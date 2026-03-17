@@ -104,6 +104,25 @@ grid-template-columns: 1.15fr 0.85fr;
 gap: 42px;
 align-items: center;
 }
+.hero-banner {
+width: 100%;
+margin: 0 auto;
+padding-top: 20px;
+}
+
+.hero-banner img {
+width: 100%;
+height: auto;
+display: block;
+border-radius: 18px;
+box-shadow: 0 20px 60px rgba(0,0,0,0.35);
+}
+
+@media (max-width: 920px) {
+.hero-banner {
+padding-top: 10px;
+}
+}
 .eyebrow {
 display: inline-block;
 padding: 8px 14px;
@@ -365,29 +384,8 @@ align-items: stretch;
 
 <main class="container">
 
-<section class="hero">
-<div>
-<div class="eyebrow">🟣 The ASTY-Effect</div>
-<h1><span class="gradient-text">$ASTY turns arbitrage into ecosystem strength.</span></h1>
-<p>
-ASTY is a DeFi arbitrage strategy designed to capture market inefficiencies and recycle that value into liquidity growth, token support, and long-term protocol strength.
-</p>
-<div class="hero-btns">
-<a class="btn btn-primary" href="https://ArbStrategy.net" target="_blank">Open Dashboard</a>
-<a class="btn btn-secondary" href="https://t.me/ArbStrategyASTY" target="_blank">Join Telegram</a>
-</div>
-</div>
-
-<div class="hero-card">
-<div class="mini-label">Protocol Overview</div>
-<div class="mini-title">The ASTY-Effect</div>
-<div class="effect-list">
-<div class="effect-item">1. Trading activity generates protocol fees</div>
-<div class="effect-item">2. Fees are split into burn, reinvestment, and treasury</div>
-<div class="effect-item">3. Supply decreases while capital efficiency grows</div>
-<div class="effect-item">4. Stronger pools can support more future activity</div>
-</div>
-</div>
+<section class="hero-banner">
+<img src="assets/banner.png" alt="ASTY ArbStrategy Banner">
 </section>
 
 <section id="about" class="section reveal">
