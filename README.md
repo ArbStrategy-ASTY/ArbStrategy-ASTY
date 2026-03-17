@@ -1,29 +1,70 @@
-# ArbStrategy-ASTY
-DeFi arbitrage protocol capturing market inefficiencies and turning them into sustainable yield.
+# 🟣 ASTY – ArbStrategy
 
-## 📈 Example Flow
+## 🚀 The ASTY Effect
 
-DEX A → Buy undervalued asset
-DEX B → Sell at higher price
-→ Profit generated
+Most DeFi tokens rely on hype.
+ASTY is built on **real market inefficiencies**.
 
-Profit is then:
+By capturing arbitrage opportunities across decentralized markets, ASTY creates a continuous cycle of:
 
-* Recycled into liquidity
-* Used for buybacks
-* Strengthens the token
+* Profit generation
+* Liquidity strengthening
+* Token support
 
-## 🧠 Why it matters
+---
 
-Most tokens rely on hype.
-ASTY is based on **real market inefficiencies**.
+## ⚙️ How It Works
 
-That means:
+ASTY operates through a simple but powerful mechanism:
 
-* Sustainable model
-* Continuous activity
-* Real value generation
+1. Buy assets on undervalued markets
+2. Sell on overvalued markets
+3. Capture the spread
+4. Recycle profits into the ecosystem
 
-## 🚀 Vision
+---
 
-To become a leading arbitrage-backed DeFi system where every trade strengthens the ecosystem.
+## 🔄 The Flywheel
+
+Arbitrage → Profit → Liquidity → Buybacks → Stronger Market → More Opportunities
+
+This creates a **self-reinforcing loop** that continuously strengthens the system.
+
+---
+
+## 📊 Token Utility
+
+$ASTY is directly tied to the system performance:
+
+* Fee capture from arbitrage activity
+* Buybacks driven by profits
+* Token burns reducing supply
+* Liquidity expansion
+
+---
+
+## 📈 Why ASTY Wins
+
+* Based on real trading activity
+* Not dependent on speculation
+* Scales with market inefficiencies
+* Strengthens over time
+
+---
+
+## 🌐 Ecosystem
+
+Dashboard: https://ArbStrategy.net
+Telegram: https://t.me/ArbStrategyASTY
+
+---
+
+## 🧠 Vision
+
+To become a leading arbitrage-powered DeFi protocol where every trade contributes to long-term value creation.
+
+---
+
+## ⚠️ Disclaimer
+
+This repository is for informational purposes only and does not constitute financial advice.
