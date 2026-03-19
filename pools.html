@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ASTY Pools</title>
+
+<style>
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+
+body {
+  margin: 0;
+  font-family: Inter, Arial, sans-serif;
+  background:
+    radial-gradient(circle at top, rgba(124, 58, 237, 0.22), transparent 30%),
+    radial-gradient(circle at 80% 20%, rgba(167, 139, 250, 0.12), transparent 22%),
+    linear-gradient(180deg, #0b1020 0%, #060914 100%);
+  color: #ffffff;
+}
+
+.container {
+  max-width: 1140px;
+  margin: auto;
+  padding: 0 20px;
+}
+
+.topbar {
+  position: sticky;
+  top: 0;
+  backdrop-filter: blur(12px);
+  background: rgba(8, 11, 23, 0.72);
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+
+.nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  min-height: 74px;
+}
+
+.brand { display:flex; align-items:center; gap:14px; }
+
+.brand-logo {
+  width:46px;
+  border-radius:50%;
+  animation:pulseGlow 3s infinite;
+}
+
+@keyframes pulseGlow {
+  0%,100% { box-shadow:0 0 18px rgba(124,58,237,0.3); }
+  50% { box-shadow:0 0 34px rgba(167,139,250,0.6); }
+}
+
+.nav-links {
+  display:flex;
+  gap:10px;
+}
+
+.nav-pill {
+  padding:10px 14px;
+  border-radius:999px;
+  background:rgba(255,255,255,0.05);
+  border:1px solid rgba(167,139,250,0.25);
+  color:#ddd;
+  font-size:14px;
+}
+
+.nav-pill.primary {
+  background:linear-gradient(135deg,#8b5cf6,#6d28d9);
+  color:#fff;
+}
+
+.nav-pill.cyan {
+  background:linear-gradient(135deg,#06b6d4,#0891b2);
+  color:#fff;
+}
+
+.summary-grid {
+  margin-top:20px;
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:14px;
+}
+
+.summary-card {
+  padding:18px;
+  border-radius:18px;
+  background:rgba(255,255,255,0.05);
+}
+
+.summary-label {
+  color:#c9b8ff;
+}
+
+.summary-value {
+  font-size:28px;
+  font-weight:700;
+  animation:pulse 3s infinite;
+}
+
+@keyframes pulse {
+  0%,100%{opacity:1;}
+  50%{opacity:0.85;}
+}
+
+.table-box {
+  margin-top:20px;
+  border-radius:20px;
+  overflow:auto;
+  border:1px solid rgba(255,255,255,0.08);
+}
+
+table {
+  width:100%;
+  border-collapse:collapse;
+}
+
+thead th {
+  position:sticky;
+  top:0;
+  background:#0b1020;
+}
+
+th, td {
+  padding:12px;
+}
+
+tbody tr {
+  border-top:1px solid rgba(255,255,255,0.05);
+}
+
+tbody tr:hover {
+  background:rgba(255,255,255,0.03);
+}
+</style>
+</head>
+
+<body>
+
+<header class="topbar">
+<div class="container nav">
+<div class="brand">
+<img src="assets/logo.png" class="brand-logo">
+<div>
+<strong>$ASTY</strong><br>
+<span style="font-size:12px;color:#aaa;">ArbStrategy</span>
+</div>
+</div>
+
+<div class="nav-links">
+<a class="nav-pill cyan" href="https://arbstrategy-asty.github.io/ArbStrategy-ASTY/" target="_blank">System Overview</a>
+<a class="nav-pill" href="https://ArbStrategy.net" target="_blank">Website</a>
+<a class="nav-pill" href="https://x.com/ArbStrategyASTY" target="_blank">X Twitter</a>
+<a class="nav-pill primary" href="https://t.me/ArbStrategyASTY" target="_blank">Telegram</a>
+</div>
+</div>
+</header>
+
+<main class="container">
+
+<h2>ASTY Pool Overview</h2>
+
+<div class="summary-grid">
+<div class="summary-card">
+<div class="summary-label">System Output 24h</div>
+<div id="fees24h" class="summary-value">$0</div>
+</div>
+
+<div class="summary-card">
+<div class="summary-label">Top Pool 24h</div>
+<div id="topPool" class="summary-value">-</div>
+<div id="topPoolVal"></div>
+</div>
+</div>
+
+<div class="table-box">
+<table>
+<thead>
+<tr>
+<th>Pool</th>
+<th>Fee</th>
+<th>Fees 1h</th>
+<th>Fees 24h</th>
+<th>Volume 24h</th>
+<th>Link</th>
+</tr>
+</thead>
+<tbody id="tableBody"></tbody>
+</table>
+</div>
+
+</main>
+
+<script>
+const pools = [...]; // bleibt unverändert
+
+function fmt(n){
+if(!n) return "-";
+if(n>1e6) return "$"+(n/1e6).toFixed(1)+"M";
+if(n>1e3) return "$"+(n/1e3).toFixed(1)+"K";
+return "$"+n.toFixed(2);
+}
+
+async function load(){
+const res = await Promise.all(pools.map(async p=>{
+const r = await fetch(`https://api.dexscreener.com/latest/dex/pairs/solana/${p[0]}`);
+const d = await r.json();
+const pair = d.pairs[0];
+
+const fee = p[2]/100;
+
+return {
+label:p[1].replace("/", " / "),
+id:p[0],
+fee,
+v24:pair.volume.h24,
+v1:pair.volume.h1,
+f24:pair.volume.h24 * fee,
+f1:pair.volume.h1 * fee
+};
+}));
+
+res.sort((a,b)=>b.f24-a.f24);
+
+let t24=0;
+
+document.getElementById("tableBody").innerHTML = res.map(r=>{
+t24+=r.f24;
+
+return `
+<tr>
+<td>${r.label}</td>
+<td>${(r.fee*100).toFixed(2)}%</td>
+<td>${fmt(r.f1)}</td>
+<td>${fmt(r.f24)}</td>
+<td>${fmt(r.v24)}</td>
+<td><a href="https://dexscreener.com/solana/${r.id}" target="_blank">🟣</a></td>
+</tr>
+`;
+}).join("");
+
+document.getElementById("fees24h").innerText = fmt(t24);
+document.getElementById("topPool").innerText = res[0].label;
+document.getElementById("topPoolVal").innerText = fmt(res[0].f24);
+}
+
+load();
+setInterval(load,60000);
+</script>
+
+</body>
+</html>
