@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>ASTY Pools</title>
+
+<style>
+* { box-sizing:border-box; }
+body {
+margin:0;
+font-family:Inter, Arial;
+background:#060914;
+color:#fff;
+}
+
+.container { max-width:1100px; margin:auto; padding:0 16px; }
+
+.topbar {
+position:sticky;
+top:0;
+background:rgba(8,11,23,0.8);
+backdrop-filter:blur(10px);
+padding:10px 0;
+}
+
+.nav { display:flex; justify-content:space-between; align-items:center; }
+
+.brand { display:flex; gap:10px; align-items:center; }
+.brand-logo { width:40px; border-radius:50%; }
+
+.nav-links a { margin-left:14px; color:#ccc; text-decoration:none; }
+
+.summary-grid {
+margin-top:20px;
+display:grid;
+grid-template-columns:repeat(3,1fr);
+gap:10px;
+}
+
+.summary-card {
+background:rgba(255,255,255,0.05);
+padding:14px;
+border-radius:12px;
+}
+
+.summary-value {
+font-size:22px;
+font-weight:700;
+animation:pulse 3s infinite;
+}
+
+@keyframes pulse {
+0%,100%{opacity:1;}
+50%{opacity:0.85;}
+}
+
+.table-box {
+margin-top:20px;
+max-height:70vh;
+overflow:auto;
+border:1px solid rgba(255,255,255,0.08);
+}
+
+table { width:100%; min-width:750px; border-collapse:collapse; }
+
+th,td { padding:10px; white-space:nowrap; }
+
+thead th {
+position:sticky;
+top:0;
+background:#060914;
+}
+
+tbody tr { border-top:1px solid rgba(255,255,255,0.05); }
+
+tbody tr:first-child {
+background:rgba(167,139,250,0.1);
+}
+
+.table-link:hover { transform:scale(1.2); }
+
+.effect-slogan { margin-top:16px; color:#d8ccff; font-weight:600; }
+.effect-sub { font-size:13px; color:#aaa; }
+.auto-update { font-size:12px; color:#888; margin-top:4px; }
+</style>
+</head>
+
+<body>
+
+<header class="topbar">
+<div class="container nav">
+<div class="brand">
+<img src="assets/logo.png" class="brand-logo">
+<div><strong>$ASTY</strong><br><span style="font-size:12px;color:#aaa;">ArbStrategy</span></div>
+</div>
+
+<div class="nav-links">
+<a href="https://ArbStrategy.net" target="_blank">Website</a>
+<a href="https://x.com/ArbStrategyASTY" target="_blank">X</a>
+<a href="https://t.me/ArbStrategyASTY" target="_blank">Telegram</a>
+</div>
+</div>
+</header>
+
+<main class="container">
+
+<h2>ASTY Pool Overview</h2>
+
+<div class="effect-slogan">🟣 The ASTY-Effect: Every trade fuels the system.</div>
+<div class="effect-sub">Live system activity generating measurable fees across all pools.</div>
+<div class="auto-update">Auto-updating every 60s</div>
+
+<div class="summary-grid">
+<div class="summary-card">
+<div>Total Fees 1h</div>
+<div id="fees1h" class="summary-value">$0</div>
+</div>
+
+<div class="summary-card">
+<div>System Output 24h</div>
+<div id="fees24h" class="summary-value">$0</div>
+</div>
+
+<div class="summary-card">
+<div>Top Pool 24h</div>
+<div id="topPool" class="summary-value">-</div>
+<div id="topPoolVal" style="font-size:12px;color:#aaa;"></div>
+</div>
+</div>
+
+<div class="table-box">
+<table>
+<thead>
+<tr>
+<th>Pool</th>
+<th>Fee</th>
+<th>Liquidity</th>
+<th>Fees 1h</th>
+<th>Fees 24h</th>
+<th>Volume 24h</th>
+<th>Efficiency</th>
+<th>Link</th>
+</tr>
+</thead>
+<tbody id="tableBody"></tbody>
+</table>
+</div>
+
+</main>
+
+<script>
+const DEFAULT_FEE = 0.01;
+
+const FEE_OVERRIDES = {
+"dxmfg4kn8pxuf7aokd1ffxjuhppj4a8wadgw87gym2mj":0.003,
+"2ufiEWc5wF8gJB1a9YiPkFuLwrFn4Zgyma1kdQRakoAr":0.0025,
+"haiegroddwr3nzpszyqqm39w2atuuknwnxxff6vwnpar":0.003,
+"3HhGsPNMtSg1dNV9SVSfzGCQLx3Zp5giAvYJdQuuNqU9":0.003,
+"BqdoyTYoXpnAzRafoBQPrY4ubVSzYE42rxJzNJwoxmZP":0.0025,
+"bwfdr72tjxjsrduyafqghv6sgxgqr2zj78kdev3c74q1":0.02,
+"2WRrdtnKKr2eq67o4ZK2VQv7dXu4Pm8iz6TMN8UXvhbV":0.02,
+"61HTuoKeWhEfscoBcd5zSNvmAyGpxdaUNMriLNnyyREz":0.06,
+"m1e9swvUoggDm2zLXzrzKRrbVwmGEP8aQy7BQigFZgK":0.0025
+};
+
+const pools = [
+{ id:"3uvhqprmyf13qgrodardi5ogjgoxhyb2ykzdcaa1tv8i", label:"ASTY / WIF" },
+{ id:"HeuivHLqCEmsgKhYhX1M6MGthEbtHrGmZdXQSCBVkstP", label:"ASTY / ALCH" },
+{ id:"CSD1NpGwhnohByefBp73Jyk6u6ZCkwwDFDVqvmkDrfxE", label:"ASTY / ARBX" },
+{ id:"dxmfg4kn8pxuf7aokd1ffxjuhppj4a8wadgw87gym2mj", label:"ASTY / ARBX" },
+{ id:"CoD6KLgnW2wKe2UtnNjSQk4RSS6fMU4P2vwKqsUxK9Bf", label:"ASTY / BONK" },
+{ id:"7T6HixJyUfzSR88dhWC9tAjasXcdFyDrKmDtuzrXgt9j", label:"ASTY / ETH" },
+{ id:"B6fq1uNpMkyGANAQo5D9GJfMCkcaNewc6q8sWZAfWZ4M", label:"ASTY / FART" },
+{ id:"8axv2ddrg3k5n3adtw37di4ythgj3zas2tpp1f2ew5zd", label:"ASTY / GEOD" },
+{ id:"9xdafi8dnhcojhyqhu6wrdm5zrehanhwy9y21aha5jyt", label:"ASTY / GOOD" },
+{ id:"92rkfrjsctmauw8tym7czgd2yjmchez5hdumdnzd54zv", label:"ASTY / GRANDMA" },
+{ id:"gec7enkk9irtsmmwpwlhk1i4vntb4vfgrae1et3let3j", label:"ASTY / JTO" },
+{ id:"iZXTZMMS51US5erGnviWfc8CNGx5QDDzp6DERH25EtW", label:"ASTY / JUP" },
+{ id:"29eKi5ipMR9fLgkYpM91Xrab2LVBnUU75SYG8kCt1nis", label:"ASTY / MET" },
+{ id:"csiazsicmngjlwykrdhdujnwz4obf3q5znmqecnmxshv", label:"ASTY / PENGU" },
+{ id:"2unbrdldemizdjneqkaapzagjwvwa3uuj3w4trvud4zw", label:"ASTY / PIPPIN" },
+{ id:"GyVyv2H2SB4fYaC7C6raWNSQqNhShdzNuSqQwG9uUUcE", label:"ASTY / POPCAT" },
+{ id:"DfJsn7Ui6YBUC25kM5FoqrCYrqfRVCoSxpTeyEzWv4vT", label:"ASTY / RAY" },
+{ id:"2ufiEWc5wF8gJB1a9YiPkFuLwrFn4Zgyma1kdQRakoAr", label:"ASTY / SOL" },
+{ id:"3HhGsPNMtSg1dNV9SVSfzGCQLx3Zp5giAvYJdQuuNqU9", label:"ASTY / USDC" }
+];
+
+async function fetchPool(p){
+const r = await fetch(`https://api.dexscreener.com/latest/dex/pairs/solana/${p.id}`);
+const d = await r.json();
+const pair = d.pairs[0];
+
+const fee = FEE_OVERRIDES[p.id] ?? DEFAULT_FEE;
+
+return {
+...p,
+fee,
+liq:pair.liquidity.usd,
+v24:pair.volume.h24,
+v1:pair.volume.h1,
+f24:pair.volume.h24 * fee,
+f1:pair.volume.h1 * fee,
+eff:pair.volume.h24 / pair.liquidity.usd
+};
+}
+
+function fmt(n){
+if(!n) return "-";
+if(n>1e6) return "$"+(n/1e6).toFixed(1)+"M";
+if(n>1e3) return "$"+(n/1e3).toFixed(1)+"K";
+return "$"+n.toFixed(2);
+}
+
+async function load(){
+const res = await Promise.all(pools.map(fetchPool));
+
+res.sort((a,b)=>b.f24-a.f24);
+
+let t1=0,t24=0;
+
+document.getElementById("tableBody").innerHTML = res.map(r=>{
+t1+=r.f1;
+t24+=r.f24;
+
+return `
+<tr>
+<td>${r.label}</td>
+<td>${(r.fee*100).toFixed(2)}%</td>
+<td>${fmt(r.liq)}</td>
+<td>${fmt(r.f1)}</td>
+<td>${fmt(r.f24)}</td>
+<td>${fmt(r.v24)}</td>
+<td>${r.eff.toFixed(2)}</td>
+<td><a class="table-link" href="https://dexscreener.com/solana/${r.id}" target="_blank">🟣</a></td>
+</tr>
+`;
+}).join("");
+
+document.getElementById("fees1h").innerText = fmt(t1);
+document.getElementById("fees24h").innerText = fmt(t24);
+document.getElementById("topPool").innerText = res[0].label;
+document.getElementById("topPoolVal").innerText = fmt(res[0].f24);
+}
+
+load();
+setInterval(load,60000);
+</script>
+
+</body>
+</html>
