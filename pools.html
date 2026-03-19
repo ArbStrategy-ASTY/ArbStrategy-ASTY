@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ASTY Pools</title>
+
+<style>
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+
+body {
+  margin: 0;
+  font-family: Inter, Arial, sans-serif;
+  background:
+    radial-gradient(circle at top, rgba(124, 58, 237, 0.22), transparent 30%),
+    radial-gradient(circle at 80% 20%, rgba(167, 139, 250, 0.12), transparent 22%),
+    linear-gradient(180deg, #0b1020 0%, #060914 100%);
+  color: #ffffff;
+  overflow-x: hidden;
+}
+
+a { color: #d8ccff; text-decoration: none; }
+
+.container {
+  max-width: 1140px;
+  margin: auto;
+  padding: 0 20px;
+  position: relative;
+  z-index: 2;
+}
+
+.blur-orb {
+  position: fixed;
+  width: 320px;
+  height: 320px;
+  border-radius: 50%;
+  filter: blur(90px);
+  opacity: 0.18;
+  pointer-events: none;
+  z-index: 0;
+  animation: floatOrb 8s ease-in-out infinite;
+}
+
+.orb-1 { top: 80px; left: -80px; background: #7c3aed; }
+.orb-2 { bottom: 80px; right: -100px; background: #a78bfa; animation-delay: 2s; }
+
+@keyframes floatOrb {
+  0%, 100% { transform: translateY(0px) translateX(0px); }
+  50% { transform: translateY(-20px) translateX(15px); }
+}
+
+.topbar {
+  position: sticky;
+  top: 0;
+  backdrop-filter: blur(12px);
+  background: rgba(8, 11, 23, 0.72);
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+  z-index: 20;
+}
+
+.nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 74px;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.brand-logo {
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  object-fit: cover;
+  display: block;
+  box-shadow: 0 0 24px rgba(124,58,237,0.35);
+  animation: pulseGlow 3.2s ease-in-out infinite;
+  background: rgba(255,255,255,0.04);
+}
+
+@keyframes pulseGlow {
+  0%, 100% { box-shadow: 0 0 18px rgba(124,58,237,0.30); transform: translateY(0); }
+  50% { box-shadow: 0 0 34px rgba(167,139,250,0.55); transform: translateY(-1px); }
+}
+
+.brand-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.brand-text strong {
+  font-size: 16px;
+  letter-spacing: 0.4px;
+}
+
+.brand-text span {
+  font-size: 12px;
+  color: #bfb8d9;
+}
+
+.nav-links {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.nav-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 14px;
+  border-radius: 999px;
+  border: 1px solid rgba(167,139,250,0.24);
+  background: rgba(255,255,255,0.04);
+  color: #dad6ea !important;
+  font-size: 14px;
+  font-weight: 600;
+  transition: transform 0.2s ease, border-color 0.2s ease, background 0.2s ease;
+}
+
+.nav-pill:hover {
+  transform: translateY(-1px);
+  border-color: rgba(196,181,253,0.42);
+  background: rgba(255,255,255,0.06);
+  color: #ffffff !important;
+}
+
+.nav-pill.primary {
+  background: linear-gradient(135deg, #8b5cf6, #6d28d9);
+  color: #fff !important;
+  border-color: transparent;
+  box-shadow: 0 8px 26px rgba(124,58,237,0.32);
+}
+
+.page-header {
+  padding: 30px 0 10px;
+  animation: fadeUp 0.7s ease both;
+}
+
+.page-title {
+  font-size: 34px;
+  margin: 0 0 12px;
+  letter-spacing: -0.6px;
+}
+
+.effect-slogan {
+  margin-top: 10px;
+  font-size: 17px;
+  font-weight: 600;
+  color: #d8ccff;
+  letter-spacing: 0.2px;
+}
+
+.effect-sub {
+  margin-top: 6px;
+  font-size: 13px;
+  color: #b5afca;
+}
+
+.auto-update {
+  margin-top: 6px;
+  font-size: 12px;
+  color: #9f98bb;
+}
+
+.summary-grid {
+  margin-top: 18px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.summary-card {
+  padding: 18px 20px;
+  border-radius: 18px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.08);
+  backdrop-filter: blur(10px);
+  box-shadow: 0 16px 40px rgba(0,0,0,0.20);
+  animation: fadeUp 0.9s ease both;
+}
+
+.summary-label {
+  font-size: 13px;
+  color: #c9b8ff;
+  margin-bottom: 8px;
+  font-weight: 600;
+}
+
+.summary-value {
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: -0.4px;
+  color: #ffffff;
+  animation: pulseValue 3s ease-in-out infinite;
+}
+
+.summary-sub {
+  margin-top: 6px;
+  font-size: 12px;
+  color: #b8b0d1;
+}
+
+.estimated-note {
+  margin-top: 14px;
+  font-size: 13px;
+  color: #a9a3c5;
+  line-height: 1.5;
+  animation: fadeUp 1s ease both;
+}
+
+.table-box {
+  margin-top: 18px;
+  border-radius: 20px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.08);
+  backdrop-filter: blur(10px);
+  box-shadow: 0 16px 40px rgba(0,0,0,0.25);
+  overflow: auto;
+  max-height: 70vh;
+  animation: fadeUp 1.05s ease both;
+}
+
+table {
+  width: 100%;
+  min-width: 860px;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+thead th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: rgba(11, 16, 32, 0.96);
+  backdrop-filter: blur(10px);
+  color: #cdbfff;
+  font-weight: 600;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+
+th, td {
+  padding: 14px 12px;
+  text-align: left;
+  white-space: nowrap;
+}
+
+tbody tr {
+  border-top: 1px solid rgba(255,255,255,0.06);
+  transition: background 0.2s ease;
+}
+
+tbody tr:hover {
+  background: rgba(255,255,255,0.03);
+}
+
+.pool-cell {
+  font-weight: 600;
+  color: #ffffff;
+}
+
+.table-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 28px;
+  text-decoration: none;
+  font-size: 16px;
+  transition: transform 0.15s ease, filter 0.15s ease;
+}
+
+.table-link:hover {
+  transform: scale(1.15);
+  filter: drop-shadow(0 0 6px rgba(167,139,250,0.6));
+}
+
+@keyframes pulseValue {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.85; }
+}
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@media (max-width: 920px) {
+  .summary-grid { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 680px) {
+  .container { padding: 0 14px; }
+
+  .nav {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 14px 0;
+    gap: 12px;
+  }
+
+  .page-title { font-size: 28px; }
+
+  .summary-card {
+    padding: 16px;
+    border-radius: 16px;
+  }
+
+  .summary-value {
+    font-size: 24px;
+  }
+
+  .table-box {
+    max-height: 68vh;
+    border-radius: 16px;
+  }
+
+  table {
+    min-width: 760px;
+    font-size: 13px;
+  }
+
+  th, td {
+    padding: 12px 8px;
+  }
+}
+</style>
+</head>
+<body>
+
+<div class="blur-orb orb-1"></div>
+<div class="blur-orb orb-2"></div>
+
+<header class="topbar">
+  <div class="container nav">
+    <div class="brand">
+      <img src="assets/logo.png" alt="ASTY Logo" class="brand-logo">
+      <div class="brand-text">
+        <strong>$ASTY</strong>
+        <span>ArbStrategy</span>
+      </div>
+    </div>
+
+    <nav class="nav-links">
+      <a class="nav-pill" href="https://ArbStrategy.net" target="_blank" rel="noopener noreferrer">Website</a>
+      <a class="nav-pill" href="https://x.com/ArbStrategyASTY" target="_blank" rel="noopener noreferrer">X</a>
+      <a class="nav-pill primary" href="https://t.me/ArbStrategyASTY" target="_blank" rel="noopener noreferrer">Telegram</a>
+    </nav>
+  </div>
+</header>
+
+<main class="container">
+  <section class="page-header">
+    <h1 class="page-title">ASTY Pool Overview</h1>
+
+    <div class="effect-slogan">🟣 The ASTY-Effect: Every trade fuels the system.</div>
+    <div class="effect-sub">Live system activity generating measurable fees across all pools.</div>
+    <div class="auto-update">Auto-updating every 60s</div>
+
+    <div class="summary-grid">
+      <div class="summary-card">
+        <div class="summary-label">System Output 24h</div>
+        <div class="summary-value" id="fees24h">$0.00</div>
+      </div>
+
+      <div class="summary-card">
+        <div class="summary-label">Top Pool 24h</div>
+        <div class="summary-value" id="topPool">-</div>
+        <div class="summary-sub" id="topPoolVal"></div>
+      </div>
+    </div>
+
+    <div class="estimated-note">
+      Estimated fees are calculated from reported trading volume and configured pool fee rates.
+    </div>
+  </section>
+
+  <div class="table-box">
+    <table>
+      <thead>
+        <tr>
+          <th>Pool</th>
+          <th>Fee</th>
+          <th>Liquidity</th>
+          <th>Fees 1h</th>
+          <th>Fees 24h</th>
+          <th>Volume 24h</th>
+          <th>Link</th>
+        </tr>
+      </thead>
+      <tbody id="tableBody"></tbody>
+    </table>
+  </div>
+</main>
+
+<script>
+const pools = [
+["3uvhqprmyf13qgrodardi5ogjgoxhyb2ykzdcaa1tv8i","ASTY/$WIF",1],
+["HeuivHLqCEmsgKhYhX1M6MGthEbtHrGmZdXQSCBVkstP","ASTY/ALCH",1],
+["CSD1NpGwhnohByefBp73Jyk6u6ZCkwwDFDVqvmkDrfxE","ASTY/ARBX",1],
+["dxmfg4kn8pxuf7aokd1ffxjuhppj4a8wadgw87gym2mj","ASTY/ARBX",0.3],
+["CoD6KLgnW2wKe2UtnNjSQk4RSS6fMU4P2vwKqsUxK9Bf","ASTY/Bonk",1],
+["7T6HixJyUfzSR88dhWC9tAjasXcdFyDrKmDtuzrXgt9j","ASTY/ETH",1],
+["B6fq1uNpMkyGANAQo5D9GJfMCkcaNewc6q8sWZAfWZ4M","ASTY/Fartcoin",1],
+["8axv2ddrg3k5n3adtw37di4ythgj3zas2tpp1f2ew5zd","ASTY/GEOD",1],
+["9xdafi8dnhcojhyqhu6wrdm5zrehanhwy9y21aha5jyt","ASTY/Good",1],
+["92rkfrjsctmauw8tym7czgd2yjmchez5hdumdnzd54zv","ASTY/Grandma",1],
+["gec7enkk9irtsmmwpwlhk1i4vntb4vfgrae1et3let3j","ASTY/JTO",1],
+["iZXTZMMS51US5erGnviWfc8CNGx5QDDzp6DERH25EtW","ASTY/JUP",1],
+["29eKi5ipMR9fLgkYpM91Xrab2LVBnUU75SYG8kCt1nis","ASTY/MET",1],
+["csiazsicmngjlwykrdhdujnwz4obf3q5znmqecnmxshv","ASTY/PENGU",1],
+["2unbrdldemizdjneqkaapzagjwvwa3uuj3w4trvud4zw","ASTY/pippin",1],
+["GyVyv2H2SB4fYaC7C6raWNSQqNhShdzNuSqQwG9uUUcE","ASTY/POPCAT",1],
+["ryztjxypcmwumfi7punwcf7q6fbxojbrtbeodz7j7gh","ASTY/PsyopAnime",1],
+["DfJsn7Ui6YBUC25kM5FoqrCYrqfRVCoSxpTeyEzWv4vT","ASTY/RAY",1],
+["2ufiEWc5wF8gJB1a9YiPkFuLwrFn4Zgyma1kdQRakoAr","ASTY/SOL",0.25],
+["7tbbdgzfzpjrpmm7jqderyyv1x8ebz1vhwqnhew97osb","ASTY/SOL",1],
+["haiegroddwr3nzpszyqqm39w2atuuknwnxxff6vwnpar","ASTY/SOL",0.3],
+["BBVxTUtaagQgG5AgmNSYS9Pqwidc7yAbRF6avt48iF2u","ASTY/TAX",1],
+["cfcyqpye4k4pyhvposagj3baqnowpzcvhpnncxssy7qh","ASTY/TAX",1],
+["tdqqti8tjds88akxfvhjztqk5idtv5zg9zknyxh23mg","ASTY/UNI",1],
+["3HhGsPNMtSg1dNV9SVSfzGCQLx3Zp5giAvYJdQuuNqU9","ASTY/USDC",0.3],
+["5zcswjfoeq7jgnahnwbrvzq7rmqvh6vqhmiyv4nwkdzk","ASTY/USDC",1],
+["BqdoyTYoXpnAzRafoBQPrY4ubVSzYE42rxJzNJwoxmZP","ASTY/USDC",0.25],
+["bwfdr72tjxjsrduyafqghv6sgxgqr2zj78kdev3c74q1","ASTY/USDC",2],
+["2hjjn2aovduegrav4vrak94ggaaw5w9syfvbexu4ad5j","ASTY/WBTC",1],
+["7fr58khkw85xifgz8wibume7p5clzfo4a8qsqxknewae","ASTY/WhiteWhale",1],
+["4tgvctkzq9zzr5znyak2y3tvaxg4q6hvkwezgxesqqkx","ASTY/WLFI",1],
+["5wpszwumdxy5kb96n7u24ifzvbsnevfd4bverhhqyjqy","ASTY/WOJAK",1],
+["2awcx2qrymjen1n8uw3elbznu7fcpqxjl9nkxqhgxphc","ASTY/ZBCN",1],
+["2WRrdtnKKr2eq67o4ZK2VQv7dXu4Pm8iz6TMN8UXvhbV","ASTY/SOL",2],
+["4iHVvcWHNYFDPFySosAx1qGZoFsDN7gXHxKqUFnGq6oJ","ASTY/BAT",1],
+["4kWT67c13svR9EfxM4TGn8inNqFsXeuAWQhn8KBVajBs","ASTY/ACC",1],
+["5fEodJwZNUTwXbiTRKU2KPCc4Xr15fPKVmxbAph7yX7v","ASTY/BTAX",1],
+["61HTuoKeWhEfscoBcd5zSNvmAyGpxdaUNMriLNnyyREz","ASTY/USDC",6],
+["8fBYS2Kq9f4Lm1SYdt4sdHRL27Ni8UcRMPtFNLdEcnAH","ASTY/Cake",1],
+["DdK87cRD7uzoUWc9JZNRNxPoLHXeAcGkfU2b49YTZrm3","AVA/ASTY",1],
+["DwZZHyqnzWEqNP4VuczHHwfJsni6xqo57TBm7SoeJ62u","ASTY/RENDER",1],
+["HvmNZyopYSwHRUXCUti4D6YANpfWscVLSQVv9nw2XYhx","ASTY/TURBO",1],
+["m1e9swvUoggDm2zLXzrzKRrbVwmGEP8aQy7BQigFZgK","ASTY/SOL",0.25],
+["3PVPMEseLJxE6yyB5eBJ3qzRCzCGN6L9qa85stcZH4FM","ASTY/testicle",1],
+["BM9W33kccA1GCdbkuGoNDvJLTQW5xKbKwXht8sCXayc3","ASTY/Buttcoin",1],
+["AiazXNe6ShtCbQHZbmpnkuuswVHFKh5rLZKeudzWU3aq","ASTY/BP",1],
+["DitqC25rriaMeZyiQPeXLNgfxqRTZL2qxFHp3MHrxM6t","ASTY/Punch",1],
+["mwsmVXehTt2aFonhJDyZWbwgpxDVM9MMfo7GUYrYL7K","ASTY/Restart",1],
+["2CBT1VgEunZmkQTNfPaNPpXWD5uVJ7KVHhjfT9SZZ3B7","ASTY/DUMB",1],
+["Fmna4bQBthaFT51VRtKR6QfgHisjxzcrzCWmPCP9dMNy","ASTY/INCOME",1],
+["AwmLBQ3keEicdD93gTr22avcJqsXwDTGMaLt25Jvyexo","ASTY/ORCA",1],
+["Ax38rDrpRMturM59zKBEGsNn2HjE96rC9Jz3WbAgXtYw","ASTY/SIMPLR",1],
+["DGuvY79xbLuJRb3CzwQL59z5zoit7KLnFwyL2t6EQCcj","ASTY/SERIOUS",1]
+];
+
+function fmtUsd(n) {
+  if (!n || Number.isNaN(n)) return "-";
+  if (n >= 1e9) return "$" + (n / 1e9).toFixed(1) + "B";
+  if (n >= 1e6) return "$" + (n / 1e6).toFixed(1) + "M";
+  if (n >= 1e3) return "$" + (n / 1e3).toFixed(1) + "K";
+  return "$" + n.toFixed(2);
+}
+
+function formatLabel(label) {
+  return label.replace("/", " / ");
+}
+
+function formatFee(percentValue) {
+  return percentValue.toFixed(2).replace(/\.00$/, "") + "%";
+}
+
+async function load() {
+  const results = await Promise.all(
+    pools.map(async ([id, label, feePercent]) => {
+      const response = await fetch(`https://api.dexscreener.com/latest/dex/pairs/solana/${id}`);
+      const data = await response.json();
+      const pair = data && Array.isArray(data.pairs) ? data.pairs[0] : null;
+
+      if (!pair) return null;
+
+      const fee = feePercent / 100;
+      const volume24h = Number(pair.volume?.h24 ?? 0);
+      const volume1h = Number(pair.volume?.h1 ?? 0);
+      const liquidity = Number(pair.liquidity?.usd ?? 0);
+
+      return {
+        id,
+        label: formatLabel(label),
+        feePercent,
+        liquidity,
+        volume24h,
+        fees1h: volume1h * fee,
+        fees24h: volume24h * fee
+      };
+    })
+  );
+
+  const rows = results.filter(Boolean).sort((a, b) => b.fees24h - a.fees24h);
+
+  let total24h = 0;
+
+  document.getElementById("tableBody").innerHTML = rows.map(row => {
+    total24h += row.fees24h;
+
+    return `
+      <tr>
+        <td class="pool-cell">${row.label}</td>
+        <td>${formatFee(row.feePercent)}</td>
+        <td>${fmtUsd(row.liquidity)}</td>
+        <td>${fmtUsd(row.fees1h)}</td>
+        <td>${fmtUsd(row.fees24h)}</td>
+        <td>${fmtUsd(row.volume24h)}</td>
+        <td><a class="table-link" href="https://dexscreener.com/solana/${row.id}" target="_blank" rel="noopener noreferrer">🟣</a></td>
+      </tr>
+    `;
+  }).join("");
+
+  document.getElementById("fees24h").innerText = fmtUsd(total24h);
+
+  if (rows.length > 0) {
+    document.getElementById("topPool").innerText = rows[0].label;
+    document.getElementById("topPoolVal").innerText = fmtUsd(rows[0].fees24h) + " in 24h";
+  }
+}
+
+load();
+setInterval(load, 60000);
+</script>
+
+</body>
+</html>
