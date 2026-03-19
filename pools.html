@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ASTY Pools</title>
+
+<style>
+* { box-sizing:border-box; }
+
+body {
+margin:0;
+font-family:Inter, Arial;
+background:linear-gradient(180deg,#0b1020,#060914);
+color:#fff;
+}
+
+.container { max-width:1200px; margin:auto; padding:0 20px; }
+
+.topbar {
+position:sticky;
+top:0;
+background:rgba(8,11,23,0.8);
+backdrop-filter:blur(10px);
+border-bottom:1px solid rgba(255,255,255,0.08);
+}
+
+.nav {
+display:flex;
+justify-content:space-between;
+align-items:center;
+height:70px;
+}
+
+.brand { display:flex; gap:12px; align-items:center; }
+.brand-logo { width:44px; border-radius:50%; }
+
+.nav-links a {
+margin-left:16px;
+color:#d8ccff;
+text-decoration:none;
+}
+
+.effect-slogan { margin-top:20px; color:#d8ccff; font-weight:600; }
+.effect-sub { font-size:13px; color:#aaa; }
+.auto-update { font-size:12px; color:#888; margin-top:6px; }
+
+.summary-grid {
+margin-top:18px;
+display:grid;
+grid-template-columns:repeat(2,1fr);
+gap:12px;
+}
+
+.summary-card {
+padding:16px;
+background:rgba(255,255,255,0.04);
+border-radius:14px;
+}
+
+.summary-value {
+font-size:26px;
+font-weight:700;
+animation:pulse 3s infinite;
+}
+
+@keyframes pulse {
+0%,100%{opacity:1;}
+50%{opacity:0.85;}
+}
+
+.table-box {
+margin-top:22px;
+border:1px solid rgba(255,255,255,0.08);
+border-radius:16px;
+overflow:auto;
+max-height:70vh;
+}
+
+table {
+width:100%;
+min-width:900px;
+border-collapse:collapse;
+}
+
+th, td {
+padding:12px;
+text-align:left;
+}
+
+thead th {
+position:sticky;
+top:0;
+background:#0b1020;
+}
+
+tbody tr {
+border-top:1px solid rgba(255,255,255,0.05);
+}
+
+tbody tr:first-child {
+background:rgba(167,139,250,0.08);
+}
+</style>
+</head>
+
+<body>
+
+<header class="topbar">
+<div class="container nav">
+<div class="brand">
+<img src="assets/logo.png" class="brand-logo">
+<div>
+<strong>$ASTY</strong><br>
+<span style="font-size:12px;color:#aaa;">ArbStrategy</span>
+</div>
+</div>
+
+<div class="nav-links">
+<a href="https://ArbStrategy.net" target="_blank">Website</a>
+<a href="https://x.com/ArbStrategyASTY" target="_blank">X</a>
+<a href="https://t.me/ArbStrategyASTY" target="_blank">Telegram</a>
+</div>
+</div>
+</header>
+
+<main class="container">
+
+<h2>ASTY Pool Overview</h2>
+
+<div class="effect-slogan">🟣 The ASTY-Effect: Every trade fuels the system.</div>
+<div class="effect-sub">Live system activity generating measurable fees across all pools.</div>
+<div class="auto-update">Auto-updating every 60s</div>
+
+<div class="summary-grid">
+<div class="summary-card">
+<div>System Output 24h</div>
+<div id="fees24h" class="summary-value">$0</div>
+</div>
+
+<div class="summary-card">
+<div>Top Pool 24h</div>
+<div id="topPool" class="summary-value">-</div>
+<div id="topPoolVal" style="font-size:12px;color:#aaa;"></div>
+</div>
+</div>
+
+<div class="table-box">
+<table>
+<thead>
+<tr>
+<th>Pool</th>
+<th>Fee</th>
+<th>Liquidity</th>
+<th>Fees 1h</th>
+<th>Fees 24h</th>
+<th>Volume 24h</th>
+<th>Link</th>
+</tr>
+</thead>
+<tbody id="tableBody"></tbody>
+</table>
+</div>
+
+</main>
+
+<script>
+const pools = [
+["3uvhqprmyf13qgrodardi5ogjgoxhyb2ykzdcaa1tv8i","ASTY/$WIF",1],
+["HeuivHLqCEmsgKhYhX1M6MGthEbtHrGmZdXQSCBVkstP","ASTY/ALCH",1],
+["CSD1NpGwhnohByefBp73Jyk6u6ZCkwwDFDVqvmkDrfxE","ASTY/ARBX",1],
+["dxmfg4kn8pxuf7aokd1ffxjuhppj4a8wadgw87gym2mj","ASTY/ARBX",0.3],
+["CoD6KLgnW2wKe2UtnNjSQk4RSS6fMU4P2vwKqsUxK9Bf","ASTY/Bonk",1],
+["7T6HixJyUfzSR88dhWC9tAjasXcdFyDrKmDtuzrXgt9j","ASTY/ETH",1],
+["B6fq1uNpMkyGANAQo5D9GJfMCkcaNewc6q8sWZAfWZ4M","ASTY/Fartcoin",1],
+["8axv2ddrg3k5n3adtw37di4ythgj3zas2tpp1f2ew5zd","ASTY/GEOD",1],
+["9xdafi8dnhcojhyqhu6wrdm5zrehanhwy9y21aha5jyt","ASTY/Good",1],
+["92rkfrjsctmauw8tym7czgd2yjmchez5hdumdnzd54zv","ASTY/Grandma",1],
+["gec7enkk9irtsmmwpwlhk1i4vntb4vfgrae1et3let3j","ASTY/JTO",1],
+["iZXTZMMS51US5erGnviWfc8CNGx5QDDzp6DERH25EtW","ASTY/JUP",1],
+["29eKi5ipMR9fLgkYpM91Xrab2LVBnUU75SYG8kCt1nis","ASTY/MET",1],
+["csiazsicmngjlwykrdhdujnwz4obf3q5znmqecnmxshv","ASTY/PENGU",1],
+["2unbrdldemizdjneqkaapzagjwvwa3uuj3w4trvud4zw","ASTY/pippin",1],
+["GyVyv2H2SB4fYaC7C6raWNSQqNhShdzNuSqQwG9uUUcE","ASTY/POPCAT",1],
+["ryztjxypcmwumfi7punwcf7q6fbxojbrtbeodz7j7gh","ASTY/PsyopAnime",1],
+["DfJsn7Ui6YBUC25kM5FoqrCYrqfRVCoSxpTeyEzWv4vT","ASTY/RAY",1],
+["2ufiEWc5wF8gJB1a9YiPkFuLwrFn4Zgyma1kdQRakoAr","ASTY/SOL",0.25],
+["7tbbdgzfzpjrpmm7jqderyyv1x8ebz1vhwqnhew97osb","ASTY/SOL",1],
+["haiegroddwr3nzpszyqqm39w2atuuknwnxxff6vwnpar","ASTY/SOL",0.3],
+["BBVxTUtaagQgG5AgmNSYS9Pqwidc7yAbRF6avt48iF2u","ASTY/TAX",1],
+["cfcyqpye4k4pyhvposagj3baqnowpzcvhpnncxssy7qh","ASTY/TAX",1],
+["tdqqti8tjds88akxfvhjztqk5idtv5zg9zknyxh23mg","ASTY/UNI",1],
+["3HhGsPNMtSg1dNV9SVSfzGCQLx3Zp5giAvYJdQuuNqU9","ASTY/USDC",0.3],
+["5zcswjfoeq7jgnahnwbrvzq7rmqvh6vqhmiyv4nwkdzk","ASTY/USDC",1],
+["BqdoyTYoXpnAzRafoBQPrY4ubVSzYE42rxJzNJwoxmZP","ASTY/USDC",0.25],
+["bwfdr72tjxjsrduyafqghv6sgxgqr2zj78kdev3c74q1","ASTY/USDC",2],
+["2hjjn2aovduegrav4vrak94ggaaw5w9syfvbexu4ad5j","ASTY/WBTC",1],
+["7fr58khkw85xifgz8wibume7p5clzfo4a8qsqxknewae","ASTY/WhiteWhale",1],
+["4tgvctkzq9zzr5znyak2y3tvaxg4q6hvkwezgxesqqkx","ASTY/WLFI",1],
+["5wpszwumdxy5kb96n7u24ifzvbsnevfd4bverhhqyjqy","ASTY/WOJAK",1],
+["2awcx2qrymjen1n8uw3elbznu7fcpqxjl9nkxqhgxphc","ASTY/ZBCN",1],
+["2WRrdtnKKr2eq67o4ZK2VQv7dXu4Pm8iz6TMN8UXvhbV","ASTY/SOL",2],
+["4iHVvcWHNYFDPFySosAx1qGZoFsDN7gXHxKqUFnGq6oJ","ASTY/BAT",1],
+["4kWT67c13svR9EfxM4TGn8inNqFsXeuAWQhn8KBVajBs","ASTY/ACC",1],
+["5fEodJwZNUTwXbiTRKU2KPCc4Xr15fPKVmxbAph7yX7v","ASTY/BTAX",1],
+["61HTuoKeWhEfscoBcd5zSNvmAyGpxdaUNMriLNnyyREz","ASTY/USDC",6],
+["8fBYS2Kq9f4Lm1SYdt4sdHRL27Ni8UcRMPtFNLdEcnAH","ASTY/Cake",1],
+["DdK87cRD7uzoUWc9JZNRNxPoLHXeAcGkfU2b49YTZrm3","AVA/ASTY",1],
+["DwZZHyqnzWEqNP4VuczHHwfJsni6xqo57TBm7SoeJ62u","ASTY/RENDER",1],
+["HvmNZyopYSwHRUXCUti4D6YANpfWscVLSQVv9nw2XYhx","ASTY/TURBO",1],
+["m1e9swvUoggDm2zLXzrzKRrbVwmGEP8aQy7BQigFZgK","ASTY/SOL",0.25],
+["3PVPMEseLJxE6yyB5eBJ3qzRCzCGN6L9qa85stcZH4FM","ASTY/testicle",1],
+["BM9W33kccA1GCdbkuGoNDvJLTQW5xKbKwXht8sCXayc3","ASTY/Buttcoin",1],
+["AiazXNe6ShtCbQHZbmpnkuuswVHFKh5rLZKeudzWU3aq","ASTY/BP",1],
+["DitqC25rriaMeZyiQPeXLNgfxqRTZL2qxFHp3MHrxM6t","ASTY/Punch",1],
+["mwsmVXehTt2aFonhJDyZWbwgpxDVM9MMfo7GUYrYL7K","ASTY/Restart",1],
+["2CBT1VgEunZmkQTNfPaNPpXWD5uVJ7KVHhjfT9SZZ3B7","ASTY/DUMB",1],
+["Fmna4bQBthaFT51VRtKR6QfgHisjxzcrzCWmPCP9dMNy","ASTY/INCOME",1],
+["AwmLBQ3keEicdD93gTr22avcJqsXwDTGMaLt25Jvyexo","ASTY/ORCA",1],
+["Ax38rDrpRMturM59zKBEGsNn2HjE96rC9Jz3WbAgXtYw","ASTY/SIMPLR",1],
+["DGuvY79xbLuJRb3CzwQL59z5zoit7KLnFwyL2t6EQCcj","ASTY/SERIOUS",1]
+];
+
+function fmt(n){
+if(!n) return "-";
+if(n>1e6) return "$"+(n/1e6).toFixed(1)+"M";
+if(n>1e3) return "$"+(n/1e3).toFixed(1)+"K";
+return "$"+n.toFixed(2);
+}
+
+async function load(){
+const res = await Promise.all(pools.map(async p=>{
+const r = await fetch(`https://api.dexscreener.com/latest/dex/pairs/solana/${p[0]}`);
+const d = await r.json();
+const pair = d.pairs[0];
+
+const fee = p[2]/100;
+
+return {
+label:p[1],
+id:p[0],
+fee,
+liq:pair.liquidity.usd,
+v24:pair.volume.h24,
+v1:pair.volume.h1,
+f24:pair.volume.h24 * fee,
+f1:pair.volume.h1 * fee
+};
+}));
+
+res.sort((a,b)=>b.f24-a.f24);
+
+let t24=0;
+
+document.getElementById("tableBody").innerHTML = res.map(r=>{
+t24+=r.f24;
+
+return `
+<tr>
+<td>${r.label}</td>
+<td>${(r.fee*100).toFixed(2)}%</td>
+<td>${fmt(r.liq)}</td>
+<td>${fmt(r.f1)}</td>
+<td>${fmt(r.f24)}</td>
+<td>${fmt(r.v24)}</td>
+<td><a href="https://dexscreener.com/solana/${r.id}" target="_blank">🟣</a></td>
+</tr>
+`;
+}).join("");
+
+document.getElementById("fees24h").innerText = fmt(t24);
+document.getElementById("topPool").innerText = res[0].label;
+document.getElementById("topPoolVal").innerText = fmt(res[0].f24);
+}
+
+load();
+setInterval(load,60000);
+</script>
+
+</body>
+</html>
