@@ -1,0 +1,706 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ASTY Wisdom Generator</title>
+  <style>
+    :root {
+      --bg1: #07111f;
+      --bg2: #0b1830;
+      --panel: rgba(10, 18, 34, 0.82);
+      --border: rgba(133, 87, 255, 0.22);
+      --text: #e9efff;
+      --muted: #9fb2d9;
+      --purple: #8b5cf6;
+      --purple-2: #a855f7;
+      --cyan: #22d3ee;
+      --red: #ff5d73;
+      --shadow: 0 0 30px rgba(139, 92, 246, 0.18);
+      --radius: 22px;
+      --transition: 0.28s ease;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html, body {
+      margin: 0;
+      min-height: 100%;
+      font-family: Inter, Arial, Helvetica, sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 20% 20%, rgba(34, 211, 238, 0.08), transparent 22%),
+        radial-gradient(circle at 80% 30%, rgba(168, 85, 247, 0.11), transparent 26%),
+        radial-gradient(circle at 50% 80%, rgba(139, 92, 246, 0.08), transparent 28%),
+        linear-gradient(180deg, var(--bg1), var(--bg2));
+      overflow-x: hidden;
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      background-image:
+        linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px);
+      background-size: 42px 42px;
+      mask-image: radial-gradient(circle at center, black 40%, transparent 100%);
+      opacity: 0.35;
+    }
+
+    .wrap {
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      padding: 32px 18px;
+    }
+
+    .card {
+      width: 100%;
+      max-width: 920px;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(10px);
+      padding: 34px 28px 28px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .card::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      background:
+        linear-gradient(135deg, rgba(139, 92, 246, 0.10), transparent 35%),
+        linear-gradient(315deg, rgba(34, 211, 238, 0.06), transparent 30%);
+    }
+
+    .header {
+      position: relative;
+      z-index: 1;
+      text-align: center;
+      margin-bottom: 26px;
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--cyan);
+      font-size: 12px;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      margin-bottom: 10px;
+      opacity: 0.9;
+    }
+
+    .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 999px;
+      background: var(--cyan);
+      box-shadow: 0 0 12px rgba(34, 211, 238, 0.75);
+      animation: pulseDot 1.8s infinite;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(30px, 5vw, 52px);
+      line-height: 1.02;
+      letter-spacing: 0.03em;
+      font-weight: 800;
+      text-transform: uppercase;
+      text-shadow: 0 0 18px rgba(139, 92, 246, 0.22);
+    }
+
+    .sub {
+      margin: 12px auto 0;
+      max-width: 700px;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.7;
+    }
+
+    .output-box {
+      position: relative;
+      z-index: 1;
+      min-height: 210px;
+      border-radius: 20px;
+      padding: 28px 24px;
+      background:
+        linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.015)),
+        rgba(4, 10, 22, 0.72);
+      border: 1px solid rgba(255,255,255,0.08);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      box-shadow:
+        inset 0 0 0 1px rgba(255,255,255,0.02),
+        0 0 24px rgba(0,0,0,0.18);
+      transition: transform var(--transition), border-color var(--transition), box-shadow var(--transition), opacity var(--transition);
+    }
+
+    .output-box.win {
+      border-color: rgba(139, 92, 246, 0.28);
+      box-shadow:
+        inset 0 0 0 1px rgba(255,255,255,0.02),
+        0 0 30px rgba(139, 92, 246, 0.16);
+    }
+
+    .output-box.loss {
+      border-color: rgba(255, 93, 115, 0.30);
+      box-shadow:
+        inset 0 0 0 1px rgba(255,255,255,0.02),
+        0 0 26px rgba(255, 93, 115, 0.14);
+    }
+
+    .output-box.fade {
+      opacity: 0.55;
+      transform: scale(0.994);
+    }
+
+    .output {
+      margin: 0;
+      white-space: pre-line;
+      font-size: clamp(24px, 3vw, 36px);
+      line-height: 1.45;
+      font-weight: 700;
+      letter-spacing: 0.01em;
+      text-shadow: 0 0 16px rgba(139, 92, 246, 0.12);
+      max-width: 720px;
+      word-break: break-word;
+    }
+
+    .output.awaiting {
+      color: var(--muted);
+      font-weight: 600;
+      text-shadow: none;
+    }
+
+    .cursor {
+      display: inline-block;
+      width: 0.65ch;
+      text-align: left;
+      animation: blink 0.75s step-end infinite;
+      color: rgba(255,255,255,0.9);
+    }
+
+    .controls {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-top: 24px;
+    }
+
+    .btn {
+      appearance: none;
+      border: 0;
+      outline: 0;
+      cursor: pointer;
+      padding: 16px 26px;
+      min-width: 220px;
+      border-radius: 999px;
+      color: white;
+      font-weight: 800;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      font-size: 13px;
+      background:
+        linear-gradient(90deg, rgba(139, 92, 246, 0.95), rgba(168, 85, 247, 0.95));
+      box-shadow:
+        0 0 24px rgba(139, 92, 246, 0.28),
+        inset 0 0 0 1px rgba(255,255,255,0.1);
+      transition: transform var(--transition), box-shadow var(--transition), filter var(--transition), opacity var(--transition);
+    }
+
+    .btn:hover {
+      transform: translateY(-1px) scale(1.01);
+      box-shadow:
+        0 0 34px rgba(139, 92, 246, 0.38),
+        inset 0 0 0 1px rgba(255,255,255,0.12);
+      filter: brightness(1.04);
+    }
+
+    .btn:active {
+      transform: translateY(0) scale(0.995);
+    }
+
+    .btn:disabled {
+      opacity: 0.68;
+      cursor: not-allowed;
+    }
+
+    .copy-btn {
+      background:
+        linear-gradient(90deg, rgba(34, 211, 238, 0.90), rgba(139, 92, 246, 0.90));
+      min-width: 180px;
+      box-shadow:
+        0 0 20px rgba(34, 211, 238, 0.22),
+        inset 0 0 0 1px rgba(255,255,255,0.1);
+    }
+
+    .copy-btn.copied {
+      filter: brightness(1.08);
+      box-shadow:
+        0 0 28px rgba(34, 211, 238, 0.30),
+        inset 0 0 0 1px rgba(255,255,255,0.12);
+    }
+
+    .wolf-wrap {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      margin-top: 30px;
+      min-height: 210px;
+    }
+
+    .wolf-glow {
+      position: absolute;
+      width: min(320px, 70vw);
+      height: min(320px, 70vw);
+      border-radius: 50%;
+      background:
+        radial-gradient(circle, rgba(139, 92, 246, 0.30) 0%, rgba(34, 211, 238, 0.16) 38%, rgba(139, 92, 246, 0.02) 68%, transparent 76%);
+      filter: blur(18px);
+      animation: wolfGlow 2.6s ease-in-out infinite;
+      pointer-events: none;
+    }
+
+    .wolf {
+      position: relative;
+      width: min(300px, 72vw);
+      max-width: 300px;
+      height: auto;
+      object-fit: contain;
+      filter:
+        drop-shadow(0 0 18px rgba(139, 92, 246, 0.35))
+        drop-shadow(0 0 35px rgba(34, 211, 238, 0.14));
+      animation: wolfPulse 2.6s ease-in-out infinite;
+      user-select: none;
+      -webkit-user-drag: none;
+    }
+
+    .copy-hint {
+      position: relative;
+      z-index: 1;
+      margin-top: 14px;
+      text-align: center;
+      color: var(--muted);
+      font-size: 12px;
+      letter-spacing: 0.03em;
+      min-height: 18px;
+    }
+
+    .shake {
+      animation: shake 0.32s ease;
+    }
+
+    @keyframes blink {
+      0%, 49% { opacity: 1; }
+      50%, 100% { opacity: 0; }
+    }
+
+    @keyframes pulseDot {
+      0%, 100% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(1.25); opacity: 0.7; }
+    }
+
+    @keyframes wolfPulse {
+      0%, 100% {
+        transform: scale(1);
+        opacity: 1;
+      }
+      50% {
+        transform: scale(1.04);
+        opacity: 0.96;
+      }
+    }
+
+    @keyframes wolfGlow {
+      0%, 100% {
+        transform: scale(1);
+        opacity: 0.72;
+      }
+      50% {
+        transform: scale(1.08);
+        opacity: 1;
+      }
+    }
+
+    @keyframes shake {
+      0% { transform: translateX(0); }
+      20% { transform: translateX(-5px); }
+      40% { transform: translateX(4px); }
+      60% { transform: translateX(-3px); }
+      80% { transform: translateX(2px); }
+      100% { transform: translateX(0); }
+    }
+
+    @media (max-width: 640px) {
+      .card {
+        padding: 26px 18px 20px;
+      }
+
+      .output-box {
+        min-height: 190px;
+        padding: 22px 16px;
+      }
+
+      .btn, .copy-btn {
+        width: 100%;
+        min-width: 0;
+      }
+
+      .wolf-wrap {
+        min-height: 180px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <section class="card">
+      <div class="header">
+        <div class="eyebrow">
+          <span class="dot"></span>
+          ASTY SIGNAL INTERFACE
+        </div>
+        <h1>ASTY Wisdom Generator</h1>
+        <p class="sub">
+          A 50 / 50 transmission. Either you receive wisdom, or the system rejects you.
+        </p>
+      </div>
+
+      <div id="outputBox" class="output-box">
+        <p id="output" class="output awaiting">Awaiting ASTY transmission…</p>
+      </div>
+
+      <div class="controls">
+        <button id="generateBtn" class="btn">Try Your Luck</button>
+        <button id="copyBtn" class="btn copy-btn">Copy Result</button>
+      </div>
+
+      <div id="copyHint" class="copy-hint"></div>
+
+      <div class="wolf-wrap">
+        <div class="wolf-glow"></div>
+        <img class="wolf" src="assets/wolf.png" alt="ASTY Wolf" />
+      </div>
+    </section>
+  </div>
+
+  <script>
+    const winMessages = [
+      "🟣 Capital follows performance.",
+      "🟣 Volume is the engine.",
+      "🟣 The system does not wait.",
+      "🟣 Efficiency decides allocation.",
+      "🟣 Liquidity follows proof.",
+      "🟣 Strong pools earn more.",
+      "🟣 Performance is the only argument.",
+      "🟣 Burn is the memory of activity.",
+      "🟣 Capital respects momentum.",
+      "🟣 The flow rewards conviction.",
+      "🟣 The system scales through action.",
+      "🟣 Real strength compounds quietly.",
+      "🟣 Liquidity moves toward proof.",
+      "🟣 Activity writes the future.",
+      "🟣 Strong systems absorb hesitation.",
+      "🟣 Volume reveals conviction.",
+      "🟣 Performance earns expansion.",
+      "🟣 The market notices strength.",
+      "🟣 The burn remembers every move.",
+      "🟣 Growth follows measurable force.",
+      "🟣 Systems reward consistency.",
+      "🟣 Proof attracts capital.",
+      "🟣 Action outruns doubt.",
+      "🟣 The signal favors believers.",
+      "🟣 Good flow creates good outcomes.",
+      "🟣 Capital loves efficient paths.",
+      "🟣 Momentum respects structure.",
+      "🟣 Results silence uncertainty.",
+      "🟣 Strong pools defend themselves.",
+      "🟣 Every trade leaves a mark.",
+      "🟣 Efficient systems keep growing.",
+      "🟣 Conviction compounds in silence.",
+      "🟣 Volume is not random here.",
+      "🟣 Smart flow becomes strong flow.",
+      "🟣 Pressure reveals the winners.",
+      "🟣 The system grows on proof.",
+      "🟣 The signal rewards patience.",
+      "🟣 Burn turns activity into scarcity.",
+      "🟣 Performance creates gravity.",
+      "🟣 Strong structure beats hype.",
+      "🟣 Efficient capital moves first.",
+      "🟣 The flow never sleeps.",
+      "🟣 Good systems scale cleanly.",
+      "🟣 Strength becomes visible over time.",
+      "🟣 Scarcity sharpens attention.",
+      "🟣 Value follows working structure.",
+      "🟣 Activity makes the signal louder.",
+      "🟣 Efficiency is a language of power.",
+      "🟣 The market follows results.",
+      "🟣 Real systems do not beg.",
+      "🟣 Price reacts. Structure remains.",
+      "🟣 The burn gives memory to motion.",
+      "🟣 Results are the purest signal.",
+      "🟣 Good flow creates better flow.",
+      "🟣 Efficient systems attract action.",
+      "🟣 Conviction gains mass over time.",
+      "🟣 Strength scales when measured.",
+      "🟣 Structure protects momentum.",
+      "🟣 The signal is earned, not gifted.",
+      "🟣 Clarity belongs to participants.",
+      "🟣 Scarcity amplifies attention.",
+      "🟣 Activity is the hidden architect.",
+      "🟣 Good mechanics outlive noise.",
+      "🟣 Efficient pools write their own future.",
+      "🟣 Growth respects discipline.",
+      "🟣 Action feeds the machine.",
+      "🟣 Capital seeks the best route.",
+      "🟣 The wise follow measurable force.",
+      "🟣 Smart structure compounds faster.",
+      "🟣 Stable growth beats random hype.",
+      "🟣 The system rewards what works.",
+      "🟣 Value emerges from flow.",
+      "🟣 Every cycle strengthens the core.",
+      "🟣 Pressure creates cleaner signals.",
+      "🟣 The strongest path attracts liquidity.",
+      "🟣 Supply shrinks. Attention grows.",
+      "🟣 Useful systems become magnetic.",
+      "🟣 Proof is the ultimate marketing.",
+      "🟣 Better mechanics win long term.",
+      "🟣 Momentum is built, not wished for.",
+      "🟣 Efficient design leaves a trail.",
+      "🟣 Real strength keeps compounding.",
+      "🟣 Activity becomes narrative.",
+      "🟣 Flow reveals the truth.",
+      "🟣 Structure creates confidence.",
+      "🟣 Strong signals cut through noise.",
+      "🟣 Scarcity sharpens conviction.",
+      "🟣 Function outlasts speculation.",
+      "🟣 The machine favors participants.",
+      "🟣 Growth begins with movement.",
+      "🟣 Performance turns heads.",
+      "🟣 Liquidity trusts proven systems.",
+      "🟣 Efficient motion creates heat.",
+      "🟣 Capital follows the evidence.",
+      "🟣 Systems become myths through results.",
+      "🟣 Good flow creates stronger floors.",
+      "🟣 Activity rewards the prepared.",
+      "🟣 The signal grows with every cycle.",
+      "🟣 Strong holders hear the message.",
+      "🟣 Only performance earns permanence.",
+      "🟣 The future belongs to working systems."
+    ];
+
+    const lossMessages = [
+      "❌ Your wallet was scanned. Not enough $ASTY detected.",
+      "❌ Wisdom denied. Minimum $ASTY aura not reached.",
+      "❌ System review complete. Holdings are emotionally insufficient.",
+      "❌ Transmission failed. Your wallet looks like a spectator.",
+      "❌ Access denied. Please accumulate more conviction.",
+      "❌ ASTY checked your bag. It was mostly vibes.",
+      "❌ Not enough $ASTY to unlock premium enlightenment.",
+      "❌ Nice try. The system prefers stronger holders.",
+      "❌ Wallet scan failed. Exposure level: concerning.",
+      "❌ The signal saw your balance and lost interest.",
+      "❌ Transmission blocked. Portfolio too lightweight.",
+      "❌ ASTY reviewed your wallet and suggested more accumulation.",
+      "❌ Your wallet pinged back. The system was not impressed.",
+      "❌ Wisdom is expensive. Your bag is not.",
+      "❌ Denied. The signal detected weak hand energy.",
+      "❌ Your wallet entered the room and the wisdom left.",
+      "❌ ASTY checked your status. Still loading.",
+      "❌ Portfolio scan complete. Confidence not found.",
+      "❌ The system asked for size. Your wallet whispered.",
+      "❌ Not today. Your exposure is still in tutorial mode.",
+      "❌ ASTY expected conviction and found pocket lint.",
+      "❌ Signal denied. You are holding too much hesitation.",
+      "❌ Your wallet is giving “maybe later” energy.",
+      "❌ The wolf looked at your bag and kept walking.",
+      "❌ Wisdom unavailable for underfunded legends.",
+      "❌ Your balance triggered a polite rejection.",
+      "❌ No transmission. Your wallet needs more gym time.",
+      "❌ ASTY checked the numbers and sighed softly.",
+      "❌ The system detected spectator-grade holdings.",
+      "❌ Your wallet is not poor. Just spiritually underweight.",
+      "❌ The signal tried, then saw the balance.",
+      "❌ Access denied. Please return with stronger bags.",
+      "❌ Wisdom paused itself after reviewing your wallet.",
+      "❌ ASTY expected a holder. It found a visitor.",
+      "❌ Your bag is currently under mystical requirements.",
+      "❌ Transmission denied. Portfolio too decorative.",
+      "❌ The system needs conviction, not loose change.",
+      "❌ Wallet scan failed. That bag needs seasoning.",
+      "❌ Your $ASTY count is currently more symbolic than powerful.",
+      "❌ ASTY looked for commitment and found curiosity.",
+      "❌ The signal is reserved for heavier participants.",
+      "❌ Your wallet passed the vibe check. Not the size check.",
+      "❌ Wisdom not found. Try adding more $ASTY first.",
+      "❌ The wolf sniffed your bag and seemed unconvinced.",
+      "❌ ASTY has standards. Your wallet is still negotiating.",
+      "❌ Signal rejected. Holdings too casual.",
+      "❌ Your bag contains hope. The system asked for more.",
+      "❌ Denied. Please upgrade from tourist to participant.",
+      "❌ The system prefers wallets with presence.",
+      "❌ ASTY checked your balance and chose comedy instead.",
+      "❌ Your wallet has potential. Mostly theoretical.",
+      "❌ Wisdom delayed due to insufficient bag pressure.",
+      "❌ The signal bounced off your holdings.",
+      "❌ You clicked for truth. The system clicked back.",
+      "❌ Not enough $ASTY to access this level of philosophy.",
+      "❌ The machine cannot hear wallets this quiet.",
+      "❌ Your portfolio feels more “observer” than “operator.”",
+      "❌ Transmission denied. Stronger hands recommended.",
+      "❌ ASTY found your bag technically present.",
+      "❌ Your wallet was weighed. It floated.",
+      "❌ The system requires stronger gravitational pull.",
+      "❌ Wisdom denied. You are still in soft-entry mode.",
+      "❌ ASTY checked your wallet and requested backup.",
+      "❌ No signal. Your bag needs more density.",
+      "❌ The transmission saw your holdings and went offline.",
+      "❌ Your wallet gave off low-burn energy.",
+      "❌ ASTY seeks conviction. You brought curiosity.",
+      "❌ Access denied. Portfolio too breathable.",
+      "❌ Wisdom is currently unavailable to micro-dramas.",
+      "❌ Your wallet has been classified as lightly seasoned.",
+      "❌ The wolf respects size. You brought a sample.",
+      "❌ Transmission failed. Bag not loud enough.",
+      "❌ The system reviewed your holdings and chose silence.",
+      "❌ $ASTY count below mythological threshold.",
+      "❌ Your wallet is still buffering into relevance.",
+      "❌ Wisdom denied. Please return with heavier intentions.",
+      "❌ The bag is not bad. Just not cinematic enough.",
+      "❌ ASTY checked the vault and found a lunchbox.",
+      "❌ No truth today. Your wallet needs more altitude.",
+      "❌ The machine respects presence. Your wallet whispered.",
+      "❌ Your balance triggered a gentle but firm no.",
+      "❌ The signal is for holders. You are still flirting.",
+      "❌ Transmission denied. Bag too polite.",
+      "❌ ASTY needs participants, not window shoppers.",
+      "❌ Your wallet has been flagged for insufficient menace.",
+      "❌ Wisdom unavailable. Holdings too adorable.",
+      "❌ The wolf blinked twice and rejected the bag.",
+      "❌ ASTY appreciates the effort. The size, less so.",
+      "❌ Portfolio detected. Dominance not detected.",
+      "❌ Your wallet entered the arena and was asked to bulk up.",
+      "❌ The system loves conviction. Your bag brought excuses.",
+      "❌ Signal interrupted by low-holder conditions.",
+      "❌ The machine tried to connect. Your wallet dodged it.",
+      "❌ Wisdom blocked. Please increase your ASTY gravity.",
+      "❌ Your holdings are currently too humble for prophecy.",
+      "❌ The signal is premium. Your bag is still freemium.",
+      "❌ ASTY checked your wallet and called it a warm-up.",
+      "❌ Access denied. Please arrive with larger consequences.",
+      "❌ Transmission rejected. That bag is still on probation.",
+      "❌ The system needs weight. Your wallet brought cardio.",
+      "❌ Wisdom denied. Not enough ASTY thunder detected."
+    ];
+
+    const output = document.getElementById("output");
+    const outputBox = document.getElementById("outputBox");
+    const generateBtn = document.getElementById("generateBtn");
+    const copyBtn = document.getElementById("copyBtn");
+    const copyHint = document.getElementById("copyHint");
+
+    let isTyping = false;
+    let currentPlainText = "Awaiting ASTY transmission…";
+
+    function sleep(ms) {
+      return new Promise(resolve => setTimeout(resolve, ms));
+    }
+
+    function randomItem(arr) {
+      return arr[Math.floor(Math.random() * arr.length)];
+    }
+
+    function escapeHtml(str) {
+      return str
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;");
+    }
+
+    async function typeText(text, speed = 32) {
+      isTyping = true;
+      output.classList.remove("awaiting");
+      output.textContent = "";
+
+      for (let i = 0; i <= text.length; i++) {
+        const visible = text.slice(0, i);
+        output.innerHTML = `${escapeHtml(visible)}<span class="cursor">|</span>`;
+        await sleep(speed);
+      }
+
+      output.innerHTML = `${escapeHtml(text)}<span class="cursor">|</span>`;
+      isTyping = false;
+    }
+
+    async function generateTransmission() {
+      if (isTyping) return;
+
+      generateBtn.disabled = true;
+      copyHint.textContent = "";
+
+      outputBox.classList.add("fade");
+      outputBox.classList.remove("win", "loss", "shake");
+
+      await sleep(220);
+
+      output.classList.remove("awaiting");
+      output.textContent = "Receiving transmission...";
+
+      outputBox.classList.remove("fade");
+
+      await sleep(420);
+
+      const isWin = Math.random() < 0.5;
+      const message = isWin ? randomItem(winMessages) : randomItem(lossMessages);
+      currentPlainText = message;
+
+      outputBox.classList.remove("win", "loss");
+      outputBox.classList.add(isWin ? "win" : "loss");
+
+      if (!isWin) {
+        outputBox.classList.add("shake");
+        setTimeout(() => outputBox.classList.remove("shake"), 340);
+      }
+
+      await typeText(message, isWin ? 34 : 26);
+
+      generateBtn.disabled = false;
+    }
+
+    async function copyCurrentText() {
+      if (isTyping) return;
+
+      try {
+        await navigator.clipboard.writeText(currentPlainText);
+        copyBtn.classList.add("copied");
+        copyHint.textContent = "Copied to clipboard.";
+        setTimeout(() => {
+          copyBtn.classList.remove("copied");
+        }, 900);
+      } catch (err) {
+        copyHint.textContent = "Copy failed. Clipboard access was blocked.";
+      }
+    }
+
+    generateBtn.addEventListener("click", generateTransmission);
+    copyBtn.addEventListener("click", copyCurrentText);
+  </script>
+</body>
+</html>
