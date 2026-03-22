@@ -514,7 +514,7 @@ async function load() {
   if (rows.length > 0) {
     document.getElementById("topPool").innerText = rows[0].label;
     document.getElementById("topPoolVal").innerText = fmtUsd(rows[0].fees24h) + " in 24h";
-    statusLine.textContent = `Loaded ${rows.length} pools from GeckoTerminal.`;
+    statusLine.textContent = `Loaded ${rows.length} pools.`;
   } else {
     document.getElementById("topPool").innerText = "-";
     document.getElementById("topPoolVal").innerText = "";
