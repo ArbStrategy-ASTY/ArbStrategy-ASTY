@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ASTY Pools</title>
+
+<style>
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+
+body {
+  margin: 0;
+  font-family: Inter, Arial, sans-serif;
+  background:
+    radial-gradient(circle at top, rgba(124, 58, 237, 0.22), transparent 30%),
+    radial-gradient(circle at 80% 20%, rgba(167, 139, 250, 0.12), transparent 22%),
+    linear-gradient(180deg, #0b1020 0%, #060914 100%);
+  color: #ffffff;
+}
+
+a {
+  text-decoration: none;
+  color: inherit;
+}
+
+.container {
+  max-width: 1140px;
+  margin: auto;
+  padding: 0 20px;
+}
+
+.blur-orb {
+  position: fixed;
+  width: 320px;
+  height: 320px;
+  border-radius: 50%;
+  filter: blur(90px);
+  opacity: 0.18;
+  pointer-events: none;
+  z-index: 0;
+  animation: floatOrb 8s ease-in-out infinite;
+}
+
+.orb-1 { top: 80px; left: -80px; background: #7c3aed; }
+.orb-2 { bottom: 80px; right: -100px; background: #a78bfa; animation-delay: 2s; }
+
+@keyframes floatOrb {
+  0%, 100% { transform: translateY(0px) translateX(0px); }
+  50% { transform: translateY(-20px) translateX(15px); }
+}
+
+.topbar {
+  position: sticky;
+  top: 0;
+  backdrop-filter: blur(12px);
+  background: rgba(8, 11, 23, 0.72);
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+  z-index: 10;
+}
+
+.nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  min-height: 74px;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.brand-logo {
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  box-shadow: 0 0 24px rgba(124,58,237,0.35);
+  animation: pulseGlow 3s ease-in-out infinite;
+  background: rgba(255,255,255,0.04);
+}
+
+@keyframes pulseGlow {
+  0%,100% { box-shadow: 0 0 18px rgba(124,58,237,0.30); transform: translateY(0); }
+  50% { box-shadow: 0 0 34px rgba(167,139,250,0.55); transform: translateY(-1px); }
+}
+
+.nav-links {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.nav-pill {
+  padding: 10px 14px;
+  border-radius: 999px;
+  border: 1px solid rgba(167,139,250,0.25);
+  background: rgba(255,255,255,0.05);
+  color: #dad6ea;
+  font-size: 14px;
+  font-weight: 600;
+  transition: transform 0.2s ease, border-color 0.2s ease, background 0.2s ease;
+}
+
+.nav-pill:hover {
+  transform: translateY(-1px);
+  border-color: rgba(196,181,253,0.42);
+  background: rgba(255,255,255,0.06);
+  color: #ffffff;
+}
+
+.nav-pill.primary {
+  background: linear-gradient(135deg, #8b5cf6, #6d28d9);
+  color: white;
+}
+
+.nav-pill.cyan {
+  background: linear-gradient(135deg, #06b6d4, #0891b2);
+  color: white;
+  border-color: transparent;
+}
+
+.nav-pill.orange {
+  background: linear-gradient(135deg, #f59e0b, #ea580c);
+  color: white;
+  border-color: transparent;
+}
+
+.page-header {
+  padding: 28px 0 10px;
+}
+
+.page-title {
+  font-size: 34px;
+  margin: 0 0 10px;
+  letter-spacing: -0.6px;
+}
+
+.effect-slogan {
+  margin-top: 10px;
+  font-size: 17px;
+  font-weight: 600;
+  color: #d8ccff;
+}
+
+.effect-sub {
+  margin-top: 6px;
+  font-size: 13px;
+  color: #b5afca;
+}
+
+.auto-update {
+  margin-top: 6px;
+  font-size: 12px;
+  color: #9f98bb;
+}
+
+.summary-grid {
+  margin-top: 18px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.summary-card {
+  padding: 18px 20px;
+  border-radius: 18px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.08);
+  backdrop-filter: blur(10px);
+}
+
+.summary-label {
+  font-size: 13px;
+  color: #c9b8ff;
+  margin-bottom: 8px;
+  font-weight: 600;
+}
+
+.summary-value {
+  font-size: 28px;
+  font-weight: 700;
+  color: #ffffff;
+  animation: pulseValue 3s ease-in-out infinite;
+}
+
+.summary-sub {
+  margin-top: 6px;
+  font-size: 12px;
+  color: #b8b0d1;
+}
+
+.estimated-note {
+  margin-top: 14px;
+  font-size: 13px;
+  color: #a9a3c5;
+  line-height: 1.5;
+}
+
+.table-box {
+  margin-top: 18px;
+  border-radius: 20px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.08);
+  backdrop-filter: blur(10px);
+  overflow: auto;
+  max-height: 70vh;
+}
+
+table {
+  width: 100%;
+  min-width: 860px;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+thead th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: rgba(11, 16, 32, 0.96);
+  color: #cdbfff;
+  font-weight: 600;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+
+th, td {
+  padding: 14px 12px;
+  text-align: left;
+  white-space: nowrap;
+}
+
+tbody tr {
+  border-top: 1px solid rgba(255,255,255,0.06);
+  transition: background 0.2s ease;
+}
+
+tbody tr:hover {
+  background: rgba(255,255,255,0.03);
+}
+
+.pool-cell {
+  font-weight: 600;
+  color: #ffffff;
+}
+
+.table-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 28px;
+  font-size: 16px;
+  transition: transform 0.15s ease, filter 0.15s ease;
+}
+
+.table-link:hover {
+  transform: scale(1.15);
+  filter: drop-shadow(0 0 6px rgba(167,139,250,0.6));
+}
+
+.status-line {
+  margin-top: 10px;
+  font-size: 12px;
+  color: #9f98bb;
+}
+
+.chart-section {
+  margin-top: 24px;
+  margin-bottom: 40px;
+  border-radius: 20px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.08);
+  backdrop-filter: blur(10px);
+  padding: 14px;
+}
+
+.chart-frame {
+  width: 100%;
+  height: 600px;
+  border: 0;
+  border-radius: 14px;
+  display: block;
+}
+
+@keyframes pulseValue {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.85; }
+}
+
+@media (max-width: 920px) {
+  .summary-grid { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 680px) {
+  .container { padding: 0 14px; }
+
+  .nav {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 14px 0;
+    gap: 12px;
+  }
+
+  .page-title { font-size: 28px; }
+
+  .summary-value { font-size: 24px; }
+
+  .table-box {
+    max-height: 68vh;
+    border-radius: 16px;
+  }
+
+  table {
+    min-width: 760px;
+    font-size: 13px;
+  }
+
+  th, td {
+    padding: 12px 8px;
+  }
+
+  .chart-frame {
+    height: 460px;
+  }
+}
+</style>
+</head>
+<body>
+
+<div class="blur-orb orb-1"></div>
+<div class="blur-orb orb-2"></div>
+
+<header class="topbar">
+  <div class="container nav">
+    <div class="brand">
+      <img src="assets/logo.png" alt="ASTY Logo" class="brand-logo">
+      <div>
+        <strong>$ASTY</strong><br>
+        <span style="font-size:12px;color:#aaa;">ArbStrategy</span>
+      </div>
+    </div>
+
+    <nav class="nav-links">
+      <a class="nav-pill" href="https://ArbStrategy.net" target="_blank" rel="noopener noreferrer">Website</a>
+      <a class="nav-pill" href="https://x.com/ArbStrategyASTY" target="_blank" rel="noopener noreferrer">X Twitter</a>
+      <a class="nav-pill cyan" href="https://arbstrategy-asty.github.io/ArbStrategy-ASTY/" target="_blank" rel="noopener noreferrer">System Overview</a>
+      <a class="nav-pill primary" href="https://t.me/ArbStrategyASTY" target="_blank" rel="noopener noreferrer">Telegram</a>
+      <a class="nav-pill orange" href="https://birdeye.so/solana/token/ASTYqeaoK83Zs1pTFEXZUB6BM8cG8YLTsN852NUkt7ZR" target="_blank" rel="noopener noreferrer">BirdEye</a>
+    </nav>
+  </div>
+</header>
+
+<main class="container">
+  <section class="page-header">
+    <h1 class="page-title">ASTY Pool Overview</h1>
+
+    <div class="effect-slogan">🟣 The ASTY-Effect: Every trade fuels the system.</div>
+    <div class="effect-sub">Live system activity generating measurable fees across all pools.</div>
+    <div class="auto-update">Auto-updating every 60s</div>
+
+    <div class="summary-grid">
+      <div class="summary-card">
+        <div class="summary-label">System Output 24h</div>
+        <div class="summary-value" id="fees24h">$0.00</div>
+      </div>
+
+      <div class="summary-card">
+        <div class="summary-label">Top Pool 24h</div>
+        <div class="summary-value" id="topPool">-</div>
+        <div class="summary-sub" id="topPoolVal"></div>
+      </div>
+    </div>
+
+    <div class="estimated-note">
+      Estimated fees are calculated from reported trading volume and configured pool fee rates.
+    </div>
+
+    <div class="status-line" id="statusLine">Loading GeckoTerminal pool data...</div>
+  </section>
+
+  <div class="table-box">
+    <table>
+      <thead>
+        <tr>
+          <th>Pool</th>
+          <th>Fee</th>
+          <th>Fees 1h</th>
+          <th>Fees 24h</th>
+          <th>Volume 24h</th>
+          <th>Link</th>
+        </tr>
+      </thead>
+      <tbody id="tableBody"></tbody>
+    </table>
+  </div>
+
+  <section class="chart-section">
+    <iframe
+      class="chart-frame"
+      src="https://embed.birdeye.so/tv-widget/ASTYqeaoK83Zs1pTFEXZUB6BM8cG8YLTsN852NUkt7ZR?chain=solana&viewMode=pair&chartInterval=1D&chartType=Line&chartTimezone=Europe%2FBerlin&chartLeftToolbar=hide&theme=dark"
+      frameborder="0"
+      allowfullscreen>
+    </iframe>
+  </section>
+</main>
+
+<script>
+const pools = [
+["3UvhqPrMyf13qgRodARDi5oGJGoxHYb2ykZdCaa1TV8i","ASTY/$WIF",1],
+["HeuivHLqCEmsgKhYhX1M6MGthEbtHrGmZdXQSCBVkstP","ASTY/ALCH",1],
+["CSD1NpGwhnohByefBp73Jyk6u6ZCkwwDFDVqvmkDrfxE","ASTY/ARBX",1],
+["DxMFG4kn8pxuf7AoKD1ffXjUhPpj4a8WAdgw87gyM2mj","ASTY/ARBX",0.3],
+["CoD6KLgnW2wKe2UtnNjSQk4RSS6fMU4P2vwKqsUxK9Bf","ASTY/Bonk",1],
+["7T6HixJyUfzSR88dhWC9tAjasXcdFyDrKmDtuzrXgt9j","ASTY/ETH",1],
+["B6fq1uNpMkyGANAQo5D9GJfMCkcaNewc6q8sWZAfWZ4M","ASTY/Fartcoin",1],
+["8aXv2DDRG3k5N3ADTw37Di4ytHGJ3ZaS2tPp1f2EW5ZD","ASTY/GEOD",1],
+["9xdaFi8dnHcoJHYqHU6wrDM5zRehanhwy9y21ahA5jYt","ASTY/Good",1],
+["92RKFRJSctMAuw8Tym7cZgd2yjMcHeZ5hDUMdnZd54zV","ASTY/Grandma",1],
+["Gec7ENkk9irtsmmwpwLHk1i4VntB4vFGRAe1ET3LeT3J","ASTY/JTO",1],
+["iZXTZMMS51US5erGnviWfc8CNGx5QDDzp6DERH25EtW","ASTY/JUP",1],
+["29eKi5ipMR9fLgkYpM91Xrab2LVBnUU75SYG8kCt1nis","ASTY/MET",1],
+["CSiAzSiCMNGjLwYKRdhDUjNwz4obf3Q5ZnMQECnmxshV","ASTY/PENGU",1],
+["2uNbRDLDeMizdJNEqKaapzAGJWVwa3uuJ3w4trVud4ZW","ASTY/pippin",1],
+["GyVyv2H2SB4fYaC7C6raWNSQqNhShdzNuSqQwG9uUUcE","ASTY/POPCAT",1],
+["RYztJXyPCmwUmfi7punwCf7q6FbxoJbRtBEodZ7j7GH","ASTY/PsyopAnime",1],
+["DfJsn7Ui6YBUC25kM5FoqrCYrqfRVCoSxpTeyEzWv4vT","ASTY/RAY",1],
+["2ufiEWc5wF8gJB1a9YiPkFuLwrFn4Zgyma1kdQRakoAr","ASTY/SOL",0.25],
+["7tbbdGzFZpjrPmM7jQderyyv1x8Ebz1vhwqNhEW97osb","ASTY/SOL",1],
+["HAieGroddWr3NZpSZYqqm39w2aTUuknWNXxfF6vWNpaR","ASTY/SOL",0.3],
+["BBVxTUtaagQgG5AgmNSYS9Pqwidc7yAbRF6avt48iF2u","ASTY/TAX",1],
+["CFcyQpye4K4pyhVPoSAgj3BAqNoWpZCvHpNncXssy7qH","ASTY/TAX",1],
+["tDqqTi8tJds88AkxFvhjZTQK5iDtV5ZG9ZkNYxh23MG","ASTY/UNI",1],
+["3HhGsPNMtSg1dNV9SVSfzGCQLx3Zp5giAvYJdQuuNqU9","ASTY/USDC",0.3],
+["5zCsWjFoEQ7jGNaHNwBRvZq7RMqVh6vQhmiYv4NWkDZK","ASTY/USDC",1],
+["BqdoyTYoXpnAzRafoBQPrY4ubVSzYE42rxJzNJwoxmZP","ASTY/USDC",0.25],
+["BWFDr72tjXJsRdUyAfqghv6sGXgQr2zJ78KdeV3c74q1","ASTY/USDC",2],
+["2Hjjn2aoVdUeGraV4vRak94GGAAW5w9syfVBeXU4Ad5J","ASTY/WBTC",1],
+["7Fr58kHKW85XiFgZ8WibumE7P5CLZFo4A8qsQxKNEWaE","ASTY/WhiteWhale",1],
+["4TgvcTKzq9zZR5znyak2y3tvaXg4q6hvKWEZgxesQqkx","ASTY/WLFI",1],
+["5wpSZwUmdXy5kB96n7U24iFzvbSNEvFd4BvERhhqYjQY","ASTY/WOJAK",1],
+["2aWCx2qrYmjen1N8UW3eLBzNu7fCPqxjL9NKXqHGXPHc","ASTY/ZBCN",1],
+["2WRrdtnKKr2eq67o4ZK2VQv7dXu4Pm8iz6TMN8UXvhbV","ASTY/SOL",2],
+["4iHVvcWHNYFDPFySosAx1qGZoFsDN7gXHxKqUFnGq6oJ","ASTY/BAT",1],
+["4kWT67c13svR9EfxM4TGn8inNqFsXeuAWQhn8KBVajBs","ASTY/ACC",1],
+["5fEodJwZNUTwXbiTRKU2KPCc4Xr15fPKVmxbAph7yX7v","ASTY/BTAX",1],
+["61HTuoKeWhEfscoBcd5zSNvmAyGpxdaUNMriLNnyyREz","ASTY/USDC",6],
+["8fBYS2Kq9f4Lm1SYdt4sdHRL27Ni8UcRMPtFNLdEcnAH","ASTY/Cake",1],
+["DdK87cRD7uzoUWc9JZNRNxPoLHXeAcGkfU2b49YTZrm3","ASTY/AVA",1],
+["DwZZHyqnzWEqNP4VuczHHwfJsni6xqo57TBm7SoeJ62u","ASTY/RENDER",1],
+["HvmNZyopYSwHRUXCUti4D6YANpfWscVLSQVv9nw2XYhx","ASTY/TURBO",1],
+["m1e9swvUoggDm2zLXzrzKRrbVwmGEP8aQy7BQigFZgK","ASTY/SOL",0.25],
+["3PVPMEseLJxE6yyB5eBJ3qzRCzCGN6L9qa85stcZH4FM","ASTY/testicle",1],
+["BM9W33kccA1GCdbkuGoNDvJLTQW5xKbKwXht8sCXayc3","ASTY/Buttcoin",1],
+["AiazXNe6ShtCbQHZbmpnkuuswVHFKh5rLZKeudzWU3aq","ASTY/BP",1],
+["DitqC25rriaMeZyiQPeXLNgfxqRTZL2qxFHp3MHrxM6t","ASTY/Punch",1],
+["mwsmVXehTt2aFonhJDyZWbwgpxDVM9MMfo7GUYrYL7K","ASTY/Restart",1],
+["2CBT1VgEunZmkQTNfPaNPpXWD5uVJ7KVHhjfT9SZZ3B7","ASTY/DUMB",1],
+["Fmna4bQBthaFT51VRtKR6QfgHisjxzcrzCWmPCP9dMNy","ASTY/INCOME",1],
+["AwmLBQ3keEicdD93gTr22avcJqsXwDTGMaLt25Jvyexo","ASTY/ORCA",1],
+["Ax38rDrpRMturM59zKBEGsNn2HjE96rC9Jz3WbAgXtYw","ASTY/SIMPLR",1],
+["DGuvY79xbLuJRb3CzwQL59z5zoit7KLnFwyL2t6EQCcj","ASTY/SERIOUS",1]
+];
+
+const CHUNK_SIZE = 25;
+
+function fmtUsd(n) {
+  if (!n || Number.isNaN(n)) return "-";
+  if (n >= 1e9) return "$" + (n / 1e9).toFixed(1) + "B";
+  if (n >= 1e6) return "$" + (n / 1e6).toFixed(1) + "M";
+  if (n >= 1e3) return "$" + (n / 1e3).toFixed(1) + "K";
+  return "$" + n.toFixed(2);
+}
+
+function formatLabel(label) {
+  return label.replace("/", " / ");
+}
+
+function formatFee(percentValue) {
+  return percentValue.toFixed(2).replace(/\.00$/, "") + "%";
+}
+
+function chunkArray(arr, size) {
+  const chunks = [];
+  for (let i = 0; i < arr.length; i += size) chunks.push(arr.slice(i, i + size));
+  return chunks;
+}
+
+async function fetchGeckoChunk(chunk) {
+  const ids = chunk.map(([id]) => id).join(",");
+  const encodedIds = encodeURIComponent(ids);
+  const url = `https://api.geckoterminal.com/api/v2/networks/solana/pools/multi/${encodedIds}?include=base_token&include_volume_breakdown=false&include_composition=false`;
+
+  const response = await fetch(url);
+  const data = await response.json();
+  return Array.isArray(data.data) ? data.data : [];
+}
+
+async function load() {
+  const statusLine = document.getElementById("statusLine");
+  statusLine.textContent = "Loading GeckoTerminal pool data...";
+
+  const chunks = chunkArray(pools, CHUNK_SIZE);
+  const responses = await Promise.all(chunks.map(fetchGeckoChunk));
+  const flatPools = responses.flat();
+
+  const geckoMap = new Map();
+  for (const item of flatPools) {
+    const address = item?.attributes?.address;
+    if (address) geckoMap.set(address, item);
+  }
+
+  const rows = pools.map(([id, label, feePercent]) => {
+    const item = geckoMap.get(id);
+    if (!item) return null;
+
+    const attrs = item.attributes || {};
+    const fee = feePercent / 100;
+    const volume1h = parseFloat(attrs.volume_usd?.h1 || "0");
+    const volume24h = parseFloat(attrs.volume_usd?.h24 || "0");
+
+    return {
+      id,
+      label: formatLabel(label),
+      feePercent,
+      volume24h,
+      fees1h: volume1h * fee,
+      fees24h: volume24h * fee
+    };
+  }).filter(Boolean).sort((a, b) => b.fees24h - a.fees24h);
+
+  let total24h = 0;
+
+  document.getElementById("tableBody").innerHTML = rows.map(row => {
+    total24h += row.fees24h;
+
+    return `
+      <tr>
+        <td class="pool-cell">${row.label}</td>
+        <td>${formatFee(row.feePercent)}</td>
+        <td>${fmtUsd(row.fees1h)}</td>
+        <td>${fmtUsd(row.fees24h)}</td>
+        <td>${fmtUsd(row.volume24h)}</td>
+        <td><a class="table-link" href="https://www.geckoterminal.com/solana/pools/${row.id}" target="_blank" rel="noopener noreferrer">🟣</a></td>
+      </tr>
+    `;
+  }).join("");
+
+  document.getElementById("fees24h").innerText = fmtUsd(total24h);
+
+  if (rows.length > 0) {
+    document.getElementById("topPool").innerText = rows[0].label;
+    document.getElementById("topPoolVal").innerText = fmtUsd(rows[0].fees24h) + " in 24h";
+    statusLine.textContent = `Loaded ${rows.length} pools.`;
+  } else {
+    document.getElementById("topPool").innerText = "-";
+    document.getElementById("topPoolVal").innerText = "";
+    statusLine.textContent = "No GeckoTerminal pool data available.";
+  }
+}
+
+load();
+setInterval(load, 60000);
+</script>
+
+</body>
+</html>
