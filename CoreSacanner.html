@@ -9,22 +9,18 @@
       --bg:#06040a;
       --bg2:#0b0711;
       --panel:rgba(18,12,30,.84);
-      --panel-2:rgba(24,16,40,.82);
       --line:rgba(192,132,252,.16);
-      --line-strong:rgba(192,132,252,.28);
       --text:#f7f2ff;
       --muted:#b9a7d7;
       --purple:#a855f7;
-      --purple-2:#c084fc;
-      --purple-3:#7e22ce;
+      --purple2:#c084fc;
+      --purple3:#7e22ce;
       --green:#22c55e;
       --yellow:#facc15;
       --red:#ef4444;
-      --cyan:#22d3ee;
       --shadow:0 0 28px rgba(168,85,247,.18);
       --shadow-strong:0 0 70px rgba(168,85,247,.30);
       --radius:22px;
-      --radius-sm:16px;
     }
 
     *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
@@ -107,10 +103,7 @@
       50%{transform:translateY(-3px)}
     }
 
-    .brand-text{
-      min-width:0;
-    }
-
+    .brand-text{min-width:0}
     .title{
       margin:0;
       font-size:clamp(24px,5vw,34px);
@@ -141,7 +134,7 @@
       margin-bottom:6px;
     }
 
-    textarea, input{
+    textarea,input{
       width:100%;
       border:1px solid rgba(255,255,255,.08);
       background:rgba(255,255,255,.04);
@@ -193,7 +186,7 @@
     button:disabled{opacity:.45;cursor:not-allowed}
 
     .btn-primary{
-      background:linear-gradient(135deg, var(--purple), var(--purple-3));
+      background:linear-gradient(135deg, var(--purple), var(--purple3));
       box-shadow:0 0 22px rgba(168,85,247,.22);
     }
 
@@ -210,7 +203,7 @@
 
     .core-card{
       position:relative;
-      min-height:440px;
+      min-height:470px;
       padding:12px;
       display:flex;
       flex-direction:column;
@@ -221,7 +214,7 @@
 
     .hud{
       display:grid;
-      grid-template-columns:repeat(3,1fr);
+      grid-template-columns:repeat(4,1fr);
       gap:8px;
       position:relative;
       z-index:2;
@@ -232,7 +225,7 @@
       border:1px solid rgba(255,255,255,.06);
       border-radius:14px;
       padding:10px;
-      min-height:68px;
+      min-height:70px;
     }
 
     .hud-k{
@@ -244,7 +237,7 @@
     }
 
     .hud-v{
-      font-size:clamp(16px,3.8vw,22px);
+      font-size:clamp(15px,3.8vw,21px);
       line-height:1.05;
       font-weight:900;
       letter-spacing:-.04em;
@@ -256,7 +249,7 @@
       display:flex;
       align-items:center;
       justify-content:center;
-      min-height:300px;
+      min-height:315px;
       z-index:1;
       margin:10px 0;
     }
@@ -266,12 +259,13 @@
       left:0;
       bottom:-4px;
       width:130px;
-      opacity:.95;
+      opacity:.98;
       filter:drop-shadow(0 0 18px rgba(168,85,247,.30));
       animation:wolfPulse 2.8s ease-in-out infinite;
       pointer-events:none;
       user-select:none;
       -webkit-user-drag:none;
+      z-index:6;
     }
 
     @keyframes wolfPulse{
@@ -287,6 +281,7 @@
         0 0 0 1px rgba(192,132,252,.04) inset,
         0 0 42px rgba(168,85,247,.10);
       animation:spin 18s linear infinite;
+      z-index:1;
     }
 
     .ring.r1{width:300px;height:300px}
@@ -327,6 +322,7 @@
         inset 0 0 34px rgba(255,255,255,.08);
       overflow:hidden;
       animation:coreIdle 3s ease-in-out infinite;
+      z-index:3;
     }
 
     .core::before{
@@ -408,7 +404,7 @@
       font-size:clamp(18px,6vw,40px);
       opacity:0;
       pointer-events:none;
-      z-index:4;
+      z-index:7;
       text-shadow:0 0 20px currentColor;
     }
 
@@ -436,10 +432,7 @@
       min-height:54px;
     }
 
-    .status-left{
-      min-width:0;
-    }
-
+    .status-left{min-width:0}
     .status-title{
       font-size:14px;
       font-weight:900;
@@ -466,7 +459,7 @@
     .wallet-list{
       display:grid;
       gap:8px;
-      max-height:210px;
+      max-height:230px;
       overflow:auto;
     }
 
@@ -481,10 +474,7 @@
       align-items:center;
     }
 
-    .wallet-main{
-      min-width:0;
-    }
-
+    .wallet-main{min-width:0}
     .wallet-addr{
       font-size:13px;
       font-weight:800;
@@ -505,7 +495,7 @@
 
     .wallet-value{
       text-align:right;
-      min-width:88px;
+      min-width:92px;
     }
 
     .wallet-usd{
@@ -541,20 +531,20 @@
     .green{color:var(--green)}
     .yellow{color:var(--yellow)}
     .red{color:var(--red)}
-    .purple{color:var(--purple-2)}
+    .purple{color:var(--purple2)}
 
     @media (max-width:420px){
       .app{padding:10px}
       .row{grid-template-columns:1fr}
       .btn-row{grid-template-columns:1fr 1fr}
       .btn-row button:last-child{grid-column:1 / -1}
-      .hud{grid-template-columns:repeat(3,1fr)}
+      .hud{grid-template-columns:repeat(2,1fr)}
       .hud-box{padding:8px}
       .ring.r1{width:270px;height:270px}
       .ring.r2{width:205px;height:205px}
       .ring.r3{width:145px;height:145px}
       .wolf{width:112px}
-      .core-card{min-height:410px}
+      .core-card{min-height:420px}
     }
   </style>
 </head>
@@ -584,7 +574,7 @@
           </div>
           <div>
             <div class="mini-label">ASTY mint</div>
-            <input id="mintInput" value="ASTYQEAOK83ZS1PTFEXZUB6BM8CG8YLTSN852NUKT7ZR" />
+            <input id="mintInput" value="ASTYqeaoK83Zs1pTFEXZUB6BM8cG8YLTsN852NUkt7ZR" />
           </div>
         </div>
 
@@ -609,6 +599,10 @@
         <div class="hud-box">
           <div class="hud-k">Total ASTY</div>
           <div class="hud-v" id="astyTotalBox">0</div>
+        </div>
+        <div class="hud-box">
+          <div class="hud-k">% of Supply</div>
+          <div class="hud-v" id="supplyPctBox">0.0000%</div>
         </div>
       </div>
 
@@ -635,7 +629,7 @@
           <div class="status-title" id="statusTitle">Standby</div>
           <div class="status-sub" id="statusSub">Waiting for wallet scan.</div>
         </div>
-        <div class="status-title" id="energyTag">LOW ENERGY</div>
+        <div class="status-title purple" id="energyTag">LOW ENERGY</div>
       </div>
     </section>
 
@@ -645,7 +639,7 @@
         <div class="empty">No wallets scanned yet.</div>
       </div>
       <div class="footer-note">
-        If the free public price route changes or your RPC blocks browser calls, switch the RPC endpoint or try again later.
+        This scanner uses GeckoTerminal for ASTY token data and Solana RPC to read wallet token accounts in the browser.  [oai_citation:1‡api.geckoterminal.com](https://api.geckoterminal.com/api/v2/networks/solana/tokens/ASTYqeaoK83Zs1pTFEXZUB6BM8cG8YLTsN852NUkt7ZR?include=top_pools&include_composition=false&include_inactive_source=false)
       </div>
     </section>
   </div>
@@ -661,6 +655,7 @@
       priceBox: document.getElementById("priceBox"),
       walletCountBox: document.getElementById("walletCountBox"),
       astyTotalBox: document.getElementById("astyTotalBox"),
+      supplyPctBox: document.getElementById("supplyPctBox"),
       coreTotal: document.getElementById("coreTotal"),
       coreSub: document.getElementById("coreSub"),
       statusTitle: document.getElementById("statusTitle"),
@@ -676,6 +671,8 @@
       priceUsd: 0,
       totalAsty: 0,
       totalUsd: 0,
+      normalizedSupply: 0,
+      supplyPct: 0,
       wallets: []
     };
 
@@ -696,6 +693,13 @@
         minimumFractionDigits: 0,
         maximumFractionDigits: max
       });
+    }
+
+    function formatPct(v, digits = 4) {
+      return `${Number(v).toLocaleString("en-US", {
+        minimumFractionDigits: digits,
+        maximumFractionDigits: digits
+      })}%`;
     }
 
     function shortAddr(addr) {
@@ -761,64 +765,53 @@
       return total;
     }
 
-    async function fetchPriceFromGeckoTerminal(mint) {
-      const tries = [
-        `https://api.geckoterminal.com/api/v2/simple/networks/solana/token_price/${mint}`,
-        `https://api.geckoterminal.com/api/v2/networks/solana/tokens/${mint}`,
-        `https://api.geckoterminal.com/api/v2/networks/solana/tokens/${mint}/pools?page=1`
-      ];
+    async function fetchTokenDataFromGeckoTerminal(mint) {
+      const url = `https://api.geckoterminal.com/api/v2/networks/solana/tokens/${mint}?include=top_pools&include_composition=false&include_inactive_source=false`;
 
-      for (const url of tries) {
-        try {
-          const res = await fetch(url, { headers: { accept: "application/json" } });
-          if (!res.ok) continue;
-          const json = await res.json();
+      const res = await fetch(url, {
+        headers: { accept: "application/json" }
+      });
 
-          const simplePrice =
-            json?.data?.attributes?.token_prices?.[mint] ??
-            json?.data?.attributes?.token_prices?.[mint.toLowerCase()];
+      if (!res.ok) {
+        throw new Error(`GeckoTerminal request failed: ${res.status}`);
+      }
 
-          if (simplePrice && !Number.isNaN(Number(simplePrice))) {
-            return Number(simplePrice);
+      const json = await res.json();
+
+      const directPrice =
+        json?.data?.attributes?.price_usd ||
+        json?.data?.attributes?.token_price_usd ||
+        json?.data?.attributes?.base_token_price_usd;
+
+      let priceUsd = directPrice ? Number(directPrice) : NaN;
+
+      if (Number.isNaN(priceUsd)) {
+        const included = Array.isArray(json?.included) ? json.included : [];
+        for (const item of included) {
+          const attr = item?.attributes || {};
+          const candidate =
+            attr?.base_token_price_usd ||
+            attr?.quote_token_price_usd ||
+            attr?.price_usd ||
+            attr?.token_price_usd;
+
+          if (candidate && !Number.isNaN(Number(candidate))) {
+            priceUsd = Number(candidate);
+            break;
           }
-
-          const tokenPrice =
-            json?.data?.attributes?.price_usd ??
-            json?.data?.attributes?.token_price_usd ??
-            json?.data?.attributes?.base_token_price_usd;
-
-          if (tokenPrice && !Number.isNaN(Number(tokenPrice))) {
-            return Number(tokenPrice);
-          }
-
-          const pools = json?.data;
-          if (Array.isArray(pools) && pools.length) {
-            const first = pools[0];
-            const attr = first?.attributes || {};
-            const rel = first?.relationships || {};
-
-            const baseAddress =
-              rel?.base_token?.data?.id?.split("_").pop()?.toUpperCase?.() || "";
-            const quoteAddress =
-              rel?.quote_token?.data?.id?.split("_").pop()?.toUpperCase?.() || "";
-
-            if (baseAddress === mint.toUpperCase() && attr.base_token_price_usd) {
-              return Number(attr.base_token_price_usd);
-            }
-            if (quoteAddress === mint.toUpperCase() && attr.quote_token_price_usd) {
-              return Number(attr.quote_token_price_usd);
-            }
-
-            if (attr.base_token_price_usd) {
-              return Number(attr.base_token_price_usd);
-            }
-          }
-        } catch (err) {
-          // try next endpoint
         }
       }
 
-      throw new Error("Could not fetch ASTY price from GeckoTerminal");
+      if (Number.isNaN(priceUsd)) {
+        throw new Error("ASTY price not found in GeckoTerminal response");
+      }
+
+      const normalizedSupply = Number(json?.data?.attributes?.normalized_total_supply || 0);
+
+      return {
+        priceUsd,
+        normalizedSupply
+      };
     }
 
     function setStatus(title, sub) {
@@ -857,13 +850,13 @@
       ui.coreEl.classList.add("boost");
     }
 
-    function animateNumber(from, to, duration, onUpdate, formatter) {
+    function animateNumber(from, to, duration, onUpdate) {
       const start = performance.now();
       function frame(now) {
         const progress = Math.min(1, (now - start) / duration);
         const eased = 1 - Math.pow(1 - progress, 3);
         const value = from + (to - from) * eased;
-        onUpdate(formatter ? formatter(value) : value);
+        onUpdate(value);
         if (progress < 1) requestAnimationFrame(frame);
       }
       requestAnimationFrame(frame);
@@ -880,7 +873,7 @@
           <div class="wallet-row">
             <div class="wallet-main">
               <div class="wallet-addr">${w.address}</div>
-              <div class="wallet-meta">${shortAddr(w.address)} • ${formatNum(w.asty, 4)} ASTY</div>
+              <div class="wallet-meta">${shortAddr(w.address)} • ${formatNum(w.asty, 4)} ASTY • ${formatPct(w.supplyPct, 4)} supply</div>
             </div>
             <div class="wallet-value">
               <div class="wallet-usd">${formatUsd(w.usd)}</div>
@@ -895,6 +888,7 @@
       ui.priceBox.textContent = formatUsd(state.priceUsd);
       ui.walletCountBox.textContent = String(state.wallets.length);
       ui.astyTotalBox.textContent = formatNum(state.totalAsty, 4);
+      ui.supplyPctBox.textContent = formatPct(state.supplyPct, 4);
       setEnergyTag(state.totalUsd);
       renderWallets();
     }
@@ -904,10 +898,10 @@
 
       animateNumber(previousUsd, state.totalUsd, 1050, value => {
         ui.coreTotal.textContent = formatUsd(value);
-      }, value => value);
+      });
 
       const subText = state.wallets.length
-        ? `${formatNum(state.totalAsty, 4)} ASTY across ${state.wallets.length} wallet${state.wallets.length === 1 ? "" : "s"}`
+        ? `${formatNum(state.totalAsty, 4)} ASTY • ${formatPct(state.supplyPct, 4)} of supply`
         : "Paste wallets above and scan the ASTY core.";
 
       ui.coreSub.textContent = subText;
@@ -933,32 +927,46 @@
 
       const previousUsd = state.totalUsd || 0;
 
-      setStatus("Scanning wallets", "Fetching ASTY price and balances...");
+      setStatus("Loading token data", "Fetching ASTY price and supply...");
       flashPulse("SCANNING", "yellow");
 
       try {
-        const priceUsd = await fetchPriceFromGeckoTerminal(mint);
+        const tokenData = await fetchTokenDataFromGeckoTerminal(mint);
+        const priceUsd = tokenData.priceUsd;
+        const normalizedSupply = tokenData.normalizedSupply;
+
+        setStatus("Price loaded", `ASTY price detected at ${formatUsd(priceUsd)}. Scanning wallets...`);
 
         const walletResults = [];
         for (let i = 0; i < wallets.length; i++) {
           setStatus("Reading wallets", `Scanning ${i + 1} of ${wallets.length}...`);
           const asty = await getAstyAmountForWallet(rpcUrl, wallets[i], mint);
+          const usd = asty * priceUsd;
+          const supplyPct = normalizedSupply > 0 ? (asty / normalizedSupply) * 100 : 0;
+
           walletResults.push({
             address: wallets[i],
             asty,
-            usd: asty * priceUsd
+            usd,
+            supplyPct
           });
         }
 
         walletResults.sort((a, b) => b.usd - a.usd);
 
-        state.priceUsd = priceUsd;
-        state.wallets = walletResults;
-        state.totalAsty = walletResults.reduce((sum, w) => sum + w.asty, 0);
-        state.totalUsd = walletResults.reduce((sum, w) => sum + w.usd, 0);
+        const totalAsty = walletResults.reduce((sum, w) => sum + w.asty, 0);
+        const totalUsd = walletResults.reduce((sum, w) => sum + w.usd, 0);
+        const totalSupplyPct = normalizedSupply > 0 ? (totalAsty / normalizedSupply) * 100 : 0;
 
-        setStatus("Scan complete", `ASTY core loaded from ${walletResults.length} wallet${walletResults.length === 1 ? "" : "s"}.`);
-        flashPulse(state.totalUsd > 0 ? "CHARGED" : "EMPTY", state.totalUsd > 0 ? "green" : "red");
+        state.priceUsd = priceUsd;
+        state.normalizedSupply = normalizedSupply;
+        state.wallets = walletResults;
+        state.totalAsty = totalAsty;
+        state.totalUsd = totalUsd;
+        state.supplyPct = totalSupplyPct;
+
+        setStatus("Scan complete", `Loaded ${walletResults.length} wallet${walletResults.length === 1 ? "" : "s"} successfully.`);
+        flashPulse(totalUsd > 0 ? "CHARGED" : "EMPTY", totalUsd > 0 ? "green" : "red");
         renderAnimated(previousUsd);
       } catch (err) {
         console.error(err);
@@ -985,12 +993,15 @@
       state.priceUsd = 0;
       state.totalAsty = 0;
       state.totalUsd = 0;
+      state.normalizedSupply = 0;
+      state.supplyPct = 0;
       state.wallets = [];
       ui.coreTotal.textContent = "$0.00";
       ui.coreSub.textContent = "Paste wallets above and scan the ASTY core.";
       ui.priceBox.textContent = "$0.00";
       ui.walletCountBox.textContent = "0";
       ui.astyTotalBox.textContent = "0";
+      ui.supplyPctBox.textContent = "0.0000%";
       ui.walletList.innerHTML = `<div class="empty">No wallets scanned yet.</div>`;
       setStatus("Standby", "Waiting for wallet scan.");
       setEnergyTag(0);
