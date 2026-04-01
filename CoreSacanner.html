@@ -687,12 +687,12 @@
       "4N9bL8a9fW8cV8m2rP5qK2wE7zQ2cG8mT4vTn6uD2dGh"
     ];
 
-    function formatUsd(v) {
-      return `$${Number(v).toLocaleString("en-US", {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2
-      })}`;
-    }
+    function formatUsd(v, digits = 2) {
+  return `$${Number(v).toLocaleString("en-US", {
+    minimumFractionDigits: digits,
+    maximumFractionDigits: digits
+  })}`;
+}
 
     function formatNum(v, max = 2) {
       return Number(v).toLocaleString("en-US", {
