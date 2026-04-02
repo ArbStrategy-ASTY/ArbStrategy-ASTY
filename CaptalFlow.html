@@ -16,9 +16,9 @@ html { scroll-behavior: smooth; }
   --panel-border:rgba(255,255,255,0.08);
   --text:#ffffff;
   --muted:#b8b0d1;
-  --muted-2:#9f98bb;
+  --muted2:#9f98bb;
   --purple:#8b5cf6;
-  --purple-2:#6d28d9;
+  --purple2:#6d28d9;
   --cyan:#06b6d4;
   --orange:#f59e0b;
   --red:#fb7185;
@@ -43,7 +43,7 @@ a {
 }
 
 .container {
-  max-width: 1380px;
+  max-width: 1440px;
   margin: auto;
   padding: 0 20px;
 }
@@ -59,6 +59,7 @@ a {
   z-index: 0;
   animation: floatOrb 8s ease-in-out infinite;
 }
+
 .orb-1 { top: 80px; left: -80px; background: #7c3aed; }
 .orb-2 { bottom: 80px; right: -100px; background: #a78bfa; animation-delay: 2s; }
 
@@ -234,7 +235,7 @@ a {
 
 .flow-panel-inner {
   position: relative;
-  min-height: 860px;
+  min-height: 920px;
   padding: 18px;
 }
 
@@ -251,9 +252,9 @@ a {
   position: relative;
   z-index: 3;
   display: grid;
-  grid-template-columns: 1.15fr 0.95fr 1.1fr;
+  grid-template-columns: 1.25fr 0.95fr 1fr;
   gap: 22px;
-  min-height: 820px;
+  min-height: 860px;
   align-items: center;
 }
 
@@ -266,106 +267,201 @@ a {
   margin-bottom: 14px;
 }
 
-.pool-column,
+.bubble-column,
 .core-column,
 .output-column {
-  min-height: 760px;
+  min-height: 820px;
   position: relative;
 }
 
-.pool-stack,
-.output-stack {
-  min-height: 760px;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  gap: 14px;
-}
-
-.pool-node,
-.output-node,
-.core-node {
+.bubble-map-shell {
   position: relative;
-  border-radius: 22px;
-  background: rgba(255,255,255,0.05);
-  border: 1px solid rgba(255,255,255,0.08);
-  backdrop-filter: blur(10px);
+  min-height: 820px;
+  border-radius: 24px;
+  background: rgba(255,255,255,0.035);
+  border: 1px solid rgba(255,255,255,0.06);
   overflow: hidden;
 }
 
-.pool-node::before,
-.output-node::before,
-.core-node::before {
-  content: "";
+.bubble-map {
+  position: relative;
+  width: 100%;
+  min-height: 820px;
+}
+
+.pool-bubble {
   position: absolute;
-  inset: 0;
-  background: linear-gradient(135deg, rgba(255,255,255,0.05), transparent 42%);
-  pointer-events: none;
-}
-
-.pool-node {
-  padding: 16px 18px;
-  min-height: 96px;
-  box-shadow: 0 0 24px rgba(139,92,246,0.12);
-}
-
-.pool-name {
-  font-size: 16px;
-  font-weight: 700;
-  margin-bottom: 8px;
-}
-
-.pool-meta {
+  border-radius: 50%;
   display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
-  font-size: 13px;
-  color: #b8b0d1;
-  line-height: 1.45;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 10px;
+  cursor: pointer;
+  user-select: none;
+  color: #fff;
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  border: 1px solid rgba(255,255,255,0.10);
+  backdrop-filter: blur(10px);
+  transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+  animation: bubbleFloat 6s ease-in-out infinite;
+  box-shadow: 0 0 22px rgba(139,92,246,0.14);
 }
 
-.badge {
-  display: inline-flex;
+.pool-bubble:hover {
+  transform: scale(1.05);
+  z-index: 5;
+}
+
+.pool-bubble.active {
+  transform: scale(1.08);
+  border-color: rgba(255,255,255,0.28);
+  box-shadow: 0 0 34px rgba(255,255,255,0.12);
+  z-index: 6;
+}
+
+.pool-bubble.high {
+  background: radial-gradient(circle at 30% 30%, rgba(16,185,129,0.34), rgba(16,185,129,0.10));
+  box-shadow: 0 0 28px rgba(16,185,129,0.18);
+}
+
+.pool-bubble.mid {
+  background: radial-gradient(circle at 30% 30%, rgba(251,191,36,0.28), rgba(251,191,36,0.09));
+  box-shadow: 0 0 28px rgba(251,191,36,0.16);
+}
+
+.pool-bubble.low {
+  background: radial-gradient(circle at 30% 30%, rgba(251,113,133,0.28), rgba(251,113,133,0.09));
+  box-shadow: 0 0 28px rgba(251,113,133,0.14);
+}
+
+.pool-bubble .bubble-inner {
+  display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 8px;
-  width: max-content;
+  gap: 4px;
+}
+
+.pool-bubble .bubble-name {
+  max-width: 92%;
+  font-size: 12px;
+}
+
+.pool-bubble .bubble-value {
+  font-size: 11px;
+  color: rgba(255,255,255,0.82);
+}
+
+@keyframes bubbleFloat {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-6px); }
+}
+
+.pool-detail {
+  position: absolute;
+  left: 16px;
+  right: 16px;
+  bottom: 16px;
+  border-radius: 20px;
+  background: rgba(10,13,25,0.82);
+  border: 1px solid rgba(255,255,255,0.08);
+  backdrop-filter: blur(12px);
+  padding: 16px;
+  box-shadow: 0 18px 50px rgba(0,0,0,0.32);
+  z-index: 7;
+}
+
+.detail-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
   margin-bottom: 10px;
-  padding: 7px 10px;
+}
+
+.detail-title {
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+}
+
+.detail-badge {
+  padding: 8px 10px;
   border-radius: 999px;
   font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.detail-badge.high {
+  background: rgba(16,185,129,0.12);
+  color: #84f1cb;
+  border: 1px solid rgba(16,185,129,0.22);
+}
+
+.detail-badge.mid {
+  background: rgba(251,191,36,0.12);
+  color: #ffd977;
+  border: 1px solid rgba(251,191,36,0.22);
+}
+
+.detail-badge.low {
+  background: rgba(251,113,133,0.12);
+  color: #ffadbd;
+  border: 1px solid rgba(251,113,133,0.22);
+}
+
+.detail-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0,1fr));
+  gap: 10px;
+}
+
+.detail-card {
+  border-radius: 16px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.06);
+  padding: 12px;
+}
+
+.detail-card-label {
+  font-size: 11px;
+  color: #c9b8ff;
   font-weight: 700;
+  margin-bottom: 8px;
   text-transform: uppercase;
   letter-spacing: 0.12em;
 }
 
-.badge-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: currentColor;
-  box-shadow: 0 0 10px currentColor;
+.detail-card-value {
+  font-size: 18px;
+  font-weight: 800;
+  line-height: 1.1;
 }
 
-.badge.high {
-  background: rgba(16,185,129,0.12);
-  border: 1px solid rgba(16,185,129,0.25);
-  color: #7df0c8;
+.detail-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 12px;
+  padding: 10px 14px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #8b5cf6, #6d28d9);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  transition: transform 0.18s ease;
 }
 
-.badge.mid {
-  background: rgba(251,191,36,0.12);
-  border: 1px solid rgba(251,191,36,0.25);
-  color: #ffd774;
-}
-
-.badge.low {
-  background: rgba(251,113,133,0.12);
-  border: 1px solid rgba(251,113,133,0.25);
-  color: #ff9db0;
+.detail-link:hover {
+  transform: translateY(-1px);
 }
 
 .core-shell {
-  min-height: 760px;
+  min-height: 820px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -461,9 +557,31 @@ a {
   font-weight: 700;
 }
 
+.output-stack {
+  min-height: 820px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 14px;
+}
+
 .output-node {
+  position: relative;
   min-height: 154px;
   padding: 22px 20px;
+  border-radius: 22px;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.08);
+  backdrop-filter: blur(10px);
+  overflow: hidden;
+}
+
+.output-node::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(255,255,255,0.05), transparent 42%);
+  pointer-events: none;
 }
 
 .output-title {
@@ -520,32 +638,6 @@ a {
   color: #ffd774;
 }
 
-.legend-grid {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 14px;
-  padding: 0 18px 18px;
-  position: relative;
-  z-index: 3;
-}
-
-.legend-card {
-  padding: 14px 16px;
-  border-radius: 18px;
-  background: rgba(255,255,255,0.04);
-  border: 1px solid rgba(255,255,255,0.08);
-  color: #b8b0d1;
-  font-size: 13px;
-  line-height: 1.55;
-}
-
-.legend-card strong {
-  display: block;
-  color: #ffffff;
-  margin-bottom: 4px;
-  font-size: 14px;
-}
-
 .status-line {
   padding: 0 18px 18px;
   font-size: 12px;
@@ -562,8 +654,8 @@ a {
 }
 
 .flow-path.in {
-  stroke: rgba(139,92,246,0.24);
-  filter: drop-shadow(0 0 8px rgba(139,92,246,0.20));
+  stroke: rgba(139,92,246,0.22);
+  filter: drop-shadow(0 0 8px rgba(139,92,246,0.18));
 }
 
 .flow-path.out-burn {
@@ -588,7 +680,7 @@ a {
   animation: dashMove 7s linear infinite;
 }
 
-.flow-glow.in { stroke: rgba(6,182,212,0.46); }
+.flow-glow.in { stroke: rgba(6,182,212,0.42); }
 .flow-glow.out-burn { stroke: rgba(251,113,133,0.58); }
 .flow-glow.out-growth { stroke: rgba(16,185,129,0.58); }
 .flow-glow.out-treasury { stroke: rgba(251,191,36,0.58); }
@@ -614,20 +706,14 @@ a {
   50% { opacity: 0.86; }
 }
 
-@media (max-width: 1180px) {
+@media (max-width: 1220px) {
   .summary-grid {
     grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-
-  .legend-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
 @media (max-width: 980px) {
-  .flow-panel-inner {
-    min-height: auto;
-  }
+  .flow-panel-inner { min-height: auto; }
 
   .flow-grid {
     grid-template-columns: 1fr;
@@ -635,13 +721,18 @@ a {
     gap: 18px;
   }
 
-  .pool-column,
+  .bubble-column,
   .core-column,
   .output-column,
-  .pool-stack,
-  .output-stack,
-  .core-shell {
+  .bubble-map-shell,
+  .bubble-map,
+  .core-shell,
+  .output-stack {
     min-height: auto;
+  }
+
+  .bubble-map {
+    height: 680px;
   }
 
   .core-ring,
@@ -653,6 +744,10 @@ a {
 
   .summary-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .detail-grid {
+    grid-template-columns: repeat(2, minmax(0,1fr));
   }
 }
 
@@ -669,10 +764,6 @@ a {
     grid-template-columns: 1fr;
   }
 
-  .legend-grid {
-    grid-template-columns: 1fr;
-  }
-
   .summary-value {
     font-size: 25px;
   }
@@ -685,8 +776,18 @@ a {
     font-size: 29px;
   }
 
-  .pool-meta {
-    font-size: 12px;
+  .detail-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .bubble-map {
+    height: 760px;
+  }
+
+  .pool-detail {
+    left: 10px;
+    right: 10px;
+    bottom: 10px;
   }
 }
 </style>
@@ -721,7 +822,7 @@ a {
     <h1 class="page-title">ASTY 24H Capital Flow</h1>
 
     <div class="effect-slogan">🟣 The ASTY-Effect: The last 24 hours, visualized.</div>
-    <div class="effect-sub">All configured ASTY pools feed the protocol core. The 24h result is then split into Burn, Growth and Treasury.</div>
+    <div class="effect-sub">All configured ASTY pools feed the protocol core. Click any pool bubble to inspect its live 24h contribution.</div>
     <div class="auto-update">Auto-updating every 60s</div>
 
     <div class="summary-grid">
@@ -759,13 +860,41 @@ a {
 
   <section class="flow-panel">
     <div class="flow-panel-inner" id="flowWrap">
-      <svg class="flow-svg" id="flowSvg" viewBox="0 0 1400 860" preserveAspectRatio="none"></svg>
+      <svg class="flow-svg" id="flowSvg" viewBox="0 0 1400 920" preserveAspectRatio="none"></svg>
 
       <div class="flow-grid">
-        <div class="pool-column">
-          <div class="cluster-title">Pool Network</div>
-          <div class="pool-stack" id="poolList">
-            <div class="pool-node">Loading ASTY pool network...</div>
+        <div class="bubble-column">
+          <div class="cluster-title">Pool Bubble Network</div>
+          <div class="bubble-map-shell">
+            <div class="bubble-map" id="bubbleMap"></div>
+
+            <div class="pool-detail" id="poolDetail">
+              <div class="detail-top">
+                <div class="detail-title" id="detailTitle">Loading pool data...</div>
+                <div class="detail-badge mid" id="detailBadge">Stable</div>
+              </div>
+
+              <div class="detail-grid">
+                <div class="detail-card">
+                  <div class="detail-card-label">24H Output</div>
+                  <div class="detail-card-value" id="detailOutput">$0.00</div>
+                </div>
+                <div class="detail-card">
+                  <div class="detail-card-label">24H Volume</div>
+                  <div class="detail-card-value" id="detailVolume">$0.00</div>
+                </div>
+                <div class="detail-card">
+                  <div class="detail-card-label">Fee</div>
+                  <div class="detail-card-value" id="detailFee">0%</div>
+                </div>
+                <div class="detail-card">
+                  <div class="detail-card-label">Pool Address</div>
+                  <div class="detail-card-value" id="detailAddress" style="font-size:13px; line-height:1.35; word-break:break-all;">-</div>
+                </div>
+              </div>
+
+              <a class="detail-link" id="detailLink" href="#" target="_blank" rel="noopener noreferrer">Open on GeckoTerminal</a>
+            </div>
           </div>
         </div>
 
@@ -812,25 +941,6 @@ a {
             </div>
           </div>
         </div>
-      </div>
-    </div>
-
-    <div class="legend-grid">
-      <div class="legend-card">
-        <strong>Left side</strong>
-        Real configured ASTY pools using your full pool list and live GeckoTerminal data.
-      </div>
-      <div class="legend-card">
-        <strong>Center</strong>
-        The core shows the combined 24h fee output from the entire pool network.
-      </div>
-      <div class="legend-card">
-        <strong>Right side</strong>
-        The protocol applies the fixed split of 40% Burn, 40% Growth and 20% Treasury.
-      </div>
-      <div class="legend-card">
-        <strong>Purpose</strong>
-        This page does not simulate. It visualizes the last 24 hours of ASTY system activity.
       </div>
     </div>
 
@@ -897,7 +1007,6 @@ const pools = [
 
 const CHUNK_SIZE = 25;
 const REFRESH_MS = 60000;
-const MAX_DISPLAY_POOLS = 8;
 
 const els = {
   fees24h: document.getElementById("fees24h"),
@@ -906,7 +1015,14 @@ const els = {
   burnSummary: document.getElementById("burnSummary"),
   growthSummary: document.getElementById("growthSummary"),
   treasurySummary: document.getElementById("treasurySummary"),
-  poolList: document.getElementById("poolList"),
+  bubbleMap: document.getElementById("bubbleMap"),
+  detailTitle: document.getElementById("detailTitle"),
+  detailBadge: document.getElementById("detailBadge"),
+  detailOutput: document.getElementById("detailOutput"),
+  detailVolume: document.getElementById("detailVolume"),
+  detailFee: document.getElementById("detailFee"),
+  detailAddress: document.getElementById("detailAddress"),
+  detailLink: document.getElementById("detailLink"),
   coreValue: document.getElementById("coreValue"),
   corePill: document.getElementById("corePill"),
   burnValue: document.getElementById("burnValue"),
@@ -923,6 +1039,8 @@ const els = {
 
 let particles = [];
 let animationFrame = null;
+let currentRows = [];
+let selectedPoolId = null;
 
 function fmtUsd(n) {
   if (!n || Number.isNaN(n)) return "$0.00";
@@ -946,7 +1064,7 @@ function chunkArray(arr, size) {
   return chunks;
 }
 
-function getTierClass(value, maxValue) {
+function getTier(value, maxValue) {
   if (!maxValue || maxValue <= 0) return { cls: "mid", label: "Stable" };
   const ratio = value / maxValue;
   if (ratio >= 0.75) return { cls: "high", label: "High Efficiency" };
@@ -962,34 +1080,6 @@ async function fetchGeckoChunk(chunk) {
   const response = await fetch(url);
   const data = await response.json();
   return Array.isArray(data.data) ? data.data : [];
-}
-
-function renderPoolNodes(rows) {
-  if (!rows.length) {
-    els.poolList.innerHTML = `<div class="pool-node">No pool data available.</div>`;
-    return;
-  }
-
-  const maxFees = Math.max(...rows.map(row => row.fees24h), 0);
-  const displayRows = rows.slice(0, MAX_DISPLAY_POOLS);
-
-  els.poolList.innerHTML = displayRows.map((row, index) => {
-    const tier = getTierClass(row.fees24h, maxFees);
-    return `
-      <div class="pool-node pool-item" data-index="${index}">
-        <div class="badge ${tier.cls}">
-          <span class="badge-dot"></span>
-          ${tier.label}
-        </div>
-        <div class="pool-name">${row.label}</div>
-        <div class="pool-meta">
-          <span>24h Output: ${fmtUsd(row.fees24h)}</span>
-          <span>Fee: ${formatFee(row.feePercent)}</span>
-          <span>24h Volume: ${fmtUsd(row.volume24h)}</span>
-        </div>
-      </div>
-    `;
-  }).join("");
 }
 
 function updateSummary(rows) {
@@ -1017,8 +1107,129 @@ function updateSummary(rows) {
     els.topPool.innerText = "-";
     els.topPoolVal.innerText = "";
   }
+}
 
-  return { total24h, burn, growth, treasury };
+function showPoolDetail(row, tier) {
+  if (!row) return;
+
+  selectedPoolId = row.id;
+
+  els.detailTitle.textContent = row.label;
+  els.detailBadge.className = `detail-badge ${tier.cls}`;
+  els.detailBadge.textContent = tier.label;
+  els.detailOutput.textContent = fmtUsd(row.fees24h);
+  els.detailVolume.textContent = fmtUsd(row.volume24h);
+  els.detailFee.textContent = formatFee(row.feePercent);
+  els.detailAddress.textContent = row.id;
+  els.detailLink.href = `https://www.geckoterminal.com/solana/pools/${row.id}`;
+
+  document.querySelectorAll(".pool-bubble").forEach(el => {
+    el.classList.toggle("active", el.dataset.id === row.id);
+  });
+}
+
+function createBubbleLayout(rows) {
+  const map = els.bubbleMap;
+  const width = map.clientWidth || 520;
+  const height = map.clientHeight || 820;
+  const placed = [];
+
+  const maxFees = Math.max(...rows.map(r => r.fees24h), 0);
+
+  const bubbles = rows.map((row, i) => {
+    const minSize = width < 700 ? 54 : 58;
+    const maxSize = width < 700 ? 118 : 134;
+    const ratio = maxFees > 0 ? row.fees24h / maxFees : 0;
+    const size = Math.max(minSize, Math.min(maxSize, minSize + ratio * (maxSize - minSize)));
+    return { ...row, size, tier: getTier(row.fees24h, maxFees), order: i };
+  });
+
+  const centerBiasX = width * 0.40;
+  const centerBiasY = height * 0.42;
+
+  bubbles.forEach((bubble, idx) => {
+    let angle = (idx / Math.max(1, bubbles.length)) * Math.PI * 2;
+    let radius = 50;
+    let placedOK = false;
+    let x = 0;
+    let y = 0;
+
+    for (let tries = 0; tries < 900 && !placedOK; tries++) {
+      angle += 0.41;
+      radius += 1.35;
+
+      x = centerBiasX + Math.cos(angle) * radius - bubble.size / 2 + (Math.random() * 10 - 5);
+      y = centerBiasY + Math.sin(angle) * radius - bubble.size / 2 + (Math.random() * 10 - 5);
+
+      x = Math.max(10, Math.min(width - bubble.size - 10, x));
+      y = Math.max(10, Math.min(height - bubble.size - 170, y));
+
+      const collides = placed.some(p => {
+        const dx = (x + bubble.size / 2) - (p.x + p.size / 2);
+        const dy = (y + bubble.size / 2) - (p.y + p.size / 2);
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        return dist < (bubble.size + p.size) / 2 + 8;
+      });
+
+      if (!collides) {
+        placedOK = true;
+        placed.push({ x, y, size: bubble.size, id: bubble.id });
+      }
+    }
+
+    bubble.x = x;
+    bubble.y = y;
+  });
+
+  return bubbles;
+}
+
+function renderBubbleMap(rows) {
+  if (!rows.length) {
+    els.bubbleMap.innerHTML = "";
+    return;
+  }
+
+  const layout = createBubbleLayout(rows);
+
+  els.bubbleMap.innerHTML = layout.map((row, idx) => {
+    const shortName = row.label.replace("ASTY / ", "").replace("ASTY/", "");
+    const fontSize = Math.max(10, Math.min(15, row.size * 0.14));
+    const valueSize = Math.max(9, Math.min(12, row.size * 0.10));
+
+    return `
+      <div
+        class="pool-bubble ${row.tier.cls}"
+        data-id="${row.id}"
+        data-index="${idx}"
+        style="
+          width:${row.size}px;
+          height:${row.size}px;
+          left:${row.x}px;
+          top:${row.y}px;
+          animation-delay:${(idx * 0.18).toFixed(2)}s;
+        "
+      >
+        <div class="bubble-inner">
+          <div class="bubble-name" style="font-size:${fontSize}px;">${shortName}</div>
+          <div class="bubble-value" style="font-size:${valueSize}px;">${fmtUsd(row.fees24h)}</div>
+        </div>
+      </div>
+    `;
+  }).join("");
+
+  const byId = new Map(layout.map(r => [r.id, r]));
+  const bubbleEls = [...els.bubbleMap.querySelectorAll(".pool-bubble")];
+
+  bubbleEls.forEach(el => {
+    el.addEventListener("click", () => {
+      const row = byId.get(el.dataset.id);
+      if (row) showPoolDetail(row, row.tier);
+    });
+  });
+
+  const initial = byId.get(selectedPoolId) || layout[0];
+  if (initial) showPoolDetail(initial, initial.tier);
 }
 
 function rectCenter(el) {
@@ -1065,8 +1276,8 @@ function createParticles(paths) {
         path: pathEl,
         offset: Math.random(),
         speed: cfg.type === "in"
-          ? 0.0015 + Math.random() * 0.0012
-          : 0.0017 + Math.random() * 0.0015
+          ? 0.0014 + Math.random() * 0.0010
+          : 0.0017 + Math.random() * 0.0013
       });
     }
   });
@@ -1094,8 +1305,8 @@ function drawFlowLines() {
     return;
   }
 
-  const poolItems = [...document.querySelectorAll(".pool-item")];
-  if (!poolItems.length) return;
+  const bubbleEls = [...document.querySelectorAll(".pool-bubble")];
+  if (!bubbleEls.length) return;
 
   const core = rectCenter(els.coreNode);
   const burn = rectCenter(els.burnNode);
@@ -1108,17 +1319,15 @@ function drawFlowLines() {
 
   const paths = [];
 
-  poolItems.forEach((item, idx) => {
+  bubbleEls.forEach((item) => {
     const p = rectCenter(item);
-
-    const startX = p.right - 8;
+    const startX = p.right - 5;
     const startY = p.y;
-
     const endX = core.left + 8;
-    const endY = core.y + ((idx - (poolItems.length - 1) / 2) * 18);
+    const endY = core.y;
 
-    const c1x = startX + Math.max(90, (endX - startX) * 0.28);
-    const c2x = endX - Math.max(110, (endX - startX) * 0.32);
+    const c1x = startX + Math.max(60, (endX - startX) * 0.28);
+    const c2x = endX - Math.max(120, (endX - startX) * 0.35);
 
     paths.push({
       d: `M ${startX} ${startY} C ${c1x} ${startY}, ${c2x} ${endY}, ${endX} ${endY}`,
@@ -1191,20 +1400,22 @@ async function load() {
     .filter(Boolean)
     .sort((a, b) => b.fees24h - a.fees24h);
 
-    renderPoolNodes(rows);
+    currentRows = rows;
+
     updateSummary(rows);
+    renderBubbleMap(rows);
 
     requestAnimationFrame(() => {
       drawFlowLines();
     });
 
     els.statusLine.textContent = rows.length
-      ? `Loaded ${rows.length} pools. Fancy map updated successfully.`
+      ? `Loaded ${rows.length} pools. Bubble map updated successfully.`
       : "No GeckoTerminal pool data available.";
   } catch (err) {
     console.error(err);
     els.statusLine.textContent = "Failed to load GeckoTerminal pool data.";
-    els.poolList.innerHTML = `<div class="pool-node">Failed to load ASTY pool network.</div>`;
+    els.bubbleMap.innerHTML = "";
     stopParticles();
     els.flowSvg.innerHTML = "";
   }
@@ -1212,7 +1423,12 @@ async function load() {
 
 window.addEventListener("resize", () => {
   clearTimeout(window.__astyFlowResize);
-  window.__astyFlowResize = setTimeout(drawFlowLines, 120);
+  window.__astyFlowResize = setTimeout(() => {
+    if (currentRows.length) {
+      renderBubbleMap(currentRows);
+      drawFlowLines();
+    }
+  }, 140);
 });
 
 load();
