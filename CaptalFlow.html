@@ -1,0 +1,1091 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ASTY 24H Capital Flow</title>
+  <style>
+    :root{
+      --bg:#06070c;
+      --bg2:#0a0d16;
+      --panel:rgba(18,22,36,0.72);
+      --panel-2:rgba(24,29,47,0.72);
+      --line:rgba(164,120,255,0.26);
+      --line-strong:rgba(173,125,255,0.65);
+      --text:#eef1ff;
+      --muted:#9ea7c7;
+      --purple:#a855f7;
+      --purple-2:#7c3aed;
+      --cyan:#34d3ff;
+      --green:#00d68f;
+      --orange:#ffb020;
+      --red:#ff5c7a;
+      --gold:#f6c453;
+      --shadow:0 0 22px rgba(168,85,247,0.28), 0 0 70px rgba(52,211,255,0.08);
+      --radius:20px;
+      --radius-sm:14px;
+      --border:1px solid rgba(255,255,255,0.08);
+      --max:1450px;
+    }
+
+    *{box-sizing:border-box}
+    html,body{
+      margin:0;
+      padding:0;
+      background:
+        radial-gradient(circle at 15% 15%, rgba(168,85,247,0.14), transparent 28%),
+        radial-gradient(circle at 85% 20%, rgba(52,211,255,0.12), transparent 26%),
+        radial-gradient(circle at 50% 100%, rgba(124,58,237,0.12), transparent 35%),
+        linear-gradient(180deg, var(--bg), var(--bg2));
+      color:var(--text);
+      font-family:Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      min-height:100%;
+      overflow-x:hidden;
+    }
+
+    body::before{
+      content:"";
+      position:fixed;
+      inset:0;
+      pointer-events:none;
+      opacity:.22;
+      background-image:
+        linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px);
+      background-size: 26px 26px;
+      mask-image: radial-gradient(circle at center, black 55%, transparent 95%);
+    }
+
+    .wrap{
+      width:min(var(--max), calc(100% - 28px));
+      margin:0 auto;
+      padding:20px 0 34px;
+      position:relative;
+      z-index:1;
+    }
+
+    .topbar{
+      display:flex;
+      flex-wrap:wrap;
+      gap:10px;
+      justify-content:center;
+      margin-bottom:18px;
+    }
+
+    .bubble{
+      text-decoration:none;
+      color:#fff;
+      font-weight:700;
+      font-size:13px;
+      letter-spacing:.02em;
+      padding:10px 14px;
+      border-radius:999px;
+      border:1px solid rgba(255,255,255,0.08);
+      background:rgba(255,255,255,0.05);
+      backdrop-filter: blur(10px);
+      box-shadow: 0 10px 20px rgba(0,0,0,0.22);
+      transition:.2s ease;
+      white-space:nowrap;
+    }
+
+    .bubble:hover{ transform:translateY(-2px); }
+    .bubble.primary{ background:linear-gradient(135deg, rgba(168,85,247,0.35), rgba(52,211,255,0.18)); }
+    .bubble.orange{ background:linear-gradient(135deg, rgba(255,176,32,0.36), rgba(255,125,32,0.18)); }
+    .bubble.green{ background:linear-gradient(135deg, rgba(0,214,143,0.28), rgba(52,211,255,0.14)); }
+
+    .hero{
+      text-align:center;
+      margin-bottom:18px;
+    }
+
+    .eyebrow{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      font-size:12px;
+      font-weight:800;
+      letter-spacing:.18em;
+      text-transform:uppercase;
+      color:#ccb6ff;
+      background:rgba(168,85,247,0.08);
+      border:1px solid rgba(168,85,247,0.18);
+      border-radius:999px;
+      padding:10px 14px;
+      margin-bottom:16px;
+    }
+
+    .dot{
+      width:10px;
+      height:10px;
+      border-radius:50%;
+      background:linear-gradient(135deg, var(--purple), var(--cyan));
+      box-shadow:0 0 18px rgba(168,85,247,0.7);
+      animation:pulse 2s infinite;
+    }
+
+    h1{
+      margin:0;
+      font-size:clamp(34px, 5vw, 72px);
+      line-height:.95;
+      letter-spacing:-0.03em;
+      text-transform:uppercase;
+      text-shadow:0 0 24px rgba(168,85,247,0.18);
+    }
+
+    .sub{
+      width:min(950px, 100%);
+      margin:14px auto 0;
+      color:var(--muted);
+      font-size:15px;
+      line-height:1.7;
+    }
+
+    .cards{
+      display:grid;
+      grid-template-columns:repeat(5, minmax(0,1fr));
+      gap:12px;
+      margin:24px 0 18px;
+    }
+
+    .card{
+      background:linear-gradient(180deg, rgba(255,255,255,0.05), rgba(255,255,255,0.03));
+      border:var(--border);
+      border-radius:18px;
+      padding:16px 16px 15px;
+      backdrop-filter: blur(12px);
+      box-shadow:0 20px 35px rgba(0,0,0,0.25);
+      min-height:95px;
+      position:relative;
+      overflow:hidden;
+    }
+
+    .card::after{
+      content:"";
+      position:absolute;
+      inset:auto -10% -55% -10%;
+      height:90px;
+      background:radial-gradient(circle, rgba(168,85,247,0.18), transparent 70%);
+      pointer-events:none;
+    }
+
+    .label{
+      font-size:11px;
+      text-transform:uppercase;
+      letter-spacing:.14em;
+      color:#aeb7d6;
+      font-weight:800;
+      margin-bottom:10px;
+    }
+
+    .value{
+      font-size:28px;
+      font-weight:900;
+      line-height:1;
+      letter-spacing:-0.03em;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+
+    .small{
+      margin-top:8px;
+      font-size:13px;
+      color:var(--muted);
+      line-height:1.45;
+    }
+
+    .panel{
+      position:relative;
+      border-radius:28px;
+      border:1px solid rgba(255,255,255,0.07);
+      background:
+        radial-gradient(circle at 50% 10%, rgba(168,85,247,0.08), transparent 35%),
+        radial-gradient(circle at 50% 85%, rgba(52,211,255,0.06), transparent 35%),
+        linear-gradient(180deg, rgba(16,19,31,0.88), rgba(10,12,20,0.88));
+      backdrop-filter: blur(14px);
+      box-shadow:0 24px 70px rgba(0,0,0,0.38), inset 0 1px 0 rgba(255,255,255,0.04);
+      padding:20px;
+      overflow:hidden;
+    }
+
+    .flow-wrap{
+      position:relative;
+      min-height:760px;
+    }
+
+    .flow-grid{
+      position:relative;
+      z-index:2;
+      display:grid;
+      grid-template-columns: 1.1fr .95fr 1.15fr;
+      gap:22px;
+      min-height:760px;
+      align-items:center;
+    }
+
+    .cluster-title{
+      font-size:12px;
+      font-weight:900;
+      letter-spacing:.18em;
+      text-transform:uppercase;
+      color:#b9c2e3;
+      margin-bottom:14px;
+    }
+
+    .pool-col,.core-col,.out-col{
+      position:relative;
+      min-height:700px;
+    }
+
+    .pool-stack,
+    .out-stack{
+      display:flex;
+      flex-direction:column;
+      gap:14px;
+      justify-content:center;
+      min-height:700px;
+    }
+
+    .node{
+      position:relative;
+      border-radius:24px;
+      border:1px solid rgba(255,255,255,0.08);
+      background:linear-gradient(180deg, rgba(255,255,255,0.055), rgba(255,255,255,0.03));
+      backdrop-filter: blur(14px);
+      box-shadow: var(--shadow);
+      overflow:hidden;
+    }
+
+    .node::before{
+      content:"";
+      position:absolute;
+      inset:0;
+      background:linear-gradient(135deg, rgba(255,255,255,0.06), transparent 40%);
+      pointer-events:none;
+    }
+
+    .pool-node{
+      padding:16px 18px;
+      min-height:92px;
+      display:flex;
+      flex-direction:column;
+      justify-content:center;
+    }
+
+    .pool-node .name{
+      font-weight:900;
+      font-size:16px;
+      letter-spacing:-0.02em;
+      margin-bottom:8px;
+    }
+
+    .pool-node .meta{
+      display:flex;
+      gap:12px;
+      flex-wrap:wrap;
+      color:var(--muted);
+      font-size:13px;
+    }
+
+    .badge{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      font-size:11px;
+      font-weight:800;
+      text-transform:uppercase;
+      letter-spacing:.12em;
+      padding:7px 10px;
+      border-radius:999px;
+      width:max-content;
+      margin-bottom:10px;
+    }
+
+    .badge.green{
+      background:rgba(0,214,143,0.12);
+      border:1px solid rgba(0,214,143,0.22);
+      color:#89ffd0;
+    }
+
+    .badge.yellow{
+      background:rgba(255,176,32,0.12);
+      border:1px solid rgba(255,176,32,0.25);
+      color:#ffd98d;
+    }
+
+    .badge.red{
+      background:rgba(255,92,122,0.12);
+      border:1px solid rgba(255,92,122,0.25);
+      color:#ffadbc;
+    }
+
+    .signal{
+      width:8px;
+      height:8px;
+      border-radius:50%;
+      background:currentColor;
+      box-shadow:0 0 12px currentColor;
+    }
+
+    .core-shell{
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      min-height:700px;
+      position:relative;
+    }
+
+    .core-node{
+      width:min(380px, 100%);
+      min-height:360px;
+      padding:26px;
+      display:flex;
+      flex-direction:column;
+      justify-content:center;
+      align-items:center;
+      text-align:center;
+      border-radius:30px;
+      background:
+        radial-gradient(circle at 50% 35%, rgba(168,85,247,0.24), transparent 42%),
+        radial-gradient(circle at 50% 70%, rgba(52,211,255,0.12), transparent 55%),
+        linear-gradient(180deg, rgba(26,20,45,0.95), rgba(18,20,36,0.92));
+      box-shadow:
+        0 0 0 1px rgba(255,255,255,0.08),
+        0 0 40px rgba(168,85,247,0.32),
+        0 0 90px rgba(52,211,255,0.12);
+      position:relative;
+    }
+
+    .core-ring,
+    .core-ring-2{
+      position:absolute;
+      inset:50%;
+      transform:translate(-50%, -50%);
+      border-radius:50%;
+      pointer-events:none;
+    }
+
+    .core-ring{
+      width:420px;
+      height:420px;
+      border:1px solid rgba(168,85,247,0.16);
+      animation:spin 20s linear infinite;
+    }
+
+    .core-ring-2{
+      width:510px;
+      height:510px;
+      border:1px dashed rgba(52,211,255,0.12);
+      animation:spin-rev 28s linear infinite;
+    }
+
+    .core-title{
+      font-size:12px;
+      font-weight:900;
+      letter-spacing:.16em;
+      text-transform:uppercase;
+      color:#c8d0ea;
+      margin-bottom:12px;
+    }
+
+    .core-value{
+      font-size: clamp(40px, 5vw, 64px);
+      font-weight: 900;
+      line-height: .95;
+      letter-spacing:-0.05em;
+      margin-bottom:14px;
+      text-shadow:0 0 30px rgba(168,85,247,0.35);
+    }
+
+    .core-desc{
+      color:var(--muted);
+      font-size:14px;
+      line-height:1.7;
+      max-width:280px;
+      margin:0 auto 18px;
+    }
+
+    .core-pill{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      padding:10px 14px;
+      border-radius:999px;
+      border:1px solid rgba(168,85,247,0.22);
+      background:rgba(168,85,247,0.10);
+      color:#e3d4ff;
+      font-size:13px;
+      font-weight:800;
+      letter-spacing:.05em;
+    }
+
+    .out-node{
+      padding:22px 20px;
+      min-height:145px;
+      display:flex;
+      flex-direction:column;
+      justify-content:center;
+      position:relative;
+    }
+
+    .out-node h3{
+      margin:0 0 8px;
+      font-size:28px;
+      line-height:1;
+      letter-spacing:-0.03em;
+    }
+
+    .out-node .pct{
+      font-size:13px;
+      font-weight:900;
+      text-transform:uppercase;
+      letter-spacing:.16em;
+      margin-bottom:10px;
+    }
+
+    .out-node .v{
+      font-size:33px;
+      font-weight:900;
+      letter-spacing:-0.03em;
+      line-height:1;
+      margin-bottom:8px;
+    }
+
+    .out-node .t{
+      color:var(--muted);
+      font-size:14px;
+      line-height:1.6;
+    }
+
+    .burn{ box-shadow:0 0 28px rgba(255,92,122,0.20), 0 0 70px rgba(255,92,122,0.08); }
+    .burn .pct, .burn h3{ color:#ff9cb2; }
+
+    .growth{ box-shadow:0 0 28px rgba(0,214,143,0.18), 0 0 70px rgba(0,214,143,0.08); }
+    .growth .pct, .growth h3{ color:#8dffd1; }
+
+    .treasury{ box-shadow:0 0 28px rgba(246,196,83,0.18), 0 0 70px rgba(246,196,83,0.08); }
+    .treasury .pct, .treasury h3{ color:#ffe39c; }
+
+    #flowSvg{
+      position:absolute;
+      inset:0;
+      z-index:1;
+      width:100%;
+      height:100%;
+      pointer-events:none;
+      overflow:visible;
+    }
+
+    .flow-line{
+      fill:none;
+      stroke:rgba(168,85,247,0.24);
+      stroke-width:3;
+      stroke-linecap:round;
+      filter: drop-shadow(0 0 10px rgba(168,85,247,0.25));
+    }
+
+    .flow-line.out-growth{ stroke:rgba(0,214,143,0.36); }
+    .flow-line.out-burn{ stroke:rgba(255,92,122,0.34); }
+    .flow-line.out-treasury{ stroke:rgba(246,196,83,0.34); }
+    .flow-line.in{ stroke:rgba(168,85,247,0.26); }
+
+    .flow-glow{
+      fill:none;
+      stroke-width:1.3;
+      stroke-dasharray:8 14;
+      opacity:.7;
+      animation:dash 7s linear infinite;
+    }
+
+    .flow-glow.in{ stroke:rgba(52,211,255,0.42); }
+    .flow-glow.out-growth{ stroke:rgba(0,214,143,0.56); }
+    .flow-glow.out-burn{ stroke:rgba(255,92,122,0.56); }
+    .flow-glow.out-treasury{ stroke:rgba(246,196,83,0.56); }
+
+    .particle{
+      position:absolute;
+      width:8px;
+      height:8px;
+      border-radius:50%;
+      z-index:3;
+      pointer-events:none;
+      box-shadow:0 0 18px currentColor, 0 0 36px currentColor;
+      background:currentColor;
+    }
+
+    .legend{
+      display:grid;
+      grid-template-columns:repeat(4, minmax(0,1fr));
+      gap:12px;
+      margin-top:18px;
+    }
+
+    .legend-item{
+      background:rgba(255,255,255,0.04);
+      border:var(--border);
+      border-radius:18px;
+      padding:14px 15px;
+      color:var(--muted);
+      font-size:13px;
+      line-height:1.6;
+    }
+
+    .legend-item strong{
+      display:block;
+      color:var(--text);
+      font-size:14px;
+      margin-bottom:4px;
+    }
+
+    .footer-note{
+      text-align:center;
+      color:var(--muted);
+      font-size:12px;
+      line-height:1.7;
+      margin-top:18px;
+      padding:0 10px;
+    }
+
+    .status{
+      text-align:center;
+      margin-top:14px;
+      color:#cbd4f0;
+      font-size:13px;
+      min-height:20px;
+    }
+
+    .loading{
+      opacity:.75;
+      animation:pulse 1.6s infinite;
+    }
+
+    .hidden-mobile{ display:block; }
+
+    @keyframes pulse{
+      0%,100%{ transform:scale(1); opacity:1; }
+      50%{ transform:scale(1.08); opacity:.75; }
+    }
+
+    @keyframes spin{
+      from{ transform:translate(-50%, -50%) rotate(0deg); }
+      to{ transform:translate(-50%, -50%) rotate(360deg); }
+    }
+
+    @keyframes spin-rev{
+      from{ transform:translate(-50%, -50%) rotate(360deg); }
+      to{ transform:translate(-50%, -50%) rotate(0deg); }
+    }
+
+    @keyframes dash{
+      from{ stroke-dashoffset:0; }
+      to{ stroke-dashoffset:-180; }
+    }
+
+    @media (max-width: 1200px){
+      .cards{ grid-template-columns:repeat(3, minmax(0,1fr)); }
+      .legend{ grid-template-columns:repeat(2, minmax(0,1fr)); }
+    }
+
+    @media (max-width: 980px){
+      .flow-wrap{ min-height:auto; }
+      .flow-grid{
+        grid-template-columns:1fr;
+        min-height:auto;
+        gap:16px;
+      }
+      .pool-col,.core-col,.out-col,
+      .pool-stack,.out-stack,.core-shell{
+        min-height:auto;
+      }
+      .core-ring,.core-ring-2,#flowSvg,.particle{ display:none; }
+      .cards{ grid-template-columns:repeat(2, minmax(0,1fr)); }
+      .legend{ grid-template-columns:1fr; }
+      .panel{ padding:16px; }
+      .pool-stack,.out-stack{ gap:12px; }
+      .core-node{ min-height:280px; }
+    }
+
+    @media (max-width: 640px){
+      .wrap{ width:min(100% - 16px, var(--max)); padding-top:14px; }
+      .cards{ grid-template-columns:1fr; }
+      .bubble{ font-size:12px; padding:9px 12px; }
+      .card{ min-height:86px; }
+      .value{ font-size:26px; }
+      .out-node h3{ font-size:24px; }
+      .out-node .v{ font-size:29px; }
+      .pool-node .name{ font-size:15px; }
+      .sub{ font-size:14px; }
+      .hidden-mobile{ display:none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="topbar">
+      <a class="bubble primary" href="https://ArbStrategy.net" target="_blank" rel="noopener noreferrer">Dashboard</a>
+      <a class="bubble" href="https://arbstrategy-asty.github.io/ArbStrategy-ASTY/" target="_blank" rel="noopener noreferrer">System Overview</a>
+      <a class="bubble orange" href="https://birdeye.so/solana/token/ASTYqeaoK83Zs1pTFEXZUB6BM8cG8YLTsN852NUkt7ZR" target="_blank" rel="noopener noreferrer">BirdEye</a>
+      <a class="bubble green" href="https://t.me/ArbStrategyASTY" target="_blank" rel="noopener noreferrer">Telegram</a>
+      <a class="bubble" href="https://x.com/ArbStrategyASTY" target="_blank" rel="noopener noreferrer">X</a>
+    </div>
+
+    <section class="hero">
+      <div class="eyebrow"><span class="dot"></span> ASTY 24H Capital Flow</div>
+      <h1>Where the last 24 hours<br>powered $ASTY</h1>
+      <div class="sub">
+        This page turns your existing 24h pool performance into a live visual capital map.
+        All ASTY pools feed the protocol fee core, then the system applies the fixed allocation logic:
+        40% Burn, 40% Growth, 20% Treasury.
+      </div>
+    </section>
+
+    <section class="cards">
+      <div class="card">
+        <div class="label">24H Pool Revenue</div>
+        <div class="value" id="totalFees">$0</div>
+        <div class="small">Summed from live ASTY pool data over the last 24 hours.</div>
+      </div>
+      <div class="card">
+        <div class="label">ASTY Price</div>
+        <div class="value" id="astyPrice">$0.0000</div>
+        <div class="small">Live price from GeckoTerminal token data.</div>
+      </div>
+      <div class="card">
+        <div class="label">Active Pools</div>
+        <div class="value" id="activePools">0</div>
+        <div class="small">Pools currently included in the 24h flow map.</div>
+      </div>
+      <div class="card">
+        <div class="label">Top Contributing Pool</div>
+        <div class="value" id="topPool">-</div>
+        <div class="small" id="topPoolMeta">Waiting for data...</div>
+      </div>
+      <div class="card">
+        <div class="label">Last Refresh</div>
+        <div class="value" id="lastRefresh">--:--:--</div>
+        <div class="small">Auto-refresh every 60 seconds.</div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="flow-wrap" id="flowWrap">
+        <svg id="flowSvg" viewBox="0 0 1400 760" preserveAspectRatio="none"></svg>
+
+        <div class="flow-grid">
+          <div class="pool-col">
+            <div class="cluster-title">Pool Network</div>
+            <div class="pool-stack" id="poolList">
+              <div class="node pool-node loading">
+                <div class="badge yellow"><span class="signal"></span> Loading</div>
+                <div class="name">Fetching ASTY pool network...</div>
+                <div class="meta"><span>Preparing live 24h flow data</span></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="core-col">
+            <div class="cluster-title" style="text-align:center;">Protocol Core</div>
+            <div class="core-shell">
+              <div class="core-ring hidden-mobile"></div>
+              <div class="core-ring-2 hidden-mobile"></div>
+              <div class="node core-node" id="coreNode">
+                <div class="core-title">24H Protocol Fee Core</div>
+                <div class="core-value" id="coreValue">$0</div>
+                <div class="core-desc">
+                  Every ASTY pool in the network contributes its last 24h revenue here.
+                  This is the central source that powers the protocol split.
+                </div>
+                <div class="core-pill" id="corePill">Awaiting pool data</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="out-col">
+            <div class="cluster-title">Protocol Allocation</div>
+            <div class="out-stack">
+              <div class="node out-node burn" id="burnNode">
+                <h3>Burn</h3>
+                <div class="pct">40% Allocation</div>
+                <div class="v" id="burnValue">$0</div>
+                <div class="t">Permanent supply reduction from the 24h protocol result.</div>
+              </div>
+
+              <div class="node out-node growth" id="growthNode">
+                <h3>Growth</h3>
+                <div class="pct">40% Allocation</div>
+                <div class="v" id="growthValue">$0</div>
+                <div class="t">Capital reserved for future high-efficiency liquidity growth.</div>
+              </div>
+
+              <div class="node out-node treasury" id="treasuryNode">
+                <h3>Treasury</h3>
+                <div class="pct">20% Allocation</div>
+                <div class="v" id="treasuryValue">$0</div>
+                <div class="t">Strategic reserve for system flexibility and expansion.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="legend">
+        <div class="legend-item">
+          <strong>How the source works</strong>
+          The left side shows live ASTY pools and their calculated 24h revenue contribution.
+        </div>
+        <div class="legend-item">
+          <strong>What flows into the core</strong>
+          Each pool contributes its 24h revenue based on live pool data and fee settings.
+        </div>
+        <div class="legend-item">
+          <strong>Why the right side matters</strong>
+          The protocol core is instantly split into Burn, Growth and Treasury.
+        </div>
+        <div class="legend-item">
+          <strong>Why this page is strong</strong>
+          It does not simulate the system. It visualizes what the last 24 hours actually produced.
+        </div>
+      </div>
+
+      <div class="status" id="status">Initializing live ASTY flow map...</div>
+      <div class="footer-note">
+        Token: ASTYqeaoK83Zs1pTFEXZUB6BM8cG8YLTsN852NUkt7ZR
+        <br>
+        Data source: GeckoTerminal API for live token and pool data.
+      </div>
+    </section>
+  </div>
+
+  <script>
+    const ASTY_MINT = "ASTYqeaoK83Zs1pTFEXZUB6BM8cG8YLTsN852NUkt7ZR";
+    const API_BASE = "https://api.geckoterminal.com/api/v2";
+    const MAX_POOLS = 6;
+    const REFRESH_MS = 60000;
+
+    const els = {
+      totalFees: document.getElementById("totalFees"),
+      astyPrice: document.getElementById("astyPrice"),
+      activePools: document.getElementById("activePools"),
+      topPool: document.getElementById("topPool"),
+      topPoolMeta: document.getElementById("topPoolMeta"),
+      lastRefresh: document.getElementById("lastRefresh"),
+      coreValue: document.getElementById("coreValue"),
+      corePill: document.getElementById("corePill"),
+      burnValue: document.getElementById("burnValue"),
+      growthValue: document.getElementById("growthValue"),
+      treasuryValue: document.getElementById("treasuryValue"),
+      poolList: document.getElementById("poolList"),
+      flowSvg: document.getElementById("flowSvg"),
+      status: document.getElementById("status"),
+      flowWrap: document.getElementById("flowWrap"),
+      coreNode: document.getElementById("coreNode"),
+      burnNode: document.getElementById("burnNode"),
+      growthNode: document.getElementById("growthNode"),
+      treasuryNode: document.getElementById("treasuryNode")
+    };
+
+    let particles = [];
+    let animationFrame = null;
+
+    function fmtUsd(n){
+      const num = Number(n || 0);
+      if (num >= 1000000) return "$" + (num / 1000000).toFixed(2) + "M";
+      if (num >= 1000) return "$" + num.toLocaleString(undefined, {maximumFractionDigits: 2});
+      if (num >= 1) return "$" + num.toFixed(2);
+      return "$" + num.toFixed(4);
+    }
+
+    function fmtPct(n){
+      return (Number(n || 0)).toFixed(2) + "%";
+    }
+
+    function timeNow(){
+      return new Date().toLocaleTimeString("en-GB", { hour12:false });
+    }
+
+    function parseNum(value, fallback = 0){
+      const n = Number(value);
+      return Number.isFinite(n) ? n : fallback;
+    }
+
+    function tierFromRevenue(v, max){
+      if (!max || max <= 0) return { cls: "yellow", label: "Stable" };
+      const r = v / max;
+      if (r >= 0.75) return { cls: "green", label: "High Efficiency" };
+      if (r >= 0.2) return { cls: "yellow", label: "Stable" };
+      return { cls: "red", label: "Low Efficiency" };
+    }
+
+    async function fetchJson(url){
+      const res = await fetch(url, {
+        headers: { "Accept": "application/json" }
+      });
+      if (!res.ok) throw new Error("HTTP " + res.status + " for " + url);
+      return await res.json();
+    }
+
+    async function loadTokenData(){
+      const url = `${API_BASE}/networks/solana/tokens/${ASTY_MINT}`;
+      const json = await fetchJson(url);
+      const attr = json?.data?.attributes || {};
+      return {
+        priceUsd: parseNum(attr.price_usd, 0)
+      };
+    }
+
+    async function loadPools(){
+      const url = `${API_BASE}/networks/solana/tokens/${ASTY_MINT}/pools?page=1`;
+      const json = await fetchJson(url);
+      const pools = (json?.data || []).map(item => {
+        const a = item.attributes || {};
+        const feePct = parseNum(a.fee_percentage, 1);
+        const vol24 = parseNum(a.volume_usd?.h24, 0);
+        const reserve = parseNum(a.reserve_in_usd, 0);
+        const revenue24 = vol24 * (feePct / 100);
+        return {
+          id: item.id,
+          address: a.address || "",
+          name: a.name || "Unknown Pool",
+          feePct,
+          vol24,
+          reserve,
+          revenue24
+        };
+      });
+
+      return pools
+        .filter(p => p.vol24 > 0 || p.revenue24 > 0)
+        .sort((a, b) => b.revenue24 - a.revenue24)
+        .slice(0, MAX_POOLS);
+    }
+
+    function renderPools(pools){
+      if (!pools.length){
+        els.poolList.innerHTML = `
+          <div class="node pool-node">
+            <div class="badge red"><span class="signal"></span> No Data</div>
+            <div class="name">No ASTY pool data was returned.</div>
+            <div class="meta"><span>Please refresh later.</span></div>
+          </div>
+        `;
+        return;
+      }
+
+      const maxRev = Math.max(...pools.map(p => p.revenue24), 0);
+
+      els.poolList.innerHTML = pools.map((p, i) => {
+        const tier = tierFromRevenue(p.revenue24, maxRev);
+        return `
+          <div class="node pool-node pool-item" data-index="${i}">
+            <div class="badge ${tier.cls}">
+              <span class="signal"></span>
+              ${tier.label}
+            </div>
+            <div class="name">${escapeHtml(p.name)}</div>
+            <div class="meta">
+              <span>24h Revenue: ${fmtUsd(p.revenue24)}</span>
+              <span>Fee: ${fmtPct(p.feePct)}</span>
+              <span>24h Volume: ${fmtUsd(p.vol24)}</span>
+            </div>
+          </div>
+        `;
+      }).join("");
+    }
+
+    function escapeHtml(str){
+      return String(str).replace(/[&<>"']/g, s => ({
+        "&":"&amp;",
+        "<":"&lt;",
+        ">":"&gt;",
+        '"':"&quot;",
+        "'":"&#039;"
+      }[s]));
+    }
+
+    function updateSummary(token, pools){
+      const totalFees = pools.reduce((sum, p) => sum + p.revenue24, 0);
+      const burn = totalFees * 0.40;
+      const growth = totalFees * 0.40;
+      const treasury = totalFees * 0.20;
+      const top = pools[0] || null;
+
+      els.totalFees.textContent = fmtUsd(totalFees);
+      els.astyPrice.textContent = "$" + Number(token.priceUsd || 0).toFixed(4);
+      els.activePools.textContent = String(pools.length);
+      els.topPool.textContent = top ? top.name.replace(" / ", "/") : "-";
+      els.topPoolMeta.textContent = top
+        ? `${fmtUsd(top.revenue24)} revenue in the last 24h`
+        : "No pool contributions found";
+      els.lastRefresh.textContent = timeNow();
+
+      els.coreValue.textContent = fmtUsd(totalFees);
+      els.corePill.textContent = `${pools.length} live pools feeding the protocol core`;
+
+      els.burnValue.textContent = fmtUsd(burn);
+      els.growthValue.textContent = fmtUsd(growth);
+      els.treasuryValue.textContent = fmtUsd(treasury);
+
+      els.status.textContent = totalFees > 0
+        ? `Live 24h ASTY flow updated successfully at ${timeNow()}.`
+        : "Data loaded, but no positive 24h pool revenue was available.";
+    }
+
+    function rectCenter(el){
+      const wrapRect = els.flowWrap.getBoundingClientRect();
+      const r = el.getBoundingClientRect();
+      return {
+        left: r.left - wrapRect.left,
+        top: r.top - wrapRect.top,
+        width: r.width,
+        height: r.height,
+        x: r.left - wrapRect.left + r.width / 2,
+        y: r.top - wrapRect.top + r.height / 2,
+        right: r.left - wrapRect.left + r.width,
+        bottom: r.top - wrapRect.top + r.height
+      };
+    }
+
+    function drawFlowLines(){
+      if (window.innerWidth <= 980){
+        els.flowSvg.innerHTML = "";
+        stopParticles();
+        return;
+      }
+
+      const poolItems = [...document.querySelectorAll(".pool-item")];
+      const core = rectCenter(els.coreNode);
+      const burn = rectCenter(els.burnNode);
+      const growth = rectCenter(els.growthNode);
+      const treasury = rectCenter(els.treasuryNode);
+
+      const svgWidth = els.flowWrap.clientWidth;
+      const svgHeight = els.flowWrap.clientHeight;
+      els.flowSvg.setAttribute("viewBox", `0 0 ${svgWidth} ${svgHeight}`);
+
+      let paths = [];
+
+      poolItems.forEach((item, idx) => {
+        const p = rectCenter(item);
+        const startX = p.right - 8;
+        const startY = p.y;
+        const endX = core.left + 8;
+        const endY = core.y + ((idx - (poolItems.length - 1) / 2) * 18);
+
+        const c1x = startX + Math.max(90, (endX - startX) * 0.28);
+        const c2x = endX - Math.max(110, (endX - startX) * 0.32);
+
+        const d = `M ${startX} ${startY} C ${c1x} ${startY}, ${c2x} ${endY}, ${endX} ${endY}`;
+        paths.push({ d, cls: "in", color: "#8b5cf6" });
+      });
+
+      [
+        { target: burn, cls: "out-burn", color: "#ff5c7a" },
+        { target: growth, cls: "out-growth", color: "#00d68f" },
+        { target: treasury, cls: "out-treasury", color: "#f6c453" }
+      ].forEach((entry, idx) => {
+        const startX = core.right - 8;
+        const startY = core.y + (idx - 1) * 20;
+        const endX = entry.target.left + 8;
+        const endY = entry.target.y;
+        const c1x = startX + Math.max(90, (endX - startX) * 0.30);
+        const c2x = endX - Math.max(90, (endX - startX) * 0.28);
+        const d = `M ${startX} ${startY} C ${c1x} ${startY}, ${c2x} ${endY}, ${endX} ${endY}`;
+        paths.push({ d, cls: entry.cls, color: entry.color });
+      });
+
+      els.flowSvg.innerHTML = paths.map((p, i) => `
+        <path id="path-${i}" class="flow-line ${p.cls} ${p.cls === 'in' ? 'in' : ''}" d="${p.d}"></path>
+        <path class="flow-glow ${p.cls} ${p.cls === 'in' ? 'in' : ''}" d="${p.d}"></path>
+      `).join("");
+
+      createParticles(paths);
+    }
+
+    function stopParticles(){
+      particles.forEach(p => p.el.remove());
+      particles = [];
+      if (animationFrame) cancelAnimationFrame(animationFrame);
+      animationFrame = null;
+    }
+
+    function createParticles(paths){
+      stopParticles();
+
+      const pathEls = paths.map((_, i) => document.getElementById(`path-${i}`)).filter(Boolean);
+
+      pathEls.forEach((path, idx) => {
+        const cls = paths[idx].cls;
+        const color = paths[idx].color;
+        const count = cls === "in" ? 2 : 3;
+
+        for (let i = 0; i < count; i++){
+          const el = document.createElement("div");
+          el.className = "particle";
+          el.style.color = color;
+          el.style.opacity = "0.95";
+          els.flowWrap.appendChild(el);
+
+          particles.push({
+            el,
+            path,
+            offset: Math.random(),
+            speed: cls === "in"
+              ? 0.0015 + Math.random() * 0.0015
+              : 0.0017 + Math.random() * 0.0018
+          });
+        }
+      });
+
+      const tick = () => {
+        particles.forEach(p => {
+          p.offset += p.speed;
+          if (p.offset > 1) p.offset = 0;
+
+          const len = p.path.getTotalLength();
+          const pt = p.path.getPointAtLength(len * p.offset);
+          p.el.style.transform = `translate(${pt.x - 4}px, ${pt.y - 4}px)`;
+        });
+
+        animationFrame = requestAnimationFrame(tick);
+      };
+
+      tick();
+    }
+
+    async function refreshData(){
+      try{
+        els.status.textContent = "Refreshing ASTY flow data...";
+        const [token, pools] = await Promise.all([
+          loadTokenData(),
+          loadPools()
+        ]);
+
+        renderPools(pools);
+        updateSummary(token, pools);
+
+        requestAnimationFrame(() => {
+          drawFlowLines();
+        });
+      }catch(err){
+        console.error(err);
+        els.status.textContent = "Failed to load live ASTY data. Please try again.";
+        els.poolList.innerHTML = `
+          <div class="node pool-node">
+            <div class="badge red"><span class="signal"></span> Error</div>
+            <div class="name">Live data could not be loaded.</div>
+            <div class="meta"><span>${escapeHtml(err.message || "Unknown error")}</span></div>
+          </div>
+        `;
+      }
+    }
+
+    window.addEventListener("resize", () => {
+      clearTimeout(window.__astyResizeTimer);
+      window.__astyResizeTimer = setTimeout(drawFlowLines, 120);
+    });
+
+    refreshData();
+    setInterval(refreshData, REFRESH_MS);
+  </script>
+</body>
+</html>
