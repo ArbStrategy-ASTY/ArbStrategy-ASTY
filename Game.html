@@ -1,282 +1,296 @@
 <!DOCTYPE html>
-<html lang="de">
+<html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>ASTY Token Collector</title>
   <style>
-    :root{
-      --bg1:#06030c;
-      --bg2:#12081f;
-      --bg3:#1a0d2b;
-      --purple:#9b5cff;
-      --purple2:#c084fc;
-      --purple3:#7c3aed;
-      --white:#f8f5ff;
-      --soft:rgba(255,255,255,.72);
-      --glass:rgba(255,255,255,.08);
-      --border:rgba(210,170,255,.18);
-      --red:#ff4d6d;
-      --green:#44ffb0;
-      --gold:#ffd86b;
+    :root {
+      --bg1: #05030a;
+      --bg2: #0d0717;
+      --bg3: #1a0f2d;
+      --purple: #9b5cff;
+      --purple2: #c084fc;
+      --purple3: #6d28d9;
+      --white: #f8f5ff;
+      --soft: rgba(255,255,255,0.72);
+      --border: rgba(210,170,255,0.18);
+      --glass: rgba(255,255,255,0.08);
+      --red: #ff5a76;
+      --green: #49f2b4;
     }
 
-    *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-    html,body{
-      margin:0;
-      width:100%;
-      height:100%;
-      overflow:hidden;
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+    }
+
+    html, body {
+      margin: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      font-family: Inter, Arial, sans-serif;
+      color: var(--white);
       background:
-        radial-gradient(circle at 50% 0%, rgba(155,92,255,.25), transparent 30%),
-        radial-gradient(circle at 10% 80%, rgba(155,92,255,.08), transparent 30%),
-        linear-gradient(180deg,var(--bg3) 0%,var(--bg2) 45%,var(--bg1) 100%);
-      font-family: Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-      color:var(--white);
+        radial-gradient(circle at 50% 0%, rgba(155,92,255,0.22), transparent 32%),
+        radial-gradient(circle at 10% 80%, rgba(155,92,255,0.08), transparent 30%),
+        linear-gradient(180deg, var(--bg3) 0%, var(--bg2) 45%, var(--bg1) 100%);
     }
 
-    body{display:flex;align-items:center;justify-content:center}
+    body {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
 
-    .app{
-      position:relative;
-      width:min(100vw, 520px);
-      height:min(100vh, 920px);
-      overflow:hidden;
-      border-left:1px solid rgba(255,255,255,.08);
-      border-right:1px solid rgba(255,255,255,.08);
-      box-shadow:
-        0 0 0 1px rgba(255,255,255,.03) inset,
-        0 0 80px rgba(123,58,237,.18),
-        inset 0 0 120px rgba(155,92,255,.06);
+    .app {
+      position: relative;
+      width: min(100vw, 520px);
+      height: min(100vh, 920px);
+      overflow: hidden;
       background:
-        radial-gradient(circle at 50% 20%, rgba(192,132,252,.08), transparent 26%),
-        linear-gradient(180deg, rgba(255,255,255,.02), rgba(255,255,255,.01));
-    }
-
-    canvas{
-      width:100%;
-      height:100%;
-      display:block;
-      touch-action:none;
-    }
-
-    .hud{
-      position:absolute;
-      top:14px;
-      left:14px;
-      right:14px;
-      z-index:5;
-      display:flex;
-      justify-content:space-between;
-      gap:10px;
-      pointer-events:none;
-    }
-
-    .hud-card{
-      min-width:110px;
-      padding:10px 12px;
-      border-radius:16px;
-      background:linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.04));
-      border:1px solid var(--border);
+        radial-gradient(circle at 50% 15%, rgba(192,132,252,0.08), transparent 28%),
+        linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+      border-left: 1px solid rgba(255,255,255,0.08);
+      border-right: 1px solid rgba(255,255,255,0.08);
       box-shadow:
-        0 8px 30px rgba(0,0,0,.22),
-        inset 0 0 20px rgba(255,255,255,.03);
+        0 0 80px rgba(123,58,237,0.16),
+        inset 0 0 120px rgba(155,92,255,0.06);
+    }
+
+    canvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+      touch-action: none;
+    }
+
+    .hud {
+      position: absolute;
+      top: 14px;
+      left: 14px;
+      right: 14px;
+      z-index: 5;
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      pointer-events: none;
+    }
+
+    .hud-card {
+      min-width: 110px;
+      padding: 10px 12px;
+      border-radius: 16px;
+      background: linear-gradient(180deg, rgba(255,255,255,0.08), rgba(255,255,255,0.04));
+      border: 1px solid var(--border);
+      box-shadow: 0 8px 30px rgba(0,0,0,0.22);
       backdrop-filter: blur(10px);
     }
 
-    .hud-label{
-      font-size:11px;
-      letter-spacing:.12em;
-      text-transform:uppercase;
-      color:rgba(255,255,255,.62);
+    .hud-label {
+      font-size: 11px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.62);
     }
 
-    .hud-value{
-      margin-top:4px;
-      font-size:24px;
-      font-weight:900;
-      line-height:1;
+    .hud-value {
+      margin-top: 4px;
+      font-size: 24px;
+      font-weight: 900;
+      line-height: 1;
     }
 
-    .hud-right{ text-align:right; }
-
-    .bottom-note{
-      position:absolute;
-      bottom:18px;
-      left:50%;
-      transform:translateX(-50%);
-      z-index:5;
-      padding:10px 14px;
-      border-radius:999px;
-      background:rgba(5,5,10,.38);
-      border:1px solid rgba(255,255,255,.08);
-      color:rgba(255,255,255,.7);
-      font-size:12px;
-      letter-spacing:.02em;
-      backdrop-filter:blur(8px);
-      pointer-events:none;
-      white-space:nowrap;
+    .hud-right {
+      text-align: right;
     }
 
-    .overlay{
-      position:absolute;
-      inset:0;
-      z-index:10;
-      display:flex;
-      flex-direction:column;
-      align-items:center;
-      justify-content:center;
-      text-align:center;
-      padding:24px;
+    .bottom-note {
+      position: absolute;
+      bottom: 18px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 5;
+      padding: 10px 14px;
+      border-radius: 999px;
+      background: rgba(5,5,10,0.38);
+      border: 1px solid rgba(255,255,255,0.08);
+      color: rgba(255,255,255,0.72);
+      font-size: 12px;
+      backdrop-filter: blur(8px);
+      pointer-events: none;
+      white-space: nowrap;
+    }
+
+    .overlay {
+      position: absolute;
+      inset: 0;
+      z-index: 10;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 24px;
       background:
-        radial-gradient(circle at 50% 15%, rgba(155,92,255,.24), transparent 25%),
-        linear-gradient(180deg, rgba(7,4,12,.72), rgba(7,4,12,.9));
+        radial-gradient(circle at 50% 15%, rgba(155,92,255,0.24), transparent 25%),
+        linear-gradient(180deg, rgba(7,4,12,0.72), rgba(7,4,12,0.9));
       backdrop-filter: blur(8px);
     }
 
-    .hidden{ display:none; }
+    .hidden {
+      display: none;
+    }
 
-    .logo-wrap{
-      position:relative;
-      width:108px;
-      height:108px;
-      border-radius:50%;
-      display:grid;
-      place-items:center;
-      margin-bottom:18px;
-      background:radial-gradient(circle at 50% 50%, rgba(192,132,252,.18), rgba(124,58,237,.08));
-      border:1px solid rgba(210,170,255,.18);
+    .logo-wrap {
+      width: 108px;
+      height: 108px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      margin-bottom: 18px;
+      background: radial-gradient(circle at 50% 50%, rgba(192,132,252,0.18), rgba(124,58,237,0.08));
+      border: 1px solid rgba(210,170,255,0.18);
       box-shadow:
-        0 0 0 1px rgba(255,255,255,.03) inset,
-        0 0 30px rgba(155,92,255,.2),
-        0 0 70px rgba(155,92,255,.18);
-      animation:pulse 2.2s ease-in-out infinite;
+        0 0 30px rgba(155,92,255,0.2),
+        0 0 70px rgba(155,92,255,0.16);
+      animation: pulse 2.1s ease-in-out infinite;
     }
 
-    .logo-wrap img{
-      width:64px;
-      height:64px;
-      object-fit:contain;
-      filter:drop-shadow(0 0 18px rgba(192,132,252,.35));
+    .logo-wrap img {
+      width: 64px;
+      height: 64px;
+      object-fit: contain;
+      filter: drop-shadow(0 0 18px rgba(192,132,252,0.35));
     }
 
-    @keyframes pulse{
-      0%,100%{ transform:scale(1); box-shadow:0 0 30px rgba(155,92,255,.2),0 0 70px rgba(155,92,255,.18);}
-      50%{ transform:scale(1.06); box-shadow:0 0 45px rgba(155,92,255,.3),0 0 95px rgba(155,92,255,.22);}
+    @keyframes pulse {
+      0%,100% { transform: scale(1); }
+      50% { transform: scale(1.06); }
     }
 
-    .pill{
-      padding:8px 14px;
-      border-radius:999px;
-      border:1px solid var(--border);
-      background:rgba(255,255,255,.06);
-      color:#efe7ff;
-      font-size:12px;
-      letter-spacing:.12em;
-      text-transform:uppercase;
-      margin-bottom:14px;
+    .pill {
+      padding: 8px 14px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,0.06);
+      color: #efe7ff;
+      font-size: 12px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      margin-bottom: 14px;
     }
 
-    h1{
-      margin:0 0 8px;
-      font-size:clamp(30px, 7vw, 48px);
-      font-weight:1000;
-      letter-spacing:.02em;
-      text-shadow:0 0 24px rgba(155,92,255,.28);
+    h1 {
+      margin: 0 0 8px;
+      font-size: clamp(30px, 7vw, 48px);
+      font-weight: 1000;
+      letter-spacing: 0.02em;
+      text-shadow: 0 0 24px rgba(155,92,255,0.28);
     }
 
-    p{
-      max-width:360px;
-      margin:0 0 20px;
-      color:rgba(255,255,255,.76);
-      line-height:1.55;
-      font-size:15px;
+    p {
+      max-width: 360px;
+      margin: 0 0 20px;
+      color: rgba(255,255,255,0.76);
+      line-height: 1.55;
+      font-size: 15px;
     }
 
-    .buttons{
-      display:flex;
-      flex-direction:column;
-      gap:10px;
-      width:min(100%, 300px);
+    .buttons {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      width: min(100%, 300px);
     }
 
-    .btn, .btn-link{
-      appearance:none;
-      border:none;
-      text-decoration:none;
-      cursor:pointer;
-      width:100%;
-      padding:15px 18px;
-      border-radius:16px;
-      font-weight:900;
-      font-size:14px;
-      letter-spacing:.03em;
-      transition:.15s ease;
+    .btn, .btn-link {
+      appearance: none;
+      border: none;
+      text-decoration: none;
+      cursor: pointer;
+      width: 100%;
+      padding: 15px 18px;
+      border-radius: 16px;
+      font-weight: 900;
+      font-size: 14px;
+      letter-spacing: 0.03em;
+      transition: 0.15s ease;
     }
 
-    .btn:hover,.btn-link:hover{ transform:translateY(-1px); }
-    .btn:active,.btn-link:active{ transform:translateY(1px) scale(.995); }
-
-    .btn-primary{
-      color:white;
-      background:linear-gradient(135deg, var(--purple3), var(--purple));
-      box-shadow:0 12px 34px rgba(124,58,237,.34);
+    .btn:hover, .btn-link:hover {
+      transform: translateY(-1px);
     }
 
-    .btn-secondary{
-      color:#f3ecff;
-      background:rgba(255,255,255,.08);
-      border:1px solid var(--border);
+    .btn:active, .btn-link:active {
+      transform: translateY(1px) scale(0.995);
     }
 
-    .btn-link{
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      color:white;
-      background:linear-gradient(135deg, #6d28d9, #9333ea);
-      box-shadow:0 12px 34px rgba(124,58,237,.28);
+    .btn-primary {
+      color: white;
+      background: linear-gradient(135deg, var(--purple3), var(--purple));
+      box-shadow: 0 12px 34px rgba(124,58,237,0.34);
     }
 
-    .result-card{
-      width:min(100%, 360px);
-      text-align:left;
-      padding:16px;
-      border-radius:20px;
-      background:linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.04));
-      border:1px solid var(--border);
-      box-shadow:
-        0 10px 30px rgba(0,0,0,.22),
-        inset 0 0 24px rgba(255,255,255,.03);
-      margin:10px 0 14px;
+    .btn-secondary {
+      color: #f3ecff;
+      background: rgba(255,255,255,0.08);
+      border: 1px solid var(--border);
     }
 
-    .result-title{
-      margin:0 0 10px;
-      font-size:17px;
-      font-weight:900;
+    .btn-link {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      background: linear-gradient(135deg, #6d28d9, #9333ea);
+      box-shadow: 0 12px 34px rgba(124,58,237,0.28);
     }
 
-    .line{
-      display:flex;
-      justify-content:space-between;
-      gap:10px;
-      padding:8px 0;
-      border-bottom:1px solid rgba(255,255,255,.07);
-      font-size:14px;
+    .result-card {
+      width: min(100%, 360px);
+      text-align: left;
+      padding: 16px;
+      border-radius: 20px;
+      background: linear-gradient(180deg, rgba(255,255,255,0.08), rgba(255,255,255,0.04));
+      border: 1px solid var(--border);
+      box-shadow: 0 10px 30px rgba(0,0,0,0.22);
+      margin: 10px 0 14px;
     }
 
-    .line:last-child{ border-bottom:none; }
-
-    .copy-note{
-      min-height:20px;
-      margin-top:8px;
-      color:#d6b8ff;
-      font-size:13px;
+    .result-title {
+      margin: 0 0 10px;
+      font-size: 17px;
+      font-weight: 900;
     }
 
-    @media (max-width:600px){
-      .app{ width:100vw;height:100vh; }
+    .line {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 8px 0;
+      border-bottom: 1px solid rgba(255,255,255,0.07);
+      font-size: 14px;
+    }
+
+    .line:last-child {
+      border-bottom: none;
+    }
+
+    .copy-note {
+      min-height: 20px;
+      margin-top: 8px;
+      color: #d6b8ff;
+      font-size: 13px;
+    }
+
+    @media (max-width: 600px) {
+      .app {
+        width: 100vw;
+        height: 100vh;
+      }
     }
   </style>
 </head>
@@ -290,12 +304,12 @@
         <div class="hud-value" id="scoreEl">0</div>
       </div>
       <div class="hud-card hud-right">
-        <div class="hud-label">Combo</div>
-        <div class="hud-value" id="comboEl">x1</div>
+        <div class="hud-label">Collected</div>
+        <div class="hud-value" id="collectedEl">0</div>
       </div>
     </div>
 
-    <div class="bottom-note">Ziehe links / rechts und sammle nur ASTY Tokens</div>
+    <div class="bottom-note">Move left and right. Collect ASTY. Avoid SELL blocks.</div>
 
     <div class="overlay" id="startScreen">
       <div class="logo-wrap">
@@ -304,8 +318,7 @@
       <div class="pill">ASTY ARCADE MODE</div>
       <h1>ASTY Token Collector</h1>
       <p>
-        Sammle fallende ASTY Tokens, halte deinen Combo alive und meide Sell Blocks.
-        Schnell, clean und komplett im ASTY Stil.
+        Collect falling ASTY tokens, avoid sell blocks and keep the system alive.
       </p>
       <div class="buttons">
         <button class="btn btn-primary" id="startBtn">PLAY</button>
@@ -324,14 +337,18 @@
         <div class="result-title">🟣 ASTY SYSTEM RESULT</div>
         <div class="line"><span>Score</span><strong id="finalScore">0</strong></div>
         <div class="line"><span>Collected</span><strong id="finalCollected">0</strong></div>
-        <div class="line"><span>Best Combo</span><strong id="finalCombo">x1</strong></div>
+        <div class="line"><span>Survival Time</span><strong id="finalTime">0s</strong></div>
         <div class="line"><span>Loop Status</span><strong id="finalStatus">ACTIVE</strong></div>
       </div>
 
       <div class="buttons">
         <button class="btn btn-secondary" id="copyBtn">COPY RESULT</button>
-        <a class="btn-link" target="_blank" rel="noopener noreferrer"
-           href="https://htmlpreview.github.io/?https://github.com/ArbStrategy-ASTY/ArbStrategy-ASTY/blob/main/pools.html">
+        <a
+          class="btn-link"
+          href="https://htmlpreview.github.io/?https://github.com/ArbStrategy-ASTY/ArbStrategy-ASTY/blob/main/pools.html"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
           ACTIVATE THE LOOP
         </a>
         <button class="btn btn-primary" id="restartBtn">PLAY AGAIN</button>
@@ -346,7 +363,8 @@
     const ctx = canvas.getContext("2d");
 
     const scoreEl = document.getElementById("scoreEl");
-    const comboEl = document.getElementById("comboEl");
+    const collectedEl = document.getElementById("collectedEl");
+
     const startScreen = document.getElementById("startScreen");
     const endScreen = document.getElementById("endScreen");
     const startBtn = document.getElementById("startBtn");
@@ -356,16 +374,18 @@
 
     const finalScore = document.getElementById("finalScore");
     const finalCollected = document.getElementById("finalCollected");
-    const finalCombo = document.getElementById("finalCombo");
+    const finalTime = document.getElementById("finalTime");
     const finalStatus = document.getElementById("finalStatus");
     const resultText = document.getElementById("resultText");
 
     const logo = new Image();
-    logo.src = "logo.png";
+    logo.src = "assets/logo.png";
 
-    let W = 0, H = 0, DPR = Math.max(1, window.devicePixelRatio || 1);
+    let W = 0;
+    let H = 0;
+    let DPR = Math.max(1, window.devicePixelRatio || 1);
 
-    function resize(){
+    function resize() {
       const app = document.querySelector(".app");
       W = app.clientWidth;
       H = app.clientHeight;
@@ -373,92 +393,91 @@
       canvas.height = H * DPR;
       canvas.style.width = W + "px";
       canvas.style.height = H + "px";
-      ctx.setTransform(DPR,0,0,DPR,0,0);
+      ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
     }
+
     window.addEventListener("resize", resize);
     resize();
 
     let running = false;
-    let raf = null;
+    let animationId = null;
     let lastTime = 0;
+    let gameTime = 0;
 
     const player = {
-      x: W/2,
-      y: H - 110,
+      x: 0,
+      y: 0,
       w: 72,
       h: 72,
-      targetX: W/2
+      speed: 420,
+      moveLeft: false,
+      moveRight: false
     };
 
+    let stars = [];
     let tokens = [];
     let hazards = [];
     let particles = [];
-    let stars = [];
+
     let score = 0;
     let collected = 0;
-    let combo = 1;
-    let bestCombo = 1;
-    let spawnTimer = 0;
-    let hazardTimer = 0;
-    let gameTime = 0;
-    let difficulty = 1;
-    let flash = 0;
+    let tokenSpawn = 0;
+    let hazardSpawn = 0;
 
-    function resetStars(){
-      stars = Array.from({length: 42}, () => ({
+    function resetStars() {
+      stars = Array.from({ length: 50 }, () => ({
         x: Math.random() * W,
         y: Math.random() * H,
         r: Math.random() * 1.8 + 0.4,
-        s: Math.random() * 0.6 + 0.2
+        s: Math.random() * 40 + 20
       }));
     }
-    resetStars();
 
-    function resetGame(){
+    function resetGame() {
+      player.x = W / 2 - player.w / 2;
+      player.y = H - 120;
+      player.moveLeft = false;
+      player.moveRight = false;
+
+      score = 0;
+      collected = 0;
+      gameTime = 0;
+      tokenSpawn = 0;
+      hazardSpawn = 1.2;
+
       tokens = [];
       hazards = [];
       particles = [];
-      score = 0;
-      collected = 0;
-      combo = 1;
-      bestCombo = 1;
-      spawnTimer = 0;
-      hazardTimer = 0;
-      gameTime = 0;
-      difficulty = 1;
-      flash = 0;
-
-      player.x = W / 2;
-      player.targetX = W / 2;
-      player.y = H - 120;
+      resetStars();
 
       scoreEl.textContent = "0";
-      comboEl.textContent = "x1";
+      collectedEl.textContent = "0";
       copyNote.textContent = "";
     }
 
-    function startGame(){
+    function startGame() {
       resetGame();
       startScreen.classList.add("hidden");
       endScreen.classList.add("hidden");
       running = true;
       lastTime = performance.now();
-      cancelAnimationFrame(raf);
-      raf = requestAnimationFrame(loop);
+      cancelAnimationFrame(animationId);
+      animationId = requestAnimationFrame(loop);
     }
 
-    function endGame(){
+    function endGame() {
       running = false;
-      cancelAnimationFrame(raf);
+      cancelAnimationFrame(animationId);
 
-      const status = score >= 4000 ? "DOMINANT"
-                  : score >= 2500 ? "ACTIVE"
-                  : score >= 1200 ? "STABLE"
-                  : "WARM";
+      const status =
+        score >= 4000 ? "DOMINANT" :
+        score >= 2200 ? "ACTIVE" :
+        score >= 1000 ? "STABLE" :
+        "WARM";
 
       finalScore.textContent = Math.floor(score).toLocaleString();
       finalCollected.textContent = collected.toString();
-      finalCombo.textContent = "x" + bestCombo;
+      finalTime.textContent = gameTime.toFixed(1) + "s";
       finalStatus.textContent = status;
 
       resultText.textContent =
@@ -470,354 +489,363 @@
       endScreen.classList.remove("hidden");
     }
 
-    function spawnToken(){
-      const size = 28 + Math.random() * 10;
+    function spawnToken() {
+      const size = 30 + Math.random() * 14;
       tokens.push({
-        x: 24 + Math.random() * (W - 48),
-        y: -40,
+        x: 20 + Math.random() * (W - 40 - size),
+        y: -size - 10,
         w: size,
         h: size,
-        speed: 2.4 + Math.random() * 1.2 + difficulty * 0.55,
+        speed: 180 + Math.random() * 80 + gameTime * 3,
         rot: Math.random() * Math.PI * 2,
-        vr: (Math.random() - 0.5) * 0.06
+        vr: (Math.random() - 0.5) * 2
       });
     }
 
-    function spawnHazard(){
-      const w = 52 + Math.random() * 24;
-      const h = 20 + Math.random() * 12;
+    function spawnHazard() {
+      const w = 62 + Math.random() * 18;
+      const h = 24;
       hazards.push({
-        x: 24 + Math.random() * (W - 48 - w),
-        y: -30,
-        w, h,
-        speed: 2.8 + Math.random() * 1.2 + difficulty * 0.7,
+        x: 20 + Math.random() * (W - 40 - w),
+        y: -h - 10,
+        w,
+        h,
+        speed: 220 + Math.random() * 70 + gameTime * 4,
         type: Math.random() > 0.4 ? "SELL" : "FUD"
       });
     }
 
-    function addBurst(x, y, color, count=10){
-      for(let i=0;i<count;i++){
+    function rectsCollide(a, b) {
+      return (
+        a.x < b.x + b.w &&
+        a.x + a.w > b.x &&
+        a.y < b.y + b.h &&
+        a.y + a.h > b.y
+      );
+    }
+
+    function burst(x, y, color, count = 12) {
+      for (let i = 0; i < count; i++) {
         particles.push({
-          x,y,
-          vx:(Math.random()-.5)*4,
-          vy:(Math.random()-.5)*4,
-          life:18 + Math.random()*16,
-          size:2 + Math.random()*3,
+          x,
+          y,
+          vx: (Math.random() - 0.5) * 4,
+          vy: (Math.random() - 0.5) * 4,
+          size: 2 + Math.random() * 3,
+          life: 20 + Math.random() * 14,
           color
         });
       }
     }
 
-    function hitTest(a,b){
-      return a.x < b.x + b.w &&
-             a.x + a.w > b.x &&
-             a.y < b.y + b.h &&
-             a.y + a.h > b.y;
-    }
-
-    function update(dt){
+    function update(dt) {
       gameTime += dt;
-      difficulty = 1 + gameTime * 0.025;
-      flash *= 0.9;
+      score += dt * 35;
 
-      player.x += (player.targetX - player.x) * Math.min(1, dt * 12);
-      player.x = Math.max(18, Math.min(W - 18 - player.w, player.x));
+      if (player.moveLeft) player.x -= player.speed * dt;
+      if (player.moveRight) player.x += player.speed * dt;
 
-      spawnTimer -= dt;
-      hazardTimer -= dt;
+      player.x = Math.max(12, Math.min(W - player.w - 12, player.x));
 
-      if(spawnTimer <= 0){
+      tokenSpawn -= dt;
+      hazardSpawn -= dt;
+
+      if (tokenSpawn <= 0) {
         spawnToken();
-        spawnTimer = Math.max(0.18, 0.62 - difficulty * 0.02);
+        tokenSpawn = Math.max(0.28, 0.62 - gameTime * 0.01);
       }
 
-      if(hazardTimer <= 0){
+      if (hazardSpawn <= 0) {
         spawnHazard();
-        hazardTimer = Math.max(0.55, 1.18 - difficulty * 0.03);
+        hazardSpawn = Math.max(0.85, 1.45 - gameTime * 0.015);
       }
 
-      for(const s of stars){
-        s.y += s.s * (0.8 + difficulty * 0.12);
-        if(s.y > H){
+      for (const s of stars) {
+        s.y += s.s * dt;
+        if (s.y > H) {
           s.y = -4;
           s.x = Math.random() * W;
         }
       }
 
-      for(const t of tokens){
-        t.y += t.speed * 60 * dt;
-        t.rot += t.vr * 60 * dt;
+      for (const t of tokens) {
+        t.y += t.speed * dt;
+        t.rot += t.vr * dt;
       }
 
-      for(const h of hazards){
-        h.y += h.speed * 60 * dt;
+      for (const h of hazards) {
+        h.y += h.speed * dt;
       }
 
-      for(let i=tokens.length-1;i>=0;i--){
+      for (let i = tokens.length - 1; i >= 0; i--) {
         const t = tokens[i];
-        if(hitTest(player, t)){
+        if (rectsCollide(player, t)) {
           collected++;
-          score += 100 * combo;
-          combo++;
-          if(combo > bestCombo) bestCombo = combo;
+          score += 140;
           scoreEl.textContent = Math.floor(score).toLocaleString();
-          comboEl.textContent = "x" + combo;
-          addBurst(t.x + t.w/2, t.y + t.h/2, "rgba(192,132,252,.95)", 12);
-          tokens.splice(i,1);
+          collectedEl.textContent = collected.toString();
+          burst(t.x + t.w / 2, t.y + t.h / 2, "rgba(192,132,252,0.95)", 14);
+          tokens.splice(i, 1);
           continue;
         }
-        if(t.y > H + 60){
-          combo = 1;
-          comboEl.textContent = "x1";
-          tokens.splice(i,1);
+        if (t.y > H + 50) {
+          tokens.splice(i, 1);
         }
       }
 
-      for(let i=hazards.length-1;i>=0;i--){
+      for (let i = hazards.length - 1; i >= 0; i--) {
         const h = hazards[i];
-        if(hitTest(player, h)){
-          addBurst(player.x + player.w/2, player.y + player.h/2, "rgba(255,77,109,.95)", 18);
+        if (rectsCollide(player, h)) {
+          burst(player.x + player.w / 2, player.y + player.h / 2, "rgba(255,90,118,0.95)", 20);
           endGame();
           return;
         }
-        if(h.y > H + 40) hazards.splice(i,1);
+        if (h.y > H + 50) {
+          hazards.splice(i, 1);
+        }
       }
 
-      for(let i=particles.length-1;i>=0;i--){
+      for (let i = particles.length - 1; i >= 0; i--) {
         const p = particles[i];
         p.x += p.vx;
         p.y += p.vy;
         p.life -= 1;
-        if(p.life <= 0) particles.splice(i,1);
+        if (p.life <= 0) particles.splice(i, 1);
       }
+
+      scoreEl.textContent = Math.floor(score).toLocaleString();
     }
 
-    function drawBackground(){
-      const g = ctx.createLinearGradient(0,0,0,H);
-      g.addColorStop(0, "#1a0d2b");
-      g.addColorStop(.45, "#12081f");
-      g.addColorStop(1, "#06030c");
+    function drawBackground() {
+      const g = ctx.createLinearGradient(0, 0, 0, H);
+      g.addColorStop(0, "#1a0f2d");
+      g.addColorStop(0.45, "#0d0717");
+      g.addColorStop(1, "#05030a");
       ctx.fillStyle = g;
-      ctx.fillRect(0,0,W,H);
+      ctx.fillRect(0, 0, W, H);
 
-      if(flash > 0.01){
-        ctx.fillStyle = `rgba(255,255,255,${flash * 0.06})`;
-        ctx.fillRect(0,0,W,H);
-      }
-
-      for(const s of stars){
-        ctx.fillStyle = `rgba(255,255,255,${0.35 + s.r * 0.1})`;
+      for (const s of stars) {
+        ctx.fillStyle = `rgba(255,255,255,${0.25 + s.r * 0.12})`;
         ctx.beginPath();
-        ctx.arc(s.x, s.y, s.r, 0, Math.PI*2);
+        ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
         ctx.fill();
       }
 
-      ctx.strokeStyle = "rgba(192,132,252,.08)";
+      ctx.strokeStyle = "rgba(192,132,252,0.06)";
       ctx.lineWidth = 1;
-      const grid = 34;
-      const drift = (gameTime * 40) % grid;
-      for(let x = -grid; x < W + grid; x += grid){
+      const grid = 36;
+      const drift = (gameTime * 25) % grid;
+
+      for (let x = -grid; x < W + grid; x += grid) {
         ctx.beginPath();
         ctx.moveTo(x + drift, 0);
         ctx.lineTo(x + drift, H);
         ctx.stroke();
       }
-      for(let y = -grid; y < H + grid; y += grid){
-        ctx.beginPath();
-        ctx.moveTo(0, y + drift);
-        ctx.lineTo(W, y + drift);
-        ctx.stroke();
-      }
-
-      ctx.save();
-      ctx.globalAlpha = 0.05;
-      const size = 140;
-      const x = W/2 - size/2;
-      const y = H/2 - size/2;
-      if(logo.complete){
-        ctx.drawImage(logo, x, y, size, size);
-      }
-      ctx.restore();
     }
 
-    function drawPlayer(){
+    function drawPlayer() {
       const x = player.x;
       const y = player.y;
 
       ctx.save();
-      ctx.shadowBlur = 26;
-      ctx.shadowColor = "rgba(155,92,255,.45)";
+      ctx.shadowBlur = 28;
+      ctx.shadowColor = "rgba(155,92,255,0.45)";
 
-      ctx.fillStyle = "rgba(155,92,255,.13)";
+      ctx.fillStyle = "rgba(155,92,255,0.15)";
       ctx.beginPath();
-      ctx.arc(x + player.w/2, y + player.h/2, 42, 0, Math.PI*2);
+      ctx.arc(x + player.w / 2, y + player.h / 2, 40, 0, Math.PI * 2);
       ctx.fill();
 
-      ctx.strokeStyle = "rgba(210,170,255,.55)";
+      ctx.strokeStyle = "rgba(210,170,255,0.45)";
       ctx.lineWidth = 2;
       ctx.beginPath();
-      ctx.arc(x + player.w/2, y + player.h/2, 39, 0, Math.PI*2);
+      ctx.arc(x + player.w / 2, y + player.h / 2, 38, 0, Math.PI * 2);
       ctx.stroke();
 
-      if(logo.complete){
+      if (logo.complete) {
         ctx.drawImage(logo, x + 8, y + 8, player.w - 16, player.h - 16);
       } else {
         ctx.fillStyle = "#9b5cff";
         ctx.beginPath();
-        ctx.arc(x + player.w/2, y + player.h/2, 22, 0, Math.PI*2);
+        ctx.arc(x + player.w / 2, y + player.h / 2, 22, 0, Math.PI * 2);
         ctx.fill();
       }
 
       ctx.restore();
     }
 
-    function drawTokens(){
-      for(const t of tokens){
+    function drawTokens() {
+      for (const t of tokens) {
         ctx.save();
-        ctx.translate(t.x + t.w/2, t.y + t.h/2);
+        ctx.translate(t.x + t.w / 2, t.y + t.h / 2);
         ctx.rotate(t.rot);
 
         ctx.shadowBlur = 22;
-        ctx.shadowColor = "rgba(192,132,252,.42)";
-        ctx.fillStyle = "rgba(155,92,255,.12)";
+        ctx.shadowColor = "rgba(192,132,252,0.42)";
+        ctx.fillStyle = "rgba(155,92,255,0.14)";
         ctx.beginPath();
-        ctx.arc(0,0,t.w * 0.55,0,Math.PI*2);
+        ctx.arc(0, 0, t.w * 0.58, 0, Math.PI * 2);
         ctx.fill();
 
-        if(logo.complete){
-          ctx.drawImage(logo, -t.w/2, -t.h/2, t.w, t.h);
+        if (logo.complete) {
+          ctx.drawImage(logo, -t.w / 2, -t.h / 2, t.w, t.h);
         } else {
           ctx.fillStyle = "#c084fc";
           ctx.beginPath();
-          ctx.arc(0,0,t.w*.34,0,Math.PI*2);
+          ctx.arc(0, 0, t.w * 0.34, 0, Math.PI * 2);
           ctx.fill();
         }
+
         ctx.restore();
       }
     }
 
-    function drawHazards(){
-      for(const h of hazards){
-        const radius = 12;
+    function roundRect(ctx, x, y, w, h, r) {
+      ctx.beginPath();
+      ctx.moveTo(x + r, y);
+      ctx.arcTo(x + w, y, x + w, y + h, r);
+      ctx.arcTo(x + w, y + h, x, y + h, r);
+      ctx.arcTo(x, y + h, x, y, r);
+      ctx.arcTo(x, y, x + w, y, r);
+      ctx.closePath();
+    }
 
+    function drawHazards() {
+      for (const h of hazards) {
         ctx.save();
         ctx.shadowBlur = 18;
-        ctx.shadowColor = "rgba(255,77,109,.3)";
-        ctx.fillStyle = h.type === "SELL" ? "rgba(255,77,109,.95)" : "rgba(255,148,77,.95)";
-
-        roundRect(ctx, h.x, h.y, h.w, h.h, radius, true, false);
+        ctx.shadowColor = "rgba(255,90,118,0.28)";
+        ctx.fillStyle = h.type === "SELL" ? "rgba(255,90,118,0.95)" : "rgba(255,155,76,0.95)";
+        roundRect(ctx, h.x, h.y, h.w, h.h, 12);
+        ctx.fill();
 
         ctx.fillStyle = "white";
         ctx.font = "900 11px Inter, Arial";
         ctx.textAlign = "center";
         ctx.textBaseline = "middle";
-        ctx.fillText(h.type, h.x + h.w/2, h.y + h.h/2 + .5);
+        ctx.fillText(h.type, h.x + h.w / 2, h.y + h.h / 2 + 0.5);
         ctx.restore();
       }
     }
 
-    function drawParticles(){
-      for(const p of particles){
-        ctx.fillStyle = p.color.replace(")", `,${Math.max(0,p.life/30)})`).replace("rgba(", "rgba(");
+    function drawParticles() {
+      for (const p of particles) {
+        const alpha = Math.max(0, p.life / 34);
+        const color = p.color
+          .replace("rgba(", "")
+          .replace(")", "")
+          .split(",");
+        ctx.fillStyle = `rgba(${color[0]},${color[1]},${color[2]},${alpha})`;
         ctx.beginPath();
-        ctx.arc(p.x, p.y, p.size, 0, Math.PI*2);
+        ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
         ctx.fill();
       }
     }
 
-    function roundRect(ctx, x, y, w, h, r, fill, stroke){
-      if (w < 2 * r) r = w / 2;
-      if (h < 2 * r) r = h / 2;
-      ctx.beginPath();
-      ctx.moveTo(x+r, y);
-      ctx.arcTo(x+w, y, x+w, y+h, r);
-      ctx.arcTo(x+w, y+h, x, y+h, r);
-      ctx.arcTo(x, y+h, x, y, r);
-      ctx.arcTo(x, y, x+w, y, r);
-      ctx.closePath();
-      if(fill) ctx.fill();
-      if(stroke) ctx.stroke();
-    }
-
-    function loop(ts){
-      const dt = Math.min(0.033, (ts - lastTime) / 1000);
-      lastTime = ts;
-
-      update(dt);
+    function render() {
       drawBackground();
       drawTokens();
       drawHazards();
       drawPlayer();
       drawParticles();
-
-      if(running) raf = requestAnimationFrame(loop);
     }
 
-    function setTargetX(clientX){
+    function loop(ts) {
+      if (!running) return;
+      const dt = Math.min(0.033, (ts - lastTime) / 1000);
+      lastTime = ts;
+
+      update(dt);
+      render();
+
+      if (running) {
+        animationId = requestAnimationFrame(loop);
+      }
+    }
+
+    function setTargetFromPointer(clientX) {
       const rect = canvas.getBoundingClientRect();
-      player.targetX = clientX - rect.left - player.w/2;
+      const x = clientX - rect.left;
+      const center = player.x + player.w / 2;
+      const deadzone = 12;
+
+      if (x < center - deadzone) {
+        player.moveLeft = true;
+        player.moveRight = false;
+      } else if (x > center + deadzone) {
+        player.moveLeft = false;
+        player.moveRight = true;
+      } else {
+        player.moveLeft = false;
+        player.moveRight = false;
+      }
     }
 
     let dragging = false;
 
-    canvas.addEventListener("pointerdown", e => {
-      if(!running) return;
+    canvas.addEventListener("pointerdown", (e) => {
+      if (!running) return;
       dragging = true;
-      setTargetX(e.clientX);
+      setTargetFromPointer(e.clientX);
     });
 
-    canvas.addEventListener("pointermove", e => {
-      if(!running || !dragging) return;
-      setTargetX(e.clientX);
+    canvas.addEventListener("pointermove", (e) => {
+      if (!running || !dragging) return;
+      setTargetFromPointer(e.clientX);
     });
 
-    window.addEventListener("pointerup", () => dragging = false);
-
-    window.addEventListener("mousemove", e => {
-      if(running) setTargetX(e.clientX);
+    window.addEventListener("pointerup", () => {
+      dragging = false;
+      player.moveLeft = false;
+      player.moveRight = false;
     });
 
-    window.addEventListener("keydown", e => {
-      if(!running) return;
-      if(e.key === "ArrowLeft" || e.key.toLowerCase() === "a"){
-        player.targetX -= 60;
-      }
-      if(e.key === "ArrowRight" || e.key.toLowerCase() === "d"){
-        player.targetX += 60;
-      }
+    window.addEventListener("keydown", (e) => {
+      if (!running) return;
+      if (e.key === "ArrowLeft" || e.key.toLowerCase() === "a") player.moveLeft = true;
+      if (e.key === "ArrowRight" || e.key.toLowerCase() === "d") player.moveRight = true;
+    });
+
+    window.addEventListener("keyup", (e) => {
+      if (e.key === "ArrowLeft" || e.key.toLowerCase() === "a") player.moveLeft = false;
+      if (e.key === "ArrowRight" || e.key.toLowerCase() === "d") player.moveRight = false;
     });
 
     startBtn.addEventListener("click", startGame);
     restartBtn.addEventListener("click", startGame);
 
     copyBtn.addEventListener("click", async () => {
-      const status = score >= 4000 ? "DOMINANT"
-                  : score >= 2500 ? "ACTIVE"
-                  : score >= 1200 ? "STABLE"
-                  : "WARM";
+      const status =
+        score >= 4000 ? "DOMINANT" :
+        score >= 2200 ? "ACTIVE" :
+        score >= 1000 ? "STABLE" :
+        "WARM";
 
       const text = `🟣 I just strengthened the system.
 
 Score: ${Math.floor(score)}
 Collected ASTY: ${collected}
-Best Combo: x${bestCombo}
+Survival Time: ${gameTime.toFixed(1)}s
 Loop Status: ${status}
 
 $ASTY
 #ArbStrategy #ASTY`;
 
-      try{
+      try {
         await navigator.clipboard.writeText(text);
         copyNote.textContent = "Copied to clipboard.";
-      }catch{
+      } catch {
         copyNote.textContent = "Copy failed. Please copy manually.";
       }
     });
 
-    logo.onload = () => { flash = 1; };
-    logo.onerror = () => { console.warn("logo.png not found."); };
+    logo.onerror = () => {
+      console.warn("assets/logo.png not found.");
+    };
 
     resetGame();
+    render();
   </script>
 </body>
 </html>
