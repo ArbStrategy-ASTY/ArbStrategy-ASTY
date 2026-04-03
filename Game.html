@@ -1,0 +1,846 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ASTY Burn Runner</title>
+  <style>
+    * { box-sizing: border-box; }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      background:
+        radial-gradient(circle at top, rgba(140, 82, 255, 0.28), transparent 35%),
+        linear-gradient(180deg, #09060f 0%, #12091f 45%, #09060f 100%);
+      color: #f2ebff;
+      font-family: Inter, Arial, sans-serif;
+      min-height: 100%;
+      overflow: hidden;
+    }
+
+    body {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .game-shell {
+      width: min(100vw, 520px);
+      height: min(100vh, 920px);
+      position: relative;
+      background:
+        linear-gradient(180deg, rgba(20, 10, 36, 0.92), rgba(9, 6, 15, 0.96)),
+        rgba(12, 8, 20, 0.9);
+      border-left: 1px solid rgba(181, 127, 255, 0.18);
+      border-right: 1px solid rgba(181, 127, 255, 0.18);
+      box-shadow:
+        0 0 40px rgba(144, 84, 255, 0.18),
+        inset 0 0 24px rgba(144, 84, 255, 0.08);
+      overflow: hidden;
+    }
+
+    canvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+      touch-action: manipulation;
+    }
+
+    .overlay {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      text-align: center;
+      background:
+        linear-gradient(180deg, rgba(11, 8, 18, 0.74), rgba(11, 8, 18, 0.9));
+      backdrop-filter: blur(3px);
+      z-index: 5;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    .title {
+      font-size: clamp(32px, 7vw, 48px);
+      font-weight: 900;
+      letter-spacing: 0.04em;
+      margin: 0 0 8px;
+      text-shadow: 0 0 18px rgba(179, 120, 255, 0.3);
+    }
+
+    .subtitle {
+      font-size: 15px;
+      line-height: 1.5;
+      color: rgba(242, 235, 255, 0.82);
+      max-width: 360px;
+      margin-bottom: 22px;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 14px;
+      border-radius: 999px;
+      background: rgba(168, 85, 247, 0.14);
+      border: 1px solid rgba(192, 132, 252, 0.28);
+      color: #efe7ff;
+      font-size: 13px;
+      margin-bottom: 16px;
+    }
+
+    .wolf {
+      font-size: 52px;
+      margin-bottom: 12px;
+      filter: drop-shadow(0 0 16px rgba(180, 120, 255, 0.28));
+      animation: pulse 1.8s infinite ease-in-out;
+    }
+
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); opacity: 0.92; }
+      50% { transform: scale(1.08); opacity: 1; }
+    }
+
+    .btn {
+      appearance: none;
+      border: 0;
+      outline: 0;
+      cursor: pointer;
+      border-radius: 16px;
+      padding: 14px 20px;
+      font-size: 15px;
+      font-weight: 800;
+      letter-spacing: 0.02em;
+      min-width: 220px;
+      margin-top: 10px;
+      transition: transform 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease;
+    }
+
+    .btn:hover {
+      transform: translateY(-1px);
+    }
+
+    .btn:active {
+      transform: translateY(1px) scale(0.99);
+    }
+
+    .btn-primary {
+      color: white;
+      background: linear-gradient(135deg, #7c3aed, #a855f7);
+      box-shadow: 0 10px 30px rgba(124, 58, 237, 0.28);
+    }
+
+    .btn-secondary {
+      color: #f3ecff;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(201, 164, 255, 0.18);
+    }
+
+    .btn-link {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      text-decoration: none;
+      color: white;
+      background: linear-gradient(135deg, #7c3aed, #9333ea);
+      box-shadow: 0 10px 30px rgba(124, 58, 237, 0.28);
+    }
+
+    .result-card {
+      width: 100%;
+      max-width: 360px;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(201, 164, 255, 0.16);
+      border-radius: 20px;
+      padding: 18px 16px;
+      margin: 16px 0 6px;
+      text-align: left;
+      box-shadow: inset 0 0 20px rgba(155, 92, 255, 0.05);
+    }
+
+    .result-card h3 {
+      margin: 0 0 12px;
+      font-size: 18px;
+      color: #f5efff;
+    }
+
+    .result-line {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 8px 0;
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+      font-size: 14px;
+    }
+
+    .result-line:last-child {
+      border-bottom: 0;
+    }
+
+    .copy-note {
+      min-height: 22px;
+      margin-top: 8px;
+      font-size: 13px;
+      color: #caa8ff;
+    }
+
+    .hud {
+      position: absolute;
+      top: 14px;
+      left: 14px;
+      right: 14px;
+      z-index: 3;
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      pointer-events: none;
+    }
+
+    .hud-box {
+      background: rgba(13, 10, 20, 0.72);
+      border: 1px solid rgba(192, 132, 252, 0.16);
+      border-radius: 14px;
+      padding: 10px 12px;
+      min-width: 110px;
+      box-shadow: 0 4px 18px rgba(0, 0, 0, 0.22);
+    }
+
+    .hud-label {
+      font-size: 11px;
+      color: rgba(238, 225, 255, 0.72);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .hud-value {
+      margin-top: 4px;
+      font-size: 22px;
+      font-weight: 900;
+      color: #faf7ff;
+    }
+
+    .controls {
+      position: absolute;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 3;
+      font-size: 12px;
+      color: rgba(244, 236, 255, 0.7);
+      background: rgba(13, 10, 20, 0.62);
+      border: 1px solid rgba(192, 132, 252, 0.14);
+      border-radius: 999px;
+      padding: 10px 14px;
+      pointer-events: none;
+      backdrop-filter: blur(4px);
+    }
+
+    @media (max-width: 600px) {
+      .game-shell {
+        width: 100vw;
+        height: 100vh;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="game-shell">
+    <canvas id="game"></canvas>
+
+    <div class="hud">
+      <div class="hud-box">
+        <div class="hud-label">Score</div>
+        <div class="hud-value" id="scoreValue">0</div>
+      </div>
+      <div class="hud-box" style="text-align:right;">
+        <div class="hud-label">Speed</div>
+        <div class="hud-value" id="speedValue">1.0x</div>
+      </div>
+    </div>
+
+    <div class="controls">Tap, click or press Space to jump</div>
+
+    <div class="overlay" id="startScreen">
+      <div class="wolf">🐺</div>
+      <div class="badge">🟣 ASTY ARCADE MODE</div>
+      <h1 class="title">ASTY Burn Runner</h1>
+      <div class="subtitle">
+        Collect burn flames, treasury cubes and reinvest orbs. Avoid sell walls and keep the loop alive.
+      </div>
+      <button class="btn btn-primary" id="playBtn">PLAY</button>
+    </div>
+
+    <div class="overlay hidden" id="gameOverScreen">
+      <div class="badge">🟣 SYSTEM RESULT</div>
+      <h2 class="title" style="font-size: clamp(28px, 6vw, 40px); margin-bottom: 4px;">Loop Interrupted</h2>
+      <div class="subtitle" id="resultSubtitle">The system measured your reaction speed.</div>
+
+      <div class="result-card">
+        <h3>🟣 ASTY SYSTEM RESULT</h3>
+        <div class="result-line"><span>Score</span><strong id="finalScore">0</strong></div>
+        <div class="result-line"><span>🔥 Burn Pressure</span><strong id="burnPressure">LOW</strong></div>
+        <div class="result-line"><span>📈 Efficiency</span><strong id="efficiency">0%</strong></div>
+        <div class="result-line"><span>⚡ Loop Status</span><strong id="loopStatus">IDLE</strong></div>
+      </div>
+
+      <button class="btn btn-secondary" id="copyBtn">COPY RESULT</button>
+      <a
+        class="btn btn-link"
+        href="https://htmlpreview.github.io/?https://github.com/ArbStrategy-ASTY/ArbStrategy-ASTY/blob/main/pools.html"
+        target="_blank"
+        rel="noopener noreferrer"
+      >ACTIVATE THE LOOP</a>
+      <button class="btn btn-primary" id="restartBtn">PLAY AGAIN</button>
+
+      <div class="copy-note" id="copyNote"></div>
+    </div>
+  </div>
+
+  <script>
+    const canvas = document.getElementById("game");
+    const ctx = canvas.getContext("2d");
+
+    const scoreValue = document.getElementById("scoreValue");
+    const speedValue = document.getElementById("speedValue");
+
+    const startScreen = document.getElementById("startScreen");
+    const gameOverScreen = document.getElementById("gameOverScreen");
+    const playBtn = document.getElementById("playBtn");
+    const restartBtn = document.getElementById("restartBtn");
+    const copyBtn = document.getElementById("copyBtn");
+    const copyNote = document.getElementById("copyNote");
+
+    const finalScoreEl = document.getElementById("finalScore");
+    const burnPressureEl = document.getElementById("burnPressure");
+    const efficiencyEl = document.getElementById("efficiency");
+    const loopStatusEl = document.getElementById("loopStatus");
+    const resultSubtitleEl = document.getElementById("resultSubtitle");
+
+    function resizeCanvas() {
+      const shell = document.querySelector(".game-shell");
+      canvas.width = shell.clientWidth * window.devicePixelRatio;
+      canvas.height = shell.clientHeight * window.devicePixelRatio;
+      canvas.style.width = shell.clientWidth + "px";
+      canvas.style.height = shell.clientHeight + "px";
+      ctx.setTransform(window.devicePixelRatio, 0, 0, window.devicePixelRatio, 0, 0);
+    }
+
+    window.addEventListener("resize", resizeCanvas);
+    resizeCanvas();
+
+    const groundHeight = 92;
+    let gameRunning = false;
+    let animationId = null;
+
+    const player = {
+      x: 70,
+      y: 0,
+      w: 42,
+      h: 42,
+      vy: 0,
+      gravity: 0.68,
+      jumpPower: -12.5,
+      grounded: true
+    };
+
+    let obstacles = [];
+    let pickups = [];
+    let particles = [];
+    let score = 0;
+    let gameSpeed = 5.2;
+    let spawnTimer = 0;
+    let pickupTimer = 0;
+    let distance = 0;
+    let backgroundOffset = 0;
+    let timeAlive = 0;
+
+    function resetGame() {
+      obstacles = [];
+      pickups = [];
+      particles = [];
+      score = 0;
+      gameSpeed = 5.2;
+      spawnTimer = 0;
+      pickupTimer = 0;
+      distance = 0;
+      backgroundOffset = 0;
+      timeAlive = 0;
+
+      player.y = getGroundY() - player.h;
+      player.vy = 0;
+      player.grounded = true;
+
+      scoreValue.textContent = "0";
+      speedValue.textContent = "1.0x";
+      copyNote.textContent = "";
+    }
+
+    function getGroundY() {
+      return canvas.clientHeight - groundHeight;
+    }
+
+    function startGame() {
+      resetGame();
+      startScreen.classList.add("hidden");
+      gameOverScreen.classList.add("hidden");
+      gameRunning = true;
+      cancelAnimationFrame(animationId);
+      loop();
+    }
+
+    function endGame() {
+      gameRunning = false;
+      cancelAnimationFrame(animationId);
+
+      const result = buildResult(score, timeAlive);
+
+      finalScoreEl.textContent = Math.floor(score).toLocaleString();
+      burnPressureEl.textContent = result.burnPressure;
+      efficiencyEl.textContent = result.efficiency;
+      loopStatusEl.textContent = result.loopStatus;
+      resultSubtitleEl.textContent = result.subtitle;
+
+      gameOverScreen.classList.remove("hidden");
+    }
+
+    function buildResult(score, timeAlive) {
+      let burnPressure = "LOW";
+      let efficiency = "41%";
+      let loopStatus = "IDLE";
+      let subtitle = "The system measured your reaction speed.";
+
+      if (score >= 4000) {
+        burnPressure = "EXTREME";
+        efficiency = "96%";
+        loopStatus = "DOMINANT";
+        subtitle = "The system recognizes your efficiency.";
+      } else if (score >= 2500) {
+        burnPressure = "HIGH";
+        efficiency = "87%";
+        loopStatus = "ACTIVE";
+        subtitle = "Strong participation detected.";
+      } else if (score >= 1400) {
+        burnPressure = "RISING";
+        efficiency = "73%";
+        loopStatus = "STABLE";
+        subtitle = "The loop remained intact.";
+      } else if (score >= 700) {
+        burnPressure = "MEDIUM";
+        efficiency = "58%";
+        loopStatus = "WARM";
+        subtitle = "The system requires more activity.";
+      }
+
+      if (timeAlive < 7 && score < 500) {
+        subtitle = "Your wallet reaction speed was below treasury standards.";
+      }
+
+      return { burnPressure, efficiency, loopStatus, subtitle };
+    }
+
+    function jump() {
+      if (!gameRunning) return;
+      if (player.grounded) {
+        player.vy = player.jumpPower;
+        player.grounded = false;
+        for (let i = 0; i < 6; i++) {
+          particles.push({
+            x: player.x + player.w * 0.3,
+            y: player.y + player.h,
+            vx: Math.random() * -2 - 0.4,
+            vy: Math.random() * -2.2,
+            life: 26,
+            size: Math.random() * 4 + 2
+          });
+        }
+      }
+    }
+
+    function addObstacle() {
+      const typeRoll = Math.random();
+      let type = "sellwall";
+
+      if (typeRoll > 0.66) type = "fud";
+      else if (typeRoll > 0.33) type = "deadpool";
+
+      let h = 40;
+      let w = 28;
+
+      if (type === "sellwall") {
+        h = 66;
+        w = 28;
+      } else if (type === "fud") {
+        h = 34;
+        w = 52;
+      } else if (type === "deadpool") {
+        h = 26;
+        w = 58;
+      }
+
+      obstacles.push({
+        type,
+        x: canvas.clientWidth + 40,
+        y: getGroundY() - h,
+        w,
+        h
+      });
+    }
+
+    function addPickup() {
+      const pool = ["burn", "reinvest", "treasury"];
+      const type = pool[Math.floor(Math.random() * pool.length)];
+      pickups.push({
+        type,
+        x: canvas.clientWidth + 40,
+        y: getGroundY() - 110 - Math.random() * 120,
+        w: 24,
+        h: 24,
+        bob: Math.random() * Math.PI * 2
+      });
+    }
+
+    function rectsCollide(a, b) {
+      return (
+        a.x < b.x + b.w &&
+        a.x + a.w > b.x &&
+        a.y < b.y + b.h &&
+        a.y + a.h > b.y
+      );
+    }
+
+    function update() {
+      timeAlive += 1 / 60;
+      backgroundOffset += gameSpeed * 0.45;
+      distance += gameSpeed;
+      score += 1 + gameSpeed * 0.08;
+      gameSpeed += 0.0018;
+
+      player.vy += player.gravity;
+      player.y += player.vy;
+
+      const groundY = getGroundY() - player.h;
+      if (player.y >= groundY) {
+        player.y = groundY;
+        player.vy = 0;
+        player.grounded = true;
+      }
+
+      spawnTimer--;
+      if (spawnTimer <= 0) {
+        addObstacle();
+        spawnTimer = Math.max(36, 88 - gameSpeed * 4 - Math.random() * 18);
+      }
+
+      pickupTimer--;
+      if (pickupTimer <= 0) {
+        addPickup();
+        pickupTimer = 68 + Math.random() * 50;
+      }
+
+      obstacles.forEach(ob => ob.x -= gameSpeed);
+      pickups.forEach(p => {
+        p.x -= gameSpeed;
+        p.bob += 0.08;
+      });
+
+      obstacles = obstacles.filter(ob => ob.x + ob.w > -40);
+      pickups = pickups.filter(p => p.x + p.w > -40);
+
+      for (const ob of obstacles) {
+        if (rectsCollide(player, ob)) {
+          endGame();
+          return;
+        }
+      }
+
+      for (let i = pickups.length - 1; i >= 0; i--) {
+        const p = pickups[i];
+        const floatingBox = {
+          x: p.x,
+          y: p.y + Math.sin(p.bob) * 5,
+          w: p.w,
+          h: p.h
+        };
+
+        if (rectsCollide(player, floatingBox)) {
+          if (p.type === "burn") score += 140;
+          if (p.type === "reinvest") score += 95;
+          if (p.type === "treasury") score += 110;
+
+          for (let j = 0; j < 10; j++) {
+            particles.push({
+              x: p.x + p.w / 2,
+              y: p.y + p.h / 2,
+              vx: (Math.random() - 0.5) * 4,
+              vy: (Math.random() - 0.5) * 4,
+              life: 22 + Math.random() * 10,
+              size: Math.random() * 4 + 2,
+              type: p.type
+            });
+          }
+
+          pickups.splice(i, 1);
+        }
+      }
+
+      particles.forEach(pt => {
+        pt.x += pt.vx;
+        pt.y += pt.vy;
+        pt.vy += 0.03;
+        pt.life--;
+      });
+      particles = particles.filter(pt => pt.life > 0);
+
+      scoreValue.textContent = Math.floor(score).toLocaleString();
+      speedValue.textContent = (gameSpeed / 5.2).toFixed(1) + "x";
+    }
+
+    function drawBackground() {
+      const w = canvas.clientWidth;
+      const h = canvas.clientHeight;
+
+      const grad = ctx.createLinearGradient(0, 0, 0, h);
+      grad.addColorStop(0, "#170d2b");
+      grad.addColorStop(0.5, "#10081e");
+      grad.addColorStop(1, "#08060f");
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, w, h);
+
+      for (let i = 0; i < 18; i++) {
+        const x = (i * 70 - (backgroundOffset * 0.35) % 70);
+        const y = 70 + (i % 4) * 65;
+        ctx.fillStyle = "rgba(180, 120, 255, 0.06)";
+        ctx.fillRect(x, y, 34, 2);
+        ctx.fillRect(x + 16, y - 16, 2, 34);
+      }
+
+      ctx.strokeStyle = "rgba(185, 123, 255, 0.08)";
+      ctx.lineWidth = 1;
+      for (let x = -40; x < w + 40; x += 36) {
+        const xx = x - (backgroundOffset % 36);
+        ctx.beginPath();
+        ctx.moveTo(xx, 0);
+        ctx.lineTo(xx, h);
+        ctx.stroke();
+      }
+    }
+
+    function drawGround() {
+      const w = canvas.clientWidth;
+      const groundY = getGroundY();
+
+      ctx.fillStyle = "#120b1f";
+      ctx.fillRect(0, groundY, w, groundHeight);
+
+      ctx.fillStyle = "rgba(168, 85, 247, 0.15)";
+      for (let i = 0; i < 30; i++) {
+        const x = i * 42 - (backgroundOffset % 42);
+        ctx.fillRect(x, groundY + 14, 24, 3);
+      }
+
+      ctx.fillStyle = "rgba(200, 160, 255, 0.14)";
+      ctx.fillRect(0, groundY, w, 3);
+    }
+
+    function drawPlayer() {
+      const x = player.x;
+      const y = player.y;
+
+      ctx.save();
+
+      ctx.shadowBlur = 22;
+      ctx.shadowColor = "rgba(168,85,247,0.45)";
+
+      ctx.fillStyle = "#9b5cff";
+      ctx.beginPath();
+      ctx.moveTo(x + 8, y + 34);
+      ctx.lineTo(x + 16, y + 6);
+      ctx.lineTo(x + 30, y + 10);
+      ctx.lineTo(x + 36, y + 22);
+      ctx.lineTo(x + 28, y + 36);
+      ctx.closePath();
+      ctx.fill();
+
+      ctx.fillStyle = "#cda8ff";
+      ctx.beginPath();
+      ctx.moveTo(x + 18, y + 9);
+      ctx.lineTo(x + 22, y + 2);
+      ctx.lineTo(x + 26, y + 11);
+      ctx.closePath();
+      ctx.fill();
+
+      ctx.beginPath();
+      ctx.moveTo(x + 10, y + 13);
+      ctx.lineTo(x + 13, y + 4);
+      ctx.lineTo(x + 17, y + 12);
+      ctx.closePath();
+      ctx.fill();
+
+      ctx.fillStyle = "#ffffff";
+      ctx.beginPath();
+      ctx.arc(x + 26, y + 18, 2.2, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.restore();
+    }
+
+    function drawObstacle(ob) {
+      ctx.save();
+
+      if (ob.type === "sellwall") {
+        ctx.fillStyle = "#ef4444";
+        ctx.shadowBlur = 14;
+        ctx.shadowColor = "rgba(239,68,68,0.32)";
+        ctx.fillRect(ob.x, ob.y, ob.w, ob.h);
+        ctx.fillStyle = "rgba(255,255,255,0.82)";
+        ctx.font = "bold 16px Arial";
+        ctx.fillText("S", ob.x + 8, ob.y + 22);
+      }
+
+      if (ob.type === "fud") {
+        ctx.fillStyle = "#f59e0b";
+        ctx.shadowBlur = 14;
+        ctx.shadowColor = "rgba(245,158,11,0.3)";
+        ctx.beginPath();
+        ctx.moveTo(ob.x + 8, ob.y);
+        ctx.lineTo(ob.x + ob.w, ob.y + ob.h / 2);
+        ctx.lineTo(ob.x + 8, ob.y + ob.h);
+        ctx.lineTo(ob.x, ob.y + ob.h / 2);
+        ctx.closePath();
+        ctx.fill();
+      }
+
+      if (ob.type === "deadpool") {
+        ctx.fillStyle = "#64748b";
+        ctx.shadowBlur = 14;
+        ctx.shadowColor = "rgba(100,116,139,0.25)";
+        ctx.fillRect(ob.x, ob.y, ob.w, ob.h);
+        ctx.fillStyle = "rgba(255,255,255,0.75)";
+        ctx.font = "bold 11px Arial";
+        ctx.fillText("POOL", ob.x + 8, ob.y + 17);
+      }
+
+      ctx.restore();
+    }
+
+    function drawPickup(p) {
+      const y = p.y + Math.sin(p.bob) * 5;
+      ctx.save();
+
+      if (p.type === "burn") {
+        ctx.shadowBlur = 18;
+        ctx.shadowColor = "rgba(255,120,70,0.45)";
+        ctx.fillStyle = "#fb923c";
+        ctx.beginPath();
+        ctx.moveTo(p.x + 12, y);
+        ctx.quadraticCurveTo(p.x + 22, y + 10, p.x + 12, y + 24);
+        ctx.quadraticCurveTo(p.x + 2, y + 11, p.x + 12, y);
+        ctx.fill();
+      }
+
+      if (p.type === "reinvest") {
+        ctx.shadowBlur = 18;
+        ctx.shadowColor = "rgba(139,92,246,0.45)";
+        ctx.fillStyle = "#8b5cf6";
+        ctx.beginPath();
+        ctx.arc(p.x + 12, y + 12, 10, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = "rgba(255,255,255,0.92)";
+        ctx.fillRect(p.x + 11, y + 5, 2, 10);
+        ctx.fillRect(p.x + 7, y + 9, 10, 2);
+      }
+
+      if (p.type === "treasury") {
+        ctx.shadowBlur = 18;
+        ctx.shadowColor = "rgba(34,197,94,0.42)";
+        ctx.fillStyle = "#22c55e";
+        ctx.fillRect(p.x + 2, y + 2, 20, 20);
+      }
+
+      ctx.restore();
+    }
+
+    function drawParticles() {
+      particles.forEach(pt => {
+        let color = "rgba(201,164,255,";
+        if (pt.type === "burn") color = "rgba(251,146,60,";
+        if (pt.type === "reinvest") color = "rgba(168,85,247,";
+        if (pt.type === "treasury") color = "rgba(34,197,94,";
+
+        const alpha = Math.max(0, pt.life / 30);
+        ctx.fillStyle = color + alpha + ")";
+        ctx.beginPath();
+        ctx.arc(pt.x, pt.y, pt.size, 0, Math.PI * 2);
+        ctx.fill();
+      });
+    }
+
+    function loop() {
+      update();
+      drawBackground();
+      drawGround();
+
+      pickups.forEach(drawPickup);
+      obstacles.forEach(drawObstacle);
+      drawPlayer();
+      drawParticles();
+
+      if (gameRunning) {
+        animationId = requestAnimationFrame(loop);
+      }
+    }
+
+    function handleAction(e) {
+      if (e) e.preventDefault();
+      if (!gameRunning && !startScreen.classList.contains("hidden")) return;
+      jump();
+    }
+
+    playBtn.addEventListener("click", startGame);
+    restartBtn.addEventListener("click", startGame);
+
+    window.addEventListener("keydown", (e) => {
+      if (e.code === "Space" || e.code === "ArrowUp" || e.code === "KeyW") {
+        e.preventDefault();
+        if (!gameRunning && !startScreen.classList.contains("hidden")) {
+          startGame();
+          return;
+        }
+        jump();
+      }
+    });
+
+    canvas.addEventListener("mousedown", handleAction);
+    canvas.addEventListener("touchstart", handleAction, { passive: false });
+
+    copyBtn.addEventListener("click", async () => {
+      const result = buildResult(score, timeAlive);
+      const copyText =
+`🟣 I just strengthened the system.
+
+Score: ${Math.floor(score)}
+Loop Status: ${result.loopStatus}
+Burn Pressure: ${result.burnPressure}
+
+$ASTY
+
+#ArbStrategy #ArbiTrage`;
+
+      try {
+        await navigator.clipboard.writeText(copyText);
+        copyNote.textContent = "Copied to clipboard.";
+      } catch (err) {
+        copyNote.textContent = "Copy failed. Please copy manually.";
+      }
+    });
+
+    resetGame();
+  </script>
+</body>
+</html>
