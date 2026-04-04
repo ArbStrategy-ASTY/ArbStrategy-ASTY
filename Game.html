@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>ASTY Runner V2</title>
+  <title>ASTY Runner</title>
   <style>
     :root{
       --bg0:#04020a;
@@ -40,8 +40,9 @@
 
     .app{
       position:relative;
-      width:min(100vw, 1080px);
-      height:min(100vh, 660px);
+      width:min(100vw, 1280px);
+      height:min(100vh, 720px);
+      aspect-ratio:16/9;
       overflow:hidden;
       border:1px solid rgba(255,255,255,.08);
       background:
@@ -74,6 +75,7 @@
     .hud-group{
       display:flex;
       gap:10px;
+      flex-wrap:wrap;
     }
 
     .card{
@@ -272,10 +274,16 @@
       font-size:13px;
     }
 
-    @media (max-width:700px){
+    @media (max-width:900px){
       .app{
         width:100vw;
         height:100vh;
+        aspect-ratio:auto;
+      }
+      .hint{
+        white-space:normal;
+        max-width:90%;
+        text-align:center;
       }
     }
   </style>
@@ -318,9 +326,9 @@
         <img src="assets/logo.png" alt="ASTY Logo" />
       </div>
       <div class="pill">ASTY ARCADE MODE</div>
-      <h1>ASTY Runner V2</h1>
+      <h1>ASTY Runner</h1>
       <p>
-        Collect ASTY coins, use the plateaus, survive the monsters and let the shield absorb up to 3 hits.
+        Collect ASTY coins, use the long upper plateaus, survive the monsters and let the shield absorb up to 3 hits.
       </p>
       <div class="buttons">
         <button class="btn btn-primary" id="startBtn">START RUN</button>
@@ -424,7 +432,7 @@
     let minMonsterGapPx = 0;
 
     const player = {
-      x: 140,
+      x: 180,
       y: 0,
       w: 72,
       h: 72,
@@ -463,14 +471,14 @@
     }
 
     function resetStars(){
-      stars = Array.from({length: 70}, () => ({
+      stars = Array.from({length: 90}, () => ({
         x: Math.random() * W,
         y: Math.random() * H,
         r: Math.random() * 1.8 + 0.5,
         s: Math.random() * 90 + 40
       }));
 
-      glowOrbs = Array.from({length: 8}, () => ({
+      glowOrbs = Array.from({length: 10}, () => ({
         x: Math.random() * W,
         y: Math.random() * (baseGroundY * 0.9),
         r: 40 + Math.random() * 70,
@@ -498,8 +506,8 @@
       floatingTexts = [];
 
       coinSpawnTimer = 0.8;
-      monsterSpawnTimer = 2.2;
-      platformSpawnTimer = 2.4;
+      monsterSpawnTimer = 2.3;
+      platformSpawnTimer = 1.9;
       minMonsterGapPx = 0;
 
       player.y = groundAt(player.x) - player.h;
@@ -594,15 +602,16 @@
     }
 
     function spawnPlatform(){
-      const w = 160 + Math.random() * 120;
+      const w = 280 + Math.random() * 260;
       const x = W + 40;
-      const y = baseGroundY - (140 + Math.random() * 90);
+      const y = baseGroundY - (145 + Math.random() * 90);
       const p = { x, y, w, h: 18 };
       platforms.push(p);
 
-      const coinCount = 2 + Math.floor(Math.random() * 3);
+      const coinSpacing = 58;
+      const coinCount = Math.max(4, Math.floor((w - 60) / coinSpacing));
       for(let i = 0; i < coinCount; i++){
-        spawnCoin(x + 30 + i * 52, y - 44);
+        spawnCoin(x + 30 + i * coinSpacing, y - 44);
       }
     }
 
@@ -628,7 +637,7 @@
       monsters.push(m);
 
       const runSpeed = 380 * speed;
-      const safeWindow = 1.8;
+      const safeWindow = 2.05;
       minMonsterGapPx = runSpeed * safeWindow + m.w;
 
       if(Math.random() < 0.45){
@@ -678,9 +687,6 @@
         addParticles(player.x + player.w/2, player.y + player.h/2, "#7dd3fc", "#ffffff", 22);
         addFloatingText(player.x + player.w/2, player.y - 10, "SHIELD");
         monsters = monsters.filter(m => m !== monster);
-        if(player.shields === 0){
-          // next hit kills, but this hit still absorbed
-        }
         return true;
       }
 
@@ -689,7 +695,7 @@
 
     function update(dt){
       gameTime += dt;
-      speed = 1 + gameTime * 0.07;
+      speed = 1 + gameTime * 0.06;
 
       collectFlash *= 0.9;
       hitFlash *= 0.88;
@@ -761,22 +767,22 @@
 
       if(coinSpawnTimer <= 0){
         spawnCoin();
-        if(Math.random() < 0.25){
+        if(Math.random() < 0.22){
           spawnCoin(W + 150, groundAt(W + 150) - 155 - Math.random() * 70);
         }
-        coinSpawnTimer = Math.max(0.82, 1.18 - gameTime * 0.01);
+        coinSpawnTimer = Math.max(0.88, 1.28 - gameTime * 0.008);
       }
 
       if(platformSpawnTimer <= 0){
-        if(Math.random() < 0.55){
+        if(Math.random() < 0.8){
           spawnPlatform();
         }
-        platformSpawnTimer = Math.max(2.6, 3.5 - gameTime * 0.01);
+        platformSpawnTimer = Math.max(1.5, 2.2 - gameTime * 0.006);
       }
 
       if(monsterSpawnTimer <= 0 && fairToSpawnMonster()){
         spawnMonster();
-        monsterSpawnTimer = Math.max(1.85, 2.45 - gameTime * 0.008);
+        monsterSpawnTimer = Math.max(2.1, 2.8 - gameTime * 0.006);
       }
 
       for(const s of stars){
@@ -827,7 +833,7 @@
 
       for(let i = platforms.length - 1; i >= 0; i--){
         const p = platforms[i];
-        if(p.x + p.w < -80) platforms.splice(i, 1);
+        if(p.x + p.w < -120) platforms.splice(i, 1);
       }
 
       for(let i = monsters.length - 1; i >= 0; i--){
@@ -935,15 +941,15 @@
       }
       ctx.stroke();
 
-      for(let i = 0; i < 8; i++){
+      for(let i = 0; i < 10; i++){
         const x = (W - ((gameTime * 260 * speed) + i * 180) % (W + 180));
         const y = groundAt(x);
-        const grad = ctx.createLinearGradient(x, y, x + 120, y + 40);
+        const grad = ctx.createLinearGradient(x, y, x + 140, y + 40);
         grad.addColorStop(0, "rgba(192,132,252,0)");
         grad.addColorStop(.5, "rgba(192,132,252,0.16)");
         grad.addColorStop(1, "rgba(192,132,252,0)");
         ctx.fillStyle = grad;
-        ctx.fillRect(x, y + 4, 120, 24);
+        ctx.fillRect(x, y + 4, 140, 24);
       }
 
       if(landingPulse > 0.01){
