@@ -3,294 +3,321 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>ASTY Token Collector</title>
+  <title>ASTY Neon Collector</title>
   <style>
-    :root {
-      --bg1: #05030a;
-      --bg2: #0d0717;
-      --bg3: #1a0f2d;
-      --purple: #9b5cff;
-      --purple2: #c084fc;
-      --purple3: #6d28d9;
-      --white: #f8f5ff;
-      --soft: rgba(255,255,255,0.72);
-      --border: rgba(210,170,255,0.18);
-      --glass: rgba(255,255,255,0.08);
-      --red: #ff5a76;
-      --green: #49f2b4;
+    :root{
+      --bg0:#04020a;
+      --bg1:#0b0614;
+      --bg2:#140a22;
+      --bg3:#220f38;
+      --p1:#7c3aed;
+      --p2:#9b5cff;
+      --p3:#c084fc;
+      --p4:#e9d5ff;
+      --danger:#ff4d6d;
+      --danger2:#ff885e;
+      --ok:#57f0b2;
+      --gold:#ffd86b;
+      --glass:rgba(255,255,255,.08);
+      --border:rgba(220,190,255,.16);
+      --text:#faf7ff;
+      --soft:rgba(255,255,255,.72);
     }
 
-    * {
-      box-sizing: border-box;
-      -webkit-tap-highlight-color: transparent;
-      user-select: none;
+    *{
+      box-sizing:border-box;
+      -webkit-tap-highlight-color:transparent;
+      user-select:none;
     }
 
-    html, body {
-      margin: 0;
-      width: 100%;
-      height: 100%;
-      overflow: hidden;
-      font-family: Inter, Arial, sans-serif;
-      color: var(--white);
+    html,body{
+      margin:0;
+      width:100%;
+      height:100%;
+      overflow:hidden;
       background:
-        radial-gradient(circle at 50% 0%, rgba(155,92,255,0.22), transparent 32%),
-        radial-gradient(circle at 10% 80%, rgba(155,92,255,0.08), transparent 30%),
-        linear-gradient(180deg, var(--bg3) 0%, var(--bg2) 45%, var(--bg1) 100%);
+        radial-gradient(circle at 50% -10%, rgba(155,92,255,.28), transparent 34%),
+        radial-gradient(circle at 15% 85%, rgba(124,58,237,.12), transparent 28%),
+        linear-gradient(180deg,var(--bg3) 0%,var(--bg2) 30%,var(--bg1) 65%,var(--bg0) 100%);
+      color:var(--text);
+      font-family:Inter, Arial, sans-serif;
     }
 
-    body {
-      display: flex;
-      align-items: center;
-      justify-content: center;
+    body{
+      display:flex;
+      align-items:center;
+      justify-content:center;
     }
 
-    .app {
-      position: relative;
-      width: min(100vw, 520px);
-      height: min(100vh, 920px);
-      overflow: hidden;
+    .app{
+      position:relative;
+      width:min(100vw,520px);
+      height:min(100vh,920px);
+      overflow:hidden;
+      border-left:1px solid rgba(255,255,255,.08);
+      border-right:1px solid rgba(255,255,255,.08);
       background:
-        radial-gradient(circle at 50% 15%, rgba(192,132,252,0.08), transparent 28%),
-        linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
-      border-left: 1px solid rgba(255,255,255,0.08);
-      border-right: 1px solid rgba(255,255,255,0.08);
+        radial-gradient(circle at 50% 12%, rgba(192,132,252,.10), transparent 28%),
+        linear-gradient(180deg, rgba(255,255,255,.025), rgba(255,255,255,.01));
       box-shadow:
-        0 0 80px rgba(123,58,237,0.16),
-        inset 0 0 120px rgba(155,92,255,0.06);
+        0 0 120px rgba(124,58,237,.18),
+        inset 0 0 120px rgba(155,92,255,.06);
     }
 
-    canvas {
-      width: 100%;
-      height: 100%;
-      display: block;
-      touch-action: none;
+    canvas{
+      width:100%;
+      height:100%;
+      display:block;
+      touch-action:none;
     }
 
-    .hud {
-      position: absolute;
-      top: 14px;
-      left: 14px;
-      right: 14px;
-      z-index: 5;
-      display: flex;
-      justify-content: space-between;
-      gap: 10px;
-      pointer-events: none;
+    .hud{
+      position:absolute;
+      top:14px;
+      left:14px;
+      right:14px;
+      z-index:6;
+      display:flex;
+      justify-content:space-between;
+      gap:10px;
+      pointer-events:none;
     }
 
-    .hud-card {
-      min-width: 110px;
-      padding: 10px 12px;
-      border-radius: 16px;
-      background: linear-gradient(180deg, rgba(255,255,255,0.08), rgba(255,255,255,0.04));
-      border: 1px solid var(--border);
-      box-shadow: 0 8px 30px rgba(0,0,0,0.22);
-      backdrop-filter: blur(10px);
+    .hud-col{
+      display:flex;
+      gap:10px;
     }
 
-    .hud-label {
-      font-size: 11px;
-      letter-spacing: 0.12em;
-      text-transform: uppercase;
-      color: rgba(255,255,255,0.62);
-    }
-
-    .hud-value {
-      margin-top: 4px;
-      font-size: 24px;
-      font-weight: 900;
-      line-height: 1;
-    }
-
-    .hud-right {
-      text-align: right;
-    }
-
-    .bottom-note {
-      position: absolute;
-      bottom: 18px;
-      left: 50%;
-      transform: translateX(-50%);
-      z-index: 5;
-      padding: 10px 14px;
-      border-radius: 999px;
-      background: rgba(5,5,10,0.38);
-      border: 1px solid rgba(255,255,255,0.08);
-      color: rgba(255,255,255,0.72);
-      font-size: 12px;
-      backdrop-filter: blur(8px);
-      pointer-events: none;
-      white-space: nowrap;
-    }
-
-    .overlay {
-      position: absolute;
-      inset: 0;
-      z-index: 10;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      text-align: center;
-      padding: 24px;
-      background:
-        radial-gradient(circle at 50% 15%, rgba(155,92,255,0.24), transparent 25%),
-        linear-gradient(180deg, rgba(7,4,12,0.72), rgba(7,4,12,0.9));
-      backdrop-filter: blur(8px);
-    }
-
-    .hidden {
-      display: none;
-    }
-
-    .logo-wrap {
-      width: 108px;
-      height: 108px;
-      border-radius: 50%;
-      display: grid;
-      place-items: center;
-      margin-bottom: 18px;
-      background: radial-gradient(circle at 50% 50%, rgba(192,132,252,0.18), rgba(124,58,237,0.08));
-      border: 1px solid rgba(210,170,255,0.18);
+    .card{
+      min-width:102px;
+      padding:10px 12px;
+      border-radius:16px;
+      border:1px solid var(--border);
+      background:linear-gradient(180deg, rgba(255,255,255,.09), rgba(255,255,255,.04));
+      backdrop-filter:blur(10px);
       box-shadow:
-        0 0 30px rgba(155,92,255,0.2),
-        0 0 70px rgba(155,92,255,0.16);
-      animation: pulse 2.1s ease-in-out infinite;
+        0 10px 30px rgba(0,0,0,.24),
+        inset 0 0 18px rgba(255,255,255,.02);
     }
 
-    .logo-wrap img {
-      width: 64px;
-      height: 64px;
-      object-fit: contain;
-      filter: drop-shadow(0 0 18px rgba(192,132,252,0.35));
+    .label{
+      font-size:11px;
+      text-transform:uppercase;
+      letter-spacing:.12em;
+      color:rgba(255,255,255,.60);
     }
 
-    @keyframes pulse {
-      0%,100% { transform: scale(1); }
-      50% { transform: scale(1.06); }
+    .value{
+      margin-top:4px;
+      font-size:24px;
+      font-weight:1000;
+      line-height:1;
+      text-shadow:0 0 18px rgba(192,132,252,.12);
     }
 
-    .pill {
-      padding: 8px 14px;
-      border-radius: 999px;
-      border: 1px solid var(--border);
-      background: rgba(255,255,255,0.06);
-      color: #efe7ff;
-      font-size: 12px;
-      letter-spacing: 0.12em;
-      text-transform: uppercase;
-      margin-bottom: 14px;
+    .combo-pop{
+      position:absolute;
+      top:88px;
+      left:50%;
+      transform:translateX(-50%);
+      z-index:6;
+      padding:8px 14px;
+      border-radius:999px;
+      background:rgba(10,8,18,.45);
+      border:1px solid rgba(215,180,255,.18);
+      color:#fff;
+      font-size:13px;
+      font-weight:900;
+      letter-spacing:.08em;
+      backdrop-filter:blur(8px);
+      box-shadow:0 0 30px rgba(155,92,255,.12);
+      opacity:0;
+      pointer-events:none;
+      transition:opacity .12s ease, transform .12s ease;
     }
 
-    h1 {
-      margin: 0 0 8px;
-      font-size: clamp(30px, 7vw, 48px);
-      font-weight: 1000;
-      letter-spacing: 0.02em;
-      text-shadow: 0 0 24px rgba(155,92,255,0.28);
+    .combo-pop.show{
+      opacity:1;
+      transform:translateX(-50%) translateY(-4px);
     }
 
-    p {
-      max-width: 360px;
-      margin: 0 0 20px;
-      color: rgba(255,255,255,0.76);
-      line-height: 1.55;
-      font-size: 15px;
+    .bottom-note{
+      position:absolute;
+      bottom:18px;
+      left:50%;
+      transform:translateX(-50%);
+      z-index:6;
+      padding:10px 14px;
+      border-radius:999px;
+      border:1px solid rgba(255,255,255,.08);
+      background:rgba(5,5,10,.36);
+      color:rgba(255,255,255,.72);
+      font-size:12px;
+      backdrop-filter:blur(8px);
+      pointer-events:none;
+      white-space:nowrap;
     }
 
-    .buttons {
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-      width: min(100%, 300px);
+    .overlay{
+      position:absolute;
+      inset:0;
+      z-index:10;
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      justify-content:center;
+      text-align:center;
+      padding:24px;
+      background:
+        radial-gradient(circle at 50% 15%, rgba(155,92,255,.26), transparent 25%),
+        linear-gradient(180deg, rgba(7,4,12,.68), rgba(7,4,12,.92));
+      backdrop-filter:blur(10px);
     }
 
-    .btn, .btn-link {
-      appearance: none;
-      border: none;
-      text-decoration: none;
-      cursor: pointer;
-      width: 100%;
-      padding: 15px 18px;
-      border-radius: 16px;
-      font-weight: 900;
-      font-size: 14px;
-      letter-spacing: 0.03em;
-      transition: 0.15s ease;
+    .hidden{ display:none; }
+
+    .logo-wrap{
+      position:relative;
+      width:118px;
+      height:118px;
+      border-radius:50%;
+      display:grid;
+      place-items:center;
+      margin-bottom:18px;
+      background:
+        radial-gradient(circle at 50% 45%, rgba(192,132,252,.22), rgba(124,58,237,.08));
+      border:1px solid rgba(220,190,255,.18);
+      box-shadow:
+        0 0 36px rgba(155,92,255,.24),
+        0 0 110px rgba(155,92,255,.16),
+        inset 0 0 24px rgba(255,255,255,.03);
+      animation:pulse 2.2s infinite ease-in-out;
     }
 
-    .btn:hover, .btn-link:hover {
-      transform: translateY(-1px);
+    .logo-wrap img{
+      width:68px;
+      height:68px;
+      object-fit:contain;
+      filter:drop-shadow(0 0 18px rgba(192,132,252,.35));
     }
 
-    .btn:active, .btn-link:active {
-      transform: translateY(1px) scale(0.995);
+    @keyframes pulse{
+      0%,100%{ transform:scale(1); }
+      50%{ transform:scale(1.07); }
     }
 
-    .btn-primary {
-      color: white;
-      background: linear-gradient(135deg, var(--purple3), var(--purple));
-      box-shadow: 0 12px 34px rgba(124,58,237,0.34);
+    .pill{
+      padding:8px 14px;
+      border-radius:999px;
+      border:1px solid var(--border);
+      background:rgba(255,255,255,.06);
+      color:#efe7ff;
+      font-size:12px;
+      text-transform:uppercase;
+      letter-spacing:.12em;
+      margin-bottom:14px;
     }
 
-    .btn-secondary {
-      color: #f3ecff;
-      background: rgba(255,255,255,0.08);
-      border: 1px solid var(--border);
+    h1{
+      margin:0 0 8px;
+      font-size:clamp(30px, 7vw, 50px);
+      font-weight:1000;
+      letter-spacing:.02em;
+      text-shadow:0 0 26px rgba(155,92,255,.24);
     }
 
-    .btn-link {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: white;
-      background: linear-gradient(135deg, #6d28d9, #9333ea);
-      box-shadow: 0 12px 34px rgba(124,58,237,0.28);
+    p{
+      max-width:360px;
+      margin:0 0 22px;
+      color:rgba(255,255,255,.76);
+      line-height:1.55;
+      font-size:15px;
     }
 
-    .result-card {
-      width: min(100%, 360px);
-      text-align: left;
-      padding: 16px;
-      border-radius: 20px;
-      background: linear-gradient(180deg, rgba(255,255,255,0.08), rgba(255,255,255,0.04));
-      border: 1px solid var(--border);
-      box-shadow: 0 10px 30px rgba(0,0,0,0.22);
-      margin: 10px 0 14px;
+    .buttons{
+      width:min(100%,300px);
+      display:flex;
+      flex-direction:column;
+      gap:10px;
     }
 
-    .result-title {
-      margin: 0 0 10px;
-      font-size: 17px;
-      font-weight: 900;
+    .btn,.btn-link{
+      appearance:none;
+      border:none;
+      text-decoration:none;
+      cursor:pointer;
+      width:100%;
+      padding:15px 18px;
+      border-radius:16px;
+      font-size:14px;
+      font-weight:1000;
+      letter-spacing:.04em;
+      transition:.15s ease;
     }
 
-    .line {
-      display: flex;
-      justify-content: space-between;
-      gap: 10px;
-      padding: 8px 0;
-      border-bottom: 1px solid rgba(255,255,255,0.07);
-      font-size: 14px;
+    .btn:hover,.btn-link:hover{ transform:translateY(-1px); }
+    .btn:active,.btn-link:active{ transform:translateY(1px) scale(.995); }
+
+    .btn-primary{
+      color:white;
+      background:linear-gradient(135deg, #6d28d9, #9b5cff);
+      box-shadow:0 14px 36px rgba(124,58,237,.34);
     }
 
-    .line:last-child {
-      border-bottom: none;
+    .btn-secondary{
+      color:#f5efff;
+      background:rgba(255,255,255,.08);
+      border:1px solid var(--border);
     }
 
-    .copy-note {
-      min-height: 20px;
-      margin-top: 8px;
-      color: #d6b8ff;
-      font-size: 13px;
+    .btn-link{
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      color:white;
+      background:linear-gradient(135deg, #7c3aed, #a855f7);
+      box-shadow:0 14px 36px rgba(124,58,237,.28);
     }
 
-    @media (max-width: 600px) {
-      .app {
-        width: 100vw;
-        height: 100vh;
-      }
+    .result-card{
+      width:min(100%,360px);
+      text-align:left;
+      padding:16px;
+      border-radius:22px;
+      background:linear-gradient(180deg, rgba(255,255,255,.09), rgba(255,255,255,.04));
+      border:1px solid var(--border);
+      box-shadow:
+        0 12px 34px rgba(0,0,0,.24),
+        inset 0 0 18px rgba(255,255,255,.03);
+      margin:10px 0 14px;
+    }
+
+    .result-title{
+      margin:0 0 10px;
+      font-size:17px;
+      font-weight:1000;
+    }
+
+    .line{
+      display:flex;
+      justify-content:space-between;
+      gap:10px;
+      padding:8px 0;
+      border-bottom:1px solid rgba(255,255,255,.07);
+      font-size:14px;
+    }
+
+    .line:last-child{ border-bottom:none; }
+
+    .copy-note{
+      min-height:20px;
+      margin-top:8px;
+      color:#d7b9ff;
+      font-size:13px;
+    }
+
+    @media (max-width:600px){
+      .app{ width:100vw; height:100vh; }
     }
   </style>
 </head>
@@ -299,26 +326,35 @@
     <canvas id="game"></canvas>
 
     <div class="hud">
-      <div class="hud-card">
-        <div class="hud-label">Score</div>
-        <div class="hud-value" id="scoreEl">0</div>
+      <div class="hud-col">
+        <div class="card">
+          <div class="label">Score</div>
+          <div class="value" id="scoreEl">0</div>
+        </div>
+        <div class="card">
+          <div class="label">Combo</div>
+          <div class="value" id="comboEl">x1</div>
+        </div>
       </div>
-      <div class="hud-card hud-right">
-        <div class="hud-label">Collected</div>
-        <div class="hud-value" id="collectedEl">0</div>
+      <div class="hud-col">
+        <div class="card">
+          <div class="label">Collected</div>
+          <div class="value" id="collectedEl">0</div>
+        </div>
       </div>
     </div>
 
-    <div class="bottom-note">Move left and right. Collect ASTY. Avoid SELL blocks.</div>
+    <div class="combo-pop" id="comboPop">COMBO x2</div>
+    <div class="bottom-note">Move left and right. Collect ASTY. Avoid SELL and FUD.</div>
 
     <div class="overlay" id="startScreen">
       <div class="logo-wrap">
         <img src="assets/logo.png" alt="ASTY Logo" />
       </div>
       <div class="pill">ASTY ARCADE MODE</div>
-      <h1>ASTY Token Collector</h1>
+      <h1>ASTY Neon Collector</h1>
       <p>
-        Collect falling ASTY tokens, avoid sell blocks and keep the system alive.
+        Collect falling ASTY tokens, build a combo, survive the pressure and keep the loop alive.
       </p>
       <div class="buttons">
         <button class="btn btn-primary" id="startBtn">PLAY</button>
@@ -330,27 +366,20 @@
         <img src="assets/logo.png" alt="ASTY Logo" />
       </div>
       <div class="pill">SYSTEM RESULT</div>
-      <h1 style="font-size:clamp(28px, 6vw, 40px)">Loop Complete</h1>
+      <h1 style="font-size:clamp(28px, 6vw, 42px)">Loop Complete</h1>
       <p id="resultText">The system measured your participation.</p>
 
       <div class="result-card">
         <div class="result-title">🟣 ASTY SYSTEM RESULT</div>
         <div class="line"><span>Score</span><strong id="finalScore">0</strong></div>
         <div class="line"><span>Collected</span><strong id="finalCollected">0</strong></div>
-        <div class="line"><span>Survival Time</span><strong id="finalTime">0s</strong></div>
+        <div class="line"><span>Best Combo</span><strong id="finalBestCombo">x1</strong></div>
         <div class="line"><span>Loop Status</span><strong id="finalStatus">ACTIVE</strong></div>
       </div>
 
       <div class="buttons">
         <button class="btn btn-secondary" id="copyBtn">COPY RESULT</button>
-        <a
-          class="btn-link"
-          href="https://htmlpreview.github.io/?https://github.com/ArbStrategy-ASTY/ArbStrategy-ASTY/blob/main/pools.html"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          ACTIVATE THE LOOP
-        </a>
+        <a class="btn-link" href="https://htmlpreview.github.io/?https://github.com/ArbStrategy-ASTY/ArbStrategy-ASTY/blob/main/pools.html" target="_blank" rel="noopener noreferrer">ACTIVATE THE LOOP</a>
         <button class="btn btn-primary" id="restartBtn">PLAY AGAIN</button>
       </div>
 
@@ -363,7 +392,9 @@
     const ctx = canvas.getContext("2d");
 
     const scoreEl = document.getElementById("scoreEl");
+    const comboEl = document.getElementById("comboEl");
     const collectedEl = document.getElementById("collectedEl");
+    const comboPop = document.getElementById("comboPop");
 
     const startScreen = document.getElementById("startScreen");
     const endScreen = document.getElementById("endScreen");
@@ -374,18 +405,17 @@
 
     const finalScore = document.getElementById("finalScore");
     const finalCollected = document.getElementById("finalCollected");
-    const finalTime = document.getElementById("finalTime");
+    const finalBestCombo = document.getElementById("finalBestCombo");
     const finalStatus = document.getElementById("finalStatus");
     const resultText = document.getElementById("resultText");
 
     const logo = new Image();
     logo.src = "assets/logo.png";
 
-    let W = 0;
-    let H = 0;
+    let W = 0, H = 0;
     let DPR = Math.max(1, window.devicePixelRatio || 1);
 
-    function resize() {
+    function resize(){
       const app = document.querySelector(".app");
       W = app.clientWidth;
       H = app.clientHeight;
@@ -393,9 +423,8 @@
       canvas.height = H * DPR;
       canvas.style.width = W + "px";
       canvas.style.height = H + "px";
-      ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+      ctx.setTransform(DPR,0,0,DPR,0,0);
     }
-
     window.addEventListener("resize", resize);
     resize();
 
@@ -403,13 +432,16 @@
     let animationId = null;
     let lastTime = 0;
     let gameTime = 0;
+    let shake = 0;
+    let bestCombo = 1;
+    let comboFlashTimer = 0;
 
     const player = {
       x: 0,
       y: 0,
-      w: 72,
-      h: 72,
-      speed: 420,
+      w: 78,
+      h: 78,
+      speed: 470,
       moveLeft: false,
       moveRight: false
     };
@@ -418,44 +450,52 @@
     let tokens = [];
     let hazards = [];
     let particles = [];
+    let scoreBursts = [];
 
     let score = 0;
     let collected = 0;
+    let combo = 1;
     let tokenSpawn = 0;
-    let hazardSpawn = 0;
+    let hazardSpawn = 1.1;
 
-    function resetStars() {
-      stars = Array.from({ length: 50 }, () => ({
+    function resetStars(){
+      stars = Array.from({length:60}, () => ({
         x: Math.random() * W,
         y: Math.random() * H,
         r: Math.random() * 1.8 + 0.4,
-        s: Math.random() * 40 + 20
+        s: Math.random() * 50 + 25
       }));
     }
 
-    function resetGame() {
+    function resetGame(){
       player.x = W / 2 - player.w / 2;
-      player.y = H - 120;
+      player.y = H - 130;
       player.moveLeft = false;
       player.moveRight = false;
 
+      gameTime = 0;
+      shake = 0;
       score = 0;
       collected = 0;
-      gameTime = 0;
+      combo = 1;
+      bestCombo = 1;
       tokenSpawn = 0;
-      hazardSpawn = 1.2;
+      hazardSpawn = 1.1;
 
       tokens = [];
       hazards = [];
       particles = [];
+      scoreBursts = [];
       resetStars();
 
       scoreEl.textContent = "0";
+      comboEl.textContent = "x1";
       collectedEl.textContent = "0";
+      comboPop.classList.remove("show");
       copyNote.textContent = "";
     }
 
-    function startGame() {
+    function startGame(){
       resetGame();
       startScreen.classList.add("hidden");
       endScreen.classList.add("hidden");
@@ -465,19 +505,19 @@
       animationId = requestAnimationFrame(loop);
     }
 
-    function endGame() {
+    function endGame(){
       running = false;
       cancelAnimationFrame(animationId);
 
       const status =
-        score >= 4000 ? "DOMINANT" :
-        score >= 2200 ? "ACTIVE" :
-        score >= 1000 ? "STABLE" :
+        score >= 7000 ? "DOMINANT" :
+        score >= 4000 ? "ACTIVE" :
+        score >= 1800 ? "STABLE" :
         "WARM";
 
       finalScore.textContent = Math.floor(score).toLocaleString();
-      finalCollected.textContent = collected.toString();
-      finalTime.textContent = gameTime.toFixed(1) + "s";
+      finalCollected.textContent = String(collected);
+      finalBestCombo.textContent = "x" + bestCombo;
       finalStatus.textContent = status;
 
       resultText.textContent =
@@ -489,33 +529,33 @@
       endScreen.classList.remove("hidden");
     }
 
-    function spawnToken() {
-      const size = 30 + Math.random() * 14;
+    function spawnToken(){
+      const size = 40 + Math.random() * 16;
       tokens.push({
         x: 20 + Math.random() * (W - 40 - size),
         y: -size - 10,
         w: size,
         h: size,
-        speed: 180 + Math.random() * 80 + gameTime * 3,
+        speed: 210 + Math.random() * 90 + gameTime * 4.5,
         rot: Math.random() * Math.PI * 2,
-        vr: (Math.random() - 0.5) * 2
+        vr: (Math.random() - 0.5) * 3.5,
+        glow: Math.random() * 10
       });
     }
 
-    function spawnHazard() {
-      const w = 62 + Math.random() * 18;
-      const h = 24;
+    function spawnHazard(){
+      const w = 70 + Math.random() * 26;
+      const h = 26;
       hazards.push({
-        x: 20 + Math.random() * (W - 40 - w),
+        x: 18 + Math.random() * (W - 36 - w),
         y: -h - 10,
-        w,
-        h,
-        speed: 220 + Math.random() * 70 + gameTime * 4,
-        type: Math.random() > 0.4 ? "SELL" : "FUD"
+        w, h,
+        speed: 235 + Math.random() * 85 + gameTime * 5,
+        type: Math.random() > 0.45 ? "SELL" : "FUD"
       });
     }
 
-    function rectsCollide(a, b) {
+    function rectsCollide(a,b){
       return (
         a.x < b.x + b.w &&
         a.x + a.w > b.x &&
@@ -524,108 +564,159 @@
       );
     }
 
-    function burst(x, y, color, count = 12) {
-      for (let i = 0; i < count; i++) {
+    function addBurst(x, y, baseColor, count=14){
+      for(let i=0;i<count;i++){
         particles.push({
-          x,
-          y,
-          vx: (Math.random() - 0.5) * 4,
-          vy: (Math.random() - 0.5) * 4,
-          size: 2 + Math.random() * 3,
-          life: 20 + Math.random() * 14,
-          color
+          x, y,
+          vx:(Math.random() - 0.5) * 5.5,
+          vy:(Math.random() - 0.5) * 5.5,
+          size:2 + Math.random() * 3.5,
+          life:20 + Math.random() * 18,
+          color:baseColor
         });
       }
     }
 
-    function update(dt) {
+    function addScoreBurst(x, y, text){
+      scoreBursts.push({ x, y, text, life: 40 });
+    }
+
+    function showCombo(mult){
+      comboPop.textContent = "COMBO x" + mult;
+      comboPop.classList.add("show");
+      comboFlashTimer = 0.45;
+    }
+
+    function update(dt){
       gameTime += dt;
-      score += dt * 35;
+      shake *= 0.88;
 
       if (player.moveLeft) player.x -= player.speed * dt;
       if (player.moveRight) player.x += player.speed * dt;
+      player.x = Math.max(10, Math.min(W - player.w - 10, player.x));
 
-      player.x = Math.max(12, Math.min(W - player.w - 12, player.x));
+      score += dt * (38 + combo * 1.5);
 
       tokenSpawn -= dt;
       hazardSpawn -= dt;
 
-      if (tokenSpawn <= 0) {
+      if (tokenSpawn <= 0){
         spawnToken();
-        tokenSpawn = Math.max(0.28, 0.62 - gameTime * 0.01);
+        tokenSpawn = Math.max(0.20, 0.52 - gameTime * 0.008);
       }
 
-      if (hazardSpawn <= 0) {
+      if (hazardSpawn <= 0){
         spawnHazard();
-        hazardSpawn = Math.max(0.85, 1.45 - gameTime * 0.015);
+        hazardSpawn = Math.max(0.70, 1.20 - gameTime * 0.012);
       }
 
-      for (const s of stars) {
+      for(const s of stars){
         s.y += s.s * dt;
-        if (s.y > H) {
+        if(s.y > H){
           s.y = -4;
           s.x = Math.random() * W;
         }
       }
 
-      for (const t of tokens) {
+      for(const t of tokens){
         t.y += t.speed * dt;
         t.rot += t.vr * dt;
+        t.glow += dt * 6;
       }
 
-      for (const h of hazards) {
+      for(const h of hazards){
         h.y += h.speed * dt;
       }
 
-      for (let i = tokens.length - 1; i >= 0; i--) {
+      for(let i=tokens.length-1;i>=0;i--){
         const t = tokens[i];
-        if (rectsCollide(player, t)) {
+        if(rectsCollide(player,t)){
           collected++;
-          score += 140;
+          combo++;
+          if(combo > bestCombo) bestCombo = combo;
+
+          const gain = 90 + combo * 18;
+          score += gain;
+
           scoreEl.textContent = Math.floor(score).toLocaleString();
-          collectedEl.textContent = collected.toString();
-          burst(t.x + t.w / 2, t.y + t.h / 2, "rgba(192,132,252,0.95)", 14);
-          tokens.splice(i, 1);
+          collectedEl.textContent = String(collected);
+          comboEl.textContent = "x" + combo;
+
+          addBurst(t.x + t.w/2, t.y + t.h/2, [192,132,252], 16);
+          addScoreBurst(t.x + t.w/2, t.y, "+" + gain);
+
+          if(combo >= 3) showCombo(combo);
+
+          tokens.splice(i,1);
           continue;
         }
-        if (t.y > H + 50) {
-          tokens.splice(i, 1);
+
+        if(t.y > H + 60){
+          combo = 1;
+          comboEl.textContent = "x1";
+          tokens.splice(i,1);
         }
       }
 
-      for (let i = hazards.length - 1; i >= 0; i--) {
+      for(let i=hazards.length-1;i>=0;i--){
         const h = hazards[i];
-        if (rectsCollide(player, h)) {
-          burst(player.x + player.w / 2, player.y + player.h / 2, "rgba(255,90,118,0.95)", 20);
+        if(rectsCollide(player,h)){
+          addBurst(player.x + player.w/2, player.y + player.h/2, [255,77,109], 26);
+          shake = 14;
           endGame();
           return;
         }
-        if (h.y > H + 50) {
-          hazards.splice(i, 1);
+        if(h.y > H + 50){
+          hazards.splice(i,1);
         }
       }
 
-      for (let i = particles.length - 1; i >= 0; i--) {
+      for(let i=particles.length-1;i>=0;i--){
         const p = particles[i];
         p.x += p.vx;
         p.y += p.vy;
-        p.life -= 1;
-        if (p.life <= 0) particles.splice(i, 1);
+        p.life--;
+        if(p.life <= 0) particles.splice(i,1);
+      }
+
+      for(let i=scoreBursts.length-1;i>=0;i--){
+        const b = scoreBursts[i];
+        b.y -= 1.1;
+        b.life--;
+        if(b.life <= 0) scoreBursts.splice(i,1);
+      }
+
+      if(comboFlashTimer > 0){
+        comboFlashTimer -= dt;
+        if(comboFlashTimer <= 0){
+          comboPop.classList.remove("show");
+        }
       }
 
       scoreEl.textContent = Math.floor(score).toLocaleString();
     }
 
-    function drawBackground() {
-      const g = ctx.createLinearGradient(0, 0, 0, H);
-      g.addColorStop(0, "#1a0f2d");
-      g.addColorStop(0.45, "#0d0717");
-      g.addColorStop(1, "#05030a");
-      ctx.fillStyle = g;
-      ctx.fillRect(0, 0, W, H);
+    function roundRect(x,y,w,h,r){
+      ctx.beginPath();
+      ctx.moveTo(x+r,y);
+      ctx.arcTo(x+w,y,x+w,y+h,r);
+      ctx.arcTo(x+w,y+h,x,y+h,r);
+      ctx.arcTo(x,y+h,x,y,r);
+      ctx.arcTo(x,y,x+w,y,r);
+      ctx.closePath();
+    }
 
-      for (const s of stars) {
-        ctx.fillStyle = `rgba(255,255,255,${0.25 + s.r * 0.12})`;
+    function drawBackground(){
+      const g = ctx.createLinearGradient(0,0,0,H);
+      g.addColorStop(0, "#220f38");
+      g.addColorStop(.35, "#140a22");
+      g.addColorStop(.7, "#0b0614");
+      g.addColorStop(1, "#04020a");
+      ctx.fillStyle = g;
+      ctx.fillRect(0,0,W,H);
+
+      for(const s of stars){
+        ctx.fillStyle = `rgba(255,255,255,${0.18 + s.r * 0.12})`;
         ctx.beginPath();
         ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
         ctx.fill();
@@ -633,63 +724,92 @@
 
       ctx.strokeStyle = "rgba(192,132,252,0.06)";
       ctx.lineWidth = 1;
-      const grid = 36;
-      const drift = (gameTime * 25) % grid;
-
-      for (let x = -grid; x < W + grid; x += grid) {
+      const grid = 34;
+      const drift = (gameTime * 38) % grid;
+      for(let x = -grid; x < W + grid; x += grid){
         ctx.beginPath();
         ctx.moveTo(x + drift, 0);
         ctx.lineTo(x + drift, H);
         ctx.stroke();
       }
+      for(let y = -grid; y < H + grid; y += grid){
+        ctx.beginPath();
+        ctx.moveTo(0, y + drift);
+        ctx.lineTo(W, y + drift);
+        ctx.stroke();
+      }
+
+      for(let i=0;i<6;i++){
+        const yy = ((gameTime * 220) + i * 120) % (H + 120) - 120;
+        const alpha = 0.035 - i * 0.004;
+        ctx.fillStyle = `rgba(192,132,252,${Math.max(0, alpha)})`;
+        ctx.fillRect(0, yy, W, 2);
+      }
+
+      if(logo.complete){
+        ctx.save();
+        ctx.globalAlpha = 0.045;
+        const size = 180;
+        ctx.drawImage(logo, W/2 - size/2, H/2 - size/2, size, size);
+        ctx.restore();
+      }
     }
 
-    function drawPlayer() {
+    function drawPlayer(){
       const x = player.x;
       const y = player.y;
 
       ctx.save();
-      ctx.shadowBlur = 28;
-      ctx.shadowColor = "rgba(155,92,255,0.45)";
+      ctx.shadowBlur = 32;
+      ctx.shadowColor = "rgba(155,92,255,.42)";
 
-      ctx.fillStyle = "rgba(155,92,255,0.15)";
+      ctx.fillStyle = "rgba(155,92,255,.16)";
       ctx.beginPath();
-      ctx.arc(x + player.w / 2, y + player.h / 2, 40, 0, Math.PI * 2);
+      ctx.arc(x + player.w/2, y + player.h/2, 44, 0, Math.PI*2);
       ctx.fill();
 
-      ctx.strokeStyle = "rgba(210,170,255,0.45)";
+      ctx.strokeStyle = "rgba(220,190,255,.48)";
       ctx.lineWidth = 2;
       ctx.beginPath();
-      ctx.arc(x + player.w / 2, y + player.h / 2, 38, 0, Math.PI * 2);
+      ctx.arc(x + player.w/2, y + player.h/2, 41, 0, Math.PI*2);
       ctx.stroke();
 
-      if (logo.complete) {
-        ctx.drawImage(logo, x + 8, y + 8, player.w - 16, player.h - 16);
+      ctx.strokeStyle = "rgba(124,58,237,.45)";
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.arc(x + player.w/2, y + player.h/2, 34, 0, Math.PI*2);
+      ctx.stroke();
+
+      if(logo.complete){
+        ctx.drawImage(logo, x + 9, y + 9, player.w - 18, player.h - 18);
       } else {
         ctx.fillStyle = "#9b5cff";
         ctx.beginPath();
-        ctx.arc(x + player.w / 2, y + player.h / 2, 22, 0, Math.PI * 2);
+        ctx.arc(x + player.w/2, y + player.h/2, 22, 0, Math.PI*2);
         ctx.fill();
       }
 
       ctx.restore();
     }
 
-    function drawTokens() {
-      for (const t of tokens) {
+    function drawTokens(){
+      for(const t of tokens){
         ctx.save();
-        ctx.translate(t.x + t.w / 2, t.y + t.h / 2);
+        ctx.translate(t.x + t.w/2, t.y + t.h/2);
         ctx.rotate(t.rot);
 
-        ctx.shadowBlur = 22;
-        ctx.shadowColor = "rgba(192,132,252,0.42)";
-        ctx.fillStyle = "rgba(155,92,255,0.14)";
+        const pulse = 0.9 + Math.sin(t.glow) * 0.08;
+        ctx.scale(pulse, pulse);
+
+        ctx.shadowBlur = 30;
+        ctx.shadowColor = "rgba(192,132,252,.55)";
+        ctx.fillStyle = "rgba(155,92,255,.15)";
         ctx.beginPath();
-        ctx.arc(0, 0, t.w * 0.58, 0, Math.PI * 2);
+        ctx.arc(0, 0, t.w * 0.62, 0, Math.PI * 2);
         ctx.fill();
 
-        if (logo.complete) {
-          ctx.drawImage(logo, -t.w / 2, -t.h / 2, t.w, t.h);
+        if(logo.complete){
+          ctx.drawImage(logo, -t.w/2, -t.h/2, t.w, t.h);
         } else {
           ctx.fillStyle = "#c084fc";
           ctx.beginPath();
@@ -701,79 +821,103 @@
       }
     }
 
-    function roundRect(ctx, x, y, w, h, r) {
-      ctx.beginPath();
-      ctx.moveTo(x + r, y);
-      ctx.arcTo(x + w, y, x + w, y + h, r);
-      ctx.arcTo(x + w, y + h, x, y + h, r);
-      ctx.arcTo(x, y + h, x, y, r);
-      ctx.arcTo(x, y, x + w, y, r);
-      ctx.closePath();
-    }
-
-    function drawHazards() {
-      for (const h of hazards) {
+    function drawHazards(){
+      for(const h of hazards){
         ctx.save();
-        ctx.shadowBlur = 18;
-        ctx.shadowColor = "rgba(255,90,118,0.28)";
-        ctx.fillStyle = h.type === "SELL" ? "rgba(255,90,118,0.95)" : "rgba(255,155,76,0.95)";
-        roundRect(ctx, h.x, h.y, h.w, h.h, 12);
+        ctx.shadowBlur = 20;
+        ctx.shadowColor = h.type === "SELL" ? "rgba(255,77,109,.34)" : "rgba(255,136,94,.34)";
+
+        const grad = ctx.createLinearGradient(h.x, h.y, h.x + h.w, h.y + h.h);
+        if(h.type === "SELL"){
+          grad.addColorStop(0, "rgba(255,77,109,.98)");
+          grad.addColorStop(1, "rgba(255,110,136,.92)");
+        } else {
+          grad.addColorStop(0, "rgba(255,136,94,.98)");
+          grad.addColorStop(1, "rgba(255,184,92,.92)");
+        }
+
+        ctx.fillStyle = grad;
+        roundRect(h.x, h.y, h.w, h.h, 13);
         ctx.fill();
 
+        ctx.strokeStyle = "rgba(255,255,255,.20)";
+        ctx.lineWidth = 1;
+        roundRect(h.x, h.y, h.w, h.h, 13);
+        ctx.stroke();
+
         ctx.fillStyle = "white";
-        ctx.font = "900 11px Inter, Arial";
+        ctx.font = "1000 11px Inter, Arial";
         ctx.textAlign = "center";
         ctx.textBaseline = "middle";
-        ctx.fillText(h.type, h.x + h.w / 2, h.y + h.h / 2 + 0.5);
+        ctx.fillText(h.type, h.x + h.w/2, h.y + h.h/2 + .5);
         ctx.restore();
       }
     }
 
-    function drawParticles() {
-      for (const p of particles) {
-        const alpha = Math.max(0, p.life / 34);
-        const color = p.color
-          .replace("rgba(", "")
-          .replace(")", "")
-          .split(",");
-        ctx.fillStyle = `rgba(${color[0]},${color[1]},${color[2]},${alpha})`;
+    function drawParticles(){
+      for(const p of particles){
+        const alpha = Math.max(0, p.life / 38);
+        ctx.fillStyle = `rgba(${p.color[0]},${p.color[1]},${p.color[2]},${alpha})`;
         ctx.beginPath();
-        ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+        ctx.arc(p.x, p.y, p.size, 0, Math.PI*2);
         ctx.fill();
       }
     }
 
-    function render() {
+    function drawScoreBursts(){
+      ctx.save();
+      ctx.font = "1000 16px Inter, Arial";
+      ctx.textAlign = "center";
+      for(const b of scoreBursts){
+        const alpha = Math.max(0, b.life / 40);
+        ctx.fillStyle = `rgba(255,255,255,${alpha})`;
+        ctx.shadowBlur = 14;
+        ctx.shadowColor = `rgba(192,132,252,${alpha * 0.5})`;
+        ctx.fillText(b.text, b.x, b.y);
+      }
+      ctx.restore();
+    }
+
+    function render(){
+      ctx.save();
+
+      if(shake > 0){
+        const sx = (Math.random() - 0.5) * shake;
+        const sy = (Math.random() - 0.5) * shake;
+        ctx.translate(sx, sy);
+      }
+
       drawBackground();
       drawTokens();
       drawHazards();
       drawPlayer();
       drawParticles();
+      drawScoreBursts();
+
+      ctx.restore();
     }
 
-    function loop(ts) {
-      if (!running) return;
+    function loop(ts){
+      if(!running) return;
       const dt = Math.min(0.033, (ts - lastTime) / 1000);
       lastTime = ts;
 
       update(dt);
       render();
 
-      if (running) {
-        animationId = requestAnimationFrame(loop);
-      }
+      if(running) animationId = requestAnimationFrame(loop);
     }
 
-    function setTargetFromPointer(clientX) {
+    function setTargetFromPointer(clientX){
       const rect = canvas.getBoundingClientRect();
       const x = clientX - rect.left;
       const center = player.x + player.w / 2;
       const deadzone = 12;
 
-      if (x < center - deadzone) {
+      if(x < center - deadzone){
         player.moveLeft = true;
         player.moveRight = false;
-      } else if (x > center + deadzone) {
+      } else if(x > center + deadzone){
         player.moveLeft = false;
         player.moveRight = true;
       } else {
@@ -785,13 +929,13 @@
     let dragging = false;
 
     canvas.addEventListener("pointerdown", (e) => {
-      if (!running) return;
+      if(!running) return;
       dragging = true;
       setTargetFromPointer(e.clientX);
     });
 
     canvas.addEventListener("pointermove", (e) => {
-      if (!running || !dragging) return;
+      if(!running || !dragging) return;
       setTargetFromPointer(e.clientX);
     });
 
@@ -802,14 +946,16 @@
     });
 
     window.addEventListener("keydown", (e) => {
-      if (!running) return;
-      if (e.key === "ArrowLeft" || e.key.toLowerCase() === "a") player.moveLeft = true;
-      if (e.key === "ArrowRight" || e.key.toLowerCase() === "d") player.moveRight = true;
+      if(!running) return;
+      const key = e.key.toLowerCase();
+      if(key === "arrowleft" || key === "a") player.moveLeft = true;
+      if(key === "arrowright" || key === "d") player.moveRight = true;
     });
 
     window.addEventListener("keyup", (e) => {
-      if (e.key === "ArrowLeft" || e.key.toLowerCase() === "a") player.moveLeft = false;
-      if (e.key === "ArrowRight" || e.key.toLowerCase() === "d") player.moveRight = false;
+      const key = e.key.toLowerCase();
+      if(key === "arrowleft" || key === "a") player.moveLeft = false;
+      if(key === "arrowright" || key === "d") player.moveRight = false;
     });
 
     startBtn.addEventListener("click", startGame);
@@ -817,22 +963,22 @@
 
     copyBtn.addEventListener("click", async () => {
       const status =
-        score >= 4000 ? "DOMINANT" :
-        score >= 2200 ? "ACTIVE" :
-        score >= 1000 ? "STABLE" :
+        score >= 7000 ? "DOMINANT" :
+        score >= 4000 ? "ACTIVE" :
+        score >= 1800 ? "STABLE" :
         "WARM";
 
       const text = `🟣 I just strengthened the system.
 
 Score: ${Math.floor(score)}
 Collected ASTY: ${collected}
-Survival Time: ${gameTime.toFixed(1)}s
+Best Combo: x${bestCombo}
 Loop Status: ${status}
 
 $ASTY
 #ArbStrategy #ASTY`;
 
-      try {
+      try{
         await navigator.clipboard.writeText(text);
         copyNote.textContent = "Copied to clipboard.";
       } catch {
