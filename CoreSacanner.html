@@ -268,6 +268,10 @@
     .ring.r2{width:230px;height:230px;animation-direction:reverse;animation-duration:11s}
     .ring.r3{width:165px;height:165px;animation-duration:7s}
 
+    .core-zone.scanning .ring.r1{animation-duration:6s}
+    .core-zone.scanning .ring.r2{animation-duration:4.5s}
+    .core-zone.scanning .ring.r3{animation-duration:3s}
+
     @keyframes spin{
       from{transform:rotate(0deg)}
       to{transform:rotate(360deg)}
@@ -305,6 +309,14 @@
       z-index:3;
     }
 
+    .core-zone.scanning .core{
+      animation:coreScanPulse .95s ease-in-out infinite;
+      box-shadow:
+        0 0 22px rgba(192,132,252,.36),
+        0 0 110px rgba(168,85,247,.45),
+        inset 0 0 40px rgba(255,255,255,.10);
+    }
+
     .core::before{
       content:"";
       position:absolute;
@@ -331,6 +343,11 @@
     @keyframes coreIdle{
       0%,100%{transform:scale(1)}
       50%{transform:scale(1.03)}
+    }
+
+    @keyframes coreScanPulse{
+      0%,100%{transform:scale(1)}
+      50%{transform:scale(1.08)}
     }
 
     .core.boost{
@@ -396,6 +413,85 @@
       0%{opacity:0;transform:translate(-50%,-40%) scale(.8)}
       15%{opacity:1;transform:translate(-50%,-50%) scale(1)}
       100%{opacity:0;transform:translate(-50%,-88%) scale(1.05)}
+    }
+
+    .scan-overlay{
+      position:absolute;
+      inset:50%;
+      transform:translate(-50%,-50%);
+      width:min(74vw,260px);
+      min-height:124px;
+      padding:14px 16px;
+      border-radius:20px;
+      background:rgba(10,7,18,.80);
+      border:1px solid rgba(192,132,252,.18);
+      backdrop-filter:blur(8px);
+      box-shadow:0 0 30px rgba(168,85,247,.18);
+      z-index:5;
+      display:none;
+      flex-direction:column;
+      justify-content:center;
+      align-items:center;
+      text-align:center;
+      pointer-events:none;
+    }
+
+    .core-zone.scanning .scan-overlay{
+      display:flex;
+    }
+
+    .scan-title{
+      font-size:18px;
+      font-weight:900;
+      letter-spacing:-.03em;
+      margin-bottom:6px;
+      color:var(--purple2);
+    }
+
+    .scan-sub{
+      font-size:12px;
+      color:var(--muted);
+      min-height:18px;
+      margin-bottom:10px;
+    }
+
+    .scan-progress-wrap{
+      width:100%;
+      height:10px;
+      border-radius:999px;
+      overflow:hidden;
+      background:rgba(255,255,255,.06);
+      border:1px solid rgba(255,255,255,.05);
+    }
+
+    .scan-progress{
+      width:0%;
+      height:100%;
+      background:linear-gradient(90deg, var(--purple), var(--purple2), #ffffff);
+      box-shadow:0 0 18px rgba(192,132,252,.5);
+      transition:width .22s ease;
+    }
+
+    .scan-dots{
+      display:flex;
+      gap:6px;
+      margin-top:10px;
+    }
+
+    .scan-dots span{
+      width:7px;
+      height:7px;
+      border-radius:999px;
+      background:rgba(192,132,252,.35);
+      animation:dotPulse 1s infinite ease-in-out;
+    }
+
+    .scan-dots span:nth-child(2){animation-delay:.15s}
+    .scan-dots span:nth-child(3){animation-delay:.3s}
+
+    @keyframes dotPulse{
+      0%,100%{transform:scale(.85);opacity:.45}
+      50%{transform:scale(1.25);opacity:1}
     }
 
     .status-bar{
@@ -517,6 +613,7 @@
       .ring.r3{width:145px;height:145px}
       .wolf{width:112px}
       .core-card{min-height:420px}
+      .scan-overlay{width:min(82vw,250px)}
     }
   </style>
 </head>
@@ -566,7 +663,7 @@
         </div>
       </div>
 
-      <div class="core-zone">
+      <div class="core-zone" id="coreZone">
         <img class="wolf" src="assets/wolf.png" alt="Wolf">
 
         <div class="ring r1"></div>
@@ -574,6 +671,17 @@
         <div class="ring r3"></div>
 
         <div class="pulse-text purple" id="pulseText">READY</div>
+
+        <div class="scan-overlay" id="scanOverlay">
+          <div class="scan-title">SCANNING CORE</div>
+          <div class="scan-sub" id="scanProgressText">Preparing scan...</div>
+          <div class="scan-progress-wrap">
+            <div class="scan-progress" id="scanProgressBar"></div>
+          </div>
+          <div class="scan-dots">
+            <span></span><span></span><span></span>
+          </div>
+        </div>
 
         <div class="core" id="coreEl">
           <div class="core-content">
@@ -619,7 +727,11 @@
       energyTag: document.getElementById("energyTag"),
       walletList: document.getElementById("walletList"),
       pulseText: document.getElementById("pulseText"),
-      coreEl: document.getElementById("coreEl")
+      coreEl: document.getElementById("coreEl"),
+      coreZone: document.getElementById("coreZone"),
+      scanOverlay: document.getElementById("scanOverlay"),
+      scanProgressText: document.getElementById("scanProgressText"),
+      scanProgressBar: document.getElementById("scanProgressBar")
     };
 
     const state = {
@@ -821,6 +933,29 @@
       requestAnimationFrame(frame);
     }
 
+    function setScanningState(isScanning, text = "", progress = 0) {
+      state.scanning = isScanning;
+      ui.scanBtn.disabled = isScanning;
+      ui.clearBtn.disabled = isScanning;
+
+      if (isScanning) {
+        ui.coreZone.classList.add("scanning");
+        ui.scanBtn.textContent = "Scanning...";
+        ui.scanProgressText.textContent = text || "Preparing scan...";
+        ui.scanProgressBar.style.width = `${Math.max(0, Math.min(100, progress))}%`;
+      } else {
+        ui.coreZone.classList.remove("scanning");
+        ui.scanBtn.textContent = "Scan Wallets";
+        ui.scanProgressText.textContent = "Preparing scan...";
+        ui.scanProgressBar.style.width = "0%";
+      }
+    }
+
+    function updateScanProgress(text, progress) {
+      ui.scanProgressText.textContent = text;
+      ui.scanProgressBar.style.width = `${Math.max(0, Math.min(100, progress))}%`;
+    }
+
     function renderWallets() {
       if (!state.wallets.length) {
         ui.walletList.innerHTML = `<div class="empty">No wallets scanned yet.</div>`;
@@ -877,25 +1012,30 @@
         return;
       }
 
-      state.scanning = true;
-      ui.scanBtn.disabled = true;
-      ui.clearBtn.disabled = true;
-
       const previousUsd = state.totalUsd || 0;
 
+      setScanningState(true, "Fetching ASTY price...", 6);
       setStatus("Loading token data", "Fetching ASTY price and supply...");
       flashPulse("SCANNING", "yellow");
 
       try {
         const tokenData = await fetchAstyPriceFromGeckoTerminal();
         const priceUsd = tokenData.priceUsd;
+
+        updateScanProgress("Fetching live ASTY supply...", 18);
         const normalizedSupply = await getAstySupply(DEFAULT_RPC);
 
         setStatus("Price loaded", `ASTY price detected at ${formatUsd(priceUsd, 4)}. Scanning wallets...`);
+        updateScanProgress(`Scanning wallet 0 / ${wallets.length}`, 22);
 
         const walletResults = [];
         for (let i = 0; i < wallets.length; i++) {
-          setStatus("Reading wallets", `Scanning ${i + 1} of ${wallets.length}...`);
+          const current = i + 1;
+          const progress = 22 + (current / wallets.length) * 68;
+
+          updateScanProgress(`Scanning wallet ${current} / ${wallets.length}`, progress);
+          setStatus("Reading wallets", `Scanning ${current} of ${wallets.length}...`);
+
           const asty = await getAstyAmountForWallet(DEFAULT_RPC, wallets[i]);
           const usd = asty * priceUsd;
           const supplyPct = normalizedSupply > 0 ? (asty / normalizedSupply) * 100 : 0;
@@ -907,6 +1047,8 @@
             supplyPct
           });
         }
+
+        updateScanProgress("Finalizing core output...", 95);
 
         walletResults.sort((a, b) => b.usd - a.usd);
 
@@ -921,9 +1063,14 @@
         state.totalUsd = totalUsd;
         state.supplyPct = totalSupplyPct;
 
+        updateScanProgress("Core charged", 100);
         setStatus("Scan complete", `Loaded ${walletResults.length} wallet${walletResults.length === 1 ? "" : "s"} successfully.`);
         flashPulse(totalUsd > 0 ? "CHARGED" : "EMPTY", totalUsd > 0 ? "green" : "red");
         renderAnimated(previousUsd);
+
+        setTimeout(() => {
+          setScanningState(false);
+        }, 380);
       } catch (err) {
         console.error(err);
 
@@ -936,17 +1083,19 @@
         }
 
         setStatus("Scan failed", message);
+        updateScanProgress("Scan failed", 100);
         flashPulse("ERROR", "red");
-      } finally {
-        state.scanning = false;
-        ui.scanBtn.disabled = false;
-        ui.clearBtn.disabled = false;
+
+        setTimeout(() => {
+          setScanningState(false);
+        }, 280);
       }
     }
 
     ui.scanBtn.addEventListener("click", scanWallets);
 
     ui.clearBtn.addEventListener("click", () => {
+      if (state.scanning) return;
       ui.walletInput.value = "";
       state.priceUsd = 0;
       state.totalAsty = 0;
