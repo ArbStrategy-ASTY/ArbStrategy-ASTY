@@ -147,18 +147,10 @@ width: 100%;
 display: block;
 height: auto;
 }
-.hero-banner-actions {
-position: absolute;
-left: 32px;
-bottom: 32px;
-display: flex;
-gap: 14px;
-flex-wrap: wrap;
-z-index: 3;
-}
 .btn {
 display: inline-flex;
 align-items: center;
+justify-content: center;
 gap: 10px;
 padding: 14px 22px;
 border-radius: 14px;
@@ -183,6 +175,29 @@ color: #fff;
 font-size: 34px;
 margin: 0 0 14px;
 letter-spacing: -0.6px;
+display: flex;
+align-items: center;
+gap: 12px;
+}
+.section-title::before {
+content: "";
+width: 13px;
+height: 13px;
+border-radius: 50%;
+background: #a78bfa;
+box-shadow: 0 0 16px rgba(167,139,250,0.9), 0 0 30px rgba(124,58,237,0.5);
+animation: titleDotPulse 2.4s ease-in-out infinite;
+flex: 0 0 auto;
+}
+@keyframes titleDotPulse {
+0%, 100% {
+transform: scale(1);
+box-shadow: 0 0 14px rgba(167,139,250,0.75), 0 0 26px rgba(124,58,237,0.42);
+}
+50% {
+transform: scale(1.28);
+box-shadow: 0 0 24px rgba(196,181,253,1), 0 0 44px rgba(124,58,237,0.72);
+}
 }
 .section-sub {
 color: #c6c2d5;
@@ -234,38 +249,18 @@ margin-bottom: 10px;
 color: #ffffff;
 }
 
-.cta-strip {
-margin: 40px 0 20px;
-padding: 26px;
-border-radius: 22px;
-background: linear-gradient(135deg, rgba(124,58,237,0.18), rgba(76,29,149,0.16));
-border: 1px solid rgba(196,181,253,0.18);
-display: flex;
-align-items: center;
-justify-content: space-between;
-gap: 18px;
-flex-wrap: wrap;
-}
-.cta-strip h3 { margin: 0 0 6px; font-size: 24px; }
-.cta-strip p { margin: 0; color: #cbc6db; }
-
-.footer {
-padding: 34px 0 54px;
-margin-top: 16px;
-border-top: 1px solid rgba(255,255,255,0.08);
-color: #aea8c4;
-text-align: center;
-}
 .contract-box {
-margin-top: 18px;
-padding: 24px;
+margin-top: 0;
+padding: 26px;
 border-radius: 20px;
-background: rgba(255,255,255,0.04);
-border: 1px solid rgba(255,255,255,0.08);
+background: linear-gradient(135deg, rgba(124,58,237,0.24), rgba(76,29,149,0.20));
+border: 1px solid rgba(196,181,253,0.26);
 font-size: 16px;
 line-height: 1.7;
 word-break: break-all;
-color: #f2effa;
+color: #ffffff;
+text-align: center;
+box-shadow: 0 12px 34px rgba(124,58,237,0.18), inset 0 1px 0 rgba(255,255,255,0.06);
 }
 .copy-contract-wrap {
 display: flex;
@@ -276,7 +271,6 @@ margin-top: 18px;
 }
 .copy-contract-wrap .contract-box {
 flex: 1;
-margin-top: 0;
 }
 .copy-btn {
 padding: 14px 18px;
@@ -345,11 +339,6 @@ transform: translateY(0);
 @media (max-width: 920px) {
 .nav-links { gap: 10px; font-size: 13px; }
 .hero-banner-wrap { padding-top: 22px; }
-.hero-banner-actions {
-left: 20px;
-right: 20px;
-bottom: 20px;
-}
 }
 
 @media (max-width: 680px) {
@@ -367,19 +356,9 @@ gap: 12px;
 .hero-banner-box {
 border-radius: 18px;
 }
-.hero-banner-actions {
-position: static;
-padding: 18px;
-background: rgba(8,11,23,0.72);
-border-top: 1px solid rgba(255,255,255,0.08);
-}
 .btn {
 justify-content: center;
 width: 100%;
-}
-.hero-banner-actions {
-display: grid;
-grid-template-columns: 1fr;
 }
 .copy-contract-wrap {
 display: grid;
@@ -410,6 +389,8 @@ bottom: 18px;
 </div>
 </div>
 <nav class="nav-links">
+<a href="https://htmlpreview.github.io/?https://github.com/ArbStrategy-ASTY/ArbStrategy-ASTY/blob/main/pools.html" target="_blank" class="nav-cta">Pool Dashboard</a>
+<a href="https://arbstrategy.net/" target="_blank" class="nav-cta">Token Dashboard</a>
 <a href="https://birdeye.so/solana/token/ASTYqeaoK83Zs1pTFEXZUB6BM8cG8YLTsN852NUkt7ZR" target="_blank" class="nav-cta">Birdeye</a>
 <a href="https://t.me/ArbStrategyASTY" target="_blank" class="nav-cta">Telegram</a>
 <button id="langToggle" class="lang-toggle" type="button">DE</button>
@@ -422,10 +403,6 @@ bottom: 18px;
 <section class="hero-banner-wrap">
 <div class="hero-banner-box">
 <img src="assets/banner.png" alt="ASTY ArbStrategy Banner" class="hero-banner-img">
-<div class="hero-banner-actions">
-<a class="btn btn-primary" href="https://htmlpreview.github.io/?https://github.com/ArbStrategy-ASTY/ArbStrategy-ASTY/blob/main/pools.html" target="_blank" data-en="Open Dashboard" data-de="Dashboard öffnen">Open Dashboard</a>
-<a class="btn btn-secondary" href="https://t.me/ArbStrategyASTY" target="_blank" data-en="Join Telegram" data-de="Telegram beitreten">Join Telegram</a>
-</div>
 </div>
 </section>
 
@@ -559,33 +536,6 @@ ASTYQEAOK83ZS1PTFEXZUB6BM8CG8YLTsN852NUKT7ZR
 <span class="copy-feedback" id="copyFeedback" data-en="Copied!" data-de="Kopiert!">Copied!</span>
 </div>
 </section>
-
-<section class="reveal">
-<div class="cta-strip">
-<div>
-<h3 data-en="Explore the ASTY ecosystem" data-de="Entdecke das ASTY Ökosystem">Explore the ASTY ecosystem</h3>
-<p data-en="Follow the strategy, the system logic, and the community." data-de="Folge der Strategie, der Systemlogik und der Community.">Follow the strategy, the system logic, and the community.</p>
-</div>
-<div style="display:flex; gap:14px; flex-wrap:wrap;">
-<a class="btn btn-primary" href="https://htmlpreview.github.io/?https://github.com/ArbStrategy-ASTY/ArbStrategy-ASTY/blob/main/pools.html" target="_blank">Dashboard</a>
-<a class="btn btn-secondary" href="https://x.com/ArbStrategyASTY" target="_blank">X</a>
-<a class="btn btn-secondary" href="https://birdeye.so/solana/token/ASTYqeaoK83Zs1pTFEXZUB6BM8cG8YLTsN852NUkt7ZR" target="_blank">Birdeye</a>
-</div>
-</div>
-</section>
-
-<footer class="footer">
-<p>$ASTY • ArbStrategy</p>
-<p style="margin-top:10px;">
-<a href="https://ArbStrategy.net" target="_blank">Dashboard</a> •
-<a href="https://t.me/ArbStrategyASTY" target="_blank">Telegram</a> •
-<a href="https://x.com/ArbStrategyASTY" target="_blank">X</a> •
-<a href="https://birdeye.so/solana/token/ASTYqeaoK83Zs1pTFEXZUB6BM8cG8YLTsN852NUkt7ZR" target="_blank">Birdeye</a>
-</p>
-<p style="margin-top:14px; font-size:13px; opacity:0.85;">
-Contract: ASTYQEAOK83ZS1PTFEXZUB6BM8CG8YLTsN852NUKT7ZR
-</p>
-</footer>
 
 </main>
 
