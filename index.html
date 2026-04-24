@@ -78,7 +78,7 @@ background: rgba(255,255,255,0.04);
 
 .nav-links {
 display: flex;
-gap: 22px;
+gap: 12px;
 align-items: center;
 font-size: 14px;
 flex-wrap: wrap;
@@ -91,13 +91,30 @@ transition: color 0.2s ease, transform 0.2s ease;
 color: #ffffff;
 transform: translateY(-1px);
 }
-.nav-cta {
+.nav-cta,
+.lang-toggle {
 padding: 11px 16px;
 border-radius: 12px;
 background: linear-gradient(135deg, #8b5cf6, #6d28d9);
 color: white !important;
 font-weight: 700;
 box-shadow: 0 8px 26px rgba(124,58,237,0.32);
+border: none;
+font-family: Inter, Arial, sans-serif;
+font-size: 14px;
+cursor: pointer;
+transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.nav-cta:hover,
+.lang-toggle:hover {
+transform: translateY(-1px);
+box-shadow: 0 10px 30px rgba(124,58,237,0.45);
+}
+.lang-toggle {
+background: rgba(255,255,255,0.07);
+border: 1px solid rgba(255,255,255,0.14);
+box-shadow: none;
+min-width: 54px;
 }
 
 /* BANNER HERO */
@@ -250,6 +267,66 @@ line-height: 1.7;
 word-break: break-all;
 color: #f2effa;
 }
+.copy-contract-wrap {
+display: flex;
+gap: 14px;
+align-items: center;
+flex-wrap: wrap;
+margin-top: 18px;
+}
+.copy-contract-wrap .contract-box {
+flex: 1;
+margin-top: 0;
+}
+.copy-btn {
+padding: 14px 18px;
+border-radius: 14px;
+border: 1px solid rgba(167,139,250,0.28);
+background: rgba(8,11,23,0.68);
+backdrop-filter: blur(8px);
+color: #fff;
+font-weight: 700;
+font-family: Inter, Arial, sans-serif;
+cursor: pointer;
+transition: transform 0.2s ease, border-color 0.2s ease;
+}
+.copy-btn:hover {
+transform: translateY(-2px);
+border-color: rgba(196,181,253,0.42);
+}
+.copy-feedback {
+font-size: 13px;
+color: #c4b5fd;
+opacity: 0;
+transition: opacity 0.2s ease;
+}
+.copy-feedback.visible {
+opacity: 1;
+}
+
+#scrollTopBtn {
+position: fixed;
+right: 28px;
+bottom: 28px;
+z-index: 100;
+width: 50px;
+height: 50px;
+border-radius: 50%;
+border: none;
+cursor: pointer;
+display: none;
+align-items: center;
+justify-content: center;
+background: linear-gradient(135deg, #8b5cf6, #6d28d9);
+color: white;
+font-size: 22px;
+font-weight: 800;
+box-shadow: 0 10px 28px rgba(124,58,237,0.42);
+transition: transform 0.2s ease;
+}
+#scrollTopBtn:hover {
+transform: translateY(-4px);
+}
 
 @keyframes fadeUp {
 from { opacity: 0; transform: translateY(18px); }
@@ -266,7 +343,7 @@ transform: translateY(0);
 }
 
 @media (max-width: 920px) {
-.nav-links { gap: 14px; font-size: 13px; }
+.nav-links { gap: 10px; font-size: 13px; }
 .hero-banner-wrap { padding-top: 22px; }
 .hero-banner-actions {
 left: 20px;
@@ -282,7 +359,9 @@ align-items: flex-start;
 padding: 14px 0;
 gap: 12px;
 }
-.nav-links { flex-wrap: wrap; }
+.nav-links { width: 100%; }
+.nav-cta,
+.lang-toggle { flex: 1; text-align: center; }
 .section-title { font-size: 28px; }
 
 .hero-banner-box {
@@ -302,6 +381,17 @@ width: 100%;
 display: grid;
 grid-template-columns: 1fr;
 }
+.copy-contract-wrap {
+display: grid;
+grid-template-columns: 1fr;
+}
+.copy-btn {
+width: 100%;
+}
+#scrollTopBtn {
+right: 18px;
+bottom: 18px;
+}
 }
 </style>
 </head>
@@ -320,14 +410,9 @@ grid-template-columns: 1fr;
 </div>
 </div>
 <nav class="nav-links">
-<a href="#about">About</a>
-<a href="#arbitrage">Arbitrage</a>
-<a href="#strategy">Strategy</a>
-<a href="#effect">ASTY-Effect</a>
-<a href="#tokenomics">Tokenomics</a>
-<a href="https://x.com/ArbStrategyASTY" target="_blank">X</a>
-<a href="https://birdeye.so/solana/token/ASTYqeaoK83Zs1pTFEXZUB6BM8cG8YLTsN852NUkt7ZR" target="_blank">Birdeye</a>
-<a href="https://t.me/ArbStrategyASTY" target="_blank" class="nav-cta">Join Telegram</a>
+<a href="https://birdeye.so/solana/token/ASTYqeaoK83Zs1pTFEXZUB6BM8cG8YLTsN852NUkt7ZR" target="_blank" class="nav-cta">Birdeye</a>
+<a href="https://t.me/ArbStrategyASTY" target="_blank" class="nav-cta">Telegram</a>
+<button id="langToggle" class="lang-toggle" type="button">DE</button>
 </nav>
 </div>
 </header>
@@ -338,144 +423,148 @@ grid-template-columns: 1fr;
 <div class="hero-banner-box">
 <img src="assets/banner.png" alt="ASTY ArbStrategy Banner" class="hero-banner-img">
 <div class="hero-banner-actions">
-<a class="btn btn-primary" href="https://htmlpreview.github.io/?https://github.com/ArbStrategy-ASTY/ArbStrategy-ASTY/blob/main/pools.html" target="_blank">Open Dashboard</a>
-<a class="btn btn-secondary" href="https://t.me/ArbStrategyASTY" target="_blank">Join Telegram</a>
+<a class="btn btn-primary" href="https://htmlpreview.github.io/?https://github.com/ArbStrategy-ASTY/ArbStrategy-ASTY/blob/main/pools.html" target="_blank" data-en="Open Dashboard" data-de="Dashboard öffnen">Open Dashboard</a>
+<a class="btn btn-secondary" href="https://t.me/ArbStrategyASTY" target="_blank" data-en="Join Telegram" data-de="Telegram beitreten">Join Telegram</a>
 </div>
 </div>
 </section>
 
 <section id="about" class="section reveal">
-<h2 class="section-title">What is ArbStrategy?</h2>
-<p class="section-sub">
+<h2 class="section-title" data-en="What is ArbStrategy?" data-de="Was ist ArbStrategy?">What is ArbStrategy?</h2>
+<p class="section-sub" data-en="ArbStrategy is a performance-based liquidity allocation system. Capital is deployed dynamically based on measurable efficiency metrics. The objective is sustainable scaling through capital efficiency, controlled liquidity growth, and the build-up of a strategic treasury reserve." data-de="ArbStrategy ist ein performancebasiertes System zur Liquiditätsverteilung. Kapital wird dynamisch anhand messbarer Effizienzwerte eingesetzt. Ziel ist nachhaltiges Wachstum durch Kapitaleffizienz, kontrolliertes Liquiditätswachstum und den Aufbau einer strategischen Treasury-Reserve.">
 ArbStrategy is a performance-based liquidity allocation system. Capital is deployed dynamically based on measurable efficiency metrics. The objective is sustainable scaling through capital efficiency, controlled liquidity growth, and the build-up of a strategic treasury reserve.
 </p>
 </section>
 
 <section id="arbitrage" class="section reveal">
-<h2 class="section-title">What is Arbitrage?</h2>
-<p class="section-sub">
+<h2 class="section-title" data-en="What is Arbitrage?" data-de="Was ist Arbitrage?">What is Arbitrage?</h2>
+<p class="section-sub" data-en="Imagine this: you see a sneaker in one shop for $100. In another shop, the same sneaker sells for $110. You buy for $100, sell for $110, and keep the $10 difference. That’s arbitrage." data-de="Stell dir vor: Du siehst einen Sneaker in einem Shop für 100 $. In einem anderen Shop wird derselbe Sneaker für 110 $ verkauft. Du kaufst für 100 $, verkaufst für 110 $ und behältst die 10 $ Differenz. Das ist Arbitrage.">
 Imagine this: you see a sneaker in one shop for $100. In another shop, the same sneaker sells for $110. You buy for $100, sell for $110, and keep the $10 difference. That’s arbitrage.
 </p>
 
 <div class="card-grid">
 <div class="card">
-<strong>Buy cheaper</strong>
-Purchase the same asset where it is priced lower.
+<strong data-en="Buy cheaper" data-de="Günstiger kaufen">Buy cheaper</strong>
+<span data-en="Purchase the same asset where it is priced lower." data-de="Kaufe denselben Vermögenswert dort, wo er günstiger ist.">Purchase the same asset where it is priced lower.</span>
 </div>
 <div class="card">
-<strong>Sell higher</strong>
-Sell it where the market price is higher.
+<strong data-en="Sell higher" data-de="Höher verkaufen">Sell higher</strong>
+<span data-en="Sell it where the market price is higher." data-de="Verkaufe ihn dort, wo der Marktpreis höher ist.">Sell it where the market price is higher.</span>
 </div>
 <div class="card">
-<strong>Keep the difference</strong>
-The spread becomes the profit.
+<strong data-en="Keep the difference" data-de="Differenz behalten">Keep the difference</strong>
+<span data-en="The spread becomes the profit." data-de="Die Preisdifferenz wird zum Gewinn.">The spread becomes the profit.</span>
 </div>
 </div>
 </section>
 
 <section class="section reveal">
-<h2 class="section-title">Does this happen in crypto?</h2>
-<p class="section-sub">
+<h2 class="section-title" data-en="Does this happen in crypto?" data-de="Passiert das auch in Krypto?">Does this happen in crypto?</h2>
+<p class="section-sub" data-en="Yes. Crypto prices are not always identical everywhere. Small price differences appear between pools because markets move fast, liquidity differs, and prices are not perfectly synced. These small gaps create opportunity." data-de="Ja. Kryptopreise sind nicht überall immer identisch. Zwischen Pools entstehen kleine Preisunterschiede, weil Märkte schnell reagieren, Liquidität unterschiedlich ist und Preise nicht perfekt synchron laufen. Diese kleinen Lücken schaffen Chancen.">
 Yes. Crypto prices are not always identical everywhere. Small price differences appear between pools because markets move fast, liquidity differs, and prices are not perfectly synced. These small gaps create opportunity.
 </p>
 
 <div class="card-grid">
-<div class="card"><strong>Markets move fast</strong> Prices can diverge quickly across venues.</div>
-<div class="card"><strong>Liquidity differs</strong> Not every pool has the same depth or activity.</div>
-<div class="card"><strong>Prices are not perfectly synced</strong> Small dislocations create arbitrage opportunity.</div>
+<div class="card"><strong data-en="Markets move fast" data-de="Märkte bewegen sich schnell">Markets move fast</strong> <span data-en="Prices can diverge quickly across venues." data-de="Preise können sich zwischen Handelsplätzen schnell unterscheiden.">Prices can diverge quickly across venues.</span></div>
+<div class="card"><strong data-en="Liquidity differs" data-de="Liquidität unterscheidet sich">Liquidity differs</strong> <span data-en="Not every pool has the same depth or activity." data-de="Nicht jeder Pool hat dieselbe Tiefe oder Aktivität.">Not every pool has the same depth or activity.</span></div>
+<div class="card"><strong data-en="Prices are not perfectly synced" data-de="Preise sind nicht perfekt synchron">Prices are not perfectly synced</strong> <span data-en="Small dislocations create arbitrage opportunity." data-de="Kleine Preisabweichungen erzeugen Arbitrage-Chancen.">Small dislocations create arbitrage opportunity.</span></div>
 </div>
 </section>
 
 <section id="strategy" class="section reveal">
-<h2 class="section-title">What does ArbStrategy do?</h2>
-<p class="section-sub">
+<h2 class="section-title" data-en="What does ArbStrategy do?" data-de="Was macht ArbStrategy?">What does ArbStrategy do?</h2>
+<p class="section-sub" data-en="ArbStrategy deploys capital into liquidity pools, but not randomly. Pools are measured by performance. Strong pools receive more capital, weak pools are not expanded, and capital follows results. The system focuses on efficiency." data-de="ArbStrategy setzt Kapital in Liquiditätspools ein, aber nicht zufällig. Pools werden anhand ihrer Performance gemessen. Starke Pools erhalten mehr Kapital, schwache Pools werden nicht erweitert, und Kapital folgt den Ergebnissen. Das System fokussiert sich auf Effizienz.">
 ArbStrategy deploys capital into liquidity pools, but not randomly. Pools are measured by performance. Strong pools receive more capital, weak pools are not expanded, and capital follows results. The system focuses on efficiency.
 </p>
 
 <div class="card-grid">
-<div class="card"><strong>Performance-based</strong> Pools are evaluated by measurable efficiency.</div>
-<div class="card"><strong>Capital follows results</strong> Stronger pools can receive more allocation.</div>
-<div class="card"><strong>Weak pools are not expanded</strong> Efficiency remains the focus.</div>
+<div class="card"><strong data-en="Performance-based" data-de="Performancebasiert">Performance-based</strong> <span data-en="Pools are evaluated by measurable efficiency." data-de="Pools werden anhand messbarer Effizienz bewertet.">Pools are evaluated by measurable efficiency.</span></div>
+<div class="card"><strong data-en="Capital follows results" data-de="Kapital folgt Ergebnissen">Capital follows results</strong> <span data-en="Stronger pools can receive more allocation." data-de="Stärkere Pools können mehr Kapital erhalten.">Stronger pools can receive more allocation.</span></div>
+<div class="card"><strong data-en="Weak pools are not expanded" data-de="Schwache Pools werden nicht erweitert">Weak pools are not expanded</strong> <span data-en="Efficiency remains the focus." data-de="Effizienz bleibt der Fokus.">Efficiency remains the focus.</span></div>
 </div>
 </section>
 
 <section class="section reveal">
-<h2 class="section-title">How does ASTY generate value?</h2>
-<p class="section-sub">
+<h2 class="section-title" data-en="How does ASTY generate value?" data-de="Wie erzeugt ASTY Wert?">How does ASTY generate value?</h2>
+<p class="section-sub" data-en="Every time someone buys, sells, or transfers ASTY, a fixed 1% transaction fee is created. That fee is allocated into burn, reinvestment, and treasury. This is where the ASTY-Effect begins." data-de="Jedes Mal, wenn jemand ASTY kauft, verkauft oder transferiert, entsteht eine feste Transaktionsgebühr von 1%. Diese Gebühr wird auf Burn, Reinvestition und Treasury verteilt. Hier beginnt der ASTY-Effect.">
 Every time someone buys, sells, or transfers ASTY, a fixed 1% transaction fee is created. That fee is allocated into burn, reinvestment, and treasury. This is where the ASTY-Effect begins.
 </p>
 
 <div class="card-grid">
-<div class="card"><strong>1% Transaction Fee</strong> Applies to buys, sells, and wallet-to-wallet transfers.</div>
-<div class="card"><strong>40% Burned</strong> Permanently removed from circulating supply.</div>
-<div class="card"><strong>40% Reinvested</strong> Allocated to the growth wallet for liquidity expansion.</div>
-<div class="card"><strong>20% Treasury</strong> Swapped into SOL or USDC and stored as reserve.</div>
+<div class="card"><strong data-en="1% Transaction Fee" data-de="1% Transaktionsgebühr">1% Transaction Fee</strong> <span data-en="Applies to buys, sells, and wallet-to-wallet transfers." data-de="Gilt für Käufe, Verkäufe und Wallet-zu-Wallet-Transfers.">Applies to buys, sells, and wallet-to-wallet transfers.</span></div>
+<div class="card"><strong data-en="40% Burned" data-de="40% Burn">40% Burned</strong> <span data-en="Permanently removed from circulating supply." data-de="Werden dauerhaft aus dem Umlauf entfernt.">Permanently removed from circulating supply.</span></div>
+<div class="card"><strong data-en="40% Reinvested" data-de="40% Reinvestition">40% Reinvested</strong> <span data-en="Allocated to the growth wallet for liquidity expansion." data-de="Fließen in die Growth Wallet zur Erweiterung der Liquidität.">Allocated to the growth wallet for liquidity expansion.</span></div>
+<div class="card"><strong data-en="20% Treasury" data-de="20% Treasury">20% Treasury</strong> <span data-en="Swapped into SOL or USDC and stored as reserve." data-de="Werden in SOL oder USDC getauscht und als Reserve gehalten.">Swapped into SOL or USDC and stored as reserve.</span></div>
 </div>
 </section>
 
 <section id="effect" class="section reveal">
-<h2 class="section-title">The ASTY-Effect</h2>
-<p class="section-sub">
+<h2 class="section-title" data-en="The ASTY-Effect" data-de="Der ASTY-Effect">The ASTY-Effect</h2>
+<p class="section-sub" data-en="The ASTY-Effect is a self-reinforcing cycle. More activity generates more fees. More fees increase burn. More burn reduces circulating supply. More reinvestment strengthens efficient pools. Stronger pools can generate more activity, and the cycle repeats." data-de="Der ASTY-Effect ist ein selbstverstärkender Kreislauf. Mehr Aktivität erzeugt mehr Gebühren. Mehr Gebühren erhöhen den Burn. Mehr Burn reduziert das zirkulierende Angebot. Mehr Reinvestition stärkt effiziente Pools. Stärkere Pools können mehr Aktivität erzeugen, und der Kreislauf wiederholt sich.">
 The ASTY-Effect is a self-reinforcing cycle. More activity generates more fees. More fees increase burn. More burn reduces circulating supply. More reinvestment strengthens efficient pools. Stronger pools can generate more activity, and the cycle repeats.
 </p>
 
 <div class="card-grid">
-<div class="card"><strong>More activity</strong> Generates more protocol fees.</div>
-<div class="card"><strong>More fees</strong> Increase burn, reinvestment, and treasury growth.</div>
-<div class="card"><strong>More burn</strong> Reduces circulating supply over time.</div>
-<div class="card"><strong>More reinvestment</strong> Strengthens efficient pools and future revenue potential.</div>
+<div class="card"><strong data-en="More activity" data-de="Mehr Aktivität">More activity</strong> <span data-en="Generates more protocol fees." data-de="Erzeugt mehr Protokollgebühren.">Generates more protocol fees.</span></div>
+<div class="card"><strong data-en="More fees" data-de="Mehr Gebühren">More fees</strong> <span data-en="Increase burn, reinvestment, and treasury growth." data-de="Erhöhen Burn, Reinvestition und Treasury-Wachstum.">Increase burn, reinvestment, and treasury growth.</span></div>
+<div class="card"><strong data-en="More burn" data-de="Mehr Burn">More burn</strong> <span data-en="Reduces circulating supply over time." data-de="Reduziert das zirkulierende Angebot über Zeit.">Reduces circulating supply over time.</span></div>
+<div class="card"><strong data-en="More reinvestment" data-de="Mehr Reinvestition">More reinvestment</strong> <span data-en="Strengthens efficient pools and future revenue potential." data-de="Stärkt effiziente Pools und zukünftiges Umsatzpotenzial.">Strengthens efficient pools and future revenue potential.</span></div>
 </div>
 </section>
 
 <section id="tokenomics" class="section reveal">
-<h2 class="section-title">Tokenomics and System Logic</h2>
-<p class="section-sub">
+<h2 class="section-title" data-en="Tokenomics and System Logic" data-de="Tokenomics und Systemlogik">Tokenomics and System Logic</h2>
+<p class="section-sub" data-en="ASTY is designed around structure, not hype. Trading activity drives revenue, revenue strengthens pools, stronger pools improve efficiency, and efficiency increases sustainability." data-de="ASTY ist auf Struktur ausgelegt, nicht auf Hype. Trading-Aktivität erzeugt Umsatz, Umsatz stärkt Pools, stärkere Pools verbessern Effizienz, und Effizienz erhöht Nachhaltigkeit.">
 ASTY is designed around structure, not hype. Trading activity drives revenue, revenue strengthens pools, stronger pools improve efficiency, and efficiency increases sustainability.
 </p>
 
 <div class="card-grid">
-<div class="card"><strong>Deflationary Design</strong> 40% of every collected fee is permanently burned.</div>
-<div class="card"><strong>Growth Wallet</strong> Funds performance-based liquidity reinvestments.</div>
-<div class="card"><strong>Treasury Reserve</strong> Held in SOL or USDC for resilience and strategic flexibility.</div>
-<div class="card"><strong>Selective Buybacks</strong> Treasury may be used for selective buyback and burn events.</div>
-<div class="card"><strong>Capital Allocation</strong> Pools are benchmarked by performance tiers.</div>
-<div class="card"><strong>Governance</strong> Major proposals are made by the core team and voted on by the community via Telegram.</div>
+<div class="card"><strong data-en="Deflationary Design" data-de="Deflationäres Design">Deflationary Design</strong> <span data-en="40% of every collected fee is permanently burned." data-de="40% jeder gesammelten Gebühr werden dauerhaft verbrannt.">40% of every collected fee is permanently burned.</span></div>
+<div class="card"><strong data-en="Growth Wallet" data-de="Growth Wallet">Growth Wallet</strong> <span data-en="Funds performance-based liquidity reinvestments." data-de="Finanziert performancebasierte Liquiditäts-Reinvestitionen.">Funds performance-based liquidity reinvestments.</span></div>
+<div class="card"><strong data-en="Treasury Reserve" data-de="Treasury Reserve">Treasury Reserve</strong> <span data-en="Held in SOL or USDC for resilience and strategic flexibility." data-de="Wird in SOL oder USDC gehalten, um Resilienz und strategische Flexibilität zu stärken.">Held in SOL or USDC for resilience and strategic flexibility.</span></div>
+<div class="card"><strong data-en="Selective Buybacks" data-de="Selektive Buybacks">Selective Buybacks</strong> <span data-en="Treasury may be used for selective buyback and burn events." data-de="Die Treasury kann selektiv für Buyback- und Burn-Events genutzt werden.">Treasury may be used for selective buyback and burn events.</span></div>
+<div class="card"><strong data-en="Capital Allocation" data-de="Kapitalallokation">Capital Allocation</strong> <span data-en="Pools are benchmarked by performance tiers." data-de="Pools werden anhand von Performance-Stufen bewertet.">Pools are benchmarked by performance tiers.</span></div>
+<div class="card"><strong data-en="Governance" data-de="Governance">Governance</strong> <span data-en="Major proposals are made by the core team and voted on by the community via Telegram." data-de="Wichtige Vorschläge kommen vom Core-Team und werden von der Community über Telegram abgestimmt.">Major proposals are made by the core team and voted on by the community via Telegram.</span></div>
 </div>
 </section>
 
 <section class="section reveal">
-<h2 class="section-title">Why this matters</h2>
-<p class="section-sub">
+<h2 class="section-title" data-en="Why this matters" data-de="Warum das wichtig ist">Why this matters</h2>
+<p class="section-sub" data-en="The system does not rely on hype. It relies on structure. As the ASTY-Effect grows, supply decreases, capital increases, the treasury grows, and overall system stability improves." data-de="Das System verlässt sich nicht auf Hype. Es basiert auf Struktur. Wenn der ASTY-Effect wächst, sinkt das Angebot, Kapital steigt, die Treasury wächst und die gesamte Systemstabilität verbessert sich.">
 The system does not rely on hype. It relies on structure. As the ASTY-Effect grows, supply decreases, capital increases, the treasury grows, and overall system stability improves.
 </p>
 
-<div class="glass-box">
+<div class="glass-box" data-en="Uses price inefficiencies → Generates structured fees → Reduces supply → Reinvests capital → Builds reserves → Strengthens itself through the ASTY-Effect" data-de="Nutzt Preisineffizienzen → Erzeugt strukturierte Gebühren → Reduziert Angebot → Reinvestiert Kapital → Baut Reserven auf → Stärkt sich selbst durch den ASTY-Effect">
 Uses price inefficiencies → Generates structured fees → Reduces supply → Reinvests capital → Builds reserves → Strengthens itself through the ASTY-Effect
 </div>
 </section>
 
 <section class="section reveal">
-<h2 class="section-title">What does this mean for a holder?</h2>
+<h2 class="section-title" data-en="What does this mean for a holder?" data-de="Was bedeutet das für Holder?">What does this mean for a holder?</h2>
 <div class="card-grid">
-<div class="card"><strong>Supply decreases</strong> Burns reduce circulating supply over time.</div>
-<div class="card"><strong>Capital increases</strong> Reinvestment can improve future pool efficiency.</div>
-<div class="card"><strong>Treasury grows</strong> Strategic reserves strengthen flexibility and resilience.</div>
-<div class="card"><strong>System stability improves</strong> More efficient structure can support long-term sustainability.</div>
+<div class="card"><strong data-en="Supply decreases" data-de="Supply sinkt">Supply decreases</strong> <span data-en="Burns reduce circulating supply over time." data-de="Burns reduzieren das zirkulierende Angebot über Zeit.">Burns reduce circulating supply over time.</span></div>
+<div class="card"><strong data-en="Capital increases" data-de="Kapital steigt">Capital increases</strong> <span data-en="Reinvestment can improve future pool efficiency." data-de="Reinvestition kann die zukünftige Pool-Effizienz verbessern.">Reinvestment can improve future pool efficiency.</span></div>
+<div class="card"><strong data-en="Treasury grows" data-de="Treasury wächst">Treasury grows</strong> <span data-en="Strategic reserves strengthen flexibility and resilience." data-de="Strategische Reserven stärken Flexibilität und Widerstandsfähigkeit.">Strategic reserves strengthen flexibility and resilience.</span></div>
+<div class="card"><strong data-en="System stability improves" data-de="Systemstabilität verbessert sich">System stability improves</strong> <span data-en="More efficient structure can support long-term sustainability." data-de="Eine effizientere Struktur kann langfristige Nachhaltigkeit unterstützen.">More efficient structure can support long-term sustainability.</span></div>
 </div>
 </section>
 
 <section class="section reveal">
-<h2 class="section-title">Contract Address</h2>
-<div class="contract-box">
+<h2 class="section-title" data-en="Contract Address" data-de="Contract Adresse">Contract Address</h2>
+<div class="copy-contract-wrap">
+<div class="contract-box" id="contractAddress">
 ASTYQEAOK83ZS1PTFEXZUB6BM8CG8YLTsN852NUKT7ZR
+</div>
+<button class="copy-btn" id="copyContractBtn" type="button" data-en="Copy Contract" data-de="Contract kopieren">Copy Contract</button>
+<span class="copy-feedback" id="copyFeedback" data-en="Copied!" data-de="Kopiert!">Copied!</span>
 </div>
 </section>
 
 <section class="reveal">
 <div class="cta-strip">
 <div>
-<h3>Explore the ASTY ecosystem</h3>
-<p>Follow the strategy, the system logic, and the community.</p>
+<h3 data-en="Explore the ASTY ecosystem" data-de="Entdecke das ASTY Ökosystem">Explore the ASTY ecosystem</h3>
+<p data-en="Follow the strategy, the system logic, and the community." data-de="Folge der Strategie, der Systemlogik und der Community.">Follow the strategy, the system logic, and the community.</p>
 </div>
 <div style="display:flex; gap:14px; flex-wrap:wrap;">
 <a class="btn btn-primary" href="https://htmlpreview.github.io/?https://github.com/ArbStrategy-ASTY/ArbStrategy-ASTY/blob/main/pools.html" target="_blank">Dashboard</a>
@@ -500,6 +589,8 @@ Contract: ASTYQEAOK83ZS1PTFEXZUB6BM8CG8YLTsN852NUKT7ZR
 
 </main>
 
+<button id="scrollTopBtn" type="button">↑</button>
+
 <script>
 const reveals = document.querySelectorAll('.reveal');
 const observer = new IntersectionObserver((entries) => {
@@ -510,6 +601,64 @@ entry.target.classList.add('visible');
 });
 }, { threshold: 0.15 });
 reveals.forEach((el) => observer.observe(el));
+
+const scrollTopBtn = document.getElementById("scrollTopBtn");
+window.addEventListener("scroll", () => {
+if (document.documentElement.scrollTop > 300 || document.body.scrollTop > 300) {
+scrollTopBtn.style.display = "flex";
+} else {
+scrollTopBtn.style.display = "none";
+}
+});
+scrollTopBtn.addEventListener("click", () => {
+window.scrollTo({ top: 0, behavior: "smooth" });
+});
+
+const langToggle = document.getElementById("langToggle");
+let currentLang = "en";
+
+function setLanguage(lang) {
+currentLang = lang;
+document.querySelectorAll("[data-en][data-de]").forEach((el) => {
+const value = el.getAttribute("data-" + lang);
+if (value) {
+el.textContent = value;
+}
+});
+document.documentElement.lang = lang;
+langToggle.textContent = lang === "en" ? "DE" : "EN";
+}
+
+langToggle.addEventListener("click", () => {
+setLanguage(currentLang === "en" ? "de" : "en");
+});
+
+setLanguage("en");
+
+const contractAddress = "ASTYQEAOK83ZS1PTFEXZUB6BM8CG8YLTsN852NUKT7ZR";
+const copyContractBtn = document.getElementById("copyContractBtn");
+const copyFeedback = document.getElementById("copyFeedback");
+
+copyContractBtn.addEventListener("click", async () => {
+try {
+await navigator.clipboard.writeText(contractAddress);
+copyFeedback.classList.add("visible");
+setTimeout(() => {
+copyFeedback.classList.remove("visible");
+}, 1600);
+} catch (err) {
+const tempInput = document.createElement("input");
+tempInput.value = contractAddress;
+document.body.appendChild(tempInput);
+tempInput.select();
+document.execCommand("copy");
+document.body.removeChild(tempInput);
+copyFeedback.classList.add("visible");
+setTimeout(() => {
+copyFeedback.classList.remove("visible");
+}, 1600);
+}
+});
 </script>
 
 </body>
