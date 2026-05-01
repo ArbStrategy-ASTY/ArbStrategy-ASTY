@@ -1,3 +1,5 @@
+Klar 🟣 Hier der komplette Code als viralere X-Version:
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -7,37 +9,63 @@
 
 <style>
 *{box-sizing:border-box}
+
 body{
   margin:0;
   font-family:Inter,Arial,sans-serif;
   background:
-    radial-gradient(circle at top,rgba(124,58,237,.25),transparent 30%),
+    radial-gradient(circle at top,rgba(124,58,237,.28),transparent 30%),
+    radial-gradient(circle at 80% 10%,rgba(167,139,250,.13),transparent 24%),
     linear-gradient(180deg,#0b1020 0%,#060914 100%);
   color:#fff;
   min-height:100vh;
   padding:22px;
 }
+
 .wrap{max-width:980px;margin:auto}
+
 .card{
   background:rgba(255,255,255,.045);
   border:1px solid rgba(167,139,250,.22);
   border-radius:28px;
   padding:24px;
-  box-shadow:0 0 42px rgba(124,58,237,.18);
+  box-shadow:0 0 46px rgba(124,58,237,.22);
 }
-.brand{display:flex;align-items:center;gap:14px;margin-bottom:18px}
+
+.brand{
+  display:flex;
+  align-items:center;
+  gap:14px;
+  margin-bottom:18px;
+}
+
 .brand img{
-  width:52px;height:52px;border-radius:50%;
-  box-shadow:0 0 24px rgba(167,139,250,.45);
+  width:52px;
+  height:52px;
+  border-radius:50%;
+  box-shadow:0 0 26px rgba(167,139,250,.5);
 }
-h1{margin:0;font-size:34px}
-.sub{color:#c4b5fd;margin-top:4px}
+
+h1{
+  margin:0;
+  font-size:34px;
+  letter-spacing:-.5px;
+}
+
+.sub{
+  color:#c4b5fd;
+  margin-top:4px;
+  font-size:14px;
+}
+
 canvas{
   width:100%;
   border-radius:22px;
   border:1px solid rgba(255,255,255,.1);
   background:#05050b;
+  box-shadow:0 0 34px rgba(124,58,237,.18);
 }
+
 textarea{
   margin-top:16px;
   width:100%;
@@ -51,7 +79,14 @@ textarea{
   line-height:1.5;
   resize:vertical;
 }
-.buttons{display:flex;flex-wrap:wrap;gap:12px;margin-top:16px}
+
+.buttons{
+  display:flex;
+  flex-wrap:wrap;
+  gap:12px;
+  margin-top:16px;
+}
+
 button{
   border:0;
   border-radius:999px;
@@ -60,12 +95,36 @@ button{
   font-weight:800;
   color:#fff;
   background:linear-gradient(135deg,#8b5cf6,#6d28d9);
+  box-shadow:0 0 22px rgba(168,85,247,.26);
+  transition:all .12s ease;
 }
-button.secondary{
-  background:rgba(255,255,255,.08);
-  border:1px solid rgba(255,255,255,.12);
+
+button:hover{
+  transform:translateY(-1px);
+  box-shadow:0 0 34px rgba(168,85,247,.45);
+  filter:brightness(1.08);
 }
-.status{margin-top:14px;color:#c4b5fd;font-size:14px}
+
+button:active{
+  transform:scale(.96);
+  box-shadow:0 0 12px rgba(168,85,247,.2);
+}
+
+button.clicked{
+  animation:buttonPop .3s ease;
+}
+
+@keyframes buttonPop{
+  0%{transform:scale(.96)}
+  50%{transform:scale(1.05)}
+  100%{transform:scale(1)}
+}
+
+.status{
+  margin-top:14px;
+  color:#c4b5fd;
+  font-size:14px;
+}
 </style>
 </head>
 
@@ -81,13 +140,13 @@ button.secondary{
     </div>
 
     <canvas id="signalCanvas" width="1200" height="675"></canvas>
+
     <textarea id="postText" readonly></textarea>
 
     <div class="buttons">
-      <button onclick="generateSignal()">Generate Signal</button>
-      <button onclick="copyText()">Copy X Post</button>
-      <button onclick="copyImage()" class="secondary">Copy Image</button>
-      <button onclick="downloadImage()" class="secondary">Download PNG</button>
+      <button onclick="generateSignal(event)">Generate Signal</button>
+      <button onclick="copyText(event)">Copy X Post</button>
+      <button onclick="downloadImage(event)">Download Image</button>
     </div>
 
     <div id="status" class="status">Loading...</div>
@@ -156,9 +215,15 @@ const canvas = document.getElementById("signalCanvas");
 const ctx = canvas.getContext("2d");
 const postText = document.getElementById("postText");
 const statusEl = document.getElementById("status");
-let latestBlob = null;
 
 function setStatus(t){ statusEl.textContent = t; }
+
+function pressEffect(el){
+  if(!el) return;
+  el.classList.remove("clicked");
+  void el.offsetWidth;
+  el.classList.add("clicked");
+}
 
 function chunkArray(arr,size){
   const chunks=[];
@@ -168,6 +233,7 @@ function chunkArray(arr,size){
 
 function fmtUsd(n){
   if(!n || Number.isNaN(n)) return "$0.00";
+  if(n >= 1e9) return "$" + (n/1e9).toFixed(2) + "B";
   if(n >= 1e6) return "$" + (n/1e6).toFixed(2) + "M";
   if(n >= 1e3) return "$" + (n/1e3).toFixed(2) + "K";
   return "$" + n.toFixed(2);
@@ -219,14 +285,16 @@ async function loadPoolData(){
   }).filter(Boolean);
 }
 
-async function generateSignal(){
+async function generateSignal(e){
+  if(e) pressEffect(e.currentTarget);
   setStatus("Loading GeckoTerminal pool data...");
 
   let rows = [];
+
   try{
     rows = await loadPoolData();
-  }catch(e){
-    console.error(e);
+  }catch(err){
+    console.error(err);
     setStatus("API error. Could not load pool data.");
     return;
   }
@@ -257,7 +325,7 @@ async function generateSignal(){
   if(above75 >= 3){
     signal = "DISTRIBUTED STRENGTH";
     flow = "WIDE";
-  } else if(above50 >= 4){
+  }else if(above50 >= 4){
     signal = "MULTI POOL MOMENTUM";
     flow = "EXPANDING";
   }
@@ -269,7 +337,7 @@ async function generateSignal(){
 
 ${signal} detected.
 
-Capital flow is ${flow.toLowerCase()} across the current 24h pool snapshot.
+ArbStrategy is processing the current 24h pool snapshot through live system data.
 
 Top Pool: ${topPool.label}
 System Output 24h: ${fmtUsd(totalFees)}
@@ -312,68 +380,85 @@ async function drawCanvas(data){
   ctx.clearRect(0,0,1200,675);
 
   const bg = ctx.createLinearGradient(0,0,1200,675);
-  bg.addColorStop(0,"#160827");
-  bg.addColorStop(.5,"#070914");
-  bg.addColorStop(1,"#12071f");
+  bg.addColorStop(0,"#17062b");
+  bg.addColorStop(.48,"#070914");
+  bg.addColorStop(1,"#13071f");
   ctx.fillStyle = bg;
   ctx.fillRect(0,0,1200,675);
 
   ctx.shadowColor = "#a855f7";
-  ctx.shadowBlur = 90;
+  ctx.shadowBlur = 110;
   ctx.fillStyle = "rgba(168,85,247,.22)";
   ctx.beginPath();
-  ctx.arc(950,135,250,0,Math.PI*2);
+  ctx.arc(950,130,270,0,Math.PI*2);
   ctx.fill();
+
+  ctx.shadowBlur = 85;
+  ctx.fillStyle = "rgba(124,58,237,.18)";
+  ctx.beginPath();
+  ctx.arc(155,565,190,0,Math.PI*2);
+  ctx.fill();
+
   ctx.shadowBlur = 0;
 
+  ctx.strokeStyle = "rgba(167,139,250,.22)";
+  ctx.lineWidth = 2;
+  roundRect(42,36,1116,603,34,false);
+
   if(wolf){
-    ctx.globalAlpha = .22;
-    ctx.drawImage(wolf,760,250,370,370);
+    ctx.globalAlpha = .28;
+    ctx.drawImage(wolf, 825, 342, 310, 310);
     ctx.globalAlpha = 1;
   }
 
   if(logo){
-    ctx.drawImage(logo,980,48,120,120);
+    ctx.drawImage(logo, 985, 52, 112, 112);
   }
 
   ctx.fillStyle = "#c4b5fd";
-  ctx.font = "800 34px Arial";
-  ctx.fillText("🟣 ASTY SYSTEM SIGNAL",70,95);
+  ctx.font = "900 32px Arial";
+  ctx.fillText("🟣 ASTY SYSTEM SIGNAL",70,88);
+
+  ctx.fillStyle = "#a78bfa";
+  ctx.font = "700 22px Arial";
+  ctx.fillText("ArbStrategy Intelligence",70,122);
 
   ctx.fillStyle = "#ffffff";
-  ctx.font = "900 58px Arial";
-  wrapText(data.signal,70,188,780,66);
+  ctx.font = "900 64px Arial";
+  wrapText(data.signal,70,220,780,72);
 
   ctx.fillStyle = "#a855f7";
-  ctx.font = "800 30px Arial";
-  ctx.fillText("LIVE 24H POOL SNAPSHOT",70,278);
+  ctx.font = "900 28px Arial";
+  ctx.fillText("LIVE 24H POOL SNAPSHOT",70,300);
 
-  drawMetric("Top Pool",data.topPool,70,365);
-  drawMetric("System Output",data.fees,70,455);
-  drawMetric("Burn Engine",data.burn,570,365);
-  drawMetric("Capital Flow",data.flow,570,455);
+  drawMetric("Top Pool",data.topPool,70,390);
+  drawMetric("System Output",data.fees,70,490);
+  drawMetric("Burn Engine",data.burn,570,390);
+  drawMetric("Capital Flow",data.flow,570,490);
 
   ctx.fillStyle = "#ffffff";
-  ctx.font = "800 28px Arial";
-  ctx.fillText("$ASTY is doing what it was built for.",70,585);
+  ctx.font = "900 30px Arial";
+  ctx.fillText("$ASTY is doing what it was built for.",70,590);
 
   ctx.fillStyle = "#8b5cf6";
-  ctx.font = "700 22px Arial";
-  ctx.fillText("#ArbStrategy  #ArbiTrage  #DeFi  #Solana",70,628);
-
-  latestBlob = await new Promise(resolve=>canvas.toBlob(resolve,"image/png"));
+  ctx.font = "800 20px Arial";
+  ctx.fillText("#ArbStrategy  #ArbiTrage  #DeFi  #Solana",70,625);
 }
 
 function drawMetric(label,value,x,y){
-  ctx.fillStyle = "rgba(255,255,255,.065)";
-  roundRect(x,y-48,410,76,20,true);
+  ctx.fillStyle = "rgba(255,255,255,.07)";
+  roundRect(x,y-52,410,82,22,true);
+
+  ctx.strokeStyle = "rgba(167,139,250,.18)";
+  ctx.lineWidth = 1;
+  roundRect(x,y-52,410,82,22,false);
 
   ctx.fillStyle = "#c4b5fd";
-  ctx.font = "700 20px Arial";
-  ctx.fillText(label,x+24,y-16);
+  ctx.font = "800 19px Arial";
+  ctx.fillText(label,x+24,y-18);
 
   ctx.fillStyle = "#ffffff";
-  ctx.font = "900 28px Arial";
+  ctx.font = "900 29px Arial";
 
   let shown = value;
   if(ctx.measureText(shown).width > 340){
@@ -383,7 +468,7 @@ function drawMetric(label,value,x,y){
     shown += "...";
   }
 
-  ctx.fillText(shown,x+24,y+18);
+  ctx.fillText(shown,x+24,y+19);
 }
 
 function roundRect(x,y,w,h,r,fill){
@@ -395,6 +480,7 @@ function roundRect(x,y,w,h,r,fill){
   ctx.arcTo(x,y,x+w,y,r);
   ctx.closePath();
   if(fill) ctx.fill();
+  else ctx.stroke();
 }
 
 function wrapText(text,x,y,maxWidth,lineHeight){
@@ -413,29 +499,35 @@ function wrapText(text,x,y,maxWidth,lineHeight){
   ctx.fillText(line,x,y);
 }
 
-async function copyText(){
+async function copyText(e){
+  pressEffect(e.currentTarget);
   await navigator.clipboard.writeText(postText.value);
   setStatus("X post copied.");
 }
 
-async function copyImage(){
-  try{
-    if(!latestBlob) await generateSignal();
-    await navigator.clipboard.write([
-      new ClipboardItem({"image/png": latestBlob})
-    ]);
-    setStatus("Image copied.");
-  }catch(e){
-    setStatus("Image copy not supported here. Use Download PNG.");
-  }
-}
+function downloadImage(e){
+  pressEffect(e.currentTarget);
 
-function downloadImage(){
-  const link = document.createElement("a");
-  link.download = "asty-system-signal.png";
-  link.href = canvas.toDataURL("image/png");
-  link.click();
-  setStatus("PNG downloaded.");
+  canvas.toBlob(blob=>{
+    if(!blob){
+      setStatus("PNG export failed.");
+      return;
+    }
+
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+
+    link.href = url;
+    link.download = "asty-system-signal.png";
+
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    setTimeout(()=>URL.revokeObjectURL(url),1000);
+
+    setStatus("Image downloaded.");
+  },"image/png");
 }
 
 generateSignal();
