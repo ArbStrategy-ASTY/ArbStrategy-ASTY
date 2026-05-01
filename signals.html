@@ -1,5 +1,3 @@
-Klar 🟣 Hier der komplette Code als viralere X-Version:
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -243,6 +241,17 @@ function cleanPoolName(label){
   return label.replace("/", " / ");
 }
 
+function getPoolToken(label){
+  const parts = label.split("/");
+  const raw = (parts[1] || parts[0] || "DeFi").trim();
+  return raw.replace(/[^a-zA-Z0-9]/g,"");
+}
+
+function buildHashtags(poolToken){
+  const tokenTag = poolToken || "Solana";
+  return `#ArbStrategy #ArbiTrage #${tokenTag} #DeFi`;
+}
+
 async function fetchGeckoChunk(chunk){
   const ids = chunk.map(([id]) => id).join(",");
   const url = `https://api.geckoterminal.com/api/v2/networks/solana/pools/multi/${encodeURIComponent(ids)}?include=base_token&include_volume_breakdown=false&include_composition=false`;
@@ -276,6 +285,8 @@ async function loadPoolData(){
     return {
       id,
       label: cleanPoolName(label),
+      rawLabel: label,
+      poolToken: getPoolToken(label),
       feePercent,
       volume24h,
       tvl,
@@ -331,6 +342,7 @@ async function generateSignal(e){
   }
 
   const burn = totalFees > 0 ? "ACTIVE" : "WAITING";
+  const hashtags = buildHashtags(topPool.poolToken);
 
   const text =
 `🟣 ASTY System Signal
@@ -348,7 +360,7 @@ Capital Flow: ${flow}
 
 $ASTY is doing what it was built for.
 
-#ArbStrategy #ArbiTrage #DeFi #Solana`;
+${hashtags}`;
 
   postText.value = text;
 
@@ -358,7 +370,8 @@ $ASTY is doing what it was built for.
     fees: fmtUsd(totalFees),
     volume: fmtUsd(totalVolume),
     burn,
-    flow
+    flow,
+    hashtags
   });
 
   setStatus(`Signal generated from ${rows.length} live pools.`);
@@ -371,6 +384,20 @@ function loadImage(src){
     img.onerror = ()=>resolve(null);
     img.src = src;
   });
+}
+
+function drawImageContain(img,x,y,w,h,alpha=1){
+  if(!img) return;
+
+  const ratio = Math.min(w / img.width, h / img.height);
+  const newW = img.width * ratio;
+  const newH = img.height * ratio;
+  const offsetX = x + (w - newW) / 2;
+  const offsetY = y + (h - newH) / 2;
+
+  ctx.globalAlpha = alpha;
+  ctx.drawImage(img, offsetX, offsetY, newW, newH);
+  ctx.globalAlpha = 1;
 }
 
 async function drawCanvas(data){
@@ -405,11 +432,7 @@ async function drawCanvas(data){
   ctx.lineWidth = 2;
   roundRect(42,36,1116,603,34,false);
 
-  if(wolf){
-    ctx.globalAlpha = .28;
-    ctx.drawImage(wolf, 825, 342, 310, 310);
-    ctx.globalAlpha = 1;
-  }
+  drawImageContain(wolf, 820, 360, 300, 250, .30);
 
   if(logo){
     ctx.drawImage(logo, 985, 52, 112, 112);
@@ -424,25 +447,25 @@ async function drawCanvas(data){
   ctx.fillText("ArbStrategy Intelligence",70,122);
 
   ctx.fillStyle = "#ffffff";
-  ctx.font = "900 64px Arial";
-  wrapText(data.signal,70,220,780,72);
+  ctx.font = "900 56px Arial";
+  wrapText(data.signal,70,210,760,62);
 
   ctx.fillStyle = "#a855f7";
-  ctx.font = "900 28px Arial";
-  ctx.fillText("LIVE 24H POOL SNAPSHOT",70,300);
+  ctx.font = "900 26px Arial";
+  ctx.fillText("LIVE 24H POOL SNAPSHOT",70,325);
 
-  drawMetric("Top Pool",data.topPool,70,390);
-  drawMetric("System Output",data.fees,70,490);
-  drawMetric("Burn Engine",data.burn,570,390);
-  drawMetric("Capital Flow",data.flow,570,490);
+  drawMetric("Top Pool",data.topPool,70,405);
+  drawMetric("System Output",data.fees,70,500);
+  drawMetric("Burn Engine",data.burn,570,405);
+  drawMetric("Capital Flow",data.flow,570,500);
 
   ctx.fillStyle = "#ffffff";
-  ctx.font = "900 30px Arial";
+  ctx.font = "900 29px Arial";
   ctx.fillText("$ASTY is doing what it was built for.",70,590);
 
   ctx.fillStyle = "#8b5cf6";
   ctx.font = "800 20px Arial";
-  ctx.fillText("#ArbStrategy  #ArbiTrage  #DeFi  #Solana",70,625);
+  ctx.fillText(data.hashtags.replaceAll("#"," #").trim(),70,625);
 }
 
 function drawMetric(label,value,x,y){
@@ -508,26 +531,23 @@ async function copyText(e){
 function downloadImage(e){
   pressEffect(e.currentTarget);
 
-  canvas.toBlob(blob=>{
-    if(!blob){
-      setStatus("PNG export failed.");
-      return;
-    }
+  try{
+    const dataUrl = canvas.toDataURL("image/png");
 
-    const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
-
-    link.href = url;
+    link.href = dataUrl;
     link.download = "asty-system-signal.png";
+    link.style.display = "none";
 
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
 
-    setTimeout(()=>URL.revokeObjectURL(url),1000);
-
-    setStatus("Image downloaded.");
-  },"image/png");
+    setStatus("Image download started.");
+  }catch(err){
+    console.error(err);
+    setStatus("Download failed. Make sure this runs on GitHub Pages and assets are loaded from the same domain.");
+  }
 }
 
 generateSignal();
