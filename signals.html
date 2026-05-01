@@ -1,3 +1,4 @@
+<!-- signals.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -130,7 +131,7 @@ button.clicked{
 <div class="wrap">
   <div class="card">
     <div class="brand">
-      <img src="assets/logo.png" alt="ASTY Logo">
+      <img src="https://raw.githubusercontent.com/ArbStrategy-ASTY/ArbStrategy-ASTY/main/assets/logo.png" alt="ASTY Logo">
       <div>
         <h1>ASTY Signal Generator</h1>
         <div class="sub">X-ready post and image from live pool data.</div>
@@ -152,6 +153,8 @@ button.clicked{
 </div>
 
 <script>
+const ASSET_BASE = "https://raw.githubusercontent.com/ArbStrategy-ASTY/ArbStrategy-ASTY/main/assets/";
+
 const pools = [
 ["3UvhqPrMyf13qgRodARDi5oGJGoxHYb2ykZdCaa1TV8i","ASTY/$WIF",1],
 ["HeuivHLqCEmsgKhYhX1M6MGthEbtHrGmZdXQSCBVkstP","ASTY/ALCH",1],
@@ -380,6 +383,7 @@ ${hashtags}`;
 function loadImage(src){
   return new Promise(resolve=>{
     const img = new Image();
+    img.crossOrigin = "anonymous";
     img.onload = ()=>resolve(img);
     img.onerror = ()=>resolve(null);
     img.src = src;
@@ -401,8 +405,8 @@ function drawImageContain(img,x,y,w,h,alpha=1){
 }
 
 async function drawCanvas(data){
-  const logo = await loadImage("assets/logo.png");
-  const wolf = await loadImage("assets/wolf.png");
+  const logo = await loadImage(ASSET_BASE + "logo.png");
+  const wolf = await loadImage(ASSET_BASE + "wolf.png");
 
   ctx.clearRect(0,0,1200,675);
 
@@ -432,10 +436,10 @@ async function drawCanvas(data){
   ctx.lineWidth = 2;
   roundRect(42,36,1116,603,34,false);
 
-  drawImageContain(wolf, 820, 360, 300, 250, .30);
+  drawImageContain(wolf, 875, 410, 260, 210, .32);
 
   if(logo){
-    ctx.drawImage(logo, 985, 52, 112, 112);
+    ctx.drawImage(logo, 1028, 46, 104, 104);
   }
 
   ctx.fillStyle = "#c4b5fd";
@@ -531,11 +535,16 @@ async function copyText(e){
 function downloadImage(e){
   pressEffect(e.currentTarget);
 
-  try{
-    const dataUrl = canvas.toDataURL("image/png");
+  canvas.toBlob(blob=>{
+    if(!blob){
+      setStatus("Download blocked. Use the real GitHub Pages URL instead of HTML Preview.");
+      return;
+    }
 
+    const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
-    link.href = dataUrl;
+
+    link.href = url;
     link.download = "asty-system-signal.png";
     link.style.display = "none";
 
@@ -543,11 +552,10 @@ function downloadImage(e){
     link.click();
     document.body.removeChild(link);
 
+    setTimeout(()=>URL.revokeObjectURL(url),1000);
+
     setStatus("Image download started.");
-  }catch(err){
-    console.error(err);
-    setStatus("Download failed. Make sure this runs on GitHub Pages and assets are loaded from the same domain.");
-  }
+  }, "image/png");
 }
 
 generateSignal();
