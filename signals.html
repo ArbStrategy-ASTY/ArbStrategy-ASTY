@@ -212,6 +212,7 @@ const pools = [
 ["DGuvY79xbLuJRb3CzwQL59z5zoit7KLnFwyL2t6EQCcj","ASTY/SERIOUS",1]
 ];
 
+const TG_LINK = "https://t.me/ArbStrategyASTY/1";
 const CHUNK_SIZE = 25;
 const canvas = document.getElementById("signalCanvas");
 const ctx = canvas.getContext("2d");
@@ -261,7 +262,9 @@ function limitText(str, max = 280){
 }
 
 function pickPostText(data){
+
   const styles = [
+
 `🟣 ASTY Signal
 
 ${data.signal} detected.
@@ -272,6 +275,8 @@ Top Pool: ${data.topPool}
 Flow: ${data.flow} | Burn: ${data.burn}
 
 $ASTY is doing what it was built for.
+
+${TG_LINK}
 
 ${data.hashtags}`,
 
@@ -287,11 +292,13 @@ Burn: ${data.burn}
 
 $ASTY is doing what it was built for.
 
+${TG_LINK}
+
 ${data.hashtags}`,
 
 `🟣 ASTY Signal
 
-${data.topPool} is leading the 24h snapshot.
+${data.topPool} leads the 24h snapshot.
 
 Fees: ${data.fees}
 Signal: ${data.signal}
@@ -300,11 +307,33 @@ Flow: ${data.flow} | Burn: ${data.burn}
 
 $ASTY is doing what it was built for.
 
+${TG_LINK}
+
 ${data.hashtags}`
   ];
 
-  const picked = styles[Math.floor(Math.random() * styles.length)];
-  return limitText(picked, 280);
+  let text = styles[Math.floor(Math.random() * styles.length)];
+
+  // Sicherheits-Logik: NIE den Link abschneiden
+  if(text.length <= 280) return text;
+
+  const fallback =
+`🟣 ASTY Signal
+
+${data.signal}
+
+Top: ${data.topPool}
+Fees: ${data.fees}
+
+$ASTY is doing what it was built for.
+
+${TG_LINK}
+
+${data.hashtags}`;
+
+  return fallback.length <= 280
+    ? fallback
+    : fallback.slice(0, 277) + "...";
 }
 
 async function fetchGeckoChunk(chunk){
