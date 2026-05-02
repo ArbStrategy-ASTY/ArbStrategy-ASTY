@@ -99,23 +99,24 @@ button{
 }
 
 button:hover{
-  transform:translateY(-1px);
-  box-shadow:0 0 34px rgba(168,85,247,.45);
-  filter:brightness(1.08);
+  transform:translateY(-2px) scale(1.03);
+  box-shadow:0 0 38px rgba(168,85,247,.55);
+  filter:brightness(1.12);
 }
 
 button:active{
-  transform:scale(.96);
-  box-shadow:0 0 12px rgba(168,85,247,.2);
+  transform:scale(.90);
+  box-shadow:0 0 18px rgba(168,85,247,.3);
 }
 
 button.clicked{
-  animation:buttonPop .3s ease;
+  animation:buttonPop .42s ease;
 }
 
 @keyframes buttonPop{
-  0%{transform:scale(.96)}
-  50%{transform:scale(1.05)}
+  0%{transform:scale(.88)}
+  35%{transform:scale(1.13)}
+  65%{transform:scale(.97)}
   100%{transform:scale(1)}
 }
 
@@ -318,14 +319,16 @@ async function generateSignal(e){
     return;
   }
 
-  rows.sort((a,b)=>b.efficiency-a.efficiency);
+  rows.sort((a,b)=>b.fees24h-a.fees24h);
 
   const topPool = rows[0];
   const totalFees = rows.reduce((s,p)=>s+p.fees24h,0);
   const totalVolume = rows.reduce((s,p)=>s+p.volume24h,0);
 
-  const benchmark = topPool.efficiency || 1;
-  const ranked = rows.map(p=>({
+  const efficiencySorted = [...rows].sort((a,b)=>b.efficiency-a.efficiency);
+  const benchmark = efficiencySorted[0].efficiency || 1;
+
+  const ranked = efficiencySorted.map(p=>({
     ...p,
     rel: Math.round((p.efficiency / benchmark) * 100)
   }));
