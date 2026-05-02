@@ -256,6 +256,57 @@ function buildHashtags(poolToken){
   return `#ArbStrategy #ArbiTrage #${tokenTag} #DeFi`;
 }
 
+function limitText(str, max = 280){
+  return str.length <= max ? str : str.slice(0, max - 3) + "...";
+}
+
+function pickPostText(data){
+  const styles = [
+`🟣 ASTY Signal
+
+${data.signal} detected.
+
+Top Pool: ${data.topPool}
+24h Fees: ${data.fees}
+
+Flow: ${data.flow} | Burn: ${data.burn}
+
+$ASTY is doing what it was built for.
+
+${data.hashtags}`,
+
+`🟣 ASTY Signal
+
+${data.signal}
+
+Top: ${data.topPool}
+Fees 24h: ${data.fees}
+
+Flow: ${data.flow}
+Burn: ${data.burn}
+
+$ASTY is doing what it was built for.
+
+${data.hashtags}`,
+
+`🟣 ASTY Signal
+
+${data.topPool} is leading the 24h snapshot.
+
+Fees: ${data.fees}
+Signal: ${data.signal}
+
+Flow: ${data.flow} | Burn: ${data.burn}
+
+$ASTY is doing what it was built for.
+
+${data.hashtags}`
+  ];
+
+  const picked = styles[Math.floor(Math.random() * styles.length)];
+  return limitText(picked, 280);
+}
+
 async function fetchGeckoChunk(chunk){
   const ids = chunk.map(([id]) => id).join(",");
   const url = `https://api.geckoterminal.com/api/v2/networks/solana/pools/multi/${encodeURIComponent(ids)}?include=base_token&include_volume_breakdown=false&include_composition=false`;
@@ -350,23 +401,15 @@ async function generateSignal(e){
   const burn = totalFees > 0 ? "ACTIVE" : "WAITING";
   const hashtags = buildHashtags(topPool.poolToken);
 
-  const text =
-`🟣 ASTY System Signal
-
-${signal} detected.
-
-ArbStrategy is processing the current 24h pool snapshot through live system data.
-
-Top Pool: ${topPool.label}
-System Output 24h: ${fmtUsd(totalFees)}
-Volume 24h: ${fmtUsd(totalVolume)}
-
-Burn Engine: ${burn}
-Capital Flow: ${flow}
-
-$ASTY is doing what it was built for.
-
-${hashtags}`;
+  const text = pickPostText({
+    signal,
+    topPool: topPool.label,
+    fees: fmtUsd(totalFees),
+    volume: fmtUsd(totalVolume),
+    burn,
+    flow,
+    hashtags
+  });
 
   postText.value = text;
 
@@ -380,7 +423,7 @@ ${hashtags}`;
     hashtags
   });
 
-  setStatus(`Signal generated from ${rows.length} live pools.`);
+  setStatus(`Signal generated from ${rows.length} live pools. X text: ${text.length}/280 characters.`);
 }
 
 function loadImage(src){
@@ -532,7 +575,7 @@ function wrapText(text,x,y,maxWidth,lineHeight){
 async function copyText(e){
   pressEffect(e.currentTarget);
   await navigator.clipboard.writeText(postText.value);
-  setStatus("X post copied.");
+  setStatus(`X post copied. ${postText.value.length}/280 characters.`);
 }
 
 function downloadImage(e){
