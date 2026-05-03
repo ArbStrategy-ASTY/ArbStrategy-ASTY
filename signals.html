@@ -253,8 +253,8 @@ function getPoolToken(label){
 }
 
 function buildHashtags(poolToken){
-  const tokenTag = poolToken || "Solana";
-  return `#ArbStrategy #ArbiTrage #${tokenTag} #DeFi`;
+  const tokenTag = poolToken || "SOL";
+  return `#ArbStrategy #ArbiTrage $${tokenTag} #DeFi`;
 }
 
 function limitText(str, max = 280){
