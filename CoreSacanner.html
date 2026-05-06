@@ -1,4 +1,604 @@
-<!-- Der HTML/CSS-Teil bleibt wie in deinem finalen Code. Ersetze nur den kompletten <script>-Block durch diesen: -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>ASTY Core Scanner</title>
+  <style>
+    :root{
+      --bg:#06040a;
+      --bg2:#0b0711;
+      --panel:rgba(18,12,30,.84);
+      --line:rgba(192,132,252,.16);
+      --text:#f7f2ff;
+      --muted:#b9a7d7;
+      --purple:#a855f7;
+      --purple2:#c084fc;
+      --purple3:#7e22ce;
+      --green:#22c55e;
+      --yellow:#facc15;
+      --red:#ef4444;
+      --shadow:0 0 28px rgba(168,85,247,.18);
+      --radius:22px;
+    }
+
+    *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+    html,body{margin:0;padding:0;min-height:100%}
+    body{
+      font-family:Inter,Arial,Helvetica,sans-serif;
+      color:var(--text);
+      background:
+        radial-gradient(circle at 50% 0%, rgba(168,85,247,.18), transparent 30%),
+        radial-gradient(circle at 100% 20%, rgba(34,211,238,.08), transparent 18%),
+        radial-gradient(circle at 0% 30%, rgba(168,85,247,.08), transparent 18%),
+        linear-gradient(180deg, var(--bg) 0%, var(--bg2) 100%);
+      overflow-x:hidden;
+    }
+
+    .bg-grid{
+      position:fixed;
+      inset:0;
+      pointer-events:none;
+      z-index:0;
+      background-image:
+        linear-gradient(rgba(255,255,255,.02) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,.02) 1px, transparent 1px);
+      background-size:28px 28px;
+      mask-image:radial-gradient(circle at center, black 40%, transparent 90%);
+      opacity:.22;
+    }
+
+    .app{
+      position:relative;
+      z-index:1;
+      max-width:680px;
+      margin:0 auto;
+      padding:12px;
+    }
+
+    .panel{
+      background:linear-gradient(180deg, rgba(18,12,30,.90), rgba(8,6,14,.92));
+      border:1px solid var(--line);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+      overflow:hidden;
+      position:relative;
+    }
+
+    .panel::after{
+      content:"";
+      position:absolute;
+      width:140px;
+      height:140px;
+      right:-45px;
+      top:-45px;
+      background:radial-gradient(circle, rgba(192,132,252,.15), transparent 72%);
+      pointer-events:none;
+    }
+
+    .top{
+      padding:12px;
+      margin-bottom:10px;
+    }
+
+    .brand{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      margin-bottom:10px;
+    }
+
+    .brand img{
+      width:42px;
+      height:42px;
+      object-fit:contain;
+      filter:drop-shadow(0 0 14px rgba(168,85,247,.38));
+      animation:logoFloat 4s ease-in-out infinite;
+      flex-shrink:0;
+    }
+
+    @keyframes logoFloat{
+      0%,100%{transform:translateY(0)}
+      50%{transform:translateY(-3px)}
+    }
+
+    .brand-text{min-width:0}
+
+    .title{
+      margin:0;
+      font-size:clamp(24px,5vw,34px);
+      line-height:1;
+      font-weight:900;
+      letter-spacing:-.05em;
+    }
+
+    .subtitle{
+      margin-top:4px;
+      color:var(--muted);
+      font-size:12px;
+      letter-spacing:.08em;
+      text-transform:uppercase;
+    }
+
+    .input-wrap{
+      display:grid;
+      gap:10px;
+    }
+
+    .mini-label{
+      color:var(--muted);
+      font-size:11px;
+      letter-spacing:.12em;
+      text-transform:uppercase;
+      margin-bottom:6px;
+    }
+
+    textarea{
+      width:100%;
+      border:1px solid rgba(255,255,255,.08);
+      background:rgba(255,255,255,.04);
+      color:var(--text);
+      border-radius:16px;
+      outline:none;
+      font:inherit;
+      min-height:98px;
+      max-height:160px;
+      padding:12px 14px;
+      resize:vertical;
+      line-height:1.45;
+      font-size:14px;
+    }
+
+    .btn-row{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:10px;
+    }
+
+    button{
+      appearance:none;
+      border:0;
+      border-radius:16px;
+      padding:13px 14px;
+      font-weight:900;
+      font-size:14px;
+      cursor:pointer;
+      color:white;
+      transition:transform .16s ease, opacity .16s ease, box-shadow .16s ease, background .16s ease;
+    }
+
+    button:hover:not(:disabled){transform:translateY(-1px)}
+    button:disabled{opacity:.45;cursor:not-allowed}
+
+    .btn-primary{
+      background:linear-gradient(135deg, var(--purple), var(--purple3));
+      box-shadow:0 0 22px rgba(168,85,247,.22);
+    }
+
+    .btn-danger{
+      background:rgba(239,68,68,.10);
+      border:1px solid rgba(239,68,68,.20);
+      color:#ffd8d8;
+    }
+
+    .core-card{
+      position:relative;
+      min-height:470px;
+      padding:12px;
+      display:flex;
+      flex-direction:column;
+      justify-content:space-between;
+      margin-bottom:10px;
+      overflow:hidden;
+    }
+
+    .hud{
+      display:grid;
+      grid-template-columns:repeat(4,1fr);
+      gap:8px;
+      position:relative;
+      z-index:2;
+    }
+
+    .hud-box{
+      background:rgba(255,255,255,.04);
+      border:1px solid rgba(255,255,255,.06);
+      border-radius:14px;
+      padding:10px;
+      min-height:70px;
+    }
+
+    .hud-k{
+      color:var(--muted);
+      font-size:10px;
+      text-transform:uppercase;
+      letter-spacing:.12em;
+      margin-bottom:6px;
+    }
+
+    .hud-v{
+      font-size:clamp(15px,3.8vw,21px);
+      line-height:1.05;
+      font-weight:900;
+      letter-spacing:-.04em;
+    }
+
+    .core-zone{
+      flex:1;
+      position:relative;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      min-height:315px;
+      z-index:1;
+      margin:10px 0;
+    }
+
+    .wolf{
+      position:absolute;
+      left:0;
+      bottom:-4px;
+      width:130px;
+      opacity:.98;
+      filter:drop-shadow(0 0 18px rgba(168,85,247,.30));
+      animation:wolfPulse 2.8s ease-in-out infinite;
+      pointer-events:none;
+      user-select:none;
+      -webkit-user-drag:none;
+      z-index:6;
+    }
+
+    @keyframes wolfPulse{
+      0%,100%{transform:translateY(0) scale(1)}
+      50%{transform:translateY(-4px) scale(1.03)}
+    }
+
+    .ring{
+      position:absolute;
+      border-radius:999px;
+      border:1px solid rgba(192,132,252,.14);
+      box-shadow:
+        0 0 0 1px rgba(192,132,252,.04) inset,
+        0 0 42px rgba(168,85,247,.10);
+      animation:spin 18s linear infinite;
+      z-index:1;
+    }
+
+    .ring.r1{width:300px;height:300px}
+    .ring.r2{width:230px;height:230px;animation-direction:reverse;animation-duration:11s}
+    .ring.r3{width:165px;height:165px;animation-duration:7s}
+
+    @keyframes spin{
+      from{transform:rotate(0deg)}
+      to{transform:rotate(360deg)}
+    }
+
+    .ring::before,.ring::after{
+      content:"";
+      position:absolute;
+      width:16px;height:16px;
+      border-radius:999px;
+      background:radial-gradient(circle, rgba(192,132,252,1), rgba(126,34,206,.15));
+      box-shadow:0 0 22px rgba(192,132,252,.88);
+    }
+
+    .ring::before{top:-8px;left:50%;transform:translateX(-50%)}
+    .ring::after{bottom:-8px;left:50%;transform:translateX(-50%)}
+
+    .core{
+      position:relative;
+      width:min(68vw,220px);
+      height:min(68vw,220px);
+      border-radius:50%;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      background:
+        radial-gradient(circle at 35% 30%, rgba(255,255,255,.22), transparent 20%),
+        radial-gradient(circle at 50% 50%, rgba(168,85,247,.42), rgba(56,28,105,.82) 45%, rgba(10,7,18,.98) 76%);
+      box-shadow:
+        0 0 16px rgba(192,132,252,.30),
+        0 0 72px rgba(168,85,247,.30),
+        inset 0 0 34px rgba(255,255,255,.08);
+      overflow:hidden;
+      animation:coreIdle 3s ease-in-out infinite;
+      z-index:3;
+    }
+
+    .core::before{
+      content:"";
+      position:absolute;
+      inset:14px;
+      border-radius:50%;
+      border:1px solid rgba(255,255,255,.08);
+    }
+
+    .core::after{
+      content:"";
+      position:absolute;
+      width:120%;
+      height:18%;
+      background:linear-gradient(90deg, transparent, rgba(255,255,255,.14), transparent);
+      transform:rotate(-18deg);
+      animation:shine 3.2s linear infinite;
+    }
+
+    @keyframes shine{
+      from{left:-140%}
+      to{left:140%}
+    }
+
+    @keyframes coreIdle{
+      0%,100%{transform:scale(1)}
+      50%{transform:scale(1.03)}
+    }
+
+    .core.boost{
+      animation:coreBoost .9s ease;
+    }
+
+    @keyframes coreBoost{
+      0%{transform:scale(1)}
+      30%{transform:scale(1.08)}
+      100%{transform:scale(1)}
+    }
+
+    .core-content{
+      position:relative;
+      z-index:2;
+      width:84%;
+      text-align:center;
+    }
+
+    .core-label{
+      color:var(--muted);
+      font-size:10px;
+      letter-spacing:.16em;
+      text-transform:uppercase;
+      margin-bottom:8px;
+    }
+
+    .core-total{
+      font-size:clamp(24px,7vw,40px);
+      line-height:1;
+      font-weight:900;
+      letter-spacing:-.06em;
+      text-shadow:0 0 18px rgba(192,132,252,.22);
+      margin-bottom:8px;
+    }
+
+    .core-sub{
+      font-size:12px;
+      color:var(--muted);
+      line-height:1.4;
+      min-height:34px;
+    }
+
+    .pulse-text{
+      position:absolute;
+      left:50%;
+      top:46%;
+      transform:translate(-50%,-50%);
+      font-weight:900;
+      letter-spacing:-.04em;
+      font-size:clamp(18px,6vw,40px);
+      opacity:0;
+      pointer-events:none;
+      z-index:7;
+      text-shadow:0 0 20px currentColor;
+    }
+
+    .pulse-text.show{
+      animation:pulsePop 1s ease forwards;
+    }
+
+    @keyframes pulsePop{
+      0%{opacity:0;transform:translate(-50%,-40%) scale(.8)}
+      15%{opacity:1;transform:translate(-50%,-50%) scale(1)}
+      100%{opacity:0;transform:translate(-50%,-88%) scale(1.05)}
+    }
+
+    .status-bar{
+      position:relative;
+      z-index:2;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      padding:10px 12px;
+      border-radius:16px;
+      background:rgba(255,255,255,.04);
+      border:1px solid rgba(255,255,255,.06);
+      min-height:54px;
+    }
+
+    .status-left{min-width:0}
+    .status-title{
+      font-size:14px;
+      font-weight:900;
+      letter-spacing:-.02em;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+
+    .status-sub{
+      margin-top:2px;
+      color:var(--muted);
+      font-size:12px;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+
+    .result-panel{
+      padding:12px;
+      margin-bottom:10px;
+    }
+
+    .wallet-list{
+      display:grid;
+      gap:8px;
+      max-height:250px;
+      overflow:auto;
+    }
+
+    .wallet-row{
+      display:grid;
+      grid-template-columns:1fr auto;
+      gap:10px;
+      padding:10px 12px;
+      border-radius:14px;
+      background:rgba(255,255,255,.04);
+      border:1px solid rgba(255,255,255,.06);
+      align-items:center;
+    }
+
+    .wallet-main{min-width:0}
+
+    .wallet-addr{
+      font-size:13px;
+      font-weight:800;
+      letter-spacing:.01em;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+      margin-bottom:4px;
+    }
+
+    .wallet-meta{
+      color:var(--muted);
+      font-size:12px;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+
+    .wallet-value{
+      text-align:right;
+      min-width:92px;
+    }
+
+    .wallet-usd{
+      font-size:15px;
+      font-weight:900;
+      line-height:1;
+    }
+
+    .wallet-asty{
+      margin-top:4px;
+      color:var(--muted);
+      font-size:12px;
+      line-height:1;
+    }
+
+    .empty{
+      padding:16px;
+      border-radius:16px;
+      text-align:center;
+      color:var(--muted);
+      background:rgba(255,255,255,.03);
+      border:1px dashed rgba(255,255,255,.08);
+      font-size:13px;
+    }
+
+    .green{color:var(--green)}
+    .yellow{color:var(--yellow)}
+    .red{color:var(--red)}
+    .purple{color:var(--purple2)}
+
+    @media (max-width:420px){
+      .app{padding:10px}
+      .btn-row{grid-template-columns:1fr 1fr}
+      .hud{grid-template-columns:repeat(2,1fr)}
+      .hud-box{padding:8px}
+      .ring.r1{width:270px;height:270px}
+      .ring.r2{width:205px;height:205px}
+      .ring.r3{width:145px;height:145px}
+      .wolf{width:112px}
+      .core-card{min-height:420px}
+    }
+  </style>
+</head>
+<body>
+  <div class="bg-grid"></div>
+
+  <div class="app">
+    <section class="panel top">
+      <div class="brand">
+        <img src="assets/logo.png" alt="ASTY Logo">
+        <div class="brand-text">
+          <h1 class="title">ASTY Core Scanner</h1>
+          <div class="subtitle">Wallet scan • ASTY total • live USD core</div>
+        </div>
+      </div>
+
+      <div class="input-wrap">
+        <div>
+          <div class="mini-label">Wallet addresses, one per line</div>
+          <textarea id="walletInput" placeholder="Paste Solana wallet addresses here, one per line"></textarea>
+        </div>
+
+        <div class="btn-row">
+          <button class="btn-primary" id="scanBtn">Scan Wallets</button>
+          <button class="btn-danger" id="clearBtn">Clear</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel core-card">
+      <div class="hud">
+        <div class="hud-box">
+          <div class="hud-k">ASTY Price</div>
+          <div class="hud-v" id="priceBox">$0.0000</div>
+        </div>
+        <div class="hud-box">
+          <div class="hud-k">Wallets</div>
+          <div class="hud-v" id="walletCountBox">0</div>
+        </div>
+        <div class="hud-box">
+          <div class="hud-k">Total ASTY</div>
+          <div class="hud-v" id="astyTotalBox">0</div>
+        </div>
+        <div class="hud-box">
+          <div class="hud-k">% of Supply</div>
+          <div class="hud-v" id="supplyPctBox">0.0000%</div>
+        </div>
+      </div>
+
+      <div class="core-zone">
+        <img class="wolf" src="assets/wolf.png" alt="Wolf">
+
+        <div class="ring r1"></div>
+        <div class="ring r2"></div>
+        <div class="ring r3"></div>
+
+        <div class="pulse-text purple" id="pulseText">READY</div>
+
+        <div class="core" id="coreEl">
+          <div class="core-content">
+            <div class="core-label">Total wallet value</div>
+            <div class="core-total" id="coreTotal">$0.00</div>
+            <div class="core-sub" id="coreSub">Paste wallets above and scan the ASTY core.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="status-bar">
+        <div class="status-left">
+          <div class="status-title" id="statusTitle">Standby</div>
+          <div class="status-sub" id="statusSub">Waiting for wallet scan.</div>
+        </div>
+        <div class="status-title purple" id="energyTag">LOW ENERGY</div>
+      </div>
+    </section>
+
+    <section class="panel result-panel">
+      <div class="wallet-list" id="walletList">
+        <div class="empty">No wallets scanned yet.</div>
+      </div>
+    </section>
+  </div>
 
 <script>
 const ASTY_MINT = "ASTYqeaoK83Zs1pTFEXZUB6BM8cG8YLTsN852NUkt7ZR";
