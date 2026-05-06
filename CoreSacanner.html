@@ -566,7 +566,7 @@
         </div>
       </div>
 
-      <div class="core-zone" id="coreZone">
+      <div class="core-zone">
         <img class="wolf" src="assets/wolf.png" alt="Wolf">
 
         <div class="ring r1"></div>
@@ -600,9 +600,11 @@
     </section>
   </div>
 
-<script>
+  <script>
 const ASTY_MINT = "ASTYqeaoK83Zs1pTFEXZUB6BM8cG8YLTsN852NUkt7ZR";
 const DEFAULT_RPC = "https://solana-rpc.publicnode.com";
+const WALLET_CHUNK_SIZE = 4;
+const RPC_TIMEOUT_MS = 10000;
 
 const ui = {
   walletInput: document.getElementById("walletInput"),
@@ -619,11 +621,7 @@ const ui = {
   energyTag: document.getElementById("energyTag"),
   walletList: document.getElementById("walletList"),
   pulseText: document.getElementById("pulseText"),
-  coreEl: document.getElementById("coreEl"),
-  coreZone: document.getElementById("coreZone"),
-  scanOverlay: document.getElementById("scanOverlay"),
-  scanProgressText: document.getElementById("scanProgressText"),
-  scanProgressBar: document.getElementById("scanProgressBar")
+  coreEl: document.getElementById("coreEl")
 };
 
 const state = {
@@ -675,42 +673,49 @@ function parseWallets(text) {
   return [...new Set(raw)].filter(isProbablySolanaAddress);
 }
 
-async function solanaRpc(rpcUrl, method, params, timeoutMs = 10000) {
+async function fetchWithTimeout(url, options = {}, timeoutMs = RPC_TIMEOUT_MS) {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), timeoutMs);
 
   try {
-    const res = await fetch(rpcUrl, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      signal: controller.signal,
-      body: JSON.stringify({
-        jsonrpc: "2.0",
-        id: 1,
-        method,
-        params
-      })
+    const res = await fetch(url, {
+      ...options,
+      signal: controller.signal
     });
-
-    if (!res.ok) {
-      throw new Error(`RPC ${res.status}`);
-    }
-
-    const json = await res.json();
-
-    if (json.error) {
-      throw new Error(json.error.message || "RPC error");
-    }
-
-    return json.result;
+    return res;
   } catch (err) {
     if (err.name === "AbortError") {
-      throw new Error("RPC timeout");
+      throw new Error("Request timeout");
     }
     throw err;
   } finally {
     clearTimeout(timeout);
   }
+}
+
+async function solanaRpc(rpcUrl, method, params) {
+  const res = await fetchWithTimeout(rpcUrl, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      jsonrpc: "2.0",
+      id: 1,
+      method,
+      params
+    })
+  });
+
+  if (!res.ok) {
+    throw new Error(`RPC ${res.status}`);
+  }
+
+  const json = await res.json();
+
+  if (json.error) {
+    throw new Error(json.error.message || "RPC error");
+  }
+
+  return json.result;
 }
 
 async function getAstyAmountForWallet(rpcUrl, owner) {
@@ -749,9 +754,9 @@ async function getAstySupply(rpcUrl) {
 async function fetchAstyPriceFromGeckoTerminal() {
   const url = `https://api.geckoterminal.com/api/v2/networks/solana/tokens/${ASTY_MINT}?include=top_pools&include_composition=false&include_inactive_source=false`;
 
-  const res = await fetch(url, {
+  const res = await fetchWithTimeout(url, {
     headers: { accept: "application/json" }
-  });
+  }, 10000);
 
   if (!res.ok) {
     throw new Error(`GeckoTerminal request failed: ${res.status}`);
@@ -785,7 +790,7 @@ async function fetchAstyPriceFromGeckoTerminal() {
   }
 
   if (Number.isNaN(priceUsd)) {
-    throw new Error("ASTY price not found in GeckoTerminal response");
+    throw new Error("ASTY price not found");
   }
 
   return { priceUsd };
@@ -845,86 +850,6 @@ function animateNumber(from, to, duration, onUpdate) {
   requestAnimationFrame(frame);
 }
 
-function setScanningState(isScanning, text = "", progress = 0) {
-  state.scanning = isScanning;
-  ui.scanBtn.disabled = isScanning;
-  ui.clearBtn.disabled = isScanning;
-
-  if (isScanning) {
-    ui.coreZone.classList.add("scanning");
-    ui.scanBtn.textContent = "Scanning...";
-    ui.scanProgressText.textContent = text || "Preparing scan...";
-    ui.scanProgressBar.style.width = `${Math.max(0, Math.min(100, progress))}%`;
-  } else {
-    ui.coreZone.classList.remove("scanning");
-    ui.scanBtn.textContent = "Scan Wallets";
-    ui.scanProgressText.textContent = "Preparing scan...";
-    ui.scanProgressBar.style.width = "0%";
-  }
-}
-
-function updateScanProgress(text, progress) {
-  ui.scanProgressText.textContent = text;
-  ui.scanProgressBar.style.width = `${Math.max(0, Math.min(100, progress))}%`;
-}
-
-async function scanWalletsInChunks(wallets, priceUsd, normalizedSupply, chunkSize = 4) {
-  const walletResults = [];
-  const total = wallets.length;
-
-  for (let start = 0; start < total; start += chunkSize) {
-    const chunk = wallets.slice(start, start + chunkSize);
-    const from = start + 1;
-    const to = Math.min(start + chunk.length, total);
-
-    updateScanProgress(
-      `Scanning wallets ${from}-${to} / ${total}`,
-      22 + (start / total) * 68
-    );
-
-    setStatus("Reading wallets", `Scanning ${from}-${to} of ${total}...`);
-
-    const settled = await Promise.allSettled(
-      chunk.map(async wallet => {
-        const asty = await getAstyAmountForWallet(DEFAULT_RPC, wallet);
-        const usd = asty * priceUsd;
-        const supplyPct = normalizedSupply > 0 ? (asty / normalizedSupply) * 100 : 0;
-
-        return {
-          address: wallet,
-          asty,
-          usd,
-          supplyPct,
-          error: false
-        };
-      })
-    );
-
-    for (let i = 0; i < settled.length; i++) {
-      if (settled[i].status === "fulfilled") {
-        walletResults.push(settled[i].value);
-      } else {
-        walletResults.push({
-          address: chunk[i],
-          asty: 0,
-          usd: 0,
-          supplyPct: 0,
-          error: true
-        });
-      }
-    }
-
-    const finished = Math.min(start + chunk.length, total);
-
-    updateScanProgress(
-      `Scanned ${finished} / ${total}`,
-      22 + (finished / total) * 68
-    );
-  }
-
-  return walletResults;
-}
-
 function renderWallets() {
   if (!state.wallets.length) {
     ui.walletList.innerHTML = `<div class="empty">No wallets scanned yet.</div>`;
@@ -965,11 +890,41 @@ function renderAnimated(previousUsd = 0) {
     ui.coreTotal.textContent = formatUsd(value, 2);
   });
 
-  const subText = state.wallets.length
+  ui.coreSub.textContent = state.wallets.length
     ? `${formatNum(state.totalAsty, 4)} ASTY • ${formatPct(state.supplyPct, 4)} of supply`
     : "Paste wallets above and scan the ASTY core.";
+}
 
-  ui.coreSub.textContent = subText;
+async function scanWalletChunk(chunk, priceUsd, normalizedSupply) {
+  const settled = await Promise.allSettled(
+    chunk.map(async wallet => {
+      const asty = await getAstyAmountForWallet(DEFAULT_RPC, wallet);
+      const usd = asty * priceUsd;
+      const supplyPct = normalizedSupply > 0 ? (asty / normalizedSupply) * 100 : 0;
+
+      return {
+        address: wallet,
+        asty,
+        usd,
+        supplyPct,
+        error: false
+      };
+    })
+  );
+
+  return settled.map((result, index) => {
+    if (result.status === "fulfilled") {
+      return result.value;
+    }
+
+    return {
+      address: chunk[index],
+      asty: 0,
+      usd: 0,
+      supplyPct: 0,
+      error: true
+    };
+  });
 }
 
 async function scanWallets() {
@@ -983,38 +938,40 @@ async function scanWallets() {
     return;
   }
 
+  state.scanning = true;
+  ui.scanBtn.disabled = true;
+  ui.clearBtn.disabled = true;
+  ui.scanBtn.textContent = "Scanning...";
+
   const previousUsd = state.totalUsd || 0;
 
-  setScanningState(true, "Fetching ASTY price...", 6);
-  setStatus("Loading token data", "Fetching ASTY price and supply...");
+  setStatus("Loading token data", "Fetching ASTY price...");
   flashPulse("SCANNING", "yellow");
 
   try {
     const tokenData = await fetchAstyPriceFromGeckoTerminal();
     const priceUsd = tokenData.priceUsd;
 
-    updateScanProgress("Fetching live ASTY supply...", 18);
-
+    setStatus("Loading supply", "Fetching live ASTY supply...");
     const normalizedSupply = await getAstySupply(DEFAULT_RPC);
 
-    setStatus(
-      "Price loaded",
-      `ASTY price detected at ${formatUsd(priceUsd, 4)}. Scanning wallets...`
-    );
+    const walletResults = [];
 
-    const walletResults = await scanWalletsInChunks(
-      wallets,
-      priceUsd,
-      normalizedSupply,
-      4
-    );
+    for (let i = 0; i < wallets.length; i += WALLET_CHUNK_SIZE) {
+      const chunk = wallets.slice(i, i + WALLET_CHUNK_SIZE);
+      const from = i + 1;
+      const to = Math.min(i + chunk.length, wallets.length);
 
-    updateScanProgress("Finalizing core output...", 95);
+      setStatus("Reading wallets", `Scanning ${from}-${to} of ${wallets.length}...`);
+
+      const chunkResults = await scanWalletChunk(chunk, priceUsd, normalizedSupply);
+      walletResults.push(...chunkResults);
+    }
 
     walletResults.sort((a, b) => b.usd - a.usd);
 
     const validWallets = walletResults.filter(w => !w.error);
-    const failedCount = walletResults.filter(w => w.error).length;
+    const failedWallets = walletResults.filter(w => w.error);
 
     const totalAsty = validWallets.reduce((sum, w) => sum + w.asty, 0);
     const totalUsd = validWallets.reduce((sum, w) => sum + w.usd, 0);
@@ -1027,26 +984,14 @@ async function scanWallets() {
     state.totalUsd = totalUsd;
     state.supplyPct = totalSupplyPct;
 
-    updateScanProgress("Core charged", 100);
-
-    if (failedCount > 0) {
-      setStatus(
-        "Scan complete",
-        `Loaded ${validWallets.length} wallet${validWallets.length === 1 ? "" : "s"}, ${failedCount} failed.`
-      );
+    if (failedWallets.length) {
+      setStatus("Scan complete", `${validWallets.length} loaded, ${failedWallets.length} failed.`);
     } else {
-      setStatus(
-        "Scan complete",
-        `Loaded ${validWallets.length} wallet${validWallets.length === 1 ? "" : "s"} successfully.`
-      );
+      setStatus("Scan complete", `Loaded ${validWallets.length} wallet${validWallets.length === 1 ? "" : "s"} successfully.`);
     }
 
     flashPulse(totalUsd > 0 ? "CHARGED" : "EMPTY", totalUsd > 0 ? "green" : "red");
     renderAnimated(previousUsd);
-
-    setTimeout(() => {
-      setScanningState(false);
-    }, 380);
   } catch (err) {
     console.error(err);
 
@@ -1056,8 +1001,8 @@ async function scanWallets() {
       message = "Public RPC blocked browser access.";
     }
 
-    if (message.includes("RPC timeout")) {
-      message = "RPC timeout. Try again.";
+    if (message.includes("timeout")) {
+      message = "Request timed out. Try again.";
     }
 
     if (message.includes("Failed to fetch")) {
@@ -1065,12 +1010,12 @@ async function scanWallets() {
     }
 
     setStatus("Scan failed", message);
-    updateScanProgress("Scan failed", 100);
     flashPulse("ERROR", "red");
-
-    setTimeout(() => {
-      setScanningState(false);
-    }, 380);
+  } finally {
+    state.scanning = false;
+    ui.scanBtn.disabled = false;
+    ui.clearBtn.disabled = false;
+    ui.scanBtn.textContent = "Scan Wallets";
   }
 }
 
@@ -1080,7 +1025,6 @@ ui.clearBtn.addEventListener("click", () => {
   if (state.scanning) return;
 
   ui.walletInput.value = "";
-
   state.priceUsd = 0;
   state.totalAsty = 0;
   state.totalUsd = 0;
@@ -1109,3 +1053,5 @@ ui.walletInput.addEventListener("keydown", e => {
 
 setEnergyTag(0);
 </script>
+</body>
+</html>
