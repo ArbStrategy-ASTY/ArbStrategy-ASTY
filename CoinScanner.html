@@ -8,8 +8,9 @@
 <style>
 :root{
   --bg:#05020a;
-  --panel:rgba(17,10,30,.86);
-  --line:rgba(192,132,252,.18);
+  --panel:rgba(17,10,30,.88);
+  --panel2:rgba(25,14,43,.78);
+  --line:rgba(192,132,252,.2);
   --text:#f8f2ff;
   --muted:#b9a7d7;
   --purple:#a855f7;
@@ -17,6 +18,7 @@
   --green:#23f7a6;
   --yellow:#ffd166;
   --red:#ff4d6d;
+  --cyan:#62e9ff;
 }
 
 *{
@@ -27,40 +29,222 @@
 }
 
 body{
-  background:
-    radial-gradient(circle at top,#1a1030 0%,#05020a 60%);
-  color:var(--text);
   min-height:100vh;
+  color:var(--text);
+  background:
+    radial-gradient(circle at 20% 5%,rgba(168,85,247,.28),transparent 30%),
+    radial-gradient(circle at 80% 10%,rgba(98,233,255,.12),transparent 28%),
+    linear-gradient(180deg,#05020a 0%,#0a0612 55%,#05020a 100%);
   overflow-x:hidden;
 }
 
+body:before{
+  content:"";
+  position:fixed;
+  inset:0;
+  background:
+    linear-gradient(rgba(255,255,255,.018) 1px, transparent 1px),
+    linear-gradient(90deg,rgba(255,255,255,.018) 1px, transparent 1px);
+  background-size:42px 42px;
+  pointer-events:none;
+  z-index:0;
+}
+
+.scanlines{
+  position:fixed;
+  inset:0;
+  pointer-events:none;
+  z-index:50;
+  background:repeating-linear-gradient(
+    to bottom,
+    rgba(255,255,255,.025),
+    rgba(255,255,255,.025) 1px,
+    transparent 2px,
+    transparent 5px
+  );
+  opacity:.25;
+}
+
+.wolf-bg{
+  position:fixed;
+  right:-80px;
+  bottom:-40px;
+  width:min(620px,85vw);
+  opacity:.18;
+  z-index:0;
+  pointer-events:none;
+  filter:drop-shadow(0 0 32px rgba(168,85,247,.55));
+  animation:wolfPulse 4s infinite ease-in-out;
+}
+
+@keyframes wolfPulse{
+  0%,100%{transform:scale(1);opacity:.16;}
+  50%{transform:scale(1.035);opacity:.24;}
+}
+
+.header{
+  position:sticky;
+  top:0;
+  z-index:20;
+  backdrop-filter:blur(18px);
+  background:rgba(5,2,10,.82);
+  border-bottom:1px solid var(--line);
+}
+
+.header-inner{
+  max-width:1400px;
+  margin:auto;
+  padding:18px 24px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:18px;
+}
+
+.brand{
+  display:flex;
+  align-items:center;
+  gap:14px;
+}
+
+.logo{
+  width:52px;
+  height:52px;
+  border-radius:16px;
+  object-fit:contain;
+  filter:drop-shadow(0 0 18px rgba(168,85,247,.8));
+  animation:logoGlow 2.6s infinite ease-in-out;
+}
+
+@keyframes logoGlow{
+  0%,100%{filter:drop-shadow(0 0 14px rgba(168,85,247,.65));}
+  50%{filter:drop-shadow(0 0 28px rgba(192,132,252,1));}
+}
+
+.brand h1{
+  font-size:1.45rem;
+  line-height:1.1;
+}
+
+.brand span{
+  color:var(--muted);
+  font-size:.83rem;
+}
+
+.nav{
+  display:flex;
+  gap:10px;
+  flex-wrap:wrap;
+  justify-content:flex-end;
+}
+
+.nav a{
+  color:var(--text);
+  text-decoration:none;
+  padding:10px 14px;
+  border:1px solid var(--line);
+  border-radius:999px;
+  background:rgba(18,12,30,.72);
+  font-size:.88rem;
+}
+
+.nav a:hover{
+  border-color:var(--purple2);
+  box-shadow:0 0 20px rgba(168,85,247,.3);
+}
+
 .wrap{
-  max-width:1200px;
+  position:relative;
+  z-index:2;
+  max-width:1400px;
   margin:auto;
   padding:24px;
 }
 
-.header{
-  text-align:center;
-  margin-bottom:30px;
-}
-
-.header h1{
-  font-size:3rem;
-  color:var(--purple2);
-}
-
-.header p{
-  color:var(--muted);
-  margin-top:10px;
+.hero{
+  display:grid;
+  grid-template-columns:1.05fr .95fr;
+  gap:22px;
+  padding:36px 0 20px;
 }
 
 .card{
   background:var(--panel);
   border:1px solid var(--line);
-  border-radius:24px;
-  padding:24px;
-  margin-bottom:24px;
+  border-radius:28px;
+  overflow:hidden;
+  box-shadow:0 0 36px rgba(168,85,247,.16);
+  position:relative;
+}
+
+.card:before{
+  content:"";
+  position:absolute;
+  inset:-1px;
+  background:radial-gradient(circle at top right,rgba(168,85,247,.18),transparent 36%);
+  pointer-events:none;
+}
+
+.card-inner{
+  position:relative;
+  padding:26px;
+}
+
+.kicker{
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  color:var(--green);
+  border:1px solid rgba(35,247,166,.25);
+  background:rgba(35,247,166,.08);
+  padding:8px 12px;
+  border-radius:999px;
+  font-size:.82rem;
+  margin-bottom:16px;
+}
+
+.pulse-dot{
+  width:9px;
+  height:9px;
+  border-radius:50%;
+  background:var(--green);
+  box-shadow:0 0 16px var(--green);
+  animation:pulse 1.55s infinite;
+}
+
+@keyframes pulse{
+  0%{transform:scale(1);opacity:1;}
+  50%{transform:scale(1.55);opacity:.55;}
+  100%{transform:scale(1);opacity:1;}
+}
+
+.big{
+  font-size:clamp(2.3rem,6vw,5.5rem);
+  line-height:.92;
+  letter-spacing:-.06em;
+  margin-bottom:18px;
+}
+
+.gradient{
+  background:linear-gradient(90deg,#fff,var(--purple2),var(--cyan));
+  -webkit-background-clip:text;
+  background-clip:text;
+  color:transparent;
+}
+
+.lead{
+  color:var(--muted);
+  font-size:1.02rem;
+  line-height:1.65;
+  max-width:760px;
+}
+
+.input-box{
+  margin-top:24px;
+  background:rgba(4,2,8,.7);
+  border:1px solid var(--line);
+  border-radius:22px;
+  padding:16px;
 }
 
 .input-row{
@@ -69,378 +253,925 @@ body{
   gap:12px;
 }
 
-@media(max-width:700px){
-  .input-row{
-    grid-template-columns:1fr;
-  }
-}
-
 input{
   width:100%;
-  padding:16px;
-  border-radius:16px;
-  border:1px solid var(--line);
-  background:#0b0712;
-  color:white;
+  border:none;
   outline:none;
+  background:rgba(11,7,18,.96);
+  border:1px solid rgba(192,132,252,.32);
+  color:var(--text);
+  padding:15px 16px;
+  border-radius:16px;
+  font-size:1rem;
 }
 
 button{
-  padding:16px 22px;
   border:none;
-  border-radius:16px;
+  outline:none;
   cursor:pointer;
   color:white;
-  font-weight:bold;
-  background:
-    linear-gradient(90deg,var(--purple),var(--purple2));
+  font-weight:900;
+  padding:15px 18px;
+  border-radius:16px;
+  background:linear-gradient(90deg,#7e22ce,var(--purple),var(--purple2));
+  box-shadow:0 0 24px rgba(168,85,247,.32);
+  transition:.18s ease;
 }
 
 button:hover{
-  opacity:.9;
+  transform:translateY(-2px);
+  box-shadow:0 0 36px rgba(168,85,247,.5);
+}
+
+button:disabled{
+  opacity:.55;
+  cursor:not-allowed;
+  transform:none;
+}
+
+.hints{
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+  margin-top:12px;
+}
+
+.hint{
+  font-size:.8rem;
+  color:var(--muted);
+  padding:8px 10px;
+  border-radius:999px;
+  border:1px solid var(--line);
+  background:rgba(255,255,255,.035);
+}
+
+.radar-stage{
+  min-height:100%;
+  display:grid;
+  place-items:center;
+  padding:22px;
+}
+
+.radar{
+  width:min(470px,86vw);
+  aspect-ratio:1;
+  border-radius:50%;
+  position:relative;
+  background:
+    radial-gradient(circle,rgba(35,247,166,.18) 0 2px,transparent 3px),
+    radial-gradient(circle,transparent 0 18%,rgba(168,85,247,.08) 18.4% 18.8%,transparent 19.2% 36%,rgba(168,85,247,.11) 36.5% 37%,transparent 37.5% 55%,rgba(168,85,247,.14) 55.4% 56%,transparent 56.8% 73%,rgba(168,85,247,.18) 73.6% 74%,transparent 74.8%),
+    radial-gradient(circle at center,rgba(98,233,255,.08),transparent 58%);
+  border:1px solid rgba(192,132,252,.32);
+  box-shadow:inset 0 0 40px rgba(168,85,247,.22),0 0 50px rgba(98,233,255,.09);
+  overflow:hidden;
+}
+
+.radar:before{
+  content:"";
+  position:absolute;
+  width:50%;
+  height:50%;
+  left:50%;
+  top:0;
+  transform-origin:left bottom;
+  background:linear-gradient(55deg,rgba(35,247,166,.48),rgba(35,247,166,.04) 58%,transparent 62%);
+  animation:sweep 4s linear infinite;
+}
+
+@keyframes sweep{
+  to{transform:rotate(360deg);}
+}
+
+.node{
+  position:absolute;
+  width:10px;
+  height:10px;
+  border-radius:50%;
+  background:var(--purple2);
+  box-shadow:0 0 20px var(--purple2);
+  animation:blink 2.4s infinite;
+}
+
+.node.n1{left:24%;top:38%;}
+.node.n2{left:66%;top:31%;animation-delay:.4s;}
+.node.n3{left:58%;top:69%;animation-delay:.9s;}
+.node.n4{left:37%;top:62%;animation-delay:1.3s;}
+.node.n5{left:76%;top:53%;animation-delay:1.9s;}
+
+@keyframes blink{
+  0%,100%{opacity:.35;transform:scale(.8);}
+  50%{opacity:1;transform:scale(1.4);}
+}
+
+.grid{
+  display:grid;
+  grid-template-columns:1.05fr .95fr;
+  gap:22px;
+}
+
+.section-title{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  margin-bottom:14px;
+}
+
+.section-title h2{
+  font-size:1.2rem;
+}
+
+.badge{
+  color:var(--muted);
+  font-size:.78rem;
+  border:1px solid var(--line);
+  border-radius:999px;
+  padding:7px 10px;
+  background:rgba(255,255,255,.035);
 }
 
 .terminal{
+  min-height:360px;
+  max-height:460px;
+  overflow:auto;
+  font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  line-height:1.7;
   background:#05030a;
   border:1px solid var(--line);
-  border-radius:18px;
+  border-radius:20px;
   padding:18px;
-  min-height:260px;
-  overflow:auto;
-  font-family:monospace;
-  line-height:1.7;
+  color:#e9ddff;
 }
 
-.metrics{
+.results{
   display:grid;
   grid-template-columns:repeat(4,1fr);
   gap:14px;
-  margin-top:20px;
-}
-
-@media(max-width:900px){
-  .metrics{
-    grid-template-columns:repeat(2,1fr);
-  }
-}
-
-@media(max-width:500px){
-  .metrics{
-    grid-template-columns:1fr;
-  }
 }
 
 .metric{
-  background:#0b0712;
+  background:rgba(5,3,10,.74);
   border:1px solid var(--line);
-  border-radius:18px;
+  border-radius:20px;
   padding:16px;
 }
 
 .metric small{
-  color:var(--muted);
   display:block;
+  color:var(--muted);
   margin-bottom:8px;
 }
 
 .metric strong{
-  font-size:1.3rem;
+  font-size:1.24rem;
+}
+
+.score-card{
+  margin-top:16px;
+  background:rgba(5,3,10,.74);
+  border:1px solid var(--line);
+  border-radius:22px;
+  padding:18px;
+}
+
+.score-top{
+  display:flex;
+  align-items:flex-end;
+  justify-content:space-between;
+  gap:14px;
+  margin-bottom:12px;
+}
+
+.score-number{
+  font-size:3.1rem;
+  font-weight:1000;
+  letter-spacing:-.06em;
+}
+
+.score-label{
+  color:var(--muted);
+  font-size:.92rem;
 }
 
 .bar{
-  margin-top:20px;
-  height:18px;
+  height:17px;
   border-radius:999px;
+  background:#12091d;
   overflow:hidden;
-  background:#130a1f;
   border:1px solid var(--line);
 }
 
 .fill{
   height:100%;
   width:0%;
-  background:
-    linear-gradient(90deg,var(--red),var(--yellow),var(--green));
-  transition:1s;
-}
-
-.score{
-  margin-top:14px;
-  font-size:2.6rem;
-  font-weight:bold;
+  border-radius:inherit;
+  background:linear-gradient(90deg,var(--red),var(--yellow),var(--green));
+  transition:1s ease;
 }
 
 .verdict{
-  margin-top:18px;
-  padding:16px;
-  border-radius:18px;
+  margin-top:14px;
+  padding:14px;
+  border-radius:16px;
   border:1px solid var(--line);
-  background:rgba(255,255,255,.03);
+  background:rgba(255,255,255,.035);
+  line-height:1.55;
+}
+
+.pool-list{
+  display:grid;
+  gap:12px;
+  margin-top:14px;
+}
+
+.pool{
+  display:grid;
+  grid-template-columns:1fr auto;
+  gap:12px;
+  align-items:center;
+  padding:14px;
+  border:1px solid var(--line);
+  background:rgba(255,255,255,.035);
+  border-radius:18px;
+}
+
+.pool h3{
+  font-size:1rem;
+  margin-bottom:5px;
+}
+
+.pool p{
+  color:var(--muted);
+  font-size:.86rem;
+  line-height:1.45;
+}
+
+.pool button{
+  padding:10px 12px;
+  border-radius:13px;
+  font-size:.8rem;
+}
+
+.footer-note{
+  color:var(--muted);
   line-height:1.6;
+  font-size:.88rem;
+  margin-top:18px;
 }
 
 .good{color:var(--green);}
 .mid{color:var(--yellow);}
 .bad{color:var(--red);}
+.cyan{color:var(--cyan);}
+.green{color:var(--green);}
+.yellow{color:var(--yellow);}
+.red{color:var(--red);}
+.muted{color:var(--muted);}
+
+a.link{
+  color:var(--purple2);
+  text-decoration:none;
+}
+
+@media(max-width:1080px){
+  .hero,.grid{
+    grid-template-columns:1fr;
+  }
+}
+
+@media(max-width:860px){
+  .results{
+    grid-template-columns:repeat(2,1fr);
+  }
+
+  .header-inner{
+    align-items:flex-start;
+    flex-direction:column;
+  }
+
+  .nav{
+    justify-content:flex-start;
+  }
+}
+
+@media(max-width:620px){
+  .input-row,.pool{
+    grid-template-columns:1fr;
+  }
+
+  .results{
+    grid-template-columns:1fr;
+  }
+
+  .wrap{
+    padding:16px;
+  }
+
+  .card-inner{
+    padding:20px;
+  }
+}
 </style>
 </head>
 
 <body>
 
-<div class="wrap">
+<img src="assets/wolf.png" class="wolf-bg" alt="ASTY Wolf" />
 
-  <div class="header">
-    <h1>🟣 ASTY Opportunity Radar</h1>
-    <p>
-      AI-driven Solana liquidity opportunity scanner
-    </p>
-  </div>
+<div class="scanlines"></div>
 
-  <div class="card">
+<header class="header">
+  <div class="header-inner">
 
-    <div class="input-row">
-      <input
-        id="searchInput"
-        placeholder="Example: TAO, ASTY/SOL, SOL or Pool Address"
-      />
-
-      <button onclick="startScan()">
-        START SCAN
-      </button>
+    <div class="brand">
+      <img src="assets/logo.png" class="logo" alt="ASTY Logo" />
+      <div>
+        <h1>ASTY Opportunity Radar</h1>
+        <span>Solana Pool Intelligence • Candidate Scanner</span>
+      </div>
     </div>
 
-  </div>
-
-  <div class="card">
-
-    <h2 style="margin-bottom:18px;">
-      AI Terminal
-    </h2>
-
-    <div class="terminal" id="terminal">
-      Awaiting scan...
-    </div>
+    <nav class="nav">
+      <a href="https://arbstrategy.net/" target="_blank" rel="noopener">Website</a>
+      <a href="https://arbstrategy-asty.github.io/ArbStrategy-ASTY/" target="_blank" rel="noopener">System Overview</a>
+      <a href="https://htmlpreview.github.io/?https://github.com/ArbStrategy-ASTY/ArbStrategy-ASTY/blob/main/pools.html" target="_blank" rel="noopener">Pool Dashboard</a>
+      <a href="https://t.me/ArbStrategyASTY" target="_blank" rel="noopener">Telegram</a>
+    </nav>
 
   </div>
+</header>
 
-  <div class="card">
+<main class="wrap">
 
-    <h2 style="margin-bottom:18px;">
-      Candidate Analysis
-    </h2>
+  <section class="hero">
 
-    <div class="metrics">
+    <div class="card">
+      <div class="card-inner">
 
-      <div class="metric">
-        <small>Liquidity</small>
-        <strong id="liq">-</strong>
+        <div class="kicker">
+          <span class="pulse-dot"></span>
+          LIVE MARKET RADAR
+        </div>
+
+        <h2 class="big">
+          Find the next<br>
+          <span class="gradient">ASTY LP Candidate.</span>
+        </h2>
+
+        <p class="lead">
+          Enter any Solana token, symbol, pair name or pool address. The radar searches external pools,
+          analyzes liquidity, volume, transactions, volatility, 7 day stability and 30 day structure.
+        </p>
+
+        <div class="input-box">
+          <div class="input-row">
+            <input id="searchInput" placeholder="Example: TAO, SOL, ASTY/SOL, or a Solana token address" />
+            <button id="scanBtn" onclick="startScan()">START RADAR SCAN</button>
+          </div>
+
+          <div class="hints">
+            <span class="hint">Token Symbol</span>
+            <span class="hint">Token Address</span>
+            <span class="hint">Pair Name</span>
+            <span class="hint">Pool Address</span>
+            <span class="hint">Solana Only</span>
+          </div>
+        </div>
+
+        <p class="footer-note">
+          This is a research interface only. It is not financial advice.
+        </p>
+
+      </div>
+    </div>
+
+    <div class="card radar-stage">
+      <div class="radar">
+        <span class="node n1"></span>
+        <span class="node n2"></span>
+        <span class="node n3"></span>
+        <span class="node n4"></span>
+        <span class="node n5"></span>
+      </div>
+    </div>
+
+  </section>
+
+  <section class="grid">
+
+    <div class="card">
+      <div class="card-inner">
+
+        <div class="section-title">
+          <h2>AI Terminal</h2>
+          <span class="badge" id="statusBadge">Idle</span>
+        </div>
+
+        <div class="terminal" id="terminal">
+          <span class="muted">Awaiting input...</span>
+        </div>
+
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-inner">
+
+        <div class="section-title">
+          <h2>Candidate Rating</h2>
+          <span class="badge">ASTY Model</span>
+        </div>
+
+        <div class="results">
+
+          <div class="metric">
+            <small>Liquidity</small>
+            <strong id="mLiquidity">-</strong>
+          </div>
+
+          <div class="metric">
+            <small>24h Volume</small>
+            <strong id="mVolume">-</strong>
+          </div>
+
+          <div class="metric">
+            <small>24h TXNS</small>
+            <strong id="mTxns">-</strong>
+          </div>
+
+          <div class="metric">
+            <small>Volatility</small>
+            <strong id="mVolatility">-</strong>
+          </div>
+
+        </div>
+
+        <div class="score-card">
+
+          <div class="score-top">
+            <div>
+              <div class="score-label">ASTY Opportunity Score</div>
+              <div class="score-number" id="scoreNumber">0</div>
+            </div>
+            <div class="score-label" id="scoreClass">No scan yet</div>
+          </div>
+
+          <div class="bar">
+            <div class="fill" id="scoreFill"></div>
+          </div>
+
+          <div class="verdict" id="verdict">
+            Start a scan to evaluate a potential future ASTY liquidity pair.
+          </div>
+
+        </div>
+
+      </div>
+    </div>
+
+  </section>
+
+  <section class="card" style="margin-top:22px;">
+    <div class="card-inner">
+
+      <div class="section-title">
+        <h2>Detected Solana Pools</h2>
+        <span class="badge" id="poolCount">0 pools</span>
       </div>
 
-      <div class="metric">
-        <small>24h Volume</small>
-        <strong id="vol">-</strong>
-      </div>
-
-      <div class="metric">
-        <small>Transactions</small>
-        <strong id="tx">-</strong>
-      </div>
-
-      <div class="metric">
-        <small>24h Change</small>
-        <strong id="change">-</strong>
+      <div id="poolList" class="pool-list">
+        <div class="footer-note">No pools loaded yet.</div>
       </div>
 
     </div>
+  </section>
 
-    <div class="bar">
-      <div class="fill" id="fill"></div>
-    </div>
-
-    <div class="score" id="score">
-      0 / 100
-    </div>
-
-    <div class="verdict" id="verdict">
-      Start a scan to generate an ASTY Opportunity Score.
-    </div>
-
-  </div>
-
-</div>
+</main>
 
 <script>
+const DEX_BASE = "https://api.dexscreener.com/latest/dex";
+const GECKO_BASE = "https://api.geckoterminal.com/api/v2";
 
-const terminal = document.getElementById("terminal");
+let currentPools = [];
 
-function log(text){
-  terminal.innerHTML += text + "<br>";
-  terminal.scrollTop = terminal.scrollHeight;
-}
+const $ = id => document.getElementById(id);
 
 function sleep(ms){
-  return new Promise(r => setTimeout(r, ms));
+  return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-function classify(score){
-  if(score >= 75){
+function setStatus(text){
+  $("statusBadge").textContent = text;
+}
+
+function clearTerminal(){
+  $("terminal").innerHTML = "";
+}
+
+function logLine(text, cls=""){
+  const div = document.createElement("div");
+  if(cls) div.className = cls;
+  div.innerHTML = text;
+  $("terminal").appendChild(div);
+  $("terminal").scrollTop = $("terminal").scrollHeight;
+}
+
+function fmtUsd(n){
+  if(n === null || n === undefined || isNaN(n)) return "-";
+  const num = Number(n);
+  if(num >= 1000000) return "$" + (num / 1000000).toFixed(2) + "M";
+  if(num >= 1000) return "$" + (num / 1000).toFixed(2) + "K";
+  return "$" + num.toFixed(2);
+}
+
+function fmtNum(n){
+  if(n === null || n === undefined || isNaN(n)) return "-";
+  const num = Number(n);
+  if(num >= 1000000) return (num / 1000000).toFixed(2) + "M";
+  if(num >= 1000) return (num / 1000).toFixed(2) + "K";
+  return Math.round(num).toString();
+}
+
+function isLikelyAddress(input){
+  const v = input.trim();
+  return /^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(v);
+}
+
+function pairName(pair){
+  const base = pair.baseToken?.symbol || "?";
+  const quote = pair.quoteToken?.symbol || "?";
+  return `${base}/${quote}`;
+}
+
+async function fetchJson(url){
+  const res = await fetch(url,{headers:{accept:"application/json"}});
+  if(!res.ok) throw new Error("HTTP " + res.status);
+  return await res.json();
+}
+
+async function searchDex(input){
+  const q = encodeURIComponent(input.trim());
+  const data = await fetchJson(`${DEX_BASE}/search?q=${q}`);
+  return (data.pairs || []).filter(p => (p.chainId || "").toLowerCase() === "solana");
+}
+
+async function tokenDex(address){
+  const data = await fetchJson(`https://api.dexscreener.com/tokens/v1/solana/${address}`);
+  return Array.isArray(data) ? data.filter(p => (p.chainId || "").toLowerCase() === "solana") : [];
+}
+
+async function pairDex(address){
+  const data = await fetchJson(`${DEX_BASE}/pairs/solana/${address}`);
+  return (data.pairs || []).filter(p => (p.chainId || "").toLowerCase() === "solana");
+}
+
+async function fetchOhlcv(poolAddress, days){
+  const url = `${GECKO_BASE}/networks/solana/pools/${poolAddress}/ohlcv/day?aggregate=1&limit=${days}&currency=usd`;
+
+  try{
+    const data = await fetchJson(url);
+    return data?.data?.attributes?.ohlcv_list || [];
+  }catch(e){
+    return [];
+  }
+}
+
+function liquidityScore(liq){
+  if(!liq || liq <= 0) return 0;
+  if(liq < 2000) return 20;
+  if(liq < 10000) return 45;
+  if(liq < 50000) return 70;
+  if(liq < 250000) return 88;
+  if(liq < 1000000) return 76;
+  return 62;
+}
+
+function volumeEfficiencyScore(volume, liquidity){
+  if(!volume || !liquidity || liquidity <= 0) return 0;
+
+  const ratio = volume / liquidity;
+
+  if(ratio < .02) return 12;
+  if(ratio < .08) return 34;
+  if(ratio < .2) return 58;
+  if(ratio < .75) return 82;
+  if(ratio < 1.8) return 96;
+  if(ratio < 4) return 84;
+  return 60;
+}
+
+function txScore(txns){
+  if(!txns || txns <= 0) return 0;
+  if(txns < 20) return 22;
+  if(txns < 80) return 48;
+  if(txns < 250) return 72;
+  if(txns < 900) return 90;
+  return 84;
+}
+
+function volatilityScoreFromChange(change24, change30){
+  const c24 = Math.abs(Number(change24 || 0));
+  const c30 = Math.abs(Number(change30 || 0));
+
+  const combined = c24 * .45 + c30 * .55;
+
+  if(combined < 5) return 18;
+  if(combined < 15) return 48;
+  if(combined < 35) return 78;
+  if(combined < 90) return 96;
+  if(combined < 180) return 82;
+  if(combined < 300) return 58;
+  return 32;
+}
+
+function analyzeStructure(ohlcv){
+  if(!ohlcv || ohlcv.length < 5){
     return {
-      text:"🟢 Strong Candidate",
-      cls:"good"
+      score:50,
+      label:"Limited",
+      change:0,
+      note:"Historical structure is limited."
     };
   }
 
-  if(score >= 50){
-    return {
-      text:"🟡 Watchlist Candidate",
-      cls:"mid"
-    };
-  }
+  const volumes = ohlcv.map(c => Number(c[5] || 0));
+  const closes = ohlcv.map(c => Number(c[4] || 0)).filter(v => v > 0);
+
+  const avgVol = volumes.reduce((a,b) => a + b,0) / Math.max(1,volumes.length);
+  const lastVol = volumes[0] || 0;
+  const volRatio = avgVol ? lastVol / avgVol : 0;
+
+  const newestClose = closes[0] || 0;
+  const oldestClose = closes[closes.length - 1] || newestClose;
+  const change = oldestClose ? ((newestClose - oldestClose) / oldestClose) * 100 : 0;
+
+  let score = 50;
+
+  if(volRatio > .65 && volRatio < 1.8) score += 22;
+  else if(volRatio > .35 && volRatio < 3) score += 12;
+  else score -= 10;
+
+  const absChange = Math.abs(change);
+
+  if(absChange > 20 && absChange < 120) score += 24;
+  else if(absChange > 8 && absChange < 200) score += 12;
+  else if(absChange <= 5) score -= 18;
+  else if(absChange > 300) score -= 22;
+
+  score = Math.max(0,Math.min(100,Math.round(score)));
 
   return {
-    text:"🔴 Weak Candidate",
-    cls:"bad"
+    score,
+    label:score >= 75 ? "Strong" : score >= 55 ? "Mixed" : "Weak",
+    change,
+    note:`Volume ratio ${volRatio.toFixed(2)}x, price movement ${change.toFixed(1)}%.`
   };
 }
 
-async function startScan(){
+function classify(score){
+  if(score >= 78) return {label:"🟢 Strong Candidate", cls:"good"};
+  if(score >= 55) return {label:"🟡 Watchlist Candidate", cls:"mid"};
+  return {label:"🔴 Weak Candidate", cls:"bad"};
+}
 
-  const input =
-    document.getElementById("searchInput").value.trim();
+function computeScore(pair, structure7, structure30){
+  const liq = Number(pair.liquidity?.usd || 0);
+  const vol24 = Number(pair.volume?.h24 || 0);
+  const txns = Number(pair.txns?.h24?.buys || 0) + Number(pair.txns?.h24?.sells || 0);
+  const change24 = Number(pair.priceChange?.h24 || 0);
 
-  if(!input){
-    alert("Enter a token or pool.");
+  const scores = {
+    liquidity:liquidityScore(liq),
+    efficiency:volumeEfficiencyScore(vol24,liq),
+    txns:txScore(txns),
+    volatility:volatilityScoreFromChange(change24,structure30.change),
+    stability7:structure7.score,
+    structure30:structure30.score
+  };
+
+  const total = Math.round(
+    scores.volatility * .30 +
+    scores.efficiency * .25 +
+    scores.stability7 * .18 +
+    scores.liquidity * .15 +
+    scores.txns * .07 +
+    scores.structure30 * .05
+  );
+
+  return {
+    total,
+    scores,
+    liq,
+    vol24,
+    txns,
+    change24
+  };
+}
+
+function renderPools(pools){
+  $("poolCount").textContent = `${pools.length} pool${pools.length === 1 ? "" : "s"}`;
+
+  if(!pools.length){
+    $("poolList").innerHTML = `<div class="footer-note">No Solana pools found.</div>`;
     return;
   }
 
-  terminal.innerHTML = "";
+  $("poolList").innerHTML = "";
 
-  log("Initializing ASTY Radar...");
-  await sleep(600);
+  pools.slice(0,12).forEach((p,index) => {
+    const liq = Number(p.liquidity?.usd || 0);
+    const vol = Number(p.volume?.h24 || 0);
+    const txns = Number(p.txns?.h24?.buys || 0) + Number(p.txns?.h24?.sells || 0);
 
-  log("Searching DexScreener...");
-  await sleep(900);
+    const div = document.createElement("div");
+    div.className = "pool";
 
-  try{
+    div.innerHTML = `
+      <div>
+        <h3>${index + 1}. ${pairName(p)} <span class="badge">${p.dexId || "DEX"}</span></h3>
+        <p>
+          Liquidity: ${fmtUsd(liq)} • 24h Volume: ${fmtUsd(vol)} • 24h TXNS: ${fmtNum(txns)}
+          <br>
+          Pair: ${p.pairAddress || "-"}
+        </p>
+      </div>
+      <button onclick="analyzePool(${index})">Analyze</button>
+    `;
 
-    const res =
-      await fetch(
-        `https://api.dexscreener.com/latest/dex/search?q=${input}`
-      );
-
-    const data = await res.json();
-
-    const pools =
-      (data.pairs || [])
-      .filter(p => p.chainId === "solana");
-
-    if(!pools.length){
-
-      log("No Solana pools found.");
-
-      return;
-    }
-
-    const pair = pools[0];
-
-    log("Pool detected:");
-    log(pair.baseToken.symbol + "/" + pair.quoteToken.symbol);
-
-    await sleep(700);
-
-    log("Analyzing liquidity...");
-    await sleep(700);
-
-    log("Analyzing volume...");
-    await sleep(700);
-
-    log("Analyzing transaction activity...");
-    await sleep(700);
-
-    log("Generating ASTY Opportunity Score...");
-    await sleep(1000);
-
-    const liquidity =
-      Number(pair.liquidity?.usd || 0);
-
-    const volume =
-      Number(pair.volume?.h24 || 0);
-
-    const tx =
-      Number(pair.txns?.h24?.buys || 0)
-      +
-      Number(pair.txns?.h24?.sells || 0);
-
-    const change =
-      Number(pair.priceChange?.h24 || 0);
-
-    document.getElementById("liq").innerText =
-      "$" + liquidity.toLocaleString();
-
-    document.getElementById("vol").innerText =
-      "$" + volume.toLocaleString();
-
-    document.getElementById("tx").innerText =
-      tx.toLocaleString();
-
-    document.getElementById("change").innerText =
-      change.toFixed(2) + "%";
-
-    let score = 0;
-
-    if(liquidity > 10000) score += 25;
-    if(volume > 5000) score += 25;
-    if(tx > 100) score += 25;
-    if(Math.abs(change) > 2 && Math.abs(change) < 35){
-      score += 25;
-    }
-
-    if(score > 100) score = 100;
-
-    document.getElementById("fill").style.width =
-      score + "%";
-
-    document.getElementById("score").innerText =
-      score + " / 100";
-
-    const verdict = classify(score);
-
-    document.getElementById("verdict").innerHTML =
-      `
-      <span class="${verdict.cls}">
-        ${verdict.text}
-      </span>
-
-      <br><br>
-
-      Pair:
-      ${pair.baseToken.symbol}/${pair.quoteToken.symbol}
-
-      <br>
-
-      DEX:
-      ${pair.dexId}
-
-      <br><br>
-
-      Liquidity Efficiency:
-      ${(volume / liquidity).toFixed(2)}x
-      `;
-
-    log("RESULT:");
-    log(verdict.text);
-
-    log("Scan complete.");
-
-  }catch(err){
-
-    log("API ERROR");
-    log(err.message);
-
-  }
-
+    $("poolList").appendChild(div);
+  });
 }
 
+function updateUi(pair, scoreData, structure7, structure30){
+  const verdict = classify(scoreData.total);
+
+  $("mLiquidity").textContent = fmtUsd(scoreData.liq);
+  $("mVolume").textContent = fmtUsd(scoreData.vol24);
+  $("mTxns").textContent = fmtNum(scoreData.txns);
+
+  const vScore = scoreData.scores.volatility;
+  $("mVolatility").innerHTML =
+    `<span class="${vScore >= 75 ? "good" : vScore >= 50 ? "mid" : "bad"}">${vScore}/100</span>`;
+
+  $("scoreNumber").textContent = scoreData.total;
+  $("scoreFill").style.width = scoreData.total + "%";
+  $("scoreClass").innerHTML = `<span class="${verdict.cls}">${verdict.label}</span>`;
+
+  const ratio = scoreData.liq ? scoreData.vol24 / scoreData.liq : 0;
+
+  $("verdict").innerHTML = `
+    <strong class="${verdict.cls}">${verdict.label}</strong>
+    <br><br>
+
+    <strong>${pairName(pair)}</strong> on ${pair.dexId || "unknown DEX"}
+    <br><br>
+
+    <ul style="margin-left:18px;line-height:1.7;">
+      <li>Volatility Score: ${scoreData.scores.volatility}/100</li>
+      <li>Volume Efficiency: ${ratio.toFixed(2)}x</li>
+      <li>7d Stability: ${structure7.label}</li>
+      <li>30d Structure: ${structure30.label}</li>
+      <li>${structure30.note}</li>
+    </ul>
+
+    <br>
+    <a class="link" href="${pair.url}" target="_blank" rel="noopener">Open pair on DexScreener</a>
+  `;
+}
+
+async function analyzePool(index){
+  const pair = currentPools[index];
+  if(!pair) return;
+
+  setStatus("Analyzing");
+  clearTerminal();
+
+  logLine("ASTY RADAR: pool selected", "cyan");
+  await sleep(300);
+
+  logLine(`PAIR: ${pairName(pair)}`);
+  await sleep(300);
+
+  logLine(`DEX: ${pair.dexId || "unknown"}`);
+  await sleep(300);
+
+  logLine(`LIQUIDITY: ${fmtUsd(Number(pair.liquidity?.usd || 0))}`);
+  await sleep(300);
+
+  logLine(`24H VOLUME: ${fmtUsd(Number(pair.volume?.h24 || 0))}`);
+  await sleep(300);
+
+  logLine("Fetching 7d structure from GeckoTerminal...", "cyan");
+  const ohlcv7 = await fetchOhlcv(pair.pairAddress,7);
+  const structure7 = analyzeStructure(ohlcv7);
+
+  await sleep(500);
+  logLine(`7D STRUCTURE: ${structure7.label} • ${structure7.note}`, structure7.score >= 75 ? "green" : structure7.score >= 55 ? "yellow" : "red");
+
+  await sleep(400);
+  logLine("Fetching 30d structure from GeckoTerminal...", "cyan");
+  const ohlcv30 = await fetchOhlcv(pair.pairAddress,30);
+  const structure30 = analyzeStructure(ohlcv30);
+
+  await sleep(500);
+  logLine(`30D STRUCTURE: ${structure30.label} • ${structure30.note}`, structure30.score >= 75 ? "green" : structure30.score >= 55 ? "yellow" : "red");
+
+  await sleep(500);
+  logLine("Calculating ASTY Opportunity Score...", "cyan");
+
+  const scoreData = computeScore(pair,structure7,structure30);
+  updateUi(pair,scoreData,structure7,structure30);
+
+  await sleep(600);
+
+  const verdict = classify(scoreData.total);
+  logLine(`RESULT: ${verdict.label}`, verdict.cls === "good" ? "green" : verdict.cls === "mid" ? "yellow" : "red");
+  logLine(`SCORE: ${scoreData.total}/100`);
+  logLine("Scan complete.", "green");
+
+  setStatus("Complete");
+}
+
+async function startScan(){
+  const input = $("searchInput").value.trim();
+
+  if(!input){
+    clearTerminal();
+    logLine("Please enter a token symbol, token address, pair name or pool address.", "yellow");
+    return;
+  }
+
+  $("scanBtn").disabled = true;
+  setStatus("Scanning");
+  clearTerminal();
+
+  $("poolList").innerHTML = `<div class="footer-note">Scanning...</div>`;
+  $("poolCount").textContent = "Scanning";
+
+  logLine("Initializing ASTY Opportunity Radar...", "cyan");
+  await sleep(400);
+
+  logLine(`Input detected: ${input}`);
+  await sleep(400);
+
+  let pools = [];
+
+  try{
+    if(isLikelyAddress(input)){
+      logLine("Address detected. Checking token pools...", "cyan");
+
+      try{
+        pools = await tokenDex(input);
+      }catch(e){
+        pools = [];
+      }
+
+      if(!pools.length){
+        logLine("Checking as pair address...", "cyan");
+
+        try{
+          pools = await pairDex(input);
+        }catch(e){
+          pools = [];
+        }
+      }
+    }else{
+      logLine("Searching Solana pools on DexScreener...", "cyan");
+      pools = await searchDex(input);
+    }
+
+    pools = pools
+      .filter(p => p && p.pairAddress)
+      .sort((a,b) => Number(b.liquidity?.usd || 0) - Number(a.liquidity?.usd || 0));
+
+    currentPools = pools;
+
+    logLine(`${pools.length} Solana pool(s) detected.`, pools.length ? "green" : "yellow");
+
+    renderPools(pools);
+
+    if(pools.length){
+      logLine("Selecting strongest liquidity pool for first analysis...", "cyan");
+      await sleep(700);
+      await analyzePool(0);
+    }else{
+      setStatus("No result");
+      $("verdict").innerHTML = "No Solana pools found. Try a token address, a clearer symbol or a known pair address.";
+    }
+
+  }catch(err){
+    logLine("API ERROR", "red");
+    logLine(err.message, "red");
+    logLine("Possible cause: API limit, browser CORS or temporary endpoint issue.", "yellow");
+    setStatus("Error");
+  }finally{
+    $("scanBtn").disabled = false;
+  }
+}
+
+$("searchInput").addEventListener("keydown", e => {
+  if(e.key === "Enter") startScan();
+});
 </script>
 
 </body>
