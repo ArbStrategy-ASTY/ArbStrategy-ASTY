@@ -1,1 +1,447 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<title>ASTY Opportunity Radar</title>
 
+<style>
+:root{
+  --bg:#05020a;
+  --panel:rgba(17,10,30,.86);
+  --line:rgba(192,132,252,.18);
+  --text:#f8f2ff;
+  --muted:#b9a7d7;
+  --purple:#a855f7;
+  --purple2:#c084fc;
+  --green:#23f7a6;
+  --yellow:#ffd166;
+  --red:#ff4d6d;
+}
+
+*{
+  margin:0;
+  padding:0;
+  box-sizing:border-box;
+  font-family:Arial,Helvetica,sans-serif;
+}
+
+body{
+  background:
+    radial-gradient(circle at top,#1a1030 0%,#05020a 60%);
+  color:var(--text);
+  min-height:100vh;
+  overflow-x:hidden;
+}
+
+.wrap{
+  max-width:1200px;
+  margin:auto;
+  padding:24px;
+}
+
+.header{
+  text-align:center;
+  margin-bottom:30px;
+}
+
+.header h1{
+  font-size:3rem;
+  color:var(--purple2);
+}
+
+.header p{
+  color:var(--muted);
+  margin-top:10px;
+}
+
+.card{
+  background:var(--panel);
+  border:1px solid var(--line);
+  border-radius:24px;
+  padding:24px;
+  margin-bottom:24px;
+}
+
+.input-row{
+  display:grid;
+  grid-template-columns:1fr auto;
+  gap:12px;
+}
+
+@media(max-width:700px){
+  .input-row{
+    grid-template-columns:1fr;
+  }
+}
+
+input{
+  width:100%;
+  padding:16px;
+  border-radius:16px;
+  border:1px solid var(--line);
+  background:#0b0712;
+  color:white;
+  outline:none;
+}
+
+button{
+  padding:16px 22px;
+  border:none;
+  border-radius:16px;
+  cursor:pointer;
+  color:white;
+  font-weight:bold;
+  background:
+    linear-gradient(90deg,var(--purple),var(--purple2));
+}
+
+button:hover{
+  opacity:.9;
+}
+
+.terminal{
+  background:#05030a;
+  border:1px solid var(--line);
+  border-radius:18px;
+  padding:18px;
+  min-height:260px;
+  overflow:auto;
+  font-family:monospace;
+  line-height:1.7;
+}
+
+.metrics{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:14px;
+  margin-top:20px;
+}
+
+@media(max-width:900px){
+  .metrics{
+    grid-template-columns:repeat(2,1fr);
+  }
+}
+
+@media(max-width:500px){
+  .metrics{
+    grid-template-columns:1fr;
+  }
+}
+
+.metric{
+  background:#0b0712;
+  border:1px solid var(--line);
+  border-radius:18px;
+  padding:16px;
+}
+
+.metric small{
+  color:var(--muted);
+  display:block;
+  margin-bottom:8px;
+}
+
+.metric strong{
+  font-size:1.3rem;
+}
+
+.bar{
+  margin-top:20px;
+  height:18px;
+  border-radius:999px;
+  overflow:hidden;
+  background:#130a1f;
+  border:1px solid var(--line);
+}
+
+.fill{
+  height:100%;
+  width:0%;
+  background:
+    linear-gradient(90deg,var(--red),var(--yellow),var(--green));
+  transition:1s;
+}
+
+.score{
+  margin-top:14px;
+  font-size:2.6rem;
+  font-weight:bold;
+}
+
+.verdict{
+  margin-top:18px;
+  padding:16px;
+  border-radius:18px;
+  border:1px solid var(--line);
+  background:rgba(255,255,255,.03);
+  line-height:1.6;
+}
+
+.good{color:var(--green);}
+.mid{color:var(--yellow);}
+.bad{color:var(--red);}
+</style>
+</head>
+
+<body>
+
+<div class="wrap">
+
+  <div class="header">
+    <h1>🟣 ASTY Opportunity Radar</h1>
+    <p>
+      AI-driven Solana liquidity opportunity scanner
+    </p>
+  </div>
+
+  <div class="card">
+
+    <div class="input-row">
+      <input
+        id="searchInput"
+        placeholder="Example: TAO, ASTY/SOL, SOL or Pool Address"
+      />
+
+      <button onclick="startScan()">
+        START SCAN
+      </button>
+    </div>
+
+  </div>
+
+  <div class="card">
+
+    <h2 style="margin-bottom:18px;">
+      AI Terminal
+    </h2>
+
+    <div class="terminal" id="terminal">
+      Awaiting scan...
+    </div>
+
+  </div>
+
+  <div class="card">
+
+    <h2 style="margin-bottom:18px;">
+      Candidate Analysis
+    </h2>
+
+    <div class="metrics">
+
+      <div class="metric">
+        <small>Liquidity</small>
+        <strong id="liq">-</strong>
+      </div>
+
+      <div class="metric">
+        <small>24h Volume</small>
+        <strong id="vol">-</strong>
+      </div>
+
+      <div class="metric">
+        <small>Transactions</small>
+        <strong id="tx">-</strong>
+      </div>
+
+      <div class="metric">
+        <small>24h Change</small>
+        <strong id="change">-</strong>
+      </div>
+
+    </div>
+
+    <div class="bar">
+      <div class="fill" id="fill"></div>
+    </div>
+
+    <div class="score" id="score">
+      0 / 100
+    </div>
+
+    <div class="verdict" id="verdict">
+      Start a scan to generate an ASTY Opportunity Score.
+    </div>
+
+  </div>
+
+</div>
+
+<script>
+
+const terminal = document.getElementById("terminal");
+
+function log(text){
+  terminal.innerHTML += text + "<br>";
+  terminal.scrollTop = terminal.scrollHeight;
+}
+
+function sleep(ms){
+  return new Promise(r => setTimeout(r, ms));
+}
+
+function classify(score){
+  if(score >= 75){
+    return {
+      text:"🟢 Strong Candidate",
+      cls:"good"
+    };
+  }
+
+  if(score >= 50){
+    return {
+      text:"🟡 Watchlist Candidate",
+      cls:"mid"
+    };
+  }
+
+  return {
+    text:"🔴 Weak Candidate",
+    cls:"bad"
+  };
+}
+
+async function startScan(){
+
+  const input =
+    document.getElementById("searchInput").value.trim();
+
+  if(!input){
+    alert("Enter a token or pool.");
+    return;
+  }
+
+  terminal.innerHTML = "";
+
+  log("Initializing ASTY Radar...");
+  await sleep(600);
+
+  log("Searching DexScreener...");
+  await sleep(900);
+
+  try{
+
+    const res =
+      await fetch(
+        `https://api.dexscreener.com/latest/dex/search?q=${input}`
+      );
+
+    const data = await res.json();
+
+    const pools =
+      (data.pairs || [])
+      .filter(p => p.chainId === "solana");
+
+    if(!pools.length){
+
+      log("No Solana pools found.");
+
+      return;
+    }
+
+    const pair = pools[0];
+
+    log("Pool detected:");
+    log(pair.baseToken.symbol + "/" + pair.quoteToken.symbol);
+
+    await sleep(700);
+
+    log("Analyzing liquidity...");
+    await sleep(700);
+
+    log("Analyzing volume...");
+    await sleep(700);
+
+    log("Analyzing transaction activity...");
+    await sleep(700);
+
+    log("Generating ASTY Opportunity Score...");
+    await sleep(1000);
+
+    const liquidity =
+      Number(pair.liquidity?.usd || 0);
+
+    const volume =
+      Number(pair.volume?.h24 || 0);
+
+    const tx =
+      Number(pair.txns?.h24?.buys || 0)
+      +
+      Number(pair.txns?.h24?.sells || 0);
+
+    const change =
+      Number(pair.priceChange?.h24 || 0);
+
+    document.getElementById("liq").innerText =
+      "$" + liquidity.toLocaleString();
+
+    document.getElementById("vol").innerText =
+      "$" + volume.toLocaleString();
+
+    document.getElementById("tx").innerText =
+      tx.toLocaleString();
+
+    document.getElementById("change").innerText =
+      change.toFixed(2) + "%";
+
+    let score = 0;
+
+    if(liquidity > 10000) score += 25;
+    if(volume > 5000) score += 25;
+    if(tx > 100) score += 25;
+    if(Math.abs(change) > 2 && Math.abs(change) < 35){
+      score += 25;
+    }
+
+    if(score > 100) score = 100;
+
+    document.getElementById("fill").style.width =
+      score + "%";
+
+    document.getElementById("score").innerText =
+      score + " / 100";
+
+    const verdict = classify(score);
+
+    document.getElementById("verdict").innerHTML =
+      `
+      <span class="${verdict.cls}">
+        ${verdict.text}
+      </span>
+
+      <br><br>
+
+      Pair:
+      ${pair.baseToken.symbol}/${pair.quoteToken.symbol}
+
+      <br>
+
+      DEX:
+      ${pair.dexId}
+
+      <br><br>
+
+      Liquidity Efficiency:
+      ${(volume / liquidity).toFixed(2)}x
+      `;
+
+    log("RESULT:");
+    log(verdict.text);
+
+    log("Scan complete.");
+
+  }catch(err){
+
+    log("API ERROR");
+    log(err.message);
+
+  }
+
+}
+
+</script>
+
+</body>
+</html>
