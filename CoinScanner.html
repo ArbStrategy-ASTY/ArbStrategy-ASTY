@@ -524,20 +524,18 @@ a.link{color:var(--purple2);text-decoration:none;}
         </h2>
 
         <p class="lead">
-          Enter any Solana token, symbol, pair name or pool address. The radar searches external pools,
+          Enter a Solana token address or pool address. The radar searches matching pools,
           analyzes GeckoTerminal liquidity, pool age, volume efficiency, volatility, 7 day stability and 30 day structure.
         </p>
 
         <div class="input-box">
           <div class="input-row">
-            <input id="searchInput" placeholder="Example: TAO, SOL, ASTY/SOL, or a Solana token address" />
+            <input id="searchInput" placeholder="Enter token address or pool address" />
             <button id="scanBtn" onclick="startScan()">START RADAR SCAN</button>
           </div>
 
           <div class="hints">
-            <span class="hint">Token Symbol</span>
             <span class="hint">Token Address</span>
-            <span class="hint">Pair Name</span>
             <span class="hint">Pool Address</span>
             <span class="hint">Solana Only</span>
           </div>
@@ -559,7 +557,7 @@ a.link{color:var(--purple2);text-decoration:none;}
         </div>
 
         <div class="terminal" id="terminal">
-          <span class="muted">Awaiting input...</span>
+          <span class="muted">Awaiting address input...</span>
         </div>
       </div>
     </div>
@@ -664,6 +662,11 @@ function fmtNum(n){
   return Math.round(num).toString();
 }
 
+function isLikelyAddress(input){
+  const v = input.trim();
+  return /^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(v);
+}
+
 function getPoolAgeDays(createdAt){
   if(!createdAt) return null;
   const created = new Date(createdAt).getTime();
@@ -691,10 +694,16 @@ async function fetchJson(url){
   return await res.json();
 }
 
-async function searchDex(input){
-  const q = encodeURIComponent(input.trim());
-  const data = await fetchJson(`${DEX_BASE}/search?q=${q}`);
+async function fetchDexPair(poolAddress){
+  const data = await fetchJson(`${DEX_BASE}/pairs/solana/${poolAddress}`);
   return (data.pairs || []).filter(p => (p.chainId || "").toLowerCase() === "solana");
+}
+
+async function fetchDexTokenPools(tokenAddress){
+  const data = await fetchJson(`https://api.dexscreener.com/tokens/v1/solana/${tokenAddress}`);
+  return Array.isArray(data)
+    ? data.filter(p => (p.chainId || "").toLowerCase() === "solana")
+    : [];
 }
 
 async function fetchGeckoPool(poolAddress){
@@ -934,9 +943,9 @@ async function analyzePool(index){
 async function startScan(){
   const input = $("searchInput").value.trim();
 
-  if(!input){
+  if(!input || !isLikelyAddress(input)){
     clearTerminal();
-    logLine("Please enter a token symbol or address.","yellow");
+    logLine("Please enter a valid Solana token address or pool address.","yellow");
     return;
   }
 
@@ -953,13 +962,24 @@ async function startScan(){
   logLine("Initializing ASTY Opportunity Radar...","cyan");
   await sleep(400);
 
-  logLine(`Input detected: ${input}`);
+  logLine("Address detected.");
   await sleep(400);
 
   try{
-    logLine("Searching Solana pools on DexScreener...","cyan");
+    let pools = [];
 
-    const pools = await searchDex(input);
+    logLine("Checking as pool address...","cyan");
+
+    try{
+      pools = await fetchDexPair(input);
+    }catch(e){
+      pools = [];
+    }
+
+    if(!pools.length){
+      logLine("No direct pool match. Checking as token address...","cyan");
+      pools = await fetchDexTokenPools(input);
+    }
 
     currentPools = pools
       .filter(p => p && p.pairAddress)
@@ -974,6 +994,7 @@ async function startScan(){
       await analyzePool(0);
     }else{
       setStatus("No result");
+      logLine("No pools found for this address.","yellow");
     }
 
   }catch(err){
