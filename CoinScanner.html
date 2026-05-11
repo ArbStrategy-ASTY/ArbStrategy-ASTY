@@ -525,7 +525,8 @@ a.link{color:var(--purple2);text-decoration:none;}
 
         <p class="lead">
           Enter a Solana token address or pool address. The radar searches matching pools,
-          analyzes GeckoTerminal liquidity, pool age, volume efficiency, volatility, 7 day stability and 30 day structure.
+          analyzes GeckoTerminal liquidity, pool age, volume efficiency, 24h volatility,
+          30d average daily volatility, 7 day stability and 30 day structure.
         </p>
 
         <div class="input-box">
@@ -763,13 +764,65 @@ function analyzeStructure(ohlcv){
   };
 }
 
+function calculateDailyVolatility(ohlcv){
+  if(!ohlcv || ohlcv.length < 5){
+    return {
+      avgMove:0,
+      score:50,
+      label:"Limited"
+    };
+  }
+
+  const closes = ohlcv
+    .map(c => Number(c[4] || 0))
+    .filter(v => v > 0);
+
+  const moves = [];
+
+  for(let i = 0; i < closes.length - 1; i++){
+    const current = closes[i];
+    const previous = closes[i + 1];
+
+    if(current && previous){
+      const move = Math.abs(((current - previous) / previous) * 100);
+      moves.push(move);
+    }
+  }
+
+  if(!moves.length){
+    return {
+      avgMove:0,
+      score:50,
+      label:"Limited"
+    };
+  }
+
+  const avgMove = moves.reduce((a,b)=>a+b,0) / moves.length;
+
+  let score = 0;
+
+  if(avgMove < 2) score = 18;
+  else if(avgMove < 5) score = 40;
+  else if(avgMove < 12) score = 70;
+  else if(avgMove < 25) score = 95;
+  else if(avgMove < 45) score = 82;
+  else if(avgMove < 80) score = 58;
+  else score = 32;
+
+  return {
+    avgMove,
+    score,
+    label:score >= 75 ? "Strong" : score >= 55 ? "Mixed" : "Weak"
+  };
+}
+
 function classify(score){
   if(score >= 78) return {label:"🟢 Strong Candidate",cls:"good"};
   if(score >= 55) return {label:"🟡 Watchlist Candidate",cls:"mid"};
   return {label:"🔴 Weak Candidate",cls:"bad"};
 }
 
-function computeScore(geckoPool,structure7,structure30){
+function computeScore(geckoPool,structure7,structure30,volatility30){
   const liq = Number(geckoPool?.reserve_in_usd || 0);
   const vol24 = Number(geckoPool?.volume_usd?.h24 || 0);
 
@@ -779,22 +832,65 @@ function computeScore(geckoPool,structure7,structure30){
 
   const change24 = Math.abs(Number(geckoPool?.price_change_percentage?.h24 || 0));
 
-  let score = 0;
+  let vol24Score = 0;
 
-  if(change24 > 15 && change24 < 120) score += 30;
+  if(change24 < 2) vol24Score = 15;
+  else if(change24 < 8) vol24Score = 45;
+  else if(change24 < 25) vol24Score = 78;
+  else if(change24 < 80) vol24Score = 95;
+  else if(change24 < 150) vol24Score = 72;
+  else vol24Score = 38;
 
   const efficiency = liq > 0 ? vol24 / liq : 0;
 
-  if(efficiency > .15) score += 25;
-  if(txns > 120) score += 15;
-  if(liq > 10000 && liq < 1000000) score += 10;
+  let efficiencyScore = 0;
 
-  score += structure7.score * .12;
-  score += structure30.score * .08;
+  if(efficiency < .02) efficiencyScore = 12;
+  else if(efficiency < .08) efficiencyScore = 34;
+  else if(efficiency < .2) efficiencyScore = 58;
+  else if(efficiency < .75) efficiencyScore = 82;
+  else if(efficiency < 1.8) efficiencyScore = 96;
+  else if(efficiency < 4) efficiencyScore = 84;
+  else efficiencyScore = 60;
 
-  score = Math.round(Math.min(100,score));
+  let txScore = 0;
 
-  return {total:score,liq,vol24,txns,change24,efficiency};
+  if(txns < 20) txScore = 22;
+  else if(txns < 80) txScore = 48;
+  else if(txns < 250) txScore = 72;
+  else if(txns < 900) txScore = 90;
+  else txScore = 84;
+
+  let liqScore = 0;
+
+  if(liq < 2000) liqScore = 20;
+  else if(liq < 10000) liqScore = 45;
+  else if(liq < 50000) liqScore = 70;
+  else if(liq < 250000) liqScore = 88;
+  else if(liq < 1000000) liqScore = 76;
+  else liqScore = 62;
+
+  const score = Math.round(
+    vol24Score * .15 +
+    volatility30.score * .15 +
+    efficiencyScore * .25 +
+    txScore * .15 +
+    liqScore * .10 +
+    structure7.score * .12 +
+    structure30.score * .08
+  );
+
+  return {
+    total:Math.min(100,score),
+    liq,
+    vol24,
+    txns,
+    change24,
+    efficiency,
+    vol24Score,
+    vol30Score:volatility30.score,
+    avg30Move:volatility30.avgMove
+  };
 }
 
 function renderPools(pools){
@@ -835,7 +931,9 @@ function updateUi(pair,scoreData,structure7,structure30,geckoPool){
   $("mTxns").textContent = fmtNum(scoreData.txns);
 
   $("mVolatility").innerHTML =
-    `<span class="${scoreData.change24 > 15 ? "good" : "mid"}">${scoreData.change24.toFixed(1)}%</span>`;
+    `<span class="${scoreData.vol30Score >= 75 ? "good" : scoreData.vol30Score >= 55 ? "mid" : "bad"}">
+      ${scoreData.avg30Move.toFixed(1)}%
+    </span>`;
 
   $("m7d").innerHTML =
     `<span class="${structure7.score >= 75 ? "good" : structure7.score >= 55 ? "mid" : "bad"}">${structure7.label}</span>`;
@@ -858,13 +956,17 @@ function updateUi(pair,scoreData,structure7,structure30,geckoPool){
     <br><br>
     Pool Age: ${formatAge(ageDays)}
     <br>
+    24h Price Move: ${scoreData.change24.toFixed(1)}%
+    <br>
+    30d Avg Daily Move: ${scoreData.avg30Move.toFixed(1)}%
+    <br>
     Liquidity Efficiency: ${scoreData.efficiency.toFixed(2)}x
     <br>
     7d Stability: ${structure7.note}
     <br>
     30d Structure: ${structure30.note}
     <br><br>
-    Pool evaluated using GeckoTerminal reserve data.
+    Pool evaluated using GeckoTerminal reserve and OHLCV data.
   `;
 }
 
@@ -904,12 +1006,18 @@ async function analyzePool(index){
 
   const ohlcv30 = await fetchOhlcv(pair.pairAddress,30);
   const structure30 = analyzeStructure(ohlcv30);
+  const volatility30 = calculateDailyVolatility(ohlcv30);
 
   await sleep(500);
 
   logLine("Calculating ASTY Opportunity Score...","cyan");
 
-  const scoreData = computeScore(geckoPool,structure7,structure30);
+  const scoreData = computeScore(
+    geckoPool,
+    structure7,
+    structure30,
+    volatility30
+  );
 
   updateUi(pair,scoreData,structure7,structure30,geckoPool);
 
@@ -921,7 +1029,10 @@ async function analyzePool(index){
   logLine(`24H VOLUME: ${fmtUsd(scoreData.vol24)}`);
   await sleep(250);
 
-  logLine(`VOLATILITY: ${scoreData.change24.toFixed(1)}%`);
+  logLine(`24H PRICE MOVE: ${scoreData.change24.toFixed(1)}%`);
+  await sleep(250);
+
+  logLine(`30D AVG DAILY MOVE: ${scoreData.avg30Move.toFixed(1)}%`);
   await sleep(250);
 
   logLine(`EFFICIENCY: ${scoreData.efficiency.toFixed(2)}x`);
