@@ -9,7 +9,6 @@
 :root{
   --bg:#05020a;
   --panel:rgba(17,10,30,.88);
-  --panel2:rgba(25,14,43,.78);
   --line:rgba(192,132,252,.2);
   --text:#f8f2ff;
   --muted:#b9a7d7;
@@ -148,11 +147,6 @@ body:before{
   font-size:.88rem;
 }
 
-.nav a:hover{
-  border-color:var(--purple2);
-  box-shadow:0 0 20px rgba(168,85,247,.3);
-}
-
 .wrap{
   position:relative;
   z-index:2;
@@ -175,14 +169,6 @@ body:before{
   overflow:hidden;
   box-shadow:0 0 36px rgba(168,85,247,.16);
   position:relative;
-}
-
-.card:before{
-  content:"";
-  position:absolute;
-  inset:-1px;
-  background:radial-gradient(circle at top right,rgba(168,85,247,.18),transparent 36%);
-  pointer-events:none;
 }
 
 .card-inner{
@@ -279,17 +265,6 @@ button{
   position:relative;
 }
 
-button:hover{
-  transform:translateY(-2px);
-  box-shadow:0 0 36px rgba(168,85,247,.5);
-}
-
-button:disabled{
-  opacity:.75;
-  cursor:not-allowed;
-  transform:none;
-}
-
 button.scanning{
   overflow:hidden;
   pointer-events:none;
@@ -315,22 +290,6 @@ button.scanning:before{
   }
 }
 
-.hints{
-  display:flex;
-  flex-wrap:wrap;
-  gap:8px;
-  margin-top:12px;
-}
-
-.hint{
-  font-size:.8rem;
-  color:var(--muted);
-  padding:8px 10px;
-  border-radius:999px;
-  border:1px solid var(--line);
-  background:rgba(255,255,255,.035);
-}
-
 .grid{
   display:grid;
   grid-template-columns:1.05fr .95fr;
@@ -343,10 +302,6 @@ button.scanning:before{
   justify-content:space-between;
   gap:12px;
   margin-bottom:14px;
-}
-
-.section-title h2{
-  font-size:1.2rem;
 }
 
 .badge{
@@ -402,23 +357,9 @@ button.scanning:before{
   padding:18px;
 }
 
-.score-top{
-  display:flex;
-  align-items:flex-end;
-  justify-content:space-between;
-  gap:14px;
-  margin-bottom:12px;
-}
-
 .score-number{
   font-size:3.1rem;
   font-weight:1000;
-  letter-spacing:-.06em;
-}
-
-.score-label{
-  color:var(--muted);
-  font-size:.92rem;
 }
 
 .bar{
@@ -427,6 +368,7 @@ button.scanning:before{
   background:#12091d;
   overflow:hidden;
   border:1px solid var(--line);
+  margin-top:14px;
 }
 
 .fill{
@@ -450,7 +392,6 @@ button.scanning:before{
   display:grid;
   gap:12px;
   margin-top:14px;
-  width:100%;
 }
 
 .pool{
@@ -463,38 +404,13 @@ button.scanning:before{
   background:rgba(255,255,255,.035);
   border-radius:18px;
   overflow:hidden;
-  max-width:100%;
 }
 
-.pool h3{
-  font-size:1rem;
-  margin-bottom:5px;
-  min-width:0;
-  overflow-wrap:anywhere;
-  word-break:break-word;
-}
-
+.pool h3,
 .pool p{
-  color:var(--muted);
-  font-size:.86rem;
-  line-height:1.45;
   min-width:0;
   overflow-wrap:anywhere;
   word-break:break-word;
-}
-
-.pool button{
-  padding:10px 12px;
-  border-radius:13px;
-  font-size:.8rem;
-  white-space:nowrap;
-}
-
-.footer-note{
-  color:var(--muted);
-  line-height:1.6;
-  font-size:.88rem;
-  margin-top:18px;
 }
 
 .good{color:var(--green);}
@@ -505,11 +421,6 @@ button.scanning:before{
 .yellow{color:var(--yellow);}
 .red{color:var(--red);}
 .muted{color:var(--muted);}
-
-a.link{
-  color:var(--purple2);
-  text-decoration:none;
-}
 
 @media(max-width:1080px){
   .grid{
@@ -525,10 +436,6 @@ a.link{
   .header-inner{
     align-items:flex-start;
     flex-direction:column;
-  }
-
-  .nav{
-    justify-content:flex-start;
   }
 }
 
@@ -557,12 +464,6 @@ a.link{
   .big{
     font-size:2.55rem;
   }
-
-  .wolf-bg{
-    width:95vw;
-    right:-120px;
-    opacity:.12;
-  }
 }
 </style>
 </head>
@@ -585,10 +486,9 @@ a.link{
     </div>
 
     <nav class="nav">
-      <a href="https://arbstrategy.net/" target="_blank" rel="noopener">Website</a>
-      <a href="https://arbstrategy-asty.github.io/ArbStrategy-ASTY/" target="_blank" rel="noopener">System Overview</a>
-      <a href="https://htmlpreview.github.io/?https://github.com/ArbStrategy-ASTY/ArbStrategy-ASTY/blob/main/pools.html" target="_blank" rel="noopener">Pool Dashboard</a>
-      <a href="https://t.me/ArbStrategyASTY" target="_blank" rel="noopener">Telegram</a>
+      <a href="https://arbstrategy.net/" target="_blank">Website</a>
+      <a href="https://x.com/ArbStrategyASTY" target="_blank">X</a>
+      <a href="https://t.me/ArbStrategyASTY" target="_blank">Telegram</a>
     </nav>
 
   </div>
@@ -596,138 +496,121 @@ a.link{
 
 <main class="wrap">
 
-  <section class="hero">
+<section class="hero">
+<div class="card">
+<div class="card-inner">
 
-    <div class="card">
-      <div class="card-inner">
+<div class="kicker">
+<span class="pulse-dot"></span>
+LIVE MARKET RADAR
+</div>
 
-        <div class="kicker">
-          <span class="pulse-dot"></span>
-          LIVE MARKET RADAR
-        </div>
+<h2 class="big">
+Find the next<br>
+<span class="gradient">ASTY LP Candidate.</span>
+</h2>
 
-        <h2 class="big">
-          Find the next<br>
-          <span class="gradient">ASTY LP Candidate.</span>
-        </h2>
+<p class="lead">
+Enter any Solana token, symbol, pair name or pool address.
+The radar searches external pools and evaluates volatility,
+liquidity efficiency, 7d stability and 30d structure.
+</p>
 
-        <p class="lead">
-          Enter any Solana token, symbol, pair name or pool address. The radar searches external pools,
-          analyzes liquidity, volume, transactions, volatility, 7 day stability and 30 day structure.
-        </p>
+<div class="input-box">
+<div class="input-row">
+<input id="searchInput" placeholder="Example: TAO, SOL, ASTY/SOL or token address" />
+<button id="scanBtn" onclick="startScan()">START RADAR SCAN</button>
+</div>
+</div>
 
-        <div class="input-box">
-          <div class="input-row">
-            <input id="searchInput" placeholder="Example: TAO, SOL, ASTY/SOL, or a Solana token address" />
-            <button id="scanBtn" onclick="startScan()">START RADAR SCAN</button>
-          </div>
+</div>
+</div>
+</section>
 
-          <div class="hints">
-            <span class="hint">Token Symbol</span>
-            <span class="hint">Token Address</span>
-            <span class="hint">Pair Name</span>
-            <span class="hint">Pool Address</span>
-            <span class="hint">Solana Only</span>
-          </div>
-        </div>
+<section class="grid">
 
-        <p class="footer-note">
-          This is a research interface only. It is not financial advice.
-        </p>
+<div class="card">
+<div class="card-inner">
 
-      </div>
-    </div>
+<div class="section-title">
+<h2>AI Terminal</h2>
+<span class="badge" id="statusBadge">Idle</span>
+</div>
 
-  </section>
+<div class="terminal" id="terminal">
+<span class="muted">Awaiting input...</span>
+</div>
 
-  <section class="grid">
+</div>
+</div>
 
-    <div class="card">
-      <div class="card-inner">
+<div class="card">
+<div class="card-inner">
 
-        <div class="section-title">
-          <h2>AI Terminal</h2>
-          <span class="badge" id="statusBadge">Idle</span>
-        </div>
+<div class="section-title">
+<h2>Candidate Rating</h2>
+<span class="badge">ASTY Model</span>
+</div>
 
-        <div class="terminal" id="terminal">
-          <span class="muted">Awaiting input...</span>
-        </div>
+<div class="results">
 
-      </div>
-    </div>
+<div class="metric">
+<small>Liquidity</small>
+<strong id="mLiquidity">-</strong>
+</div>
 
-    <div class="card">
-      <div class="card-inner">
+<div class="metric">
+<small>24h Volume</small>
+<strong id="mVolume">-</strong>
+</div>
 
-        <div class="section-title">
-          <h2>Candidate Rating</h2>
-          <span class="badge">ASTY Model</span>
-        </div>
+<div class="metric">
+<small>24h TXNS</small>
+<strong id="mTxns">-</strong>
+</div>
 
-        <div class="results">
+<div class="metric">
+<small>Volatility</small>
+<strong id="mVolatility">-</strong>
+</div>
 
-          <div class="metric">
-            <small>Liquidity</small>
-            <strong id="mLiquidity">-</strong>
-          </div>
+</div>
 
-          <div class="metric">
-            <small>24h Volume</small>
-            <strong id="mVolume">-</strong>
-          </div>
+<div class="score-card">
 
-          <div class="metric">
-            <small>24h TXNS</small>
-            <strong id="mTxns">-</strong>
-          </div>
+<div class="score-number" id="scoreNumber">
+0
+</div>
 
-          <div class="metric">
-            <small>Volatility</small>
-            <strong id="mVolatility">-</strong>
-          </div>
+<div class="bar">
+<div class="fill" id="scoreFill"></div>
+</div>
 
-        </div>
+<div class="verdict" id="verdict">
+Start a scan to evaluate a potential ASTY liquidity pair.
+</div>
 
-        <div class="score-card">
+</div>
 
-          <div class="score-top">
-            <div>
-              <div class="score-label">ASTY Opportunity Score</div>
-              <div class="score-number" id="scoreNumber">0</div>
-            </div>
-            <div class="score-label" id="scoreClass">No scan yet</div>
-          </div>
+</div>
+</div>
 
-          <div class="bar">
-            <div class="fill" id="scoreFill"></div>
-          </div>
+</section>
 
-          <div class="verdict" id="verdict">
-            Start a scan to evaluate a potential future ASTY liquidity pair.
-          </div>
+<section class="card" style="margin-top:22px;">
+<div class="card-inner">
 
-        </div>
+<div class="section-title">
+<h2>Detected Solana Pools</h2>
+<span class="badge" id="poolCount">0 pools</span>
+</div>
 
-      </div>
-    </div>
+<div id="poolList" class="pool-list">
+<div class="muted">No pools loaded yet.</div>
+</div>
 
-  </section>
-
-  <section class="card" style="margin-top:22px;">
-    <div class="card-inner">
-
-      <div class="section-title">
-        <h2>Detected Solana Pools</h2>
-        <span class="badge" id="poolCount">0 pools</span>
-      </div>
-
-      <div id="poolList" class="pool-list">
-        <div class="footer-note">No pools loaded yet.</div>
-      </div>
-
-    </div>
-  </section>
+</div>
+</section>
 
 </main>
 
@@ -760,327 +643,285 @@ function logLine(text, cls=""){
 }
 
 function fmtUsd(n){
-  if(n === null || n === undefined || isNaN(n)) return "-";
+  if(!n || isNaN(n)) return "-";
   const num = Number(n);
-  if(num >= 1000000) return "$" + (num / 1000000).toFixed(2) + "M";
-  if(num >= 1000) return "$" + (num / 1000).toFixed(2) + "K";
+
+  if(num >= 1000000) return "$" + (num/1000000).toFixed(2) + "M";
+  if(num >= 1000) return "$" + (num/1000).toFixed(2) + "K";
+
   return "$" + num.toFixed(2);
 }
 
 function fmtNum(n){
-  if(n === null || n === undefined || isNaN(n)) return "-";
+  if(!n || isNaN(n)) return "-";
   const num = Number(n);
-  if(num >= 1000000) return (num / 1000000).toFixed(2) + "M";
-  if(num >= 1000) return (num / 1000).toFixed(2) + "K";
+
+  if(num >= 1000000) return (num/1000000).toFixed(2) + "M";
+  if(num >= 1000) return (num/1000).toFixed(2) + "K";
+
   return Math.round(num).toString();
 }
 
-function isLikelyAddress(input){
-  const v = input.trim();
-  return /^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(v);
-}
-
-function pairName(pair){
-  const base = pair.baseToken?.symbol || "?";
-  const quote = pair.quoteToken?.symbol || "?";
-  return `${base}/${quote}`;
-}
-
 async function fetchJson(url){
-  const res = await fetch(url,{headers:{accept:"application/json"}});
-  if(!res.ok) throw new Error("HTTP " + res.status);
+  const res = await fetch(url,{
+    headers:{accept:"application/json"}
+  });
+
+  if(!res.ok){
+    throw new Error("HTTP " + res.status);
+  }
+
   return await res.json();
 }
 
 async function searchDex(input){
   const q = encodeURIComponent(input.trim());
-  const data = await fetchJson(`${DEX_BASE}/search?q=${q}`);
-  return (data.pairs || []).filter(p => (p.chainId || "").toLowerCase() === "solana");
+
+  const data =
+    await fetchJson(`${DEX_BASE}/search?q=${q}`);
+
+  return (data.pairs || [])
+    .filter(p =>
+      (p.chainId || "").toLowerCase() === "solana"
+    );
 }
 
-async function tokenDex(address){
-  const data = await fetchJson(`https://api.dexscreener.com/tokens/v1/solana/${address}`);
-  return Array.isArray(data) ? data.filter(p => (p.chainId || "").toLowerCase() === "solana") : [];
-}
+async function fetchGeckoPool(poolAddress){
 
-async function pairDex(address){
-  const data = await fetchJson(`${DEX_BASE}/pairs/solana/${address}`);
-  return (data.pairs || []).filter(p => (p.chainId || "").toLowerCase() === "solana");
-}
-
-async function fetchOhlcv(poolAddress, days){
-  const url = `${GECKO_BASE}/networks/solana/pools/${poolAddress}/ohlcv/day?aggregate=1&limit=${days}&currency=usd`;
+  const url =
+    `${GECKO_BASE}/networks/solana/pools/${poolAddress}`;
 
   try{
     const data = await fetchJson(url);
-    return data?.data?.attributes?.ohlcv_list || [];
+    return data?.data?.attributes || null;
   }catch(e){
-    return [];
+    return null;
   }
-}
-
-function liquidityScore(liq){
-  if(!liq || liq <= 0) return 0;
-  if(liq < 2000) return 20;
-  if(liq < 10000) return 45;
-  if(liq < 50000) return 70;
-  if(liq < 250000) return 88;
-  if(liq < 1000000) return 76;
-  return 62;
-}
-
-function volumeEfficiencyScore(volume, liquidity){
-  if(!volume || !liquidity || liquidity <= 0) return 0;
-
-  const ratio = volume / liquidity;
-
-  if(ratio < .02) return 12;
-  if(ratio < .08) return 34;
-  if(ratio < .2) return 58;
-  if(ratio < .75) return 82;
-  if(ratio < 1.8) return 96;
-  if(ratio < 4) return 84;
-  return 60;
-}
-
-function txScore(txns){
-  if(!txns || txns <= 0) return 0;
-  if(txns < 20) return 22;
-  if(txns < 80) return 48;
-  if(txns < 250) return 72;
-  if(txns < 900) return 90;
-  return 84;
-}
-
-function volatilityScoreFromChange(change24, change30){
-  const c24 = Math.abs(Number(change24 || 0));
-  const c30 = Math.abs(Number(change30 || 0));
-
-  const combined = c24 * .45 + c30 * .55;
-
-  if(combined < 5) return 18;
-  if(combined < 15) return 48;
-  if(combined < 35) return 78;
-  if(combined < 90) return 96;
-  if(combined < 180) return 82;
-  if(combined < 300) return 58;
-  return 32;
-}
-
-function analyzeStructure(ohlcv){
-  if(!ohlcv || ohlcv.length < 5){
-    return {
-      score:50,
-      label:"Limited",
-      change:0,
-      note:"Historical structure is limited."
-    };
-  }
-
-  const volumes = ohlcv.map(c => Number(c[5] || 0));
-  const closes = ohlcv.map(c => Number(c[4] || 0)).filter(v => v > 0);
-
-  const avgVol = volumes.reduce((a,b) => a + b,0) / Math.max(1,volumes.length);
-  const lastVol = volumes[0] || 0;
-  const volRatio = avgVol ? lastVol / avgVol : 0;
-
-  const newestClose = closes[0] || 0;
-  const oldestClose = closes[closes.length - 1] || newestClose;
-  const change = oldestClose ? ((newestClose - oldestClose) / oldestClose) * 100 : 0;
-
-  let score = 50;
-
-  if(volRatio > .65 && volRatio < 1.8) score += 22;
-  else if(volRatio > .35 && volRatio < 3) score += 12;
-  else score -= 10;
-
-  const absChange = Math.abs(change);
-
-  if(absChange > 20 && absChange < 120) score += 24;
-  else if(absChange > 8 && absChange < 200) score += 12;
-  else if(absChange <= 5) score -= 18;
-  else if(absChange > 300) score -= 22;
-
-  score = Math.max(0,Math.min(100,Math.round(score)));
-
-  return {
-    score,
-    label:score >= 75 ? "Strong" : score >= 55 ? "Mixed" : "Weak",
-    change,
-    note:`Volume ratio ${volRatio.toFixed(2)}x, price movement ${change.toFixed(1)}%.`
-  };
 }
 
 function classify(score){
-  if(score >= 78) return {label:"🟢 Strong Candidate", cls:"good"};
-  if(score >= 55) return {label:"🟡 Watchlist Candidate", cls:"mid"};
-  return {label:"🔴 Weak Candidate", cls:"bad"};
-}
 
-function computeScore(pair, structure7, structure30){
-  const liq = Number(pair.liquidity?.usd || 0);
-  const vol24 = Number(pair.volume?.h24 || 0);
-  const txns = Number(pair.txns?.h24?.buys || 0) + Number(pair.txns?.h24?.sells || 0);
-  const change24 = Number(pair.priceChange?.h24 || 0);
+  if(score >= 78){
+    return {
+      label:"🟢 Strong Candidate",
+      cls:"good"
+    };
+  }
 
-  const scores = {
-    liquidity:liquidityScore(liq),
-    efficiency:volumeEfficiencyScore(vol24,liq),
-    txns:txScore(txns),
-    volatility:volatilityScoreFromChange(change24,structure30.change),
-    stability7:structure7.score,
-    structure30:structure30.score
-  };
-
-  const total = Math.round(
-    scores.volatility * .30 +
-    scores.efficiency * .25 +
-    scores.stability7 * .18 +
-    scores.liquidity * .15 +
-    scores.txns * .07 +
-    scores.structure30 * .05
-  );
+  if(score >= 55){
+    return {
+      label:"🟡 Watchlist Candidate",
+      cls:"mid"
+    };
+  }
 
   return {
-    total,
-    scores,
+    label:"🔴 Weak Candidate",
+    cls:"bad"
+  };
+}
+
+function computeScore(geckoPool){
+
+  const liq =
+    Number(geckoPool?.reserve_in_usd || 0);
+
+  const vol24 =
+    Number(geckoPool?.volume_usd?.h24 || 0);
+
+  const txns =
+    Number(geckoPool?.transactions?.h24?.buys || 0)
+    +
+    Number(geckoPool?.transactions?.h24?.sells || 0);
+
+  const change24 =
+    Math.abs(
+      Number(
+        geckoPool?.price_change_percentage?.h24 || 0
+      )
+    );
+
+  let score = 0;
+
+  if(change24 > 15 && change24 < 120){
+    score += 35;
+  }
+
+  const efficiency =
+    liq > 0 ? vol24 / liq : 0;
+
+  if(efficiency > .15) score += 30;
+  if(txns > 120) score += 20;
+
+  if(liq > 10000 && liq < 1000000){
+    score += 15;
+  }
+
+  if(score > 100){
+    score = 100;
+  }
+
+  return {
+    total:score,
     liq,
     vol24,
     txns,
-    change24
+    change24,
+    efficiency
   };
 }
 
 function renderPools(pools){
-  $("poolCount").textContent = `${pools.length} pool${pools.length === 1 ? "" : "s"}`;
 
-  if(!pools.length){
-    $("poolList").innerHTML = `<div class="footer-note">No Solana pools found.</div>`;
-    return;
-  }
+  $("poolCount").textContent =
+    `${pools.length} pools`;
 
   $("poolList").innerHTML = "";
 
   pools.slice(0,12).forEach((p,index) => {
-    const liq = Number(p.liquidity?.usd || 0);
-    const vol = Number(p.volume?.h24 || 0);
-    const txns = Number(p.txns?.h24?.buys || 0) + Number(p.txns?.h24?.sells || 0);
 
     const div = document.createElement("div");
     div.className = "pool";
 
     div.innerHTML = `
       <div>
-        <h3>${index + 1}. ${pairName(p)} <span class="badge">${p.dexId || "DEX"}</span></h3>
+        <h3>
+          ${p.baseToken.symbol}/${p.quoteToken.symbol}
+        </h3>
+
         <p>
-          Liquidity: ${fmtUsd(liq)} • 24h Volume: ${fmtUsd(vol)} • 24h TXNS: ${fmtNum(txns)}
-          <br>
-          Pair: ${p.pairAddress || "-"}
+          Pair:
+          ${p.pairAddress}
         </p>
       </div>
-      <button onclick="analyzePool(${index})">Analyze</button>
+
+      <button onclick="analyzePool(${index})">
+        Analyze
+      </button>
     `;
 
     $("poolList").appendChild(div);
+
   });
 }
 
-function updateUi(pair, scoreData, structure7, structure30){
-  const verdict = classify(scoreData.total);
-
-  $("mLiquidity").textContent = fmtUsd(scoreData.liq);
-  $("mVolume").textContent = fmtUsd(scoreData.vol24);
-  $("mTxns").textContent = fmtNum(scoreData.txns);
-
-  const vScore = scoreData.scores.volatility;
-  $("mVolatility").innerHTML =
-    `<span class="${vScore >= 75 ? "good" : vScore >= 50 ? "mid" : "bad"}">${vScore}/100</span>`;
-
-  $("scoreNumber").textContent = scoreData.total;
-  $("scoreFill").style.width = scoreData.total + "%";
-  $("scoreClass").innerHTML = `<span class="${verdict.cls}">${verdict.label}</span>`;
-
-  const ratio = scoreData.liq ? scoreData.vol24 / scoreData.liq : 0;
-
-  $("verdict").innerHTML = `
-    <strong class="${verdict.cls}">${verdict.label}</strong>
-    <br><br>
-
-    <strong>${pairName(pair)}</strong> on ${pair.dexId || "unknown DEX"}
-    <br><br>
-
-    <ul style="margin-left:18px;line-height:1.7;">
-      <li>Volatility Score: ${scoreData.scores.volatility}/100</li>
-      <li>Volume Efficiency: ${ratio.toFixed(2)}x</li>
-      <li>7d Stability: ${structure7.label}</li>
-      <li>30d Structure: ${structure30.label}</li>
-      <li>${structure30.note}</li>
-    </ul>
-
-    <br>
-    <a class="link" href="${pair.url}" target="_blank" rel="noopener">Open pair on DexScreener</a>
-  `;
-}
-
 async function analyzePool(index){
+
   const pair = currentPools[index];
+
   if(!pair) return;
 
-  setStatus("Analyzing");
   clearTerminal();
 
-  logLine("ASTY RADAR: pool selected", "cyan");
+  logLine("ASTY RADAR: pool selected","cyan");
   await sleep(300);
 
-  logLine(`PAIR: ${pairName(pair)}`);
+  logLine(
+    `PAIR: ${pair.baseToken.symbol}/${pair.quoteToken.symbol}`
+  );
+
   await sleep(300);
 
-  logLine(`DEX: ${pair.dexId || "unknown"}`);
-  await sleep(300);
+  logLine("Fetching GeckoTerminal data...","cyan");
 
-  logLine(`LIQUIDITY: ${fmtUsd(Number(pair.liquidity?.usd || 0))}`);
-  await sleep(300);
-
-  logLine(`24H VOLUME: ${fmtUsd(Number(pair.volume?.h24 || 0))}`);
-  await sleep(300);
-
-  logLine("Fetching 7d structure from GeckoTerminal...", "cyan");
-  const ohlcv7 = await fetchOhlcv(pair.pairAddress,7);
-  const structure7 = analyzeStructure(ohlcv7);
+  const geckoPool =
+    await fetchGeckoPool(pair.pairAddress);
 
   await sleep(500);
-  logLine(`7D STRUCTURE: ${structure7.label} • ${structure7.note}`, structure7.score >= 75 ? "green" : structure7.score >= 55 ? "yellow" : "red");
 
-  await sleep(400);
-  logLine("Fetching 30d structure from GeckoTerminal...", "cyan");
-  const ohlcv30 = await fetchOhlcv(pair.pairAddress,30);
-  const structure30 = analyzeStructure(ohlcv30);
+  const scoreData =
+    computeScore(geckoPool);
+
+  $("mLiquidity").textContent =
+    fmtUsd(scoreData.liq);
+
+  $("mVolume").textContent =
+    fmtUsd(scoreData.vol24);
+
+  $("mTxns").textContent =
+    fmtNum(scoreData.txns);
+
+  $("mVolatility").innerHTML =
+    `<span class="${
+      scoreData.change24 > 15
+      ? "good"
+      : "mid"
+    }">
+      ${scoreData.change24.toFixed(1)}%
+    </span>`;
+
+  $("scoreNumber").textContent =
+    scoreData.total;
+
+  $("scoreFill").style.width =
+    scoreData.total + "%";
+
+  const verdict =
+    classify(scoreData.total);
+
+  $("verdict").innerHTML = `
+    <strong class="${verdict.cls}">
+      ${verdict.label}
+    </strong>
+
+    <br><br>
+
+    Liquidity Efficiency:
+    ${scoreData.efficiency.toFixed(2)}x
+
+    <br>
+
+    Volatility:
+    ${scoreData.change24.toFixed(1)}%
+
+    <br>
+
+    Transactions:
+    ${fmtNum(scoreData.txns)}
+
+    <br><br>
+
+    Pool evaluated using GeckoTerminal reserve data.
+  `;
+
+  logLine(
+    `LIQUIDITY: ${fmtUsd(scoreData.liq)}`
+  );
+
+  await sleep(300);
+
+  logLine(
+    `24H VOLUME: ${fmtUsd(scoreData.vol24)}`
+  );
+
+  await sleep(300);
+
+  logLine(
+    `VOLATILITY: ${scoreData.change24.toFixed(1)}%`
+  );
+
+  await sleep(300);
+
+  logLine(
+    `EFFICIENCY: ${scoreData.efficiency.toFixed(2)}x`
+  );
 
   await sleep(500);
-  logLine(`30D STRUCTURE: ${structure30.label} • ${structure30.note}`, structure30.score >= 75 ? "green" : structure30.score >= 55 ? "yellow" : "red");
 
-  await sleep(500);
-  logLine("Calculating ASTY Opportunity Score...", "cyan");
-
-  const scoreData = computeScore(pair,structure7,structure30);
-  updateUi(pair,scoreData,structure7,structure30);
-
-  await sleep(600);
-
-  const verdict = classify(scoreData.total);
-  logLine(`RESULT: ${verdict.label}`, verdict.cls === "good" ? "green" : verdict.cls === "mid" ? "yellow" : "red");
-  logLine(`SCORE: ${scoreData.total}/100`);
-  logLine("Scan complete.", "green");
+  logLine(
+    `RESULT: ${verdict.label}`,
+    verdict.cls
+  );
 
   setStatus("Complete");
 }
 
 async function startScan(){
-  const input = $("searchInput").value.trim();
+
+  const input =
+    $("searchInput").value.trim();
 
   if(!input){
-    clearTerminal();
-    logLine("Please enter a token symbol, token address, pair name or pool address.", "yellow");
     return;
   }
 
@@ -1089,76 +930,62 @@ async function startScan(){
   $("scanBtn").textContent = "SCANNING...";
 
   setStatus("Scanning");
+
   clearTerminal();
 
-  $("poolList").innerHTML = `<div class="footer-note">Scanning...</div>`;
-  $("poolCount").textContent = "Scanning";
+  logLine(
+    "Initializing ASTY Opportunity Radar...",
+    "cyan"
+  );
 
-  logLine("Initializing ASTY Opportunity Radar...", "cyan");
   await sleep(400);
 
-  logLine(`Input detected: ${input}`);
-  await sleep(400);
-
-  let pools = [];
+  logLine(
+    `Searching Solana pools for: ${input}`,
+    "cyan"
+  );
 
   try{
-    if(isLikelyAddress(input)){
-      logLine("Address detected. Checking token pools...", "cyan");
 
-      try{
-        pools = await tokenDex(input);
-      }catch(e){
-        pools = [];
-      }
-
-      if(!pools.length){
-        logLine("Checking as pair address...", "cyan");
-
-        try{
-          pools = await pairDex(input);
-        }catch(e){
-          pools = [];
-        }
-      }
-    }else{
-      logLine("Searching Solana pools on DexScreener...", "cyan");
-      pools = await searchDex(input);
-    }
-
-    pools = pools
-      .filter(p => p && p.pairAddress)
-      .sort((a,b) => Number(b.liquidity?.usd || 0) - Number(a.liquidity?.usd || 0));
+    const pools =
+      await searchDex(input);
 
     currentPools = pools;
 
-    logLine(`${pools.length} Solana pool(s) detected.`, pools.length ? "green" : "yellow");
-
     renderPools(pools);
 
+    logLine(
+      `${pools.length} Solana pools detected.`,
+      "green"
+    );
+
     if(pools.length){
-      logLine("Selecting strongest liquidity pool for first analysis...", "cyan");
-      await sleep(700);
+
+      await sleep(600);
+
       await analyzePool(0);
-    }else{
-      setStatus("No result");
-      $("verdict").innerHTML = "No Solana pools found. Try a token address, a clearer symbol or a known pair address.";
+
     }
 
   }catch(err){
-    logLine("API ERROR", "red");
-    logLine(err.message, "red");
-    logLine("Possible cause: API limit, browser CORS or temporary endpoint issue.", "yellow");
-    setStatus("Error");
+
+    logLine("API ERROR","red");
+    logLine(err.message,"red");
+
   }finally{
+
     $("scanBtn").disabled = false;
     $("scanBtn").classList.remove("scanning");
     $("scanBtn").textContent = "START RADAR SCAN";
+
   }
+
 }
 
-$("searchInput").addEventListener("keydown", e => {
-  if(e.key === "Enter") startScan();
+$("searchInput").addEventListener("keydown",e=>{
+  if(e.key === "Enter"){
+    startScan();
+  }
 });
 </script>
 
