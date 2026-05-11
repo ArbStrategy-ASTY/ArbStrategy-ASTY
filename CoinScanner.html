@@ -147,6 +147,11 @@ body:before{
   font-size:.88rem;
 }
 
+.nav a:hover{
+  border-color:var(--purple2);
+  box-shadow:0 0 20px rgba(168,85,247,.3);
+}
+
 .wrap{
   position:relative;
   z-index:2;
@@ -169,6 +174,14 @@ body:before{
   overflow:hidden;
   box-shadow:0 0 36px rgba(168,85,247,.16);
   position:relative;
+}
+
+.card:before{
+  content:"";
+  position:absolute;
+  inset:-1px;
+  background:radial-gradient(circle at top right,rgba(168,85,247,.18),transparent 36%);
+  pointer-events:none;
 }
 
 .card-inner{
@@ -265,6 +278,17 @@ button{
   position:relative;
 }
 
+button:hover{
+  transform:translateY(-2px);
+  box-shadow:0 0 36px rgba(168,85,247,.5);
+}
+
+button:disabled{
+  opacity:.75;
+  cursor:not-allowed;
+  transform:none;
+}
+
 button.scanning{
   overflow:hidden;
   pointer-events:none;
@@ -290,6 +314,22 @@ button.scanning:before{
   }
 }
 
+.hints{
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+  margin-top:12px;
+}
+
+.hint{
+  font-size:.8rem;
+  color:var(--muted);
+  padding:8px 10px;
+  border-radius:999px;
+  border:1px solid var(--line);
+  background:rgba(255,255,255,.035);
+}
+
 .grid{
   display:grid;
   grid-template-columns:1.05fr .95fr;
@@ -302,6 +342,10 @@ button.scanning:before{
   justify-content:space-between;
   gap:12px;
   margin-bottom:14px;
+}
+
+.section-title h2{
+  font-size:1.2rem;
 }
 
 .badge{
@@ -328,7 +372,7 @@ button.scanning:before{
 
 .results{
   display:grid;
-  grid-template-columns:repeat(4,1fr);
+  grid-template-columns:repeat(6,1fr);
   gap:14px;
 }
 
@@ -346,7 +390,7 @@ button.scanning:before{
 }
 
 .metric strong{
-  font-size:1.24rem;
+  font-size:1.18rem;
 }
 
 .score-card{
@@ -357,9 +401,23 @@ button.scanning:before{
   padding:18px;
 }
 
+.score-top{
+  display:flex;
+  align-items:flex-end;
+  justify-content:space-between;
+  gap:14px;
+  margin-bottom:12px;
+}
+
 .score-number{
   font-size:3.1rem;
   font-weight:1000;
+  letter-spacing:-.06em;
+}
+
+.score-label{
+  color:var(--muted);
+  font-size:.92rem;
 }
 
 .bar{
@@ -368,7 +426,6 @@ button.scanning:before{
   background:#12091d;
   overflow:hidden;
   border:1px solid var(--line);
-  margin-top:14px;
 }
 
 .fill{
@@ -392,6 +449,7 @@ button.scanning:before{
   display:grid;
   gap:12px;
   margin-top:14px;
+  width:100%;
 }
 
 .pool{
@@ -404,13 +462,38 @@ button.scanning:before{
   background:rgba(255,255,255,.035);
   border-radius:18px;
   overflow:hidden;
+  max-width:100%;
 }
 
-.pool h3,
-.pool p{
+.pool h3{
+  font-size:1rem;
+  margin-bottom:5px;
   min-width:0;
   overflow-wrap:anywhere;
   word-break:break-word;
+}
+
+.pool p{
+  color:var(--muted);
+  font-size:.86rem;
+  line-height:1.45;
+  min-width:0;
+  overflow-wrap:anywhere;
+  word-break:break-word;
+}
+
+.pool button{
+  padding:10px 12px;
+  border-radius:13px;
+  font-size:.8rem;
+  white-space:nowrap;
+}
+
+.footer-note{
+  color:var(--muted);
+  line-height:1.6;
+  font-size:.88rem;
+  margin-top:18px;
 }
 
 .good{color:var(--green);}
@@ -421,6 +504,17 @@ button.scanning:before{
 .yellow{color:var(--yellow);}
 .red{color:var(--red);}
 .muted{color:var(--muted);}
+
+a.link{
+  color:var(--purple2);
+  text-decoration:none;
+}
+
+@media(max-width:1180px){
+  .results{
+    grid-template-columns:repeat(3,1fr);
+  }
+}
 
 @media(max-width:1080px){
   .grid{
@@ -436,6 +530,10 @@ button.scanning:before{
   .header-inner{
     align-items:flex-start;
     flex-direction:column;
+  }
+
+  .nav{
+    justify-content:flex-start;
   }
 }
 
@@ -464,6 +562,12 @@ button.scanning:before{
   .big{
     font-size:2.55rem;
   }
+
+  .wolf-bg{
+    width:95vw;
+    right:-120px;
+    opacity:.12;
+  }
 }
 </style>
 </head>
@@ -486,9 +590,11 @@ button.scanning:before{
     </div>
 
     <nav class="nav">
-      <a href="https://arbstrategy.net/" target="_blank">Website</a>
-      <a href="https://x.com/ArbStrategyASTY" target="_blank">X</a>
-      <a href="https://t.me/ArbStrategyASTY" target="_blank">Telegram</a>
+      <a href="https://arbstrategy.net/" target="_blank" rel="noopener">Website</a>
+      <a href="https://arbstrategy-asty.github.io/ArbStrategy-ASTY/" target="_blank" rel="noopener">System Overview</a>
+      <a href="https://htmlpreview.github.io/?https://github.com/ArbStrategy-ASTY/ArbStrategy-ASTY/blob/main/pools.html" target="_blank" rel="noopener">Pool Dashboard</a>
+      <a href="https://x.com/ArbStrategyASTY" target="_blank" rel="noopener">X</a>
+      <a href="https://t.me/ArbStrategyASTY" target="_blank" rel="noopener">Telegram</a>
     </nav>
 
   </div>
@@ -496,121 +602,148 @@ button.scanning:before{
 
 <main class="wrap">
 
-<section class="hero">
-<div class="card">
-<div class="card-inner">
+  <section class="hero">
+    <div class="card">
+      <div class="card-inner">
 
-<div class="kicker">
-<span class="pulse-dot"></span>
-LIVE MARKET RADAR
-</div>
+        <div class="kicker">
+          <span class="pulse-dot"></span>
+          LIVE MARKET RADAR
+        </div>
 
-<h2 class="big">
-Find the next<br>
-<span class="gradient">ASTY LP Candidate.</span>
-</h2>
+        <h2 class="big">
+          Find the next<br>
+          <span class="gradient">ASTY LP Candidate.</span>
+        </h2>
 
-<p class="lead">
-Enter any Solana token, symbol, pair name or pool address.
-The radar searches external pools and evaluates volatility,
-liquidity efficiency, 7d stability and 30d structure.
-</p>
+        <p class="lead">
+          Enter any Solana token, symbol, pair name or pool address. The radar searches external pools,
+          analyzes GeckoTerminal liquidity, volume efficiency, volatility, 7 day stability and 30 day structure.
+        </p>
 
-<div class="input-box">
-<div class="input-row">
-<input id="searchInput" placeholder="Example: TAO, SOL, ASTY/SOL or token address" />
-<button id="scanBtn" onclick="startScan()">START RADAR SCAN</button>
-</div>
-</div>
+        <div class="input-box">
+          <div class="input-row">
+            <input id="searchInput" placeholder="Example: TAO, SOL, ASTY/SOL, or a Solana token address" />
+            <button id="scanBtn" onclick="startScan()">START RADAR SCAN</button>
+          </div>
 
-</div>
-</div>
-</section>
+          <div class="hints">
+            <span class="hint">Token Symbol</span>
+            <span class="hint">Token Address</span>
+            <span class="hint">Pair Name</span>
+            <span class="hint">Pool Address</span>
+            <span class="hint">Solana Only</span>
+          </div>
+        </div>
 
-<section class="grid">
+        <p class="footer-note">
+          This is a research interface only. It is not financial advice.
+        </p>
 
-<div class="card">
-<div class="card-inner">
+      </div>
+    </div>
+  </section>
 
-<div class="section-title">
-<h2>AI Terminal</h2>
-<span class="badge" id="statusBadge">Idle</span>
-</div>
+  <section class="grid">
 
-<div class="terminal" id="terminal">
-<span class="muted">Awaiting input...</span>
-</div>
+    <div class="card">
+      <div class="card-inner">
 
-</div>
-</div>
+        <div class="section-title">
+          <h2>AI Terminal</h2>
+          <span class="badge" id="statusBadge">Idle</span>
+        </div>
 
-<div class="card">
-<div class="card-inner">
+        <div class="terminal" id="terminal">
+          <span class="muted">Awaiting input...</span>
+        </div>
 
-<div class="section-title">
-<h2>Candidate Rating</h2>
-<span class="badge">ASTY Model</span>
-</div>
+      </div>
+    </div>
 
-<div class="results">
+    <div class="card">
+      <div class="card-inner">
 
-<div class="metric">
-<small>Liquidity</small>
-<strong id="mLiquidity">-</strong>
-</div>
+        <div class="section-title">
+          <h2>Candidate Rating</h2>
+          <span class="badge">ASTY Model</span>
+        </div>
 
-<div class="metric">
-<small>24h Volume</small>
-<strong id="mVolume">-</strong>
-</div>
+        <div class="results">
 
-<div class="metric">
-<small>24h TXNS</small>
-<strong id="mTxns">-</strong>
-</div>
+          <div class="metric">
+            <small>Liquidity</small>
+            <strong id="mLiquidity">-</strong>
+          </div>
 
-<div class="metric">
-<small>Volatility</small>
-<strong id="mVolatility">-</strong>
-</div>
+          <div class="metric">
+            <small>24h Volume</small>
+            <strong id="mVolume">-</strong>
+          </div>
 
-</div>
+          <div class="metric">
+            <small>24h TXNS</small>
+            <strong id="mTxns">-</strong>
+          </div>
 
-<div class="score-card">
+          <div class="metric">
+            <small>Volatility</small>
+            <strong id="mVolatility">-</strong>
+          </div>
 
-<div class="score-number" id="scoreNumber">
-0
-</div>
+          <div class="metric">
+            <small>7d Stability</small>
+            <strong id="m7d">-</strong>
+          </div>
 
-<div class="bar">
-<div class="fill" id="scoreFill"></div>
-</div>
+          <div class="metric">
+            <small>30d Structure</small>
+            <strong id="m30d">-</strong>
+          </div>
 
-<div class="verdict" id="verdict">
-Start a scan to evaluate a potential ASTY liquidity pair.
-</div>
+        </div>
 
-</div>
+        <div class="score-card">
 
-</div>
-</div>
+          <div class="score-top">
+            <div>
+              <div class="score-label">ASTY Opportunity Score</div>
+              <div class="score-number" id="scoreNumber">0</div>
+            </div>
+            <div class="score-label" id="scoreClass">No scan yet</div>
+          </div>
 
-</section>
+          <div class="bar">
+            <div class="fill" id="scoreFill"></div>
+          </div>
 
-<section class="card" style="margin-top:22px;">
-<div class="card-inner">
+          <div class="verdict" id="verdict">
+            Start a scan to evaluate a potential future ASTY liquidity pair.
+          </div>
 
-<div class="section-title">
-<h2>Detected Solana Pools</h2>
-<span class="badge" id="poolCount">0 pools</span>
-</div>
+        </div>
 
-<div id="poolList" class="pool-list">
-<div class="muted">No pools loaded yet.</div>
-</div>
+      </div>
+    </div>
 
-</div>
-</section>
+  </section>
+
+  <section class="card" style="margin-top:22px;">
+    <div class="card-inner">
+
+      <div class="section-title">
+        <h2>Detected Solana Pools</h2>
+        <span class="badge" id="poolCount">0 pools</span>
+      </div>
+
+      <div id="poolList" class="pool-list">
+        <div class="footer-note">No pools loaded yet.</div>
+      </div>
+
+    </div>
+  </section>
+
+<!-- START CODE 2/2 -->
 
 </main>
 
@@ -636,35 +769,81 @@ function clearTerminal(){
 
 function logLine(text, cls=""){
   const div = document.createElement("div");
-  if(cls) div.className = cls;
+
+  if(cls){
+    div.className = cls;
+  }
+
   div.innerHTML = text;
+
   $("terminal").appendChild(div);
-  $("terminal").scrollTop = $("terminal").scrollHeight;
+
+  $("terminal").scrollTop =
+    $("terminal").scrollHeight;
 }
 
 function fmtUsd(n){
-  if(!n || isNaN(n)) return "-";
+
+  if(n === null || n === undefined || isNaN(n)){
+    return "-";
+  }
+
   const num = Number(n);
 
-  if(num >= 1000000) return "$" + (num/1000000).toFixed(2) + "M";
-  if(num >= 1000) return "$" + (num/1000).toFixed(2) + "K";
+  if(num >= 1000000){
+    return "$" + (num / 1000000).toFixed(2) + "M";
+  }
+
+  if(num >= 1000){
+    return "$" + (num / 1000).toFixed(2) + "K";
+  }
 
   return "$" + num.toFixed(2);
 }
 
 function fmtNum(n){
-  if(!n || isNaN(n)) return "-";
+
+  if(n === null || n === undefined || isNaN(n)){
+    return "-";
+  }
+
   const num = Number(n);
 
-  if(num >= 1000000) return (num/1000000).toFixed(2) + "M";
-  if(num >= 1000) return (num/1000).toFixed(2) + "K";
+  if(num >= 1000000){
+    return (num / 1000000).toFixed(2) + "M";
+  }
+
+  if(num >= 1000){
+    return (num / 1000).toFixed(2) + "K";
+  }
 
   return Math.round(num).toString();
 }
 
+function isLikelyAddress(input){
+
+  const v = input.trim();
+
+  return /^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(v);
+}
+
+function pairName(pair){
+
+  const base =
+    pair.baseToken?.symbol || "?";
+
+  const quote =
+    pair.quoteToken?.symbol || "?";
+
+  return `${base}/${quote}`;
+}
+
 async function fetchJson(url){
+
   const res = await fetch(url,{
-    headers:{accept:"application/json"}
+    headers:{
+      accept:"application/json"
+    }
   });
 
   if(!res.ok){
@@ -675,14 +854,18 @@ async function fetchJson(url){
 }
 
 async function searchDex(input){
-  const q = encodeURIComponent(input.trim());
+
+  const q =
+    encodeURIComponent(input.trim());
 
   const data =
     await fetchJson(`${DEX_BASE}/search?q=${q}`);
 
   return (data.pairs || [])
-    .filter(p =>
-      (p.chainId || "").toLowerCase() === "solana"
+    .filter(
+      p =>
+        (p.chainId || "").toLowerCase()
+        === "solana"
     );
 }
 
@@ -692,47 +875,181 @@ async function fetchGeckoPool(poolAddress){
     `${GECKO_BASE}/networks/solana/pools/${poolAddress}`;
 
   try{
-    const data = await fetchJson(url);
+
+    const data =
+      await fetchJson(url);
+
     return data?.data?.attributes || null;
+
   }catch(e){
+
     return null;
+
   }
+
+}
+
+async function fetchOhlcv(poolAddress,days){
+
+  const url =
+    `${GECKO_BASE}/networks/solana/pools/${poolAddress}/ohlcv/day?aggregate=1&limit=${days}&currency=usd`;
+
+  try{
+
+    const data =
+      await fetchJson(url);
+
+    return (
+      data?.data?.attributes?.ohlcv_list || []
+    );
+
+  }catch(e){
+
+    return [];
+
+  }
+
+}
+
+function analyzeStructure(ohlcv){
+
+  if(!ohlcv || ohlcv.length < 5){
+
+    return {
+      score:50,
+      label:"Limited",
+      change:0,
+      note:"Limited historical data."
+    };
+
+  }
+
+  const closes =
+    ohlcv
+      .map(c => Number(c[4] || 0))
+      .filter(v => v > 0);
+
+  const volumes =
+    ohlcv
+      .map(c => Number(c[5] || 0));
+
+  const newest =
+    closes[0] || 0;
+
+  const oldest =
+    closes[closes.length - 1] || newest;
+
+  const change =
+    oldest
+      ? ((newest - oldest) / oldest) * 100
+      : 0;
+
+  const avgVol =
+    volumes.reduce((a,b)=>a+b,0)
+    /
+    Math.max(1,volumes.length);
+
+  const lastVol =
+    volumes[0] || 0;
+
+  const volRatio =
+    avgVol
+      ? lastVol / avgVol
+      : 0;
+
+  let score = 50;
+
+  const abs =
+    Math.abs(change);
+
+  if(abs > 20 && abs < 120){
+    score += 25;
+  }else if(abs > 8){
+    score += 12;
+  }else{
+    score -= 12;
+  }
+
+  if(volRatio > .6 && volRatio < 2){
+    score += 18;
+  }else if(volRatio > .3){
+    score += 8;
+  }else{
+    score -= 8;
+  }
+
+  score =
+    Math.max(
+      0,
+      Math.min(100,Math.round(score))
+    );
+
+  return {
+    score,
+    label:
+      score >= 75
+        ? "Strong"
+        : score >= 55
+          ? "Mixed"
+          : "Weak",
+    change,
+    note:
+      `Vol Ratio ${volRatio.toFixed(2)}x • ${change.toFixed(1)}%`
+  };
+
 }
 
 function classify(score){
 
   if(score >= 78){
+
     return {
       label:"🟢 Strong Candidate",
       cls:"good"
     };
+
   }
 
   if(score >= 55){
+
     return {
       label:"🟡 Watchlist Candidate",
       cls:"mid"
     };
+
   }
 
   return {
     label:"🔴 Weak Candidate",
     cls:"bad"
   };
+
 }
 
-function computeScore(geckoPool){
+function computeScore(
+  geckoPool,
+  structure7,
+  structure30
+){
 
   const liq =
-    Number(geckoPool?.reserve_in_usd || 0);
+    Number(
+      geckoPool?.reserve_in_usd || 0
+    );
 
   const vol24 =
-    Number(geckoPool?.volume_usd?.h24 || 0);
+    Number(
+      geckoPool?.volume_usd?.h24 || 0
+    );
 
   const txns =
-    Number(geckoPool?.transactions?.h24?.buys || 0)
+    Number(
+      geckoPool?.transactions?.h24?.buys || 0
+    )
     +
-    Number(geckoPool?.transactions?.h24?.sells || 0);
+    Number(
+      geckoPool?.transactions?.h24?.sells || 0
+    );
 
   const change24 =
     Math.abs(
@@ -744,22 +1061,36 @@ function computeScore(geckoPool){
   let score = 0;
 
   if(change24 > 15 && change24 < 120){
-    score += 35;
+    score += 30;
   }
 
   const efficiency =
-    liq > 0 ? vol24 / liq : 0;
+    liq > 0
+      ? vol24 / liq
+      : 0;
 
-  if(efficiency > .15) score += 30;
-  if(txns > 120) score += 20;
+  if(efficiency > .15){
+    score += 25;
+  }
 
-  if(liq > 10000 && liq < 1000000){
+  if(txns > 120){
     score += 15;
   }
 
-  if(score > 100){
-    score = 100;
+  if(liq > 10000 && liq < 1000000){
+    score += 10;
   }
+
+  score +=
+    structure7.score * .12;
+
+  score +=
+    structure30.score * .08;
+
+  score =
+    Math.round(
+      Math.min(100,score)
+    );
 
   return {
     total:score,
@@ -769,29 +1100,44 @@ function computeScore(geckoPool){
     change24,
     efficiency
   };
+
 }
 
 function renderPools(pools){
 
   $("poolCount").textContent =
-    `${pools.length} pools`;
+    `${pools.length} pool${pools.length === 1 ? "" : "s"}`;
+
+  if(!pools.length){
+
+    $("poolList").innerHTML =
+      `<div class="footer-note">No Solana pools found.</div>`;
+
+    return;
+
+  }
 
   $("poolList").innerHTML = "";
 
-  pools.slice(0,12).forEach((p,index) => {
+  pools.slice(0,12).forEach((p,index)=>{
 
-    const div = document.createElement("div");
+    const div =
+      document.createElement("div");
+
     div.className = "pool";
 
     div.innerHTML = `
       <div>
         <h3>
-          ${p.baseToken.symbol}/${p.quoteToken.symbol}
+          ${index + 1}. ${pairName(p)}
+          <span class="badge">
+            ${p.dexId || "DEX"}
+          </span>
         </h3>
 
         <p>
           Pair:
-          ${p.pairAddress}
+          ${p.pairAddress || "-"}
         </p>
       </div>
 
@@ -803,34 +1149,18 @@ function renderPools(pools){
     $("poolList").appendChild(div);
 
   });
+
 }
 
-async function analyzePool(index){
+function updateUi(
+  pair,
+  scoreData,
+  structure7,
+  structure30
+){
 
-  const pair = currentPools[index];
-
-  if(!pair) return;
-
-  clearTerminal();
-
-  logLine("ASTY RADAR: pool selected","cyan");
-  await sleep(300);
-
-  logLine(
-    `PAIR: ${pair.baseToken.symbol}/${pair.quoteToken.symbol}`
-  );
-
-  await sleep(300);
-
-  logLine("Fetching GeckoTerminal data...","cyan");
-
-  const geckoPool =
-    await fetchGeckoPool(pair.pairAddress);
-
-  await sleep(500);
-
-  const scoreData =
-    computeScore(geckoPool);
+  const verdict =
+    classify(scoreData.total);
 
   $("mLiquidity").textContent =
     fmtUsd(scoreData.liq);
@@ -844,10 +1174,32 @@ async function analyzePool(index){
   $("mVolatility").innerHTML =
     `<span class="${
       scoreData.change24 > 15
-      ? "good"
-      : "mid"
+        ? "good"
+        : "mid"
     }">
       ${scoreData.change24.toFixed(1)}%
+    </span>`;
+
+  $("m7d").innerHTML =
+    `<span class="${
+      structure7.score >= 75
+        ? "good"
+        : structure7.score >= 55
+          ? "mid"
+          : "bad"
+    }">
+      ${structure7.label}
+    </span>`;
+
+  $("m30d").innerHTML =
+    `<span class="${
+      structure30.score >= 75
+        ? "good"
+        : structure30.score >= 55
+          ? "mid"
+          : "bad"
+    }">
+      ${structure30.label}
     </span>`;
 
   $("scoreNumber").textContent =
@@ -856,12 +1208,20 @@ async function analyzePool(index){
   $("scoreFill").style.width =
     scoreData.total + "%";
 
-  const verdict =
-    classify(scoreData.total);
+  $("scoreClass").innerHTML =
+    `<span class="${verdict.cls}">
+      ${verdict.label}
+    </span>`;
 
   $("verdict").innerHTML = `
     <strong class="${verdict.cls}">
       ${verdict.label}
+    </strong>
+
+    <br><br>
+
+    <strong>
+      ${pairName(pair)}
     </strong>
 
     <br><br>
@@ -871,42 +1231,148 @@ async function analyzePool(index){
 
     <br>
 
-    Volatility:
-    ${scoreData.change24.toFixed(1)}%
+    7d Stability:
+    ${structure7.note}
 
     <br>
 
-    Transactions:
-    ${fmtNum(scoreData.txns)}
+    30d Structure:
+    ${structure30.note}
 
     <br><br>
 
     Pool evaluated using GeckoTerminal reserve data.
   `;
 
+}
+
+async function analyzePool(index){
+
+  const pair =
+    currentPools[index];
+
+  if(!pair) return;
+
+  setStatus("Analyzing");
+
+  clearTerminal();
+
+  logLine(
+    "ASTY RADAR: pool selected",
+    "cyan"
+  );
+
+  await sleep(300);
+
+  logLine(
+    `PAIR: ${pairName(pair)}`
+  );
+
+  await sleep(300);
+
+  logLine(
+    "Fetching GeckoTerminal data...",
+    "cyan"
+  );
+
+  const geckoPool =
+    await fetchGeckoPool(
+      pair.pairAddress
+    );
+
+  await sleep(500);
+
+  logLine(
+    "Analyzing 7d structure...",
+    "cyan"
+  );
+
+  const ohlcv7 =
+    await fetchOhlcv(
+      pair.pairAddress,
+      7
+    );
+
+  const structure7 =
+    analyzeStructure(ohlcv7);
+
+  await sleep(500);
+
+  logLine(
+    "Analyzing 30d structure...",
+    "cyan"
+  );
+
+  const ohlcv30 =
+    await fetchOhlcv(
+      pair.pairAddress,
+      30
+    );
+
+  const structure30 =
+    analyzeStructure(ohlcv30);
+
+  await sleep(500);
+
+  logLine(
+    "Calculating ASTY Opportunity Score...",
+    "cyan"
+  );
+
+  const scoreData =
+    computeScore(
+      geckoPool,
+      structure7,
+      structure30
+    );
+
+  updateUi(
+    pair,
+    scoreData,
+    structure7,
+    structure30
+  );
+
+  await sleep(500);
+
   logLine(
     `LIQUIDITY: ${fmtUsd(scoreData.liq)}`
   );
 
-  await sleep(300);
+  await sleep(250);
 
   logLine(
     `24H VOLUME: ${fmtUsd(scoreData.vol24)}`
   );
 
-  await sleep(300);
+  await sleep(250);
 
   logLine(
     `VOLATILITY: ${scoreData.change24.toFixed(1)}%`
   );
 
-  await sleep(300);
+  await sleep(250);
 
   logLine(
     `EFFICIENCY: ${scoreData.efficiency.toFixed(2)}x`
   );
 
+  await sleep(250);
+
+  logLine(
+    `7D: ${structure7.label} • ${structure7.note}`
+  );
+
+  await sleep(250);
+
+  logLine(
+    `30D: ${structure30.label} • ${structure30.note}`
+  );
+
   await sleep(500);
+
+  const verdict =
+    classify(scoreData.total);
 
   logLine(
     `RESULT: ${verdict.label}`,
@@ -914,6 +1380,7 @@ async function analyzePool(index){
   );
 
   setStatus("Complete");
+
 }
 
 async function startScan(){
@@ -922,7 +1389,16 @@ async function startScan(){
     $("searchInput").value.trim();
 
   if(!input){
+
+    clearTerminal();
+
+    logLine(
+      "Please enter a token symbol or address.",
+      "yellow"
+    );
+
     return;
+
   }
 
   $("scanBtn").disabled = true;
@@ -933,6 +1409,12 @@ async function startScan(){
 
   clearTerminal();
 
+  $("poolList").innerHTML =
+    `<div class="footer-note">Scanning...</div>`;
+
+  $("poolCount").textContent =
+    "Scanning";
+
   logLine(
     "Initializing ASTY Opportunity Radar...",
     "cyan"
@@ -941,52 +1423,89 @@ async function startScan(){
   await sleep(400);
 
   logLine(
-    `Searching Solana pools for: ${input}`,
-    "cyan"
+    `Input detected: ${input}`
   );
 
+  await sleep(400);
+
   try{
+
+    logLine(
+      "Searching Solana pools on DexScreener...",
+      "cyan"
+    );
 
     const pools =
       await searchDex(input);
 
-    currentPools = pools;
+    currentPools =
+      pools
+        .filter(
+          p => p && p.pairAddress
+        )
+        .sort(
+          (a,b)=>
+            Number(b.liquidity?.usd || 0)
+            -
+            Number(a.liquidity?.usd || 0)
+        );
 
-    renderPools(pools);
+    renderPools(currentPools);
 
     logLine(
-      `${pools.length} Solana pools detected.`,
-      "green"
+      `${currentPools.length} Solana pool(s) detected.`,
+      currentPools.length
+        ? "green"
+        : "yellow"
     );
 
-    if(pools.length){
+    if(currentPools.length){
 
-      await sleep(600);
+      await sleep(700);
 
       await analyzePool(0);
+
+    }else{
+
+      setStatus("No result");
 
     }
 
   }catch(err){
 
-    logLine("API ERROR","red");
-    logLine(err.message,"red");
+    logLine(
+      "API ERROR",
+      "red"
+    );
+
+    logLine(
+      err.message,
+      "red"
+    );
+
+    setStatus("Error");
 
   }finally{
 
     $("scanBtn").disabled = false;
+
     $("scanBtn").classList.remove("scanning");
-    $("scanBtn").textContent = "START RADAR SCAN";
+
+    $("scanBtn").textContent =
+      "START RADAR SCAN";
 
   }
 
 }
 
-$("searchInput").addEventListener("keydown",e=>{
-  if(e.key === "Enter"){
-    startScan();
+$("searchInput").addEventListener(
+  "keydown",
+  e => {
+    if(e.key === "Enter"){
+      startScan();
+    }
   }
-});
+);
 </script>
 
 </body>
