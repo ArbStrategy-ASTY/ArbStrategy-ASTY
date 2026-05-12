@@ -7,111 +7,469 @@
 
 <style>
 :root{
-  --bg:#05020a;--bg2:#0b0614;--panel:rgba(18,11,32,.82);--line:rgba(192,132,252,.18);
-  --text:#f8f2ff;--muted:#bda9dd;--purple:#a855f7;--purple2:#c084fc;
-  --green:#22c55e;--yellow:#facc15;--red:#ef4444;--cyan:#22d3ee;
+  --bg:#05020a;
+  --bg2:#0b0614;
+  --panel:rgba(18,11,32,.82);
+  --line:rgba(192,132,252,.18);
+  --text:#f8f2ff;
+  --muted:#bda9dd;
+  --purple:#a855f7;
+  --purple2:#c084fc;
+  --green:#22c55e;
+  --yellow:#facc15;
+  --red:#ef4444;
+  --cyan:#22d3ee;
 }
+
 *{box-sizing:border-box}
+
 html{scroll-behavior:smooth}
+
 body{
-  margin:0;font-family:Inter,Arial,sans-serif;color:var(--text);
-  background:radial-gradient(circle at 20% 0%,rgba(168,85,247,.26),transparent 32%),
-             radial-gradient(circle at 85% 10%,rgba(34,211,238,.13),transparent 30%),
-             linear-gradient(180deg,var(--bg),var(--bg2));
-  min-height:100vh;overflow-x:hidden;
+  margin:0;
+  font-family:Inter,Arial,sans-serif;
+  color:var(--text);
+  background:
+    radial-gradient(circle at 20% 0%,rgba(168,85,247,.26),transparent 32%),
+    radial-gradient(circle at 85% 10%,rgba(34,211,238,.13),transparent 30%),
+    linear-gradient(180deg,var(--bg),var(--bg2));
+  min-height:100vh;
+  overflow-x:hidden;
 }
-a{color:inherit;text-decoration:none}
-.wrap{width:min(1180px,calc(100% - 28px));margin:0 auto}
 
-.nav{z-index:20;backdrop-filter:blur(18px);background:rgba(5,2,10,.72);border-bottom:1px solid var(--line)}
-.navin{display:flex;gap:14px;align-items:center;justify-content:space-between;padding:14px 0}
-.brand{display:flex;align-items:center;gap:10px;font-weight:900;letter-spacing:.4px}
-.logo{width:38px;height:38px;object-fit:contain;filter:drop-shadow(0 0 18px rgba(168,85,247,.75))}
-.links{display:flex;gap:9px;flex-wrap:wrap;justify-content:flex-end}
-.pill{border:1px solid var(--line);background:rgba(255,255,255,.045);padding:10px 13px;border-radius:999px;font-size:13px;color:#efe4ff}
-.pill:hover{border-color:rgba(192,132,252,.52);box-shadow:0 0 22px rgba(168,85,247,.2)}
+a{
+  color:inherit;
+  text-decoration:none;
+}
 
-.hero{padding:54px 0 24px;text-align:center;position:relative}
-.heroTop{position:relative;width:240px;height:240px;margin:0 auto 24px}
+.wrap{
+  width:min(1180px,calc(100% - 28px));
+  margin:0 auto;
+}
+
+.nav{
+  z-index:20;
+  backdrop-filter:blur(18px);
+  background:rgba(5,2,10,.72);
+  border-bottom:1px solid var(--line);
+}
+
+.navin{
+  display:flex;
+  gap:14px;
+  align-items:center;
+  justify-content:space-between;
+  padding:14px 0;
+}
+
+.brand{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  font-weight:900;
+  letter-spacing:.4px;
+}
+
+.logo{
+  width:38px;
+  height:38px;
+  object-fit:contain;
+  filter:drop-shadow(0 0 18px rgba(168,85,247,.75));
+}
+
+.links{
+  display:flex;
+  gap:9px;
+  flex-wrap:wrap;
+  justify-content:flex-end;
+}
+
+.pill{
+  border:1px solid var(--line);
+  background:rgba(255,255,255,.045);
+  padding:10px 13px;
+  border-radius:999px;
+  font-size:13px;
+  color:#efe4ff;
+}
+
+.pill:hover{
+  border-color:rgba(192,132,252,.52);
+  box-shadow:0 0 22px rgba(168,85,247,.2);
+}
+
+.hero{
+  padding:54px 0 24px;
+  text-align:center;
+  position:relative;
+}
+
+.heroTop{
+  position:relative;
+  width:240px;
+  height:240px;
+  margin:0 auto 24px;
+}
+
 .scanring{
-  width:220px;height:220px;margin:0 auto;border-radius:50%;position:absolute;inset:10px;
+  width:220px;
+  height:220px;
+  margin:0 auto;
+  border-radius:50%;
+  position:absolute;
+  inset:10px;
   background:radial-gradient(circle,rgba(168,85,247,.16),transparent 54%);
-  border:1px solid rgba(192,132,252,.22);box-shadow:0 0 70px rgba(168,85,247,.22);
+  border:1px solid rgba(192,132,252,.22);
+  box-shadow:0 0 70px rgba(168,85,247,.22);
 }
+
 .scanring:before{
-  content:"";position:absolute;inset:15px;border-radius:50%;
-  border:1px dashed rgba(34,211,238,.32);animation:spin 9s linear infinite;
+  content:"";
+  position:absolute;
+  inset:15px;
+  border-radius:50%;
+  border:1px dashed rgba(34,211,238,.32);
+  animation:spin 9s linear infinite;
 }
+
 .scanring:after{
-  content:"";position:absolute;left:50%;top:50%;width:48%;height:2px;
-  background:linear-gradient(90deg,var(--purple2),transparent);transform-origin:left center;
-  animation:spin 2.2s linear infinite;box-shadow:0 0 16px var(--purple2);
+  content:"";
+  position:absolute;
+  left:50%;
+  top:50%;
+  width:48%;
+  height:2px;
+  background:linear-gradient(90deg,var(--purple2),transparent);
+  transform-origin:left center;
+  animation:spin 2.2s linear infinite;
+  box-shadow:0 0 16px var(--purple2);
 }
+
 .wolf{
-  position:absolute;width:118px;height:auto;left:50%;top:52%;transform:translate(-50%,-50%);
-  z-index:3;filter:drop-shadow(0 0 24px rgba(168,85,247,.75));animation:wolfPulse 2.6s ease-in-out infinite;
+  position:absolute;
+  width:118px;
+  height:auto;
+  left:50%;
+  top:52%;
+  transform:translate(-50%,-50%);
+  z-index:3;
+  filter:drop-shadow(0 0 24px rgba(168,85,247,.75));
+  animation:wolfPulse 2.6s ease-in-out infinite;
 }
-.dot{position:absolute;width:9px;height:9px;border-radius:50%;background:var(--cyan);box-shadow:0 0 16px var(--cyan);animation:pulse 1.8s infinite}
-.d1{left:38px;top:55px}.d2{right:48px;top:84px;animation-delay:.3s}.d3{left:95px;bottom:35px;animation-delay:.6s}.d4{right:72px;bottom:58px;animation-delay:.9s}
-@keyframes spin{to{transform:rotate(360deg)}}
-@keyframes pulse{50%{transform:scale(1.9);opacity:.45}}
-@keyframes wolfPulse{0%,100%{transform:translate(-50%,-50%) scale(1)}50%{transform:translate(-50%,-50%) scale(1.045)}}
-h1{font-size:clamp(35px,6vw,72px);line-height:.94;margin:0;text-shadow:0 0 35px rgba(168,85,247,.42)}
+
+.dot{
+  position:absolute;
+  width:9px;
+  height:9px;
+  border-radius:50%;
+  background:var(--cyan);
+  box-shadow:0 0 16px var(--cyan);
+  animation:pulse 1.8s infinite;
+}
+
+.d1{left:38px;top:55px}
+.d2{right:48px;top:84px;animation-delay:.3s}
+.d3{left:95px;bottom:35px;animation-delay:.6s}
+.d4{right:72px;bottom:58px;animation-delay:.9s}
+
+@keyframes spin{
+  to{transform:rotate(360deg)}
+}
+
+@keyframes pulse{
+  50%{transform:scale(1.9);opacity:.45}
+}
+
+@keyframes wolfPulse{
+  0%,100%{transform:translate(-50%,-50%) scale(1)}
+  50%{transform:translate(-50%,-50%) scale(1.045)}
+}
+
+h1{
+  font-size:clamp(35px,6vw,72px);
+  line-height:.94;
+  margin:0;
+  text-shadow:0 0 35px rgba(168,85,247,.42);
+}
 
 .panel{
-  border:1px solid var(--line);background:linear-gradient(180deg,var(--panel),rgba(11,6,20,.9));
-  border-radius:28px;padding:18px;box-shadow:0 18px 90px rgba(0,0,0,.35);
+  border:1px solid var(--line);
+  background:linear-gradient(180deg,var(--panel),rgba(11,6,20,.9));
+  border-radius:28px;
+  padding:18px;
+  box-shadow:0 18px 90px rgba(0,0,0,.35);
 }
-.controls{display:grid;grid-template-columns:repeat(6,1fr);gap:12px;margin:18px 0}
-.control{background:rgba(255,255,255,.04);border:1px solid var(--line);border-radius:18px;padding:13px}
-.control label{display:block;color:var(--muted);font-size:12px;margin-bottom:8px}
-.control input,.control select{
-  width:100%;background:rgba(0,0,0,.22);border:1px solid rgba(192,132,252,.18);
-  border-radius:13px;color:var(--text);padding:11px;outline:none;
+
+.controls{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:12px;
+  margin:18px 0;
 }
-.actions{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+
+.control{
+  background:rgba(255,255,255,.04);
+  border:1px solid var(--line);
+  border-radius:18px;
+  padding:13px;
+}
+
+.control label{
+  display:block;
+  color:var(--muted);
+  font-size:12px;
+  margin-bottom:8px;
+}
+
+.control input{
+  width:100%;
+  background:rgba(0,0,0,.22);
+  border:1px solid rgba(192,132,252,.18);
+  border-radius:13px;
+  color:var(--text);
+  padding:11px;
+  outline:none;
+}
+
+.actions{
+  display:flex;
+  gap:12px;
+  flex-wrap:wrap;
+  align-items:center;
+}
+
 .btn{
-  cursor:pointer;border:0;border-radius:18px;padding:15px 20px;font-weight:900;color:white;
-  background:linear-gradient(135deg,var(--purple),#6d28d9);box-shadow:0 0 30px rgba(168,85,247,.28);letter-spacing:.2px;
+  cursor:pointer;
+  border:0;
+  border-radius:18px;
+  padding:15px 20px;
+  font-weight:900;
+  color:white;
+  background:linear-gradient(135deg,var(--purple),#6d28d9);
+  box-shadow:0 0 30px rgba(168,85,247,.28);
+  letter-spacing:.2px;
 }
-.btn:disabled{opacity:.6;cursor:not-allowed}
-.status{color:var(--muted);font-size:14px}
-.bar{height:10px;background:rgba(255,255,255,.06);border-radius:999px;overflow:hidden;margin:16px 0 4px}
-.fill{height:100%;width:0%;background:linear-gradient(90deg,var(--purple),var(--cyan));border-radius:999px;transition:.25s}
 
-.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin:20px 0 60px}
+.btn.small{
+  padding:11px 13px;
+  border-radius:14px;
+  font-size:12px;
+  margin-top:12px;
+}
+
+.btn:disabled{
+  opacity:.6;
+  cursor:not-allowed;
+}
+
+.status{
+  color:var(--muted);
+  font-size:14px;
+}
+
+.bar{
+  height:10px;
+  background:rgba(255,255,255,.06);
+  border-radius:999px;
+  overflow:hidden;
+  margin:16px 0 4px;
+}
+
+.fill{
+  height:100%;
+  width:0%;
+  background:linear-gradient(90deg,var(--purple),var(--cyan));
+  border-radius:999px;
+  transition:.25s;
+}
+
+.grid{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:16px;
+  margin:20px 0 60px;
+}
+
 .card{
-  position:relative;overflow:hidden;border:1px solid var(--line);
+  position:relative;
+  overflow:hidden;
+  border:1px solid var(--line);
   background:linear-gradient(180deg,rgba(28,16,50,.88),rgba(10,6,18,.94));
-  border-radius:24px;padding:18px;box-shadow:0 14px 60px rgba(0,0,0,.24);animation:pop .45s ease both;
+  border-radius:24px;
+  padding:18px;
+  box-shadow:0 14px 60px rgba(0,0,0,.24);
+  animation:pop .45s ease both;
 }
-.rank{position:absolute;right:15px;top:15px;color:#fff;background:rgba(168,85,247,.22);border:1px solid rgba(192,132,252,.28);border-radius:999px;padding:7px 10px;font-weight:900}
-.sym{font-size:25px;font-weight:950;margin-right:70px}
-.name{color:var(--muted);font-size:13px;margin:5px 70px 14px 0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.score{display:flex;align-items:center;gap:14px;margin:14px 0}
-.circle{
-  width:82px;height:82px;min-width:82px;min-height:82px;max-width:82px;max-height:82px;
-  flex:0 0 82px;aspect-ratio:1/1;border-radius:50%;display:grid;place-items:center;
-  font-weight:950;font-size:22px;background:conic-gradient(var(--purple2) calc(var(--s)*1%),rgba(255,255,255,.08) 0);position:relative;
-}
-.circle:after{content:"";position:absolute;inset:8px;border-radius:50%;background:#10091d}
-.circle span{position:relative;z-index:2}
-.tag{display:inline-block;border-radius:999px;padding:7px 10px;font-size:12px;font-weight:900}
-.green{background:rgba(34,197,94,.15);color:#86efac;border:1px solid rgba(34,197,94,.28)}
-.yellow{background:rgba(250,204,21,.13);color:#fde68a;border:1px solid rgba(250,204,21,.28)}
-.red{background:rgba(239,68,68,.13);color:#fca5a5;border:1px solid rgba(239,68,68,.28)}
-.blue{background:rgba(34,211,238,.12);color:#a5f3fc;border:1px solid rgba(34,211,238,.28)}
-.metrics{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:14px}
-.metric{background:rgba(255,255,255,.04);border:1px solid rgba(192,132,252,.13);border-radius:14px;padding:10px}
-.metric b{display:block;font-size:13px}
-.metric span{display:block;color:var(--muted);font-size:12px;margin-top:3px}
-.why{margin-top:12px;color:#d9c8f5;font-size:13px;line-height:1.45}
-.smalllink{display:inline-block;margin-top:12px;color:#c4b5fd;font-weight:800;font-size:13px}
-.empty{display:none;text-align:center;padding:34px;color:var(--muted)}
-@keyframes pop{from{opacity:0;transform:translateY(18px) scale(.98)}to{opacity:1;transform:none}}
 
-@media(max-width:980px){.controls{grid-template-columns:1fr 1fr}.grid{grid-template-columns:1fr 1fr}.navin{align-items:flex-start;flex-direction:column}.links{justify-content:flex-start}}
-@media(max-width:620px){.controls,.grid{grid-template-columns:1fr}.hero{padding-top:34px}.heroTop{width:190px;height:190px}.scanring{width:176px;height:176px;inset:7px}.wolf{width:94px}.panel{border-radius:22px;padding:14px}.metrics{grid-template-columns:1fr}.actions{flex-direction:column;align-items:stretch}.btn{width:100%}}
+.rank{
+  position:absolute;
+  right:15px;
+  top:15px;
+  color:#fff;
+  background:rgba(168,85,247,.22);
+  border:1px solid rgba(192,132,252,.28);
+  border-radius:999px;
+  padding:7px 10px;
+  font-weight:900;
+}
+
+.sym{
+  font-size:25px;
+  font-weight:950;
+  margin-right:70px;
+}
+
+.name{
+  color:var(--muted);
+  font-size:13px;
+  margin:5px 70px 14px 0;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+
+.score{
+  display:flex;
+  align-items:center;
+  gap:14px;
+  margin:14px 0;
+}
+
+.circle{
+  width:82px;
+  height:82px;
+  min-width:82px;
+  min-height:82px;
+  max-width:82px;
+  max-height:82px;
+  flex:0 0 82px;
+  aspect-ratio:1/1;
+  border-radius:50%;
+  display:grid;
+  place-items:center;
+  font-weight:950;
+  font-size:22px;
+  background:conic-gradient(var(--purple2) calc(var(--s)*1%),rgba(255,255,255,.08) 0);
+  position:relative;
+}
+
+.circle:after{
+  content:"";
+  position:absolute;
+  inset:8px;
+  border-radius:50%;
+  background:#10091d;
+}
+
+.circle span{
+  position:relative;
+  z-index:2;
+}
+
+.tag{
+  display:inline-block;
+  border-radius:999px;
+  padding:7px 10px;
+  font-size:12px;
+  font-weight:900;
+  margin:2px 4px 2px 0;
+}
+
+.green{
+  background:rgba(34,197,94,.15);
+  color:#86efac;
+  border:1px solid rgba(34,197,94,.28);
+}
+
+.yellow{
+  background:rgba(250,204,21,.13);
+  color:#fde68a;
+  border:1px solid rgba(250,204,21,.28);
+}
+
+.red{
+  background:rgba(239,68,68,.13);
+  color:#fca5a5;
+  border:1px solid rgba(239,68,68,.28);
+}
+
+.blue{
+  background:rgba(34,211,238,.12);
+  color:#a5f3fc;
+  border:1px solid rgba(34,211,238,.28);
+}
+
+.metrics{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:9px;
+  margin-top:14px;
+}
+
+.metric{
+  background:rgba(255,255,255,.04);
+  border:1px solid rgba(192,132,252,.13);
+  border-radius:14px;
+  padding:10px;
+}
+
+.metric b{
+  display:block;
+  font-size:13px;
+}
+
+.metric span{
+  display:block;
+  color:var(--muted);
+  font-size:12px;
+  margin-top:3px;
+}
+
+.why{
+  margin-top:12px;
+  color:#d9c8f5;
+  font-size:13px;
+  line-height:1.45;
+}
+
+.smalllink{
+  display:inline-block;
+  margin-top:12px;
+  color:#c4b5fd;
+  font-weight:800;
+  font-size:13px;
+}
+
+.empty{
+  display:none;
+  text-align:center;
+  padding:34px;
+  color:var(--muted);
+}
+
+@keyframes pop{
+  from{opacity:0;transform:translateY(18px) scale(.98)}
+  to{opacity:1;transform:none}
+}
+
+@media(max-width:980px){
+  .controls{grid-template-columns:1fr 1fr}
+  .grid{grid-template-columns:1fr 1fr}
+  .navin{align-items:flex-start;flex-direction:column}
+  .links{justify-content:flex-start}
+}
+
+@media(max-width:620px){
+  .controls,.grid{grid-template-columns:1fr}
+  .hero{padding-top:34px}
+  .heroTop{width:190px;height:190px}
+  .scanring{width:176px;height:176px;inset:7px}
+  .wolf{width:94px}
+  .panel{border-radius:22px;padding:14px}
+  .metrics{grid-template-columns:1fr}
+  .actions{flex-direction:column;align-items:stretch}
+  .btn{width:100%}
+}
 </style>
 </head>
 
@@ -123,6 +481,7 @@ h1{font-size:clamp(35px,6vw,72px);line-height:.94;margin:0;text-shadow:0 0 35px 
       <img class="logo" src="assets/logo.png" alt="ASTY Logo">
       <span>$ASTY Market Radar</span>
     </a>
+
     <div class="links">
       <a class="pill" href="https://arbstrategy.net" target="_blank">Website</a>
       <a class="pill" href="https://arbstrategy-asty.github.io/ArbStrategy-ASTY/" target="_blank">System Overview</a>
@@ -136,37 +495,39 @@ h1{font-size:clamp(35px,6vw,72px);line-height:.94;margin:0;text-shadow:0 0 35px 
 <header class="hero wrap">
   <div class="heroTop">
     <div class="scanring">
-      <span class="dot d1"></span><span class="dot d2"></span><span class="dot d3"></span><span class="dot d4"></span>
+      <span class="dot d1"></span>
+      <span class="dot d2"></span>
+      <span class="dot d3"></span>
+      <span class="dot d4"></span>
     </div>
+
     <img class="wolf" src="assets/wolf.png" alt="ASTY Wolf">
   </div>
+
   <h1>Auto Discovery for Volatile Solana Pools</h1>
 </header>
 
 <main class="wrap">
   <section class="panel">
     <div class="controls">
-      <div class="control"><label>Minimum Pool Age</label><input id="minAge" type="number" value="60" min="1"></div>
-      <div class="control"><label>Minimum Liquidity USD</label><input id="minLiq" type="number" value="25000" min="0"></div>
-      <div class="control"><label>Minimum 24h Volume USD</label><input id="minVol" type="number" value="5000" min="0"></div>
-      <div class="control"><label>Minimum 24h TXNS</label><input id="minTx" type="number" value="80" min="0"></div>
       <div class="control">
-        <label>Pool Pages</label>
-        <select id="pages">
-          <option>2</option>
-          <option selected>3</option>
-          <option>4</option>
-          <option>5</option>
-        </select>
+        <label>Minimum Pool Age</label>
+        <input id="minAge" type="number" value="60" min="1">
       </div>
+
       <div class="control">
-        <label>History Checks</label>
-        <select id="historyLimit">
-          <option>3</option>
-          <option selected>5</option>
-          <option>8</option>
-          <option>10</option>
-        </select>
+        <label>Minimum Liquidity USD</label>
+        <input id="minLiq" type="number" value="25000" min="0">
+      </div>
+
+      <div class="control">
+        <label>Minimum 24h Volume USD</label>
+        <input id="minVol" type="number" value="5000" min="0">
+      </div>
+
+      <div class="control">
+        <label>Minimum 24h TXNS</label>
+        <input id="minTx" type="number" value="80" min="0">
       </div>
     </div>
 
@@ -175,22 +536,86 @@ h1{font-size:clamp(35px,6vw,72px);line-height:.94;margin:0;text-shadow:0 0 35px 
       <span class="status" id="status">Ready. Free GeckoTerminal mode.</span>
     </div>
 
-    <div class="bar"><div class="fill" id="fill"></div></div>
+    <div class="bar">
+      <div class="fill" id="fill"></div>
+    </div>
   </section>
 
   <div class="empty" id="empty">No candidates passed the current filters.</div>
+
   <section class="grid" id="grid"></section>
 </main>
-
 <script>
 const API = 'https://api.geckoterminal.com/api/v2';
 const VERSION_ACCEPT = 'application/json;version=20230203';
-const $ = id => document.getElementById(id);
+const AUTO_POOL_PAGES = 5;
 
+const ASTY_EXISTING_POOLS = new Set([
+  '3uvhqprmyf13qgrodardi5ogjgoxhyb2ykzdcaa1tv8i',
+  'heuivhlqcemsgkhyh1m6mgthebthrgmzdxqscbvkstp',
+  'csd1npgwhnohbyefbp73jy6u6zckwwdfdvqvmkdrfxe',
+  'dxmfg4kn8pxuf7aokd1ffxjuhppj4a8wadgw87gym2mj',
+  'cod6klgnw2wke2utnnjsqk4rss6fmu4p2vwkqsuxk9bf',
+  '7t6hixjyufzsr88dhwc9ttajasxcdfydrkmdtuzrxgt9j',
+  'b6fq1unpmkyganaqo5d9gjfmckcanewc6q8swzafwz4m',
+  '8axv2ddrg3k5n3adtw37di4ythgj3zas2tpp1f2ew5zd',
+  '9xdafi8dnhcojhyqhu6wrm5zrehanhwy9y21aha5jyt',
+  '92rkfrjsctmauw8tym7czgd2yjmcHeZ5hDUMdnZd54zV'.toLowerCase(),
+  'gec7enkk9irtsmmwpwlhk1i4vntb4vfgrae1ette3leT3j'.toLowerCase(),
+  'izxtzmms51us5ergnviwfc8cngx5qddzp6derh25etw',
+  '29eki5ipmr9flgkypm91xrab2lvbnuu75syg8kct1nis',
+  'csiazsicmngjlwykrdhdujnwz4obf3q5znmqecnmxshv',
+  '2unbrdldemizdjneqkaapzagjwvwa3uuJ3w4trVud4ZW'.toLowerCase(),
+  'gyvyv2h2sb4fyac7c6rawnsqqnhshdznusqqwg9uuuCe'.toLowerCase(),
+  'ryztjxypcmwumfi7punwcf7q6fbxojbrtbeodz7j7gh',
+  'dfjsn7ui6ybuc25km5foqrcyrqfrvcosxpteyezvv4vt',
+  '2ufiewc5wf8gjb1a9yipkfulwrfn4zgyma1kdqrakoar',
+  '7tbbdgzfzpjrpmM7jQderyyv1x8Ebz1vhwqNhEW97osb'.toLowerCase(),
+  'haiegroddwr3nzpszyqqm39w2atuuknwnxxff6vwnpar',
+  'bbvxtutaagqgg5agmsys9pqwidc7yabrf6avt48if2u',
+  'cfcyqpye4k4pyhvposagj3baqnowpzcvhpnncxssy7qh',
+  'tdqqti8tjds88akxfvhjztqk5idtv5zg9zknyxh23mg',
+  '3hhgspnmtsg1dnv9svsfzgcqlx3zp5giavyjdquunqu9',
+  '5zcswjfoeq7jgnahnwbrvzq7rmqvh6vqhmiYv4NWkDZK'.toLowerCase(),
+  'bqdoytyoxpnazrafobqpry4ubvszye42rxjznjWoxmZP'.toLowerCase(),
+  'bwfdr72tjxjsrduyafqghv6sgxgqrzj78kdev3c74q1',
+  '2hjjn2aovduegrav4vrak94ggaaw5w9syfvbeXu4Ad5J'.toLowerCase(),
+  '7fr58khkw85xifgz8wibume7p5clzfo4a8qsqxknewae',
+  '4tgvctkzq9zzr5znyaky3tvaxg4q6hvkwezgxesqqkx',
+  '5wpszwumdxY5kB96n7U24iFzvbSNEvFd4BvERhhqYjQY'.toLowerCase(),
+  '2awcx2qrymjen1n8uw3elbznu7fcpqxjl9nkxqhgxphc',
+  '2wrrdtnkkr2eq67o4zk2vqv7dxu4pm8iz6tmn8uxvhbv',
+  '4ihvvcwhnyfdpfysosax1qgzofsdn7gxhxxkqufngq6oj',
+  '4kwt67c13svr9efxm4tgn8innqfsxeuawqhn8kbvajbs',
+  '5feodjwznutwxbtrku2kpcc4xr15fpkvmxbaph7yx7v',
+  '61htuokewhefscobcd5zsnvmaygpxdaunmrilnnyyrez',
+  '8fbys2kq9f4lm1sydt4sdhrl27niucrmpTfnldecnah'.toLowerCase(),
+  'ddk87crd7uzouwc9jznrnxpolhxeacgkfu2b49ytzrm3',
+  'dwzzhyqnzweqnp4vuczhhwfjsni6xqo57tbm7soej62u',
+  'hvmnzyopyswhruxcuti4d6yanpfwscvlsqvv9nw2xyhx',
+  'm1e9swvuoggdm2zlxzrzkrrbvwmgEP8aQy7BQigFZgK'.toLowerCase(),
+  '3pvpmeseljxe6yyb5ebj3qzrccgn6l9qa85stczh4fm',
+  'bm9w33kcca1gcdbkugondvjltqw5xkbkwxht8scxayc3',
+  'aiazxne6shtcbqhzbmpnkuuswvhfkh5rlzkeudzwu3aq',
+  'ditqc25rriamezyiqpexlngfxqrtzl2qxfhp3mhrxm6t',
+  'mwsmvxehtt2afonhjdyzwbwgpxdvm9mmfo7guyrylgk',
+  '2cbt1vgeunzmqtnfpapxpwd5uvj7kvhhjft9szz3b7',
+  'fmna4bqbthaft51vrtkr6qfghisjxzcrzcwmpcp9dmny',
+  'awmlbq3keeicdd93gtr22avcjqsxwdtgMalt25Jvyexo'.toLowerCase(),
+  '4upudzppkrc5yhdpfnfv4rx7dfhynjz8byzatcewsn5v',
+  '9dvpj67aezzzd9thhaejzkzvwxivqrvc2virv8kyggzb',
+  'dz8auktejlrveuavhbg4gbtkbenqc89wflt3fjkzk8v',
+  '28ynwbwcvnlac8h2lf8afczqzfrpkmqmynwjjmibwru',
+  '7wcaibegfhphb5idtcerSnxbzsc7bzyamqqshnxuhdyu'.toLowerCase(),
+  'ax38rdrprmturm59zkbegsnn2hje96rc9jz3wbagxtyw',
+  'dguvy79xblujrb3czwql59z5zoit7klnfwyl2t6eqccj'
+]);
+
+const $ = id => document.getElementById(id);
 let results = [];
-let stopScan = false;
 
 function num(v){ return Number(v || 0); }
+function normAddr(v){ return String(v || '').trim().toLowerCase(); }
 
 function money(v){
   v = num(v);
@@ -239,6 +664,10 @@ function tx24(a){
   return num(a.transactions?.h24?.buys) + num(a.transactions?.h24?.sells);
 }
 
+function clamp(v,min,max){
+  return Math.max(min,Math.min(max,v));
+}
+
 function liveScore(a){
   const liq = num(a.reserve_in_usd);
   const vol = num(a.volume_usd?.h24);
@@ -264,27 +693,27 @@ function liveScore(a){
   );
 }
 
-function clamp(v,min,max){ return Math.max(min,Math.min(max,v)); }
-
 async function fetchPools(){
-  const pages = num($('pages').value);
   const urls = [`${API}/networks/solana/trending_pools?include=base_token,quote_token,dex&page=1`];
 
-  for(let p=1;p<=pages;p++){
+  for(let p = 1; p <= AUTO_POOL_PAGES; p++){
     urls.push(`${API}/networks/solana/pools?include=base_token,quote_token,dex&page=${p}`);
   }
 
   const map = new Map();
 
-  for(let i=0;i<urls.length;i++){
-    setProgress(6 + i * 5, `Fetching pool list ${i + 1}/${urls.length}...`);
+  for(let i = 0; i < urls.length; i++){
+    setProgress(6 + i * 6, `Fetching pool list ${i + 1}/${urls.length}...`);
 
     try{
       const j = await getJson(urls[i]);
       if(Array.isArray(j.data)){
         j.data.forEach(pool => {
           const a = attrs(pool);
-          if(a.address) map.set(a.address,pool);
+          const addr = normAddr(a.address);
+          if(addr && !ASTY_EXISTING_POOLS.has(addr)){
+            map.set(addr,pool);
+          }
         });
       }
     }catch(e){
@@ -323,25 +752,39 @@ async function fetchPoolOHLCV(poolAddress){
 
 function normalizeCandles(list){
   return (list || [])
-    .map(x => ({time:num(x[0]),open:num(x[1]),high:num(x[2]),low:num(x[3]),close:num(x[4]),volume:num(x[5])}))
+    .map(x => ({
+      time:num(x[0]),
+      open:num(x[1]),
+      high:num(x[2]),
+      low:num(x[3]),
+      close:num(x[4]),
+      volume:num(x[5])
+    }))
     .filter(x => x.time && x.close > 0)
     .sort((a,b) => a.time - b.time);
 }
 
 function avgCloseMove(candles){
   if(!candles || candles.length < 2) return null;
+
   const moves = [];
+
   for(let i=1;i<candles.length;i++){
     const p = candles[i-1].close;
     const c = candles[i].close;
-    if(p > 0 && c > 0) moves.push(Math.abs((c - p) / p) * 100);
+
+    if(p > 0 && c > 0){
+      moves.push(Math.abs((c - p) / p) * 100);
+    }
   }
+
   if(!moves.length) return null;
   return moves.reduce((a,b)=>a+b,0) / moves.length;
 }
 
 function avgRangeMove(candles){
   if(!candles || candles.length < 2) return null;
+
   const ranges = candles
     .filter(c => c.low > 0 && c.high > 0)
     .map(c => ((c.high - c.low) / c.low) * 100);
@@ -352,8 +795,10 @@ function avgRangeMove(candles){
 
 function trend(candles){
   if(!candles || candles.length < 2) return 0;
+
   const first = candles[0].close;
   const last = candles[candles.length - 1].close;
+
   if(!first || !last) return 0;
   return ((last - first) / first) * 100;
 }
@@ -367,6 +812,7 @@ function structureScore(candles){
   const totalTrend = Math.abs(trend(candles));
 
   let upDays = 0;
+
   for(let i=1;i<candles.length;i++){
     if(candles[i].close >= candles[i-1].close) upDays++;
   }
@@ -429,7 +875,8 @@ function reason(item){
   const r = [];
 
   if(item.historyStatus === 'ready') r.push('90d history verified');
-  if(item.historyStatus === 'pending') r.push('history queued');
+  if(item.historyStatus === 'idle') r.push('history optional');
+  if(item.historyStatus === 'loading') r.push('analyzing history');
   if(item.historyStatus === 'missing') r.push('live score only');
 
   if(item.history?.vol30 > 6) r.push('strong 30d volatility');
@@ -442,8 +889,13 @@ function reason(item){
   return r.join(', ') || 'passed live activity filters';
 }
 
-function formatVol(v){ return v === null || v === undefined ? 'Pending' : v.toFixed(2) + '%'; }
-function formatStructure(v){ return v === null || v === undefined ? 'Pending' : v + '/100'; }
+function formatVol(v){
+  return v === null || v === undefined ? 'Not analyzed' : v.toFixed(2) + '%';
+}
+
+function formatStructure(v){
+  return v === null || v === undefined ? 'Not analyzed' : v + '/100';
+}
 
 function render(){
   const grid = $('grid');
@@ -466,11 +918,18 @@ function render(){
 
     const historyTag =
       x.historyStatus === 'ready' ? '<span class="tag green">History Ready</span>' :
+      x.historyStatus === 'loading' ? '<span class="tag blue">Analyzing</span>' :
       x.historyStatus === 'missing' ? '<span class="tag red">No History</span>' :
-      '<span class="tag blue">History Queue</span>';
+      '<span class="tag blue">Live Score</span>';
+
+    const historyButton =
+      x.historyStatus === 'ready'
+        ? ''
+        : `<button class="btn small" onclick="analyzeOne('${a.address}')">Analyze 90d History 🟣</button>`;
 
     const card = document.createElement('article');
     card.className = 'card';
+
     card.innerHTML = `
       <div class="rank">#${i + 1}</div>
       <div class="sym">${sym}</div>
@@ -480,6 +939,7 @@ function render(){
         <div class="circle" style="--s:${x.score}">
           <span>${x.score}</span>
         </div>
+
         <div>
           <span class="tag ${cls}">${label}</span>
           ${historyTag}
@@ -498,48 +958,47 @@ function render(){
         <div class="metric"><b>${formatStructure(x.history?.structure90)}</b><span>90d structure</span></div>
       </div>
 
+      ${historyButton}
+
+      <br>
+
       <a class="smalllink" href="https://www.geckoterminal.com/solana/pools/${a.address}" target="_blank">
         Open pool 🟣
       </a>
     `;
+
     grid.appendChild(card);
   });
 }
 
-async function runHistoryQueue(){
-  const historyLimit = num($('historyLimit').value);
-  const queue = results.slice(0,historyLimit);
+async function analyzeOne(poolAddress){
+  const item = results.find(x => x.a.address === poolAddress);
+  if(!item || item.historyStatus === 'loading') return;
 
-  for(let i=0;i<queue.length;i++){
-    if(stopScan) return;
+  item.historyStatus = 'loading';
+  render();
 
-    const item = queue[i];
-    setProgress(60 + Math.round((i / queue.length) * 35), `Checking 90d history ${i + 1}/${queue.length}: ${symbolFromName(tokenName(item.p))}`);
+  setProgress(80, `Analyzing 90d history for ${symbolFromName(tokenName(item.p))}...`);
 
-    const list = await fetchPoolOHLCV(item.a.address);
-    const h = analyzeCandles(list);
+  const list = await fetchPoolOHLCV(item.a.address);
+  const h = analyzeCandles(list);
 
-    if(h){
-      item.history = h;
-      item.historyStatus = 'ready';
-      item.score = finalScore(item.a,h);
-    }else{
-      item.history = null;
-      item.historyStatus = 'missing';
-      item.score = Math.max(0,item.score - 7);
-    }
-
-    render();
-
-    if(i < queue.length - 1){
-      setProgress(62 + Math.round((i / queue.length) * 35), 'Waiting for free API rate limit...');
-      await sleep(7000);
-    }
+  if(h){
+    item.history = h;
+    item.historyStatus = 'ready';
+    item.score = finalScore(item.a,h);
+    setProgress(100, `90d history loaded for ${symbolFromName(tokenName(item.p))}.`);
+  }else{
+    item.history = null;
+    item.historyStatus = 'missing';
+    item.score = Math.max(0,item.score - 7);
+    setProgress(100, `No 90d history available for ${symbolFromName(tokenName(item.p))}.`);
   }
+
+  render();
 }
 
 async function scan(){
-  stopScan = false;
   $('scanBtn').disabled = true;
   $('grid').innerHTML = '';
   $('empty').style.display = 'none';
@@ -554,12 +1013,13 @@ async function scan(){
     const minVol = num($('minVol').value);
     const minTx = num($('minTx').value);
 
-    setProgress(38,`Filtering ${pools.length} pools by live metrics...`);
+    setProgress(46,`Filtering ${pools.length} pools. Existing ASTY pools excluded...`);
 
     results = pools
       .map(p => ({p,a:attrs(p)}))
       .filter(x =>
         x.a.address &&
+        !ASTY_EXISTING_POOLS.has(normAddr(x.a.address)) &&
         daysAgo(x.a.pool_created_at) >= minAge &&
         num(x.a.reserve_in_usd) >= minLiq &&
         num(x.a.volume_usd?.h24) >= minVol &&
@@ -569,7 +1029,7 @@ async function scan(){
         ...x,
         score:liveScore(x.a),
         history:null,
-        historyStatus:'pending'
+        historyStatus:'idle'
       }))
       .sort((a,b) => b.score - a.score)
       .slice(0,30);
@@ -577,15 +1037,12 @@ async function scan(){
     render();
 
     if(!results.length){
-      setProgress(100,'No live candidates found. Lower the filters and scan again.');
       $('empty').style.display = 'block';
+      setProgress(100,'No live candidates found. Lower the filters and scan again.');
       return;
     }
 
-    setProgress(55,`${results.length} live candidates found. Starting slow 90d history queue...`);
-    await runHistoryQueue();
-
-    setProgress(100,'Scan complete. Live candidates ranked, top history checked.');
+    setProgress(100,`${results.length} candidates found. Click Analyze 90d History on selected pools.`);
   }catch(e){
     setProgress(0,'Scan failed: ' + e.message);
   }finally{
@@ -593,6 +1050,7 @@ async function scan(){
   }
 }
 
+window.analyzeOne = analyzeOne;
 $('scanBtn').addEventListener('click',scan);
 </script>
 
