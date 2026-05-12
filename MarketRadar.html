@@ -7,341 +7,111 @@
 
 <style>
 :root{
-  --bg:#05020a;
-  --bg2:#0b0614;
-  --panel:rgba(18,11,32,.82);
-  --line:rgba(192,132,252,.18);
-  --text:#f8f2ff;
-  --muted:#bda9dd;
-  --purple:#a855f7;
-  --purple2:#c084fc;
-  --green:#22c55e;
-  --yellow:#facc15;
-  --red:#ef4444;
-  --cyan:#22d3ee;
+  --bg:#05020a;--bg2:#0b0614;--panel:rgba(18,11,32,.82);--line:rgba(192,132,252,.18);
+  --text:#f8f2ff;--muted:#bda9dd;--purple:#a855f7;--purple2:#c084fc;
+  --green:#22c55e;--yellow:#facc15;--red:#ef4444;--cyan:#22d3ee;
 }
-
 *{box-sizing:border-box}
 html{scroll-behavior:smooth}
 body{
-  margin:0;
-  font-family:Inter,Arial,sans-serif;
-  color:var(--text);
-  background:
-    radial-gradient(circle at 20% 0%,rgba(168,85,247,.26),transparent 32%),
-    radial-gradient(circle at 85% 10%,rgba(34,211,238,.13),transparent 30%),
-    linear-gradient(180deg,var(--bg),var(--bg2));
-  min-height:100vh;
-  overflow-x:hidden;
+  margin:0;font-family:Inter,Arial,sans-serif;color:var(--text);
+  background:radial-gradient(circle at 20% 0%,rgba(168,85,247,.26),transparent 32%),
+             radial-gradient(circle at 85% 10%,rgba(34,211,238,.13),transparent 30%),
+             linear-gradient(180deg,var(--bg),var(--bg2));
+  min-height:100vh;overflow-x:hidden;
 }
-
 a{color:inherit;text-decoration:none}
 .wrap{width:min(1180px,calc(100% - 28px));margin:0 auto}
 
-.nav{
-  z-index:20;
-  backdrop-filter:blur(18px);
-  background:rgba(5,2,10,.72);
-  border-bottom:1px solid var(--line);
-}
+.nav{z-index:20;backdrop-filter:blur(18px);background:rgba(5,2,10,.72);border-bottom:1px solid var(--line)}
+.navin{display:flex;gap:14px;align-items:center;justify-content:space-between;padding:14px 0}
+.brand{display:flex;align-items:center;gap:10px;font-weight:900;letter-spacing:.4px}
+.logo{width:38px;height:38px;object-fit:contain;filter:drop-shadow(0 0 18px rgba(168,85,247,.75))}
+.links{display:flex;gap:9px;flex-wrap:wrap;justify-content:flex-end}
+.pill{border:1px solid var(--line);background:rgba(255,255,255,.045);padding:10px 13px;border-radius:999px;font-size:13px;color:#efe4ff}
+.pill:hover{border-color:rgba(192,132,252,.52);box-shadow:0 0 22px rgba(168,85,247,.2)}
 
-.navin{
-  display:flex;
-  gap:14px;
-  align-items:center;
-  justify-content:space-between;
-  padding:14px 0;
-}
-
-.brand{
-  display:flex;
-  align-items:center;
-  gap:10px;
-  font-weight:900;
-  letter-spacing:.4px;
-}
-
-.logo{
-  width:38px;
-  height:38px;
-  object-fit:contain;
-  filter:drop-shadow(0 0 18px rgba(168,85,247,.75));
-}
-
-.links{
-  display:flex;
-  gap:9px;
-  flex-wrap:wrap;
-  justify-content:flex-end;
-}
-
-.pill{
-  border:1px solid var(--line);
-  background:rgba(255,255,255,.045);
-  padding:10px 13px;
-  border-radius:999px;
-  font-size:13px;
-  color:#efe4ff;
-}
-
-.pill:hover{
-  border-color:rgba(192,132,252,.52);
-  box-shadow:0 0 22px rgba(168,85,247,.2);
-}
-
-.hero{
-  padding:54px 0 24px;
-  text-align:center;
-  position:relative;
-}
-
-.heroTop{
-  position:relative;
-  width:240px;
-  height:240px;
-  margin:0 auto 24px;
-}
-
+.hero{padding:54px 0 24px;text-align:center;position:relative}
+.heroTop{position:relative;width:240px;height:240px;margin:0 auto 24px}
 .scanring{
-  width:220px;
-  height:220px;
-  margin:0 auto;
-  border-radius:50%;
-  position:absolute;
-  inset:10px;
+  width:220px;height:220px;margin:0 auto;border-radius:50%;position:absolute;inset:10px;
   background:radial-gradient(circle,rgba(168,85,247,.16),transparent 54%);
-  border:1px solid rgba(192,132,252,.22);
-  box-shadow:0 0 70px rgba(168,85,247,.22);
+  border:1px solid rgba(192,132,252,.22);box-shadow:0 0 70px rgba(168,85,247,.22);
 }
-
 .scanring:before{
-  content:"";
-  position:absolute;
-  inset:15px;
-  border-radius:50%;
-  border:1px dashed rgba(34,211,238,.32);
-  animation:spin 9s linear infinite;
+  content:"";position:absolute;inset:15px;border-radius:50%;
+  border:1px dashed rgba(34,211,238,.32);animation:spin 9s linear infinite;
 }
-
 .scanring:after{
-  content:"";
-  position:absolute;
-  left:50%;
-  top:50%;
-  width:48%;
-  height:2px;
-  background:linear-gradient(90deg,var(--purple2),transparent);
-  transform-origin:left center;
-  animation:spin 2.2s linear infinite;
-  box-shadow:0 0 16px var(--purple2);
+  content:"";position:absolute;left:50%;top:50%;width:48%;height:2px;
+  background:linear-gradient(90deg,var(--purple2),transparent);transform-origin:left center;
+  animation:spin 2.2s linear infinite;box-shadow:0 0 16px var(--purple2);
 }
-
 .wolf{
-  position:absolute;
-  width:118px;
-  height:auto;
-  left:50%;
-  top:52%;
-  transform:translate(-50%,-50%);
-  z-index:3;
-  filter:drop-shadow(0 0 24px rgba(168,85,247,.75));
-  animation:wolfPulse 2.6s ease-in-out infinite;
+  position:absolute;width:118px;height:auto;left:50%;top:52%;transform:translate(-50%,-50%);
+  z-index:3;filter:drop-shadow(0 0 24px rgba(168,85,247,.75));animation:wolfPulse 2.6s ease-in-out infinite;
 }
-
-.dot{
-  position:absolute;
-  width:9px;
-  height:9px;
-  border-radius:50%;
-  background:var(--cyan);
-  box-shadow:0 0 16px var(--cyan);
-  animation:pulse 1.8s infinite;
-}
-
-.d1{left:38px;top:55px}
-.d2{right:48px;top:84px;animation-delay:.3s}
-.d3{left:95px;bottom:35px;animation-delay:.6s}
-.d4{right:72px;bottom:58px;animation-delay:.9s}
-
+.dot{position:absolute;width:9px;height:9px;border-radius:50%;background:var(--cyan);box-shadow:0 0 16px var(--cyan);animation:pulse 1.8s infinite}
+.d1{left:38px;top:55px}.d2{right:48px;top:84px;animation-delay:.3s}.d3{left:95px;bottom:35px;animation-delay:.6s}.d4{right:72px;bottom:58px;animation-delay:.9s}
 @keyframes spin{to{transform:rotate(360deg)}}
 @keyframes pulse{50%{transform:scale(1.9);opacity:.45}}
-@keyframes wolfPulse{
-  0%,100%{transform:translate(-50%,-50%) scale(1)}
-  50%{transform:translate(-50%,-50%) scale(1.045)}
-}
-
-h1{
-  font-size:clamp(35px,6vw,72px);
-  line-height:.94;
-  margin:0;
-  text-shadow:0 0 35px rgba(168,85,247,.42);
-}
+@keyframes wolfPulse{0%,100%{transform:translate(-50%,-50%) scale(1)}50%{transform:translate(-50%,-50%) scale(1.045)}}
+h1{font-size:clamp(35px,6vw,72px);line-height:.94;margin:0;text-shadow:0 0 35px rgba(168,85,247,.42)}
 
 .panel{
-  border:1px solid var(--line);
-  background:linear-gradient(180deg,var(--panel),rgba(11,6,20,.9));
-  border-radius:28px;
-  padding:18px;
-  box-shadow:0 18px 90px rgba(0,0,0,.35);
+  border:1px solid var(--line);background:linear-gradient(180deg,var(--panel),rgba(11,6,20,.9));
+  border-radius:28px;padding:18px;box-shadow:0 18px 90px rgba(0,0,0,.35);
 }
-
-.controls{
-  display:grid;
-  grid-template-columns:repeat(5,1fr);
-  gap:12px;
-  margin:18px 0;
+.controls{display:grid;grid-template-columns:repeat(6,1fr);gap:12px;margin:18px 0}
+.control{background:rgba(255,255,255,.04);border:1px solid var(--line);border-radius:18px;padding:13px}
+.control label{display:block;color:var(--muted);font-size:12px;margin-bottom:8px}
+.control input,.control select{
+  width:100%;background:rgba(0,0,0,.22);border:1px solid rgba(192,132,252,.18);
+  border-radius:13px;color:var(--text);padding:11px;outline:none;
 }
-
-.control{
-  background:rgba(255,255,255,.04);
-  border:1px solid var(--line);
-  border-radius:18px;
-  padding:13px;
-}
-
-.control label{
-  display:block;
-  color:var(--muted);
-  font-size:12px;
-  margin-bottom:8px;
-}
-
-.control input,
-.control select{
-  width:100%;
-  background:rgba(0,0,0,.22);
-  border:1px solid rgba(192,132,252,.18);
-  border-radius:13px;
-  color:var(--text);
-  padding:11px;
-  outline:none;
-}
-
-.actions{
-  display:flex;
-  gap:12px;
-  flex-wrap:wrap;
-  align-items:center;
-}
-
+.actions{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
 .btn{
-  cursor:pointer;
-  border:0;
-  border-radius:18px;
-  padding:15px 20px;
-  font-weight:900;
-  color:white;
-  background:linear-gradient(135deg,var(--purple),#6d28d9);
-  box-shadow:0 0 30px rgba(168,85,247,.28);
-  letter-spacing:.2px;
+  cursor:pointer;border:0;border-radius:18px;padding:15px 20px;font-weight:900;color:white;
+  background:linear-gradient(135deg,var(--purple),#6d28d9);box-shadow:0 0 30px rgba(168,85,247,.28);letter-spacing:.2px;
 }
-
 .btn:disabled{opacity:.6;cursor:not-allowed}
+.status{color:var(--muted);font-size:14px}
+.bar{height:10px;background:rgba(255,255,255,.06);border-radius:999px;overflow:hidden;margin:16px 0 4px}
+.fill{height:100%;width:0%;background:linear-gradient(90deg,var(--purple),var(--cyan));border-radius:999px;transition:.25s}
 
-.status{
-  color:var(--muted);
-  font-size:14px;
-}
-
-.bar{
-  height:10px;
-  background:rgba(255,255,255,.06);
-  border-radius:999px;
-  overflow:hidden;
-  margin:16px 0 4px;
-}
-
-.fill{
-  height:100%;
-  width:0%;
-  background:linear-gradient(90deg,var(--purple),var(--cyan));
-  border-radius:999px;
-  transition:.25s;
-}
-
-.grid{
-  display:grid;
-  grid-template-columns:repeat(3,1fr);
-  gap:16px;
-  margin:20px 0 60px;
-}
-
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin:20px 0 60px}
 .card{
-  position:relative;
-  overflow:hidden;
-  border:1px solid var(--line);
+  position:relative;overflow:hidden;border:1px solid var(--line);
   background:linear-gradient(180deg,rgba(28,16,50,.88),rgba(10,6,18,.94));
-  border-radius:24px;
-  padding:18px;
-  box-shadow:0 14px 60px rgba(0,0,0,.24);
-  animation:pop .45s ease both;
+  border-radius:24px;padding:18px;box-shadow:0 14px 60px rgba(0,0,0,.24);animation:pop .45s ease both;
 }
-
-.rank{
-  position:absolute;
-  right:15px;
-  top:15px;
-  color:#fff;
-  background:rgba(168,85,247,.22);
-  border:1px solid rgba(192,132,252,.28);
-  border-radius:999px;
-  padding:7px 10px;
-  font-weight:900;
-}
-
+.rank{position:absolute;right:15px;top:15px;color:#fff;background:rgba(168,85,247,.22);border:1px solid rgba(192,132,252,.28);border-radius:999px;padding:7px 10px;font-weight:900}
 .sym{font-size:25px;font-weight:950;margin-right:70px}
 .name{color:var(--muted);font-size:13px;margin:5px 70px 14px 0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-
 .score{display:flex;align-items:center;gap:14px;margin:14px 0}
-
 .circle{
   width:82px;height:82px;min-width:82px;min-height:82px;max-width:82px;max-height:82px;
-  flex:0 0 82px;aspect-ratio:1/1;border-radius:50%;
-  display:grid;place-items:center;font-weight:950;font-size:22px;
-  background:conic-gradient(var(--purple2) calc(var(--s)*1%),rgba(255,255,255,.08) 0);
-  position:relative;
+  flex:0 0 82px;aspect-ratio:1/1;border-radius:50%;display:grid;place-items:center;
+  font-weight:950;font-size:22px;background:conic-gradient(var(--purple2) calc(var(--s)*1%),rgba(255,255,255,.08) 0);position:relative;
 }
-
 .circle:after{content:"";position:absolute;inset:8px;border-radius:50%;background:#10091d}
 .circle span{position:relative;z-index:2}
-
 .tag{display:inline-block;border-radius:999px;padding:7px 10px;font-size:12px;font-weight:900}
 .green{background:rgba(34,197,94,.15);color:#86efac;border:1px solid rgba(34,197,94,.28)}
 .yellow{background:rgba(250,204,21,.13);color:#fde68a;border:1px solid rgba(250,204,21,.28)}
 .red{background:rgba(239,68,68,.13);color:#fca5a5;border:1px solid rgba(239,68,68,.28)}
-
+.blue{background:rgba(34,211,238,.12);color:#a5f3fc;border:1px solid rgba(34,211,238,.28)}
 .metrics{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:14px}
 .metric{background:rgba(255,255,255,.04);border:1px solid rgba(192,132,252,.13);border-radius:14px;padding:10px}
 .metric b{display:block;font-size:13px}
 .metric span{display:block;color:var(--muted);font-size:12px;margin-top:3px}
-
 .why{margin-top:12px;color:#d9c8f5;font-size:13px;line-height:1.45}
 .smalllink{display:inline-block;margin-top:12px;color:#c4b5fd;font-weight:800;font-size:13px}
 .empty{display:none;text-align:center;padding:34px;color:var(--muted)}
+@keyframes pop{from{opacity:0;transform:translateY(18px) scale(.98)}to{opacity:1;transform:none}}
 
-@keyframes pop{
-  from{opacity:0;transform:translateY(18px) scale(.98)}
-  to{opacity:1;transform:none}
-}
-
-@media(max-width:920px){
-  .controls{grid-template-columns:1fr 1fr}
-  .grid{grid-template-columns:1fr 1fr}
-  .navin{align-items:flex-start;flex-direction:column}
-  .links{justify-content:flex-start}
-}
-
-@media(max-width:620px){
-  .controls,.grid{grid-template-columns:1fr}
-  .hero{padding-top:34px}
-  .heroTop{width:190px;height:190px}
-  .scanring{width:176px;height:176px;inset:7px}
-  .wolf{width:94px}
-  .panel{border-radius:22px;padding:14px}
-  .metrics{grid-template-columns:1fr}
-  .actions{flex-direction:column;align-items:stretch}
-  .btn{width:100%}
-}
+@media(max-width:980px){.controls{grid-template-columns:1fr 1fr}.grid{grid-template-columns:1fr 1fr}.navin{align-items:flex-start;flex-direction:column}.links{justify-content:flex-start}}
+@media(max-width:620px){.controls,.grid{grid-template-columns:1fr}.hero{padding-top:34px}.heroTop{width:190px;height:190px}.scanring{width:176px;height:176px;inset:7px}.wolf{width:94px}.panel{border-radius:22px;padding:14px}.metrics{grid-template-columns:1fr}.actions{flex-direction:column;align-items:stretch}.btn{width:100%}}
 </style>
 </head>
 
@@ -353,7 +123,6 @@ h1{
       <img class="logo" src="assets/logo.png" alt="ASTY Logo">
       <span>$ASTY Market Radar</span>
     </a>
-
     <div class="links">
       <a class="pill" href="https://arbstrategy.net" target="_blank">Website</a>
       <a class="pill" href="https://arbstrategy-asty.github.io/ArbStrategy-ASTY/" target="_blank">System Overview</a>
@@ -367,14 +136,10 @@ h1{
 <header class="hero wrap">
   <div class="heroTop">
     <div class="scanring">
-      <span class="dot d1"></span>
-      <span class="dot d2"></span>
-      <span class="dot d3"></span>
-      <span class="dot d4"></span>
+      <span class="dot d1"></span><span class="dot d2"></span><span class="dot d3"></span><span class="dot d4"></span>
     </div>
     <img class="wolf" src="assets/wolf.png" alt="ASTY Wolf">
   </div>
-
   <h1>Auto Discovery for Volatile Solana Pools</h1>
 </header>
 
@@ -386,33 +151,44 @@ h1{
       <div class="control"><label>Minimum 24h Volume USD</label><input id="minVol" type="number" value="5000" min="0"></div>
       <div class="control"><label>Minimum 24h TXNS</label><input id="minTx" type="number" value="80" min="0"></div>
       <div class="control">
-        <label>Result Limit</label>
-        <select id="limit">
+        <label>Pool Pages</label>
+        <select id="pages">
+          <option>2</option>
+          <option selected>3</option>
+          <option>4</option>
+          <option>5</option>
+        </select>
+      </div>
+      <div class="control">
+        <label>History Checks</label>
+        <select id="historyLimit">
+          <option>3</option>
+          <option selected>5</option>
+          <option>8</option>
           <option>10</option>
-          <option selected>15</option>
-          <option>20</option>
-          <option>30</option>
         </select>
       </div>
     </div>
 
     <div class="actions">
       <button class="btn" id="scanBtn">SCAN SOLANA MARKET</button>
-      <span class="status" id="status">Ready. No address needed.</span>
+      <span class="status" id="status">Ready. Free GeckoTerminal mode.</span>
     </div>
 
     <div class="bar"><div class="fill" id="fill"></div></div>
   </section>
 
-  <div class="empty" id="empty">No candidates passed the current filters. Lower liquidity, volume or TXNS and scan again.</div>
+  <div class="empty" id="empty">No candidates passed the current filters.</div>
   <section class="grid" id="grid"></section>
 </main>
 
 <script>
 const API = 'https://api.geckoterminal.com/api/v2';
+const VERSION_ACCEPT = 'application/json;version=20230203';
 const $ = id => document.getElementById(id);
 
-let lastResults = [];
+let results = [];
+let stopScan = false;
 
 function num(v){ return Number(v || 0); }
 
@@ -436,13 +212,13 @@ function daysAgo(iso){
 
 function sleep(ms){ return new Promise(r => setTimeout(r, ms)); }
 
-function setProgress(p, t){
-  $('fill').style.width = p + '%';
+function setProgress(p,t){
+  $('fill').style.width = Math.max(0,Math.min(100,p)) + '%';
   $('status').textContent = t;
 }
 
 async function getJson(url){
-  const r = await fetch(url, { headers:{ accept:'application/json' } });
+  const r = await fetch(url,{headers:{accept:VERSION_ACCEPT}});
   if(!r.ok) throw new Error('API error ' + r.status);
   return r.json();
 }
@@ -459,66 +235,66 @@ function symbolFromName(name){
   return s ? ('$' + s.toUpperCase()) : '$TOKEN';
 }
 
-function tokenAddressFromRelationship(rel){
-  const id = rel?.data?.id || '';
-  return String(id).replace('solana_', '');
+function tx24(a){
+  return num(a.transactions?.h24?.buys) + num(a.transactions?.h24?.sells);
 }
 
-function baseTokenAddress(p){
-  return tokenAddressFromRelationship(p.relationships?.base_token);
+function liveScore(a){
+  const liq = num(a.reserve_in_usd);
+  const vol = num(a.volume_usd?.h24);
+  const tx = tx24(a);
+  const move24 = Math.abs(num(a.price_change_percentage?.h24));
+  const age = daysAgo(a.pool_created_at);
+  const eff = liq ? vol / liq : 0;
+
+  const sEff = clamp(eff * 55,0,100);
+  const sTx = clamp(tx / 6,0,100);
+  const sLiq = liq < 25000 ? 20 : liq < 75000 ? 70 : liq < 500000 ? 100 : 80;
+  const sMove = clamp(move24 * 2.2,0,100);
+  const sAge = age > 365 ? 100 : age > 180 ? 85 : age > 90 ? 70 : 55;
+  const sVol = clamp(vol / 2500,0,100);
+
+  return Math.round(
+    sEff * .24 +
+    sTx * .20 +
+    sLiq * .16 +
+    sMove * .16 +
+    sAge * .12 +
+    sVol * .12
+  );
 }
+
+function clamp(v,min,max){ return Math.max(min,Math.min(max,v)); }
 
 async function fetchPools(){
-  const urls = [
-    `${API}/networks/solana/trending_pools?include=base_token,quote_token,dex&page=1`,
-    `${API}/networks/solana/pools?include=base_token,quote_token,dex&page=1`,
-    `${API}/networks/solana/pools?include=base_token,quote_token,dex&page=2`,
-    `${API}/networks/solana/pools?include=base_token,quote_token,dex&page=3`,
-    `${API}/networks/solana/pools?include=base_token,quote_token,dex&page=4`
-  ];
+  const pages = num($('pages').value);
+  const urls = [`${API}/networks/solana/trending_pools?include=base_token,quote_token,dex&page=1`];
 
-  const settled = await Promise.allSettled(urls.map(getJson));
-  const map = new Map();
-
-  settled.forEach(s => {
-    if(s.status === 'fulfilled' && Array.isArray(s.value.data)){
-      s.value.data.forEach(p => {
-        const a = attrs(p);
-        if(a.address) map.set(a.address, p);
-      });
-    }
-  });
-
-  return [...map.values()];
-}
-
-async function tryOHLCVUrls(urls){
-  for(const url of urls){
-    try{
-      const j = await getJson(url);
-      const list = j?.data?.attributes?.ohlcv_list || [];
-      if(Array.isArray(list) && list.length >= 30){
-        return list;
-      }
-    }catch(e){
-      console.warn('OHLCV failed:', url, e);
-      await sleep(250);
-    }
+  for(let p=1;p<=pages;p++){
+    urls.push(`${API}/networks/solana/pools?include=base_token,quote_token,dex&page=${p}`);
   }
 
-  return [];
-}
+  const map = new Map();
 
-async function fetchTokenOHLCV(tokenAddress){
-  if(!tokenAddress) return [];
+  for(let i=0;i<urls.length;i++){
+    setProgress(6 + i * 5, `Fetching pool list ${i + 1}/${urls.length}...`);
 
-  const urls = [
-    `${API}/networks/solana/tokens/${tokenAddress}/ohlcv/day?aggregate=1&limit=90&currency=usd`,
-    `${API}/networks/solana/tokens/${tokenAddress}/ohlcv/day?aggregate=1&limit=60&currency=usd`,
-    `${API}/networks/solana/tokens/${tokenAddress}/ohlcv/day?aggregate=1&limit=31&currency=usd`
-  ];
+    try{
+      const j = await getJson(urls[i]);
+      if(Array.isArray(j.data)){
+        j.data.forEach(pool => {
+          const a = attrs(pool);
+          if(a.address) map.set(a.address,pool);
+        });
+      }
+    }catch(e){
+      console.warn('Pool list failed:', urls[i], e);
+    }
 
-  return tryOHLCVUrls(urls);
+    if(i < urls.length - 1) await sleep(6500);
+  }
+
+  return [...map.values()];
 }
 
 async function fetchPoolOHLCV(poolAddress){
@@ -528,65 +304,56 @@ async function fetchPoolOHLCV(poolAddress){
     `${API}/networks/solana/pools/${poolAddress}/ohlcv/day?aggregate=1&limit=90&currency=usd&token=base`,
     `${API}/networks/solana/pools/${poolAddress}/ohlcv/day?aggregate=1&limit=90&currency=usd`,
     `${API}/networks/solana/pools/${poolAddress}/ohlcv/day?aggregate=1&limit=60&currency=usd&token=base`,
-    `${API}/networks/solana/pools/${poolAddress}/ohlcv/day?aggregate=1&limit=60&currency=usd`,
-    `${API}/networks/solana/pools/${poolAddress}/ohlcv/day?aggregate=1&limit=31&currency=usd&token=base`,
-    `${API}/networks/solana/pools/${poolAddress}/ohlcv/day?aggregate=1&limit=31&currency=usd`
+    `${API}/networks/solana/pools/${poolAddress}/ohlcv/day?aggregate=1&limit=31&currency=usd&token=base`
   ];
 
-  return tryOHLCVUrls(urls);
-}
+  for(const url of urls){
+    try{
+      const j = await getJson(url);
+      const list = j?.data?.attributes?.ohlcv_list || [];
+      if(Array.isArray(list) && list.length >= 30) return list;
+    }catch(e){
+      console.warn('OHLCV failed:', url, e);
+      await sleep(500);
+    }
+  }
 
-async function fetchOHLCVForCandidate(pool){
-  const a = attrs(pool);
-  const base = baseTokenAddress(pool);
-
-  let list = await fetchTokenOHLCV(base);
-  if(list.length >= 30) return { list, source:'token' };
-
-  list = await fetchPoolOHLCV(a.address);
-  if(list.length >= 30) return { list, source:'pool' };
-
-  return { list:[], source:'none' };
+  return [];
 }
 
 function normalizeCandles(list){
   return (list || [])
-    .map(x => ({
-      time:num(x[0]),
-      open:num(x[1]),
-      high:num(x[2]),
-      low:num(x[3]),
-      close:num(x[4]),
-      volume:num(x[5])
-    }))
+    .map(x => ({time:num(x[0]),open:num(x[1]),high:num(x[2]),low:num(x[3]),close:num(x[4]),volume:num(x[5])}))
     .filter(x => x.time && x.close > 0)
     .sort((a,b) => a.time - b.time);
 }
 
-function avgMove(candles){
+function avgCloseMove(candles){
   if(!candles || candles.length < 2) return null;
-
-  let moves = [];
-
-  for(let i = 1; i < candles.length; i++){
-    const prev = candles[i - 1].close;
-    const cur = candles[i].close;
-
-    if(prev > 0 && cur > 0){
-      moves.push(Math.abs((cur - prev) / prev) * 100);
-    }
+  const moves = [];
+  for(let i=1;i<candles.length;i++){
+    const p = candles[i-1].close;
+    const c = candles[i].close;
+    if(p > 0 && c > 0) moves.push(Math.abs((c - p) / p) * 100);
   }
-
   if(!moves.length) return null;
-  return moves.reduce((a,b) => a + b, 0) / moves.length;
+  return moves.reduce((a,b)=>a+b,0) / moves.length;
+}
+
+function avgRangeMove(candles){
+  if(!candles || candles.length < 2) return null;
+  const ranges = candles
+    .filter(c => c.low > 0 && c.high > 0)
+    .map(c => ((c.high - c.low) / c.low) * 100);
+
+  if(!ranges.length) return null;
+  return ranges.reduce((a,b)=>a+b,0) / ranges.length;
 }
 
 function trend(candles){
   if(!candles || candles.length < 2) return 0;
-
   const first = candles[0].close;
   const last = candles[candles.length - 1].close;
-
   if(!first || !last) return 0;
   return ((last - first) / first) * 100;
 }
@@ -595,188 +362,115 @@ function structureScore(candles){
   if(!candles || candles.length < 30) return null;
 
   const activeDays = candles.filter(c => c.volume > 0).length / candles.length;
-  const volatility = avgMove(candles) ?? 0;
+  const closeVol = avgCloseMove(candles) ?? 0;
+  const rangeVol = avgRangeMove(candles) ?? 0;
   const totalTrend = Math.abs(trend(candles));
 
   let upDays = 0;
-
-  for(let i = 1; i < candles.length; i++){
-    if(candles[i].close >= candles[i - 1].close) upDays++;
+  for(let i=1;i<candles.length;i++){
+    if(candles[i].close >= candles[i-1].close) upDays++;
   }
 
   const balance = 100 - Math.abs(50 - ((upDays / (candles.length - 1)) * 100));
-  const volPart = Math.min(35, volatility * 2.2);
-  const trendPart = Math.min(20, totalTrend / 5);
+  const volPart = Math.min(35, ((closeVol + rangeVol) / 2) * 1.8);
+  const trendPart = Math.min(18, totalTrend / 6);
   const activePart = activeDays * 30;
 
-  return Math.round(Math.max(0, Math.min(100, balance * .25 + volPart + trendPart + activePart)));
+  return Math.round(clamp(balance * .25 + volPart + trendPart + activePart,0,100));
 }
 
-function analyzeCandles(list, source){
+function analyzeCandles(list){
   const candles = normalizeCandles(list).slice(-90);
+  if(candles.length < 30) return null;
+
   const last30 = candles.slice(-31);
   const last90 = candles.slice(-90);
 
-  if(candles.length < 30){
-    return null;
-  }
+  const close30 = avgCloseMove(last30);
+  const range30 = avgRangeMove(last30);
+  const close90 = avgCloseMove(last90);
+  const range90 = avgRangeMove(last90);
 
   return {
     candles:candles.length,
-    vol30:avgMove(last30),
-    vol90:avgMove(last90),
-    trend30:trend(last30),
-    trend90:trend(last90),
-    structure90:structureScore(last90),
-    source
+    vol30: close30 === null && range30 === null ? null : ((close30 ?? 0) + (range30 ?? 0)) / ((close30 !== null && range30 !== null) ? 2 : 1),
+    vol90: close90 === null && range90 === null ? null : ((close90 ?? 0) + (range90 ?? 0)) / ((close90 !== null && range90 !== null) ? 2 : 1),
+    trend30: trend(last30),
+    trend90: trend(last90),
+    structure90: structureScore(last90)
   };
 }
 
-function clamp(v,min,max){
-  return Math.max(min, Math.min(max, v));
-}
+function finalScore(a,h){
+  const base = liveScore(a);
+  if(!h) return base;
 
-function calcScore(a, ohlc){
-  const liq = num(a.reserve_in_usd);
-  const vol = num(a.volume_usd?.h24);
-  const tx = num(a.transactions?.h24?.buys) + num(a.transactions?.h24?.sells);
-  const h24 = Math.abs(num(a.price_change_percentage?.h24));
-  const eff = liq ? vol / liq : 0;
-
-  const sVol30 = clamp((ohlc.vol30 ?? 0) * 5, 0, 100);
-  const sVol90 = clamp((ohlc.vol90 ?? 0) * 4, 0, 100);
-  const sEff = clamp(eff * 55, 0, 100);
-  const sTx = clamp(tx / 6, 0, 100);
-  const sLiq = liq < 25000 ? 20 : liq < 75000 ? 70 : liq < 500000 ? 100 : 80;
-  const sMove24 = clamp(h24 * 2, 0, 100);
-  const sStruct = ohlc.structure90 ?? 45;
+  const sVol30 = clamp((h.vol30 ?? 0) * 4.5,0,100);
+  const sVol90 = clamp((h.vol90 ?? 0) * 4,0,100);
+  const sStruct = h.structure90 ?? 45;
 
   return Math.round(
-    sVol30 * .22 +
-    sVol90 * .22 +
-    sEff * .18 +
-    sTx * .14 +
-    sLiq * .10 +
-    sMove24 * .06 +
+    base * .56 +
+    sVol30 * .18 +
+    sVol90 * .18 +
     sStruct * .08
   );
 }
 
-function risk(score, liq){
-  if(score >= 78 && liq >= 50000) return ['High Opportunity','green'];
+function risk(score, hasHistory){
+  if(hasHistory && score >= 78) return ['High Opportunity','green'];
   if(score >= 62) return ['Watchlist Candidate','yellow'];
   return ['Speculative / Risky','red'];
 }
 
-function reason(a,o){
+function reason(item){
+  const a = item.a;
   const eff = num(a.reserve_in_usd) ? num(a.volume_usd?.h24) / num(a.reserve_in_usd) : 0;
-  let r = [];
+  const r = [];
 
-  if(o.source === 'token') r.push('token history active');
-  if(o.source === 'pool') r.push('pool history active');
-  if((o.vol30 ?? 0) > 6) r.push('strong 30d volatility');
-  if((o.vol90 ?? 0) > 5) r.push('consistent 90d volatility');
-  if((o.structure90 ?? 0) > 65) r.push('solid 90d structure');
+  if(item.historyStatus === 'ready') r.push('90d history verified');
+  if(item.historyStatus === 'pending') r.push('history queued');
+  if(item.historyStatus === 'missing') r.push('live score only');
+
+  if(item.history?.vol30 > 6) r.push('strong 30d volatility');
+  if(item.history?.vol90 > 5) r.push('consistent 90d volatility');
+  if(item.history?.structure90 > 65) r.push('solid 90d structure');
   if(eff > .4) r.push('efficient volume/liquidity ratio');
-  if((num(a.transactions?.h24?.buys) + num(a.transactions?.h24?.sells)) > 250) r.push('active trading');
+  if(tx24(a) > 250) r.push('active trading');
   if(daysAgo(a.pool_created_at) > 180) r.push('established pool age');
 
-  return r.length ? r.join(', ') : 'passed historical volatility and activity filters';
+  return r.join(', ') || 'passed live activity filters';
 }
 
-function formatVol(v){
-  return v === null || v === undefined ? 'No data' : v.toFixed(2) + '%';
-}
+function formatVol(v){ return v === null || v === undefined ? 'Pending' : v.toFixed(2) + '%'; }
+function formatStructure(v){ return v === null || v === undefined ? 'Pending' : v + '/100'; }
 
-function formatStructure(v){
-  return v === null || v === undefined ? 'No data' : v + '/100';
-}
-
-async function scan(){
-  $('scanBtn').disabled = true;
-  $('grid').innerHTML = '';
-  $('empty').style.display = 'none';
-  lastResults = [];
-
-  try{
-    setProgress(8, 'Fetching Solana market candidates...');
-    const pools = await fetchPools();
-
-    const minAge = num($('minAge').value);
-    const minLiq = num($('minLiq').value);
-    const minVol = num($('minVol').value);
-    const minTx = num($('minTx').value);
-    const lim = num($('limit').value);
-
-    setProgress(25, `Filtering ${pools.length} pools by age, liquidity and activity...`);
-
-    let base = pools
-      .map(p => ({ p, a:attrs(p) }))
-      .filter(x =>
-        x.a.address &&
-        baseTokenAddress(x.p) &&
-        daysAgo(x.a.pool_created_at) >= minAge &&
-        num(x.a.reserve_in_usd) >= minLiq &&
-        num(x.a.volume_usd?.h24) >= minVol &&
-        (num(x.a.transactions?.h24?.buys) + num(x.a.transactions?.h24?.sells)) >= minTx
-      );
-
-    base.sort((x,y) => num(y.a.volume_usd?.h24) - num(x.a.volume_usd?.h24));
-    base = base.slice(0, Math.max(30, lim * 3));
-
-    let out = [];
-
-    for(let i = 0; i < base.length; i++){
-      setProgress(
-        30 + Math.round((i / base.length) * 55),
-        `Analyzing 90d history ${i + 1}/${base.length}...`
-      );
-
-      const fetched = await fetchOHLCVForCandidate(base[i].p);
-      const o = analyzeCandles(fetched.list, fetched.source);
-
-      if(o){
-        const sc = calcScore(base[i].a, o);
-        out.push({ ...base[i], ohlc:o, score:sc });
-      }
-
-      await sleep(900);
-    }
-
-    out.sort((a,b) => b.score - a.score);
-    lastResults = out.slice(0, lim);
-
-    render(lastResults);
-    setProgress(100, `Scan complete. ${lastResults.length} historical candidates found.`);
-  }catch(e){
-    setProgress(0, 'Scan failed: ' + e.message);
-  }finally{
-    $('scanBtn').disabled = false;
-  }
-}
-
-function render(list){
+function render(){
   const grid = $('grid');
   grid.innerHTML = '';
 
-  if(!list.length){
+  if(!results.length){
     $('empty').style.display = 'block';
-    $('empty').textContent = 'No candidates with sufficient 30d to 90d OHLCV history passed the current filters.';
     return;
   }
 
-  list.forEach((x,i) => {
+  $('empty').style.display = 'none';
+
+  results.sort((a,b) => b.score - a.score);
+
+  results.forEach((x,i) => {
     const a = x.a;
-    const tx = num(a.transactions?.h24?.buys) + num(a.transactions?.h24?.sells);
-    const [label,cls] = risk(x.score, num(a.reserve_in_usd));
+    const [label,cls] = risk(x.score,x.historyStatus === 'ready');
     const name = tokenName(x.p);
     const sym = symbolFromName(name);
-    const pair = a.address;
+
+    const historyTag =
+      x.historyStatus === 'ready' ? '<span class="tag green">History Ready</span>' :
+      x.historyStatus === 'missing' ? '<span class="tag red">No History</span>' :
+      '<span class="tag blue">History Queue</span>';
 
     const card = document.createElement('article');
     card.className = 'card';
-    card.style.animationDelay = (i * .04) + 's';
-
     card.innerHTML = `
       <div class="rank">#${i + 1}</div>
       <div class="sym">${sym}</div>
@@ -786,10 +480,10 @@ function render(list){
         <div class="circle" style="--s:${x.score}">
           <span>${x.score}</span>
         </div>
-
         <div>
           <span class="tag ${cls}">${label}</span>
-          <div class="why">${reason(a,x.ohlc)}</div>
+          ${historyTag}
+          <div class="why">${reason(x)}</div>
         </div>
       </div>
 
@@ -797,23 +491,109 @@ function render(list){
         <div class="metric"><b>${daysAgo(a.pool_created_at)} days</b><span>Pool age</span></div>
         <div class="metric"><b>${money(a.reserve_in_usd)}</b><span>Liquidity</span></div>
         <div class="metric"><b>${money(a.volume_usd?.h24)}</b><span>24h volume</span></div>
-        <div class="metric"><b>${tx}</b><span>24h TXNS</span></div>
+        <div class="metric"><b>${tx24(a)}</b><span>24h TXNS</span></div>
         <div class="metric"><b>${pct(a.price_change_percentage?.h24)}</b><span>24h price</span></div>
-        <div class="metric"><b>${formatVol(x.ohlc.vol30)}</b><span>Avg 30d volatility</span></div>
-        <div class="metric"><b>${formatVol(x.ohlc.vol90)}</b><span>Avg 90d volatility</span></div>
-        <div class="metric"><b>${formatStructure(x.ohlc.structure90)}</b><span>90d structure</span></div>
+        <div class="metric"><b>${formatVol(x.history?.vol30)}</b><span>Avg 30d volatility</span></div>
+        <div class="metric"><b>${formatVol(x.history?.vol90)}</b><span>Avg 90d volatility</span></div>
+        <div class="metric"><b>${formatStructure(x.history?.structure90)}</b><span>90d structure</span></div>
       </div>
 
-      <a class="smalllink" href="https://www.geckoterminal.com/solana/pools/${pair}" target="_blank">
+      <a class="smalllink" href="https://www.geckoterminal.com/solana/pools/${a.address}" target="_blank">
         Open pool 🟣
       </a>
     `;
-
     grid.appendChild(card);
   });
 }
 
-$('scanBtn').addEventListener('click', scan);
+async function runHistoryQueue(){
+  const historyLimit = num($('historyLimit').value);
+  const queue = results.slice(0,historyLimit);
+
+  for(let i=0;i<queue.length;i++){
+    if(stopScan) return;
+
+    const item = queue[i];
+    setProgress(60 + Math.round((i / queue.length) * 35), `Checking 90d history ${i + 1}/${queue.length}: ${symbolFromName(tokenName(item.p))}`);
+
+    const list = await fetchPoolOHLCV(item.a.address);
+    const h = analyzeCandles(list);
+
+    if(h){
+      item.history = h;
+      item.historyStatus = 'ready';
+      item.score = finalScore(item.a,h);
+    }else{
+      item.history = null;
+      item.historyStatus = 'missing';
+      item.score = Math.max(0,item.score - 7);
+    }
+
+    render();
+
+    if(i < queue.length - 1){
+      setProgress(62 + Math.round((i / queue.length) * 35), 'Waiting for free API rate limit...');
+      await sleep(7000);
+    }
+  }
+}
+
+async function scan(){
+  stopScan = false;
+  $('scanBtn').disabled = true;
+  $('grid').innerHTML = '';
+  $('empty').style.display = 'none';
+  results = [];
+
+  try{
+    setProgress(5,'Starting free GeckoTerminal scan...');
+    const pools = await fetchPools();
+
+    const minAge = num($('minAge').value);
+    const minLiq = num($('minLiq').value);
+    const minVol = num($('minVol').value);
+    const minTx = num($('minTx').value);
+
+    setProgress(38,`Filtering ${pools.length} pools by live metrics...`);
+
+    results = pools
+      .map(p => ({p,a:attrs(p)}))
+      .filter(x =>
+        x.a.address &&
+        daysAgo(x.a.pool_created_at) >= minAge &&
+        num(x.a.reserve_in_usd) >= minLiq &&
+        num(x.a.volume_usd?.h24) >= minVol &&
+        tx24(x.a) >= minTx
+      )
+      .map(x => ({
+        ...x,
+        score:liveScore(x.a),
+        history:null,
+        historyStatus:'pending'
+      }))
+      .sort((a,b) => b.score - a.score)
+      .slice(0,30);
+
+    render();
+
+    if(!results.length){
+      setProgress(100,'No live candidates found. Lower the filters and scan again.');
+      $('empty').style.display = 'block';
+      return;
+    }
+
+    setProgress(55,`${results.length} live candidates found. Starting slow 90d history queue...`);
+    await runHistoryQueue();
+
+    setProgress(100,'Scan complete. Live candidates ranked, top history checked.');
+  }catch(e){
+    setProgress(0,'Scan failed: ' + e.message);
+  }finally{
+    $('scanBtn').disabled = false;
+  }
+}
+
+$('scanBtn').addEventListener('click',scan);
 </script>
 
 </body>
