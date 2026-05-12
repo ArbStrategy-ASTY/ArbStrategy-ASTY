@@ -39,8 +39,6 @@ a{color:inherit;text-decoration:none}
 .wrap{width:min(1180px,calc(100% - 28px));margin:0 auto}
 
 .nav{
-  position:sticky;
-  top:0;
   z-index:20;
   backdrop-filter:blur(18px);
   background:rgba(5,2,10,.72);
@@ -92,7 +90,7 @@ a{color:inherit;text-decoration:none}
 }
 
 .hero{
-  padding:54px 0 30px;
+  padding:54px 0 24px;
   text-align:center;
   position:relative;
 }
@@ -179,14 +177,6 @@ h1{
   text-shadow:0 0 35px rgba(168,85,247,.42);
 }
 
-.sub{
-  max-width:780px;
-  margin:18px auto 0;
-  color:var(--muted);
-  font-size:17px;
-  line-height:1.6;
-}
-
 .panel{
   border:1px solid var(--line);
   background:linear-gradient(180deg,var(--panel),rgba(11,6,20,.9));
@@ -244,12 +234,6 @@ h1{
   background:linear-gradient(135deg,var(--purple),#6d28d9);
   box-shadow:0 0 30px rgba(168,85,247,.28);
   letter-spacing:.2px;
-}
-
-.btn.secondary{
-  background:rgba(255,255,255,.055);
-  border:1px solid var(--line);
-  box-shadow:none;
 }
 
 .btn:disabled{opacity:.6;cursor:not-allowed}
@@ -338,6 +322,12 @@ h1{
 .circle{
   width:82px;
   height:82px;
+  min-width:82px;
+  min-height:82px;
+  max-width:82px;
+  max-height:82px;
+  flex:0 0 82px;
+  aspect-ratio:1/1;
   border-radius:50%;
   display:grid;
   place-items:center;
@@ -427,13 +417,6 @@ h1{
   font-size:13px;
 }
 
-.footer{
-  padding:24px 0 45px;
-  color:var(--muted);
-  text-align:center;
-  font-size:13px;
-}
-
 .empty{
   display:none;
   text-align:center;
@@ -477,6 +460,7 @@ h1{
     </a>
 
     <div class="links">
+      <a class="pill" href="https://arbstrategy.net" target="_blank">Website</a>
       <a class="pill" href="https://arbstrategy-asty.github.io/ArbStrategy-ASTY/" target="_blank">System Overview</a>
       <a class="pill" href="https://htmlpreview.github.io/?https://github.com/ArbStrategy-ASTY/ArbStrategy-ASTY/blob/main/pools.html" target="_blank">Pool Dashboard</a>
       <a class="pill" href="https://x.com/ArbStrategyASTY" target="_blank">X</a>
@@ -497,9 +481,6 @@ h1{
   </div>
 
   <h1>Auto Discovery for Volatile Solana Pools</h1>
-  <p class="sub">
-    Scans Solana pools automatically. Filters out fresh pools by requiring a minimum market age of 60 days, then ranks candidates by volatility, activity, liquidity efficiency and structure.
-  </p>
 </header>
 
 <main class="wrap">
@@ -538,7 +519,6 @@ h1{
 
     <div class="actions">
       <button class="btn" id="scanBtn">SCAN SOLANA MARKET</button>
-      <button class="btn secondary" id="copyBtn">COPY TOP RESULTS</button>
       <span class="status" id="status">Ready. No address needed.</span>
     </div>
 
@@ -553,10 +533,6 @@ h1{
 
   <section class="grid" id="grid"></section>
 </main>
-
-<footer class="footer wrap">
-  Data source: GeckoTerminal public API. This is a research and pool-candidate discovery tool, not investment advice.
-</footer>
 
 <script>
 const API = 'https://api.geckoterminal.com/api/v2';
@@ -615,12 +591,17 @@ function symbolFromName(name){
   return s ? ('$' + s.toUpperCase()) : '$TOKEN';
 }
 
+function poolAddressFromId(poolId){
+  return String(poolId || '').split('_').pop();
+}
+
 async function fetchPools(){
   const urls = [
     `${API}/networks/solana/trending_pools?include=base_token,quote_token,dex&page=1`,
     `${API}/networks/solana/pools?include=base_token,quote_token,dex&page=1`,
     `${API}/networks/solana/pools?include=base_token,quote_token,dex&page=2`,
-    `${API}/networks/solana/pools?include=base_token,quote_token,dex&page=3`
+    `${API}/networks/solana/pools?include=base_token,quote_token,dex&page=3`,
+    `${API}/networks/solana/pools?include=base_token,quote_token,dex&page=4`
   ];
 
   const settled = await Promise.allSettled(urls.map(getJson));
@@ -636,43 +617,112 @@ async function fetchPools(){
 }
 
 async function fetchOHLCV(poolId){
-  const address = poolId.split('_').pop();
-  const url = `${API}/networks/solana/pools/${address}/ohlcv/day?aggregate=1&limit=31&currency=usd`;
+  const address = poolAddressFromId(poolId);
 
-  try{
-    const j = await getJson(url);
-    return j?.data?.attributes?.ohlcv_list || [];
-  }catch(e){
-    return [];
+  const dailyUrls = [
+    `${API}/networks/solana/pools/${address}/ohlcv/day?aggregate=1&limit=150&currency=usd`,
+    `${API}/networks/solana/pools/${address}/ohlcv/day?aggregate=1&limit=120&currency=usd`,
+    `${API}/networks/solana/pools/${address}/ohlcv/day?aggregate=1&limit=90&currency=usd`,
+    `${API}/networks/solana/pools/${address}/ohlcv/day?aggregate=1&limit=31&currency=usd`
+  ];
+
+  for(const url of dailyUrls){
+    try{
+      const j = await getJson(url);
+      const list = j?.data?.attributes?.ohlcv_list || [];
+      if(Array.isArray(list) && list.length){
+        return list;
+      }
+    }catch(e){}
   }
+
+  return [];
 }
 
-function analyzeCandles(list){
-  const closes = list.map(x => num(x[4])).filter(Boolean).reverse();
+function normalizeCandles(list){
+  return (list || [])
+    .map(x => ({
+      time:num(x[0]),
+      open:num(x[1]),
+      high:num(x[2]),
+      low:num(x[3]),
+      close:num(x[4]),
+      volume:num(x[5])
+    }))
+    .filter(x => x.time && x.close > 0)
+    .sort((a,b) => a.time - b.time);
+}
 
-  if(closes.length < 8){
-    return { vol30:0, trend7:0, structure:0 };
-  }
+function avgMove(candles){
+  if(!candles || candles.length < 2) return 0;
 
   let moves = [];
 
-  for(let i = 1; i < closes.length; i++){
-    moves.push(Math.abs((closes[i] - closes[i - 1]) / closes[i - 1]) * 100);
+  for(let i = 1; i < candles.length; i++){
+    const prev = candles[i - 1].close;
+    const cur = candles[i].close;
+
+    if(prev > 0 && cur > 0){
+      moves.push(Math.abs((cur - prev) / prev) * 100);
+    }
   }
 
-  const vol30 = moves.reduce((a,b) => a + b, 0) / moves.length;
-  const trend7 = closes.length > 7 ? ((closes.at(-1) - closes.at(-8)) / closes.at(-8)) * 100 : 0;
+  if(!moves.length) return 0;
+  return moves.reduce((a,b) => a + b, 0) / moves.length;
+}
 
-  const upDays = moves.length
-    ? closes.slice(1).filter((c,i) => c >= closes[i]).length / (closes.length - 1)
-    : 0;
+function trend(candles){
+  if(!candles || candles.length < 2) return 0;
 
-  const structure = Math.max(
-    0,
-    Math.min(100, (100 - Math.abs(50 - upDays * 100)) * 0.8 + Math.min(35, vol30 * 2))
-  );
+  const first = candles[0].close;
+  const last = candles[candles.length - 1].close;
 
-  return { vol30, trend7, structure };
+  if(!first || !last) return 0;
+  return ((last - first) / first) * 100;
+}
+
+function structureScore(candles){
+  if(!candles || candles.length < 10) return 0;
+
+  let activeDays = candles.filter(c => c.volume > 0).length / candles.length;
+  let volatility = avgMove(candles);
+  let totalTrend = Math.abs(trend(candles));
+
+  let upDays = 0;
+
+  for(let i = 1; i < candles.length; i++){
+    if(candles[i].close >= candles[i - 1].close) upDays++;
+  }
+
+  let balance = 100 - Math.abs(50 - ((upDays / (candles.length - 1)) * 100));
+  let volPart = Math.min(35, volatility * 2.2);
+  let trendPart = Math.min(20, totalTrend / 5);
+  let activePart = activeDays * 30;
+
+  return Math.round(Math.max(0, Math.min(100, balance * .25 + volPart + trendPart + activePart)));
+}
+
+function analyzeCandles(list){
+  const candles = normalizeCandles(list);
+  const last30 = candles.slice(-31);
+  const last150 = candles.slice(-150);
+
+  const vol30 = avgMove(last30);
+  const vol5m = avgMove(last150);
+  const trend7 = trend(candles.slice(-8));
+  const trend30 = trend(last30);
+  const trend5m = trend(last150);
+  const structure5m = structureScore(last150);
+
+  return {
+    candles:candles.length,
+    vol30,
+    vol5m,
+    trend7,
+    trend30,
+    trend5m,
+    structure5m
+  };
 }
 
 function clamp(v,min,max){
@@ -686,20 +736,22 @@ function calcScore(a, ohlc){
   const h24 = num(a.price_change_percentage?.h24);
   const eff = liq ? vol / liq : 0;
 
-  const sVol = clamp(ohlc.vol30 * 5, 0, 100);
+  const sVol30 = clamp(ohlc.vol30 * 5, 0, 100);
+  const sVol5m = clamp(ohlc.vol5m * 4, 0, 100);
   const sEff = clamp(eff * 55, 0, 100);
   const sTx = clamp(tx / 6, 0, 100);
   const sLiq = liq < 25000 ? 20 : liq < 75000 ? 70 : liq < 500000 ? 100 : 80;
   const sTrend = clamp(50 + h24 * 2, 0, 100);
-  const sStruct = ohlc.structure || 45;
+  const sStruct = ohlc.structure5m || 45;
 
   return Math.round(
-    sVol * .24 +
-    sEff * .22 +
-    sTx * .18 +
-    sLiq * .14 +
-    sTrend * .10 +
-    sStruct * .12
+    sVol30 * .20 +
+    sVol5m * .14 +
+    sEff * .20 +
+    sTx * .16 +
+    sLiq * .12 +
+    sTrend * .08 +
+    sStruct * .10
   );
 }
 
@@ -713,7 +765,9 @@ function reason(a,o){
   const eff = num(a.reserve_in_usd) ? num(a.volume_usd?.h24) / num(a.reserve_in_usd) : 0;
   let r = [];
 
-  if(o.vol30 > 8) r.push('strong 30d movement');
+  if(o.vol30 > 6) r.push('strong 30d movement');
+  if(o.vol5m > 5) r.push('consistent 5M volatility');
+  if(o.structure5m > 65) r.push('solid 5M market structure');
   if(eff > .4) r.push('efficient volume/liquidity ratio');
   if((num(a.transactions?.h24?.buys) + num(a.transactions?.h24?.sells)) > 250) r.push('active trading');
   if(daysAgo(a.pool_created_at) > 180) r.push('established pool age');
@@ -749,12 +803,12 @@ async function scan(){
       );
 
     base.sort((x,y) => num(y.a.volume_usd?.h24) - num(x.a.volume_usd?.h24));
-    base = base.slice(0, Math.max(20, lim * 2));
+    base = base.slice(0, Math.max(24, lim * 2));
 
     let out = [];
 
     for(let i = 0; i < base.length; i++){
-      setProgress(30 + Math.round((i / base.length) * 55), `Analyzing 30d volatility ${i + 1}/${base.length}...`);
+      setProgress(30 + Math.round((i / base.length) * 55), `Analyzing 5M market structure ${i + 1}/${base.length}...`);
 
       const o = analyzeCandles(await fetchOHLCV(base[i].p.id));
       const sc = calcScore(base[i].a, o);
@@ -790,7 +844,7 @@ function render(list){
     const [label,cls] = risk(x.score, x.ohlc.vol30, num(a.reserve_in_usd));
     const name = tokenName(x.p);
     const sym = symbolFromName(name);
-    const pair = a.address || x.p.id.split('_').pop();
+    const pair = a.address || poolAddressFromId(x.p.id);
 
     const card = document.createElement('article');
     card.className = 'card';
@@ -842,10 +896,20 @@ function render(list){
           <b>${x.ohlc.vol30.toFixed(2)}%</b>
           <span>Avg 30d volatility</span>
         </div>
+
+        <div class="metric">
+          <b>${x.ohlc.vol5m.toFixed(2)}%</b>
+          <span>Avg 5M volatility</span>
+        </div>
+
+        <div class="metric">
+          <b>${x.ohlc.structure5m}/100</b>
+          <span>5M structure</span>
+        </div>
       </div>
 
       <a class="smalllink" href="https://www.geckoterminal.com/solana/pools/${pair}" target="_blank">
-        Open pool ↗
+        Open pool 🟣
       </a>
     `;
 
@@ -853,19 +917,7 @@ function render(list){
   });
 }
 
-function copyResults(){
-  if(!lastResults.length) return;
-
-  const text = lastResults.map((x,i) =>
-    `${i + 1}. ${symbolFromName(tokenName(x.p))} | Score ${x.score}/100 | Age ${daysAgo(x.a.pool_created_at)}d | Liq ${money(x.a.reserve_in_usd)} | Vol24h ${money(x.a.volume_usd?.h24)} | Volatility30d ${x.ohlc.vol30.toFixed(2)}%`
-  ).join('\n');
-
-  navigator.clipboard.writeText(text);
-  $('status').textContent = 'Top results copied.';
-}
-
 $('scanBtn').addEventListener('click', scan);
-$('copyBtn').addEventListener('click', copyResults);
 </script>
 
 </body>
