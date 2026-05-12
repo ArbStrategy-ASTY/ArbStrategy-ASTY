@@ -1017,14 +1017,33 @@ async function scan(){
 
     results = pools
       .map(p => ({p,a:attrs(p)}))
-      .filter(x =>
-        x.a.address &&
-        !ASTY_EXISTING_POOLS.has(normAddr(x.a.address)) &&
-        daysAgo(x.a.pool_created_at) >= minAge &&
-        num(x.a.reserve_in_usd) >= minLiq &&
-        num(x.a.volume_usd?.h24) >= minVol &&
-        tx24(x.a) >= minTx
-      )
+      .filter(x => {
+  const addr = normAddr(x.a.address);
+  const name = (x.a.name || '').toUpperCase();
+
+  const excludedPairs = [
+    'SOL / USDC',
+    'USDC / SOL',
+    'SOL / USDT',
+    'USDT / SOL',
+    'USDC / USDT',
+    'USDT / USDC',
+    'WOJAK / SOL',
+    'SOL / WOJAK'
+  ];
+
+  const isExcludedPair = excludedPairs.some(p => name.includes(p));
+
+  return (
+    x.a.address &&
+    !ASTY_EXISTING_POOLS.has(addr) &&
+    !isExcludedPair &&
+    daysAgo(x.a.pool_created_at) >= minAge &&
+    num(x.a.reserve_in_usd) >= minLiq &&
+    num(x.a.volume_usd?.h24) >= minVol &&
+    tx24(x.a) >= minTx
+  );
+})
       .map(x => ({
         ...x,
         score:liveScore(x.a),
