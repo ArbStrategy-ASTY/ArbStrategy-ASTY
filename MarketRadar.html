@@ -591,10 +591,6 @@ function symbolFromName(name){
   return s ? ('$' + s.toUpperCase()) : '$TOKEN';
 }
 
-function poolAddressFromId(poolId){
-  return String(poolId || '').split('_').pop();
-}
-
 async function fetchPools(){
   const urls = [
     `${API}/networks/solana/trending_pools?include=base_token,quote_token,dex&page=1`,
@@ -609,31 +605,37 @@ async function fetchPools(){
 
   settled.forEach(s => {
     if(s.status === 'fulfilled' && Array.isArray(s.value.data)){
-      s.value.data.forEach(p => map.set(p.id, p));
+      s.value.data.forEach(p => {
+        const a = attrs(p);
+        if(a.address) map.set(a.address, p);
+      });
     }
   });
 
   return [...map.values()];
 }
 
-async function fetchOHLCV(poolId){
-  const address = poolAddressFromId(poolId);
+async function fetchOHLCV(poolAddress){
+  if(!poolAddress) return [];
 
-  const dailyUrls = [
-    `${API}/networks/solana/pools/${address}/ohlcv/day?aggregate=1&limit=150&currency=usd`,
-    `${API}/networks/solana/pools/${address}/ohlcv/day?aggregate=1&limit=120&currency=usd`,
-    `${API}/networks/solana/pools/${address}/ohlcv/day?aggregate=1&limit=90&currency=usd`,
-    `${API}/networks/solana/pools/${address}/ohlcv/day?aggregate=1&limit=31&currency=usd`
+  const urls = [
+    `${API}/networks/solana/pools/${poolAddress}/ohlcv/day?aggregate=1&limit=150&currency=usd`,
+    `${API}/networks/solana/pools/${poolAddress}/ohlcv/day?aggregate=1&limit=120&currency=usd`,
+    `${API}/networks/solana/pools/${poolAddress}/ohlcv/day?aggregate=1&limit=90&currency=usd`,
+    `${API}/networks/solana/pools/${poolAddress}/ohlcv/day?aggregate=1&limit=31&currency=usd`
   ];
 
-  for(const url of dailyUrls){
+  for(const url of urls){
     try{
       const j = await getJson(url);
       const list = j?.data?.attributes?.ohlcv_list || [];
+
       if(Array.isArray(list) && list.length){
         return list;
       }
-    }catch(e){}
+    }catch(e){
+      console.warn('OHLCV failed:', url, e);
+    }
   }
 
   return [];
@@ -684,9 +686,9 @@ function trend(candles){
 function structureScore(candles){
   if(!candles || candles.length < 10) return 0;
 
-  let activeDays = candles.filter(c => c.volume > 0).length / candles.length;
-  let volatility = avgMove(candles);
-  let totalTrend = Math.abs(trend(candles));
+  const activeDays = candles.filter(c => c.volume > 0).length / candles.length;
+  const volatility = avgMove(candles);
+  const totalTrend = Math.abs(trend(candles));
 
   let upDays = 0;
 
@@ -694,10 +696,10 @@ function structureScore(candles){
     if(candles[i].close >= candles[i - 1].close) upDays++;
   }
 
-  let balance = 100 - Math.abs(50 - ((upDays / (candles.length - 1)) * 100));
-  let volPart = Math.min(35, volatility * 2.2);
-  let trendPart = Math.min(20, totalTrend / 5);
-  let activePart = activeDays * 30;
+  const balance = 100 - Math.abs(50 - ((upDays / (candles.length - 1)) * 100));
+  const volPart = Math.min(35, volatility * 2.2);
+  const trendPart = Math.min(20, totalTrend / 5);
+  const activePart = activeDays * 30;
 
   return Math.round(Math.max(0, Math.min(100, balance * .25 + volPart + trendPart + activePart)));
 }
@@ -707,21 +709,14 @@ function analyzeCandles(list){
   const last30 = candles.slice(-31);
   const last150 = candles.slice(-150);
 
-  const vol30 = avgMove(last30);
-  const vol5m = avgMove(last150);
-  const trend7 = trend(candles.slice(-8));
-  const trend30 = trend(last30);
-  const trend5m = trend(last150);
-  const structure5m = structureScore(last150);
-
   return {
     candles:candles.length,
-    vol30,
-    vol5m,
-    trend7,
-    trend30,
-    trend5m,
-    structure5m
+    vol30:avgMove(last30),
+    vol5m:avgMove(last150),
+    trend7:trend(candles.slice(-8)),
+    trend30:trend(last30),
+    trend5m:trend(last150),
+    structure5m:structureScore(last150)
   };
 }
 
@@ -755,7 +750,7 @@ function calcScore(a, ohlc){
   );
 }
 
-function risk(score, vol30, liq){
+function risk(score, liq){
   if(score >= 78 && liq >= 50000) return ['High Opportunity','green'];
   if(score >= 62) return ['Watchlist Candidate','yellow'];
   return ['Speculative / Risky','red'];
@@ -796,6 +791,7 @@ async function scan(){
     let base = pools
       .map(p => ({ p, a:attrs(p) }))
       .filter(x =>
+        x.a.address &&
         daysAgo(x.a.pool_created_at) >= minAge &&
         num(x.a.reserve_in_usd) >= minLiq &&
         num(x.a.volume_usd?.h24) >= minVol &&
@@ -810,7 +806,7 @@ async function scan(){
     for(let i = 0; i < base.length; i++){
       setProgress(30 + Math.round((i / base.length) * 55), `Analyzing 5M market structure ${i + 1}/${base.length}...`);
 
-      const o = analyzeCandles(await fetchOHLCV(base[i].p.id));
+      const o = analyzeCandles(await fetchOHLCV(base[i].a.address));
       const sc = calcScore(base[i].a, o);
 
       out.push({ ...base[i], ohlc:o, score:sc });
@@ -841,10 +837,10 @@ function render(list){
   list.forEach((x,i) => {
     const a = x.a;
     const tx = num(a.transactions?.h24?.buys) + num(a.transactions?.h24?.sells);
-    const [label,cls] = risk(x.score, x.ohlc.vol30, num(a.reserve_in_usd));
+    const [label,cls] = risk(x.score, num(a.reserve_in_usd));
     const name = tokenName(x.p);
     const sym = symbolFromName(name);
-    const pair = a.address || poolAddressFromId(x.p.id);
+    const pair = a.address;
 
     const card = document.createElement('article');
     card.className = 'card';
