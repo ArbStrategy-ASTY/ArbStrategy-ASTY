@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>ASTY Volatility Radar</title>
+
+<style>
+:root{
+  --bg:#05030a;
+  --panel:#120b1f;
+  --purple:#a855f7;
+  --purple2:#7c3aed;
+  --blue:#38bdf8;
+  --orange:#fb923c;
+  --red:#ef4444;
+  --text:#f8f5ff;
+  --muted:#b9aed1;
+}
+
+*{
+  margin:0;
+  padding:0;
+  box-sizing:border-box;
+}
+
+body{
+  background:
+    radial-gradient(circle at top, rgba(168,85,247,.18), transparent 40%),
+    radial-gradient(circle at bottom, rgba(56,189,248,.08), transparent 35%),
+    var(--bg);
+  color:var(--text);
+  font-family:Inter,Arial,sans-serif;
+  overflow:hidden;
+  height:100vh;
+}
+
+header{
+  position:absolute;
+  top:0;
+  left:0;
+  width:100%;
+  z-index:20;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  padding:18px 24px;
+  backdrop-filter:blur(12px);
+  background:rgba(5,3,10,.45);
+  border-bottom:1px solid rgba(168,85,247,.12);
+}
+
+.logo-wrap{
+  display:flex;
+  align-items:center;
+  gap:14px;
+}
+
+.logo{
+  width:42px;
+  height:42px;
+  border-radius:50%;
+  background:
+    radial-gradient(circle at 30% 30%, #c084fc, transparent 40%),
+    linear-gradient(135deg,var(--purple),var(--purple2));
+  box-shadow:
+    0 0 20px rgba(168,85,247,.6),
+    0 0 40px rgba(168,85,247,.25);
+}
+
+h1{
+  font-size:20px;
+  font-weight:700;
+  letter-spacing:.5px;
+}
+
+.sub{
+  font-size:12px;
+  color:var(--muted);
+  margin-top:2px;
+}
+
+.links{
+  display:flex;
+  gap:12px;
+}
+
+.links a{
+  color:white;
+  text-decoration:none;
+  padding:10px 16px;
+  border-radius:999px;
+  background:rgba(168,85,247,.12);
+  border:1px solid rgba(168,85,247,.22);
+  transition:.25s;
+  font-size:14px;
+}
+
+.links a:hover{
+  transform:translateY(-2px);
+  background:rgba(168,85,247,.22);
+  box-shadow:0 0 20px rgba(168,85,247,.3);
+}
+
+#radar{
+  width:100vw;
+  height:100vh;
+  display:block;
+}
+
+.panel{
+  position:absolute;
+  bottom:24px;
+  left:24px;
+  z-index:20;
+  width:320px;
+  padding:18px;
+  border-radius:22px;
+  background:rgba(13,8,20,.75);
+  backdrop-filter:blur(14px);
+  border:1px solid rgba(168,85,247,.14);
+  box-shadow:
+    0 0 30px rgba(168,85,247,.08),
+    inset 0 0 30px rgba(168,85,247,.04);
+}
+
+.panel h2{
+  font-size:18px;
+  margin-bottom:14px;
+}
+
+.row{
+  display:flex;
+  justify-content:space-between;
+  margin-bottom:10px;
+  font-size:14px;
+}
+
+.label{
+  color:var(--muted);
+}
+
+.status{
+  margin-top:12px;
+  padding:10px 14px;
+  border-radius:999px;
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  background:rgba(251,146,60,.12);
+  color:#ffd7ba;
+  border:1px solid rgba(251,146,60,.25);
+  font-size:13px;
+}
+
+@media(max-width:768px){
+
+  header{
+    flex-direction:column;
+    gap:16px;
+    align-items:flex-start;
+  }
+
+  .links{
+    flex-wrap:wrap;
+  }
+
+  .panel{
+    width:calc(100% - 32px);
+    left:16px;
+    bottom:16px;
+  }
+
+}
+</style>
+</head>
+<body>
+
+<header>
+
+  <div class="logo-wrap">
+    <div class="logo"></div>
+
+    <div>
+      <h1>ASTY Volatility Radar</h1>
+      <div class="sub">
+        Chaos creates opportunity.
+      </div>
+    </div>
+  </div>
+
+  <div class="links">
+    <a href="https://arbstrategy.net/" target="_blank">Website</a>
+    <a href="https://t.me/ArbStrategyASTY" target="_blank">Telegram</a>
+    <a href="https://htmlpreview.github.io/?https://github.com/ArbStrategy-ASTY/ArbStrategy-ASTY/blob/main/pools.html" target="_blank">Dashboard</a>
+  </div>
+
+</header>
+
+<canvas id="radar"></canvas>
+
+<div class="panel" id="panel">
+
+  <h2>ASTY / WIF</h2>
+
+  <div class="row">
+    <span class="label">Chaos Score</span>
+    <span id="score">100%</span>
+  </div>
+
+  <div class="row">
+    <span class="label">24h Volume</span>
+    <span>$148,220</span>
+  </div>
+
+  <div class="row">
+    <span class="label">Liquidity</span>
+    <span>$44,100</span>
+  </div>
+
+  <div class="row">
+    <span class="label">TXNS</span>
+    <span>1,284</span>
+  </div>
+
+  <div class="row">
+    <span class="label">Volatility</span>
+    <span>19.2%</span>
+  </div>
+
+  <div class="status">
+    🔥 Chaos Zone
+  </div>
+
+</div>
+
+<script>
+const canvas = document.getElementById("radar");
+const ctx = canvas.getContext("2d");
+
+function resize(){
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+}
+resize();
+window.addEventListener("resize", resize);
+
+const pools = [
+
+{
+  name:"ASTY / WIF",
+  x:.22,
+  y:.34,
+  score:100,
+  volume:"148,220",
+  liquidity:"44,100",
+  txns:"1,284",
+  volatility:"19.2"
+},
+
+{
+  name:"ASTY / ALCH",
+  x:.68,
+  y:.28,
+  score:72,
+  volume:"102,310",
+  liquidity:"39,210",
+  txns:"822",
+  volatility:"14.1"
+},
+
+{
+  name:"ASTY / JTO",
+  x:.55,
+  y:.68,
+  score:58,
+  volume:"81,200",
+  liquidity:"35,002",
+  txns:"601",
+  volatility:"11.4"
+},
+
+{
+  name:"ASTY / PIPPIN",
+  x:.32,
+  y:.73,
+  score:34,
+  volume:"42,800",
+  liquidity:"28,111",
+  txns:"304",
+  volatility:"7.2"
+}
+
+];
+
+let selected = pools[0];
+
+function getColor(score){
+
+  if(score < 20) return "#6d28d9";
+  if(score < 40) return "#9333ea";
+  if(score < 60) return "#7c3aed";
+  if(score < 80) return "#fb923c";
+
+  return "#ef4444";
+}
+
+function drawBackground(){
+
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+
+  const centerX = canvas.width / 2;
+  const centerY = canvas.height / 2;
+
+  for(let i=1;i<7;i++){
+
+    ctx.beginPath();
+    ctx.arc(centerX, centerY, i * 140, 0, Math.PI*2);
+    ctx.strokeStyle = "rgba(168,85,247,.06)";
+    ctx.lineWidth = 1;
+    ctx.stroke();
+  }
+
+  for(let i=0;i<360;i+=20){
+
+    const rad = i * Math.PI/180;
+
+    ctx.beginPath();
+    ctx.moveTo(centerX, centerY);
+    ctx.lineTo(
+      centerX + Math.cos(rad)*1000,
+      centerY + Math.sin(rad)*1000
+    );
+    ctx.strokeStyle = "rgba(168,85,247,.04)";
+    ctx.stroke();
+  }
+}
+
+function drawPools(time){
+
+  pools.forEach(pool=>{
+
+    const x = pool.x * canvas.width;
+    const y = pool.y * canvas.height;
+
+    const pulse =
+      Math.sin(time * 0.002 + pool.score) * 6;
+
+    const radius =
+      14 + (pool.score * 0.28);
+
+    const ring =
+      radius + 24 + pulse;
+
+    const color = getColor(pool.score);
+
+    ctx.beginPath();
+    ctx.arc(x,y,ring,0,Math.PI*2);
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 3;
+    ctx.shadowBlur = 24;
+    ctx.shadowColor = color;
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.arc(x,y,ring + 18 + pulse*.5,0,Math.PI*2);
+    ctx.strokeStyle = color + "55";
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.arc(x,y,radius,0,Math.PI*2);
+
+    const gradient =
+      ctx.createRadialGradient(
+        x,y,0,
+        x,y,radius
+      );
+
+    gradient.addColorStop(0,"#fff");
+    gradient.addColorStop(.2,color);
+    gradient.addColorStop(1,"rgba(0,0,0,0)");
+
+    ctx.fillStyle = gradient;
+    ctx.fill();
+
+    for(let i=0;i<pool.score/12;i++){
+
+      const angle =
+        time * 0.0003 +
+        i * (Math.PI*2/(pool.score/12));
+
+      const orbit = ring + 12;
+
+      const px =
+        x + Math.cos(angle) * orbit;
+
+      const py =
+        y + Math.sin(angle) * orbit;
+
+      ctx.beginPath();
+      ctx.arc(px,py,2.2,0,Math.PI*2);
+      ctx.fillStyle = color;
+      ctx.fill();
+    }
+
+  });
+}
+
+function animate(time){
+
+  drawBackground();
+  drawPools(time);
+
+  requestAnimationFrame(animate);
+}
+
+animate(0);
+
+canvas.addEventListener("click",(e)=>{
+
+  const mx = e.clientX;
+  const my = e.clientY;
+
+  pools.forEach(pool=>{
+
+    const x = pool.x * canvas.width;
+    const y = pool.y * canvas.height;
+
+    const dist =
+      Math.hypot(mx-x,my-y);
+
+    if(dist < 70){
+
+      selected = pool;
+      updatePanel();
+    }
+
+  });
+
+});
+
+function updatePanel(){
+
+  document.querySelector(".panel h2").innerText =
+    selected.name;
+
+  document.getElementById("score").innerText =
+    selected.score + "%";
+
+  const rows =
+    document.querySelectorAll(".row span:last-child");
+
+  rows[1].innerText =
+    "$" + selected.volume;
+
+  rows[2].innerText =
+    "$" + selected.liquidity;
+
+  rows[3].innerText =
+    selected.txns;
+
+  rows[4].innerText =
+    selected.volatility + "%";
+}
+
+</script>
+
+</body>
+</html>
