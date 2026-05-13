@@ -162,7 +162,7 @@ body{
 
 <section class="hero">
   <h1>ASTY Chaos Map</h1>
-  <p>Chaos Score is calculated from the same 24h fee output ranking as the ASTY Pool Dashboard. The strongest pool becomes 100%, all other pools are scaled relative to it.</p>
+  <p>Live volatility pressure across the ASTY pool network.</p>
   <div class="status-line" id="statusLine">Loading GeckoTerminal pool data...</div>
 
   <div class="stats">
@@ -323,15 +323,13 @@ function buildPositions(rows){
   const w = window.innerWidth;
   const h = window.innerHeight;
   const cx = w * 0.52;
-  const cy = h * 0.52;
-  const maxR = Math.min(w,h) * 0.38;
+  const cy = h * 0.54;
+  const maxR = Math.min(w,h) * 0.42;
 
   return rows.map((row,index)=>{
-    const ringIndex = Math.floor(index / 14);
-    const withinRing = index % 14;
-    const ringItems = Math.min(14, rows.length - ringIndex * 14);
-    const angle = (withinRing / ringItems) * Math.PI * 2 + ringIndex * 0.42;
-    const radius = maxR * (0.22 + ringIndex * 0.18);
+    const total = rows.length;
+    const angle = index * 2.399963229728653;
+    const radius = maxR * Math.sqrt(index / Math.max(total - 1, 1));
 
     return {
       ...row,
@@ -414,7 +412,7 @@ function drawBackground(time){
   const w = window.innerWidth;
   const h = window.innerHeight;
   const cx = w * 0.52;
-  const cy = h * 0.52;
+  const cy = h * 0.54;
 
   ctx.clearRect(0,0,w,h);
 
@@ -452,22 +450,22 @@ function drawPools(time){
     const pulse = Math.sin(time * 0.002 + pool.drift) * 5;
     const color = getChaosColor(pool.chaosScore);
 
-    const nodeRadius = 6 + pool.chaosScore * 0.14;
-    const ringRadius = 18 + pool.chaosScore * 0.48 + pulse;
-    const outerRing = ringRadius + 13 + pulse * 0.6;
+    const nodeRadius = 5 + pool.chaosScore * 0.08;
+    const ringRadius = 12 + pool.chaosScore * 0.22 + pulse * 0.45;
+    const outerRing = ringRadius + 7 + pulse * 0.3;
 
     ctx.beginPath();
     ctx.arc(pool.x,pool.y,ringRadius,0,Math.PI*2);
     ctx.strokeStyle = color;
-    ctx.lineWidth = Math.max(1.5, pool.chaosScore / 28);
-    ctx.shadowBlur = 22 + pool.chaosScore * 0.25;
+    ctx.lineWidth = Math.max(1.2, pool.chaosScore / 55);
+    ctx.shadowBlur = 14 + pool.chaosScore * 0.12;
     ctx.shadowColor = color;
     ctx.stroke();
 
     ctx.beginPath();
     ctx.arc(pool.x,pool.y,outerRing,0,Math.PI*2);
-    ctx.strokeStyle = color + "55";
-    ctx.lineWidth = 1.5;
+    ctx.strokeStyle = color + "40";
+    ctx.lineWidth = 1;
     ctx.stroke();
 
     ctx.beginPath();
@@ -479,24 +477,24 @@ function drawPools(time){
     ctx.fillStyle = g;
     ctx.fill();
 
-    const particles = Math.max(1, Math.floor(pool.chaosScore / 18));
+    const particles = Math.max(1, Math.floor(pool.chaosScore / 22));
     for(let i=0;i<particles;i++){
       const angle = time * 0.00045 + i * (Math.PI * 2 / particles) + pool.drift;
-      const orbit = outerRing + 8;
+      const orbit = outerRing + 5;
       const px = pool.x + Math.cos(angle) * orbit;
       const py = pool.y + Math.sin(angle) * orbit;
 
       ctx.beginPath();
-      ctx.arc(px,py,2,0,Math.PI*2);
+      ctx.arc(px,py,1.7,0,Math.PI*2);
       ctx.fillStyle = color;
       ctx.fill();
     }
 
-    if(pool.chaosScore >= 50){
+    if(pool.chaosScore >= 60){
       ctx.font = "700 11px Inter, Arial";
       ctx.fillStyle = "rgba(255,255,255,.82)";
       ctx.textAlign = "center";
-      ctx.fillText(pool.label.replace("ASTY / ",""), pool.x, pool.y + outerRing + 18);
+      ctx.fillText(pool.label.replace("ASTY / ",""), pool.x, pool.y + outerRing + 16);
     }
 
     ctx.shadowBlur = 0;
@@ -518,7 +516,7 @@ canvas.addEventListener("click",event=>{
 
   radarPools.forEach(pool=>{
     const d = Math.hypot(mx - pool.x, my - pool.y);
-    const hitRadius = 28 + pool.chaosScore * 0.5;
+    const hitRadius = 22 + pool.chaosScore * 0.28;
     if(d < hitRadius && d < closestDist){
       closest = pool;
       closestDist = d;
