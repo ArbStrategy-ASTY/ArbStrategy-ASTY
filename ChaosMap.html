@@ -449,16 +449,17 @@ function drawPools(time){
   radarPools.forEach(pool=>{
     const pulse = Math.sin(time * 0.002 + pool.drift) * 5;
     const color = getChaosColor(pool.chaosScore);
+    const scale = Math.max(0.12, pool.chaosScore / 100);
 
-    const nodeRadius = 5 + pool.chaosScore * 0.08;
-    const ringRadius = 12 + pool.chaosScore * 0.22 + pulse * 0.45;
-    const outerRing = ringRadius + 7 + pulse * 0.3;
+    const nodeRadius = 4 + scale * 18;
+    const ringRadius = 9 + scale * 42 + pulse * (0.25 + scale * 0.6);
+    const outerRing = ringRadius + 5 + scale * 12 + pulse * 0.25;
 
     ctx.beginPath();
     ctx.arc(pool.x,pool.y,ringRadius,0,Math.PI*2);
     ctx.strokeStyle = color;
-    ctx.lineWidth = Math.max(1.2, pool.chaosScore / 55);
-    ctx.shadowBlur = 14 + pool.chaosScore * 0.12;
+    ctx.lineWidth = Math.max(1.2, pool.chaosScore / 42);
+    ctx.shadowBlur = 14 + pool.chaosScore * 0.16;
     ctx.shadowColor = color;
     ctx.stroke();
 
@@ -477,7 +478,7 @@ function drawPools(time){
     ctx.fillStyle = g;
     ctx.fill();
 
-    const particles = Math.max(1, Math.floor(pool.chaosScore / 22));
+    const particles = Math.max(1, Math.floor(pool.chaosScore / 18));
     for(let i=0;i<particles;i++){
       const angle = time * 0.00045 + i * (Math.PI * 2 / particles) + pool.drift;
       const orbit = outerRing + 5;
@@ -490,13 +491,16 @@ function drawPools(time){
       ctx.fill();
     }
 
-    if(pool.chaosScore >= 60){
-      ctx.font = "700 11px Inter, Arial";
-      ctx.fillStyle = "rgba(255,255,255,.82)";
-      ctx.textAlign = "center";
-      ctx.fillText(pool.label.replace("ASTY / ",""), pool.x, pool.y + outerRing + 16);
-    }
+    const tokenName = pool.label.replace("ASTY / ","");
 
+    ctx.font = `${pool.chaosScore >= 70 ? "800" : "700"} ${pool.chaosScore >= 70 ? 12 : 10}px Inter, Arial`;
+    ctx.fillStyle = pool.chaosScore >= 50 ? "rgba(255,255,255,.9)" : "rgba(216,209,236,.72)";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+
+    ctx.shadowBlur = pool.chaosScore >= 50 ? 8 : 0;
+    ctx.shadowColor = color;
+    ctx.fillText(tokenName, pool.x, pool.y + outerRing + 14);
     ctx.shadowBlur = 0;
   });
 }
@@ -516,7 +520,7 @@ canvas.addEventListener("click",event=>{
 
   radarPools.forEach(pool=>{
     const d = Math.hypot(mx - pool.x, my - pool.y);
-    const hitRadius = 22 + pool.chaosScore * 0.28;
+    const hitRadius = 26 + Math.max(8, pool.chaosScore * 0.42);
     if(d < hitRadius && d < closestDist){
       closest = pool;
       closestDist = d;
