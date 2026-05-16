@@ -11,25 +11,30 @@ html{scroll-behavior:smooth}
 body{
   margin:0;
   font-family:Inter,Arial,sans-serif;
-  background:
-    radial-gradient(circle at top,rgba(124,58,237,.24),transparent 32%),
-    radial-gradient(circle at 80% 18%,rgba(167,139,250,.12),transparent 24%),
-    linear-gradient(180deg,#0b1020 0%,#060914 100%);
+  background:#060914;
   color:#fff;
   min-height:100vh;
 }
 a{text-decoration:none;color:inherit}
 
+body{
+  background:
+    radial-gradient(circle at top,rgba(124,58,237,.24),transparent 32%),
+    radial-gradient(circle at 80% 18%,rgba(167,139,250,.12),transparent 24%),
+    linear-gradient(180deg,#0b1020 0%,#060914 100%);
+}
+
 .topbar{
   position:sticky;
   top:0;
-  z-index:20;
+  z-index:30;
   backdrop-filter:blur(14px);
-  background:rgba(8,11,23,.78);
+  background:rgba(8,11,23,.82);
   border-bottom:1px solid rgba(255,255,255,.08);
 }
+
 .nav{
-  max-width:1220px;
+  max-width:1240px;
   margin:auto;
   padding:14px 18px;
   display:flex;
@@ -37,11 +42,13 @@ a{text-decoration:none;color:inherit}
   justify-content:space-between;
   gap:14px;
 }
+
 .brand{
   display:flex;
   align-items:center;
   gap:14px;
 }
+
 .brand-logo{
   width:46px;
   height:46px;
@@ -49,24 +56,29 @@ a{text-decoration:none;color:inherit}
   box-shadow:0 0 28px rgba(124,58,237,.45);
   animation:pulseGlow 3s ease-in-out infinite;
 }
+
 @keyframes pulseGlow{
   0%,100%{filter:drop-shadow(0 0 10px rgba(124,58,237,.35))}
   50%{filter:drop-shadow(0 0 24px rgba(167,139,250,.65))}
 }
+
 .brand-title{
   font-size:20px;
   font-weight:900;
 }
+
 .brand-sub{
   font-size:12px;
   color:#b8b0d1;
   margin-top:2px;
 }
+
 .nav-links{
   display:flex;
   flex-wrap:wrap;
   gap:10px;
 }
+
 .nav-pill{
   padding:9px 13px;
   border-radius:999px;
@@ -77,20 +89,24 @@ a{text-decoration:none;color:inherit}
   color:#dad6ea;
   transition:.2s ease;
 }
+
 .nav-pill:hover{
   transform:translateY(-1px);
   background:rgba(255,255,255,.08);
   color:#fff;
 }
+
 .nav-pill.primary{
   background:linear-gradient(135deg,#8b5cf6,#6d28d9);
   color:#fff;
 }
+
 .nav-pill.orange{
   background:linear-gradient(135deg,#f59e0b,#ea580c);
   color:#fff;
   border-color:transparent;
 }
+
 .nav-pill.cyan{
   background:linear-gradient(135deg,#06b6d4,#0891b2);
   color:#fff;
@@ -98,196 +114,188 @@ a{text-decoration:none;color:inherit}
 }
 
 .page{
-  max-width:1220px;
+  max-width:1240px;
   margin:auto;
-  padding:24px 18px 44px;
-  position:relative;
+  padding:22px 18px 42px;
 }
-.wolf{
-  position:fixed;
-  right:38px;
-  top:118px;
-  width:190px;
-  opacity:.12;
-  pointer-events:none;
-  filter:drop-shadow(0 0 28px rgba(167,139,250,.45));
-  z-index:0;
-}
-.header-panel{
-  position:relative;
-  z-index:2;
+
+.header-grid{
   display:grid;
   grid-template-columns:1.2fr .8fr;
   gap:14px;
-  margin-bottom:18px;
+  margin-bottom:16px;
 }
-.info-card{
-  border-radius:22px;
-  padding:18px 20px;
+
+.info-card,.stat{
+  border-radius:20px;
+  padding:16px 18px;
   background:rgba(255,255,255,.045);
   border:1px solid rgba(255,255,255,.08);
   backdrop-filter:blur(12px);
 }
+
 .info-card h1{
   margin:0;
   font-size:32px;
   letter-spacing:-.7px;
 }
+
 .status-line{
   margin-top:10px;
   font-size:12px;
   color:#9f98bb;
 }
+
 .stats{
   display:grid;
   grid-template-columns:1fr 1fr;
   gap:12px;
 }
-.stat{
-  border-radius:20px;
-  padding:16px;
-  background:rgba(255,255,255,.045);
-  border:1px solid rgba(255,255,255,.08);
-  backdrop-filter:blur(12px);
-}
+
 .stat-label{
   font-size:12px;
   color:#c9b8ff;
   font-weight:800;
   margin-bottom:8px;
 }
+
 .stat-value{
-  font-size:22px;
+  font-size:21px;
   font-weight:900;
-  line-height:1.15;
+  line-height:1.12;
 }
 
-.chaos-map{
+.map-wrap{
   position:relative;
-  z-index:2;
-  display:flex;
-  flex-wrap:wrap;
-  justify-content:center;
-  align-items:center;
-  align-content:center;
-  gap:8px;
-  min-height:calc(100vh - 230px);
-  padding:18px;
-  border-radius:28px;
-  background:
-    linear-gradient(rgba(255,255,255,.025) 1px,transparent 1px),
-    linear-gradient(90deg,rgba(255,255,255,.025) 1px,transparent 1px),
-    rgba(255,255,255,.025);
-  background-size:36px 36px;
-  border:1px solid rgba(255,255,255,.07);
-  backdrop-filter:blur(8px);
+  border-radius:22px;
+  overflow:hidden;
+  background:#050814;
+  border:1px solid rgba(255,255,255,.09);
+  box-shadow:0 0 40px rgba(124,58,237,.12);
 }
-.block{
-  flex:0 0 auto;
-  width:var(--s);
-  height:var(--s);
-  border-radius:18px;
+
+#treemap{
+  position:relative;
+  width:100%;
+  height:690px;
+  background:#050814;
+  overflow:hidden;
+}
+
+.tile{
+  position:absolute;
+  overflow:hidden;
+  border:1px solid rgba(5,8,20,.92);
+  cursor:pointer;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  text-align:center;
+  transition:filter .16s ease, transform .16s ease, box-shadow .16s ease;
+}
+
+.tile:hover{
+  z-index:10;
+  filter:brightness(1.14);
+  box-shadow:0 0 24px rgba(255,255,255,.15);
+}
+
+.tile-inner{
+  width:100%;
+  height:100%;
+  padding:8px;
   display:flex;
   flex-direction:column;
   align-items:center;
   justify-content:center;
-  text-align:center;
-  cursor:pointer;
-  position:relative;
-  overflow:hidden;
-  padding:8px;
-  background:linear-gradient(135deg,var(--c1),var(--c2));
-  border:1px solid rgba(255,255,255,.16);
-  box-shadow:
-    0 0 var(--glow) var(--glowColor),
-    inset 0 0 28px rgba(255,255,255,.07);
-  transition:transform .18s ease, box-shadow .18s ease, border-color .18s ease;
+  background:
+    radial-gradient(circle at 30% 20%,rgba(255,255,255,.22),transparent 30%),
+    linear-gradient(135deg,var(--c1),var(--c2));
 }
-.block:hover{
-  transform:translateY(-3px) scale(1.025);
-  border-color:rgba(255,255,255,.34);
-}
-.block::before{
-  content:"";
-  position:absolute;
-  inset:-40%;
-  background:radial-gradient(circle at 30% 20%,rgba(255,255,255,.34),transparent 32%);
-  opacity:.7;
-  pointer-events:none;
-}
-.token{
-  position:relative;
-  z-index:1;
+
+.tile-token{
   font-weight:900;
-  line-height:1;
+  line-height:.95;
+  letter-spacing:-.03em;
   font-size:var(--tokenSize);
-  word-break:break-word;
+  text-shadow:0 2px 10px rgba(0,0,0,.38);
   max-width:100%;
-  text-shadow:0 2px 10px rgba(0,0,0,.45);
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
 }
-.percent{
-  position:relative;
-  z-index:1;
+
+.tile-percent{
   margin-top:6px;
-  font-weight:900;
+  font-weight:800;
   font-size:var(--percentSize);
-  color:rgba(255,255,255,.88);
-  text-shadow:0 2px 10px rgba(0,0,0,.45);
+  color:rgba(255,255,255,.86);
+  text-shadow:0 2px 10px rgba(0,0,0,.38);
 }
-.block.top{
-  order:-100;
-  border-radius:24px;
+
+.tile-fees{
+  margin-top:3px;
+  font-weight:700;
+  font-size:var(--feeSize);
+  color:rgba(255,255,255,.72);
+  text-shadow:0 2px 10px rgba(0,0,0,.38);
 }
-.block.high{order:-80}
-.block.mid{order:-40}
-.block.low{order:0}
 
 .detail-panel{
-  position:fixed;
-  right:22px;
-  bottom:22px;
-  z-index:30;
-  width:340px;
-  padding:18px 20px;
-  border-radius:24px;
-  background:rgba(10,13,28,.82);
-  border:1px solid rgba(255,255,255,.1);
-  backdrop-filter:blur(16px);
-  box-shadow:0 0 42px rgba(124,58,237,.18);
+  margin-top:16px;
+  border-radius:22px;
+  padding:16px 18px;
+  background:rgba(255,255,255,.045);
+  border:1px solid rgba(255,255,255,.08);
+  backdrop-filter:blur(12px);
+  display:grid;
+  grid-template-columns:1.2fr repeat(4,1fr) auto;
+  gap:12px;
+  align-items:center;
 }
-.detail-panel h2{
-  margin:0 0 14px;
+
+.detail-title{
   font-size:22px;
-}
-.row{
-  display:flex;
-  justify-content:space-between;
-  gap:16px;
-  margin:10px 0;
-  font-size:14px;
-}
-.label{color:#b8b0d1}
-.value{font-weight:900}
-.badge{
-  display:inline-flex;
-  margin-top:12px;
-  padding:10px 14px;
-  border-radius:999px;
-  background:rgba(251,146,60,.13);
-  border:1px solid rgba(251,146,60,.28);
-  color:#ffd7ba;
-  font-size:13px;
   font-weight:900;
 }
+
+.detail-item{
+  min-width:0;
+}
+
+.detail-label{
+  font-size:11px;
+  color:#c9b8ff;
+  font-weight:800;
+  margin-bottom:5px;
+}
+
+.detail-value{
+  font-size:15px;
+  font-weight:900;
+  white-space:nowrap;
+}
+
 .open-link{
   display:inline-flex;
-  margin-top:14px;
   padding:10px 14px;
   border-radius:999px;
   background:linear-gradient(135deg,#8b5cf6,#6d28d9);
   color:#fff;
   font-size:13px;
   font-weight:900;
+  white-space:nowrap;
+}
+
+.wolf{
+  position:fixed;
+  right:34px;
+  top:120px;
+  width:185px;
+  opacity:.09;
+  pointer-events:none;
+  filter:drop-shadow(0 0 28px rgba(167,139,250,.45));
+  z-index:0;
 }
 
 @media(max-width:900px){
@@ -295,52 +303,55 @@ a{text-decoration:none;color:inherit}
     flex-direction:column;
     align-items:flex-start;
   }
-  .header-panel{
+
+  .header-grid{
     grid-template-columns:1fr;
   }
-  .stats{
+
+  #treemap{
+    height:720px;
+  }
+
+  .detail-panel{
     grid-template-columns:1fr 1fr;
   }
-  .chaos-map{
-    min-height:auto;
+
+  .detail-title{
+    grid-column:1/-1;
+  }
+
+  .open-link{
     justify-content:center;
-    padding:12px;
-    gap:7px;
   }
-  .detail-panel{
-    position:relative;
-    right:auto;
-    bottom:auto;
-    width:auto;
-    margin:16px 0 0;
+
+  .wolf{
+    display:none;
   }
-  .wolf{display:none}
 }
 
 @media(max-width:560px){
   .page{
-    padding:18px 12px 32px;
+    padding:16px 10px 32px;
   }
+
   .info-card h1{
     font-size:26px;
   }
+
   .stats{
     grid-template-columns:1fr;
   }
-  .chaos-map{
-    display:grid;
-    grid-template-columns:repeat(2,minmax(0,1fr));
-    align-items:stretch;
+
+  #treemap{
+    height:760px;
   }
-  .block{
-    width:100%;
-    height:auto;
-    aspect-ratio:1/1;
-    border-radius:16px;
+
+  .tile-inner{
+    padding:5px;
   }
-  .block.top{
-    grid-column:span 2;
-    aspect-ratio:2/1;
+
+  .detail-panel{
+    grid-template-columns:1fr;
   }
 }
 </style>
@@ -354,7 +365,7 @@ a{text-decoration:none;color:inherit}
       <img src="assets/logo.png" alt="ASTY Logo" class="brand-logo">
       <div>
         <div class="brand-title">$ASTY Chaos Map</div>
-        <div class="brand-sub">Live Block Visualization</div>
+        <div class="brand-sub">Live Treemap Visualization</div>
       </div>
     </div>
 
@@ -371,9 +382,9 @@ a{text-decoration:none;color:inherit}
 <img class="wolf" src="assets/wolf.png" alt="ASTY Wolf">
 
 <main class="page">
-  <section class="header-panel">
+  <section class="header-grid">
     <div class="info-card">
-      <h1>Chaos Block Map</h1>
+      <h1>Chaos Treemap</h1>
       <div class="status-line" id="statusLine">Loading GeckoTerminal pool data...</div>
     </div>
 
@@ -390,16 +401,33 @@ a{text-decoration:none;color:inherit}
     </div>
   </section>
 
-  <section class="chaos-map" id="chaosMap"></section>
+  <section class="map-wrap">
+    <div id="treemap"></div>
+  </section>
 
-  <section class="detail-panel" id="detailPanel">
-    <h2 id="panelName">Loading...</h2>
-    <div class="row"><span class="label">Chaos Score</span><span class="value" id="panelChaos">-</span></div>
-    <div class="row"><span class="label">Fees 24h</span><span class="value" id="panelFees">-</span></div>
-    <div class="row"><span class="label">Volume 24h</span><span class="value" id="panelVolume">-</span></div>
-    <div class="row"><span class="label">Fee Rate</span><span class="value" id="panelFeeRate">-</span></div>
-    <div class="badge" id="panelStatus">🟣 Loading</div>
-    <br>
+  <section class="detail-panel">
+    <div class="detail-title" id="panelName">Loading...</div>
+
+    <div class="detail-item">
+      <div class="detail-label">Chaos Score</div>
+      <div class="detail-value" id="panelChaos">-</div>
+    </div>
+
+    <div class="detail-item">
+      <div class="detail-label">Fees 24h</div>
+      <div class="detail-value" id="panelFees">-</div>
+    </div>
+
+    <div class="detail-item">
+      <div class="detail-label">Volume 24h</div>
+      <div class="detail-value" id="panelVolume">-</div>
+    </div>
+
+    <div class="detail-item">
+      <div class="detail-label">Fee Rate</div>
+      <div class="detail-value" id="panelFeeRate">-</div>
+    </div>
+
     <a class="open-link" id="panelLink" href="#" target="_blank">Open Pool 🟣</a>
   </section>
 </main>
@@ -499,34 +527,11 @@ async function fetchGeckoChunk(chunk){
   return Array.isArray(data.data) ? data.data : [];
 }
 
-function getStatus(score){
-  if(score >= 80) return "🔥 Chaos Zone";
-  if(score >= 50) return "🟠 High Pressure";
-  if(score >= 20) return "🟣 Active";
-  return "🔵 Calm";
-}
-
 function getColors(score){
-  if(score >= 80){
-    return ["#ef4444","#f97316","rgba(239,68,68,.28)"];
-  }
-  if(score >= 50){
-    return ["#f59e0b","#7c3aed","rgba(245,158,11,.22)"];
-  }
-  if(score >= 20){
-    return ["#8b5cf6","#6d28d9","rgba(139,92,246,.18)"];
-  }
-  return ["#3b1b82","#1e1b4b","rgba(124,58,237,.12)"];
-}
-
-function getSize(score,index){
-  const base = window.innerWidth <= 560 ? 92 : 54;
-  const maxExtra = window.innerWidth <= 560 ? 0 : 188;
-  const size = base + (score / 100) * maxExtra;
-
-  if(index === 0 && window.innerWidth > 560) return Math.max(size,260);
-  if(index < 3 && window.innerWidth > 560) return Math.max(size,190);
-  return size;
+  if(score >= 80) return ["#ef4444","#f97316"];
+  if(score >= 50) return ["#f59e0b","#c2410c"];
+  if(score >= 20) return ["#8b5cf6","#6d28d9"];
+  return ["#312e81","#1e1b4b"];
 }
 
 function updatePanel(pool){
@@ -536,40 +541,134 @@ function updatePanel(pool){
   document.getElementById("panelFees").textContent = fmtUsd(pool.fees24h);
   document.getElementById("panelVolume").textContent = fmtUsd(pool.volume24h);
   document.getElementById("panelFeeRate").textContent = formatFee(pool.feePercent);
-  document.getElementById("panelStatus").textContent = getStatus(pool.chaosScore);
   document.getElementById("panelLink").href = `https://www.geckoterminal.com/solana/pools/${pool.id}`;
 }
 
-function renderBlocks(rows){
-  const map = document.getElementById("chaosMap");
-  map.innerHTML = "";
+function normalizeSizes(items){
+  const minValue = 0.25;
+  return items.map(item => ({
+    ...item,
+    layoutValue: Math.max(item.chaosScore, minValue)
+  }));
+}
 
-  rows.forEach((row,index)=>{
-    const size = getSize(row.chaosScore,index);
-    const [c1,c2,glow] = getColors(row.chaosScore);
-    const tokenSize = Math.max(10, Math.min(28, size * 0.16));
-    const percentSize = Math.max(10, Math.min(24, size * 0.14));
+function worstRatio(row, w){
+  if(!row.length) return Infinity;
+  const sum = row.reduce((a,b)=>a+b.layoutValue,0);
+  const max = Math.max(...row.map(i=>i.layoutValue));
+  const min = Math.min(...row.map(i=>i.layoutValue));
+  return Math.max((w*w*max)/(sum*sum), (sum*sum)/(w*w*min));
+}
 
-    const block = document.createElement("button");
-    block.className =
-      "block " +
-      (index === 0 ? "top" : row.chaosScore >= 80 ? "high" : row.chaosScore >= 50 ? "mid" : "low");
+function layoutRow(row, rect, horizontal, result){
+  const sum = row.reduce((a,b)=>a+b.layoutValue,0);
 
-    block.style.setProperty("--s", size + "px");
-    block.style.setProperty("--c1", c1);
-    block.style.setProperty("--c2", c2);
-    block.style.setProperty("--glow", row.chaosScore >= 80 ? "34px" : row.chaosScore >= 50 ? "24px" : "14px");
-    block.style.setProperty("--glowColor", glow);
-    block.style.setProperty("--tokenSize", tokenSize + "px");
-    block.style.setProperty("--percentSize", percentSize + "px");
+  if(horizontal){
+    const rowH = sum / rect.w;
+    let x = rect.x;
 
-    block.innerHTML = `
-      <div class="token">${getTokenName(row.label)}</div>
-      <div class="percent">${Math.round(row.chaosScore)}%</div>
+    row.forEach(item=>{
+      const itemW = item.layoutValue / rowH;
+      result.push({...item,x,y:rect.y,w:itemW,h:rowH});
+      x += itemW;
+    });
+
+    rect.y += rowH;
+    rect.h -= rowH;
+  }else{
+    const colW = sum / rect.h;
+    let y = rect.y;
+
+    row.forEach(item=>{
+      const itemH = item.layoutValue / colW;
+      result.push({...item,x:rect.x,y,w:colW,h:itemH});
+      y += itemH;
+    });
+
+    rect.x += colW;
+    rect.w -= colW;
+  }
+}
+
+function squarify(items, width, height){
+  const total = items.reduce((a,b)=>a+b.layoutValue,0);
+  const area = width * height;
+
+  const scaled = items.map(item=>({
+    ...item,
+    layoutValue:item.layoutValue / total * area
+  }));
+
+  const result = [];
+  const rect = {x:0,y:0,w:width,h:height};
+  let row = [];
+
+  while(scaled.length){
+    const item = scaled[0];
+    const shortSide = Math.min(rect.w,rect.h);
+
+    if(row.length === 0 || worstRatio(row.concat(item),shortSide) <= worstRatio(row,shortSide)){
+      row.push(item);
+      scaled.shift();
+    }else{
+      layoutRow(row,rect,rect.w >= rect.h,result);
+      row = [];
+    }
+  }
+
+  if(row.length){
+    layoutRow(row,rect,rect.w >= rect.h,result);
+  }
+
+  return result;
+}
+
+function renderTreemap(rows){
+  const container = document.getElementById("treemap");
+  container.innerHTML = "";
+
+  const width = container.clientWidth;
+  const height = container.clientHeight;
+
+  const data = normalizeSizes(rows);
+  const layout = squarify(data,width,height);
+
+  layout.forEach((item,index)=>{
+    const tile = document.createElement("button");
+    tile.className = "tile";
+
+    const gap = 1;
+    tile.style.left = item.x + gap + "px";
+    tile.style.top = item.y + gap + "px";
+    tile.style.width = Math.max(1,item.w - gap * 2) + "px";
+    tile.style.height = Math.max(1,item.h - gap * 2) + "px";
+
+    const [c1,c2] = getColors(item.chaosScore);
+    tile.style.setProperty("--c1",c1);
+    tile.style.setProperty("--c2",c2);
+
+    const minSide = Math.min(item.w,item.h);
+    const tokenSize = Math.max(8,Math.min(44,minSide * 0.22));
+    const percentSize = Math.max(8,Math.min(24,minSide * 0.13));
+    const feeSize = Math.max(0,Math.min(15,minSide * 0.09));
+
+    tile.style.setProperty("--tokenSize",tokenSize + "px");
+    tile.style.setProperty("--percentSize",percentSize + "px");
+    tile.style.setProperty("--feeSize",feeSize + "px");
+
+    const showFees = item.w > 90 && item.h > 70;
+    const showPercent = item.w > 42 && item.h > 38;
+
+    tile.innerHTML = `
+      <div class="tile-inner">
+        <div class="tile-token">${getTokenName(item.label)}</div>
+        ${showPercent ? `<div class="tile-percent">${Math.round(item.chaosScore)}%</div>` : ""}
+        ${showFees ? `<div class="tile-fees">${fmtUsd(item.fees24h)}</div>` : ""}
+      </div>
     `;
 
-    block.addEventListener("click",()=>updatePanel(row));
-    map.appendChild(block);
+    tile.addEventListener("click",()=>updatePanel(item));
+    container.appendChild(tile);
   });
 }
 
@@ -612,7 +711,7 @@ async function load(){
     document.getElementById("topPool").textContent = rows[0]?.label || "-";
     statusLine.textContent = `Loaded ${rows.length} ASTY pools. Auto-updating every 60s.`;
 
-    renderBlocks(rows);
+    renderTreemap(rows);
     updatePanel(rows[0]);
 
   }catch(error){
@@ -623,7 +722,7 @@ async function load(){
 
 load();
 setInterval(load,60000);
-window.addEventListener("resize",load);
+window.addEventListener("resize",()=>load());
 </script>
 
 </body>
