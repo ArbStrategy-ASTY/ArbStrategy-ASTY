@@ -604,6 +604,14 @@
     const ASTY_MINT = "ASTYqeaoK83Zs1pTFEXZUB6BM8cG8YLTsN852NUkt7ZR";
     const DEFAULT_RPC = "https://solana.rpc.subquery.network/public";
 
+    const SUPPLY_RPC_FALLBACKS = [
+      "https://solana.rpc.subquery.network/public",
+      "https://solana-rpc.publicnode.com",
+      "https://solana.drpc.org",
+      "https://solana.api.onfinality.io/public",
+      "https://api.mainnet-beta.solana.com"
+    ];
+
     const ui = {
       walletInput: document.getElementById("walletInput"),
       scanBtn: document.getElementById("scanBtn"),
@@ -716,17 +724,32 @@
       return total;
     }
 
-    async function getAstySupply(rpcUrl) {
-      const result = await solanaRpc(rpcUrl, "getTokenSupply", [
-        ASTY_MINT
-      ]);
+    async function getAstySupply() {
+      let lastError = null;
 
-      const supply =
-        result?.value?.uiAmountString ??
-        result?.value?.uiAmount ??
-        "0";
+      for (const rpcUrl of SUPPLY_RPC_FALLBACKS) {
+        try {
+          const result = await solanaRpc(rpcUrl, "getTokenSupply", [
+            ASTY_MINT
+          ]);
 
-      return Number(supply) || 0;
+          const supply =
+            result?.value?.uiAmountString ??
+            result?.value?.uiAmount ??
+            "0";
+
+          const parsedSupply = Number(supply) || 0;
+
+          if (parsedSupply > 0) {
+            return parsedSupply;
+          }
+        } catch (err) {
+          lastError = err;
+          console.warn("Supply RPC failed:", rpcUrl, err);
+        }
+      }
+
+      throw lastError || new Error("All supply RPCs failed");
     }
 
     async function fetchAstyPriceFromGeckoTerminal() {
@@ -887,29 +910,11 @@
       flashPulse("SCANNING", "yellow");
 
       try {
-        setStatus("Loading ASTY price", "Requesting GeckoTerminal token data...");
+        const tokenData = await fetchAstyPriceFromGeckoTerminal();
+        const priceUsd = tokenData.priceUsd;
+        const normalizedSupply = await getAstySupply();
 
-let tokenData;
-let priceUsd;
-
-try {
-  tokenData = await fetchAstyPriceFromGeckoTerminal();
-  priceUsd = tokenData.priceUsd;
-} catch (e) {
-  throw new Error("GeckoTerminal price request failed");
-}
-
-setStatus("Loading ASTY supply", "Requesting live supply from Solana RPC...");
-
-let normalizedSupply;
-
-try {
-  normalizedSupply = await getAstySupply(DEFAULT_RPC);
-} catch (e) {
-  throw new Error("Solana RPC supply request failed");
-}
-
-setStatus("Token data loaded", `ASTY price ${formatUsd(priceUsd, 4)} loaded. Scanning wallets...`);
+        setStatus("Price loaded", `ASTY price detected at ${formatUsd(priceUsd, 4)}. Scanning wallets...`);
 
         const walletResults = [];
         for (let i = 0; i < wallets.length; i++) {
@@ -954,7 +959,6 @@ setStatus("Token data loaded", `ASTY price ${formatUsd(priceUsd, 4)} loaded. Sca
         }
 
         setStatus("Scan failed", message);
-        ui.coreSub.textContent = message;
         flashPulse("ERROR", "red");
       } finally {
         state.scanning = false;
