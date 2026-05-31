@@ -657,9 +657,10 @@
       "https://api.mainnet-beta.solana.com"
     ];
 
-    const SPL_TOKEN_PROGRAM_ID = "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA";
     const ASSOCIATED_TOKEN_PROGRAM_ID = "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL";
     const RPC_TIMEOUT_MS = 12000;
+
+    let cachedAstyTokenProgramId = null;
 
     const ui = {
       walletInput: document.getElementById("walletInput"),
@@ -832,10 +833,33 @@
       throw new Error(`All RPCs failed. Last RPC: ${rpcName(lastRpc)}. Last error: ${lastError?.message || "unknown"}`);
     }
 
-    function deriveAssociatedTokenAccount(web3, ownerAddress, mintAddress) {
+    async function getAstyTokenProgramId() {
+      if (cachedAstyTokenProgramId) {
+        return cachedAstyTokenProgramId;
+      }
+
+      const result = await solanaRpcWithFallback("getAccountInfo", [
+        ASTY_MINT,
+        {
+          encoding: "jsonParsed",
+          commitment: "finalized"
+        }
+      ]);
+
+      const owner = result?.value?.owner;
+
+      if (!owner) {
+        throw new Error("Could not detect ASTY token program");
+      }
+
+      cachedAstyTokenProgramId = owner;
+      return owner;
+    }
+
+    function deriveAssociatedTokenAccount(web3, ownerAddress, mintAddress, tokenProgramId) {
       const owner = new web3.PublicKey(ownerAddress);
       const mint = new web3.PublicKey(mintAddress);
-      const tokenProgram = new web3.PublicKey(SPL_TOKEN_PROGRAM_ID);
+      const tokenProgram = new web3.PublicKey(tokenProgramId);
       const associatedTokenProgram = new web3.PublicKey(ASSOCIATED_TOKEN_PROGRAM_ID);
 
       const [ata] = web3.PublicKey.findProgramAddressSync(
@@ -850,13 +874,14 @@
       return ata.toBase58();
     }
 
-    async function getTokenAccountAmountByAta(ownerAddress) {
+    async function getTokenAccountAmountByAta(ownerAddress, tokenProgramId) {
       const web3 = await loadSolanaWeb3();
 
       const ata = deriveAssociatedTokenAccount(
         web3,
         ownerAddress,
-        ASTY_MINT
+        ASTY_MINT,
+        tokenProgramId
       );
 
       const result = await solanaRpcWithFallback("getAccountInfo", [
@@ -1062,6 +1087,9 @@
       try {
         await loadSolanaWeb3();
 
+        setStatus("Detecting ASTY program", "Reading ASTY mint account...");
+        const tokenProgramId = await getAstyTokenProgramId();
+
         setStatus("Loading token data", "Fetching ASTY price...");
         const tokenData = await fetchAstyPriceFromGeckoTerminal();
         const priceUsd = tokenData.priceUsd;
@@ -1081,7 +1109,7 @@
           let errorMessage = "";
 
           try {
-            asty = await getTokenAccountAmountByAta(wallets[i]);
+            asty = await getTokenAccountAmountByAta(wallets[i], tokenProgramId);
           } catch (err) {
             failed = true;
             errorMessage = err.message || "Wallet scan failed";
