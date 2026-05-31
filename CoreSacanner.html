@@ -612,6 +612,14 @@
       "https://api.mainnet-beta.solana.com"
     ];
 
+    const WALLET_RPC_FALLBACKS = [
+      "https://solana.rpc.subquery.network/public",
+      "https://solana.drpc.org",
+      "https://solana.api.onfinality.io/public",
+      "https://solana-rpc.publicnode.com",
+      "https://api.mainnet-beta.solana.com"
+    ];
+
     const ui = {
       walletInput: document.getElementById("walletInput"),
       scanBtn: document.getElementById("scanBtn"),
@@ -700,6 +708,7 @@
       if (json.error) {
         throw new Error(json.error.message || "RPC error");
       }
+
       return json.result;
     }
 
@@ -718,10 +727,26 @@
           item?.account?.data?.parsed?.info?.tokenAmount?.uiAmountString ??
           item?.account?.data?.parsed?.info?.tokenAmount?.uiAmount ??
           "0";
+
         total += Number(amount) || 0;
       }
 
       return total;
+    }
+
+    async function getAstyAmountForWalletWithFallback(owner) {
+      let lastError = null;
+
+      for (const rpcUrl of WALLET_RPC_FALLBACKS) {
+        try {
+          return await getAstyAmountForWallet(rpcUrl, owner);
+        } catch (err) {
+          lastError = err;
+          console.warn("Wallet RPC failed:", rpcUrl, owner, err);
+        }
+      }
+
+      throw lastError || new Error("All wallet RPCs failed");
     }
 
     async function getAstySupply() {
@@ -834,13 +859,19 @@
 
     function animateNumber(from, to, duration, onUpdate) {
       const start = performance.now();
+
       function frame(now) {
         const progress = Math.min(1, (now - start) / duration);
         const eased = 1 - Math.pow(1 - progress, 3);
         const value = from + (to - from) * eased;
+
         onUpdate(value);
-        if (progress < 1) requestAnimationFrame(frame);
+
+        if (progress < 1) {
+          requestAnimationFrame(frame);
+        }
       }
+
       requestAnimationFrame(frame);
     }
 
@@ -917,9 +948,18 @@
         setStatus("Price loaded", `ASTY price detected at ${formatUsd(priceUsd, 4)}. Scanning wallets...`);
 
         const walletResults = [];
+
         for (let i = 0; i < wallets.length; i++) {
           setStatus("Reading wallets", `Scanning ${i + 1} of ${wallets.length}...`);
-          const asty = await getAstyAmountForWallet(DEFAULT_RPC, wallets[i]);
+
+          let asty;
+
+          try {
+            asty = await getAstyAmountForWalletWithFallback(wallets[i]);
+          } catch (err) {
+            throw new Error(`Wallet scan failed at wallet ${i + 1}`);
+          }
+
           const usd = asty * priceUsd;
           const supplyPct = normalizedSupply > 0 ? (asty / normalizedSupply) * 100 : 0;
 
@@ -951,14 +991,21 @@
         console.error(err);
 
         let message = err.message || "Could not complete scan.";
+
         if (message.includes("RPC 403")) {
           message = "Public RPC blocked browser access.";
         }
-        if (message.includes("Failed to fetch")) {
+
+        if (
+          message.includes("Failed to fetch") ||
+          message.includes("Load failed") ||
+          message.includes("NetworkError")
+        ) {
           message = "Request blocked or network error.";
         }
 
         setStatus("Scan failed", message);
+        ui.coreSub.textContent = message;
         flashPulse("ERROR", "red");
       } finally {
         state.scanning = false;
@@ -977,6 +1024,7 @@
       state.normalizedSupply = 0;
       state.supplyPct = 0;
       state.wallets = [];
+
       ui.coreTotal.textContent = "$0.00";
       ui.coreSub.textContent = "Paste wallets above and scan the ASTY core.";
       ui.priceBox.textContent = "$0.0000";
@@ -984,6 +1032,7 @@
       ui.astyTotalBox.textContent = "0";
       ui.supplyPctBox.textContent = "0.0000%";
       ui.walletList.innerHTML = `<div class="empty">No wallets scanned yet.</div>`;
+
       setStatus("Standby", "Waiting for wallet scan.");
       setEnergyTag(0);
       flashPulse("RESET", "purple");
