@@ -11,7 +11,8 @@
         "https://cdn.jsdelivr.net/npm/@solana/web3.js@1.98.4/lib/index.iife.min.js",
         "https://unpkg.com/@solana/web3.js@1.98.4/lib/index.iife.min.js",
         "https://cdn.jsdelivr.net/npm/@solana/web3.js@1.95.3/lib/index.iife.min.js",
-        "https://unpkg.com/@solana/web3.js@1.95.3/lib/index.iife.min.js"
+        "https://unpkg.com/@solana/web3.js@1.95.3/lib/index.iife.min.js",
+        "https://unpkg.com/@solana/web3.js@latest/lib/index.iife.min.js"
       ];
 
       let index = 0;
@@ -456,6 +457,7 @@
     }
 
     .status-left{min-width:0}
+
     .status-title{
       font-size:14px;
       font-weight:900;
@@ -655,11 +657,7 @@
       "https://api.mainnet-beta.solana.com"
     ];
 
-    const TOKEN_PROGRAM_IDS = [
-      "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA",
-      "TokenzQdBNbLqP5VEhdkAS6EPF3wAJyK8P2Qqbkb2Kkb"
-    ];
-
+    const SPL_TOKEN_PROGRAM_ID = "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA";
     const ASSOCIATED_TOKEN_PROGRAM_ID = "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL";
     const RPC_TIMEOUT_MS = 12000;
 
@@ -746,6 +744,15 @@
       return [...new Set(raw)].filter(isProbablySolanaAddress);
     }
 
+    function rpcName(url) {
+      if (url.includes("subquery")) return "SubQuery";
+      if (url.includes("drpc")) return "dRPC";
+      if (url.includes("onfinality")) return "OnFinality";
+      if (url.includes("publicnode")) return "PublicNode";
+      if (url.includes("mainnet-beta")) return "Solana Mainnet";
+      return "RPC";
+    }
+
     async function fetchWithTimeout(url, options, timeoutMs = RPC_TIMEOUT_MS) {
       const controller = new AbortController();
       const timeout = setTimeout(() => controller.abort(), timeoutMs);
@@ -813,6 +820,7 @@
 
       for (const rpcUrl of RPC_FALLBACKS) {
         try {
+          setStatus("Trying RPC", `${rpcName(rpcUrl)} • ${method}`);
           return await solanaRpc(rpcUrl, method, params);
         } catch (err) {
           lastError = err;
@@ -821,13 +829,13 @@
         }
       }
 
-      throw new Error(`All RPCs failed. Last RPC: ${lastRpc}. Last error: ${lastError?.message || "unknown"}`);
+      throw new Error(`All RPCs failed. Last RPC: ${rpcName(lastRpc)}. Last error: ${lastError?.message || "unknown"}`);
     }
 
-    function deriveAssociatedTokenAccount(web3, ownerAddress, mintAddress, tokenProgramId) {
+    function deriveAssociatedTokenAccount(web3, ownerAddress, mintAddress) {
       const owner = new web3.PublicKey(ownerAddress);
       const mint = new web3.PublicKey(mintAddress);
-      const tokenProgram = new web3.PublicKey(tokenProgramId);
+      const tokenProgram = new web3.PublicKey(SPL_TOKEN_PROGRAM_ID);
       const associatedTokenProgram = new web3.PublicKey(ASSOCIATED_TOKEN_PROGRAM_ID);
 
       const [ata] = web3.PublicKey.findProgramAddressSync(
@@ -844,32 +852,31 @@
 
     async function getTokenAccountAmountByAta(ownerAddress) {
       const web3 = await loadSolanaWeb3();
-      let total = 0;
 
-      for (const tokenProgramId of TOKEN_PROGRAM_IDS) {
-        const ata = deriveAssociatedTokenAccount(web3, ownerAddress, ASTY_MINT, tokenProgramId);
+      const ata = deriveAssociatedTokenAccount(
+        web3,
+        ownerAddress,
+        ASTY_MINT
+      );
 
-        const result = await solanaRpcWithFallback("getAccountInfo", [
-          ata,
-          {
-            encoding: "jsonParsed",
-            commitment: "finalized"
-          }
-        ]);
-
-        if (!result?.value) {
-          continue;
+      const result = await solanaRpcWithFallback("getAccountInfo", [
+        ata,
+        {
+          encoding: "jsonParsed",
+          commitment: "finalized"
         }
+      ]);
 
-        const amount =
-          result?.value?.data?.parsed?.info?.tokenAmount?.uiAmountString ??
-          result?.value?.data?.parsed?.info?.tokenAmount?.uiAmount ??
-          "0";
-
-        total += Number(amount) || 0;
+      if (!result?.value) {
+        return 0;
       }
 
-      return total;
+      const amount =
+        result?.value?.data?.parsed?.info?.tokenAmount?.uiAmountString ??
+        result?.value?.data?.parsed?.info?.tokenAmount?.uiAmount ??
+        "0";
+
+      return Number(amount) || 0;
     }
 
     async function getAstySupply() {
@@ -1055,13 +1062,14 @@
       try {
         await loadSolanaWeb3();
 
-        setStatus("Loading token data", "Fetching ASTY price and supply...");
-
+        setStatus("Loading token data", "Fetching ASTY price...");
         const tokenData = await fetchAstyPriceFromGeckoTerminal();
         const priceUsd = tokenData.priceUsd;
+
+        setStatus("Loading supply", "Fetching live ASTY supply...");
         const normalizedSupply = await getAstySupply();
 
-        setStatus("Price loaded", `ASTY price detected at ${formatUsd(priceUsd, 4)}. Scanning wallets...`);
+        setStatus("Token data loaded", `ASTY price ${formatUsd(priceUsd, 4)} loaded.`);
 
         const walletResults = [];
 
@@ -1070,11 +1078,13 @@
 
           let asty = 0;
           let failed = false;
+          let errorMessage = "";
 
           try {
             asty = await getTokenAccountAmountByAta(wallets[i]);
           } catch (err) {
             failed = true;
+            errorMessage = err.message || "Wallet scan failed";
             console.error("ATA wallet scan failed:", wallets[i], err);
           }
 
@@ -1086,7 +1096,8 @@
             asty,
             usd,
             supplyPct,
-            error: failed
+            error: failed,
+            errorMessage
           });
         }
 
@@ -1108,6 +1119,7 @@
 
         if (failedWallets.length > 0) {
           setStatus("Scan complete", `${validWallets.length} loaded, ${failedWallets.length} failed.`);
+          ui.coreSub.textContent = failedWallets[0].errorMessage || "One or more wallets failed.";
         } else {
           setStatus("Scan complete", `Loaded ${walletResults.length} wallet${walletResults.length === 1 ? "" : "s"} successfully.`);
         }
@@ -1146,6 +1158,7 @@
 
     ui.clearBtn.addEventListener("click", () => {
       ui.walletInput.value = "";
+
       state.priceUsd = 0;
       state.totalAsty = 0;
       state.totalUsd = 0;
