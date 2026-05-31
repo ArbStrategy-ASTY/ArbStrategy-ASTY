@@ -887,11 +887,29 @@
       flashPulse("SCANNING", "yellow");
 
       try {
-        const tokenData = await fetchAstyPriceFromGeckoTerminal();
-        const priceUsd = tokenData.priceUsd;
-        const normalizedSupply = await getAstySupply(DEFAULT_RPC);
+        setStatus("Loading ASTY price", "Requesting GeckoTerminal token data...");
 
-        setStatus("Price loaded", `ASTY price detected at ${formatUsd(priceUsd, 4)}. Scanning wallets...`);
+let tokenData;
+let priceUsd;
+
+try {
+  tokenData = await fetchAstyPriceFromGeckoTerminal();
+  priceUsd = tokenData.priceUsd;
+} catch (e) {
+  throw new Error("GeckoTerminal price request failed");
+}
+
+setStatus("Loading ASTY supply", "Requesting live supply from Solana RPC...");
+
+let normalizedSupply;
+
+try {
+  normalizedSupply = await getAstySupply(DEFAULT_RPC);
+} catch (e) {
+  throw new Error("Solana RPC supply request failed");
+}
+
+setStatus("Token data loaded", `ASTY price ${formatUsd(priceUsd, 4)} loaded. Scanning wallets...`);
 
         const walletResults = [];
         for (let i = 0; i < wallets.length; i++) {
@@ -936,6 +954,7 @@
         }
 
         setStatus("Scan failed", message);
+        ui.coreSub.textContent = message;
         flashPulse("ERROR", "red");
       } finally {
         state.scanning = false;
