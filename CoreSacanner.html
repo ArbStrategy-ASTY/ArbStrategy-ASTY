@@ -4,6 +4,9 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>ASTY Core Scanner</title>
+
+  <script src="https://unpkg.com/@solana/web3.js@1.95.3/lib/index.iife.min.js"></script>
+
   <style>
     :root{
       --bg:#06040a;
@@ -520,6 +523,7 @@
     }
   </style>
 </head>
+
 <body>
   <div class="bg-grid"></div>
 
@@ -602,23 +606,22 @@
 
   <script>
     const ASTY_MINT = "ASTYqeaoK83Zs1pTFEXZUB6BM8cG8YLTsN852NUkt7ZR";
-    const DEFAULT_RPC = "https://solana.rpc.subquery.network/public";
 
-    const SUPPLY_RPC_FALLBACKS = [
-      "https://solana.rpc.subquery.network/public",
-      "https://solana-rpc.publicnode.com",
-      "https://solana.drpc.org",
-      "https://solana.api.onfinality.io/public",
-      "https://api.mainnet-beta.solana.com"
-    ];
-
-    const WALLET_RPC_FALLBACKS = [
+    const RPC_FALLBACKS = [
       "https://solana.rpc.subquery.network/public",
       "https://solana.drpc.org",
       "https://solana.api.onfinality.io/public",
       "https://solana-rpc.publicnode.com",
       "https://api.mainnet-beta.solana.com"
     ];
+
+    const TOKEN_PROGRAM_IDS = [
+      "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA",
+      "TokenzQdBNbLqP5VEhdkAS6EPF3wAJyK8P2Qqbkb2Kkb"
+    ];
+
+    const ASSOCIATED_TOKEN_PROGRAM_ID = "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL";
+    const RPC_TIMEOUT_MS = 12000;
 
     const ui = {
       walletInput: document.getElementById("walletInput"),
@@ -684,49 +687,135 @@
         .map(s => s.trim())
         .filter(Boolean);
 
-      const unique = [...new Set(raw)];
-      return unique.filter(isProbablySolanaAddress);
+      return [...new Set(raw)].filter(isProbablySolanaAddress);
+    }
+
+    function requireWeb3() {
+      if (!window.solanaWeb3 || !window.solanaWeb3.PublicKey) {
+        throw new Error("Solana Web3 library failed to load");
+      }
+      return window.solanaWeb3;
+    }
+
+    async function fetchWithTimeout(url, options, timeoutMs = RPC_TIMEOUT_MS) {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), timeoutMs);
+
+      try {
+        return await fetch(url, {
+          ...options,
+          signal: controller.signal
+        });
+      } catch (err) {
+        if (err.name === "AbortError") {
+          throw new Error("Request timeout");
+        }
+        throw err;
+      } finally {
+        clearTimeout(timeout);
+      }
     }
 
     async function solanaRpc(rpcUrl, method, params) {
-      const res = await fetch(rpcUrl, {
-        method: "POST",
-        headers: { "Content-Type": "text/plain" },
-        body: JSON.stringify({
-          jsonrpc: "2.0",
-          id: 1,
-          method,
-          params
-        })
+      const body = JSON.stringify({
+        jsonrpc: "2.0",
+        id: 1,
+        method,
+        params
       });
 
-      if (!res.ok) {
-        throw new Error(`RPC ${res.status}`);
+      const headerModes = [
+        { "Content-Type": "text/plain" },
+        { "Content-Type": "application/json" }
+      ];
+
+      let lastError = null;
+
+      for (const headers of headerModes) {
+        try {
+          const res = await fetchWithTimeout(rpcUrl, {
+            method: "POST",
+            headers,
+            body
+          });
+
+          if (!res.ok) {
+            throw new Error(`RPC ${res.status}`);
+          }
+
+          const json = await res.json();
+
+          if (json.error) {
+            throw new Error(json.error.message || "RPC error");
+          }
+
+          return json.result;
+        } catch (err) {
+          lastError = err;
+        }
       }
 
-      const json = await res.json();
-
-      if (json.error) {
-        throw new Error(json.error.message || "RPC error");
-      }
-
-      return json.result;
+      throw lastError || new Error("RPC request failed");
     }
 
-    async function getAstyAmountForWallet(rpcUrl, owner) {
-      const result = await solanaRpc(rpcUrl, "getTokenAccountsByOwner", [
-        owner,
-        { mint: ASTY_MINT },
-        { encoding: "jsonParsed", commitment: "finalized" }
-      ]);
+    async function solanaRpcWithFallback(method, params) {
+      let lastError = null;
+      let lastRpc = "";
 
-      const accounts = result?.value || [];
+      for (const rpcUrl of RPC_FALLBACKS) {
+        try {
+          return await solanaRpc(rpcUrl, method, params);
+        } catch (err) {
+          lastError = err;
+          lastRpc = rpcUrl;
+          console.warn("RPC failed:", rpcUrl, method, err);
+        }
+      }
+
+      throw new Error(`All RPCs failed. Last RPC: ${lastRpc}. Last error: ${lastError?.message || "unknown"}`);
+    }
+
+    function deriveAssociatedTokenAccount(ownerAddress, mintAddress, tokenProgramId) {
+      const web3 = requireWeb3();
+
+      const owner = new web3.PublicKey(ownerAddress);
+      const mint = new web3.PublicKey(mintAddress);
+      const tokenProgram = new web3.PublicKey(tokenProgramId);
+      const associatedTokenProgram = new web3.PublicKey(ASSOCIATED_TOKEN_PROGRAM_ID);
+
+      const [ata] = web3.PublicKey.findProgramAddressSync(
+        [
+          owner.toBuffer(),
+          tokenProgram.toBuffer(),
+          mint.toBuffer()
+        ],
+        associatedTokenProgram
+      );
+
+      return ata.toBase58();
+    }
+
+    async function getTokenAccountAmountByAta(ownerAddress) {
       let total = 0;
 
-      for (const item of accounts) {
+      for (const tokenProgramId of TOKEN_PROGRAM_IDS) {
+        const ata = deriveAssociatedTokenAccount(ownerAddress, ASTY_MINT, tokenProgramId);
+
+        const result = await solanaRpcWithFallback("getAccountInfo", [
+          ata,
+          {
+            encoding: "jsonParsed",
+            commitment: "finalized"
+          }
+        ]);
+
+        if (!result?.value) {
+          continue;
+        }
+
         const amount =
-          item?.account?.data?.parsed?.info?.tokenAmount?.uiAmountString ??
-          item?.account?.data?.parsed?.info?.tokenAmount?.uiAmount ??
+          result?.value?.data?.parsed?.info?.tokenAmount?.uiAmountString ??
+          result?.value?.data?.parsed?.info?.tokenAmount?.uiAmount ??
           "0";
 
         total += Number(amount) || 0;
@@ -735,59 +824,25 @@
       return total;
     }
 
-    async function getAstyAmountForWalletWithFallback(owner) {
-      let lastError = null;
-      let lastRpc = "";
-
-      for (const rpcUrl of WALLET_RPC_FALLBACKS) {
-        try {
-          return await getAstyAmountForWallet(rpcUrl, owner);
-        } catch (err) {
-          lastError = err;
-          lastRpc = rpcUrl;
-          console.warn("Wallet RPC failed:", rpcUrl, owner, err);
-        }
-      }
-
-      throw new Error(`All wallet RPCs failed. Last RPC: ${lastRpc}. Last error: ${lastError?.message || "unknown"}`);
-    }
-
     async function getAstySupply() {
-      let lastError = null;
-      let lastRpc = "";
+      const result = await solanaRpcWithFallback("getTokenSupply", [
+        ASTY_MINT
+      ]);
 
-      for (const rpcUrl of SUPPLY_RPC_FALLBACKS) {
-        try {
-          const result = await solanaRpc(rpcUrl, "getTokenSupply", [
-            ASTY_MINT
-          ]);
+      const supply =
+        result?.value?.uiAmountString ??
+        result?.value?.uiAmount ??
+        "0";
 
-          const supply =
-            result?.value?.uiAmountString ??
-            result?.value?.uiAmount ??
-            "0";
-
-          const parsedSupply = Number(supply) || 0;
-
-          if (parsedSupply > 0) {
-            return parsedSupply;
-          }
-        } catch (err) {
-          lastError = err;
-          lastRpc = rpcUrl;
-          console.warn("Supply RPC failed:", rpcUrl, err);
-        }
-      }
-
-      throw new Error(`All supply RPCs failed. Last RPC: ${lastRpc}. Last error: ${lastError?.message || "unknown"}`);
+      return Number(supply) || 0;
     }
 
     async function fetchAstyPriceFromGeckoTerminal() {
       const url = `https://api.geckoterminal.com/api/v2/networks/solana/tokens/${ASTY_MINT}?include=top_pools&include_composition=false&include_inactive_source=false`;
 
-      const res = await fetch(url, {
+      const res = await fetchWithTimeout(url, {
         headers: { accept: "application/json" }
-      });
+      }, 10000);
 
       if (!res.ok) {
         throw new Error(`GeckoTerminal request failed: ${res.status}`);
@@ -942,6 +997,7 @@
       state.scanning = true;
       ui.scanBtn.disabled = true;
       ui.clearBtn.disabled = true;
+      ui.scanBtn.textContent = "Scanning...";
 
       const previousUsd = state.totalUsd || 0;
 
@@ -949,6 +1005,8 @@
       flashPulse("SCANNING", "yellow");
 
       try {
+        requireWeb3();
+
         const tokenData = await fetchAstyPriceFromGeckoTerminal();
         const priceUsd = tokenData.priceUsd;
         const normalizedSupply = await getAstySupply();
@@ -964,10 +1022,10 @@
           let failed = false;
 
           try {
-            asty = await getAstyAmountForWalletWithFallback(wallets[i]);
+            asty = await getTokenAccountAmountByAta(wallets[i]);
           } catch (err) {
             failed = true;
-            console.error("Wallet scan failed:", wallets[i], err);
+            console.error("ATA wallet scan failed:", wallets[i], err);
           }
 
           const usd = asty * priceUsd;
@@ -999,15 +1057,9 @@
         state.supplyPct = totalSupplyPct;
 
         if (failedWallets.length > 0) {
-          setStatus(
-            "Scan complete",
-            `${validWallets.length} loaded, ${failedWallets.length} failed.`
-          );
+          setStatus("Scan complete", `${validWallets.length} loaded, ${failedWallets.length} failed.`);
         } else {
-          setStatus(
-            "Scan complete",
-            `Loaded ${walletResults.length} wallet${walletResults.length === 1 ? "" : "s"} successfully.`
-          );
+          setStatus("Scan complete", `Loaded ${walletResults.length} wallet${walletResults.length === 1 ? "" : "s"} successfully.`);
         }
 
         flashPulse(totalUsd > 0 ? "CHARGED" : "EMPTY", totalUsd > 0 ? "green" : "red");
@@ -1036,6 +1088,7 @@
         state.scanning = false;
         ui.scanBtn.disabled = false;
         ui.clearBtn.disabled = false;
+        ui.scanBtn.textContent = "Scan Wallets";
       }
     }
 
