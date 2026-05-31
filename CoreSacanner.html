@@ -691,7 +691,7 @@
     async function solanaRpc(rpcUrl, method, params) {
       const res = await fetch(rpcUrl, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "text/plain" },
         body: JSON.stringify({
           jsonrpc: "2.0",
           id: 1,
@@ -705,6 +705,7 @@
       }
 
       const json = await res.json();
+
       if (json.error) {
         throw new Error(json.error.message || "RPC error");
       }
@@ -735,25 +736,25 @@
     }
 
     async function getAstyAmountForWalletWithFallback(owner) {
-  let lastError = null;
-  let lastRpc = "";
+      let lastError = null;
+      let lastRpc = "";
 
-  for (const rpcUrl of WALLET_RPC_FALLBACKS) {
-    try {
-      return await getAstyAmountForWallet(rpcUrl, owner);
-    } catch (err) {
-      lastError = err;
-      lastRpc = rpcUrl;
-      console.warn("Wallet RPC failed:", rpcUrl, owner, err);
-    }
-  }
+      for (const rpcUrl of WALLET_RPC_FALLBACKS) {
+        try {
+          return await getAstyAmountForWallet(rpcUrl, owner);
+        } catch (err) {
+          lastError = err;
+          lastRpc = rpcUrl;
+          console.warn("Wallet RPC failed:", rpcUrl, owner, err);
+        }
+      }
 
-  throw new Error(`All wallet RPCs failed. Last RPC: ${lastRpc}. Last error: ${lastError?.message || "unknown"}`);
-}
+      throw new Error(`All wallet RPCs failed. Last RPC: ${lastRpc}. Last error: ${lastError?.message || "unknown"}`);
     }
 
     async function getAstySupply() {
       let lastError = null;
+      let lastRpc = "";
 
       for (const rpcUrl of SUPPLY_RPC_FALLBACKS) {
         try {
@@ -773,11 +774,12 @@
           }
         } catch (err) {
           lastError = err;
+          lastRpc = rpcUrl;
           console.warn("Supply RPC failed:", rpcUrl, err);
         }
       }
 
-      throw lastError || new Error("All supply RPCs failed");
+      throw new Error(`All supply RPCs failed. Last RPC: ${lastRpc}. Last error: ${lastError?.message || "unknown"}`);
     }
 
     async function fetchAstyPriceFromGeckoTerminal() {
@@ -802,6 +804,7 @@
 
       if (Number.isNaN(priceUsd)) {
         const included = Array.isArray(json?.included) ? json.included : [];
+
         for (const item of included) {
           const attr = item?.attributes || {};
           const candidate =
@@ -889,11 +892,13 @@
           <div class="wallet-row">
             <div class="wallet-main">
               <div class="wallet-addr">${w.address}</div>
-              <div class="wallet-meta">${shortAddr(w.address)} • ${formatNum(w.asty, 4)} ASTY • ${formatPct(w.supplyPct, 4)} supply</div>
+              <div class="wallet-meta">
+                ${shortAddr(w.address)} • ${formatNum(w.asty, 4)} ASTY • ${formatPct(w.supplyPct, 4)} supply${w.error ? " • scan failed" : ""}
+              </div>
             </div>
             <div class="wallet-value">
-              <div class="wallet-usd">${formatUsd(w.usd)}</div>
-              <div class="wallet-asty">${formatNum(w.asty, 4)}</div>
+              <div class="wallet-usd">${w.error ? "Error" : formatUsd(w.usd)}</div>
+              <div class="wallet-asty">${w.error ? "0" : formatNum(w.asty, 4)}</div>
             </div>
           </div>
         `)
@@ -955,12 +960,14 @@
         for (let i = 0; i < wallets.length; i++) {
           setStatus("Reading wallets", `Scanning ${i + 1} of ${wallets.length}...`);
 
-          let asty;
+          let asty = 0;
+          let failed = false;
 
           try {
             asty = await getAstyAmountForWalletWithFallback(wallets[i]);
           } catch (err) {
-            throw new Error(`Wallet scan failed at wallet ${i + 1}`);
+            failed = true;
+            console.error("Wallet scan failed:", wallets[i], err);
           }
 
           const usd = asty * priceUsd;
@@ -970,14 +977,18 @@
             address: wallets[i],
             asty,
             usd,
-            supplyPct
+            supplyPct,
+            error: failed
           });
         }
 
         walletResults.sort((a, b) => b.usd - a.usd);
 
-        const totalAsty = walletResults.reduce((sum, w) => sum + w.asty, 0);
-        const totalUsd = walletResults.reduce((sum, w) => sum + w.usd, 0);
+        const validWallets = walletResults.filter(w => !w.error);
+        const failedWallets = walletResults.filter(w => w.error);
+
+        const totalAsty = validWallets.reduce((sum, w) => sum + w.asty, 0);
+        const totalUsd = validWallets.reduce((sum, w) => sum + w.usd, 0);
         const totalSupplyPct = normalizedSupply > 0 ? (totalAsty / normalizedSupply) * 100 : 0;
 
         state.priceUsd = priceUsd;
@@ -987,7 +998,18 @@
         state.totalUsd = totalUsd;
         state.supplyPct = totalSupplyPct;
 
-        setStatus("Scan complete", `Loaded ${walletResults.length} wallet${walletResults.length === 1 ? "" : "s"} successfully.`);
+        if (failedWallets.length > 0) {
+          setStatus(
+            "Scan complete",
+            `${validWallets.length} loaded, ${failedWallets.length} failed.`
+          );
+        } else {
+          setStatus(
+            "Scan complete",
+            `Loaded ${walletResults.length} wallet${walletResults.length === 1 ? "" : "s"} successfully.`
+          );
+        }
+
         flashPulse(totalUsd > 0 ? "CHARGED" : "EMPTY", totalUsd > 0 ? "green" : "red");
         renderAnimated(previousUsd);
       } catch (err) {
