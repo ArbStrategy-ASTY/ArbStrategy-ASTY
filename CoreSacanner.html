@@ -735,18 +735,21 @@
     }
 
     async function getAstyAmountForWalletWithFallback(owner) {
-      let lastError = null;
+  let lastError = null;
+  let lastRpc = "";
 
-      for (const rpcUrl of WALLET_RPC_FALLBACKS) {
-        try {
-          return await getAstyAmountForWallet(rpcUrl, owner);
-        } catch (err) {
-          lastError = err;
-          console.warn("Wallet RPC failed:", rpcUrl, owner, err);
-        }
-      }
+  for (const rpcUrl of WALLET_RPC_FALLBACKS) {
+    try {
+      return await getAstyAmountForWallet(rpcUrl, owner);
+    } catch (err) {
+      lastError = err;
+      lastRpc = rpcUrl;
+      console.warn("Wallet RPC failed:", rpcUrl, owner, err);
+    }
+  }
 
-      throw lastError || new Error("All wallet RPCs failed");
+  throw new Error(`All wallet RPCs failed. Last RPC: ${lastRpc}. Last error: ${lastError?.message || "unknown"}`);
+}
     }
 
     async function getAstySupply() {
