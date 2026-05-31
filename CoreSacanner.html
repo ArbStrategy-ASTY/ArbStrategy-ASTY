@@ -5,7 +5,47 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>ASTY Core Scanner</title>
 
-  <script src="https://unpkg.com/@solana/web3.js@1.95.3/lib/index.iife.min.js"></script>
+  <script>
+    window.__loadSolanaWeb3 = new Promise((resolve, reject) => {
+      const sources = [
+        "https://cdn.jsdelivr.net/npm/@solana/web3.js@1.98.4/lib/index.iife.min.js",
+        "https://unpkg.com/@solana/web3.js@1.98.4/lib/index.iife.min.js",
+        "https://cdn.jsdelivr.net/npm/@solana/web3.js@1.95.3/lib/index.iife.min.js",
+        "https://unpkg.com/@solana/web3.js@1.95.3/lib/index.iife.min.js"
+      ];
+
+      let index = 0;
+
+      function loadNext() {
+        if (window.solanaWeb3 && window.solanaWeb3.PublicKey) {
+          resolve(window.solanaWeb3);
+          return;
+        }
+
+        if (index >= sources.length) {
+          reject(new Error("Solana Web3 library failed to load"));
+          return;
+        }
+
+        const script = document.createElement("script");
+        script.src = sources[index++];
+        script.async = true;
+
+        script.onload = () => {
+          if (window.solanaWeb3 && window.solanaWeb3.PublicKey) {
+            resolve(window.solanaWeb3);
+          } else {
+            loadNext();
+          }
+        };
+
+        script.onerror = loadNext;
+        document.head.appendChild(script);
+      }
+
+      loadNext();
+    });
+  </script>
 
   <style>
     :root{
@@ -651,6 +691,22 @@
       wallets: []
     };
 
+    async function loadSolanaWeb3() {
+      if (window.solanaWeb3 && window.solanaWeb3.PublicKey) {
+        return window.solanaWeb3;
+      }
+
+      if (window.__loadSolanaWeb3) {
+        await window.__loadSolanaWeb3;
+      }
+
+      if (!window.solanaWeb3 || !window.solanaWeb3.PublicKey) {
+        throw new Error("Solana Web3 library failed to load");
+      }
+
+      return window.solanaWeb3;
+    }
+
     function formatUsd(v, digits = 2) {
       return `$${Number(v).toLocaleString("en-US", {
         minimumFractionDigits: digits,
@@ -688,13 +744,6 @@
         .filter(Boolean);
 
       return [...new Set(raw)].filter(isProbablySolanaAddress);
-    }
-
-    function requireWeb3() {
-      if (!window.solanaWeb3 || !window.solanaWeb3.PublicKey) {
-        throw new Error("Solana Web3 library failed to load");
-      }
-      return window.solanaWeb3;
     }
 
     async function fetchWithTimeout(url, options, timeoutMs = RPC_TIMEOUT_MS) {
@@ -775,9 +824,7 @@
       throw new Error(`All RPCs failed. Last RPC: ${lastRpc}. Last error: ${lastError?.message || "unknown"}`);
     }
 
-    function deriveAssociatedTokenAccount(ownerAddress, mintAddress, tokenProgramId) {
-      const web3 = requireWeb3();
-
+    function deriveAssociatedTokenAccount(web3, ownerAddress, mintAddress, tokenProgramId) {
       const owner = new web3.PublicKey(ownerAddress);
       const mint = new web3.PublicKey(mintAddress);
       const tokenProgram = new web3.PublicKey(tokenProgramId);
@@ -796,10 +843,11 @@
     }
 
     async function getTokenAccountAmountByAta(ownerAddress) {
+      const web3 = await loadSolanaWeb3();
       let total = 0;
 
       for (const tokenProgramId of TOKEN_PROGRAM_IDS) {
-        const ata = deriveAssociatedTokenAccount(ownerAddress, ASTY_MINT, tokenProgramId);
+        const ata = deriveAssociatedTokenAccount(web3, ownerAddress, ASTY_MINT, tokenProgramId);
 
         const result = await solanaRpcWithFallback("getAccountInfo", [
           ata,
@@ -1001,11 +1049,13 @@
 
       const previousUsd = state.totalUsd || 0;
 
-      setStatus("Loading token data", "Fetching ASTY price and supply...");
+      setStatus("Loading library", "Preparing Solana scanner...");
       flashPulse("SCANNING", "yellow");
 
       try {
-        requireWeb3();
+        await loadSolanaWeb3();
+
+        setStatus("Loading token data", "Fetching ASTY price and supply...");
 
         const tokenData = await fetchAstyPriceFromGeckoTerminal();
         const priceUsd = tokenData.priceUsd;
