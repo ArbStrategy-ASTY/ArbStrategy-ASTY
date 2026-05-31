@@ -1,0 +1,806 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>$ASTY HeatMap</title>
+
+<style>
+*{
+  box-sizing:border-box;
+}
+
+html{
+  scroll-behavior:smooth;
+}
+
+body{
+  margin:0;
+  font-family:Inter,Arial,sans-serif;
+  background:#050814;
+  color:#fff;
+  min-height:100vh;
+  overflow-x:hidden;
+}
+
+a{
+  color:inherit;
+  text-decoration:none;
+}
+
+.topbar{
+  position:sticky;
+  top:0;
+  z-index:50;
+  background:rgba(5,8,20,.92);
+  backdrop-filter:blur(14px);
+  border-bottom:1px solid rgba(255,255,255,.1);
+}
+
+.nav{
+  max-width:1440px;
+  margin:auto;
+  min-height:72px;
+  padding:12px 16px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:14px;
+}
+
+.brand{
+  display:flex;
+  align-items:center;
+  gap:13px;
+}
+
+.brand-logo{
+  width:46px;
+  height:46px;
+  border-radius:50%;
+  background:rgba(255,255,255,.04);
+  box-shadow:0 0 24px rgba(124,58,237,.45);
+}
+
+.brand-title{
+  font-size:21px;
+  font-weight:950;
+  letter-spacing:-.2px;
+}
+
+.brand-sub{
+  margin-top:2px;
+  font-size:12px;
+  color:#a9a3c5;
+  font-weight:700;
+}
+
+.nav-links{
+  display:flex;
+  flex-wrap:wrap;
+  gap:9px;
+}
+
+.nav-pill{
+  padding:9px 13px;
+  border-radius:999px;
+  background:rgba(255,255,255,.055);
+  border:1px solid rgba(167,139,250,.24);
+  color:#dad6ea;
+  font-size:13px;
+  font-weight:850;
+  transition:.18s ease;
+}
+
+.nav-pill:hover{
+  transform:translateY(-1px);
+  background:rgba(255,255,255,.09);
+  color:#fff;
+}
+
+.nav-pill.primary{
+  background:linear-gradient(135deg,#8b5cf6,#6d28d9);
+  color:#fff;
+}
+
+.nav-pill.cyan{
+  background:linear-gradient(135deg,#06b6d4,#0891b2);
+  color:#fff;
+  border-color:transparent;
+}
+
+.nav-pill.orange{
+  background:linear-gradient(135deg,#f59e0b,#ea580c);
+  color:#fff;
+  border-color:transparent;
+}
+
+.page{
+  max-width:1440px;
+  margin:auto;
+  padding:14px 14px 28px;
+}
+
+.top-panel{
+  display:grid;
+  grid-template-columns:1.2fr .8fr;
+  gap:12px;
+  margin-bottom:12px;
+}
+
+.info-card,
+.stat{
+  border-radius:16px;
+  padding:14px 16px;
+  background:rgba(255,255,255,.045);
+  border:1px solid rgba(255,255,255,.09);
+  backdrop-filter:blur(12px);
+}
+
+.info-card h1{
+  margin:0;
+  font-size:30px;
+  font-weight:950;
+  letter-spacing:-.7px;
+}
+
+.status-line{
+  margin-top:8px;
+  font-size:12px;
+  color:#9f98bb;
+  font-weight:650;
+}
+
+.stats{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:12px;
+}
+
+.stat-label{
+  font-size:11px;
+  color:#c9b8ff;
+  font-weight:900;
+  text-transform:uppercase;
+  letter-spacing:.3px;
+  margin-bottom:7px;
+}
+
+.stat-value{
+  font-size:21px;
+  line-height:1.15;
+  font-weight:950;
+  word-break:break-word;
+}
+
+.map-frame{
+  position:relative;
+  width:100%;
+  height:calc(100vh - 190px);
+  min-height:620px;
+  border-radius:16px;
+  overflow:hidden;
+  background:#050814;
+  border:1px solid rgba(255,255,255,.12);
+  box-shadow:
+    0 0 38px rgba(124,58,237,.12),
+    inset 0 0 50px rgba(255,255,255,.015);
+}
+
+#heatmap{
+  position:absolute;
+  inset:0;
+  width:100%;
+  height:100%;
+}
+
+.tile{
+  position:absolute;
+  padding:0;
+  border:1px solid rgba(5,8,20,.92);
+  background:transparent;
+  color:#fff;
+  overflow:hidden;
+  cursor:pointer;
+  font-family:inherit;
+  text-align:center;
+}
+
+.tile:hover{
+  z-index:10;
+}
+
+.tile:hover .tile-inner{
+  filter:brightness(1.12) saturate(1.08);
+  box-shadow:inset 0 0 0 2px rgba(255,255,255,.25);
+}
+
+.tile-inner{
+  width:100%;
+  height:100%;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  align-items:center;
+  padding:6px;
+  background:
+    radial-gradient(circle at 28% 20%,rgba(255,255,255,.22),transparent 32%),
+    linear-gradient(135deg,var(--c1),var(--c2));
+  transition:.16s ease;
+}
+
+.tile-token{
+  max-width:100%;
+  font-weight:950;
+  line-height:.95;
+  letter-spacing:-.045em;
+  font-size:var(--tokenSize);
+  text-shadow:0 2px 9px rgba(0,0,0,.42);
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+
+.tile-percent{
+  margin-top:6px;
+  font-weight:900;
+  line-height:1;
+  font-size:var(--percentSize);
+  color:rgba(255,255,255,.92);
+  text-shadow:0 2px 9px rgba(0,0,0,.42);
+}
+
+.tile-fees{
+  margin-top:5px;
+  font-weight:850;
+  line-height:1;
+  font-size:var(--feesSize);
+  color:rgba(255,255,255,.82);
+  text-shadow:0 2px 9px rgba(0,0,0,.42);
+}
+
+.tile-volume{
+  margin-top:5px;
+  font-weight:800;
+  line-height:1;
+  font-size:var(--smallSize);
+  color:rgba(255,255,255,.74);
+  text-shadow:0 2px 9px rgba(0,0,0,.42);
+}
+
+.detail-panel{
+  margin-top:12px;
+  display:grid;
+  grid-template-columns:1.3fr repeat(4,1fr) auto;
+  gap:12px;
+  align-items:center;
+  border-radius:16px;
+  padding:14px 16px;
+  background:rgba(255,255,255,.045);
+  border:1px solid rgba(255,255,255,.09);
+  backdrop-filter:blur(12px);
+}
+
+.detail-title{
+  font-size:21px;
+  font-weight:950;
+  letter-spacing:-.3px;
+}
+
+.detail-label{
+  font-size:11px;
+  color:#c9b8ff;
+  font-weight:900;
+  text-transform:uppercase;
+  letter-spacing:.3px;
+  margin-bottom:5px;
+}
+
+.detail-value{
+  font-size:15px;
+  font-weight:950;
+  white-space:nowrap;
+}
+
+.open-link{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  padding:10px 14px;
+  border-radius:999px;
+  background:linear-gradient(135deg,#8b5cf6,#6d28d9);
+  color:#fff;
+  font-size:13px;
+  font-weight:950;
+  white-space:nowrap;
+}
+
+.wolf{
+  position:fixed;
+  right:36px;
+  top:110px;
+  width:190px;
+  opacity:.075;
+  pointer-events:none;
+  z-index:0;
+  filter:drop-shadow(0 0 28px rgba(167,139,250,.45));
+}
+
+@media(max-width:980px){
+  .nav{
+    align-items:flex-start;
+    flex-direction:column;
+  }
+
+  .top-panel{
+    grid-template-columns:1fr;
+  }
+
+  .map-frame{
+    height:720px;
+    min-height:720px;
+  }
+
+  .detail-panel{
+    grid-template-columns:1fr 1fr;
+  }
+
+  .detail-title{
+    grid-column:1/-1;
+  }
+
+  .open-link{
+    grid-column:1/-1;
+  }
+
+  .wolf{
+    display:none;
+  }
+}
+
+@media(max-width:560px){
+  .page{
+    padding:10px 8px 22px;
+  }
+
+  .brand-title{
+    font-size:18px;
+  }
+
+  .brand-sub{
+    font-size:11px;
+  }
+
+  .nav-links{
+    gap:7px;
+  }
+
+  .nav-pill{
+    font-size:12px;
+    padding:8px 11px;
+  }
+
+  .info-card h1{
+    font-size:25px;
+  }
+
+  .stats{
+    grid-template-columns:1fr;
+  }
+
+  .map-frame{
+    height:78vh;
+    min-height:640px;
+    border-radius:12px;
+  }
+
+  .detail-panel{
+    grid-template-columns:1fr;
+  }
+
+  .tile-inner{
+    padding:4px;
+  }
+}
+</style>
+</head>
+
+<body>
+
+<header class="topbar">
+  <div class="nav">
+    <div class="brand">
+      <img src="assets/logo.png" alt="ASTY Logo" class="brand-logo">
+      <div>
+        <div class="brand-title">$ASTY HeatMap</div>
+        <div class="brand-sub">Live Pool Heat Visualization</div>
+      </div>
+    </div>
+
+    <nav class="nav-links">
+      <a class="nav-pill" href="https://ArbStrategy.net" target="_blank" rel="noopener noreferrer">Website</a>
+      <a class="nav-pill" href="https://x.com/ArbStrategyASTY" target="_blank" rel="noopener noreferrer">X Twitter</a>
+      <a class="nav-pill cyan" href="https://arbstrategy-asty.github.io/ArbStrategy-ASTY/" target="_blank" rel="noopener noreferrer">System Overview</a>
+      <a class="nav-pill primary" href="https://t.me/ArbStrategyASTY" target="_blank" rel="noopener noreferrer">Telegram</a>
+      <a class="nav-pill orange" href="https://birdeye.so/solana/token/ASTYqeaoK83Zs1pTFEXZUB6BM8cG8YLTsN852NUkt7ZR" target="_blank" rel="noopener noreferrer">BirdEye</a>
+    </nav>
+  </div>
+</header>
+
+<img class="wolf" src="assets/wolf.png" alt="ASTY Wolf">
+
+<main class="page">
+  <section class="top-panel">
+    <div class="info-card">
+      <h1>$ASTY HeatMap</h1>
+      <div class="status-line" id="statusLine">Loading GeckoTerminal pool data...</div>
+    </div>
+
+    <div class="stats">
+      <div class="stat">
+        <div class="stat-label">System Output 24h</div>
+        <div class="stat-value" id="systemOutput">$0.00</div>
+      </div>
+
+      <div class="stat">
+        <div class="stat-label">Top Heat Pool</div>
+        <div class="stat-value" id="topPool">-</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="map-frame">
+    <div id="heatmap"></div>
+  </section>
+
+  <section class="detail-panel">
+    <div class="detail-title" id="panelName">Loading...</div>
+
+    <div>
+      <div class="detail-label">Chaos Score</div>
+      <div class="detail-value" id="panelChaos">-</div>
+    </div>
+
+    <div>
+      <div class="detail-label">Fees 24h</div>
+      <div class="detail-value" id="panelFees">-</div>
+    </div>
+
+    <div>
+      <div class="detail-label">Volume 24h</div>
+      <div class="detail-value" id="panelVolume">-</div>
+    </div>
+
+    <div>
+      <div class="detail-label">Fee Rate</div>
+      <div class="detail-value" id="panelFeeRate">-</div>
+    </div>
+
+    <a class="open-link" id="panelLink" href="#" target="_blank" rel="noopener noreferrer">Open Pool 🟣</a>
+  </section>
+</main>
+
+<script>
+const pools = [
+["3UvhqPrMyf13qgRodARDi5oGJGoxHYb2ykZdCaa1TV8i","ASTY/$WIF",1],
+["HeuivHLqCEmsgKhYhX1M6MGthEbtHrGmZdXQSCBVkstP","ASTY/ALCH",1],
+["CSD1NpGwhnohByefBp73Jyk6u6ZCkwwDFDVqvmkDrfxE","ASTY/ARBX",1],
+["DxMFG4kn8pxuf7AoKD1ffXjUhPpj4a8WAdgw87gyM2mj","ASTY/ARBX",0.3],
+["CoD6KLgnW2wKe2UtnNjSQk4RSS6fMU4P2vwKqsUxK9Bf","ASTY/Bonk",1],
+["7T6HixJyUfzSR88dhWC9tAjasXcdFyDrKmDtuzrXgt9j","ASTY/ETH",1],
+["B6fq1uNpMkyGANAQo5D9GJfMCkcaNewc6q8sWZAfWZ4M","ASTY/Fartcoin",1],
+["8aXv2DDRG3k5N3ADTw37Di4ytHGJ3ZaS2tPp1f2EW5ZD","ASTY/GEOD",1],
+["9xdaFi8dnHcoJHYqHU6wrDM5zRehanhwy9y21ahA5jYt","ASTY/Good",1],
+["92RKFRJSctMAuw8Tym7cZgd2yjMcHeZ5hDUMdnZd54zV","ASTY/Grandma",1],
+["Gec7ENkk9irtsmmwpwLHk1i4VntB4vFGRAe1ET3LeT3J","ASTY/JTO",1],
+["iZXTZMMS51US5erGnviWfc8CNGx5QDDzp6DERH25EtW","ASTY/JUP",1],
+["29eKi5ipMR9fLgkYpM91Xrab2LVBnUU75SYG8kCt1nis","ASTY/MET",1],
+["CSiAzSiCMNGjLwYKRdhDUjNwz4obf3Q5ZnMQECnmxshV","ASTY/PENGU",1],
+["2uNbRDLDeMizdJNEqKaapzAGJWVwa3uuJ3w4trVud4ZW","ASTY/pippin",1],
+["GyVyv2H2SB4fYaC7C6raWNSQqNhShdzNuSqQwG9uUUcE","ASTY/POPCAT",1],
+["RYztJXyPCmwUmfi7punwCf7q6FbxoJbRtBEodZ7j7GH","ASTY/PsyopAnime",1],
+["DfJsn7Ui6YBUC25kM5FoqrCYrqfRVCoSxpTeyEzWv4vT","ASTY/RAY",1],
+["2ufiEWc5wF8gJB1a9YiPkFuLwrFn4Zgyma1kdQRakoAr","ASTY/SOL",0.25],
+["7tbbdGzFZpjrPmM7jQderyyv1x8Ebz1vhwqNhEW97osb","ASTY/SOL",1],
+["HAieGroddWr3NZpSZYqqm39w2aTUuknWNXxfF6vWNpaR","ASTY/SOL",0.3],
+["BBVxTUtaagQgG5AgmNSYS9Pqwidc7yAbRF6avt48iF2u","ASTY/TAX",1],
+["CFcyQpye4K4pyhVPoSAgj3BAqNoWpZCvHpNncXssy7qH","ASTY/TAX",1],
+["tDqqTi8tJds88AkxFvhjZTQK5iDtV5ZG9ZkNYxh23MG","ASTY/UNI",1],
+["3HhGsPNMtSg1dNV9SVSfzGCQLx3Zp5giAvYJdQuuNqU9","ASTY/USDC",0.3],
+["5zCsWjFoEQ7jGNaHNwBRvZq7RMqVh6vQhmiYv4NWkDZK","ASTY/USDC",1],
+["BqdoyTYoXpnAzRafoBQPrY4ubVSzYE42rxJzNJwoxmZP","ASTY/USDC",0.25],
+["BWFDr72tjXJsRdUyAfqghv6sGXgQr2zJ78KdeV3c74q1","ASTY/USDC",2],
+["2Hjjn2aoVdUeGraV4vRak94GGAAW5w9syfVBeXU4Ad5J","ASTY/WBTC",1],
+["7Fr58kHKW85XiFgZ8WibumE7P5CLZFo4A8qsQxKNEWaE","ASTY/WhiteWhale",1],
+["4TgvcTKzq9zZR5znyak2y3tvaXg4q6hvKWEZgxesQqkx","ASTY/WLFI",1],
+["5wpSZwUmdXy5kB96n7U24iFzvbSNEvFd4BvERhhqYjQY","ASTY/WOJAK",1],
+["2aWCx2qrYmjen1N8UW3eLBzNu7fCPqxjL9NKXqHGXPHc","ASTY/ZBCN",1],
+["2WRrdtnKKr2eq67o4ZK2VQv7dXu4Pm8iz6TMN8UXvhbV","ASTY/SOL",2],
+["4iHVvcWHNYFDPFySosAx1qGZoFsDN7gXHxKqUFnGq6oJ","ASTY/BAT",1],
+["4kWT67c13svR9EfxM4TGn8inNqFsXeuAWQhn8KBVajBs","ASTY/ACC",1],
+["5fEodJwZNUTwXbiTRKU2KPCc4Xr15fPKVmxbAph7yX7v","ASTY/BTAX",1],
+["61HTuoKeWhEfscoBcd5zSNvmAyGpxdaUNMriLNnyyREz","ASTY/USDC",6],
+["8fBYS2Kq9f4Lm1SYdt4sdHRL27Ni8UcRMPtFNLdEcnAH","ASTY/Cake",1],
+["DdK87cRD7uzoUWc9JZNRNxPoLHXeAcGkfU2b49YTZrm3","ASTY/AVA",1],
+["DwZZHyqnzWEqNP4VuczHHwfJsni6xqo57TBm7SoeJ62u","ASTY/RENDER",1],
+["HvmNZyopYSwHRUXCUti4D6YANpfWscVLSQVv9nw2XYhx","ASTY/TURBO",1],
+["m1e9swvUoggDm2zLXzrzKRrbVwmGEP8aQy7BQigFZgK","ASTY/SOL",0.25],
+["3PVPMEseLJxE6yyB5eBJ3qzRCzCGN6L9qa85stcZH4FM","ASTY/testicle",1],
+["BM9W33kccA1GCdbkuGoNDvJLTQW5xKbKwXht8sCXayc3","ASTY/Buttcoin",1],
+["AiazXNe6ShtCbQHZbmpnkuuswVHFKh5rLZKeudzWU3aq","ASTY/BP",1],
+["DitqC25rriaMeZyiQPeXLNgfxqRTZL2qxFHp3MHrxM6t","ASTY/Punch",1],
+["mwsmVXehTt2aFonhJDyZWbwgpxDVM9MMfo7GUYrYL7K","ASTY/Restart",1],
+["2CBT1VgEunZmkQTNfPaNPpXWD5uVJ7KVHhjfT9SZZ3B7","ASTY/DUMB",1],
+["Fmna4bQBthaFT51VRtKR6QfgHisjxzcrzCWmPCP9dMNy","ASTY/INCOME",1],
+["AwmLBQ3keEicdD93gTr22avcJqsXwDTGMaLt25Jvyexo","ASTY/ORCA",1],
+["4UPuDZPPkrC5YHdpFnfv4RX7dfHYnjz8BYZaTCewSn5v","ASTY/MOODENG",1],
+["9dvPJ67AEzZZD9ThHAEJzkzVwxiVQrvC2Virv8KyGgZb","ASTY/SEARCH",1],
+["Dz8AuKtEJLrVeuAvhBg4gbTkBeNqC89wfLt3fJKZKk8v","ASTY/USD",4],
+["28yNWBwCvNLaC8h2Lf8AFcZqzfRpKMQMynwjjMibRwRU","ASTY/HYPE",1],
+["7wCaiBEGFHPhB5iDTCERsNXbzsc7bZyamqQsHNxuhdYU","ASTY/SATO",1],
+["Ax38rDrpRMturM59zKBEGsNn2HjE96rC9Jz3WbAgXtYw","ASTY/SIMPLR",1],
+["DGuvY79xbLuJRb3CzwQL59z5zoit7KLnFwyL2t6EQCcj","ASTY/SERIOUS",1]
+];
+
+const CHUNK_SIZE = 25;
+let latestRows = [];
+
+function fmtUsd(n){
+  if(!n || Number.isNaN(n)) return "$0.00";
+  if(n >= 1e9) return "$" + (n / 1e9).toFixed(1) + "B";
+  if(n >= 1e6) return "$" + (n / 1e6).toFixed(1) + "M";
+  if(n >= 1e3) return "$" + (n / 1e3).toFixed(1) + "K";
+  return "$" + n.toFixed(2);
+}
+
+function formatFee(percentValue){
+  return percentValue.toFixed(2).replace(/\.00$/,"") + "%";
+}
+
+function getTokenName(label){
+  return label.replace("ASTY/","").replace("ASTY / ","");
+}
+
+function chunkArray(arr,size){
+  const chunks=[];
+  for(let i=0;i<arr.length;i+=size){
+    chunks.push(arr.slice(i,i+size));
+  }
+  return chunks;
+}
+
+async function fetchGeckoChunk(chunk){
+  const ids = chunk.map(([id]) => id).join(",");
+  const encodedIds = encodeURIComponent(ids);
+  const url = `https://api.geckoterminal.com/api/v2/networks/solana/pools/multi/${encodedIds}?include=base_token&include_volume_breakdown=false&include_composition=false`;
+  const response = await fetch(url);
+  if(!response.ok) throw new Error("GeckoTerminal request failed");
+  const data = await response.json();
+  return Array.isArray(data.data) ? data.data : [];
+}
+
+function getColors(score){
+  if(score >= 80) return ["#16c784","#0f9f67"];
+  if(score >= 50) return ["#13b981","#0f8f65"];
+  if(score >= 20) return ["#cc1126","#a80d1e"];
+  return ["#7f0d1b","#5c0a14"];
+}
+
+function updatePanel(pool){
+  if(!pool) return;
+
+  document.getElementById("panelName").textContent = pool.label;
+  document.getElementById("panelChaos").textContent = pool.chaosScore.toFixed(1) + "%";
+  document.getElementById("panelFees").textContent = fmtUsd(pool.fees24h);
+  document.getElementById("panelVolume").textContent = fmtUsd(pool.volume24h);
+  document.getElementById("panelFeeRate").textContent = formatFee(pool.feePercent);
+  document.getElementById("panelLink").href = `https://www.geckoterminal.com/solana/pools/${pool.id}`;
+}
+
+function prepareHeatWeights(rows){
+  return rows.map(row=>{
+    const normalized = Math.max(row.chaosScore,0.6);
+
+    return {
+      ...row,
+      weight:Math.pow(normalized,0.78)
+    };
+  });
+}
+
+function splitBalanced(items){
+  const total = items.reduce((sum,item)=>sum + item.weight,0);
+  const target = total / 2;
+
+  let bestIndex = 1;
+  let bestDiff = Infinity;
+  let running = 0;
+
+  for(let i=0;i<items.length - 1;i++){
+    running += items[i].weight;
+    const diff = Math.abs(target - running);
+
+    if(diff < bestDiff){
+      bestDiff = diff;
+      bestIndex = i + 1;
+    }
+  }
+
+  return [
+    items.slice(0,bestIndex),
+    items.slice(bestIndex)
+  ];
+}
+
+function binaryTreemap(items,rect,result){
+  if(!items.length) return;
+
+  if(items.length === 1){
+    result.push({
+      ...items[0],
+      x:rect.x,
+      y:rect.y,
+      w:rect.w,
+      h:rect.h
+    });
+    return;
+  }
+
+  const [a,b] = splitBalanced(items);
+
+  const sumA = a.reduce((sum,item)=>sum + item.weight,0);
+  const sumB = b.reduce((sum,item)=>sum + item.weight,0);
+  const total = sumA + sumB;
+
+  if(rect.w >= rect.h){
+    const wA = rect.w * (sumA / total);
+
+    binaryTreemap(a,{x:rect.x,y:rect.y,w:wA,h:rect.h},result);
+    binaryTreemap(b,{x:rect.x + wA,y:rect.y,w:rect.w - wA,h:rect.h},result);
+  }else{
+    const hA = rect.h * (sumA / total);
+
+    binaryTreemap(a,{x:rect.x,y:rect.y,w:rect.w,h:hA},result);
+    binaryTreemap(b,{x:rect.x,y:rect.y + hA,w:rect.w,h:rect.h - hA},result);
+  }
+}
+
+function renderHeatmap(rows){
+  const container = document.getElementById("heatmap");
+  container.innerHTML = "";
+
+  const width = container.clientWidth;
+  const height = container.clientHeight;
+
+  if(!width || !height || !rows.length) return;
+
+  const prepared = prepareHeatWeights(rows);
+  const layout = [];
+
+  binaryTreemap(prepared,{x:0,y:0,w:width,h:height},layout);
+
+  layout.forEach(item=>{
+    const tile = document.createElement("button");
+    tile.className = "tile";
+
+    const gap = 1;
+
+    tile.style.left = item.x + gap + "px";
+    tile.style.top = item.y + gap + "px";
+    tile.style.width = Math.max(1,item.w - gap * 2) + "px";
+    tile.style.height = Math.max(1,item.h - gap * 2) + "px";
+
+    const [c1,c2] = getColors(item.chaosScore);
+    tile.style.setProperty("--c1",c1);
+    tile.style.setProperty("--c2",c2);
+
+    const area = item.w * item.h;
+    const minSide = Math.min(item.w,item.h);
+    const token = getTokenName(item.label);
+
+    const tokenFitWidth = item.w / Math.max(token.length,4) * 1.45;
+    const tokenFitHeight = item.h * 0.32;
+    const tokenSize = Math.max(7,Math.min(54,Math.sqrt(area) * 0.19,tokenFitWidth,tokenFitHeight));
+
+    const percentSize = Math.max(7,Math.min(24,Math.sqrt(area) * 0.09,item.h * 0.18));
+    const feesSize = Math.max(7,Math.min(16,Math.sqrt(area) * 0.065,item.h * 0.14));
+    const smallSize = Math.max(7,Math.min(13,Math.sqrt(area) * 0.05,item.h * 0.11));
+
+    tile.style.setProperty("--tokenSize",tokenSize + "px");
+    tile.style.setProperty("--percentSize",percentSize + "px");
+    tile.style.setProperty("--feesSize",feesSize + "px");
+    tile.style.setProperty("--smallSize",smallSize + "px");
+
+    const showPercent = item.w > 34 && item.h > 32;
+    const showFees = item.w > 76 && item.h > 62;
+    const showVolume = item.w > 120 && item.h > 104;
+
+    tile.innerHTML = `
+      <div class="tile-inner">
+        <div class="tile-token">${token}</div>
+        ${showPercent ? `<div class="tile-percent">${Math.round(item.chaosScore)}%</div>` : ""}
+        ${showFees ? `<div class="tile-fees">${fmtUsd(item.fees24h)}</div>` : ""}
+        ${showVolume ? `<div class="tile-volume">Vol ${fmtUsd(item.volume24h)}</div>` : ""}
+      </div>
+    `;
+
+    tile.addEventListener("click",()=>updatePanel(item));
+    container.appendChild(tile);
+  });
+}
+
+async function load(){
+  const statusLine = document.getElementById("statusLine");
+  statusLine.textContent = "Loading GeckoTerminal pool data...";
+
+  try{
+    const chunks = chunkArray(pools,CHUNK_SIZE);
+    const responses = await Promise.all(chunks.map(fetchGeckoChunk));
+    const flatPools = responses.flat();
+
+    const geckoMap = new Map();
+
+    for(const item of flatPools){
+      const address = item?.attributes?.address;
+      if(address) geckoMap.set(address,item);
+    }
+
+    let rows = pools.map(([id,label,feePercent])=>{
+      const item = geckoMap.get(id);
+      if(!item) return null;
+
+      const attrs = item.attributes || {};
+      const fee = feePercent / 100;
+      const volume24h = parseFloat(attrs.volume_usd?.h24 || "0");
+      const fees24h = volume24h * fee;
+
+      return {
+        id,
+        label,
+        feePercent,
+        volume24h,
+        fees24h
+      };
+    }).filter(Boolean).sort((a,b)=>b.fees24h - a.fees24h);
+
+    const highest = rows[0]?.fees24h || 0;
+    const total = rows.reduce((sum,row)=>sum + row.fees24h,0);
+
+    rows = rows.map(row=>({
+      ...row,
+      chaosScore:highest > 0 ? (row.fees24h / highest) * 100 : 0
+    }));
+
+    latestRows = rows;
+
+    document.getElementById("systemOutput").textContent = fmtUsd(total);
+    document.getElementById("topPool").textContent = rows[0]?.label || "-";
+    statusLine.textContent = `Loaded ${rows.length} ASTY pools. Auto-updating every 60s.`;
+
+    renderHeatmap(rows);
+    updatePanel(rows[0]);
+
+  }catch(error){
+    console.error(error);
+    statusLine.textContent = "Error loading GeckoTerminal data.";
+  }
+}
+
+function rerender(){
+  if(latestRows.length){
+    renderHeatmap(latestRows);
+  }
+}
+
+load();
+setInterval(load,60000);
+
+let resizeTimer;
+window.addEventListener("resize",()=>{
+  clearTimeout(resizeTimer);
+  resizeTimer = setTimeout(rerender,180);
+});
+</script>
+
+</body>
+</html>
