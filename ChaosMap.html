@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>$ASTY Chaos Map</title>
+<title>$ASTY HeatMap</title>
 
 <style>
 *{
@@ -63,8 +63,8 @@ a{
 }
 
 .brand-title{
-  font-size:20px;
-  font-weight:900;
+  font-size:21px;
+  font-weight:950;
   letter-spacing:-.2px;
 }
 
@@ -72,7 +72,7 @@ a{
   margin-top:2px;
   font-size:12px;
   color:#a9a3c5;
-  font-weight:600;
+  font-weight:700;
 }
 
 .nav-links{
@@ -88,7 +88,7 @@ a{
   border:1px solid rgba(167,139,250,.24);
   color:#dad6ea;
   font-size:13px;
-  font-weight:800;
+  font-weight:850;
   transition:.18s ease;
 }
 
@@ -148,7 +148,7 @@ a{
   margin-top:8px;
   font-size:12px;
   color:#9f98bb;
-  font-weight:600;
+  font-weight:650;
 }
 
 .stats{
@@ -187,7 +187,7 @@ a{
     inset 0 0 50px rgba(255,255,255,.015);
 }
 
-#treemap{
+#heatmap{
   position:absolute;
   inset:0;
   width:100%;
@@ -211,8 +211,8 @@ a{
 }
 
 .tile:hover .tile-inner{
-  filter:brightness(1.13) saturate(1.08);
-  box-shadow:inset 0 0 0 2px rgba(255,255,255,.22);
+  filter:brightness(1.12) saturate(1.08);
+  box-shadow:inset 0 0 0 2px rgba(255,255,255,.25);
 }
 
 .tile-inner{
@@ -412,8 +412,8 @@ a{
     <div class="brand">
       <img src="assets/logo.png" alt="ASTY Logo" class="brand-logo">
       <div>
-        <div class="brand-title">$ASTY Chaos Map</div>
-        <div class="brand-sub">Live Treemap Visualization</div>
+        <div class="brand-title">$ASTY HeatMap</div>
+        <div class="brand-sub">Live Pool Heat Visualization</div>
       </div>
     </div>
 
@@ -432,7 +432,7 @@ a{
 <main class="page">
   <section class="top-panel">
     <div class="info-card">
-      <h1>Chaos Treemap</h1>
+      <h1>$ASTY HeatMap</h1>
       <div class="status-line" id="statusLine">Loading GeckoTerminal pool data...</div>
     </div>
 
@@ -443,14 +443,14 @@ a{
       </div>
 
       <div class="stat">
-        <div class="stat-label">Top Chaos Pool</div>
+        <div class="stat-label">Top Heat Pool</div>
         <div class="stat-value" id="topPool">-</div>
       </div>
     </div>
   </section>
 
   <section class="map-frame">
-    <div id="treemap"></div>
+    <div id="heatmap"></div>
   </section>
 
   <section class="detail-panel">
@@ -583,7 +583,7 @@ function getColors(score){
   if(score >= 80) return ["#16c784","#0f9f67"];
   if(score >= 50) return ["#13b981","#0f8f65"];
   if(score >= 20) return ["#cc1126","#a80d1e"];
-  return ["#6b7280","#4b5563"];
+  return ["#7f0d1b","#5c0a14"];
 }
 
 function updatePanel(pool){
@@ -597,105 +597,76 @@ function updatePanel(pool){
   document.getElementById("panelLink").href = `https://www.geckoterminal.com/solana/pools/${pool.id}`;
 }
 
-function normalizeForTreemap(items){
-  const minWeight = 0.18;
+function prepareHeatWeights(rows){
+  return rows.map(row=>{
+    const normalized = Math.max(row.chaosScore,0.6);
 
-  return items.map(item=>({
-    ...item,
-    weight:Math.max(item.chaosScore, minWeight)
-  }));
+    return {
+      ...row,
+      weight:Math.pow(normalized,0.78)
+    };
+  });
 }
 
-function worstAspect(row, side){
-  if(!row.length) return Infinity;
+function splitBalanced(items){
+  const total = items.reduce((sum,item)=>sum + item.weight,0);
+  const target = total / 2;
 
-  const sum = row.reduce((a,b)=>a + b.area,0);
-  const max = Math.max(...row.map(i=>i.area));
-  const min = Math.min(...row.map(i=>i.area));
+  let bestIndex = 1;
+  let bestDiff = Infinity;
+  let running = 0;
 
-  return Math.max(
-    (side * side * max) / (sum * sum),
-    (sum * sum) / (side * side * min)
-  );
-}
+  for(let i=0;i<items.length - 1;i++){
+    running += items[i].weight;
+    const diff = Math.abs(target - running);
 
-function layoutRow(row, rect, result){
-  const sum = row.reduce((a,b)=>a + b.area,0);
-
-  if(rect.w >= rect.h){
-    const rowH = sum / rect.w;
-    let x = rect.x;
-
-    row.forEach(item=>{
-      const itemW = item.area / rowH;
-      result.push({
-        ...item,
-        x:x,
-        y:rect.y,
-        w:itemW,
-        h:rowH
-      });
-      x += itemW;
-    });
-
-    rect.y += rowH;
-    rect.h -= rowH;
-  }else{
-    const colW = sum / rect.h;
-    let y = rect.y;
-
-    row.forEach(item=>{
-      const itemH = item.area / colW;
-      result.push({
-        ...item,
-        x:rect.x,
-        y:y,
-        w:colW,
-        h:itemH
-      });
-      y += itemH;
-    });
-
-    rect.x += colW;
-    rect.w -= colW;
-  }
-}
-
-function squarify(data,width,height){
-  const totalWeight = data.reduce((a,b)=>a + b.weight,0);
-  const totalArea = width * height;
-
-  const items = data.map(item=>({
-    ...item,
-    area:(item.weight / totalWeight) * totalArea
-  }));
-
-  const result = [];
-  const rect = {x:0,y:0,w:width,h:height};
-  let row = [];
-
-  while(items.length){
-    const item = items[0];
-    const side = Math.min(rect.w,rect.h);
-
-    if(row.length === 0 || worstAspect([...row,item],side) <= worstAspect(row,side)){
-      row.push(item);
-      items.shift();
-    }else{
-      layoutRow(row,rect,result);
-      row = [];
+    if(diff < bestDiff){
+      bestDiff = diff;
+      bestIndex = i + 1;
     }
   }
 
-  if(row.length){
-    layoutRow(row,rect,result);
-  }
-
-  return result;
+  return [
+    items.slice(0,bestIndex),
+    items.slice(bestIndex)
+  ];
 }
 
-function renderTreemap(rows){
-  const container = document.getElementById("treemap");
+function binaryTreemap(items,rect,result){
+  if(!items.length) return;
+
+  if(items.length === 1){
+    result.push({
+      ...items[0],
+      x:rect.x,
+      y:rect.y,
+      w:rect.w,
+      h:rect.h
+    });
+    return;
+  }
+
+  const [a,b] = splitBalanced(items);
+
+  const sumA = a.reduce((sum,item)=>sum + item.weight,0);
+  const sumB = b.reduce((sum,item)=>sum + item.weight,0);
+  const total = sumA + sumB;
+
+  if(rect.w >= rect.h){
+    const wA = rect.w * (sumA / total);
+
+    binaryTreemap(a,{x:rect.x,y:rect.y,w:wA,h:rect.h},result);
+    binaryTreemap(b,{x:rect.x + wA,y:rect.y,w:rect.w - wA,h:rect.h},result);
+  }else{
+    const hA = rect.h * (sumA / total);
+
+    binaryTreemap(a,{x:rect.x,y:rect.y,w:rect.w,h:hA},result);
+    binaryTreemap(b,{x:rect.x,y:rect.y + hA,w:rect.w,h:rect.h - hA},result);
+  }
+}
+
+function renderHeatmap(rows){
+  const container = document.getElementById("heatmap");
   container.innerHTML = "";
 
   const width = container.clientWidth;
@@ -703,10 +674,12 @@ function renderTreemap(rows){
 
   if(!width || !height || !rows.length) return;
 
-  const data = normalizeForTreemap(rows);
-  const layout = squarify(data,width,height);
+  const prepared = prepareHeatWeights(rows);
+  const layout = [];
 
-  layout.forEach((item,index)=>{
+  binaryTreemap(prepared,{x:0,y:0,w:width,h:height},layout);
+
+  layout.forEach(item=>{
     const tile = document.createElement("button");
     tile.className = "tile";
 
@@ -721,26 +694,30 @@ function renderTreemap(rows){
     tile.style.setProperty("--c1",c1);
     tile.style.setProperty("--c2",c2);
 
-    const minSide = Math.min(item.w,item.h);
     const area = item.w * item.h;
+    const minSide = Math.min(item.w,item.h);
+    const token = getTokenName(item.label);
 
-    const tokenSize = Math.max(8,Math.min(54,Math.sqrt(area) * 0.22));
-    const percentSize = Math.max(7,Math.min(24,Math.sqrt(area) * 0.095));
-    const feesSize = Math.max(0,Math.min(17,Math.sqrt(area) * 0.075));
-    const smallSize = Math.max(0,Math.min(13,Math.sqrt(area) * 0.055));
+    const tokenFitWidth = item.w / Math.max(token.length,4) * 1.45;
+    const tokenFitHeight = item.h * 0.32;
+    const tokenSize = Math.max(7,Math.min(54,Math.sqrt(area) * 0.19,tokenFitWidth,tokenFitHeight));
+
+    const percentSize = Math.max(7,Math.min(24,Math.sqrt(area) * 0.09,item.h * 0.18));
+    const feesSize = Math.max(7,Math.min(16,Math.sqrt(area) * 0.065,item.h * 0.14));
+    const smallSize = Math.max(7,Math.min(13,Math.sqrt(area) * 0.05,item.h * 0.11));
 
     tile.style.setProperty("--tokenSize",tokenSize + "px");
     tile.style.setProperty("--percentSize",percentSize + "px");
     tile.style.setProperty("--feesSize",feesSize + "px");
     tile.style.setProperty("--smallSize",smallSize + "px");
 
-    const showPercent = item.w > 38 && item.h > 34;
-    const showFees = item.w > 82 && item.h > 68;
-    const showVolume = item.w > 130 && item.h > 108;
+    const showPercent = item.w > 34 && item.h > 32;
+    const showFees = item.w > 76 && item.h > 62;
+    const showVolume = item.w > 120 && item.h > 104;
 
     tile.innerHTML = `
       <div class="tile-inner">
-        <div class="tile-token">${getTokenName(item.label)}</div>
+        <div class="tile-token">${token}</div>
         ${showPercent ? `<div class="tile-percent">${Math.round(item.chaosScore)}%</div>` : ""}
         ${showFees ? `<div class="tile-fees">${fmtUsd(item.fees24h)}</div>` : ""}
         ${showVolume ? `<div class="tile-volume">Vol ${fmtUsd(item.volume24h)}</div>` : ""}
@@ -800,7 +777,7 @@ async function load(){
     document.getElementById("topPool").textContent = rows[0]?.label || "-";
     statusLine.textContent = `Loaded ${rows.length} ASTY pools. Auto-updating every 60s.`;
 
-    renderTreemap(rows);
+    renderHeatmap(rows);
     updatePanel(rows[0]);
 
   }catch(error){
@@ -811,7 +788,7 @@ async function load(){
 
 function rerender(){
   if(latestRows.length){
-    renderTreemap(latestRows);
+    renderHeatmap(latestRows);
   }
 }
 
