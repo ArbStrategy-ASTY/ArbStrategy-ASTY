@@ -1,0 +1,1859 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="theme-color" content="#05020a" />
+<title>ASTY Short Trader</title>
+
+<style>
+:root{
+  --bg:#05020a;
+  --bg2:#0b0614;
+  --panel:rgba(18,11,32,.82);
+  --panel2:rgba(28,16,50,.88);
+  --line:rgba(192,132,252,.18);
+  --lineStrong:rgba(192,132,252,.38);
+  --text:#f8f2ff;
+  --muted:#bda9dd;
+  --purple:#a855f7;
+  --purple2:#c084fc;
+  --green:#22c55e;
+  --yellow:#facc15;
+  --red:#ef4444;
+  --orange:#f97316;
+  --cyan:#22d3ee;
+  --blue:#38bdf8;
+}
+
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+
+body{
+  margin:0;
+  font-family:Inter,Arial,sans-serif;
+  color:var(--text);
+  background:
+    radial-gradient(circle at 20% 0%,rgba(168,85,247,.26),transparent 32%),
+    radial-gradient(circle at 85% 10%,rgba(34,211,238,.13),transparent 30%),
+    linear-gradient(180deg,var(--bg),var(--bg2));
+  min-height:100vh;
+  overflow-x:hidden;
+}
+
+button,input,select{font:inherit}
+a{color:inherit;text-decoration:none}
+
+.wrap{
+  width:min(1180px,calc(100% - 28px));
+  margin:0 auto;
+}
+
+.nav{
+  position:sticky;
+  top:0;
+  z-index:50;
+  backdrop-filter:blur(18px);
+  background:rgba(5,2,10,.78);
+  border-bottom:1px solid var(--line);
+}
+
+.navin{
+  display:flex;
+  gap:14px;
+  align-items:center;
+  justify-content:space-between;
+  padding:14px 0;
+}
+
+.brand{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  font-weight:900;
+  letter-spacing:.4px;
+}
+
+.logo{
+  width:38px;
+  height:38px;
+  object-fit:contain;
+  filter:drop-shadow(0 0 18px rgba(168,85,247,.75));
+}
+
+.links{
+  display:flex;
+  gap:9px;
+  flex-wrap:wrap;
+  justify-content:flex-end;
+}
+
+.pill{
+  border:1px solid var(--line);
+  background:rgba(255,255,255,.045);
+  padding:10px 13px;
+  border-radius:999px;
+  font-size:13px;
+  color:#efe4ff;
+  transition:.2s ease;
+}
+
+.pill:hover{
+  border-color:rgba(192,132,252,.52);
+  box-shadow:0 0 22px rgba(168,85,247,.2);
+  transform:translateY(-1px);
+}
+
+.hero{
+  padding:42px 0 28px;
+  text-align:center;
+  position:relative;
+}
+
+
+h1{
+  font-size:clamp(38px,6vw,68px);
+  line-height:.96;
+  margin:0;
+  text-shadow:0 0 35px rgba(168,85,247,.42);
+}
+
+.hero p{
+  margin:13px auto 0;
+  color:var(--muted);
+  max-width:720px;
+  line-height:1.55;
+  font-size:15px;
+}
+
+.chainBadge{
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  margin-top:16px;
+  padding:9px 13px;
+  border-radius:999px;
+  color:#c9f8ff;
+  border:1px solid rgba(34,211,238,.28);
+  background:rgba(34,211,238,.08);
+  font-size:12px;
+  font-weight:900;
+  letter-spacing:.4px;
+}
+
+.chainDot{
+  width:8px;
+  height:8px;
+  border-radius:50%;
+  background:var(--cyan);
+  box-shadow:0 0 12px var(--cyan);
+}
+
+.panel{
+  border:1px solid var(--line);
+  background:linear-gradient(180deg,var(--panel),rgba(11,6,20,.9));
+  border-radius:28px;
+  padding:18px;
+  box-shadow:0 18px 90px rgba(0,0,0,.35);
+}
+
+.controls{
+  display:grid;
+  grid-template-columns:repeat(5,1fr);
+  gap:12px;
+}
+
+.control{
+  background:rgba(255,255,255,.04);
+  border:1px solid var(--line);
+  border-radius:18px;
+  padding:13px;
+}
+
+.control label{
+  display:block;
+  color:var(--muted);
+  font-size:12px;
+  margin-bottom:8px;
+}
+
+.control input,
+.control select,
+.toolbar input,
+.toolbar select{
+  width:100%;
+  background:rgba(0,0,0,.22);
+  border:1px solid rgba(192,132,252,.18);
+  border-radius:13px;
+  color:var(--text);
+  padding:11px;
+  outline:none;
+}
+
+.control input:focus,
+.control select:focus,
+.toolbar input:focus,
+.toolbar select:focus{
+  border-color:rgba(192,132,252,.55);
+  box-shadow:0 0 0 3px rgba(168,85,247,.1);
+}
+
+select option{background:#10091d;color:var(--text)}
+
+.actions{
+  display:flex;
+  gap:12px;
+  flex-wrap:wrap;
+  align-items:center;
+  margin-top:15px;
+}
+
+.btn{
+  cursor:pointer;
+  border:0;
+  border-radius:18px;
+  padding:15px 20px;
+  font-weight:900;
+  color:white;
+  background:linear-gradient(135deg,var(--purple),#6d28d9);
+  box-shadow:0 0 30px rgba(168,85,247,.28);
+  letter-spacing:.2px;
+  transition:.2s ease;
+}
+
+.btn:hover{transform:translateY(-1px);box-shadow:0 0 38px rgba(168,85,247,.4)}
+.btn:disabled{opacity:.6;cursor:not-allowed;transform:none}
+
+.status{
+  color:var(--muted);
+  font-size:14px;
+  line-height:1.4;
+}
+
+.progressBar{
+  height:11px;
+  background:rgba(255,255,255,.06);
+  border-radius:999px;
+  overflow:hidden;
+  margin:16px 0 0;
+  border:1px solid rgba(192,132,252,.1);
+}
+
+.progressFill{
+  height:100%;
+  width:0%;
+  background:linear-gradient(90deg,var(--purple),var(--cyan));
+  border-radius:999px;
+  transition:.25s;
+  box-shadow:0 0 16px rgba(34,211,238,.3);
+}
+
+.summary{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:12px;
+  margin:18px 0;
+}
+
+.summaryCard{
+  border:1px solid var(--line);
+  background:rgba(255,255,255,.035);
+  border-radius:20px;
+  padding:15px;
+  min-height:92px;
+}
+
+.summaryCard span{
+  display:block;
+  color:var(--muted);
+  font-size:12px;
+  margin-bottom:8px;
+}
+
+.summaryCard b{
+  font-size:25px;
+  line-height:1;
+}
+
+.summaryCard small{
+  display:block;
+  color:#d9c8f5;
+  margin-top:7px;
+  font-size:11px;
+}
+
+.tabs{
+  display:flex;
+  gap:9px;
+  overflow-x:auto;
+  padding:3px 1px 9px;
+  margin:18px 0 8px;
+  scrollbar-width:thin;
+}
+
+.tab{
+  flex:0 0 auto;
+  cursor:pointer;
+  border:1px solid var(--line);
+  color:#e9dcfb;
+  background:rgba(255,255,255,.035);
+  border-radius:999px;
+  padding:11px 14px;
+  font-weight:850;
+  font-size:13px;
+  transition:.2s ease;
+}
+
+.tab:hover{border-color:var(--lineStrong)}
+.tab.active{
+  color:white;
+  border-color:rgba(192,132,252,.58);
+  background:linear-gradient(135deg,rgba(168,85,247,.25),rgba(34,211,238,.1));
+  box-shadow:0 0 22px rgba(168,85,247,.18);
+}
+
+.tabCount{
+  display:inline-grid;
+  place-items:center;
+  min-width:21px;
+  height:21px;
+  margin-left:7px;
+  padding:0 6px;
+  border-radius:999px;
+  background:rgba(255,255,255,.09);
+  font-size:11px;
+}
+
+.toolbar{
+  display:grid;
+  grid-template-columns:1fr 230px;
+  gap:12px;
+  margin:10px 0 16px;
+}
+
+.grid{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:16px;
+  margin:0 0 60px;
+}
+
+.card{
+  position:relative;
+  overflow:hidden;
+  border:1px solid var(--line);
+  background:linear-gradient(180deg,rgba(28,16,50,.88),rgba(10,6,18,.94));
+  border-radius:24px;
+  padding:18px;
+  box-shadow:0 14px 60px rgba(0,0,0,.24);
+  animation:pop .45s ease both;
+}
+
+.card:before{
+  content:"";
+  position:absolute;
+  inset:0;
+  pointer-events:none;
+  background:radial-gradient(circle at 100% 0%,rgba(168,85,247,.12),transparent 34%);
+}
+
+.card.entry{border-color:rgba(34,197,94,.32)}
+.card.pullback{border-color:rgba(34,211,238,.3)}
+.card.hot{border-color:rgba(239,68,68,.3)}
+.card.excluded{opacity:.76}
+
+.cardHeader{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  position:relative;
+  z-index:2;
+}
+
+.tokenLogo,
+.tokenFallback{
+  width:52px;
+  height:52px;
+  flex:0 0 52px;
+  border-radius:50%;
+  border:1px solid rgba(192,132,252,.34);
+  background:#10091d;
+  box-shadow:0 0 20px rgba(168,85,247,.2);
+}
+
+.tokenLogo{object-fit:cover}
+.tokenFallback{
+  display:grid;
+  place-items:center;
+  font-size:15px;
+  font-weight:950;
+  color:#efe4ff;
+}
+
+.tokenTitle{min-width:0;flex:1}
+.tokenTitle h2{
+  margin:0;
+  font-size:24px;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+
+.tokenTitle p{
+  margin:4px 0 0;
+  color:var(--muted);
+  font-size:12px;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+
+.rank{
+  min-width:45px;
+  text-align:center;
+  color:#fff;
+  background:rgba(168,85,247,.22);
+  border:1px solid rgba(192,132,252,.28);
+  border-radius:999px;
+  padding:7px 9px;
+  font-weight:900;
+  font-size:12px;
+}
+
+.badges{
+  display:flex;
+  gap:7px;
+  flex-wrap:wrap;
+  margin:13px 0 14px;
+  position:relative;
+  z-index:2;
+}
+
+.tag{
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  border-radius:999px;
+  padding:7px 10px;
+  font-size:11px;
+  font-weight:900;
+}
+
+.green{background:rgba(34,197,94,.15);color:#86efac;border:1px solid rgba(34,197,94,.28)}
+.yellow{background:rgba(250,204,21,.13);color:#fde68a;border:1px solid rgba(250,204,21,.28)}
+.red{background:rgba(239,68,68,.13);color:#fca5a5;border:1px solid rgba(239,68,68,.28)}
+.blue{background:rgba(34,211,238,.12);color:#a5f3fc;border:1px solid rgba(34,211,238,.28)}
+.purple{background:rgba(168,85,247,.16);color:#ddd6fe;border:1px solid rgba(168,85,247,.3)}
+.gray{background:rgba(255,255,255,.055);color:#d5c9e8;border:1px solid rgba(255,255,255,.11)}
+
+.scoreBlock{
+  position:relative;
+  z-index:2;
+  border-top:1px solid rgba(192,132,252,.12);
+  border-bottom:1px solid rgba(192,132,252,.12);
+  padding:13px 0;
+}
+
+.scoreRow{
+  display:grid;
+  grid-template-columns:148px 1fr;
+  align-items:center;
+  gap:11px;
+  margin:8px 0;
+}
+
+.scoreRow.main{margin:1px 0 13px}
+
+.scoreLabel{
+  color:var(--muted);
+  font-size:12px;
+  font-weight:750;
+}
+
+.scoreRow.main .scoreLabel{
+  color:#f6edff;
+  font-size:13px;
+  font-weight:950;
+}
+
+.scoreTrack{
+  height:23px;
+  position:relative;
+  overflow:hidden;
+  border-radius:999px;
+  background:rgba(255,255,255,.06);
+  border:1px solid rgba(192,132,252,.13);
+}
+
+.scoreRow.main .scoreTrack{height:31px}
+
+.scoreFill{
+  position:absolute;
+  left:0;
+  top:0;
+  bottom:0;
+  width:0;
+  border-radius:999px;
+  transition:width .55s ease;
+}
+
+.scoreFill.positive{
+  background:linear-gradient(90deg,var(--purple),var(--purple2),var(--cyan));
+  box-shadow:0 0 18px rgba(168,85,247,.28);
+}
+
+.scoreFill.riskLow{background:linear-gradient(90deg,#15803d,var(--green))}
+.scoreFill.riskMid{background:linear-gradient(90deg,#ca8a04,var(--yellow))}
+.scoreFill.riskHigh{background:linear-gradient(90deg,#991b1b,var(--red))}
+
+.scoreValue{
+  position:absolute;
+  inset:0;
+  z-index:2;
+  display:grid;
+  place-items:center;
+  color:white;
+  font-size:11px;
+  font-weight:950;
+  text-shadow:0 1px 5px rgba(0,0,0,.9);
+  pointer-events:none;
+}
+
+.scoreRow.main .scoreValue{font-size:14px}
+
+.metrics{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:8px;
+  margin-top:14px;
+  position:relative;
+  z-index:2;
+}
+
+.metric{
+  background:rgba(255,255,255,.04);
+  border:1px solid rgba(192,132,252,.13);
+  border-radius:14px;
+  padding:10px;
+  min-width:0;
+}
+
+.metric b{
+  display:block;
+  font-size:12px;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+
+.metric span{
+  display:block;
+  color:var(--muted);
+  font-size:10px;
+  margin-top:4px;
+}
+
+.plan{
+  margin-top:13px;
+  position:relative;
+  z-index:2;
+  border:1px solid rgba(192,132,252,.13);
+  background:rgba(255,255,255,.025);
+  border-radius:16px;
+  overflow:hidden;
+}
+
+.planHeader{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  padding:11px 12px;
+  border-bottom:1px solid rgba(192,132,252,.12);
+  color:#eee3ff;
+  font-size:12px;
+  font-weight:900;
+}
+
+.planGrid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+}
+
+.planItem{
+  padding:10px 12px;
+  border-right:1px solid rgba(192,132,252,.1);
+  border-bottom:1px solid rgba(192,132,252,.1);
+  min-width:0;
+}
+
+.planItem:nth-child(2n){border-right:0}
+.planItem:nth-last-child(-n+2){border-bottom:0}
+
+.planItem span{
+  display:block;
+  color:var(--muted);
+  font-size:10px;
+  margin-bottom:4px;
+}
+
+.planItem b{
+  display:block;
+  font-size:12px;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+
+.why{
+  margin-top:13px;
+  color:#d9c8f5;
+  font-size:12px;
+  line-height:1.5;
+  position:relative;
+  z-index:2;
+}
+
+.why ul{margin:7px 0 0;padding-left:18px}
+.why li{margin:4px 0}
+
+.cardActions{
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+  margin-top:13px;
+  position:relative;
+  z-index:2;
+}
+
+.smallBtn{
+  cursor:pointer;
+  border:1px solid rgba(192,132,252,.22);
+  background:rgba(255,255,255,.045);
+  color:#eadcff;
+  padding:9px 11px;
+  border-radius:12px;
+  font-weight:850;
+  font-size:11px;
+}
+
+.smallBtn:hover{
+  border-color:rgba(192,132,252,.5);
+  box-shadow:0 0 18px rgba(168,85,247,.16);
+}
+
+.empty{
+  display:none;
+  text-align:center;
+  padding:42px 20px;
+  color:var(--muted);
+  border:1px solid var(--line);
+  border-radius:24px;
+  background:rgba(255,255,255,.025);
+  margin-bottom:60px;
+}
+
+.footer{
+  color:#8f7ba9;
+  text-align:center;
+  font-size:11px;
+  padding:0 0 28px;
+}
+
+@keyframes pop{
+  from{opacity:0;transform:translateY(18px) scale(.98)}
+  to{opacity:1;transform:none}
+}
+
+@media(max-width:1040px){
+  .controls{grid-template-columns:repeat(3,1fr)}
+  .summary{grid-template-columns:1fr 1fr}
+}
+
+@media(max-width:900px){
+  .grid{grid-template-columns:1fr}
+  .navin{align-items:flex-start;flex-direction:column}
+  .links{justify-content:flex-start}
+}
+
+@media(max-width:680px){
+  .controls{grid-template-columns:1fr 1fr}
+  .toolbar{grid-template-columns:1fr}
+  .metrics{grid-template-columns:1fr 1fr}
+  .hero{padding-top:30px}
+  .panel{border-radius:22px;padding:14px}
+  .actions{flex-direction:column;align-items:stretch}
+  .btn{width:100%}
+  .scoreRow{grid-template-columns:125px 1fr}
+}
+
+@media(max-width:500px){
+  .controls,.summary{grid-template-columns:1fr}
+  .scoreRow{grid-template-columns:1fr;gap:5px;margin:10px 0}
+  .scoreTrack{height:25px}
+  .scoreRow.main .scoreTrack{height:31px}
+  .planGrid{grid-template-columns:1fr}
+  .planItem{border-right:0}
+  .planItem:nth-last-child(-n+2){border-bottom:1px solid rgba(192,132,252,.1)}
+  .planItem:last-child{border-bottom:0}
+  .tokenTitle h2{font-size:21px}
+  .card{padding:15px}
+}
+</style>
+</head>
+
+<body>
+<nav class="nav">
+  <div class="wrap navin">
+    <a class="brand" href="https://arbstrategy.net/" target="_blank" rel="noopener">
+      <img class="logo" src="assets/logo.png" alt="ASTY Logo">
+      <span>$ASTY Short Trader</span>
+    </a>
+
+    <div class="links">
+      <a class="pill" href="https://arbstrategy.net" target="_blank" rel="noopener">Website</a>
+      <a class="pill" href="https://arbstrategy-asty.github.io/ArbStrategy-ASTY/" target="_blank" rel="noopener">System Overview</a>
+      <a class="pill" href="https://htmlpreview.github.io/?https://github.com/ArbStrategy-ASTY/ArbStrategy-ASTY/blob/main/pools.html" target="_blank" rel="noopener">Pool Dashboard</a>
+      <a class="pill" href="https://x.com/ArbStrategyASTY" target="_blank" rel="noopener">X</a>
+      <a class="pill" href="https://t.me/ArbStrategyASTY" target="_blank" rel="noopener">Telegram</a>
+    </div>
+  </div>
+</nav>
+
+<header class="hero wrap">
+  <h1>ASTY Short Trader</h1>
+  <div class="chainBadge"><span class="chainDot"></span> SOLANA ONLY</div>
+</header>
+
+<main class="wrap">
+  <section class="panel">
+    <div class="controls">
+      <div class="control">
+        <label>Min. Poolalter in Stunden</label>
+        <input id="minAge" type="number" value="24" min="1" max="8760">
+      </div>
+
+      <div class="control">
+        <label>Min. Liquidität in USD</label>
+        <input id="minLiq" type="number" value="25000" min="0">
+      </div>
+
+      <div class="control">
+        <label>Min. 24h-Volumen in USD</label>
+        <input id="minVol" type="number" value="15000" min="0">
+      </div>
+
+      <div class="control">
+        <label>Min. Transaktionen in 1h</label>
+        <input id="minTx" type="number" value="25" min="0">
+      </div>
+
+      <div class="control">
+        <label>72h-Tiefenanalysen</label>
+        <input id="deepCount" type="number" value="12" min="0" max="20">
+      </div>
+    </div>
+
+    <div class="actions">
+      <button class="btn" id="scanBtn">SOLANA SHORT-CHANCEN SCANNEN</button>
+      <span class="status" id="status">Bereit. Datenquellen: GeckoTerminal und Solana RPC.</span>
+    </div>
+
+    <div class="progressBar">
+      <div class="progressFill" id="progressFill"></div>
+    </div>
+  </section>
+
+  <section class="summary" id="summary" hidden>
+    <div class="summaryCard">
+      <span>Gefundene Solana-Coins</span>
+      <b id="sumCoins">0</b>
+      <small>Je Coin nur der liquideste geeignete Pool</small>
+    </div>
+    <div class="summaryCard">
+      <span>Einstiegskandidaten</span>
+      <b id="sumEntry">0</b>
+      <small>Aktuell bestätigte Short-Term-Muster</small>
+    </div>
+    <div class="summaryCard">
+      <span>Durchschnittlicher Short Score</span>
+      <b id="sumAvg">0 %</b>
+      <small>Über alle nicht ausgeschlossenen Kandidaten</small>
+    </div>
+    <div class="summaryCard">
+      <span>Letzte Aktualisierung</span>
+      <b id="sumTime">--:--</b>
+      <small>Zeitpunkt des letzten Scans</small>
+    </div>
+  </section>
+
+  <div class="tabs" id="tabs" hidden>
+    <button class="tab active" data-view="top">Top-Chancen <span class="tabCount" id="countTop">0</span></button>
+    <button class="tab" data-view="entry">Einstiegskandidaten <span class="tabCount" id="countEntry">0</span></button>
+    <button class="tab" data-view="watch">Beobachtung <span class="tabCount" id="countWatch">0</span></button>
+    <button class="tab" data-view="pullback">Rücksetzer <span class="tabCount" id="countPullback">0</span></button>
+    <button class="tab" data-view="hot">Überhitzt <span class="tabCount" id="countHot">0</span></button>
+    <button class="tab" data-view="excluded">Ausgeschlossen <span class="tabCount" id="countExcluded">0</span></button>
+  </div>
+
+  <section class="toolbar" id="toolbar" hidden>
+    <input id="searchInput" type="search" placeholder="Coin, Symbol oder Contract-Adresse suchen">
+    <select id="sortSelect">
+      <option value="score">Nach ASTY Short Score</option>
+      <option value="chance">Nach Chance</option>
+      <option value="safety">Nach Sicherheit</option>
+      <option value="liquidity">Nach Liquidität</option>
+      <option value="volume">Nach 24h-Volumen</option>
+      <option value="newest">Nach Poolalter</option>
+    </select>
+  </section>
+
+  <div class="empty" id="empty">Keine Coins entsprechen der aktuellen Ansicht.</div>
+  <section class="grid" id="grid"></section>
+</main>
+
+<footer class="footer wrap">
+  ASTY Short Trader · Solana Market Screening · Max. 72 Stunden Haltedauer
+</footer>
+
+<script>
+const API = 'https://api.geckoterminal.com/api/v2';
+const NETWORK = 'solana';
+const VERSION_ACCEPT = 'application/json;version=20230203';
+
+const ASTY_MINT = 'ASTYqeaoK83Zs1pTFEXZUB6BM8cG8YLTsN852NUkt7ZR';
+const WSOL_MINT = 'So11111111111111111111111111111111111111112';
+const WSOL_2022_MINT = '9pan9bMn5HatX4EJdBwg9VgCa7Uz5HL8N1m5D3NdXejP';
+const USDC_MINT = 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v';
+const USDT_MINT = 'Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB';
+
+const QUOTE_MINTS = new Set([
+  WSOL_MINT.toLowerCase(),
+  WSOL_2022_MINT.toLowerCase(),
+  USDC_MINT.toLowerCase(),
+  USDT_MINT.toLowerCase()
+]);
+
+const QUOTE_SYMBOLS = new Set(['SOL','WSOL','USDC','USDT']);
+
+const RPC_ENDPOINTS = [
+  'https://solana.rpc.subquery.network/public',
+  'https://api.mainnet-beta.solana.com'
+];
+
+const $ = id => document.getElementById(id);
+
+let results = [];
+let currentView = 'top';
+let scanRunning = false;
+
+function num(value){
+  const n = Number(value);
+  return Number.isFinite(n) ? n : 0;
+}
+
+function clamp(value,min=0,max=100){
+  return Math.max(min,Math.min(max,value));
+}
+
+function round(value){
+  return Math.round(clamp(value));
+}
+
+function norm(value){
+  return String(value || '').trim().toLowerCase();
+}
+
+function sleep(ms){
+  return new Promise(resolve => setTimeout(resolve,ms));
+}
+
+function escapeHtml(value){
+  return String(value ?? '')
+    .replaceAll('&','&amp;')
+    .replaceAll('<','&lt;')
+    .replaceAll('>','&gt;')
+    .replaceAll('"','&quot;')
+    .replaceAll("'",'&#039;');
+}
+
+function setProgress(percent,text){
+  $('progressFill').style.width = clamp(percent) + '%';
+  $('status').textContent = text;
+}
+
+function formatMoney(value){
+  const v = num(value);
+  if(v >= 1e9) return '$' + (v / 1e9).toFixed(2) + ' Mrd.';
+  if(v >= 1e6) return '$' + (v / 1e6).toFixed(2) + ' Mio.';
+  if(v >= 1e3) return '$' + (v / 1e3).toFixed(1) + ' Tsd.';
+  return '$' + v.toFixed(v < 10 ? 2 : 0);
+}
+
+function formatPrice(value){
+  const v = num(value);
+  if(!v) return 'Nicht verfügbar';
+  if(v >= 1000) return '$' + v.toLocaleString('de-DE',{maximumFractionDigits:2});
+  if(v >= 1) return '$' + v.toFixed(4);
+  if(v >= .01) return '$' + v.toFixed(6);
+  if(v >= .0001) return '$' + v.toFixed(8);
+  return '$' + v.toPrecision(5);
+}
+
+function formatSignedPct(value){
+  const v = num(value);
+  return (v > 0 ? '+' : '') + v.toFixed(2) + ' %';
+}
+
+function formatAge(hours){
+  const h = Math.max(0,Math.floor(num(hours)));
+  if(h < 24) return h + ' h';
+  if(h < 24 * 60) return Math.floor(h / 24) + ' T.';
+  return (h / (24 * 30.44)).toFixed(1) + ' Mon.';
+}
+
+function shortAddress(address){
+  const a = String(address || '');
+  if(a.length < 12) return a;
+  return a.slice(0,5) + '…' + a.slice(-5);
+}
+
+function poolAgeHours(iso){
+  if(!iso) return 0;
+  const t = new Date(iso).getTime();
+  if(!Number.isFinite(t)) return 0;
+  return Math.max(0,(Date.now() - t) / 3600000);
+}
+
+function tx(a,period){
+  const t = a.transactions?.[period] || {};
+  return {
+    buys:num(t.buys),
+    sells:num(t.sells),
+    buyers:num(t.buyers),
+    sellers:num(t.sellers)
+  };
+}
+
+function txTotal(a,period){
+  const t = tx(a,period);
+  return t.buys + t.sells;
+}
+
+function volume(a,period){
+  return num(a.volume_usd?.[period]);
+}
+
+function move(a,period){
+  return num(a.price_change_percentage?.[period]);
+}
+
+function relationshipId(pool,key){
+  return pool.relationships?.[key]?.data?.id || '';
+}
+
+function mintFromRelationshipId(id){
+  const prefix = NETWORK + '_';
+  return String(id || '').startsWith(prefix) ? String(id).slice(prefix.length) : '';
+}
+
+function buildIncludedMap(included){
+  const map = new Map();
+  (included || []).forEach(item => map.set(item.id,item));
+  return map;
+}
+
+function tokenFromRelationship(pool,key,includedMap,fallbackSymbol=''){
+  const id = relationshipId(pool,key);
+  const included = includedMap.get(id);
+  const a = included?.attributes || {};
+
+  return {
+    id,
+    address:a.address || mintFromRelationshipId(id),
+    symbol:String(a.symbol || fallbackSymbol || '').toUpperCase(),
+    name:a.name || fallbackSymbol || 'Unbekannter Token',
+    imageUrl:a.image_url || a.image_url_small || a.image_url_thumb || ''
+  };
+}
+
+function isAllowedQuote(token){
+  return QUOTE_MINTS.has(norm(token.address)) || QUOTE_SYMBOLS.has(String(token.symbol || '').toUpperCase());
+}
+
+function isExcludedCandidate(token){
+  const address = norm(token.address);
+  const symbol = String(token.symbol || '').toUpperCase();
+
+  return !address ||
+    address === norm(ASTY_MINT) ||
+    QUOTE_MINTS.has(address) ||
+    QUOTE_SYMBOLS.has(symbol);
+}
+
+function normalizePool(pool,includedMap,source){
+  const a = pool.attributes || {};
+  const pairParts = String(a.name || '').split('/').map(x => x.trim());
+
+  const base = tokenFromRelationship(pool,'base_token',includedMap,pairParts[0] || '');
+  const quote = tokenFromRelationship(pool,'quote_token',includedMap,pairParts[1] || '');
+
+  if(!base.address || !quote.address) return null;
+  if(!isAllowedQuote(quote)) return null;
+  if(isExcludedCandidate(base)) return null;
+
+  const poolAddress = a.address || mintFromRelationshipId(pool.id);
+  if(!poolAddress) return null;
+
+  return {
+    pool,
+    a,
+    source,
+    poolAddress,
+    base,
+    quote,
+    tokenAddress:base.address,
+    symbol:base.symbol || pairParts[0] || 'TOKEN',
+    name:base.name || pairParts[0] || 'Unbekannter Token',
+    imageUrl:base.imageUrl,
+    ageHours:poolAgeHours(a.pool_created_at),
+    liquidity:num(a.reserve_in_usd),
+    volume24:volume(a,'h24'),
+    price:num(a.base_token_price_usd),
+    fdv:num(a.fdv_usd),
+    marketCap:num(a.market_cap_usd),
+    history:null,
+    audit:{status:'unknown'},
+    deepAnalyzed:false
+  };
+}
+
+async function getJson(url,attempt=0){
+  try{
+    const response = await fetch(url,{headers:{accept:VERSION_ACCEPT}});
+
+    if(response.status === 429 && attempt < 4){
+      const delay = 2500 * Math.pow(2,attempt);
+      setProgress(8,'API-Limit erreicht. Neuer Versuch wird vorbereitet...');
+      await sleep(delay);
+      return getJson(url,attempt + 1);
+    }
+
+    if(!response.ok) throw new Error('API-Fehler ' + response.status);
+    return response.json();
+  }catch(error){
+    if(attempt < 2){
+      await sleep(1800 * (attempt + 1));
+      return getJson(url,attempt + 1);
+    }
+    throw error;
+  }
+}
+
+async function fetchDiscoveryPools(){
+  const urls = [
+    {source:'Trending',url:`${API}/networks/${NETWORK}/trending_pools?include=base_token,quote_token,dex&page=1`},
+    {source:'Neue Pools',url:`${API}/networks/${NETWORK}/new_pools?include=base_token,quote_token,dex&page=1`},
+    {source:'Neue Pools',url:`${API}/networks/${NETWORK}/new_pools?include=base_token,quote_token,dex&page=2`},
+    {source:'Top Pools',url:`${API}/networks/${NETWORK}/pools?include=base_token,quote_token,dex&page=1`},
+    {source:'Top Pools',url:`${API}/networks/${NETWORK}/pools?include=base_token,quote_token,dex&page=2`},
+    {source:'Top Pools',url:`${API}/networks/${NETWORK}/pools?include=base_token,quote_token,dex&page=3`},
+    {source:'Top Pools',url:`${API}/networks/${NETWORK}/pools?include=base_token,quote_token,dex&page=4`}
+  ];
+
+  const byPool = new Map();
+
+  for(let i=0;i<urls.length;i++){
+    const item = urls[i];
+    setProgress(5 + ((i + 1) / urls.length) * 28,`Solana-Poollisten werden geladen (${i + 1}/${urls.length})...`);
+
+    try{
+      const json = await getJson(item.url);
+      const includedMap = buildIncludedMap(json.included);
+
+      (json.data || []).forEach(pool => {
+        const normalized = normalizePool(pool,includedMap,item.source);
+        if(normalized) byPool.set(norm(normalized.poolAddress),normalized);
+      });
+    }catch(error){
+      console.warn('Poolliste konnte nicht geladen werden:',item.url,error);
+    }
+
+    if(i < urls.length - 1) await sleep(2200);
+  }
+
+  return [...byPool.values()];
+}
+
+function dedupeByToken(pools){
+  const map = new Map();
+
+  pools.forEach(item => {
+    const key = norm(item.tokenAddress);
+    const existing = map.get(key);
+
+    if(!existing || item.liquidity > existing.liquidity){
+      map.set(key,item);
+    }
+  });
+
+  return [...map.values()];
+}
+
+function linearScore(value,bad,good){
+  if(good === bad) return value >= good ? 100 : 0;
+  return clamp(((value - bad) / (good - bad)) * 100);
+}
+
+function bandScore(value,idealMin,idealMax,hardMin,hardMax){
+  const v = num(value);
+  if(v >= idealMin && v <= idealMax) return 100;
+  if(v < idealMin) return linearScore(v,hardMin,idealMin);
+  return linearScore(hardMax - v,0,hardMax - idealMax);
+}
+
+function accelerationScore(ratio){
+  const r = num(ratio);
+  if(r <= 0) return 0;
+  if(r < .4) return linearScore(r,0,.4) * .25;
+  if(r < 1) return 25 + linearScore(r,.4,1) * .35;
+  if(r <= 4) return 60 + linearScore(r,1,4) * .4;
+  if(r <= 8) return 100 - linearScore(r,4,8) * .25;
+  return Math.max(20,75 - (r - 8) * 7);
+}
+
+function buyerBalanceScore(share){
+  return bandScore(share,54,69,35,90);
+}
+
+function liquidityScore(item){
+  const liq = item.liquidity;
+  const fdv = item.marketCap || item.fdv;
+  const volumeTurnover = liq > 0 ? item.volume24 / liq : 0;
+
+  const depth = liq < 5000 ? 8 :
+    liq < 15000 ? 30 :
+    liq < 25000 ? 48 :
+    liq < 50000 ? 64 :
+    liq < 100000 ? 78 :
+    liq < 250000 ? 90 : 100;
+
+  const backingRatio = fdv > 0 ? liq / fdv : .04;
+  const backing = clamp(linearScore(backingRatio,.005,.12));
+  const activity = bandScore(volumeTurnover,.25,4,.03,12);
+
+  return round(depth * .68 + backing * .18 + activity * .14);
+}
+
+function ageSafetyScore(hours){
+  if(hours < 3) return 5;
+  if(hours < 12) return 18;
+  if(hours < 24) return 32;
+  if(hours < 72) return 50;
+  if(hours < 168) return 66;
+  if(hours < 720) return 82;
+  if(hours < 2160) return 94;
+  return 100;
+}
+
+function auditAuthorityScore(audit){
+  if(!audit || audit.status !== 'ready') return 55;
+  if(audit.mintAuthority === null && audit.freezeAuthority === null) return 100;
+  if(audit.mintAuthority !== null && audit.freezeAuthority !== null) return 18;
+  if(audit.freezeAuthority !== null) return 35;
+  return 58;
+}
+
+function historyVolumeAcceleration(history){
+  if(!history) return 1;
+  return history.volumeAcceleration || 1;
+}
+
+function calculateScores(item,settings){
+  const a = item.a;
+  const t1 = tx(a,'h1');
+  const t6 = tx(a,'h6');
+  const t24 = tx(a,'h24');
+
+  const total1 = t1.buys + t1.sells;
+  const total6 = t6.buys + t6.sells;
+  const total24 = t24.buys + t24.sells;
+
+  const buyShare1 = total1 ? (t1.buys / total1) * 100 : 50;
+  const buyShare6 = total6 ? (t6.buys / total6) * 100 : 50;
+  const unique1Total = t1.buyers + t1.sellers;
+  const uniqueBuyShare1 = unique1Total ? (t1.buyers / unique1Total) * 100 : buyShare1;
+
+  const hourlyBaselineVolume = Math.max(item.volume24 / 24,1);
+  const volAccel1 = volume(a,'h1') / hourlyBaselineVolume;
+  const previous18Volume = Math.max(item.volume24 - volume(a,'h6'),1);
+  const volAccel6 = (volume(a,'h6') / 6) / (previous18Volume / 18);
+
+  const hourlyBaselineTx = Math.max(total24 / 24,1);
+  const txAccel1 = total1 / hourlyBaselineTx;
+
+  const momentumLive =
+    bandScore(move(a,'m5'),-.8,2.8,-6,12) * .12 +
+    bandScore(move(a,'h1'),.5,8,-12,28) * .28 +
+    bandScore(move(a,'h6'),2,25,-25,75) * .34 +
+    bandScore(move(a,'h24'),4,60,-45,180) * .26;
+
+  let momentum = momentumLive;
+  if(item.history){
+    const historyMomentum =
+      bandScore(item.history.trend6,1.5,18,-18,55) * .42 +
+      bandScore(item.history.trend24,3,45,-35,130) * .38 +
+      bandScore(item.history.distanceSma12,-1,9,-14,30) * .20;
+    momentum = momentumLive * .58 + historyMomentum * .42;
+  }
+
+  const absoluteVolumeScore = linearScore(volume(a,'h1'),Math.max(settings.minVol / 96,100),Math.max(settings.minVol / 12,3500));
+  const turnover = item.liquidity > 0 ? item.volume24 / item.liquidity : 0;
+
+  let volumeScore =
+    accelerationScore(volAccel1) * .38 +
+    accelerationScore(volAccel6) * .25 +
+    bandScore(turnover,.25,4,.03,13) * .17 +
+    absoluteVolumeScore * .20;
+
+  if(item.history){
+    volumeScore = volumeScore * .68 + accelerationScore(historyVolumeAcceleration(item.history)) * .32;
+  }
+
+  const buyers =
+    buyerBalanceScore(buyShare1) * .42 +
+    buyerBalanceScore(buyShare6) * .22 +
+    buyerBalanceScore(uniqueBuyShare1) * .18 +
+    accelerationScore(txAccel1) * .18;
+
+  const liqScore = liquidityScore(item);
+  const sellShare = total1 ? (t1.sells / total1) * 100 : 45;
+  const marketExitScore = bandScore(sellShare,24,48,4,78);
+
+  let safety =
+    liqScore * .44 +
+    ageSafetyScore(item.ageHours) * .20 +
+    auditAuthorityScore(item.audit) * .26 +
+    marketExitScore * .10;
+
+  if(item.audit?.status === 'error') safety -= 5;
+
+  const overheatParts = [];
+  overheatParts.push(linearScore(move(a,'h1'),8,28));
+  overheatParts.push(linearScore(move(a,'h6'),28,85));
+  overheatParts.push(linearScore(move(a,'h24'),70,200));
+  overheatParts.push(linearScore(buyShare1,70,92));
+  overheatParts.push(linearScore(volAccel1,4,10));
+
+  if(item.history){
+    overheatParts.push(linearScore(item.history.distanceSma12,8,28));
+    const nearHighAndPumped = item.history.pullback24 < 2.5 && item.history.trend24 > 30 ? 85 : 0;
+    overheatParts.push(nearHighAndPumped);
+  }
+
+  const overheat = round(overheatParts.reduce((sum,v) => sum + v,0) / overheatParts.length);
+  const chance = round(momentum * .34 + volumeScore * .28 + buyers * .22 + (100 - overheat) * .16);
+  let shortScore = round(chance * .48 + safety * .22 + liqScore * .16 + (100 - overheat) * .14);
+
+  const corePass =
+    item.ageHours >= settings.minAge &&
+    item.liquidity >= settings.minLiq &&
+    item.volume24 >= settings.minVol &&
+    total1 >= settings.minTx;
+
+  if(!corePass) shortScore = Math.min(shortScore,59);
+
+  const isPullback =
+    move(a,'h6') > 3 &&
+    move(a,'h24') > 5 &&
+    move(a,'h1') <= -.7 &&
+    move(a,'h1') >= -12 &&
+    overheat < 65;
+
+  let statusKey = 'excluded';
+  let statusLabel = 'Ausgeschlossen';
+
+  if(!corePass || safety < 38){
+    statusKey = 'excluded';
+    statusLabel = 'Ausgeschlossen';
+  }else if(overheat >= 65){
+    statusKey = 'hot';
+    statusLabel = 'Überhitzt';
+  }else if(isPullback && shortScore >= 54){
+    statusKey = 'pullback';
+    statusLabel = 'Rücksetzer abwarten';
+  }else if(shortScore >= 78 && chance >= 73 && safety >= 56){
+    statusKey = 'entry';
+    statusLabel = 'Einstiegskandidat';
+  }else if(shortScore >= 61){
+    statusKey = 'watch';
+    statusLabel = 'Beobachten';
+  }
+
+  const holdHours = statusKey === 'entry'
+    ? (shortScore >= 86 ? 24 : 48)
+    : statusKey === 'pullback' || statusKey === 'watch'
+      ? 72
+      : 0;
+
+  item.scores = {
+    shortScore,
+    chance,
+    safety:round(safety),
+    momentum:round(momentum),
+    volume:round(volumeScore),
+    buyers:round(buyers),
+    liquidity:liqScore,
+    overheat,
+    buyShare1,
+    volAccel1,
+    volAccel6,
+    txAccel1,
+    corePass
+  };
+
+  item.statusKey = statusKey;
+  item.statusLabel = statusLabel;
+  item.holdHours = holdHours;
+  item.plan = calculatePlan(item);
+  item.reasons = buildReasons(item,settings);
+
+  return item;
+}
+
+function calculatePlan(item){
+  const price = item.price;
+  if(!price || !item.scores) return null;
+
+  const liveVolatility = clamp(
+    Math.abs(move(item.a,'h1')) * .75 +
+    Math.abs(move(item.a,'m5')) * 1.2 +
+    Math.abs(move(item.a,'h6')) / 6,
+    2.5,
+    14
+  );
+
+  const atrPct = clamp(item.history?.atrPct || liveVolatility,2.5,16);
+  let entryLow;
+  let entryHigh;
+
+  if(item.statusKey === 'pullback'){
+    entryLow = price * (1 - clamp(atrPct * .55,3.5,8.5) / 100);
+    entryHigh = price * .992;
+  }else{
+    entryLow = price * (1 - clamp(atrPct * .28,1.2,4.2) / 100);
+    entryHigh = price * (1 + clamp(atrPct * .09,.3,1.4) / 100);
+  }
+
+  const stop = entryLow * (1 - clamp(atrPct * .72,4.5,10) / 100);
+  const target1 = entryHigh * (1 + clamp(atrPct * 1.25,7,18) / 100);
+  const target2 = entryHigh * (1 + clamp(atrPct * 2.05,11,30) / 100);
+
+  return {entryLow,entryHigh,stop,target1,target2,atrPct};
+}
+
+function buildReasons(item,settings){
+  const r = [];
+  const s = item.scores;
+  const h1Move = move(item.a,'h1');
+  const h6Move = move(item.a,'h6');
+
+  if(s.volAccel1 >= 1.25) r.push(`1h-Volumen liegt ${s.volAccel1.toFixed(1)}× über dem 24h-Stundenschnitt.`);
+  else r.push(`1h-Volumenbeschleunigung liegt aktuell nur bei ${s.volAccel1.toFixed(1)}×.`);
+
+  r.push(`Kaufanteil der letzten Stunde: ${s.buyShare1.toFixed(1)} % bei ${txTotal(item.a,'h1')} Transaktionen.`);
+
+  if(h6Move > 0) r.push(`6h-Momentum ist mit ${formatSignedPct(h6Move)} positiv.`);
+  else r.push(`6h-Momentum ist mit ${formatSignedPct(h6Move)} noch negativ.`);
+
+  if(item.history){
+    r.push(`72h-Struktur geprüft: 24h-Trend ${formatSignedPct(item.history.trend24)}, Volumenfaktor ${item.history.volumeAcceleration.toFixed(1)}×.`);
+  }
+
+  if(item.audit?.status === 'ready'){
+    if(item.audit.mintAuthority !== null) r.push('Mint Authority ist noch aktiv.');
+    if(item.audit.freezeAuthority !== null) r.push('Freeze Authority ist noch aktiv.');
+    if(item.audit.mintAuthority === null && item.audit.freezeAuthority === null) r.push('Mint und Freeze Authority sind deaktiviert.');
+  }
+
+  if(item.liquidity < settings.minLiq) r.push(`Liquidität liegt unter dem Filterwert von ${formatMoney(settings.minLiq)}.`);
+  if(item.volume24 < settings.minVol) r.push(`24h-Volumen liegt unter dem Filterwert von ${formatMoney(settings.minVol)}.`);
+  if(item.ageHours < settings.minAge) r.push('Der Pool ist jünger als das eingestellte Mindestalter.');
+  if(txTotal(item.a,'h1') < settings.minTx) r.push('Zu wenige Transaktionen in der letzten Stunde.');
+  if(s.overheat >= 65) r.push('Der Kurs ist nach dem aktuellen Modell deutlich überhitzt.');
+
+  return r.slice(0,5);
+}
+
+async function fetchPoolOHLCV(poolAddress){
+  const urls = [
+    `${API}/networks/${NETWORK}/pools/${poolAddress}/ohlcv/hour?aggregate=1&limit=72&currency=usd&token=base`,
+    `${API}/networks/${NETWORK}/pools/${poolAddress}/ohlcv/hour?aggregate=1&limit=72&currency=usd`
+  ];
+
+  for(const url of urls){
+    try{
+      const json = await getJson(url);
+      const list = json?.data?.attributes?.ohlcv_list || [];
+      if(Array.isArray(list) && list.length >= 12) return list;
+    }catch(error){
+      console.warn('OHLCV nicht verfügbar:',url,error);
+    }
+    await sleep(500);
+  }
+
+  return [];
+}
+
+function normalizeCandles(list){
+  return (list || [])
+    .map(row => ({
+      time:num(row[0]),
+      open:num(row[1]),
+      high:num(row[2]),
+      low:num(row[3]),
+      close:num(row[4]),
+      volume:num(row[5])
+    }))
+    .filter(c => c.time && c.close > 0)
+    .sort((a,b) => a.time - b.time);
+}
+
+function trendFor(candles,hours){
+  if(candles.length < 2) return 0;
+  const slice = candles.slice(-Math.min(hours + 1,candles.length));
+  const first = slice[0]?.close;
+  const last = slice.at(-1)?.close;
+  if(!first || !last) return 0;
+  return ((last - first) / first) * 100;
+}
+
+function average(values){
+  const clean = values.filter(Number.isFinite);
+  return clean.length ? clean.reduce((a,b) => a + b,0) / clean.length : 0;
+}
+
+function analyzeHistory(list){
+  const candles = normalizeCandles(list).slice(-72);
+  if(candles.length < 12) return null;
+
+  const recent6 = candles.slice(-6);
+  const previous18 = candles.slice(-24,-6);
+  const last24 = candles.slice(-24);
+  const last12 = candles.slice(-12);
+  const current = candles.at(-1).close;
+  const sma12 = average(last12.map(c => c.close));
+  const high24 = Math.max(...last24.map(c => c.high));
+
+  const recentVolumeAvg = average(recent6.map(c => c.volume));
+  const previousVolumeAvg = average(previous18.map(c => c.volume)) || recentVolumeAvg || 1;
+
+  const ranges = last24
+    .filter(c => c.close > 0)
+    .map(c => ((c.high - c.low) / c.close) * 100);
+
+  return {
+    candleCount:candles.length,
+    trend6:trendFor(candles,6),
+    trend24:trendFor(candles,24),
+    trend72:trendFor(candles,72),
+    distanceSma12:sma12 ? ((current - sma12) / sma12) * 100 : 0,
+    pullback24:high24 ? ((high24 - current) / high24) * 100 : 0,
+    volumeAcceleration:recentVolumeAvg / previousVolumeAvg,
+    atrPct:average(ranges)
+  };
+}
+
+async function rpcCall(method,params){
+  let lastError = null;
+
+  for(const endpoint of RPC_ENDPOINTS){
+    try{
+      const response = await fetch(endpoint,{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({jsonrpc:'2.0',id:Date.now(),method,params})
+      });
+
+      if(!response.ok) throw new Error('RPC ' + response.status);
+      const json = await response.json();
+      if(json.error) throw new Error(json.error.message || 'RPC-Fehler');
+      return json.result;
+    }catch(error){
+      lastError = error;
+    }
+  }
+
+  throw lastError || new Error('Keine RPC-Verbindung möglich');
+}
+
+async function fetchMintAudit(mint){
+  try{
+    const result = await rpcCall('getAccountInfo',[
+      mint,
+      {encoding:'jsonParsed',commitment:'confirmed'}
+    ]);
+
+    const value = result?.value;
+    const info = value?.data?.parsed?.info;
+
+    if(!info){
+      return {status:'error',message:'Mint-Daten konnten nicht geparst werden'};
+    }
+
+    return {
+      status:'ready',
+      mintAuthority:info.mintAuthority ?? null,
+      freezeAuthority:info.freezeAuthority ?? null,
+      decimals:num(info.decimals),
+      supply:String(info.supply || ''),
+      owner:value.owner || ''
+    };
+  }catch(error){
+    return {status:'error',message:error.message};
+  }
+}
+
+function settings(){
+  return {
+    minAge:Math.max(1,num($('minAge').value)),
+    minLiq:Math.max(0,num($('minLiq').value)),
+    minVol:Math.max(0,num($('minVol').value)),
+    minTx:Math.max(0,num($('minTx').value)),
+    deepCount:Math.min(20,Math.max(0,Math.round(num($('deepCount').value))))
+  };
+}
+
+function preliminaryCandidateFloor(item){
+  return item.liquidity >= 3000 &&
+    item.volume24 >= 1000 &&
+    txTotal(item.a,'h1') >= 2 &&
+    item.ageHours >= 1;
+}
+
+async function runDeepAnalysis(items,settingsValue){
+  const shortlist = [...items]
+    .sort((a,b) => b.scores.shortScore - a.scores.shortScore)
+    .slice(0,settingsValue.deepCount);
+
+  for(let i=0;i<shortlist.length;i++){
+    const item = shortlist[i];
+    const start = 42;
+    const span = 48;
+    const progress = start + ((i + 1) / Math.max(shortlist.length,1)) * span;
+
+    setProgress(progress,`72h-Analyse ${i + 1}/${shortlist.length}: $${item.symbol}...`);
+
+    const [ohlcv,audit] = await Promise.all([
+      fetchPoolOHLCV(item.poolAddress),
+      fetchMintAudit(item.tokenAddress)
+    ]);
+
+    item.history = analyzeHistory(ohlcv);
+    item.audit = audit;
+    item.deepAnalyzed = true;
+    calculateScores(item,settingsValue);
+    renderAll();
+
+    if(i < shortlist.length - 1) await sleep(1900);
+  }
+}
+
+function statusClass(key){
+  return key === 'entry' ? 'green' :
+    key === 'watch' ? 'yellow' :
+    key === 'pullback' ? 'blue' :
+    key === 'hot' ? 'red' : 'gray';
+}
+
+function sourceClass(source){
+  return source === 'Trending' ? 'purple' : source === 'Neue Pools' ? 'blue' : 'gray';
+}
+
+function riskFillClass(value){
+  if(value < 35) return 'riskLow';
+  if(value < 65) return 'riskMid';
+  return 'riskHigh';
+}
+
+function scoreBar(label,value,{main=false,risk=false}={}){
+  const v = round(value);
+  const fillClass = risk ? riskFillClass(v) : 'positive';
+
+  return `
+    <div class="scoreRow ${main ? 'main' : ''}">
+      <div class="scoreLabel">${escapeHtml(label)}</div>
+      <div class="scoreTrack" aria-label="${escapeHtml(label)} ${v} Prozent">
+        <div class="scoreFill ${fillClass}" style="width:${v}%"></div>
+        <span class="scoreValue">${v} %</span>
+      </div>
+    </div>
+  `;
+}
+
+function tokenImage(item){
+  if(item.imageUrl){
+    return `<img class="tokenLogo" src="${escapeHtml(item.imageUrl)}" alt="${escapeHtml(item.symbol)}" onerror="this.style.display='none';this.nextElementSibling.style.display='grid'">` +
+      `<div class="tokenFallback" style="display:none">${escapeHtml(item.symbol.slice(0,4))}</div>`;
+  }
+
+  return `<div class="tokenFallback">${escapeHtml(item.symbol.slice(0,4))}</div>`;
+}
+
+function planHtml(item){
+  if(!item.plan || !['entry','watch','pullback'].includes(item.statusKey)){
+    const text = item.statusKey === 'hot'
+      ? 'Kein Einstieg, bis das Überhitzungsrisiko deutlich sinkt.'
+      : 'Aktuell kein Ein- und Ausstiegsplan.';
+
+    return `
+      <div class="plan">
+        <div class="planHeader"><span>Ein- und Ausstiegsplan</span><span>${item.holdHours ? item.holdHours + ' h' : 'Abwarten'}</span></div>
+        <div class="why" style="margin:0;padding:12px">${escapeHtml(text)}</div>
+      </div>
+    `;
+  }
+
+  return `
+    <div class="plan">
+      <div class="planHeader">
+        <span>Ein- und Ausstiegsplan</span>
+        <span>Max. ${item.holdHours} h</span>
+      </div>
+      <div class="planGrid">
+        <div class="planItem"><span>Einstiegszone</span><b>${formatPrice(item.plan.entryLow)} bis ${formatPrice(item.plan.entryHigh)}</b></div>
+        <div class="planItem"><span>Zielzone</span><b>${formatPrice(item.plan.target1)} bis ${formatPrice(item.plan.target2)}</b></div>
+        <div class="planItem"><span>Stop-Loss</span><b>${formatPrice(item.plan.stop)}</b></div>
+        <div class="planItem"><span>Max. Haltedauer</span><b>${item.holdHours} Stunden</b></div>
+      </div>
+    </div>
+  `;
+}
+
+function cardHtml(item,rank){
+  const s = item.scores;
+  const statusCls = statusClass(item.statusKey);
+  const cardCls = item.statusKey === 'entry' ? 'entry' :
+    item.statusKey === 'pullback' ? 'pullback' :
+    item.statusKey === 'hot' ? 'hot' :
+    item.statusKey === 'excluded' ? 'excluded' : '';
+
+  const deepTag = item.deepAnalyzed
+    ? `<span class="tag ${item.history ? 'green' : 'yellow'}">${item.history ? '72h geprüft' : 'Live-Daten'}</span>`
+    : '<span class="tag gray">Live-Score</span>';
+
+  const auditTag = item.audit?.status === 'ready'
+    ? `<span class="tag ${item.audit.mintAuthority === null && item.audit.freezeAuthority === null ? 'green' : 'yellow'}">Mint geprüft</span>`
+    : '';
+
+  return `
+    <article class="card ${cardCls}">
+      <div class="cardHeader">
+        ${tokenImage(item)}
+        <div class="tokenTitle">
+          <h2>$${escapeHtml(item.symbol)} <small style="font-size:12px;color:var(--muted)">/ ${escapeHtml(item.quote.symbol)}</small></h2>
+          <p>${escapeHtml(item.name)} · ${escapeHtml(shortAddress(item.tokenAddress))}</p>
+        </div>
+        <div class="rank">#${rank}</div>
+      </div>
+
+      <div class="badges">
+        <span class="tag ${statusCls}">${escapeHtml(item.statusLabel)}</span>
+        <span class="tag ${sourceClass(item.source)}">${escapeHtml(item.source)}</span>
+        <span class="tag blue">Solana</span>
+        ${deepTag}
+        ${auditTag}
+      </div>
+
+      <div class="scoreBlock">
+        ${scoreBar('ASTY Short Score',s.shortScore,{main:true})}
+        ${scoreBar('Chance',s.chance)}
+        ${scoreBar('Sicherheit',s.safety)}
+        ${scoreBar('Momentum',s.momentum)}
+        ${scoreBar('Volumenentwicklung',s.volume)}
+        ${scoreBar('Käuferaktivität',s.buyers)}
+        ${scoreBar('Liquidität',s.liquidity)}
+        ${scoreBar('Überhitzungsrisiko',s.overheat,{risk:true})}
+      </div>
+
+      <div class="metrics">
+        <div class="metric"><b>${formatPrice(item.price)}</b><span>Aktueller Preis</span></div>
+        <div class="metric"><b>${formatMoney(item.liquidity)}</b><span>Liquidität</span></div>
+        <div class="metric"><b>${formatMoney(item.volume24)}</b><span>24h-Volumen</span></div>
+        <div class="metric"><b>${txTotal(item.a,'h1')}</b><span>Transaktionen 1h</span></div>
+        <div class="metric"><b>${formatSignedPct(move(item.a,'h24'))}</b><span>Preisänderung 24h</span></div>
+        <div class="metric"><b>${formatAge(item.ageHours)}</b><span>Poolalter</span></div>
+      </div>
+
+      ${planHtml(item)}
+
+      <div class="why">
+        <b>Kurzanalyse</b>
+        <ul>${item.reasons.map(reason => `<li>${escapeHtml(reason)}</li>`).join('')}</ul>
+      </div>
+
+      <div class="cardActions">
+        <a class="smallBtn" href="https://www.geckoterminal.com/solana/pools/${encodeURIComponent(item.poolAddress)}" target="_blank" rel="noopener">Pool öffnen</a>
+        <button class="smallBtn" onclick="copyContract('${escapeHtml(item.tokenAddress)}',this)">Contract kopieren</button>
+      </div>
+    </article>
+  `;
+}
+
+function filteredResults(){
+  let list = [...results];
+  const query = norm($('searchInput')?.value);
+  const sort = $('sortSelect')?.value || 'score';
+
+  if(currentView === 'top'){
+    list = list.filter(item => ['entry','watch','pullback'].includes(item.statusKey));
+  }else{
+    list = list.filter(item => item.statusKey === currentView);
+  }
+
+  if(query){
+    list = list.filter(item =>
+      norm(item.symbol).includes(query) ||
+      norm(item.name).includes(query) ||
+      norm(item.tokenAddress).includes(query)
+    );
+  }
+
+  const sorters = {
+    score:(a,b) => b.scores.shortScore - a.scores.shortScore,
+    chance:(a,b) => b.scores.chance - a.scores.chance,
+    safety:(a,b) => b.scores.safety - a.scores.safety,
+    liquidity:(a,b) => b.liquidity - a.liquidity,
+    volume:(a,b) => b.volume24 - a.volume24,
+    newest:(a,b) => a.ageHours - b.ageHours
+  };
+
+  list.sort(sorters[sort] || sorters.score);
+  return currentView === 'top' ? list.slice(0,18) : list.slice(0,30);
+}
+
+function updateCounts(){
+  const count = key => results.filter(item => item.statusKey === key).length;
+  const top = results.filter(item => ['entry','watch','pullback'].includes(item.statusKey)).length;
+
+  $('countTop').textContent = top;
+  $('countEntry').textContent = count('entry');
+  $('countWatch').textContent = count('watch');
+  $('countPullback').textContent = count('pullback');
+  $('countHot').textContent = count('hot');
+  $('countExcluded').textContent = count('excluded');
+}
+
+function updateSummary(){
+  if(!results.length) return;
+
+  const active = results.filter(item => item.statusKey !== 'excluded');
+  const avg = active.length
+    ? Math.round(active.reduce((sum,item) => sum + item.scores.shortScore,0) / active.length)
+    : 0;
+
+  $('sumCoins').textContent = results.length;
+  $('sumEntry').textContent = results.filter(item => item.statusKey === 'entry').length;
+  $('sumAvg').textContent = avg + ' %';
+  $('sumTime').textContent = new Date().toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'});
+}
+
+function renderCards(){
+  const list = filteredResults();
+  const grid = $('grid');
+  grid.innerHTML = list.map((item,index) => cardHtml(item,index + 1)).join('');
+  $('empty').style.display = list.length ? 'none' : 'block';
+}
+
+function renderAll(){
+  updateCounts();
+  updateSummary();
+  renderCards();
+}
+
+async function copyContract(address,button){
+  try{
+    await navigator.clipboard.writeText(address);
+    const old = button.textContent;
+    button.textContent = 'Kopiert ✓';
+    setTimeout(() => button.textContent = old,1400);
+  }catch(error){
+    window.prompt('Contract-Adresse kopieren:',address);
+  }
+}
+
+window.copyContract = copyContract;
+
+async function scan(){
+  if(scanRunning) return;
+  scanRunning = true;
+  $('scanBtn').disabled = true;
+  $('grid').innerHTML = '';
+  $('empty').style.display = 'none';
+  $('summary').hidden = true;
+  $('tabs').hidden = true;
+  $('toolbar').hidden = true;
+  results = [];
+
+  try{
+    const config = settings();
+    setProgress(3,'Solana-Scan wird gestartet...');
+
+    const pools = await fetchDiscoveryPools();
+    setProgress(35,`${pools.length} geeignete Solana-Pools wurden gefunden. Coins werden zusammengeführt...`);
+
+    const coins = dedupeByToken(pools)
+      .filter(preliminaryCandidateFloor)
+      .map(item => calculateScores(item,config))
+      .sort((a,b) => b.scores.shortScore - a.scores.shortScore)
+      .slice(0,60);
+
+    results = coins;
+
+    $('summary').hidden = false;
+    $('tabs').hidden = false;
+    $('toolbar').hidden = false;
+    renderAll();
+
+    if(!results.length){
+      setProgress(100,'Keine Solana-Coins konnten aus den aktuellen Poollisten ausgewertet werden.');
+      return;
+    }
+
+    if(config.deepCount > 0){
+      setProgress(42,`Live-Bewertung abgeschlossen. Die besten ${Math.min(config.deepCount,results.length)} Coins erhalten eine 72h- und Mint-Analyse...`);
+      await runDeepAnalysis(results,config);
+    }
+
+    results.forEach(item => calculateScores(item,config));
+    results.sort((a,b) => b.scores.shortScore - a.scores.shortScore);
+    renderAll();
+
+    const entryCount = results.filter(item => item.statusKey === 'entry').length;
+    setProgress(100,`Scan abgeschlossen: ${results.length} Solana-Coins bewertet, ${entryCount} Einstiegskandidaten gefunden.`);
+  }catch(error){
+    console.error(error);
+    setProgress(0,'Scan fehlgeschlagen: ' + error.message);
+    $('empty').textContent = 'Der Scan konnte nicht abgeschlossen werden. Bitte später erneut versuchen.';
+    $('empty').style.display = 'block';
+  }finally{
+    scanRunning = false;
+    $('scanBtn').disabled = false;
+  }
+}
+
+$('scanBtn').addEventListener('click',scan);
+$('searchInput').addEventListener('input',renderCards);
+$('sortSelect').addEventListener('change',renderCards);
+
+$('tabs').addEventListener('click',event => {
+  const button = event.target.closest('.tab');
+  if(!button) return;
+
+  currentView = button.dataset.view;
+  document.querySelectorAll('.tab').forEach(tab => tab.classList.toggle('active',tab === button));
+  renderCards();
+});
+</script>
+</body>
+</html>
