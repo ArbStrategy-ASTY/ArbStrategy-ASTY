@@ -590,6 +590,18 @@ select option{background:#10091d;color:var(--text)}
 .planItem:nth-child(2n){border-right:0}
 .planItem:nth-last-child(-n+2){border-bottom:0}
 
+.planItem.profit{
+  grid-column:1 / -1;
+  border-right:0;
+  border-bottom:0;
+  background:linear-gradient(90deg,rgba(168,85,247,.1),rgba(34,211,238,.06));
+}
+
+.planItem.profit b{
+  color:#d8fbff;
+  font-size:14px;
+}
+
 .planItem span{
   display:block;
   color:var(--muted);
@@ -749,8 +761,8 @@ select option{background:#10091d;color:var(--text)}
       </div>
 
       <div class="control">
-        <label>72h-Tiefenanalysen</label>
-        <input id="deepCount" type="number" value="12" min="0" max="20">
+        <label>Einsatz in USD</label>
+        <input id="stake" type="number" value="100" min="1" step="1">
       </div>
     </div>
 
@@ -820,6 +832,7 @@ select option{background:#10091d;color:var(--text)}
 const API = 'https://api.geckoterminal.com/api/v2';
 const NETWORK = 'solana';
 const VERSION_ACCEPT = 'application/json;version=20230203';
+const DEEP_ANALYSIS_COUNT = 12;
 
 const ASTY_MINT = 'ASTYqeaoK83Zs1pTFEXZUB6BM8cG8YLTsN852NUkt7ZR';
 const WSOL_MINT = 'So11111111111111111111111111111111111111112';
@@ -888,6 +901,13 @@ function formatMoney(value){
   if(v >= 1e6) return '$' + (v / 1e6).toFixed(2) + ' Mio.';
   if(v >= 1e3) return '$' + (v / 1e3).toFixed(1) + ' Tsd.';
   return '$' + v.toFixed(v < 10 ? 2 : 0);
+}
+
+function formatUsdExact(value){
+  return '$' + num(value).toLocaleString('de-DE',{
+    minimumFractionDigits:2,
+    maximumFractionDigits:2
+  });
 }
 
 function formatPrice(value){
@@ -1520,7 +1540,7 @@ function settings(){
     minLiq:Math.max(0,num($('minLiq').value)),
     minVol:Math.max(0,num($('minVol').value)),
     minTx:Math.max(0,num($('minTx').value)),
-    deepCount:Math.min(20,Math.max(0,Math.round(num($('deepCount').value))))
+    stake:Math.max(1,num($('stake').value))
   };
 }
 
@@ -1534,7 +1554,7 @@ function preliminaryCandidateFloor(item){
 async function runDeepAnalysis(items,settingsValue){
   const shortlist = [...items]
     .sort((a,b) => b.scores.shortScore - a.scores.shortScore)
-    .slice(0,settingsValue.deepCount);
+    .slice(0,DEEP_ANALYSIS_COUNT);
 
   for(let i=0;i<shortlist.length;i++){
     const item = shortlist[i];
@@ -1591,6 +1611,32 @@ function scoreBar(label,value,{main=false,risk=false}={}){
   `;
 }
 
+function currentStake(){
+  return Math.max(1,num($('stake')?.value || 100));
+}
+
+function profitRange(item){
+  if(
+    !item.plan ||
+    !['entry','watch','pullback'].includes(item.statusKey) ||
+    !item.plan.entryHigh
+  ){
+    return null;
+  }
+
+  const stake = currentStake();
+  const lowPct = Math.max(0,(item.plan.target1 / item.plan.entryHigh) - 1);
+  const highPct = Math.max(0,(item.plan.target2 / item.plan.entryHigh) - 1);
+
+  return {
+    stake,
+    low:stake * lowPct,
+    high:stake * highPct,
+    lowPct:lowPct * 100,
+    highPct:highPct * 100
+  };
+}
+
 function tokenImage(item){
   if(item.imageUrl){
     return `<img class="tokenLogo" src="${escapeHtml(item.imageUrl)}" alt="${escapeHtml(item.symbol)}" onerror="this.style.display='none';this.nextElementSibling.style.display='grid'">` +
@@ -1601,6 +1647,8 @@ function tokenImage(item){
 }
 
 function planHtml(item){
+  const profit = profitRange(item);
+
   if(!item.plan || !['entry','watch','pullback'].includes(item.statusKey)){
     const text = item.statusKey === 'hot'
       ? 'Kein Einstieg, bis das Überhitzungsrisiko deutlich sinkt.'
@@ -1625,6 +1673,10 @@ function planHtml(item){
         <div class="planItem"><span>Zielzone</span><b>${formatPrice(item.plan.target1)} bis ${formatPrice(item.plan.target2)}</b></div>
         <div class="planItem"><span>Stop-Loss</span><b>${formatPrice(item.plan.stop)}</b></div>
         <div class="planItem"><span>Max. Haltedauer</span><b>${item.holdHours} Stunden</b></div>
+        <div class="planItem profit">
+          <span>Mögliche Gewinnspanne bei ${formatMoney(profit?.stake || currentStake())} Einsatz, vor Gebühren</span>
+          <b>${profit ? `${formatUsdExact(profit.low)} bis ${formatUsdExact(profit.high)} (+${profit.lowPct.toFixed(1)} % bis +${profit.highPct.toFixed(1)} %)` : 'Nicht berechenbar'}</b>
+        </div>
       </div>
     </div>
   `;
@@ -1820,10 +1872,8 @@ async function scan(){
       return;
     }
 
-    if(config.deepCount > 0){
-      setProgress(42,`Live-Bewertung abgeschlossen. Die besten ${Math.min(config.deepCount,results.length)} Coins erhalten eine 72h- und Mint-Analyse...`);
-      await runDeepAnalysis(results,config);
-    }
+    setProgress(42,`Live-Bewertung abgeschlossen. Die besten ${Math.min(DEEP_ANALYSIS_COUNT,results.length)} Coins erhalten automatisch eine 72h- und Mint-Analyse...`);
+    await runDeepAnalysis(results,config);
 
     results.forEach(item => calculateScores(item,config));
     results.sort((a,b) => b.scores.shortScore - a.scores.shortScore);
@@ -1845,6 +1895,7 @@ async function scan(){
 $('scanBtn').addEventListener('click',scan);
 $('searchInput').addEventListener('input',renderCards);
 $('sortSelect').addEventListener('change',renderCards);
+$('stake').addEventListener('input',renderCards);
 
 $('tabs').addEventListener('click',event => {
   const button = event.target.closest('.tab');
