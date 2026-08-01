@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="de">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="color-scheme" content="dark" />
-  <title>ASTY Liquidity Optimizer</title>
+  <title>ASTY Liquiditäts-Optimierer</title>
 
   <style>
     :root {
@@ -982,41 +982,41 @@
   <main class="container">
     <section class="hero">
       <div>
-        <div class="eyebrow">ArbStrategy on Solana</div>
-        <h1>ASTY Liquidity Optimizer</h1>
-        <p class="hero-copy">Dynamic liquidity guidance for the complete ASTY pool network.</p>
-        <div class="live-proof" id="liveProof">Scanning current liquidity, volume, transactions and short-term momentum...</div>
-        <div class="trust-line">No fixed efficiency tiers. Every pool is recalculated from the latest available activity.</div>
+        <div class="eyebrow">ArbStrategy auf Solana</div>
+        <h1>ASTY Liquiditäts-Optimierer</h1>
+        <p class="hero-copy">Dynamische Liquiditätsempfehlungen für das gesamte ASTY-Poolnetzwerk.</p>
+        <div class="live-proof" id="liveProof">Aktuelle Liquidität, Volumen, Transaktionen und kurzfristige Dynamik werden analysiert...</div>
+        <div class="trust-line">Keine festen Effizienzstufen. Jeder Pool wird anhand der neuesten verfügbaren Aktivität neu berechnet.</div>
       </div>
 
       <div class="status-wrap">
         <div class="status-line">
           <span class="status-dot" id="statusDot"></span>
-          <span id="statusText">Loading live pool data...</span>
+          <span id="statusText">Live-Pooldaten werden geladen...</span>
         </div>
-        <button class="icon-button" id="refreshButton" type="button" aria-label="Refresh optimizer">↻</button>
+        <button class="icon-button" id="refreshButton" type="button" aria-label="Optimierer aktualisieren">↻</button>
       </div>
     </section>
 
-    <section class="panel" aria-label="Optimizer settings">
+    <section class="panel" aria-label="Einstellungen des Optimierers">
       <div class="panel-head">
         <div>
-          <div class="panel-title">Deployment Setup</div>
-          <div class="panel-sub">Enter the capital currently available for the next liquidity action.</div>
+          <div class="panel-title">Kapital-Einstellungen</div>
+          <div class="panel-sub">Trage das Kapital ein, das für den nächsten Liquiditätsschritt zur Verfügung steht.</div>
         </div>
       </div>
 
       <div class="optimizer-controls">
         <div class="field">
-          <label for="capitalInput">Available Capital</label>
+          <label for="capitalInput">Verfügbares Kapital</label>
           <div class="input-shell">
             <span class="input-prefix">$</span>
-            <input class="control-input with-prefix" id="capitalInput" type="number" min="0" step="5" value="250" inputmode="decimal">
+            <input class="control-input with-prefix" id="capitalInput" type="number" min="25" step="5" value="25" inputmode="decimal">
           </div>
         </div>
 
         <div class="field">
-          <label for="reserveInput">Keep Available</label>
+          <label for="reserveInput">Als Reserve behalten</label>
           <div class="input-shell">
             <input class="control-input with-suffix" id="reserveInput" type="number" min="0" max="100" step="5" value="30" inputmode="decimal">
             <span class="input-suffix">%</span>
@@ -1024,130 +1024,130 @@
         </div>
 
         <div class="field">
-          <label for="minStepInput">Minimum Step</label>
+          <label for="minStepInput">Kleinster Schritt</label>
           <div class="input-shell">
             <span class="input-prefix">$</span>
-            <input class="control-input with-prefix" id="minStepInput" type="number" min="5" step="5" value="20" inputmode="decimal">
+            <input class="control-input with-prefix" id="minStepInput" type="number" min="5" step="5" value="5" inputmode="decimal">
           </div>
         </div>
 
         <div class="field">
-          <label for="maxStepInput">Maximum Step</label>
+          <label for="maxStepInput">Größter Schritt</label>
           <div class="input-shell">
             <span class="input-prefix">$</span>
-            <input class="control-input with-prefix" id="maxStepInput" type="number" min="5" step="5" value="100" inputmode="decimal">
+            <input class="control-input with-prefix" id="maxStepInput" type="number" min="5" step="5" value="25" inputmode="decimal">
           </div>
         </div>
 
-        <button class="pill run-button" id="runButton" type="button">Recalculate</button>
+        <button class="pill run-button" id="runButton" type="button">Neu berechnen</button>
       </div>
 
       <div class="model-note">
-        <strong>How it works:</strong> The optimizer compares 5m, 1h, 6h and 24h volume, transaction activity, current liquidity, configured pool fees and locally stored scan history. It recommends only the next controlled step. A pool that is quiet now remains monitored and can move to the top immediately when real on-chain activity appears.
+        <strong>So funktioniert es:</strong> Der Optimierer vergleicht das Volumen der letzten 5 Minuten, 1 Stunde, 6 Stunden und 24 Stunden mit der Transaktionsaktivität, der aktuellen Liquidität, der jeweiligen Pool-Gebühr und der lokal gespeicherten Scan-Historie. Empfohlen wird immer nur der nächste kontrollierte Schritt. Ein derzeit ruhiger Pool bleibt unter Beobachtung und kann bei neuer On-Chain-Aktivität sofort nach oben rücken.
       </div>
     </section>
 
     <section class="main-grid" aria-label="Optimizer summary">
       <article class="metric-card">
-        <div class="metric-label">Suggested Deployment</div>
+        <div class="metric-label">Empfohlener Einsatz</div>
         <div class="metric-value green" id="deployValue">$0.00</div>
-        <div class="metric-sub" id="deploySub">Waiting for live pool data</div>
+        <div class="metric-sub" id="deploySub">Warte auf Live-Pooldaten</div>
       </article>
 
       <article class="metric-card">
-        <div class="metric-label">Kept Available</div>
+        <div class="metric-label">Verfügbare Reserve</div>
         <div class="metric-value live-color" id="reserveValue">$0.00</div>
-        <div class="metric-sub" id="reserveSub">Ready for sudden Meme pool activity</div>
+        <div class="metric-sub" id="reserveSub">Bereit für plötzliche Meme-Pool-Aktivität</div>
       </article>
 
       <article class="metric-card">
-        <div class="metric-label">Pools Selected</div>
+        <div class="metric-label">Ausgewählte Pools</div>
         <div class="metric-value" id="selectedValue">0</div>
-        <div class="metric-sub" id="selectedSub">No deployment calculated yet</div>
+        <div class="metric-sub" id="selectedSub">Noch keine Verteilung berechnet</div>
       </article>
 
       <article class="metric-card">
-        <div class="metric-label">Strongest Current Impulse</div>
+        <div class="metric-label">Stärkster aktueller Impuls</div>
         <div class="metric-value live-color" id="impulseValue">-</div>
-        <div class="metric-sub" id="impulseSub">Waiting for activity data</div>
+        <div class="metric-sub" id="impulseSub">Warte auf Aktivitätsdaten</div>
       </article>
     </section>
 
     <div class="allocation-bar-wrap">
       <div class="allocation-labels">
-        <span id="barDeployLabel">Suggested now: $0.00</span>
-        <span id="barReserveLabel">Available reserve: $0.00</span>
+        <span id="barDeployLabel">Jetzt empfohlen: $0.00</span>
+        <span id="barReserveLabel">Verfügbare Reserve: $0.00</span>
       </div>
-      <div class="allocation-track" aria-label="Capital allocation">
+      <div class="allocation-track" aria-label="Kapitalverteilung">
         <div class="allocation-deploy" id="allocationDeploy"></div>
         <div class="allocation-reserve" id="allocationReserve"></div>
       </div>
     </div>
 
-    <section class="panel" aria-label="Pool recommendations">
+    <section class="panel" aria-label="Pool-Empfehlungen">
       <div class="panel-head">
         <div>
-          <div class="panel-title">Dynamic Pool Recommendations</div>
-          <div class="panel-sub">Recommendations update automatically every 60 seconds and react to sudden activity.</div>
+          <div class="panel-title">Dynamische Pool-Empfehlungen</div>
+          <div class="panel-sub">Die Empfehlungen aktualisieren sich alle 60 Sekunden und reagieren auf plötzliche Aktivität.</div>
         </div>
       </div>
 
       <div class="toolbar">
         <div class="toolbar-left">
-          <input class="search" id="poolSearch" type="search" placeholder="Search pool or token..." autocomplete="off">
-          <div class="filter-pills" role="group" aria-label="Pool filter">
-            <button class="pill filter-button active" data-filter="all" type="button">All Pools</button>
-            <button class="pill filter-button" data-filter="deploy" type="button">Deploy Now</button>
-            <button class="pill filter-button" data-filter="momentum" type="button">Momentum</button>
-            <button class="pill filter-button" data-filter="xwatch" type="button">X Watch</button>
+          <input class="search" id="poolSearch" type="search" placeholder="Pool oder Token suchen..." autocomplete="off">
+          <div class="filter-pills" role="group" aria-label="Pool-Filter">
+            <button class="pill filter-button active" data-filter="all" type="button">Alle Pools</button>
+            <button class="pill filter-button" data-filter="deploy" type="button">Jetzt einsetzen</button>
+            <button class="pill filter-button" data-filter="momentum" type="button">Dynamik</button>
+            <button class="pill filter-button" data-filter="xwatch" type="button">X-Beobachtung</button>
           </div>
         </div>
 
         <div class="toolbar-right">
-          <select class="control-select small" id="sortSelect" aria-label="Sort pools">
-            <option value="recommended">Recommended first</option>
-            <option value="impulse">Current impulse</option>
-            <option value="fees">Fees 24h</option>
-            <option value="volume">Volume 24h</option>
-            <option value="liquidity">Liquidity</option>
+          <select class="control-select small" id="sortSelect" aria-label="Pools sortieren">
+            <option value="recommended">Empfehlungen zuerst</option>
+            <option value="impulse">Aktueller Impuls</option>
+            <option value="fees">Gebühren 24h</option>
+            <option value="volume">Volumen 24h</option>
+            <option value="liquidity">Liquidität</option>
           </select>
           <div class="pool-count" id="poolCount">-</div>
         </div>
       </div>
 
       <div class="pool-grid" id="poolGrid">
-        <div class="empty-state">Loading the ASTY pool network...</div>
+        <div class="empty-state">Das ASTY-Poolnetzwerk wird geladen...</div>
       </div>
     </section>
 
-    <section class="contract-card" id="contractCard" aria-label="ASTY contract address">
+    <section class="contract-card" id="contractCard" aria-label="ASTY-Contract-Adresse">
       <div class="contract-icon">
         <img src="assets/logo.png" alt="ASTY" onerror="this.onerror=null;this.src='assets/wolf.png'">
       </div>
       <div class="contract-content">
         <div class="contract-label">ASTY Contract</div>
-        <div class="contract-meta">Solana Token Mint</div>
+        <div class="contract-meta">Solana Token-Mint</div>
         <code class="contract-address contract-address-full">ASTYqeaoK83Zs1pTFEXZUB6BM8cG8YLTsN852NUkt7ZR</code>
         <code class="contract-address contract-address-short">ASTYqeao...NUkt7ZR</code>
       </div>
-      <button class="pill" id="copyContractButton" type="button">Copy</button>
+      <button class="pill" id="copyContractButton" type="button">Kopieren</button>
     </section>
 
     <img class="footer-wolf" src="assets/wolf.png" alt="ASTY Wolf" onerror="if(!this.dataset.fallback){this.dataset.fallback='upper';this.src='assets/Wolf.png';}else if(this.dataset.fallback==='upper'){this.dataset.fallback='logo';this.src='assets/logo.png';}else{this.style.display='none';}">
 
     <div class="footer">
-      Live pool data: GeckoTerminal · Calculations run locally in the browser<br>
-      The optimizer is a deployment assistant, not an execution bot. Recommendations are estimates and do not guarantee higher fees or volume.
+      Live-Pooldaten: GeckoTerminal · Berechnungen erfolgen lokal im Browser<br>
+      Der Optimierer ist ein Analysewerkzeug und kein Ausführungs-Bot. Die Empfehlungen sind Schätzungen und garantieren weder höhere Gebühren noch mehr Volumen.
     </div>
   </main>
 
   <dialog id="poolDialog">
     <div class="dialog-head">
       <div>
-        <div class="dialog-title" id="dialogTitle">Pool Details</div>
+        <div class="dialog-title" id="dialogTitle">Pool-Details</div>
         <div class="dialog-sub" id="dialogSub">-</div>
       </div>
-      <button class="dialog-close" id="dialogClose" type="button" aria-label="Close">✕</button>
+      <button class="dialog-close" id="dialogClose" type="button" aria-label="Schließen">✕</button>
     </div>
     <div class="dialog-body" id="dialogBody"></div>
   </dialog>
@@ -1159,7 +1159,7 @@
     const CACHE_KEY = "asty-liquidity-optimizer-cache-v1";
     const HISTORY_KEY = "asty-liquidity-optimizer-history-v1";
     const FLAGS_KEY = "asty-liquidity-optimizer-xflags-v1";
-    const SETTINGS_KEY = "asty-liquidity-optimizer-settings-v1";
+    const SETTINGS_KEY = "asty-liquidity-optimizer-settings-v2-de";
     const X_EVENT_MS = 2 * 60 * 60 * 1000;
 
     // [pool address, display label, configured pool fee in percent]
@@ -1361,10 +1361,10 @@
     }
 
     function getSettings() {
-      const capital = Math.max(0, num(els.capitalInput.value));
+      const capital = Math.max(25, num(els.capitalInput.value) || 25);
       const reserve = clamp(num(els.reserveInput.value), 0, 100);
-      const minStep = Math.max(5, num(els.minStepInput.value) || 20);
-      const maxStep = Math.max(minStep, num(els.maxStepInput.value) || 100);
+      const minStep = Math.max(5, num(els.minStepInput.value) || 5);
+      const maxStep = Math.max(minStep, num(els.maxStepInput.value) || 25);
       const settings = { capital, reserve, minStep, maxStep };
       saveJson(SETTINGS_KEY, settings);
       return settings;
@@ -1593,37 +1593,37 @@
     function buildReason(row) {
       if (row.allocation > 0) {
         if (row.accel5 >= 2.2 && row.txAccel5 >= 1.5) {
-          return `Fresh 5m volume and transaction acceleration are appearing together. The next step stays capped at ${fmtUsd(row.allocation)}.`;
+          return `Frisches 5-Minuten-Volumen und steigende Transaktionsaktivität treten gleichzeitig auf. Der nächste Schritt bleibt auf ${fmtUsd(row.allocation)} begrenzt.`;
         }
         if (row.accel1 >= 1.8) {
-          return `Current 1h volume is running about ${fmtMultiple(row.accel1)} above its recent hourly baseline. Add only the calculated step and rescan.`;
+          return `Das aktuelle 1-Stunden-Volumen liegt etwa ${fmtMultiple(row.accel1)} über seinem jüngsten Stunden-Durchschnitt. Nur den berechneten Schritt hinzufügen und danach erneut scannen.`;
         }
         if (row.turnover24 >= 1.5) {
-          return `The pool is turning over its liquidity quickly enough to support a controlled increase without committing the full available capital.`;
+          return `Der Pool setzt seine Liquidität schnell genug um, um eine kontrollierte Erhöhung zu tragen, ohne das gesamte verfügbare Kapital zu binden.`;
         }
-        return `Current flow can support a small measured increase. The recommendation remains deliberately limited because future volume is uncertain.`;
+        return `Die aktuelle Handelsaktivität kann eine kleine, kontrollierte Erhöhung tragen. Die Empfehlung bleibt bewusst begrenzt, weil das zukünftige Volumen unsicher ist.`;
       }
 
       if (row.xMarked && row.v5 <= 0 && row.tx5 <= 0) {
-        return "An X event is marked, but no matching on-chain reaction is visible yet. Keep the pool under close watch without adding capital.";
+        return "Ein X-Ereignis wurde markiert, aber eine passende On-Chain-Reaktion ist noch nicht sichtbar. Den Pool eng beobachten, ohne Kapital hinzuzufügen.";
       }
       if (row.signal >= 0.58) {
-        return "Momentum is visible, but the current liquidity already covers the observed flow. Watch for another confirmed increase before adding.";
+        return "Dynamik ist sichtbar, aber die aktuelle Liquidität deckt die beobachtete Handelsaktivität bereits ab. Vor einer Aufstockung auf einen weiteren bestätigten Anstieg warten.";
       }
       if (row.v24 <= 1 && row.tx24 <= 2) {
-        return "No meaningful on-chain activity is visible right now. The pool remains monitored and can reactivate immediately after a new impulse.";
+        return "Aktuell ist keine relevante On-Chain-Aktivität sichtbar. Der Pool bleibt unter Beobachtung und kann nach einem neuen Impuls sofort wieder aktiv werden.";
       }
       if (row.targetHigh <= row.liquidity) {
-        return "Observed flow does not currently justify more depth. Keep the existing base liquidity and wait for a stronger confirmed move.";
+        return "Die beobachtete Handelsaktivität rechtfertigt derzeit keine größere Liquiditätstiefe. Die bestehende Basisliquidität halten und auf eine stärkere bestätigte Bewegung warten.";
       }
-      return "The activity signal is not strong enough for a new liquidity step. Continue monitoring instead of forcing capital into the pool.";
+      return "Das Aktivitätssignal ist für einen neuen Liquiditätsschritt noch nicht stark genug. Weiter beobachten, statt Kapital in den Pool zu zwingen.";
     }
 
     function recommendationLabel(row) {
-      if (row.allocation > 0) return { text: "Add now", cls: "add" };
-      if (row.xMarked) return { text: "X event watch", cls: "xevent" };
-      if (row.signal >= 0.56 || row.accel5 >= 2) return { text: "Watch closely", cls: "watch" };
-      return { text: "Hold", cls: "" };
+      if (row.allocation > 0) return { text: "Jetzt erhöhen", cls: "add" };
+      if (row.xMarked) return { text: "X-Ereignis beobachten", cls: "xevent" };
+      if (row.signal >= 0.56 || row.accel5 >= 2) return { text: "Eng beobachten", cls: "watch" };
+      return { text: "Halten", cls: "" };
     }
 
     function allocateCapital(rows, settings) {
@@ -1720,33 +1720,33 @@
       const strongest = [...poolRows].sort((a, b) => b.signal - a.signal)[0];
       els.deployValue.textContent = fmtUsd(summary.deployed);
       els.deploySub.textContent = summary.selected
-        ? `${summary.selected} controlled next step${summary.selected === 1 ? "" : "s"} calculated`
-        : "No pool currently confirms an additional step";
+        ? `${summary.selected} kontrollierte${summary.selected === 1 ? "r Schritt" : " Schritte"} berechnet`
+        : "Aktuell bestätigt kein Pool einen weiteren Schritt";
 
       els.reserveValue.textContent = fmtUsd(summary.reserve);
       els.reserveSub.textContent = summary.reserve > 0
-        ? "Remains available for the next confirmed impulse"
-        : "All entered capital is currently assigned";
+        ? "Bleibt für den nächsten bestätigten Impuls verfügbar"
+        : "Das gesamte eingegebene Kapital ist aktuell zugewiesen";
 
       els.selectedValue.textContent = String(summary.selected);
       els.selectedSub.textContent = summary.selected
-        ? "Only pools with current capacity receive capital"
-        : "Quiet pools stay monitored instead of being discarded";
+        ? "Nur Pools mit aktueller Aufnahmekapazität erhalten Kapital"
+        : "Ruhige Pools bleiben unter Beobachtung, statt aussortiert zu werden";
 
       if (strongest) {
         els.impulseValue.textContent = strongest.label.replace("ASTY / ", "");
         els.impulseSub.textContent = `${fmtMultiple(strongest.accel5)} 5m volume pace · ${fmtUsd(strongest.v1, true)} 1h volume`;
       } else {
         els.impulseValue.textContent = "-";
-        els.impulseSub.textContent = "No activity data available";
+        els.impulseSub.textContent = "Keine Aktivitätsdaten verfügbar";
       }
 
       const total = Math.max(getSettings().capital, 0.01);
       const deployPercent = clamp(summary.deployed / total * 100, 0, 100);
       els.allocationDeploy.style.width = deployPercent + "%";
       els.allocationReserve.style.width = (100 - deployPercent) + "%";
-      els.barDeployLabel.textContent = `Suggested now: ${fmtUsd(summary.deployed)}`;
-      els.barReserveLabel.textContent = `Available reserve: ${fmtUsd(summary.reserve)}`;
+      els.barDeployLabel.textContent = `Jetzt empfohlen: ${fmtUsd(summary.deployed)}`;
+      els.barReserveLabel.textContent = `Verfügbare Reserve: ${fmtUsd(summary.reserve)}`;
     }
 
     function poolCardHtml(row) {
@@ -1758,50 +1758,50 @@
 
       const targetText = row.targetHigh > 0
         ? `${fmtUsd(row.targetLow, true)} - ${fmtUsd(row.targetHigh, true)}`
-        : "No active target";
+        : "Kein aktiver Zielbereich";
 
       const recommendationValue = row.allocation > 0
         ? `+${fmtUsd(row.allocation)}`
-        : "No add now";
+        : "Jetzt nicht erhöhen";
 
       return `
         <article class="${cardClasses.join(" ")}" tabindex="0" data-address="${row.address}">
           <div class="pool-head">
             <div>
               <div class="pool-name">${row.label}</div>
-              <div class="pool-meta">${row.feePercent}% pool fee · ${shortAddress(row.address)}</div>
+              <div class="pool-meta">${row.feePercent}% Pool-Gebühr · ${shortAddress(row.address)}</div>
             </div>
             <span class="signal-badge ${recommendation.cls}">${recommendation.text}</span>
           </div>
 
           <div class="pool-main">
             <div class="recommend-box">
-              <div class="box-label">NEXT LIQUIDITY STEP</div>
+              <div class="box-label">NÄCHSTER LIQUIDITÄTSSCHRITT</div>
               <div class="recommend-value ${row.allocation > 0 ? "" : "zero"}">${recommendationValue}</div>
-              <div class="box-sub">Current liquidity: ${fmtUsd(row.liquidity, true)}</div>
+              <div class="box-sub">Aktuelle Liquidität: ${fmtUsd(row.liquidity, true)}</div>
             </div>
             <div class="target-box">
-              <div class="box-label">CURRENT TARGET RANGE</div>
+              <div class="box-label">AKTUELLER ZIELBEREICH</div>
               <div class="target-value">${targetText}</div>
-              <div class="box-sub">Recalculated from current flow</div>
+              <div class="box-sub">Aus der aktuellen Handelsaktivität neu berechnet</div>
             </div>
           </div>
 
           <div class="metrics-row">
             <div class="tiny-metric">
-              <div class="tiny-label">Volume 5m</div>
+              <div class="tiny-label">Volumen 5m</div>
               <div class="tiny-value ${row.accel5 >= 2 ? "cyan" : ""}">${fmtUsd(row.v5, true)}</div>
             </div>
             <div class="tiny-metric">
-              <div class="tiny-label">Volume 1h</div>
+              <div class="tiny-label">Volumen 1h</div>
               <div class="tiny-value">${fmtUsd(row.v1, true)}</div>
             </div>
             <div class="tiny-metric">
-              <div class="tiny-label">Fees 24h</div>
+              <div class="tiny-label">Gebühren 24h</div>
               <div class="tiny-value green">${fmtUsd(row.fees24, true)}</div>
             </div>
             <div class="tiny-metric">
-              <div class="tiny-label">1h Pace</div>
+              <div class="tiny-label">1h-Tempo</div>
               <div class="tiny-value ${row.accel1 >= 1.8 ? "amber" : ""}">${fmtMultiple(row.accel1)}</div>
             </div>
           </div>
@@ -1809,8 +1809,8 @@
           <div class="reason">${row.reason}</div>
 
           <div class="card-footer">
-            <button class="pill micro-action x-event-button ${row.xMarked ? "active" : ""}" type="button" data-x-address="${row.address}">${row.xMarked ? "X Event Marked" : "Mark X Event"}</button>
-            <span class="updated-line">Click for full simulation</span>
+            <button class="pill micro-action x-event-button ${row.xMarked ? "active" : ""}" type="button" data-x-address="${row.address}">${row.xMarked ? "X-Ereignis markiert" : "X-Ereignis markieren"}</button>
+            <span class="updated-line">Für vollständige Simulation anklicken</span>
           </div>
         </article>
       `;
@@ -1839,10 +1839,10 @@
 
     function renderPools() {
       const rows = filteredRows();
-      els.poolCount.textContent = `${rows.length} of ${poolRows.length} pools`;
+      els.poolCount.textContent = `${rows.length} von ${poolRows.length} Pools`;
       els.poolGrid.innerHTML = rows.length
         ? rows.map(poolCardHtml).join("")
-        : `<div class="empty-state">No pools match the current filter.</div>`;
+        : `<div class="empty-state">Keine Pools entsprechen dem aktuellen Filter.</div>`;
 
       els.poolGrid.querySelectorAll(".pool-card").forEach(card => {
         card.addEventListener("click", event => {
@@ -1866,18 +1866,18 @@
     }
 
     function simulationRows(row) {
-      const candidates = [25, 50, 100, row.allocation].filter((value, index, array) => value > 0 && array.indexOf(value) === index).sort((a, b) => a - b);
+      const candidates = [5, 10, 25, row.allocation].filter((value, index, array) => value > 0 && array.indexOf(value) === index).sort((a, b) => a - b);
       return candidates.map(step => {
         const newLiquidity = row.liquidity + step;
         const staticDailyYield = newLiquidity > 0 ? row.fees24 / newLiquidity * 100 : 0;
         const withinCurrentRange = newLiquidity >= row.targetLow && newLiquidity <= row.targetHigh;
         const effect = step === row.allocation && row.allocation > 0
-          ? "Recommended next step"
+          ? "Empfohlener nächster Schritt"
           : withinCurrentRange
-            ? "Inside current range"
+            ? "Im aktuellen Zielbereich"
             : newLiquidity > row.targetHigh
-              ? "Above current range"
-              : "Below current range";
+              ? "Über dem aktuellen Zielbereich"
+              : "Unter dem aktuellen Zielbereich";
         return { step, newLiquidity, staticDailyYield, effect };
       });
     }
@@ -1887,76 +1887,76 @@
       if (!row) return;
 
       els.dialogTitle.textContent = row.label;
-      els.dialogSub.textContent = `${row.feePercent}% pool fee · ${row.dexId}`;
+      els.dialogSub.textContent = `${row.feePercent}% Pool-Gebühr · ${row.dexId}`;
       const simulations = simulationRows(row);
 
       els.dialogBody.innerHTML = `
         <div class="detail-grid">
           <div class="detail-item">
-            <div class="detail-label">Current Liquidity</div>
+            <div class="detail-label">Aktuelle Liquidität</div>
             <div class="detail-value highlight">${fmtUsd(row.liquidity)}</div>
           </div>
           <div class="detail-item">
-            <div class="detail-label">Recommended Step</div>
-            <div class="detail-value positive">${row.allocation > 0 ? "+" + fmtUsd(row.allocation) : "No add now"}</div>
+            <div class="detail-label">Empfohlener Schritt</div>
+            <div class="detail-value positive">${row.allocation > 0 ? "+" + fmtUsd(row.allocation) : "Jetzt nicht erhöhen"}</div>
           </div>
           <div class="detail-item">
-            <div class="detail-label">Current Target Range</div>
+            <div class="detail-label">Aktueller Zielbereich</div>
             <div class="detail-value">${fmtUsd(row.targetLow)} - ${fmtUsd(row.targetHigh)}</div>
           </div>
           <div class="detail-item">
-            <div class="detail-label">Volume 5m / 1h</div>
+            <div class="detail-label">Volumen 5m / 1h</div>
             <div class="detail-value">${fmtUsd(row.v5)} / ${fmtUsd(row.v1)}</div>
           </div>
           <div class="detail-item">
-            <div class="detail-label">Volume 6h / 24h</div>
+            <div class="detail-label">Volumen 6h / 24h</div>
             <div class="detail-value">${fmtUsd(row.v6)} / ${fmtUsd(row.v24)}</div>
           </div>
           <div class="detail-item">
-            <div class="detail-label">Transactions 1h / 24h</div>
+            <div class="detail-label">Transaktionen 1h / 24h</div>
             <div class="detail-value">${fmtNumber(row.tx1, 0)} / ${fmtNumber(row.tx24, 0)}</div>
           </div>
           <div class="detail-item">
-            <div class="detail-label">1h Volume Pace</div>
+            <div class="detail-label">1h-Volumentempo</div>
             <div class="detail-value">${fmtMultiple(row.accel1)}</div>
           </div>
           <div class="detail-item">
-            <div class="detail-label">5m Volume Pace</div>
+            <div class="detail-label">5m-Volumentempo</div>
             <div class="detail-value">${fmtMultiple(row.accel5)}</div>
           </div>
           <div class="detail-item">
-            <div class="detail-label">Estimated Fees 24h</div>
+            <div class="detail-label">Geschätzte Gebühren 24h</div>
             <div class="detail-value positive">${fmtUsd(row.fees24)}</div>
           </div>
           <div class="detail-item">
-            <div class="detail-label">Volume / Liquidity 24h</div>
+            <div class="detail-label">Volumen / Liquidität 24h</div>
             <div class="detail-value">${fmtMultiple(row.turnover24)}</div>
           </div>
           <div class="detail-item">
-            <div class="detail-label">Static Daily Fee Yield</div>
+            <div class="detail-label">Statische tägliche Gebührenrendite</div>
             <div class="detail-value">${fmtPercent(row.staticDailyYield, 2)}</div>
           </div>
           <div class="detail-item">
-            <div class="detail-label">X Event Watch</div>
-            <div class="detail-value">${row.xMarked ? "Active" : "Not marked"}</div>
+            <div class="detail-label">X-Ereignis-Beobachtung</div>
+            <div class="detail-value">${row.xMarked ? "Aktiv" : "Nicht markiert"}</div>
           </div>
         </div>
 
         <div class="detail-section">
-          <div class="detail-section-title">Current Recommendation</div>
+          <div class="detail-section-title">Aktuelle Empfehlung</div>
           <div class="detail-section-copy">${row.reason}</div>
         </div>
 
         <div class="detail-section">
-          <div class="detail-section-title">Liquidity Step Simulation</div>
-          <div class="detail-section-copy">Static fee yield assumes the last reported 24h fees stay unchanged. It shows dilution only and does not assume that additional liquidity will create more volume.</div>
+          <div class="detail-section-title">Simulation der Liquiditätsschritte</div>
+          <div class="detail-section-copy">Die statische Gebührenrendite unterstellt, dass die zuletzt gemeldeten 24h-Gebühren unverändert bleiben. Sie zeigt nur die Verwässerung und geht nicht davon aus, dass zusätzliche Liquidität automatisch mehr Volumen erzeugt.</div>
           <table class="simulation-table">
             <thead>
               <tr>
-                <th>Step</th>
-                <th>New Liquidity</th>
-                <th>Static Daily Yield</th>
-                <th>Position</th>
+                <th>Schritt</th>
+                <th>Neue Liquidität</th>
+                <th>Statische Tagesrendite</th>
+                <th>Einordnung</th>
               </tr>
             </thead>
             <tbody>
@@ -1973,12 +1973,12 @@
         </div>
 
         <div class="detail-section">
-          <div class="detail-section-title">Pool Address</div>
+          <div class="detail-section-title">Pool-Adresse</div>
           <div class="detail-section-copy" style="font-family:ui-monospace,SFMono-Regular,Menlo,monospace;word-break:break-all;">${row.address}</div>
         </div>
 
         <div class="dialog-actions">
-          <button class="pill" id="dialogXButton" type="button">${row.xMarked ? "Remove X Event" : "Mark X Event"}</button>
+          <button class="pill" id="dialogXButton" type="button">${row.xMarked ? "X-Ereignis entfernen" : "X-Ereignis markieren"}</button>
           <a class="pill" href="https://www.geckoterminal.com/solana/pools/${row.address}" target="_blank" rel="noopener noreferrer">GeckoTerminal ↗</a>
           <a class="pill" href="https://dexscreener.com/solana/${row.address}" target="_blank" rel="noopener noreferrer">DexScr ↗</a>
         </div>
@@ -2007,7 +2007,7 @@
       if (isLoading) return;
       isLoading = true;
       els.refreshButton.classList.add("spinning");
-      setStatus("loading", "Scanning the ASTY pool network...");
+      setStatus("loading", "Das ASTY-Poolnetzwerk wird analysiert...");
 
       try {
         let result;
@@ -2028,22 +2028,22 @@
         renderPools();
 
         const strongest = [...poolRows].sort((a, b) => b.signal - a.signal)[0];
-        const timeText = new Date(result.timestamp).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" });
+        const timeText = new Date(result.timestamp).toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" });
 
         if (result.mode === "live") {
-          setStatus("live", `Live · ${poolRows.length} pools · ${timeText}`);
+          setStatus("live", `Live · ${poolRows.length} Pools · ${timeText}`);
           els.liveProof.innerHTML = strongest
-            ? `Strongest current impulse: <strong>${strongest.label}</strong> · ${fmtUsd(strongest.v1, true)} volume in 1h · ${fmtNumber(strongest.tx1, 0)} transactions.`
-            : `Loaded <strong>${poolRows.length}</strong> ASTY pools.`;
+            ? `Stärkster aktueller Impuls: <strong>${strongest.label}</strong> · ${fmtUsd(strongest.v1, true)} Volumen in 1h · ${fmtNumber(strongest.tx1, 0)} Transaktionen.`
+            : `<strong>${poolRows.length}</strong> ASTY-Pools geladen.`;
         } else {
-          setStatus("error", `Cached data · ${poolRows.length} pools · ${timeText}`);
-          els.liveProof.innerHTML = `Live API was unavailable. Showing the last locally saved scan from <strong>${timeText}</strong>.`;
+          setStatus("error", `Zwischengespeicherte Daten · ${poolRows.length} Pools · ${timeText}`);
+          els.liveProof.innerHTML = `Die Live-API war nicht erreichbar. Angezeigt wird der letzte lokal gespeicherte Scan von <strong>${timeText}</strong>.`;
         }
       } catch (error) {
         console.error(error);
-        setStatus("error", "Pool data could not be loaded");
-        els.liveProof.textContent = "No live or cached GeckoTerminal data is currently available.";
-        els.poolGrid.innerHTML = `<div class="empty-state">The pool API could not be reached. Open the page through GitHub Pages rather than directly as a local file, then refresh.</div>`;
+        setStatus("error", "Pooldaten konnten nicht geladen werden");
+        els.liveProof.textContent = "Aktuell sind weder Live- noch zwischengespeicherte GeckoTerminal-Daten verfügbar.";
+        els.poolGrid.innerHTML = `<div class="empty-state">Die Pool-API konnte nicht erreicht werden. Öffne die Seite über GitHub Pages statt direkt als lokale Datei und aktualisiere sie anschließend.</div>`;
       } finally {
         isLoading = false;
         els.refreshButton.classList.remove("spinning");
@@ -2078,7 +2078,7 @@
       try {
         await navigator.clipboard.writeText(ASTY_MINT);
         const original = els.copyContractButton.textContent;
-        els.copyContractButton.textContent = "Copied";
+        els.copyContractButton.textContent = "Kopiert";
         setTimeout(() => { els.copyContractButton.textContent = original; }, 1400);
       } catch {
         const textarea = document.createElement("textarea");
