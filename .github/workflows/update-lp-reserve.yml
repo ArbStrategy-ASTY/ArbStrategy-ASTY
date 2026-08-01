@@ -1,0 +1,175 @@
+name: Update ASTY LP Reserve
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "*/5 * * * *"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: update-asty-lp-reserve
+  cancel-in-progress: true
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Query BirdEye and write lp-reserve.json
+        shell: bash
+        run: |
+          node <<'NODE'
+          const fs = require("fs");
+
+          const API_KEY = "d920d9664acf463c87f6b6b17893b70a";
+          const ENDPOINT = "https://public-api.birdeye.so/wallet/v2/token-balance";
+          const ASTY_MINT = "ASTYqeaoK83Zs1pTFEXZUB6BM8cG8YLTsN852NUkt7ZR";
+
+          const WALLETS = [
+            "8KgDtknVhs88sMjRckCGzVDhaFBre3V3FAvhwxfANmfq",
+            "9Hv3HPGSHS1vq1qjfumoER4TEhu2sgWUmL3S4EaUWrk6",
+            "4aGjJavF5fq15szkFTdDGQAz9mUUSZ1y1c74isQm2zYV",
+            "8aYomPkFRaetda3672NfVLZ1xhrJRm9fro2gzNxCPbyf",
+            "9EDJ8RnqnVhwEZF8w3whGgCumDbeexPcHpzWRaWr6USt"
+          ];
+
+          const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
+
+          async function queryWallet(wallet) {
+            let lastError;
+
+            for (let attempt = 1; attempt <= 4; attempt++) {
+              try {
+                const response = await fetch(ENDPOINT, {
+                  method: "POST",
+                  headers: {
+                    "accept": "application/json",
+                    "content-type": "application/json",
+                    "x-chain": "solana",
+                    "X-API-KEY": API_KEY
+                  },
+                  body: JSON.stringify({
+                    wallet,
+                    token_addresses: [ASTY_MINT]
+                  })
+                });
+
+                const payload = await response.json().catch(() => null);
+
+                if (!response.ok) {
+                  throw new Error(
+                    payload?.message ||
+                    payload?.error ||
+                    `BirdEye HTTP ${response.status}`
+                  );
+                }
+
+                if (payload?.success !== true || !Array.isArray(payload?.data)) {
+                  throw new Error("Unexpected BirdEye response");
+                }
+
+                const token = payload.data.find(
+                  item => item?.address === ASTY_MINT
+                );
+
+                return {
+                  wallet,
+                  resolved: true,
+                  amount: Number(token?.amount || 0),
+                  value: Number(token?.value || 0),
+                  decimals: Number(token?.decimals || 9),
+                  price: Number(token?.price || 0)
+                };
+              } catch (error) {
+                lastError = error;
+
+                if (attempt < 4) {
+                  await sleep(attempt * 2000);
+                }
+              }
+            }
+
+            return {
+              wallet,
+              resolved: false,
+              amount: 0,
+              value: 0,
+              error: String(lastError?.message || lastError)
+            };
+          }
+
+          async function main() {
+            const balances = [];
+
+            // Sequential requests are deliberately used to stay well below
+            // the Wallet API rate limit.
+            for (const wallet of WALLETS) {
+              balances.push(await queryWallet(wallet));
+              await sleep(500);
+            }
+
+            const resolved = balances.filter(item => item.resolved).length;
+            const amount = balances.reduce(
+              (sum, item) => sum + (Number.isFinite(item.amount) ? item.amount : 0),
+              0
+            );
+            const value = balances.reduce(
+              (sum, item) => sum + (Number.isFinite(item.value) ? item.value : 0),
+              0
+            );
+
+            if (resolved === 0) {
+              throw new Error(
+                "BirdEye returned no successful reserve wallet response: " +
+                balances.map(item => item.error || "unknown").join(" | ")
+              );
+            }
+
+            const output = {
+              success: true,
+              token: ASTY_MINT,
+              amount,
+              value,
+              resolved,
+              total: WALLETS.length,
+              balances,
+              source: "BirdEye Wallet API",
+              updatedAt: Date.now(),
+              updatedAtIso: new Date().toISOString()
+            };
+
+            fs.writeFileSync(
+              "lp-reserve.json",
+              JSON.stringify(output, null, 2) + "\n"
+            );
+
+            console.log(
+              `ASTY LP Reserve: ${amount.toLocaleString("en-US")} ASTY ` +
+              `across ${resolved}/${WALLETS.length} wallets`
+            );
+          }
+
+          main().catch(error => {
+            console.error(error);
+            process.exit(1);
+          });
+          NODE
+
+      - name: Commit updated reserve data
+        shell: bash
+        run: |
+          if git diff --quiet -- lp-reserve.json; then
+            echo "No reserve change."
+            exit 0
+          fi
+
+          git config user.name "ASTY Reserve Bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add lp-reserve.json
+          git commit -m "Update ASTY LP Reserve"
+          git push
