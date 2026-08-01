@@ -257,59 +257,63 @@
     }
 
     .ownership-card {
-      position: relative;
-      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 18px;
       margin-top: 14px;
-      padding: 18px 20px;
-      border-radius: var(--radius);
-      border: 1px solid rgba(167,139,250,0.22);
-      background:
-        linear-gradient(135deg, rgba(124,58,237,0.12), rgba(6,182,212,0.035)),
-        rgba(255,255,255,0.035);
-      box-shadow: var(--shadow);
+      padding: 14px 16px;
+      border-radius: 16px;
+      border: 1px solid rgba(167,139,250,0.16);
+      background: rgba(255,255,255,0.025);
+      box-shadow: none;
     }
 
-    .ownership-card::after {
-      content: "";
-      position: absolute;
-      width: 190px;
-      height: 190px;
-      right: -85px;
-      top: -110px;
-      border-radius: 50%;
-      background: rgba(139,92,246,0.18);
-      filter: blur(18px);
-      pointer-events: none;
+    .ownership-text-wrap {
+      min-width: 0;
     }
 
     .ownership-kicker {
-      position: relative;
-      z-index: 1;
       color: var(--purple-soft);
-      font-size: 10px;
+      font-size: 9px;
       font-weight: 850;
-      letter-spacing: 1.3px;
+      letter-spacing: 1.15px;
       text-transform: uppercase;
     }
 
     .ownership-message {
-      position: relative;
-      z-index: 1;
-      margin-top: 8px;
-      max-width: 900px;
-      color: #f7f4ff;
-      font-size: clamp(17px, 2.3vw, 23px);
-      font-weight: 820;
-      line-height: 1.35;
-      letter-spacing: -0.35px;
+      margin-top: 5px;
+      color: #d9d4e6;
+      font-size: 13px;
+      font-weight: 650;
+      line-height: 1.45;
+    }
+
+    .ownership-highlight {
+      display: inline-block;
+      margin: 0 2px;
+      color: var(--cyan);
+      font-size: 1.22em;
+      font-weight: 900;
+      letter-spacing: -0.3px;
+      text-shadow: 0 0 16px rgba(103,232,249,0.22);
     }
 
     .ownership-sub {
-      position: relative;
-      z-index: 1;
-      margin-top: 7px;
-      color: var(--muted);
-      font-size: 11px;
+      margin-top: 4px;
+      color: var(--muted-2);
+      font-size: 9px;
+    }
+
+    .ownership-badge {
+      flex: 0 0 auto;
+      padding: 8px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(167,139,250,0.20);
+      color: #cfc5ea;
+      font-size: 10px;
+      font-weight: 800;
+      white-space: nowrap;
     }
 
     .icon-button {
@@ -807,6 +811,11 @@
         flex-direction: column;
       }
 
+      .ownership-card {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+
       .status-wrap {
         justify-content: flex-start;
         min-width: 0;
@@ -890,8 +899,7 @@
         <div class="eyebrow">ArbStrategy on Solana</div>
         <h1>ASTY Live Dashboard</h1>
         <p class="hero-copy">
-          A clean live view of the ASTY system using the full configured pool register,
-          GeckoTerminal market data and on-chain Solana supply.
+          A clean live view about the power of the ASTY-Effect
         </p>
       </div>
 
@@ -902,14 +910,6 @@
         </div>
         <button class="icon-button" id="refreshButton" type="button" aria-label="Refresh dashboard">↻</button>
       </div>
-    </section>
-
-    <section class="contract-strip" aria-label="ASTY contract address">
-      <div>
-        <div class="contract-label">ASTY Contract</div>
-        <code class="contract-address" id="contractAddress">ASTYqeaoK83Zs1pTFEXZUB6BM8cG8YLTsN852NUkt7ZR</code>
-      </div>
-      <button class="pill" id="copyContractButton" type="button">Copy</button>
     </section>
 
     <section class="main-grid" aria-label="Main metrics">
@@ -965,31 +965,18 @@
     </section>
 
     <section class="ownership-card" aria-label="ASTY ownership effect">
-      <div class="ownership-kicker">The ASTY-Effect</div>
-      <div class="ownership-message" id="ownershipMessage">
-        Calculating the ownership increase created by token burns…
-      </div>
-      <div class="ownership-sub" id="ownershipSub">
-        Based on holding 100,000 ASTY, equal to 1% of the original launch supply.
-      </div>
-    </section>
-
-    <section class="panel">
-      <div class="panel-head">
-        <div>
-          <div class="panel-title">ASTY Price Chart</div>
-          <div class="panel-sub">Interactive market chart provided by BirdEye</div>
+      <div class="ownership-text-wrap">
+        <div class="ownership-kicker">The ASTY-Effect</div>
+        <div class="ownership-message" id="ownershipMessage">
+          If you owned 1% of ASTY at launch, you now own
+          <span class="ownership-highlight" id="ownershipPercent">—</span>
+          of the network without buying a single additional token.
         </div>
-        <a class="pill" href="https://birdeye.so/solana/token/ASTYqeaoK83Zs1pTFEXZUB6BM8cG8YLTsN852NUkt7ZR" target="_blank" rel="noopener noreferrer">Open full chart ↗</a>
+        <div class="ownership-sub" id="ownershipSub">
+          Based on holding 100,000 ASTY, equal to 1% of the original launch supply.
+        </div>
       </div>
-
-      <iframe
-        class="chart-frame"
-        src="https://embed.birdeye.so/tv-widget/ASTYqeaoK83Zs1pTFEXZUB6BM8cG8YLTsN852NUkt7ZR?chain=solana&viewMode=pair&chartInterval=240&chartType=Line&chartTimezone=Europe%2FBerlin&chartLeftToolbar=hide&theme=dark"
-        frameborder="0"
-        allowfullscreen
-        loading="lazy">
-      </iframe>
+      <div class="ownership-badge">Burns increase ownership</div>
     </section>
 
     <section class="panel">
@@ -1036,6 +1023,32 @@
           </table>
         </div>
       </div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-head">
+        <div>
+          <div class="panel-title">ASTY Price Chart</div>
+          <div class="panel-sub">Interactive market chart provided by BirdEye</div>
+        </div>
+        <a class="pill" href="https://birdeye.so/solana/token/ASTYqeaoK83Zs1pTFEXZUB6BM8cG8YLTsN852NUkt7ZR" target="_blank" rel="noopener noreferrer">Open full chart ↗</a>
+      </div>
+
+      <iframe
+        class="chart-frame"
+        src="https://embed.birdeye.so/tv-widget/ASTYqeaoK83Zs1pTFEXZUB6BM8cG8YLTsN852NUkt7ZR?chain=solana&viewMode=pair&chartInterval=240&chartType=Line&chartTimezone=Europe%2FBerlin&chartLeftToolbar=hide&theme=dark"
+        frameborder="0"
+        allowfullscreen
+        loading="lazy">
+      </iframe>
+    </section>
+
+    <section class="contract-strip" aria-label="ASTY contract address">
+      <div>
+        <div class="contract-label">ASTY Contract</div>
+        <code class="contract-address" id="contractAddress">ASTYqeaoK83Zs1pTFEXZUB6BM8cG8YLTsN852NUkt7ZR</code>
+      </div>
+      <button class="pill" id="copyContractButton" type="button">Copy</button>
     </section>
 
     <div class="footer">
@@ -1717,12 +1730,13 @@
         `Burn value: ${fmtUsd(summary.burnedUsd, true)}`;
 
       if (Number.isFinite(summary.launchOnePercentNow)) {
-        el("ownershipMessage").textContent =
-          `If you owned 1% of ASTY at launch, you now own ${summary.launchOnePercentNow.toFixed(3)}% of the network without buying a single additional token.`;
+        el("ownershipPercent").textContent =
+          `${summary.launchOnePercentNow.toFixed(3)}%`;
         el("ownershipSub").textContent =
           `${fmtNumber(summary.launchOnePercentTokens)} ASTY represented 1% at launch. Burns automatically increase that share of the remaining supply.`;
       } else {
-        el("ownershipMessage").textContent =
+        el("ownershipPercent").textContent = "—";
+        el("ownershipSub").textContent =
           "The ownership increase created by ASTY burns is temporarily unavailable.";
       }
 
