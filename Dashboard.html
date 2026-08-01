@@ -1,0 +1,2005 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="color-scheme" content="dark" />
+  <title>ASTY Live Dashboard</title>
+
+  <style>
+    :root {
+      --bg-1: #070a13;
+      --bg-2: #0b1020;
+      --panel: rgba(255,255,255,0.045);
+      --panel-strong: rgba(10,14,28,0.92);
+      --border: rgba(255,255,255,0.09);
+      --border-soft: rgba(167,139,250,0.20);
+      --text: #ffffff;
+      --muted: #a9a4bd;
+      --muted-2: #7f7a94;
+      --purple: #8b5cf6;
+      --purple-2: #6d28d9;
+      --purple-soft: #c4b5fd;
+      --cyan: #67e8f9;
+      --cyan-2: #06b6d4;
+      --green: #34d399;
+      --red: #fb7185;
+      --amber: #fbbf24;
+      --shadow: 0 18px 55px rgba(0,0,0,0.26);
+      --radius: 20px;
+    }
+
+    * { box-sizing: border-box; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background:
+        radial-gradient(circle at 12% -5%, rgba(124,58,237,0.24), transparent 31%),
+        radial-gradient(circle at 88% 18%, rgba(6,182,212,0.10), transparent 24%),
+        linear-gradient(180deg, var(--bg-2) 0%, var(--bg-1) 48%, #050710 100%);
+      color: var(--text);
+    }
+
+    a { color: inherit; text-decoration: none; }
+    button, input { font: inherit; }
+
+    .orb {
+      position: fixed;
+      width: 340px;
+      height: 340px;
+      border-radius: 50%;
+      filter: blur(110px);
+      opacity: 0.13;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .orb.one { top: 120px; left: -160px; background: #7c3aed; }
+    .orb.two { bottom: 80px; right: -170px; background: #22d3ee; }
+
+    .container {
+      position: relative;
+      z-index: 1;
+      width: min(1160px, calc(100% - 32px));
+      margin: 0 auto;
+    }
+
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      backdrop-filter: blur(16px);
+      background: rgba(6,9,19,0.76);
+      border-bottom: 1px solid rgba(255,255,255,0.07);
+    }
+
+    .nav {
+      min-height: 72px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 18px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-width: max-content;
+    }
+
+    .brand-logo {
+      width: 44px;
+      height: 44px;
+      object-fit: cover;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(196,181,253,0.25);
+      box-shadow: 0 0 26px rgba(124,58,237,0.28);
+    }
+
+    .brand-title {
+      font-size: 15px;
+      font-weight: 800;
+      letter-spacing: 0.3px;
+    }
+
+    .brand-sub {
+      margin-top: 2px;
+      font-size: 11px;
+      color: var(--muted);
+    }
+
+    .nav-links {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 38px;
+      padding: 9px 13px;
+      border: 1px solid rgba(167,139,250,0.20);
+      border-radius: 999px;
+      background: rgba(255,255,255,0.045);
+      color: #ded9ed;
+      font-size: 13px;
+      font-weight: 700;
+      transition: transform 0.18s ease, border-color 0.18s ease, background 0.18s ease;
+    }
+
+    .pill:hover {
+      transform: translateY(-1px);
+      border-color: rgba(196,181,253,0.42);
+      background: rgba(255,255,255,0.07);
+      color: #fff;
+    }
+
+    .pill.primary {
+      background: linear-gradient(135deg, var(--purple), var(--purple-2));
+      border-color: transparent;
+      color: #fff;
+    }
+
+    .pill.cyan {
+      background: linear-gradient(135deg, var(--cyan-2), #0e7490);
+      border-color: transparent;
+      color: #fff;
+    }
+
+    main { padding: 34px 0 54px; }
+
+    .hero {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 22px;
+      margin-bottom: 18px;
+    }
+
+    .eyebrow {
+      color: var(--purple-soft);
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: 1.6px;
+      text-transform: uppercase;
+    }
+
+    h1 {
+      margin: 7px 0 8px;
+      font-size: clamp(30px, 5vw, 48px);
+      line-height: 1.02;
+      letter-spacing: -1.6px;
+    }
+
+    .hero-copy {
+      margin: 0;
+      max-width: 680px;
+      color: #c7c2d6;
+      line-height: 1.55;
+      font-size: 14px;
+    }
+
+    .status-wrap {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 10px;
+      min-width: max-content;
+    }
+
+    .status-line {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--muted);
+      font-size: 12px;
+      text-align: right;
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--amber);
+      box-shadow: 0 0 0 5px rgba(251,191,36,0.08);
+    }
+
+    .status-dot.live {
+      background: var(--green);
+      box-shadow: 0 0 0 5px rgba(52,211,153,0.08);
+    }
+
+    .status-dot.error {
+      background: var(--red);
+      box-shadow: 0 0 0 5px rgba(251,113,133,0.08);
+    }
+
+    .icon-button {
+      width: 35px;
+      height: 35px;
+      border-radius: 11px;
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,0.04);
+      color: #ddd8eb;
+      cursor: pointer;
+      transition: transform .18s ease, border-color .18s ease;
+    }
+
+    .icon-button:hover {
+      transform: translateY(-1px);
+      border-color: rgba(196,181,253,0.38);
+    }
+
+    .icon-button.spinning {
+      animation: spin 0.9s linear infinite;
+      pointer-events: none;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .main-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .metric-card,
+    .panel,
+    .mini-card {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      backdrop-filter: blur(12px);
+      box-shadow: var(--shadow);
+    }
+
+    .metric-card {
+      min-height: 154px;
+      padding: 18px;
+      border-radius: var(--radius);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .metric-card::after {
+      content: "";
+      position: absolute;
+      width: 110px;
+      height: 110px;
+      top: -64px;
+      right: -46px;
+      border-radius: 50%;
+      background: rgba(139,92,246,0.16);
+      filter: blur(8px);
+    }
+
+    .metric-label {
+      color: #bdb6d0;
+      font-size: 12px;
+      font-weight: 750;
+      letter-spacing: .2px;
+    }
+
+    .metric-value {
+      margin-top: 17px;
+      font-size: clamp(23px, 2.8vw, 31px);
+      line-height: 1;
+      font-weight: 850;
+      letter-spacing: -0.8px;
+    }
+
+    .metric-value.live-color { color: var(--cyan); }
+
+    .metric-sub {
+      margin-top: 12px;
+      color: var(--muted-2);
+      font-size: 11px;
+      line-height: 1.35;
+      min-height: 30px;
+    }
+
+    .positive { color: var(--green) !important; }
+    .negative { color: var(--red) !important; }
+
+    .mini-grid {
+      margin-top: 14px;
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .mini-card {
+      border-radius: 16px;
+      padding: 14px 16px;
+      box-shadow: none;
+    }
+
+    .mini-label {
+      color: var(--muted);
+      font-size: 11px;
+    }
+
+    .mini-value {
+      margin-top: 7px;
+      color: #f4f2fb;
+      font-size: 18px;
+      font-weight: 800;
+      letter-spacing: -0.3px;
+    }
+
+    .mini-sub {
+      margin-top: 5px;
+      color: var(--muted-2);
+      font-size: 10px;
+      min-height: 13px;
+    }
+
+    .panel {
+      margin-top: 18px;
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+
+    .panel-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 17px 18px;
+      border-bottom: 1px solid rgba(255,255,255,0.065);
+    }
+
+    .panel-title {
+      font-size: 14px;
+      font-weight: 800;
+    }
+
+    .panel-sub {
+      margin-top: 4px;
+      color: var(--muted);
+      font-size: 11px;
+    }
+
+    .chart-frame {
+      display: block;
+      width: 100%;
+      height: 520px;
+      border: 0;
+      background: #090b14;
+    }
+
+    .tabs {
+      display: inline-flex;
+      padding: 4px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: rgba(0,0,0,0.18);
+    }
+
+    .tab-button {
+      border: 0;
+      border-radius: 9px;
+      padding: 8px 12px;
+      background: transparent;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 750;
+      cursor: pointer;
+    }
+
+    .tab-button.active {
+      background: rgba(139,92,246,0.18);
+      color: #f2edff;
+      box-shadow: inset 0 0 0 1px rgba(196,181,253,0.18);
+    }
+
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+
+    .network-wrap {
+      position: relative;
+      padding: 10px 14px 16px;
+    }
+
+    #networkSvg {
+      width: 100%;
+      height: auto;
+      display: block;
+      border-radius: 16px;
+      background:
+        linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px);
+      background-size: 42px 42px;
+      background-position: center center;
+    }
+
+    .network-note {
+      padding: 0 18px 17px;
+      color: var(--muted-2);
+      font-size: 10px;
+    }
+
+    .tooltip {
+      position: fixed;
+      z-index: 50;
+      display: none;
+      width: 250px;
+      padding: 11px 12px;
+      border-radius: 13px;
+      border: 1px solid rgba(196,181,253,0.28);
+      background: rgba(4,6,13,0.94);
+      box-shadow: 0 16px 44px rgba(0,0,0,0.36);
+      pointer-events: none;
+      font-size: 11px;
+    }
+
+    .tooltip strong { font-size: 12px; }
+
+    .tooltip-grid {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 6px 12px;
+      margin-top: 8px;
+      color: var(--muted);
+    }
+
+    .tooltip-grid span:nth-child(even) { color: #f3efff; }
+
+    .table-tools {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 14px 16px;
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+    }
+
+    .search {
+      width: min(320px, 100%);
+      height: 39px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      outline: none;
+      background: rgba(0,0,0,0.20);
+      color: #fff;
+      padding: 0 13px;
+    }
+
+    .search:focus {
+      border-color: rgba(196,181,253,0.42);
+      box-shadow: 0 0 0 4px rgba(139,92,246,0.08);
+    }
+
+    .table-count {
+      color: var(--muted);
+      font-size: 11px;
+      min-width: max-content;
+    }
+
+    .table-scroll {
+      max-height: 600px;
+      overflow: auto;
+    }
+
+    table {
+      width: 100%;
+      min-width: 760px;
+      border-collapse: collapse;
+      font-size: 12px;
+    }
+
+    th, td {
+      padding: 13px 14px;
+      text-align: left;
+      white-space: nowrap;
+    }
+
+    thead th {
+      position: sticky;
+      top: 0;
+      z-index: 2;
+      background: rgba(9,12,24,0.97);
+      color: #cfc5ea;
+      border-bottom: 1px solid rgba(255,255,255,0.075);
+      font-size: 10px;
+      letter-spacing: .5px;
+      text-transform: uppercase;
+    }
+
+    tbody tr {
+      border-top: 1px solid rgba(255,255,255,0.05);
+      cursor: pointer;
+      transition: background .16s ease;
+    }
+
+    tbody tr:hover { background: rgba(255,255,255,0.035); }
+
+    .pair-name {
+      font-weight: 800;
+      color: #f8f6ff;
+    }
+
+    .pair-sub {
+      display: block;
+      margin-top: 3px;
+      color: var(--muted-2);
+      font-size: 9px;
+      font-weight: 500;
+    }
+
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      border-radius: 999px;
+      padding: 5px 8px;
+      font-size: 9px;
+      font-weight: 800;
+      border: 1px solid transparent;
+    }
+
+    .status-badge.live {
+      color: #9ff3d0;
+      background: rgba(52,211,153,0.09);
+      border-color: rgba(52,211,153,0.16);
+    }
+
+    .status-badge.stale {
+      color: #fde68a;
+      background: rgba(251,191,36,0.09);
+      border-color: rgba(251,191,36,0.16);
+    }
+
+    .status-badge.off {
+      color: #b2adc2;
+      background: rgba(255,255,255,0.045);
+      border-color: rgba(255,255,255,0.07);
+    }
+
+    .external {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 29px;
+      height: 29px;
+      border-radius: 9px;
+      border: 1px solid var(--border);
+      color: var(--purple-soft);
+      background: rgba(139,92,246,0.08);
+    }
+
+    dialog {
+      width: min(520px, calc(100% - 28px));
+      border: 1px solid rgba(196,181,253,0.22);
+      border-radius: 20px;
+      background: #0a0e1b;
+      color: #fff;
+      padding: 0;
+      box-shadow: 0 30px 90px rgba(0,0,0,0.58);
+    }
+
+    dialog::backdrop {
+      background: rgba(0,0,0,0.72);
+      backdrop-filter: blur(5px);
+    }
+
+    .dialog-head {
+      padding: 18px;
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 15px;
+      border-bottom: 1px solid rgba(255,255,255,0.07);
+    }
+
+    .dialog-title { font-size: 18px; font-weight: 850; }
+    .dialog-sub { margin-top: 4px; color: var(--muted); font-size: 11px; }
+
+    .dialog-close {
+      width: 34px;
+      height: 34px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: rgba(255,255,255,0.04);
+      color: #fff;
+      cursor: pointer;
+    }
+
+    .dialog-body { padding: 18px; }
+
+    .detail-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 11px;
+    }
+
+    .detail-item {
+      padding: 12px;
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,0.07);
+      background: rgba(255,255,255,0.035);
+    }
+
+    .detail-label { color: var(--muted); font-size: 10px; }
+    .detail-value { margin-top: 6px; font-size: 15px; font-weight: 800; }
+
+    .address-box {
+      margin-top: 12px;
+      padding: 12px;
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,0.07);
+      background: rgba(0,0,0,0.18);
+      color: #bdb7ce;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: 10px;
+      line-height: 1.45;
+      word-break: break-all;
+    }
+
+    .dialog-links {
+      display: flex;
+      gap: 9px;
+      flex-wrap: wrap;
+      margin-top: 14px;
+    }
+
+    .footer {
+      padding-top: 22px;
+      color: var(--muted-2);
+      font-size: 10px;
+      text-align: center;
+      line-height: 1.6;
+    }
+
+    @media (max-width: 980px) {
+      .main-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .mini-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+
+    @media (max-width: 760px) {
+      .container { width: min(100% - 22px, 1160px); }
+
+      .nav {
+        padding: 12px 0;
+        min-height: auto;
+        align-items: flex-start;
+      }
+
+      .nav-links {
+        gap: 6px;
+        justify-content: flex-end;
+      }
+
+      .pill {
+        min-height: 34px;
+        padding: 8px 10px;
+        font-size: 11px;
+      }
+
+      .hero {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+
+      .status-wrap {
+        justify-content: flex-start;
+        min-width: 0;
+      }
+
+      .status-line { text-align: left; }
+
+      .chart-frame { height: 440px; }
+
+      .panel-head {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+
+      .table-tools {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+    }
+
+    @media (max-width: 560px) {
+      main { padding-top: 25px; }
+
+      .brand-sub { display: none; }
+
+      .nav {
+        flex-direction: column;
+      }
+
+      .nav-links {
+        width: 100%;
+        justify-content: flex-start;
+      }
+
+      .main-grid { grid-template-columns: 1fr; }
+
+      .metric-card { min-height: 137px; }
+
+      .mini-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+
+      .mini-value { font-size: 15px; }
+
+      .chart-frame { height: 390px; }
+
+      .detail-grid { grid-template-columns: 1fr; }
+
+      .tabs { width: 100%; }
+      .tab-button { flex: 1; }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="orb one"></div>
+  <div class="orb two"></div>
+
+  <header class="topbar">
+    <div class="container nav">
+      <a class="brand" href="https://ArbStrategy.net" target="_blank" rel="noopener noreferrer">
+        <img src="assets/logo.png" alt="ASTY Logo" class="brand-logo"
+             onerror="this.style.display='none'">
+        <div>
+          <div class="brand-title">$ASTY</div>
+          <div class="brand-sub">ArbStrategy</div>
+        </div>
+      </a>
+
+      <nav class="nav-links">
+        <a class="pill" href="https://ArbStrategy.net" target="_blank" rel="noopener noreferrer">Website</a>
+        <a class="pill" href="https://arbstrategy-asty.github.io/ArbStrategy-ASTY/" target="_blank" rel="noopener noreferrer">System</a>
+        <a class="pill" href="https://t.me/ArbStrategyASTY" target="_blank" rel="noopener noreferrer">Telegram</a>
+        <a class="pill cyan" href="https://birdeye.so/solana/token/ASTYqeaoK83Zs1pTFEXZUB6BM8cG8YLTsN852NUkt7ZR" target="_blank" rel="noopener noreferrer">BirdEye</a>
+        <a class="pill primary" id="buyLink" href="https://dexscreener.com/solana" target="_blank" rel="noopener noreferrer">Buy</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container">
+    <section class="hero">
+      <div>
+        <div class="eyebrow">ArbStrategy on Solana</div>
+        <h1>ASTY Live Dashboard</h1>
+        <p class="hero-copy">
+          A clean live view of the ASTY system using the full configured pool register,
+          GeckoTerminal market data and on-chain Solana supply.
+        </p>
+      </div>
+
+      <div class="status-wrap">
+        <div class="status-line">
+          <span class="status-dot" id="statusDot"></span>
+          <span id="statusText">Loading live data…</span>
+        </div>
+        <button class="icon-button" id="refreshButton" type="button" aria-label="Refresh dashboard">↻</button>
+      </div>
+    </section>
+
+    <section class="main-grid" aria-label="Main metrics">
+      <article class="metric-card">
+        <div class="metric-label">ASTY Price</div>
+        <div class="metric-value live-color" id="priceValue">—</div>
+        <div class="metric-sub" id="priceSub">Building a liquidity-weighted reference price…</div>
+      </article>
+
+      <article class="metric-card">
+        <div class="metric-label">Total Liquidity</div>
+        <div class="metric-value live-color" id="liquidityValue">—</div>
+        <div class="metric-sub" id="liquiditySub">Across all loaded ASTY pools</div>
+      </article>
+
+      <article class="metric-card">
+        <div class="metric-label">24h Volume</div>
+        <div class="metric-value" id="volumeValue">—</div>
+        <div class="metric-sub">Full reported trading volume, not divided by two</div>
+      </article>
+
+      <article class="metric-card">
+        <div class="metric-label">System Output 24h</div>
+        <div class="metric-value" id="feesValue">—</div>
+        <div class="metric-sub" id="feesSub">Estimated from each pool’s configured fee rate</div>
+      </article>
+    </section>
+
+    <section class="mini-grid" aria-label="Supply metrics">
+      <article class="mini-card">
+        <div class="mini-label">Market Cap</div>
+        <div class="mini-value" id="marketCapValue">—</div>
+        <div class="mini-sub">Current supply × reference price</div>
+      </article>
+
+      <article class="mini-card">
+        <div class="mini-label">Current Supply</div>
+        <div class="mini-value" id="supplyValue">—</div>
+        <div class="mini-sub">Read directly from Solana</div>
+      </article>
+
+      <article class="mini-card">
+        <div class="mini-label">Burned Tokens</div>
+        <div class="mini-value" id="burnedValue">—</div>
+        <div class="mini-sub" id="burnedUsdSub">Burn value: —</div>
+      </article>
+
+      <article class="mini-card">
+        <div class="mini-label">Burn %</div>
+        <div class="mini-value live-color" id="burnPercentValue">—</div>
+        <div class="mini-sub">From the original 10,000,000 ASTY</div>
+      </article>
+    </section>
+
+    <section class="panel">
+      <div class="panel-head">
+        <div>
+          <div class="panel-title">ASTY Price Chart</div>
+          <div class="panel-sub">Interactive market chart provided by BirdEye</div>
+        </div>
+        <a class="pill" href="https://birdeye.so/solana/token/ASTYqeaoK83Zs1pTFEXZUB6BM8cG8YLTsN852NUkt7ZR" target="_blank" rel="noopener noreferrer">Open full chart ↗</a>
+      </div>
+
+      <iframe
+        class="chart-frame"
+        src="https://embed.birdeye.so/tv-widget/ASTYqeaoK83Zs1pTFEXZUB6BM8cG8YLTsN852NUkt7ZR?chain=solana&viewMode=pair&chartInterval=240&chartType=Line&chartTimezone=Europe%2FBerlin&chartLeftToolbar=hide&theme=dark"
+        frameborder="0"
+        allowfullscreen
+        loading="lazy">
+      </iframe>
+    </section>
+
+    <section class="panel">
+      <div class="panel-head">
+        <div>
+          <div class="panel-title">ASTY Liquidity</div>
+          <div class="panel-sub">Overview first, full pool details only when needed</div>
+        </div>
+
+        <div class="tabs" role="tablist" aria-label="Liquidity view">
+          <button class="tab-button active" id="networkTab" type="button" role="tab" aria-selected="true">Network</button>
+          <button class="tab-button" id="listTab" type="button" role="tab" aria-selected="false">Pool List</button>
+        </div>
+      </div>
+
+      <div class="tab-panel active" id="networkPanel" role="tabpanel">
+        <div class="network-wrap">
+          <svg id="networkSvg" viewBox="0 0 760 430" aria-label="ASTY liquidity network"></svg>
+          <div class="tooltip" id="networkTooltip"></div>
+        </div>
+        <div class="network-note">
+          The network shows the largest markets individually and groups smaller markets into “Other” to keep the view readable.
+        </div>
+      </div>
+
+      <div class="tab-panel" id="listPanel" role="tabpanel">
+        <div class="table-tools">
+          <input class="search" id="poolSearch" type="search" placeholder="Search pool or token…" autocomplete="off">
+          <div class="table-count" id="tableCount">—</div>
+        </div>
+
+        <div class="table-scroll">
+          <table>
+            <thead>
+              <tr>
+                <th>Pool</th>
+                <th>Liquidity</th>
+                <th>24h Volume</th>
+                <th>Fees 24h</th>
+                <th>Status</th>
+                <th>Link</th>
+              </tr>
+            </thead>
+            <tbody id="poolTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <div class="footer">
+      Pool data: GeckoTerminal · Supply data: Solana RPC · Chart: BirdEye<br>
+      Live values are informational and may differ slightly across providers.
+    </div>
+  </main>
+
+  <dialog id="poolDialog">
+    <div class="dialog-head">
+      <div>
+        <div class="dialog-title" id="dialogTitle">Pool Details</div>
+        <div class="dialog-sub" id="dialogSub">—</div>
+      </div>
+      <button class="dialog-close" id="dialogClose" type="button" aria-label="Close">✕</button>
+    </div>
+
+    <div class="dialog-body">
+      <div class="detail-grid" id="dialogGrid"></div>
+      <div class="address-box" id="dialogAddress"></div>
+      <div class="dialog-links" id="dialogLinks"></div>
+    </div>
+  </dialog>
+
+  <script>
+    const ASTY_MINT = "ASTYqeaoK83Zs1pTFEXZUB6BM8cG8YLTsN852NUkt7ZR";
+    const INITIAL_SUPPLY = 10_000_000;
+    const PRESALE_PRICE = 0.0025;
+    const CHUNK_SIZE = 25;
+    const REFRESH_MS = 60_000;
+    const CACHE_KEY = "asty-live-dashboard-v1";
+
+    // [pool address, display label, configured pool fee in percent]
+    const POOLS = [
+      ["3UvhqPrMyf13qgRodARDi5oGJGoxHYb2ykZdCaa1TV8i","ASTY/$WIF",1],
+      ["HeuivHLqCEmsgKhYhX1M6MGthEbtHrGmZdXQSCBVkstP","ASTY/ALCH",1],
+      ["CSD1NpGwhnohByefBp73Jyk6u6ZCkwwDFDVqvmkDrfxE","ASTY/ARBX",1],
+      ["DxMFG4kn8pxuf7AoKD1ffXjUhPpj4a8WAdgw87gyM2mj","ASTY/ARBX",0.3],
+      ["CoD6KLgnW2wKe2UtnNjSQk4RSS6fMU4P2vwKqsUxK9Bf","ASTY/Bonk",1],
+      ["7T6HixJyUfzSR88dhWC9tAjasXcdFyDrKmDtuzrXgt9j","ASTY/ETH",1],
+      ["B6fq1uNpMkyGANAQo5D9GJfMCkcaNewc6q8sWZAfWZ4M","ASTY/Fartcoin",1],
+      ["8aXv2DDRG3k5N3ADTw37Di4ytHGJ3ZaS2tPp1f2EW5ZD","ASTY/GEOD",1],
+      ["CRGcFA8f577F2BEZSmgohd4cuBTVsBpLjwqfVHrG8krE","ASTY/BOME",1],
+      ["3UapB8rB3T88Kac7CG3F44SKCa5xSBsKaJndbx8YrxWG","ASTY/RTM",1],
+      ["92RKFRJSctMAuw8Tym7cZgd2yjMcHeZ5hDUMdnZd54zV","ASTY/Grandma",1],
+      ["Gec7ENkk9irtsmmwpwLHk1i4VntB4vFGRAe1ET3LeT3J","ASTY/JTO",1],
+      ["iZXTZMMS51US5erGnviWfc8CNGx5QDDzp6DERH25EtW","ASTY/JUP",1],
+      ["29eKi5ipMR9fLgkYpM91Xrab2LVBnUU75SYG8kCt1nis","ASTY/MET",1],
+      ["CSiAzSiCMNGjLwYKRdhDUjNwz4obf3Q5ZnMQECnmxshV","ASTY/PENGU",1],
+      ["2uNbRDLDeMizdJNEqKaapzAGJWVwa3uuJ3w4trVud4ZW","ASTY/pippin",1],
+      ["GyVyv2H2SB4fYaC7C6raWNSQqNhShdzNuSqQwG9uUUcE","ASTY/POPCAT",1],
+      ["RYztJXyPCmwUmfi7punwCf7q6FbxoJbRtBEodZ7j7GH","ASTY/PsyopAnime",1],
+      ["DfJsn7Ui6YBUC25kM5FoqrCYrqfRVCoSxpTeyEzWv4vT","ASTY/RAY",1],
+      ["2ufiEWc5wF8gJB1a9YiPkFuLwrFn4Zgyma1kdQRakoAr","ASTY/SOL",0.25],
+      ["7tbbdGzFZpjrPmM7jQderyyv1x8Ebz1vhwqNhEW97osb","ASTY/SOL",1],
+      ["HAieGroddWr3NZpSZYqqm39w2aTUuknWNXxfF6vWNpaR","ASTY/SOL",0.3],
+      ["BBVxTUtaagQgG5AgmNSYS9Pqwidc7yAbRF6avt48iF2u","ASTY/TAX",1],
+      ["CFcyQpye4K4pyhVPoSAgj3BAqNoWpZCvHpNncXssy7qH","ASTY/TAX",1],
+      ["tDqqTi8tJds88AkxFvhjZTQK5iDtV5ZG9ZkNYxh23MG","ASTY/UNI",1],
+      ["3HhGsPNMtSg1dNV9SVSfzGCQLx3Zp5giAvYJdQuuNqU9","ASTY/USDC",0.3],
+      ["5zCsWjFoEQ7jGNaHNwBRvZq7RMqVh6vQhmiYv4NWkDZK","ASTY/USDC",1],
+      ["BqdoyTYoXpnAzRafoBQPrY4ubVSzYE42rxJzNJwoxmZP","ASTY/USDC",0.25],
+      ["BWFDr72tjXJsRdUyAfqghv6sGXgQr2zJ78KdeV3c74q1","ASTY/USDC",2],
+      ["2Hjjn2aoVdUeGraV4vRak94GGAAW5w9syfVBeXU4Ad5J","ASTY/WBTC",1],
+      ["7Fr58kHKW85XiFgZ8WibumE7P5CLZFo4A8qsQxKNEWaE","ASTY/WhiteWhale",1],
+      ["4TgvcTKzq9zZR5znyak2y3tvaXg4q6hvKWEZgxesQqkx","ASTY/WLFI",1],
+      ["5wpSZwUmdXy5kB96n7U24iFzvbSNEvFd4BvERhhqYjQY","ASTY/WOJAK",1],
+      ["2aWCx2qrYmjen1N8UW3eLBzNu7fCPqxjL9NKXqHGXPHc","ASTY/ZBCN",1],
+      ["2WRrdtnKKr2eq67o4ZK2VQv7dXu4Pm8iz6TMN8UXvhbV","ASTY/SOL",2],
+      ["4iHVvcWHNYFDPFySosAx1qGZoFsDN7gXHxKqUFnGq6oJ","ASTY/BAT",1],
+      ["4kWT67c13svR9EfxM4TGn8inNqFsXeuAWQhn8KBVajBs","ASTY/ACC",1],
+      ["5fEodJwZNUTwXbiTRKU2KPCc4Xr15fPKVmxbAph7yX7v","ASTY/BTAX",1],
+      ["61HTuoKeWhEfscoBcd5zSNvmAyGpxdaUNMriLNnyyREz","ASTY/USDC",6],
+      ["8fBYS2Kq9f4Lm1SYdt4sdHRL27Ni8UcRMPtFNLdEcnAH","ASTY/Cake",1],
+      ["DdK87cRD7uzoUWc9JZNRNxPoLHXeAcGkfU2b49YTZrm3","ASTY/AVA",1],
+      ["DwZZHyqnzWEqNP4VuczHHwfJsni6xqo57TBm7SoeJ62u","ASTY/RENDER",1],
+      ["HvmNZyopYSwHRUXCUti4D6YANpfWscVLSQVv9nw2XYhx","ASTY/TURBO",1],
+      ["m1e9swvUoggDm2zLXzrzKRrbVwmGEP8aQy7BQigFZgK","ASTY/SOL",0.25],
+      ["3PVPMEseLJxE6yyB5eBJ3qzRCzCGN6L9qa85stcZH4FM","ASTY/testicle",1],
+      ["BM9W33kccA1GCdbkuGoNDvJLTQW5xKbKwXht8sCXayc3","ASTY/Buttcoin",1],
+      ["AiazXNe6ShtCbQHZbmpnkuuswVHFKh5rLZKeudzWU3aq","ASTY/BP",1],
+      ["DitqC25rriaMeZyiQPeXLNgfxqRTZL2qxFHp3MHrxM6t","ASTY/Punch",1],
+      ["mwsmVXehTt2aFonhJDyZWbwgpxDVM9MMfo7GUYrYL7K","ASTY/Restart",1],
+      ["EybMABxhsZ9MajRseP1X3c3v38U1P88YpvweFsGvgPSS","ASTY/INCOME",1],
+      ["AwmLBQ3keEicdD93gTr22avcJqsXwDTGMaLt25Jvyexo","ASTY/ORCA",1],
+      ["4UPuDZPPkrC5YHdpFnfv4RX7dfHYnjz8BYZaTCewSn5v","ASTY/MOODENG",1],
+      ["9dvPJ67AEzZZD9ThHAEJzkzVwxiVQrvC2Virv8KyGgZb","ASTY/SEARCH",1],
+      ["Dz8AuKtEJLrVeuAvhBg4gbTkBeNqC89wfLt3fJKZKk8v","ASTY/USD",4],
+      ["28yNWBwCvNLaC8h2Lf8AFcZqzfRpKMQMynwjjMibRwRU","ASTY/HYPE",1],
+      ["7wCaiBEGFHPhB5iDTCERsNXbzsc7bZyamqQsHNxuhdYU","ASTY/SATO",1],
+      ["Ax38rDrpRMturM59zKBEGsNn2HjE96rC9Jz3WbAgXtYw","ASTY/SIMPLR",1],
+      ["444uxc7K8jDZhtRUiuDAM822Pe93RYkHytzWuLKNyxVs","ASTY/TAO",1],
+      ["EDrT8LWDRuYE7v75Dkc9gUjLk7MvDYdezvDcnoHGqwuq","ASTY/TROLL",1],
+      ["39dM3NfQuPiGwC3M93BUsXKrRdXTAZWPX6VxianCSevn","ASTY/GREM",1],
+      ["ArKpj5vcNtHJTLhUKeADCmvuBpn1ZZoGNHZZYQ1QXq5n","ASTY/CUPSEY",1],
+      ["DGuvY79xbLuJRb3CzwQL59z5zoit7KLnFwyL2t6EQCcj","ASTY/SERIOUS",1]
+    ];
+
+    const RPC_ENDPOINTS = [
+      "https://api.mainnet-beta.solana.com",
+      "https://solana-rpc.publicnode.com"
+    ];
+
+    const state = {
+      rows: [],
+      supply: null,
+      summary: null,
+      updatedAt: null,
+      refreshing: false
+    };
+
+    const el = id => document.getElementById(id);
+
+    function chunkArray(arr, size) {
+      const chunks = [];
+      for (let i = 0; i < arr.length; i += size) chunks.push(arr.slice(i, i + size));
+      return chunks;
+    }
+
+    function safeNumber(value) {
+      const n = Number(value);
+      return Number.isFinite(n) ? n : null;
+    }
+
+    function escapeHtml(value) {
+      return String(value ?? "")
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+    }
+
+    function fmtUsd(value, compact = false) {
+      if (!Number.isFinite(value)) return "—";
+      const abs = Math.abs(value);
+
+      if (compact && abs >= 1e9) return "$" + (value / 1e9).toFixed(2) + "B";
+      if (compact && abs >= 1e6) return "$" + (value / 1e6).toFixed(2) + "M";
+      if (compact && abs >= 1e3) return "$" + (value / 1e3).toFixed(2) + "K";
+
+      return "$" + value.toLocaleString("en-US", {
+        minimumFractionDigits: abs < 100 ? 2 : 0,
+        maximumFractionDigits: abs < 100 ? 2 : 0
+      });
+    }
+
+    function fmtPrice(value) {
+      if (!Number.isFinite(value)) return "—";
+      const decimals = value < 0.01 ? 8 : value < 1 ? 6 : 4;
+      return "$" + value.toLocaleString("en-US", {
+        minimumFractionDigits: 0,
+        maximumFractionDigits: decimals
+      });
+    }
+
+    function fmtNumber(value, decimals = 0) {
+      if (!Number.isFinite(value)) return "—";
+      return value.toLocaleString("en-US", {
+        minimumFractionDigits: decimals,
+        maximumFractionDigits: decimals
+      });
+    }
+
+    function fmtPercent(value) {
+      if (!Number.isFinite(value)) return "—";
+      return `${value > 0 ? "+" : ""}${value.toFixed(2)}%`;
+    }
+
+    function feeLabel(value) {
+      return Number(value).toFixed(2).replace(/\.00$/, "") + "%";
+    }
+
+    function titleCase(value) {
+      return String(value || "Unknown")
+        .replaceAll("-", " ")
+        .replace(/\b\w/g, char => char.toUpperCase());
+    }
+
+    function mintFromRelationship(rel) {
+      const id = rel?.data?.id || "";
+      const prefix = "solana_";
+      return id.startsWith(prefix) ? id.slice(prefix.length) : id;
+    }
+
+    function tokenSymbolMapFromIncluded(included = []) {
+      const map = new Map();
+      for (const item of included) {
+        const id = item?.id || "";
+        const mint = id.startsWith("solana_") ? id.slice(7) : id;
+        const symbol = item?.attributes?.symbol;
+        if (mint && symbol) map.set(mint, symbol);
+      }
+      return map;
+    }
+
+    function median(values) {
+      if (!values.length) return null;
+      const sorted = [...values].sort((a, b) => a - b);
+      const middle = Math.floor(sorted.length / 2);
+      return sorted.length % 2
+        ? sorted[middle]
+        : (sorted[middle - 1] + sorted[middle]) / 2;
+    }
+
+    function bigintAmountToNumber(amountString, decimals) {
+      const raw = BigInt(amountString);
+      const factor = 10n ** BigInt(decimals);
+      const whole = raw / factor;
+      const fraction = raw % factor;
+      return Number(whole) + Number(fraction) / (10 ** decimals);
+    }
+
+    async function fetchJson(url, options = {}, timeoutMs = 12_000) {
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), timeoutMs);
+
+      try {
+        const response = await fetch(url, {
+          ...options,
+          signal: controller.signal
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}`);
+        }
+
+        return await response.json();
+      } finally {
+        clearTimeout(timer);
+      }
+    }
+
+    async function fetchJsonWithRetry(url, options = {}, retries = 1) {
+      let lastError;
+
+      for (let attempt = 0; attempt <= retries; attempt++) {
+        try {
+          return await fetchJson(url, options);
+        } catch (error) {
+          lastError = error;
+          if (attempt < retries) {
+            await new Promise(resolve => setTimeout(resolve, 700 * (attempt + 1)));
+          }
+        }
+      }
+
+      throw lastError;
+    }
+
+    async function fetchGeckoChunk(chunk) {
+      const ids = chunk.map(([id]) => id);
+      const encodedIds = encodeURIComponent(ids.join(","));
+      const url =
+        `https://api.geckoterminal.com/api/v2/networks/solana/pools/multi/${encodedIds}` +
+        `?include=base_token,quote_token&include_volume_breakdown=false&include_composition=false`;
+
+      const payload = await fetchJsonWithRetry(url, {
+        headers: {
+          Accept: "application/json;version=20230203"
+        },
+        cache: "no-store"
+      }, 1);
+
+      return {
+        requestedIds: ids,
+        data: Array.isArray(payload?.data) ? payload.data : [],
+        included: Array.isArray(payload?.included) ? payload.included : []
+      };
+    }
+
+    function parseGeckoRow(config, item, tokenSymbols, stale = false) {
+      const [id, configuredLabel, feePercent] = config;
+      const attrs = item?.attributes || {};
+      const relationships = item?.relationships || {};
+
+      const baseMint = mintFromRelationship(relationships.base_token);
+      const quoteMint = mintFromRelationship(relationships.quote_token);
+      const basePrice = safeNumber(attrs.base_token_price_usd);
+      const quotePrice = safeNumber(attrs.quote_token_price_usd);
+
+      const astyIsBase = baseMint === ASTY_MINT;
+      const astyIsQuote = quoteMint === ASTY_MINT;
+      const counterMint = astyIsBase ? quoteMint : astyIsQuote ? baseMint : null;
+
+      const configuredMarket = configuredLabel.split("/").slice(1).join("/") || "Unknown";
+      const liveMarket = counterMint ? tokenSymbols.get(counterMint) : null;
+      const marketLabel = liveMarket || configuredMarket;
+      const displayLabel = `ASTY / ${marketLabel}`;
+
+      const liquidity = safeNumber(attrs.reserve_in_usd) ?? 0;
+      const volume1h = safeNumber(attrs.volume_usd?.h1) ?? 0;
+      const volume24h = safeNumber(attrs.volume_usd?.h24) ?? 0;
+      const astyPrice = astyIsBase ? basePrice : astyIsQuote ? quotePrice : null;
+
+      // GeckoTerminal pool percentage changes are safest for ASTY when ASTY is base.
+      const priceChange24h =
+        astyIsBase ? safeNumber(attrs.price_change_percentage?.h24) : null;
+
+      const dexId =
+        relationships.dex?.data?.id ||
+        attrs.dex_name ||
+        "Unknown";
+
+      const status =
+        stale ? "stale" :
+        liquidity > 0 ? "live" :
+        "inactive";
+
+      return {
+        id,
+        configuredLabel,
+        displayLabel,
+        marketLabel,
+        marketKey: counterMint || marketLabel.toUpperCase(),
+        counterMint,
+        feePercent,
+        feeRate: feePercent / 100,
+        dexId,
+        dexLabel: titleCase(dexId),
+        baseMint,
+        quoteMint,
+        astyIsBase,
+        astyIsQuote,
+        liquidity,
+        volume1h,
+        volume24h,
+        fees1h: volume1h * (feePercent / 100),
+        fees24h: volume24h * (feePercent / 100),
+        astyPrice,
+        priceChange24h,
+        status,
+        stale,
+        geckoUrl: `https://www.geckoterminal.com/solana/pools/${id}`,
+        dexScreenerUrl: `https://dexscreener.com/solana/${id}`,
+        solscanUrl: `https://solscan.io/account/${id}`
+      };
+    }
+
+    function unavailableRow(config) {
+      const [id, configuredLabel, feePercent] = config;
+      const marketLabel = configuredLabel.split("/").slice(1).join("/") || "Unknown";
+
+      return {
+        id,
+        configuredLabel,
+        displayLabel: configuredLabel.replace("/", " / "),
+        marketLabel,
+        marketKey: marketLabel.toUpperCase(),
+        counterMint: null,
+        feePercent,
+        feeRate: feePercent / 100,
+        dexId: null,
+        dexLabel: "—",
+        baseMint: null,
+        quoteMint: null,
+        astyIsBase: false,
+        astyIsQuote: false,
+        liquidity: null,
+        volume1h: null,
+        volume24h: null,
+        fees1h: null,
+        fees24h: null,
+        astyPrice: null,
+        priceChange24h: null,
+        status: "unavailable",
+        stale: false,
+        geckoUrl: `https://www.geckoterminal.com/solana/pools/${id}`,
+        dexScreenerUrl: `https://dexscreener.com/solana/${id}`,
+        solscanUrl: `https://solscan.io/account/${id}`
+      };
+    }
+
+    async function loadPools() {
+      const chunks = chunkArray(POOLS, CHUNK_SIZE);
+      const settled = await Promise.allSettled(chunks.map(fetchGeckoChunk));
+
+      const successfulIds = new Set();
+      const itemMap = new Map();
+      const tokenSymbols = new Map();
+      let fulfilledChunks = 0;
+
+      for (const result of settled) {
+        if (result.status !== "fulfilled") continue;
+
+        fulfilledChunks++;
+        const payload = result.value;
+
+        for (const id of payload.requestedIds) successfulIds.add(id);
+
+        for (const item of payload.data) {
+          const address = item?.attributes?.address;
+          if (address) itemMap.set(address, item);
+        }
+
+        for (const [mint, symbol] of tokenSymbolMapFromIncluded(payload.included)) {
+          tokenSymbols.set(mint, symbol);
+        }
+      }
+
+      if (fulfilledChunks === 0) {
+        throw new Error("All GeckoTerminal requests failed");
+      }
+
+      const previousMap = new Map(state.rows.map(row => [row.id, row]));
+
+      return POOLS.map(config => {
+        const id = config[0];
+        const item = itemMap.get(id);
+
+        if (item) {
+          return parseGeckoRow(config, item, tokenSymbols, false);
+        }
+
+        // If an entire request chunk failed, retain the last successful value.
+        if (!successfulIds.has(id) && previousMap.has(id)) {
+          return {
+            ...previousMap.get(id),
+            stale: true,
+            status: "stale"
+          };
+        }
+
+        return unavailableRow(config);
+      });
+    }
+
+    async function loadSupply() {
+      let lastError;
+
+      for (const endpoint of RPC_ENDPOINTS) {
+        try {
+          const payload = await fetchJsonWithRetry(endpoint, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              jsonrpc: "2.0",
+              id: 1,
+              method: "getTokenSupply",
+              params: [ASTY_MINT, { commitment: "confirmed" }]
+            }),
+            cache: "no-store"
+          }, 0);
+
+          const value = payload?.result?.value;
+          if (!value?.amount || !Number.isInteger(value?.decimals)) {
+            throw new Error("Unexpected RPC response");
+          }
+
+          return {
+            currentSupply: bigintAmountToNumber(value.amount, value.decimals),
+            decimals: value.decimals
+          };
+        } catch (error) {
+          lastError = error;
+        }
+      }
+
+      throw lastError || new Error("Supply unavailable");
+    }
+
+    function buildReferencePrice(rows) {
+      const priced = rows.filter(row =>
+        Number.isFinite(row.astyPrice) &&
+        row.astyPrice > 0 &&
+        Number.isFinite(row.liquidity) &&
+        row.liquidity > 0
+      );
+
+      if (!priced.length) {
+        return {
+          price: null,
+          change24h: null,
+          usedPools: 0,
+          usedLiquidity: 0
+        };
+      }
+
+      let candidates = priced.filter(row => row.liquidity >= 100);
+      if (candidates.length < 3) candidates = priced;
+
+      const med = median(candidates.map(row => row.astyPrice));
+      const filtered = med
+        ? candidates.filter(row => Math.abs(row.astyPrice / med - 1) <= 0.15)
+        : candidates;
+
+      const used = filtered.length >= 3 ? filtered : candidates;
+      const weight = used.reduce((sum, row) => sum + row.liquidity, 0);
+      const price = weight > 0
+        ? used.reduce((sum, row) => sum + row.astyPrice * row.liquidity, 0) / weight
+        : null;
+
+      const changeRows = used.filter(row => Number.isFinite(row.priceChange24h));
+      const changeWeight = changeRows.reduce((sum, row) => sum + row.liquidity, 0);
+      const change24h = changeWeight > 0
+        ? changeRows.reduce((sum, row) => sum + row.priceChange24h * row.liquidity, 0) / changeWeight
+        : null;
+
+      return {
+        price,
+        change24h,
+        usedPools: used.length,
+        usedLiquidity: weight
+      };
+    }
+
+    function aggregateMarkets(rows) {
+      const map = new Map();
+
+      for (const row of rows) {
+        if (!Number.isFinite(row.liquidity) || row.liquidity <= 0) continue;
+
+        const key = row.marketKey;
+        const existing = map.get(key);
+
+        if (existing) {
+          existing.liquidity += row.liquidity;
+          existing.volume24h += row.volume24h || 0;
+          existing.fees24h += row.fees24h || 0;
+          existing.pools += 1;
+          existing.dexes.add(row.dexLabel);
+
+          if (row.liquidity > existing.topLiquidity) {
+            existing.topLiquidity = row.liquidity;
+            existing.topPool = row;
+          }
+        } else {
+          map.set(key, {
+            key,
+            label: row.marketLabel,
+            liquidity: row.liquidity,
+            volume24h: row.volume24h || 0,
+            fees24h: row.fees24h || 0,
+            pools: 1,
+            dexes: new Set([row.dexLabel]),
+            topLiquidity: row.liquidity,
+            topPool: row
+          });
+        }
+      }
+
+      return Array.from(map.values())
+        .map(item => ({
+          ...item,
+          dexes: Array.from(item.dexes).filter(Boolean)
+        }))
+        .sort((a, b) => b.liquidity - a.liquidity);
+    }
+
+    function calculateSummary(rows, supply) {
+      const loadedRows = rows.filter(row => row.status !== "unavailable");
+      const liveRows = loadedRows.filter(row => Number.isFinite(row.liquidity) && row.liquidity > 0);
+      const unavailableRows = rows.filter(row => row.status === "unavailable");
+      const staleRows = rows.filter(row => row.status === "stale");
+
+      const liquidity = liveRows.reduce((sum, row) => sum + row.liquidity, 0);
+      const volume24h = liveRows.reduce((sum, row) => sum + (row.volume24h || 0), 0);
+      const fees24h = liveRows.reduce((sum, row) => sum + (row.fees24h || 0), 0);
+      const markets = aggregateMarkets(liveRows);
+      const reference = buildReferencePrice(liveRows);
+      const topFeePool = [...liveRows].sort((a, b) => (b.fees24h || 0) - (a.fees24h || 0))[0] || null;
+
+      const currentSupply = supply?.currentSupply ?? null;
+      const burnedTokens = Number.isFinite(currentSupply)
+        ? Math.max(0, INITIAL_SUPPLY - currentSupply)
+        : null;
+      const burnedPercent = Number.isFinite(burnedTokens)
+        ? burnedTokens / INITIAL_SUPPLY * 100
+        : null;
+      const marketCap = Number.isFinite(reference.price) && Number.isFinite(currentSupply)
+        ? reference.price * currentSupply
+        : null;
+      const burnedUsd = Number.isFinite(reference.price) && Number.isFinite(burnedTokens)
+        ? reference.price * burnedTokens
+        : null;
+      const sincePresale = Number.isFinite(reference.price)
+        ? (reference.price / PRESALE_PRICE - 1) * 100
+        : null;
+
+      return {
+        configuredPools: rows.length,
+        loadedPools: loadedRows.length,
+        livePools: liveRows.length,
+        unavailablePools: unavailableRows.length,
+        stalePools: staleRows.length,
+        marketCount: markets.length,
+        liquidity,
+        volume24h,
+        fees24h,
+        markets,
+        reference,
+        topFeePool,
+        currentSupply,
+        burnedTokens,
+        burnedPercent,
+        marketCap,
+        burnedUsd,
+        sincePresale
+      };
+    }
+
+    function setMetric(id, value, className = "") {
+      const node = el(id);
+      node.textContent = value;
+      node.classList.remove("positive", "negative");
+      if (className) node.classList.add(className);
+    }
+
+    function renderSummary(summary) {
+      const { reference } = summary;
+
+      setMetric("priceValue", fmtPrice(reference.price));
+
+      const priceDirection =
+        Number.isFinite(reference.change24h)
+          ? reference.change24h >= 0 ? "positive" : "negative"
+          : "";
+
+      el("priceSub").innerHTML = Number.isFinite(reference.price)
+        ? `${reference.usedPools} eligible pools · ${fmtUsd(reference.usedLiquidity, true)} weighted liquidity` +
+          (Number.isFinite(reference.change24h)
+            ? ` · <span class="${priceDirection}">${fmtPercent(reference.change24h)} 24h</span>`
+            : "") +
+          (Number.isFinite(summary.sincePresale)
+            ? ` · <span class="${summary.sincePresale >= 0 ? "positive" : "negative"}">${fmtPercent(summary.sincePresale)} since presale</span>`
+            : "")
+        : "Reference price unavailable";
+
+      setMetric("liquidityValue", fmtUsd(summary.liquidity, true));
+      el("liquiditySub").textContent =
+        `${summary.livePools} live of ${summary.configuredPools} configured pools · ${summary.marketCount} markets`;
+
+      setMetric("volumeValue", fmtUsd(summary.volume24h, true));
+      setMetric("feesValue", fmtUsd(summary.fees24h, true));
+
+      el("feesSub").textContent = summary.topFeePool
+        ? `Top fee pool: ${summary.topFeePool.displayLabel} · ${fmtUsd(summary.topFeePool.fees24h)}`
+        : "Estimated from each pool’s configured fee rate";
+
+      setMetric("marketCapValue", fmtUsd(summary.marketCap, true));
+      setMetric("supplyValue", fmtNumber(summary.currentSupply));
+      setMetric("burnedValue", fmtNumber(summary.burnedTokens));
+      setMetric("burnPercentValue",
+        Number.isFinite(summary.burnedPercent) ? summary.burnedPercent.toFixed(2) + "%" : "—"
+      );
+      el("burnedUsdSub").textContent =
+        `Burn value: ${fmtUsd(summary.burnedUsd, true)}`;
+
+      updateBuyLink(state.rows);
+    }
+
+    function updateBuyLink(rows) {
+      const candidates = rows
+        .filter(row =>
+          row.marketLabel.toUpperCase() === "SOL" &&
+          Number.isFinite(row.liquidity) &&
+          row.liquidity > 0
+        )
+        .sort((a, b) => b.liquidity - a.liquidity);
+
+      const fallback = rows
+        .filter(row => Number.isFinite(row.liquidity) && row.liquidity > 0)
+        .sort((a, b) => b.liquidity - a.liquidity)[0];
+
+      const selected = candidates[0] || fallback;
+      el("buyLink").href = selected?.dexScreenerUrl || "https://dexscreener.com/solana";
+    }
+
+    function statusBadge(row) {
+      if (row.status === "live") {
+        return `<span class="status-badge live">● Live</span>`;
+      }
+
+      if (row.status === "stale") {
+        return `<span class="status-badge stale">● Cached</span>`;
+      }
+
+      if (row.status === "inactive") {
+        return `<span class="status-badge off">● Inactive</span>`;
+      }
+
+      return `<span class="status-badge off">● No data</span>`;
+    }
+
+    function renderTable() {
+      const query = el("poolSearch").value.trim().toLowerCase();
+
+      const filtered = state.rows
+        .filter(row => {
+          const haystack = [
+            row.displayLabel,
+            row.configuredLabel,
+            row.dexLabel,
+            row.id
+          ].join(" ").toLowerCase();
+
+          return !query || haystack.includes(query);
+        })
+        .sort((a, b) => {
+          const aLoaded = Number.isFinite(a.liquidity);
+          const bLoaded = Number.isFinite(b.liquidity);
+          if (aLoaded !== bLoaded) return aLoaded ? -1 : 1;
+          return (b.liquidity || 0) - (a.liquidity || 0);
+        });
+
+      el("tableCount").textContent = `${filtered.length} of ${state.rows.length} pools`;
+
+      el("poolTableBody").innerHTML = filtered.map(row => `
+        <tr data-pool-id="${escapeHtml(row.id)}">
+          <td>
+            <span class="pair-name">${escapeHtml(row.displayLabel)}</span>
+            <span class="pair-sub">${escapeHtml(row.dexLabel)} · ${feeLabel(row.feePercent)} fee</span>
+          </td>
+          <td>${fmtUsd(row.liquidity)}</td>
+          <td>${fmtUsd(row.volume24h)}</td>
+          <td>${fmtUsd(row.fees24h)}</td>
+          <td>${statusBadge(row)}</td>
+          <td>
+            <a class="external" href="${escapeHtml(row.geckoUrl)}"
+               target="_blank" rel="noopener noreferrer"
+               aria-label="Open GeckoTerminal"
+               onclick="event.stopPropagation()">↗</a>
+          </td>
+        </tr>
+      `).join("");
+
+      el("poolTableBody").querySelectorAll("tr[data-pool-id]").forEach(rowNode => {
+        rowNode.addEventListener("click", () => {
+          openPoolDialog(rowNode.dataset.poolId);
+        });
+      });
+    }
+
+    function openPoolDialog(poolId) {
+      const row = state.rows.find(item => item.id === poolId);
+      if (!row) return;
+
+      el("dialogTitle").textContent = row.displayLabel;
+      el("dialogSub").textContent =
+        `${row.dexLabel} · ${feeLabel(row.feePercent)} configured fee · ${row.status === "stale" ? "cached data" : row.status}`;
+
+      const details = [
+        ["Liquidity", fmtUsd(row.liquidity)],
+        ["24h Volume", fmtUsd(row.volume24h)],
+        ["1h Volume", fmtUsd(row.volume1h)],
+        ["Fees 24h", fmtUsd(row.fees24h)],
+        ["Fees 1h", fmtUsd(row.fees1h)],
+        ["ASTY Price", fmtPrice(row.astyPrice)]
+      ];
+
+      el("dialogGrid").innerHTML = details.map(([label, value]) => `
+        <div class="detail-item">
+          <div class="detail-label">${escapeHtml(label)}</div>
+          <div class="detail-value">${escapeHtml(value)}</div>
+        </div>
+      `).join("");
+
+      el("dialogAddress").textContent = row.id;
+
+      el("dialogLinks").innerHTML = `
+        <a class="pill primary" href="${escapeHtml(row.geckoUrl)}" target="_blank" rel="noopener noreferrer">GeckoTerminal ↗</a>
+        <a class="pill" href="${escapeHtml(row.dexScreenerUrl)}" target="_blank" rel="noopener noreferrer">DexScreener ↗</a>
+        <a class="pill" href="${escapeHtml(row.solscanUrl)}" target="_blank" rel="noopener noreferrer">Solscan ↗</a>
+      `;
+
+      el("poolDialog").showModal();
+    }
+
+    function svgNode(tag, attributes = {}) {
+      const node = document.createElementNS("http://www.w3.org/2000/svg", tag);
+      for (const [key, value] of Object.entries(attributes)) {
+        node.setAttribute(key, String(value));
+      }
+      return node;
+    }
+
+    function renderNetwork(markets) {
+      const svg = el("networkSvg");
+      const tooltip = el("networkTooltip");
+      svg.innerHTML = "";
+
+      const defs = svgNode("defs");
+      const glow = svgNode("filter", {
+        id: "astyGlow",
+        x: "-60%",
+        y: "-60%",
+        width: "220%",
+        height: "220%"
+      });
+      glow.appendChild(svgNode("feGaussianBlur", { stdDeviation: "5", result: "blur" }));
+      const merge = svgNode("feMerge");
+      merge.appendChild(svgNode("feMergeNode", { in: "blur" }));
+      merge.appendChild(svgNode("feMergeNode", { in: "SourceGraphic" }));
+      glow.appendChild(merge);
+      defs.appendChild(glow);
+      svg.appendChild(defs);
+
+      const centerX = 380;
+      const centerY = 215;
+
+      const topMarkets = markets.slice(0, 18);
+      const remaining = markets.slice(18);
+
+      if (remaining.length) {
+        topMarkets.push({
+          key: "other",
+          label: "OTHER",
+          liquidity: remaining.reduce((sum, item) => sum + item.liquidity, 0),
+          volume24h: remaining.reduce((sum, item) => sum + item.volume24h, 0),
+          fees24h: remaining.reduce((sum, item) => sum + item.fees24h, 0),
+          pools: remaining.reduce((sum, item) => sum + item.pools, 0),
+          dexes: [...new Set(remaining.flatMap(item => item.dexes))],
+          topPool: null
+        });
+      }
+
+      if (!topMarkets.length) {
+        const text = svgNode("text", {
+          x: centerX,
+          y: centerY,
+          "text-anchor": "middle",
+          fill: "rgba(169,164,189,0.9)",
+          "font-size": "15"
+        });
+        text.textContent = "No live pool data available";
+        svg.appendChild(text);
+        return;
+      }
+
+      const maxLiquidity = Math.max(...topMarkets.map(item => item.liquidity), 1);
+
+      const ringOne = topMarkets.slice(0, 8);
+      const ringTwo = topMarkets.slice(8);
+
+      const placed = [];
+
+      function placeRing(items, radius, angleOffset) {
+        items.forEach((item, index) => {
+          const angle = angleOffset + (index / items.length) * Math.PI * 2;
+          const bubbleRadius = 18 + Math.sqrt(item.liquidity / maxLiquidity) * 34;
+
+          placed.push({
+            item,
+            x: centerX + Math.cos(angle) * radius,
+            y: centerY + Math.sin(angle) * radius * 0.76,
+            r: Math.min(54, bubbleRadius)
+          });
+        });
+      }
+
+      placeRing(ringOne, 118, -Math.PI / 2);
+      if (ringTwo.length) placeRing(ringTwo, 220, -Math.PI / 2 + 0.16);
+
+      for (const node of placed) {
+        const line = svgNode("line", {
+          x1: centerX,
+          y1: centerY,
+          x2: node.x,
+          y2: node.y,
+          stroke: "rgba(139,92,246,0.13)",
+          "stroke-width": "1.2"
+        });
+        svg.appendChild(line);
+      }
+
+      const centerGroup = svgNode("g", { filter: "url(#astyGlow)" });
+      centerGroup.appendChild(svgNode("circle", {
+        cx: centerX,
+        cy: centerY,
+        r: 58,
+        fill: "rgba(103,232,249,0.14)",
+        stroke: "rgba(103,232,249,0.48)",
+        "stroke-width": "2"
+      }));
+      centerGroup.appendChild(svgNode("circle", {
+        cx: centerX,
+        cy: centerY,
+        r: 43,
+        fill: "rgba(9,12,24,0.92)",
+        stroke: "rgba(196,181,253,0.24)"
+      }));
+      const centerText = svgNode("text", {
+        x: centerX,
+        y: centerY + 6,
+        "text-anchor": "middle",
+        fill: "#f7f4ff",
+        "font-size": "21",
+        "font-weight": "900"
+      });
+      centerText.textContent = "ASTY";
+      centerGroup.appendChild(centerText);
+      svg.appendChild(centerGroup);
+
+      placed.forEach((node, index) => {
+        const hue = 215 + (index * 19) % 70;
+        const group = svgNode("g", {
+          tabindex: "0",
+          role: "button",
+          style: node.item.topPool ? "cursor:pointer" : "cursor:default"
+        });
+
+        const circle = svgNode("circle", {
+          cx: node.x,
+          cy: node.y,
+          r: node.r,
+          fill: `hsl(${hue} 76% 64% / 0.83)`,
+          stroke: "rgba(196,181,253,0.34)",
+          "stroke-width": "1.5"
+        });
+
+        const label = svgNode("text", {
+          x: node.x,
+          y: node.y + 4,
+          "text-anchor": "middle",
+          fill: "rgba(8,11,23,0.94)",
+          "font-size": Math.max(9, Math.min(13, node.r / 2.7)),
+          "font-weight": "900",
+          "pointer-events": "none"
+        });
+
+        const shortLabel = node.item.label.length > 10
+          ? node.item.label.slice(0, 9) + "…"
+          : node.item.label;
+
+        label.textContent = shortLabel;
+
+        group.appendChild(circle);
+        group.appendChild(label);
+
+        const showTooltip = event => {
+          tooltip.style.display = "block";
+          tooltip.style.left = Math.min(event.clientX + 14, window.innerWidth - 270) + "px";
+          tooltip.style.top = Math.max(event.clientY - 40, 10) + "px";
+          tooltip.innerHTML = `
+            <strong>ASTY / ${escapeHtml(node.item.label)}</strong>
+            <div class="tooltip-grid">
+              <span>Liquidity</span><span>${fmtUsd(node.item.liquidity)}</span>
+              <span>24h Volume</span><span>${fmtUsd(node.item.volume24h)}</span>
+              <span>Fees 24h</span><span>${fmtUsd(node.item.fees24h)}</span>
+              <span>Pools</span><span>${node.item.pools}</span>
+            </div>
+          `;
+        };
+
+        group.addEventListener("mousemove", showTooltip);
+        group.addEventListener("mouseenter", showTooltip);
+        group.addEventListener("mouseleave", () => {
+          tooltip.style.display = "none";
+        });
+
+        if (node.item.topPool) {
+          group.addEventListener("click", () => {
+            window.open(node.item.topPool.geckoUrl, "_blank", "noopener,noreferrer");
+          });
+        }
+
+        svg.appendChild(group);
+      });
+    }
+
+    function updateStatus(tone = "live", customText = null) {
+      const summary = state.summary;
+      const dot = el("statusDot");
+      dot.className = "status-dot" + (tone ? ` ${tone}` : "");
+
+      if (customText) {
+        el("statusText").textContent = customText;
+        return;
+      }
+
+      if (!summary) {
+        el("statusText").textContent = "Waiting for live data…";
+        return;
+      }
+
+      const time = state.updatedAt
+        ? new Date(state.updatedAt).toLocaleTimeString("en-GB", {
+            hour: "2-digit",
+            minute: "2-digit",
+            second: "2-digit"
+          })
+        : "—";
+
+      const staleText = summary.stalePools
+        ? ` · ${summary.stalePools} cached`
+        : "";
+
+      el("statusText").textContent =
+        `${summary.configuredPools} configured · ${summary.livePools} live · ${summary.marketCount} markets${staleText} · Updated ${time}`;
+    }
+
+    function persistCache() {
+      try {
+        localStorage.setItem(CACHE_KEY, JSON.stringify({
+          savedAt: Date.now(),
+          rows: state.rows,
+          supply: state.supply
+        }));
+      } catch {}
+    }
+
+    function restoreCache() {
+      try {
+        const cached = JSON.parse(localStorage.getItem(CACHE_KEY) || "null");
+        if (!cached?.rows?.length) return false;
+
+        state.rows = cached.rows;
+        state.supply = cached.supply || null;
+        state.updatedAt = cached.savedAt || null;
+        state.summary = calculateSummary(state.rows, state.supply);
+
+        renderAll();
+        updateStatus("", "Showing cached data while live values refresh…");
+        return true;
+      } catch {
+        return false;
+      }
+    }
+
+    function renderAll() {
+      if (!state.summary) return;
+      renderSummary(state.summary);
+      renderNetwork(state.summary.markets);
+      renderTable();
+    }
+
+    async function refreshDashboard() {
+      if (state.refreshing) return;
+
+      state.refreshing = true;
+      el("refreshButton").classList.add("spinning");
+      updateStatus("", "Refreshing live data…");
+
+      const [poolResult, supplyResult] = await Promise.allSettled([
+        loadPools(),
+        loadSupply()
+      ]);
+
+      let hadSuccess = false;
+
+      if (poolResult.status === "fulfilled") {
+        state.rows = poolResult.value;
+        hadSuccess = true;
+      }
+
+      if (supplyResult.status === "fulfilled") {
+        state.supply = supplyResult.value;
+        hadSuccess = true;
+      }
+
+      if (state.rows.length) {
+        state.summary = calculateSummary(state.rows, state.supply);
+        state.updatedAt = Date.now();
+        renderAll();
+        persistCache();
+
+        const partialError =
+          poolResult.status === "rejected" ||
+          supplyResult.status === "rejected" ||
+          state.summary.stalePools > 0;
+
+        updateStatus(partialError ? "" : "live");
+      } else {
+        updateStatus("error", "Live data could not be loaded.");
+      }
+
+      if (!hadSuccess && state.rows.length) {
+        updateStatus("", "Live refresh failed. Showing the last successful data.");
+      }
+
+      state.refreshing = false;
+      el("refreshButton").classList.remove("spinning");
+    }
+
+    function setActiveTab(tab) {
+      const networkActive = tab === "network";
+
+      el("networkTab").classList.toggle("active", networkActive);
+      el("listTab").classList.toggle("active", !networkActive);
+      el("networkTab").setAttribute("aria-selected", String(networkActive));
+      el("listTab").setAttribute("aria-selected", String(!networkActive));
+      el("networkPanel").classList.toggle("active", networkActive);
+      el("listPanel").classList.toggle("active", !networkActive);
+    }
+
+    el("networkTab").addEventListener("click", () => setActiveTab("network"));
+    el("listTab").addEventListener("click", () => setActiveTab("list"));
+    el("poolSearch").addEventListener("input", renderTable);
+    el("refreshButton").addEventListener("click", refreshDashboard);
+
+    el("dialogClose").addEventListener("click", () => el("poolDialog").close());
+    el("poolDialog").addEventListener("click", event => {
+      if (event.target === el("poolDialog")) el("poolDialog").close();
+    });
+
+    restoreCache();
+    refreshDashboard();
+    setInterval(refreshDashboard, REFRESH_MS);
+  </script>
+</body>
+</html>
