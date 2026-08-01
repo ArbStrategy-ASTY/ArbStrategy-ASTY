@@ -1,0 +1,2105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="color-scheme" content="dark" />
+  <title>ASTY Liquidity Optimizer</title>
+
+  <style>
+    :root {
+      --bg-1: #070a13;
+      --bg-2: #0b1020;
+      --panel: rgba(255,255,255,0.045);
+      --panel-strong: rgba(10,14,28,0.96);
+      --border: rgba(255,255,255,0.09);
+      --border-soft: rgba(167,139,250,0.20);
+      --text: #ffffff;
+      --muted: #a9a4bd;
+      --muted-2: #7f7a94;
+      --purple: #8b5cf6;
+      --purple-2: #6d28d9;
+      --purple-soft: #c4b5fd;
+      --purple-heading: #cdbfff;
+      --cyan: #67e8f9;
+      --cyan-2: #06b6d4;
+      --green: #34d399;
+      --red: #fb7185;
+      --amber: #fbbf24;
+      --shadow: 0 18px 55px rgba(0,0,0,0.26);
+      --radius: 20px;
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background:
+        radial-gradient(circle at 12% -5%, rgba(124,58,237,0.24), transparent 31%),
+        radial-gradient(circle at 88% 18%, rgba(6,182,212,0.10), transparent 24%),
+        linear-gradient(180deg, var(--bg-2) 0%, var(--bg-1) 48%, #050710 100%);
+      color: var(--text);
+    }
+
+    a { color: inherit; text-decoration: none; }
+    button, input, select { font: inherit; }
+    button { color: inherit; }
+
+    .orb {
+      position: fixed;
+      width: 340px;
+      height: 340px;
+      border-radius: 50%;
+      filter: blur(110px);
+      opacity: 0.13;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .orb.one { top: 120px; left: -160px; background: #7c3aed; }
+    .orb.two { bottom: 80px; right: -170px; background: #22d3ee; }
+
+    .container {
+      position: relative;
+      z-index: 1;
+      width: min(1160px, calc(100% - 32px));
+      margin: 0 auto;
+    }
+
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      backdrop-filter: blur(16px);
+      background: rgba(6,9,19,0.76);
+      border-bottom: 1px solid rgba(255,255,255,0.07);
+    }
+
+    .nav {
+      min-height: 72px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 18px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-width: max-content;
+    }
+
+    .brand-logo {
+      width: 44px;
+      height: 44px;
+      object-fit: cover;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(196,181,253,0.25);
+      box-shadow: 0 0 26px rgba(124,58,237,0.28);
+    }
+
+    .brand-title {
+      font-size: 15px;
+      font-weight: 800;
+      letter-spacing: 0.3px;
+    }
+
+    .brand-sub {
+      margin-top: 2px;
+      font-size: 11px;
+      color: var(--muted);
+    }
+
+    .nav-links {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 38px;
+      padding: 9px 13px;
+      border: 1px solid rgba(167,139,250,0.28);
+      border-radius: 999px;
+      background: transparent;
+      color: #ded9ed;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: transform 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease, color 0.18s ease;
+    }
+
+    .pill:hover,
+    .pill:focus-visible,
+    .pill.active {
+      transform: translateY(-1px);
+      border-color: rgba(196,181,253,0.78);
+      background: transparent;
+      color: #fff;
+      box-shadow:
+        0 0 0 1px rgba(167,139,250,0.22),
+        0 0 18px rgba(139,92,246,0.34);
+      outline: none;
+    }
+
+    main { padding: 34px 0 54px; }
+
+    .hero {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 22px;
+      margin-bottom: 18px;
+    }
+
+    .eyebrow {
+      color: var(--purple-soft);
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: 1.6px;
+      text-transform: uppercase;
+    }
+
+    h1 {
+      margin: 7px 0 8px;
+      font-size: clamp(30px, 5vw, 48px);
+      line-height: 1.02;
+      letter-spacing: -1.6px;
+    }
+
+    .hero-copy {
+      margin: 0;
+      max-width: 720px;
+      color: #c7c2d6;
+      line-height: 1.55;
+      font-size: 14px;
+    }
+
+    .live-proof {
+      margin-top: 13px;
+      color: #aaa3bc;
+      font-size: 12px;
+      line-height: 1.5;
+    }
+
+    .live-proof strong { color: #f3efff; font-weight: 850; }
+
+    .trust-line {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      margin-top: 7px;
+      color: var(--muted-2);
+      font-size: 10px;
+      line-height: 1.4;
+    }
+
+    .trust-line::before {
+      content: "✓";
+      color: var(--purple-soft);
+      font-weight: 900;
+    }
+
+    .status-wrap {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 10px;
+      min-width: max-content;
+    }
+
+    .status-line {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--muted);
+      font-size: 12px;
+      text-align: right;
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--purple);
+      box-shadow: 0 0 0 5px rgba(139,92,246,0.10), 0 0 16px rgba(139,92,246,0.42);
+    }
+
+    .status-dot.live {
+      animation: livePulse 2.3s ease-in-out infinite;
+    }
+
+    .status-dot.error {
+      background: var(--red);
+      box-shadow: 0 0 0 5px rgba(251,113,133,0.08);
+      animation: none;
+    }
+
+    @keyframes livePulse {
+      0%, 100% { transform: scale(1); opacity: 0.85; }
+      50% { transform: scale(1.18); opacity: 1; }
+    }
+
+    .icon-button {
+      width: 35px;
+      height: 35px;
+      border-radius: 11px;
+      border: 1px solid rgba(167,139,250,0.28);
+      background: transparent;
+      color: #ddd8eb;
+      cursor: pointer;
+      transition: transform .18s ease, border-color .18s ease, box-shadow .18s ease;
+    }
+
+    .icon-button:hover,
+    .icon-button:focus-visible {
+      transform: translateY(-1px);
+      border-color: rgba(196,181,253,0.78);
+      box-shadow: 0 0 0 1px rgba(167,139,250,0.22), 0 0 18px rgba(139,92,246,0.34);
+      outline: none;
+    }
+
+    .icon-button.spinning {
+      animation: spin 0.9s linear infinite;
+      pointer-events: none;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .panel,
+    .metric-card,
+    .mini-card {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      backdrop-filter: blur(12px);
+      box-shadow: var(--shadow);
+    }
+
+    .panel {
+      margin-top: 18px;
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+
+    .panel-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 17px 18px;
+      border-bottom: 1px solid rgba(255,255,255,0.065);
+    }
+
+    .panel-title {
+      color: var(--purple-heading);
+      font-size: 14px;
+      font-weight: 820;
+    }
+
+    .panel-sub {
+      margin-top: 4px;
+      color: var(--muted);
+      font-size: 11px;
+      line-height: 1.45;
+    }
+
+    .optimizer-controls {
+      display: grid;
+      grid-template-columns: 1.2fr .8fr .8fr .8fr auto;
+      gap: 12px;
+      padding: 18px;
+      align-items: end;
+    }
+
+    .field label {
+      display: block;
+      margin-bottom: 7px;
+      color: var(--purple-heading);
+      font-size: 10px;
+      font-weight: 800;
+      letter-spacing: .25px;
+    }
+
+    .input-shell {
+      position: relative;
+    }
+
+    .input-prefix,
+    .input-suffix {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--muted-2);
+      font-size: 12px;
+      pointer-events: none;
+    }
+
+    .input-prefix { left: 13px; }
+    .input-suffix { right: 13px; }
+
+    .control-input,
+    .control-select,
+    .search {
+      width: 100%;
+      height: 43px;
+      border-radius: 12px;
+      border: 1px solid rgba(167,139,250,0.22);
+      outline: none;
+      background: rgba(0,0,0,0.18);
+      color: #fff;
+      padding: 0 12px;
+      font-weight: 750;
+    }
+
+    .control-input.with-prefix { padding-left: 28px; }
+    .control-input.with-suffix { padding-right: 30px; }
+
+    .control-input:focus,
+    .control-select:focus,
+    .search:focus {
+      border-color: rgba(196,181,253,0.62);
+      box-shadow: 0 0 0 4px rgba(139,92,246,0.08);
+    }
+
+    .run-button {
+      min-height: 43px;
+      padding-left: 18px;
+      padding-right: 18px;
+    }
+
+    .model-note {
+      margin: 0 18px 18px;
+      padding: 12px 14px;
+      border-radius: 14px;
+      border: 1px solid rgba(167,139,250,0.14);
+      background: rgba(255,255,255,0.022);
+      color: var(--muted);
+      font-size: 10px;
+      line-height: 1.55;
+    }
+
+    .model-note strong { color: #e8e3f4; }
+
+    .main-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 14px;
+      margin-top: 14px;
+    }
+
+    .metric-card {
+      min-height: 154px;
+      padding: 18px;
+      border-radius: var(--radius);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .metric-card::after {
+      content: "";
+      position: absolute;
+      width: 110px;
+      height: 110px;
+      top: -64px;
+      right: -46px;
+      border-radius: 50%;
+      background: rgba(139,92,246,0.16);
+      filter: blur(8px);
+    }
+
+    .metric-label {
+      color: var(--purple-heading);
+      font-size: 12px;
+      font-weight: 780;
+      letter-spacing: .2px;
+    }
+
+    .metric-value {
+      margin-top: 17px;
+      font-size: clamp(23px, 2.8vw, 31px);
+      line-height: 1;
+      font-weight: 850;
+      letter-spacing: -0.8px;
+    }
+
+    .metric-value.live-color { color: var(--cyan); }
+    .metric-value.green { color: var(--green); }
+
+    .metric-sub {
+      margin-top: 12px;
+      color: var(--muted-2);
+      font-size: 11px;
+      line-height: 1.35;
+      min-height: 30px;
+    }
+
+    .allocation-bar-wrap {
+      margin-top: 14px;
+      padding: 16px 17px;
+      border-radius: 16px;
+      border: 1px solid rgba(167,139,250,0.15);
+      background: rgba(255,255,255,0.025);
+    }
+
+    .allocation-labels {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      color: var(--muted);
+      font-size: 10px;
+    }
+
+    .allocation-track {
+      display: flex;
+      height: 11px;
+      margin-top: 9px;
+      overflow: hidden;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.055);
+    }
+
+    .allocation-deploy {
+      width: 0%;
+      background: linear-gradient(90deg, var(--purple), var(--cyan-2));
+      transition: width .35s ease;
+    }
+
+    .allocation-reserve {
+      width: 100%;
+      background: rgba(255,255,255,0.055);
+      transition: width .35s ease;
+    }
+
+    .toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 14px 16px;
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+    }
+
+    .toolbar-left,
+    .toolbar-right,
+    .filter-pills {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .search { width: min(290px, 100%); height: 39px; font-weight: 600; }
+    .control-select.small { width: auto; min-width: 150px; height: 39px; font-size: 11px; }
+
+    .filter-button {
+      min-height: 34px;
+      padding: 7px 11px;
+      font-size: 11px;
+    }
+
+    .pool-count {
+      color: var(--muted);
+      font-size: 11px;
+      white-space: nowrap;
+    }
+
+    .pool-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+      padding: 16px;
+    }
+
+    .pool-card {
+      position: relative;
+      min-width: 0;
+      padding: 15px;
+      border-radius: 17px;
+      border: 1px solid rgba(255,255,255,0.075);
+      background: rgba(255,255,255,0.028);
+      cursor: pointer;
+      transition: transform .18s ease, border-color .18s ease, box-shadow .18s ease, background .18s ease;
+    }
+
+    .pool-card:hover,
+    .pool-card:focus-visible {
+      transform: translateY(-2px);
+      border-color: rgba(196,181,253,0.44);
+      background: rgba(255,255,255,0.04);
+      box-shadow: 0 14px 38px rgba(0,0,0,0.22), 0 0 20px rgba(139,92,246,0.10);
+      outline: none;
+    }
+
+    .pool-card.recommended {
+      border-color: rgba(52,211,153,0.24);
+      background:
+        radial-gradient(circle at 100% 0%, rgba(52,211,153,0.075), transparent 34%),
+        rgba(255,255,255,0.03);
+    }
+
+    .pool-card.hot {
+      border-color: rgba(103,232,249,0.22);
+    }
+
+    .pool-card.marked {
+      box-shadow: inset 0 0 0 1px rgba(251,191,36,0.13);
+    }
+
+    .pool-head {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .pool-name {
+      color: #f8f6ff;
+      font-size: 15px;
+      font-weight: 850;
+      line-height: 1.2;
+    }
+
+    .pool-meta {
+      margin-top: 4px;
+      color: var(--muted-2);
+      font-size: 9px;
+    }
+
+    .signal-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 27px;
+      padding: 5px 8px;
+      border-radius: 999px;
+      border: 1px solid rgba(167,139,250,0.18);
+      color: #cfc5ea;
+      font-size: 9px;
+      font-weight: 850;
+      white-space: nowrap;
+    }
+
+    .signal-badge.add {
+      color: #9ff3d0;
+      background: rgba(52,211,153,0.08);
+      border-color: rgba(52,211,153,0.18);
+    }
+
+    .signal-badge.watch {
+      color: #a5f3fc;
+      background: rgba(6,182,212,0.08);
+      border-color: rgba(103,232,249,0.18);
+    }
+
+    .signal-badge.xevent {
+      color: #fde68a;
+      background: rgba(251,191,36,0.08);
+      border-color: rgba(251,191,36,0.18);
+    }
+
+    .pool-main {
+      display: grid;
+      grid-template-columns: 1.05fr .95fr;
+      gap: 11px;
+      margin-top: 14px;
+    }
+
+    .recommend-box,
+    .target-box {
+      padding: 12px;
+      border-radius: 13px;
+      border: 1px solid rgba(255,255,255,0.06);
+      background: rgba(0,0,0,0.12);
+    }
+
+    .box-label {
+      color: var(--purple-heading);
+      font-size: 9px;
+      font-weight: 800;
+      letter-spacing: .25px;
+    }
+
+    .recommend-value {
+      margin-top: 7px;
+      color: var(--green);
+      font-size: 22px;
+      line-height: 1;
+      font-weight: 920;
+      letter-spacing: -.6px;
+    }
+
+    .recommend-value.zero { color: #eee9f7; font-size: 16px; }
+
+    .box-sub {
+      margin-top: 6px;
+      color: var(--muted-2);
+      font-size: 9px;
+      line-height: 1.35;
+    }
+
+    .target-value {
+      margin-top: 7px;
+      color: var(--cyan);
+      font-size: 14px;
+      line-height: 1.15;
+      font-weight: 850;
+    }
+
+    .metrics-row {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 7px;
+      margin-top: 10px;
+    }
+
+    .tiny-metric {
+      min-width: 0;
+      padding: 8px;
+      border-radius: 11px;
+      border: 1px solid rgba(255,255,255,0.055);
+      background: rgba(255,255,255,0.018);
+    }
+
+    .tiny-label {
+      color: var(--muted-2);
+      font-size: 8px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .tiny-value {
+      margin-top: 4px;
+      color: #eeeaf7;
+      font-size: 11px;
+      font-weight: 800;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .tiny-value.cyan { color: var(--cyan); }
+    .tiny-value.green { color: var(--green); }
+    .tiny-value.amber { color: var(--amber); }
+
+    .reason {
+      margin-top: 10px;
+      color: var(--muted);
+      font-size: 10px;
+      line-height: 1.45;
+    }
+
+    .card-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    .micro-action {
+      min-height: 31px;
+      padding: 6px 9px;
+      font-size: 9px;
+    }
+
+    .updated-line {
+      color: var(--muted-2);
+      font-size: 8px;
+    }
+
+    .empty-state {
+      grid-column: 1 / -1;
+      padding: 40px 20px;
+      text-align: center;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    dialog {
+      width: min(680px, calc(100% - 28px));
+      max-height: calc(100vh - 28px);
+      border: 1px solid rgba(196,181,253,0.22);
+      border-radius: 20px;
+      background: #0a0e1b;
+      color: #fff;
+      padding: 0;
+      box-shadow: 0 30px 90px rgba(0,0,0,0.58);
+      overflow: auto;
+    }
+
+    dialog::backdrop {
+      background: rgba(0,0,0,0.72);
+      backdrop-filter: blur(5px);
+    }
+
+    .dialog-head {
+      position: sticky;
+      top: 0;
+      z-index: 2;
+      padding: 18px;
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 15px;
+      border-bottom: 1px solid rgba(255,255,255,0.07);
+      background: rgba(10,14,27,0.97);
+      backdrop-filter: blur(12px);
+    }
+
+    .dialog-title { font-size: 18px; font-weight: 850; }
+    .dialog-sub { margin-top: 4px; color: var(--muted); font-size: 11px; }
+
+    .dialog-close {
+      width: 34px;
+      height: 34px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: rgba(255,255,255,0.04);
+      color: #fff;
+      cursor: pointer;
+    }
+
+    .dialog-body { padding: 18px; }
+
+    .detail-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .detail-item {
+      min-width: 0;
+      padding: 12px;
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,0.07);
+      background: rgba(255,255,255,0.035);
+    }
+
+    .detail-label { color: var(--muted); font-size: 9px; }
+    .detail-value { margin-top: 6px; font-size: 14px; font-weight: 800; overflow-wrap: anywhere; }
+    .detail-value.highlight { color: var(--cyan); }
+    .detail-value.positive { color: var(--green); }
+
+    .detail-section {
+      margin-top: 14px;
+      padding: 14px;
+      border-radius: 15px;
+      border: 1px solid rgba(167,139,250,0.14);
+      background: rgba(255,255,255,0.022);
+    }
+
+    .detail-section-title {
+      color: var(--purple-heading);
+      font-size: 11px;
+      font-weight: 850;
+    }
+
+    .detail-section-copy {
+      margin-top: 7px;
+      color: var(--muted);
+      font-size: 10px;
+      line-height: 1.55;
+    }
+
+    .simulation-table {
+      width: 100%;
+      margin-top: 9px;
+      border-collapse: collapse;
+      font-size: 10px;
+    }
+
+    .simulation-table th,
+    .simulation-table td {
+      padding: 9px 7px;
+      text-align: left;
+      border-top: 1px solid rgba(255,255,255,0.055);
+    }
+
+    .simulation-table th { color: var(--muted-2); font-weight: 700; }
+
+    .dialog-actions {
+      display: flex;
+      gap: 9px;
+      flex-wrap: wrap;
+      margin-top: 14px;
+    }
+
+    .contract-card {
+      display: grid;
+      grid-template-columns: auto minmax(0, 1fr) auto;
+      align-items: center;
+      gap: 14px;
+      margin-top: 30px;
+      margin-bottom: 16px;
+      padding: 15px 16px;
+      border-radius: 18px;
+      border: 1px solid rgba(167,139,250,0.20);
+      background:
+        radial-gradient(circle at 88% 30%, rgba(6,182,212,0.07), transparent 24%),
+        linear-gradient(135deg, rgba(124,58,237,0.07), rgba(255,255,255,0.025));
+      backdrop-filter: blur(12px);
+      box-shadow: 0 14px 42px rgba(0,0,0,0.18);
+      cursor: pointer;
+    }
+
+    .contract-icon {
+      width: 48px;
+      height: 48px;
+      display: grid;
+      place-items: center;
+      border-radius: 50%;
+      border: 1px solid rgba(196,181,253,0.26);
+      background: rgba(255,255,255,0.035);
+      box-shadow: 0 0 0 5px rgba(139,92,246,0.055), 0 0 22px rgba(103,232,249,0.10);
+      overflow: hidden;
+    }
+
+    .contract-icon img { width: 100%; height: 100%; object-fit: cover; }
+    .contract-content { min-width: 0; }
+
+    .contract-label {
+      color: var(--purple-heading);
+      font-size: 10px;
+      font-weight: 850;
+      letter-spacing: 1.15px;
+      text-transform: uppercase;
+    }
+
+    .contract-meta { margin-top: 3px; color: var(--muted-2); font-size: 9px; }
+
+    .contract-address {
+      display: block;
+      margin-top: 7px;
+      color: #f1edfb;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: 11px;
+      line-height: 1.45;
+      word-break: break-all;
+    }
+
+    .contract-address-short { display: none; }
+
+    .footer-wolf {
+      display: block;
+      width: 68px;
+      height: auto;
+      margin: 19px auto 3px;
+      opacity: 0.88;
+      filter: drop-shadow(0 0 10px rgba(139,92,246,0.24)) drop-shadow(0 0 18px rgba(103,232,249,0.10));
+    }
+
+    .footer {
+      padding-top: 22px;
+      color: var(--muted-2);
+      font-size: 10px;
+      text-align: center;
+      line-height: 1.6;
+    }
+
+    @media (max-width: 980px) {
+      .optimizer-controls { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .run-button { width: 100%; }
+      .main-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .pool-grid { grid-template-columns: 1fr; }
+    }
+
+    @media (max-width: 760px) {
+      .container { width: min(100% - 22px, 1160px); }
+
+      .nav {
+        padding: 12px 0;
+        min-height: auto;
+        align-items: flex-start;
+      }
+
+      .nav-links { gap: 6px; justify-content: flex-end; }
+      .pill { min-height: 34px; padding: 8px 10px; font-size: 11px; }
+      .hero { align-items: flex-start; flex-direction: column; }
+      .status-wrap { justify-content: flex-start; min-width: 0; }
+      .status-line { text-align: left; }
+      .panel-head { align-items: flex-start; flex-direction: column; }
+      .toolbar { align-items: flex-start; flex-direction: column; }
+      .toolbar-left, .toolbar-right { width: 100%; }
+      .search { width: 100%; }
+      .detail-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+
+      .contract-card { grid-template-columns: auto minmax(0, 1fr); }
+      .contract-card .pill { grid-column: 1 / -1; width: 100%; }
+    }
+
+    @media (max-width: 560px) {
+      main { padding-top: 25px; }
+      .brand-sub { display: none; }
+      .nav { flex-direction: column; }
+      .nav-links { width: 100%; justify-content: flex-start; }
+      .optimizer-controls { grid-template-columns: 1fr; }
+      .main-grid { grid-template-columns: 1fr; }
+      .metric-card { min-height: 137px; }
+      .pool-grid { padding: 11px; }
+      .pool-main { grid-template-columns: 1fr; }
+      .metrics-row { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .detail-grid { grid-template-columns: 1fr; }
+      .contract-address-full { display: none; }
+      .contract-address-short { display: block; }
+      .control-select.small { width: 100%; }
+    }
+  </style>
+</head>
+<body>
+  <div class="orb one"></div>
+  <div class="orb two"></div>
+
+  <header class="topbar">
+    <div class="container nav">
+      <div class="brand">
+        <img src="assets/logo.png" alt="ASTY Logo" class="brand-logo" onerror="this.style.display='none'">
+        <div>
+          <div class="brand-title">$ASTY</div>
+          <div class="brand-sub">ArbStrategy</div>
+        </div>
+      </div>
+
+      <nav class="nav-links">
+        <a class="pill" href="https://arbstrategy-asty.github.io/ArbStrategy-ASTY/" target="_blank" rel="noopener noreferrer">System</a>
+        <a class="pill" href="https://t.me/ArbStrategyASTY" target="_blank" rel="noopener noreferrer">Telegram</a>
+        <a class="pill" href="https://birdeye.so/solana/token/ASTYqeaoK83Zs1pTFEXZUB6BM8cG8YLTsN852NUkt7ZR" target="_blank" rel="noopener noreferrer">BirdEye</a>
+        <a class="pill" href="https://dexscreener.com/solana/2ufiewc5wf8gjb1a9yipkfulwrfn4zgyma1kdqrakoar" target="_blank" rel="noopener noreferrer">DexScr</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container">
+    <section class="hero">
+      <div>
+        <div class="eyebrow">ArbStrategy on Solana</div>
+        <h1>ASTY Liquidity Optimizer</h1>
+        <p class="hero-copy">Dynamic liquidity guidance for the complete ASTY pool network.</p>
+        <div class="live-proof" id="liveProof">Scanning current liquidity, volume, transactions and short-term momentum...</div>
+        <div class="trust-line">No fixed efficiency tiers. Every pool is recalculated from the latest available activity.</div>
+      </div>
+
+      <div class="status-wrap">
+        <div class="status-line">
+          <span class="status-dot" id="statusDot"></span>
+          <span id="statusText">Loading live pool data...</span>
+        </div>
+        <button class="icon-button" id="refreshButton" type="button" aria-label="Refresh optimizer">↻</button>
+      </div>
+    </section>
+
+    <section class="panel" aria-label="Optimizer settings">
+      <div class="panel-head">
+        <div>
+          <div class="panel-title">Deployment Setup</div>
+          <div class="panel-sub">Enter the capital currently available for the next liquidity action.</div>
+        </div>
+      </div>
+
+      <div class="optimizer-controls">
+        <div class="field">
+          <label for="capitalInput">Available Capital</label>
+          <div class="input-shell">
+            <span class="input-prefix">$</span>
+            <input class="control-input with-prefix" id="capitalInput" type="number" min="0" step="5" value="250" inputmode="decimal">
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="reserveInput">Keep Available</label>
+          <div class="input-shell">
+            <input class="control-input with-suffix" id="reserveInput" type="number" min="0" max="100" step="5" value="30" inputmode="decimal">
+            <span class="input-suffix">%</span>
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="minStepInput">Minimum Step</label>
+          <div class="input-shell">
+            <span class="input-prefix">$</span>
+            <input class="control-input with-prefix" id="minStepInput" type="number" min="5" step="5" value="20" inputmode="decimal">
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="maxStepInput">Maximum Step</label>
+          <div class="input-shell">
+            <span class="input-prefix">$</span>
+            <input class="control-input with-prefix" id="maxStepInput" type="number" min="5" step="5" value="100" inputmode="decimal">
+          </div>
+        </div>
+
+        <button class="pill run-button" id="runButton" type="button">Recalculate</button>
+      </div>
+
+      <div class="model-note">
+        <strong>How it works:</strong> The optimizer compares 5m, 1h, 6h and 24h volume, transaction activity, current liquidity, configured pool fees and locally stored scan history. It recommends only the next controlled step. A pool that is quiet now remains monitored and can move to the top immediately when real on-chain activity appears.
+      </div>
+    </section>
+
+    <section class="main-grid" aria-label="Optimizer summary">
+      <article class="metric-card">
+        <div class="metric-label">Suggested Deployment</div>
+        <div class="metric-value green" id="deployValue">$0.00</div>
+        <div class="metric-sub" id="deploySub">Waiting for live pool data</div>
+      </article>
+
+      <article class="metric-card">
+        <div class="metric-label">Kept Available</div>
+        <div class="metric-value live-color" id="reserveValue">$0.00</div>
+        <div class="metric-sub" id="reserveSub">Ready for sudden Meme pool activity</div>
+      </article>
+
+      <article class="metric-card">
+        <div class="metric-label">Pools Selected</div>
+        <div class="metric-value" id="selectedValue">0</div>
+        <div class="metric-sub" id="selectedSub">No deployment calculated yet</div>
+      </article>
+
+      <article class="metric-card">
+        <div class="metric-label">Strongest Current Impulse</div>
+        <div class="metric-value live-color" id="impulseValue">-</div>
+        <div class="metric-sub" id="impulseSub">Waiting for activity data</div>
+      </article>
+    </section>
+
+    <div class="allocation-bar-wrap">
+      <div class="allocation-labels">
+        <span id="barDeployLabel">Suggested now: $0.00</span>
+        <span id="barReserveLabel">Available reserve: $0.00</span>
+      </div>
+      <div class="allocation-track" aria-label="Capital allocation">
+        <div class="allocation-deploy" id="allocationDeploy"></div>
+        <div class="allocation-reserve" id="allocationReserve"></div>
+      </div>
+    </div>
+
+    <section class="panel" aria-label="Pool recommendations">
+      <div class="panel-head">
+        <div>
+          <div class="panel-title">Dynamic Pool Recommendations</div>
+          <div class="panel-sub">Recommendations update automatically every 60 seconds and react to sudden activity.</div>
+        </div>
+      </div>
+
+      <div class="toolbar">
+        <div class="toolbar-left">
+          <input class="search" id="poolSearch" type="search" placeholder="Search pool or token..." autocomplete="off">
+          <div class="filter-pills" role="group" aria-label="Pool filter">
+            <button class="pill filter-button active" data-filter="all" type="button">All Pools</button>
+            <button class="pill filter-button" data-filter="deploy" type="button">Deploy Now</button>
+            <button class="pill filter-button" data-filter="momentum" type="button">Momentum</button>
+            <button class="pill filter-button" data-filter="xwatch" type="button">X Watch</button>
+          </div>
+        </div>
+
+        <div class="toolbar-right">
+          <select class="control-select small" id="sortSelect" aria-label="Sort pools">
+            <option value="recommended">Recommended first</option>
+            <option value="impulse">Current impulse</option>
+            <option value="fees">Fees 24h</option>
+            <option value="volume">Volume 24h</option>
+            <option value="liquidity">Liquidity</option>
+          </select>
+          <div class="pool-count" id="poolCount">-</div>
+        </div>
+      </div>
+
+      <div class="pool-grid" id="poolGrid">
+        <div class="empty-state">Loading the ASTY pool network...</div>
+      </div>
+    </section>
+
+    <section class="contract-card" id="contractCard" aria-label="ASTY contract address">
+      <div class="contract-icon">
+        <img src="assets/logo.png" alt="ASTY" onerror="this.onerror=null;this.src='assets/wolf.png'">
+      </div>
+      <div class="contract-content">
+        <div class="contract-label">ASTY Contract</div>
+        <div class="contract-meta">Solana Token Mint</div>
+        <code class="contract-address contract-address-full">ASTYqeaoK83Zs1pTFEXZUB6BM8cG8YLTsN852NUkt7ZR</code>
+        <code class="contract-address contract-address-short">ASTYqeao...NUkt7ZR</code>
+      </div>
+      <button class="pill" id="copyContractButton" type="button">Copy</button>
+    </section>
+
+    <img class="footer-wolf" src="assets/wolf.png" alt="ASTY Wolf" onerror="if(!this.dataset.fallback){this.dataset.fallback='upper';this.src='assets/Wolf.png';}else if(this.dataset.fallback==='upper'){this.dataset.fallback='logo';this.src='assets/logo.png';}else{this.style.display='none';}">
+
+    <div class="footer">
+      Live pool data: GeckoTerminal · Calculations run locally in the browser<br>
+      The optimizer is a deployment assistant, not an execution bot. Recommendations are estimates and do not guarantee higher fees or volume.
+    </div>
+  </main>
+
+  <dialog id="poolDialog">
+    <div class="dialog-head">
+      <div>
+        <div class="dialog-title" id="dialogTitle">Pool Details</div>
+        <div class="dialog-sub" id="dialogSub">-</div>
+      </div>
+      <button class="dialog-close" id="dialogClose" type="button" aria-label="Close">✕</button>
+    </div>
+    <div class="dialog-body" id="dialogBody"></div>
+  </dialog>
+
+  <script>
+    const ASTY_MINT = "ASTYqeaoK83Zs1pTFEXZUB6BM8cG8YLTsN852NUkt7ZR";
+    const REFRESH_MS = 60_000;
+    const CHUNK_SIZE = 25;
+    const CACHE_KEY = "asty-liquidity-optimizer-cache-v1";
+    const HISTORY_KEY = "asty-liquidity-optimizer-history-v1";
+    const FLAGS_KEY = "asty-liquidity-optimizer-xflags-v1";
+    const SETTINGS_KEY = "asty-liquidity-optimizer-settings-v1";
+    const X_EVENT_MS = 2 * 60 * 60 * 1000;
+
+    // [pool address, display label, configured pool fee in percent]
+    const POOLS = [
+      ["3UvhqPrMyf13qgRodARDi5oGJGoxHYb2ykZdCaa1TV8i","ASTY/$WIF",1],
+      ["HeuivHLqCEmsgKhYhX1M6MGthEbtHrGmZdXQSCBVkstP","ASTY/ALCH",1],
+      ["CSD1NpGwhnohByefBp73Jyk6u6ZCkwwDFDVqvmkDrfxE","ASTY/ARBX",1],
+      ["DxMFG4kn8pxuf7AoKD1ffXjUhPpj4a8WAdgw87gyM2mj","ASTY/ARBX",0.3],
+      ["CoD6KLgnW2wKe2UtnNjSQk4RSS6fMU4P2vwKqsUxK9Bf","ASTY/Bonk",1],
+      ["7T6HixJyUfzSR88dhWC9tAjasXcdFyDrKmDtuzrXgt9j","ASTY/ETH",1],
+      ["B6fq1uNpMkyGANAQo5D9GJfMCkcaNewc6q8sWZAfWZ4M","ASTY/Fartcoin",1],
+      ["8aXv2DDRG3k5N3ADTw37Di4ytHGJ3ZaS2tPp1f2EW5ZD","ASTY/GEOD",1],
+      ["CRGcFA8f577F2BEZSmgohd4cuBTVsBpLjwqfVHrG8krE","ASTY/BOME",1],
+      ["3UapB8rB3T88Kac7CG3F44SKCa5xSBsKaJndbx8YrxWG","ASTY/RTM",1],
+      ["92RKFRJSctMAuw8Tym7cZgd2yjMcHeZ5hDUMdnZd54zV","ASTY/Grandma",1],
+      ["Gec7ENkk9irtsmmwpwLHk1i4VntB4vFGRAe1ET3LeT3J","ASTY/JTO",1],
+      ["iZXTZMMS51US5erGnviWfc8CNGx5QDDzp6DERH25EtW","ASTY/JUP",1],
+      ["29eKi5ipMR9fLgkYpM91Xrab2LVBnUU75SYG8kCt1nis","ASTY/MET",1],
+      ["CSiAzSiCMNGjLwYKRdhDUjNwz4obf3Q5ZnMQECnmxshV","ASTY/PENGU",1],
+      ["2uNbRDLDeMizdJNEqKaapzAGJWVwa3uuJ3w4trVud4ZW","ASTY/pippin",1],
+      ["GyVyv2H2SB4fYaC7C6raWNSQqNhShdzNuSqQwG9uUUcE","ASTY/POPCAT",1],
+      ["RYztJXyPCmwUmfi7punwCf7q6FbxoJbRtBEodZ7j7GH","ASTY/PsyopAnime",1],
+      ["DfJsn7Ui6YBUC25kM5FoqrCYrqfRVCoSxpTeyEzWv4vT","ASTY/RAY",1],
+      ["2ufiEWc5wF8gJB1a9YiPkFuLwrFn4Zgyma1kdQRakoAr","ASTY/SOL",0.25],
+      ["7tbbdGzFZpjrPmM7jQderyyv1x8Ebz1vhwqNhEW97osb","ASTY/SOL",1],
+      ["HAieGroddWr3NZpSZYqqm39w2aTUuknWNXxfF6vWNpaR","ASTY/SOL",0.3],
+      ["BBVxTUtaagQgG5AgmNSYS9Pqwidc7yAbRF6avt48iF2u","ASTY/TAX",1],
+      ["CFcyQpye4K4pyhVPoSAgj3BAqNoWpZCvHpNncXssy7qH","ASTY/TAX",1],
+      ["tDqqTi8tJds88AkxFvhjZTQK5iDtV5ZG9ZkNYxh23MG","ASTY/UNI",1],
+      ["3HhGsPNMtSg1dNV9SVSfzGCQLx3Zp5giAvYJdQuuNqU9","ASTY/USDC",0.3],
+      ["5zCsWjFoEQ7jGNaHNwBRvZq7RMqVh6vQhmiYv4NWkDZK","ASTY/USDC",1],
+      ["BqdoyTYoXpnAzRafoBQPrY4ubVSzYE42rxJzNJwoxmZP","ASTY/USDC",0.25],
+      ["BWFDr72tjXJsRdUyAfqghv6sGXgQr2zJ78KdeV3c74q1","ASTY/USDC",2],
+      ["2Hjjn2aoVdUeGraV4vRak94GGAAW5w9syfVBeXU4Ad5J","ASTY/WBTC",1],
+      ["7Fr58kHKW85XiFgZ8WibumE7P5CLZFo4A8qsQxKNEWaE","ASTY/WhiteWhale",1],
+      ["4TgvcTKzq9zZR5znyak2y3tvaXg4q6hvKWEZgxesQqkx","ASTY/WLFI",1],
+      ["5wpSZwUmdXy5kB96n7U24iFzvbSNEvFd4BvERhhqYjQY","ASTY/WOJAK",1],
+      ["2aWCx2qrYmjen1N8UW3eLBzNu7fCPqxjL9NKXqHGXPHc","ASTY/ZBCN",1],
+      ["2WRrdtnKKr2eq67o4ZK2VQv7dXu4Pm8iz6TMN8UXvhbV","ASTY/SOL",2],
+      ["4iHVvcWHNYFDPFySosAx1qGZoFsDN7gXHxKqUFnGq6oJ","ASTY/BAT",1],
+      ["4kWT67c13svR9EfxM4TGn8inNqFsXeuAWQhn8KBVajBs","ASTY/ACC",1],
+      ["5fEodJwZNUTwXbiTRKU2KPCc4Xr15fPKVmxbAph7yX7v","ASTY/BTAX",1],
+      ["61HTuoKeWhEfscoBcd5zSNvmAyGpxdaUNMriLNnyyREz","ASTY/USDC",6],
+      ["8fBYS2Kq9f4Lm1SYdt4sdHRL27Ni8UcRMPtFNLdEcnAH","ASTY/Cake",1],
+      ["DdK87cRD7uzoUWc9JZNRNxPoLHXeAcGkfU2b49YTZrm3","ASTY/AVA",1],
+      ["DwZZHyqnzWEqNP4VuczHHwfJsni6xqo57TBm7SoeJ62u","ASTY/RENDER",1],
+      ["HvmNZyopYSwHRUXCUti4D6YANpfWscVLSQVv9nw2XYhx","ASTY/TURBO",1],
+      ["m1e9swvUoggDm2zLXzrzKRrbVwmGEP8aQy7BQigFZgK","ASTY/SOL",0.25],
+      ["3PVPMEseLJxE6yyB5eBJ3qzRCzCGN6L9qa85stcZH4FM","ASTY/testicle",1],
+      ["BM9W33kccA1GCdbkuGoNDvJLTQW5xKbKwXht8sCXayc3","ASTY/Buttcoin",1],
+      ["AiazXNe6ShtCbQHZbmpnkuuswVHFKh5rLZKeudzWU3aq","ASTY/BP",1],
+      ["DitqC25rriaMeZyiQPeXLNgfxqRTZL2qxFHp3MHrxM6t","ASTY/Punch",1],
+      ["mwsmVXehTt2aFonhJDyZWbwgpxDVM9MMfo7GUYrYL7K","ASTY/Restart",1],
+      ["EybMABxhsZ9MajRseP1X3c3v38U1P88YpvweFsGvgPSS","ASTY/INCOME",1],
+      ["AwmLBQ3keEicdD93gTr22avcJqsXwDTGMaLt25Jvyexo","ASTY/ORCA",1],
+      ["4UPuDZPPkrC5YHdpFnfv4RX7dfHYnjz8BYZaTCewSn5v","ASTY/MOODENG",1],
+      ["9dvPJ67AEzZZD9ThHAEJzkzVwxiVQrvC2Virv8KyGgZb","ASTY/SEARCH",1],
+      ["Dz8AuKtEJLrVeuAvhBg4gbTkBeNqC89wfLt3fJKZKk8v","ASTY/USD",4],
+      ["28yNWBwCvNLaC8h2Lf8AFcZqzfRpKMQMynwjjMibRwRU","ASTY/HYPE",1],
+      ["7wCaiBEGFHPhB5iDTCERsNXbzsc7bZyamqQsHNxuhdYU","ASTY/SATO",1],
+      ["Ax38rDrpRMturM59zKBEGsNn2HjE96rC9Jz3WbAgXtYw","ASTY/SIMPLR",1],
+      ["444uxc7K8jDZhtRUiuDAM822Pe93RYkHytzWuLKNyxVs","ASTY/TAO",1],
+      ["EDrT8LWDRuYE7v75Dkc9gUjLk7MvDYdezvDcnoHGqwuq","ASTY/TROLL",1],
+      ["39dM3NfQuPiGwC3M93BUsXKrRdXTAZWPX6VxianCSevn","ASTY/GREM",1],
+      ["ArKpj5vcNtHJTLhUKeADCmvuBpn1ZZoGNHZZYQ1QXq5n","ASTY/CUPSEY",1],
+      ["DGuvY79xbLuJRb3CzwQL59z5zoit7KLnFwyL2t6EQCcj","ASTY/SERIOUS",1]
+    ];
+
+    const els = {
+      statusDot: document.getElementById("statusDot"),
+      statusText: document.getElementById("statusText"),
+      refreshButton: document.getElementById("refreshButton"),
+      runButton: document.getElementById("runButton"),
+      liveProof: document.getElementById("liveProof"),
+      capitalInput: document.getElementById("capitalInput"),
+      reserveInput: document.getElementById("reserveInput"),
+      minStepInput: document.getElementById("minStepInput"),
+      maxStepInput: document.getElementById("maxStepInput"),
+      deployValue: document.getElementById("deployValue"),
+      deploySub: document.getElementById("deploySub"),
+      reserveValue: document.getElementById("reserveValue"),
+      reserveSub: document.getElementById("reserveSub"),
+      selectedValue: document.getElementById("selectedValue"),
+      selectedSub: document.getElementById("selectedSub"),
+      impulseValue: document.getElementById("impulseValue"),
+      impulseSub: document.getElementById("impulseSub"),
+      allocationDeploy: document.getElementById("allocationDeploy"),
+      allocationReserve: document.getElementById("allocationReserve"),
+      barDeployLabel: document.getElementById("barDeployLabel"),
+      barReserveLabel: document.getElementById("barReserveLabel"),
+      poolSearch: document.getElementById("poolSearch"),
+      sortSelect: document.getElementById("sortSelect"),
+      poolCount: document.getElementById("poolCount"),
+      poolGrid: document.getElementById("poolGrid"),
+      poolDialog: document.getElementById("poolDialog"),
+      dialogTitle: document.getElementById("dialogTitle"),
+      dialogSub: document.getElementById("dialogSub"),
+      dialogBody: document.getElementById("dialogBody"),
+      dialogClose: document.getElementById("dialogClose"),
+      copyContractButton: document.getElementById("copyContractButton"),
+      contractCard: document.getElementById("contractCard")
+    };
+
+    let poolRows = [];
+    let currentFilter = "all";
+    let lastDataMode = "live";
+    let isLoading = false;
+
+    function clamp(value, min, max) {
+      return Math.min(max, Math.max(min, value));
+    }
+
+    function num(value) {
+      const parsed = Number(value);
+      return Number.isFinite(parsed) ? parsed : 0;
+    }
+
+    function roundMoney(value, step = 5) {
+      if (value <= 0) return 0;
+      return Math.floor(value / step) * step;
+    }
+
+    function fmtUsd(value, compact = false) {
+      const n = num(value);
+      if (compact) {
+        if (Math.abs(n) >= 1e9) return "$" + (n / 1e9).toFixed(1) + "B";
+        if (Math.abs(n) >= 1e6) return "$" + (n / 1e6).toFixed(1) + "M";
+        if (Math.abs(n) >= 1e3) return "$" + (n / 1e3).toFixed(1) + "K";
+      }
+      return new Intl.NumberFormat("en-US", {
+        style: "currency",
+        currency: "USD",
+        minimumFractionDigits: n < 100 ? 2 : 0,
+        maximumFractionDigits: n < 100 ? 2 : 0
+      }).format(n);
+    }
+
+    function fmtNumber(value, digits = 1) {
+      const n = num(value);
+      return new Intl.NumberFormat("en-US", {
+        maximumFractionDigits: digits,
+        minimumFractionDigits: 0
+      }).format(n);
+    }
+
+    function fmtPercent(value, digits = 1) {
+      const n = num(value);
+      if (!Number.isFinite(n)) return "-";
+      return n.toFixed(digits).replace(/\.0$/, "") + "%";
+    }
+
+    function fmtMultiple(value) {
+      const n = num(value);
+      if (!Number.isFinite(n) || n <= 0) return "-";
+      return n.toFixed(n >= 10 ? 0 : 1) + "x";
+    }
+
+    function formatLabel(label) {
+      return label.replace("/", " / ");
+    }
+
+    function shortAddress(address) {
+      return address.slice(0, 6) + "..." + address.slice(-5);
+    }
+
+    function txTotal(source) {
+      return num(source?.buys) + num(source?.sells);
+    }
+
+    function chunkArray(items, size) {
+      const chunks = [];
+      for (let i = 0; i < items.length; i += size) chunks.push(items.slice(i, i + size));
+      return chunks;
+    }
+
+    function sleep(ms) {
+      return new Promise(resolve => setTimeout(resolve, ms));
+    }
+
+    function loadJson(key, fallback) {
+      try {
+        const value = JSON.parse(localStorage.getItem(key));
+        return value ?? fallback;
+      } catch {
+        return fallback;
+      }
+    }
+
+    function saveJson(key, value) {
+      try { localStorage.setItem(key, JSON.stringify(value)); } catch { /* storage is optional */ }
+    }
+
+    function readSettings() {
+      const saved = loadJson(SETTINGS_KEY, {});
+      if (Number.isFinite(Number(saved.capital))) els.capitalInput.value = saved.capital;
+      if (Number.isFinite(Number(saved.reserve))) els.reserveInput.value = saved.reserve;
+      if (Number.isFinite(Number(saved.minStep))) els.minStepInput.value = saved.minStep;
+      if (Number.isFinite(Number(saved.maxStep))) els.maxStepInput.value = saved.maxStep;
+    }
+
+    function getSettings() {
+      const capital = Math.max(0, num(els.capitalInput.value));
+      const reserve = clamp(num(els.reserveInput.value), 0, 100);
+      const minStep = Math.max(5, num(els.minStepInput.value) || 20);
+      const maxStep = Math.max(minStep, num(els.maxStepInput.value) || 100);
+      const settings = { capital, reserve, minStep, maxStep };
+      saveJson(SETTINGS_KEY, settings);
+      return settings;
+    }
+
+    function cleanXFlags() {
+      const flags = loadJson(FLAGS_KEY, {});
+      const now = Date.now();
+      let changed = false;
+      for (const [address, expiry] of Object.entries(flags)) {
+        if (num(expiry) <= now) {
+          delete flags[address];
+          changed = true;
+        }
+      }
+      if (changed) saveJson(FLAGS_KEY, flags);
+      return flags;
+    }
+
+    function isXMarked(address) {
+      const flags = cleanXFlags();
+      return num(flags[address]) > Date.now();
+    }
+
+    function toggleXFlag(address) {
+      const flags = cleanXFlags();
+      if (num(flags[address]) > Date.now()) delete flags[address];
+      else flags[address] = Date.now() + X_EVENT_MS;
+      saveJson(FLAGS_KEY, flags);
+      recalculate();
+    }
+
+    function getHistoryReference(address) {
+      const history = loadJson(HISTORY_KEY, {});
+      const list = Array.isArray(history[address]) ? history[address] : [];
+      const target = Date.now() - 10 * 60 * 1000;
+      for (let i = list.length - 1; i >= 0; i--) {
+        if (num(list[i].t) <= target) return list[i];
+      }
+      return null;
+    }
+
+    function saveHistory(rows) {
+      const history = loadJson(HISTORY_KEY, {});
+      const now = Date.now();
+      const cutoff = now - 7 * 24 * 60 * 60 * 1000;
+
+      for (const row of rows) {
+        const list = Array.isArray(history[row.address]) ? history[row.address] : [];
+        const last = list[list.length - 1];
+        if (!last || now - num(last.t) >= 50_000) {
+          list.push({
+            t: now,
+            liquidity: row.liquidity,
+            v5: row.v5,
+            v1: row.v1,
+            v6: row.v6,
+            v24: row.v24,
+            tx5: row.tx5,
+            tx1: row.tx1
+          });
+        }
+        history[row.address] = list.filter(item => num(item.t) >= cutoff).slice(-360);
+      }
+
+      saveJson(HISTORY_KEY, history);
+    }
+
+    async function fetchWithTimeout(url, timeoutMs = 16_000) {
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), timeoutMs);
+      try {
+        const response = await fetch(url, {
+          headers: { Accept: "application/json;version=20230302" },
+          signal: controller.signal
+        });
+        if (!response.ok) throw new Error("HTTP " + response.status);
+        return await response.json();
+      } finally {
+        clearTimeout(timer);
+      }
+    }
+
+    async function fetchGeckoPools() {
+      const chunks = chunkArray(POOLS, CHUNK_SIZE);
+      const all = [];
+
+      for (let i = 0; i < chunks.length; i++) {
+        const ids = chunks[i].map(([address]) => address).join(",");
+        const url = `https://api.geckoterminal.com/api/v2/networks/solana/pools/multi/${encodeURIComponent(ids)}?include=base_token,quote_token&include_volume_breakdown=false&include_composition=false`;
+        const payload = await fetchWithTimeout(url);
+        if (Array.isArray(payload?.data)) all.push(...payload.data);
+        if (i < chunks.length - 1) await sleep(260);
+      }
+
+      if (!all.length) throw new Error("No pool data returned");
+      saveJson(CACHE_KEY, { t: Date.now(), data: all });
+      return { data: all, mode: "live", timestamp: Date.now() };
+    }
+
+    function loadCachedPools() {
+      const cached = loadJson(CACHE_KEY, null);
+      if (!cached || !Array.isArray(cached.data) || !cached.data.length) return null;
+      return { data: cached.data, mode: "cache", timestamp: num(cached.t) };
+    }
+
+    function setStatus(mode, text) {
+      els.statusDot.classList.remove("live", "error");
+      if (mode === "live") els.statusDot.classList.add("live");
+      if (mode === "error") els.statusDot.classList.add("error");
+      els.statusText.textContent = text;
+    }
+
+    function parsePoolRows(items) {
+      const map = new Map();
+      for (const item of items) {
+        const address = item?.attributes?.address;
+        if (address) map.set(address, item);
+      }
+
+      return POOLS.map(([address, label, feePercent]) => {
+        const item = map.get(address);
+        if (!item) return null;
+        const a = item.attributes || {};
+        const tx = a.transactions || {};
+        const volume = a.volume_usd || {};
+        const priceChange = a.price_change_percentage || {};
+        const historyRef = getHistoryReference(address);
+
+        const row = {
+          address,
+          label: formatLabel(label),
+          rawLabel: label,
+          feePercent,
+          name: a.name || label,
+          dexId: item.relationships?.dex?.data?.id || "-",
+          createdAt: a.pool_created_at || null,
+          liquidity: num(a.reserve_in_usd),
+          v5: num(volume.m5),
+          v1: num(volume.h1),
+          v6: num(volume.h6),
+          v24: num(volume.h24),
+          tx5: txTotal(tx.m5),
+          tx1: txTotal(tx.h1),
+          tx24: txTotal(tx.h24),
+          buys1: num(tx.h1?.buys),
+          sells1: num(tx.h1?.sells),
+          p5: num(priceChange.m5),
+          p1: num(priceChange.h1),
+          p6: num(priceChange.h6),
+          p24: num(priceChange.h24),
+          historyRef,
+          xMarked: isXMarked(address)
+        };
+
+        row.fees1 = row.v1 * feePercent / 100;
+        row.fees24 = row.v24 * feePercent / 100;
+        row.turnover24 = row.liquidity > 0 ? row.v24 / row.liquidity : 0;
+        row.staticDailyYield = row.liquidity > 0 ? row.fees24 / row.liquidity * 100 : 0;
+        return row;
+      }).filter(Boolean);
+    }
+
+    function computeSignals(rows) {
+      const maxV1 = Math.max(1, ...rows.map(row => row.v1));
+      const maxFees24 = Math.max(0.01, ...rows.map(row => row.fees24));
+
+      for (const row of rows) {
+        const previousFiveHourAverage = Math.max((row.v6 - row.v1) / 5, row.v24 / 24 * 0.18, 0.05);
+        const rollingFiveMinuteAverage = Math.max(row.v1 / 12, row.v24 / 288 * 0.25, 0.01);
+        const txFiveMinuteAverage = Math.max(row.tx1 / 12, row.tx24 / 288 * 0.25, 0.20);
+
+        row.accel1 = clamp(row.v1 / previousFiveHourAverage, 0, 12);
+        row.accel5 = clamp(row.v5 / rollingFiveMinuteAverage, 0, 12);
+        row.txAccel5 = clamp(row.tx5 / txFiveMinuteAverage, 0, 12);
+
+        const localVolumeDelta = row.historyRef
+          ? (row.v1 - num(row.historyRef.v1)) / Math.max(num(row.historyRef.v1), 1)
+          : 0;
+        const localTxDelta = row.historyRef
+          ? (row.tx1 - num(row.historyRef.tx1)) / Math.max(num(row.historyRef.tx1), 1)
+          : 0;
+
+        row.localMomentum = clamp(Math.max(0, localVolumeDelta) * 0.7 + Math.max(0, localTxDelta) * 0.3, 0, 3);
+
+        const accel5Score = clamp(Math.log1p(row.accel5) / Math.log(9), 0, 1);
+        const accel1Score = clamp(Math.log1p(row.accel1) / Math.log(9), 0, 1);
+        const txScore = clamp(Math.log1p(row.txAccel5) / Math.log(9), 0, 1);
+        const turnoverScore = clamp(Math.log1p(row.turnover24) / Math.log(5), 0, 1);
+        const currentActivityScore = clamp(Math.log1p(row.v1) / Math.log1p(maxV1), 0, 1);
+        const outputScore = clamp(Math.log1p(row.fees24) / Math.log1p(maxFees24), 0, 1);
+        const localScore = clamp(row.localMomentum / 1.5, 0, 1);
+        const volatilityScore = clamp((Math.abs(row.p5) * 2 + Math.abs(row.p1)) / 30, 0, 1);
+        const xBoost = row.xMarked ? 0.055 : 0;
+
+        row.signal = clamp(
+          accel5Score * 0.24 +
+          accel1Score * 0.20 +
+          txScore * 0.16 +
+          turnoverScore * 0.14 +
+          currentActivityScore * 0.10 +
+          outputScore * 0.08 +
+          localScore * 0.05 +
+          volatilityScore * 0.03 +
+          xBoost,
+          0,
+          1
+        );
+
+        const dailyFrom5 = row.v5 * 288;
+        const dailyFrom1 = row.v1 * 24;
+        const dailyFrom6 = row.v6 * 4;
+        const blendedDaily = dailyFrom5 * 0.10 + dailyFrom1 * 0.42 + dailyFrom6 * 0.30 + row.v24 * 0.18;
+        const forecastCap = Math.max(row.v24 * 6, row.v6 * 7, row.v1 * 30, 10);
+        row.forecast24 = clamp(blendedDaily * (0.72 + row.signal * 0.66), 0, forecastCap);
+
+        const targetTurnover = 2.6 - row.signal * 1.25;
+        row.targetLiquidity = row.forecast24 / Math.max(targetTurnover, 0.8);
+        row.targetLow = row.targetLiquidity * 0.85;
+        row.targetHigh = row.targetLiquidity * 1.15;
+      }
+
+      return rows;
+    }
+
+    function buildReason(row) {
+      if (row.allocation > 0) {
+        if (row.accel5 >= 2.2 && row.txAccel5 >= 1.5) {
+          return `Fresh 5m volume and transaction acceleration are appearing together. The next step stays capped at ${fmtUsd(row.allocation)}.`;
+        }
+        if (row.accel1 >= 1.8) {
+          return `Current 1h volume is running about ${fmtMultiple(row.accel1)} above its recent hourly baseline. Add only the calculated step and rescan.`;
+        }
+        if (row.turnover24 >= 1.5) {
+          return `The pool is turning over its liquidity quickly enough to support a controlled increase without committing the full available capital.`;
+        }
+        return `Current flow can support a small measured increase. The recommendation remains deliberately limited because future volume is uncertain.`;
+      }
+
+      if (row.xMarked && row.v5 <= 0 && row.tx5 <= 0) {
+        return "An X event is marked, but no matching on-chain reaction is visible yet. Keep the pool under close watch without adding capital.";
+      }
+      if (row.signal >= 0.58) {
+        return "Momentum is visible, but the current liquidity already covers the observed flow. Watch for another confirmed increase before adding.";
+      }
+      if (row.v24 <= 1 && row.tx24 <= 2) {
+        return "No meaningful on-chain activity is visible right now. The pool remains monitored and can reactivate immediately after a new impulse.";
+      }
+      if (row.targetHigh <= row.liquidity) {
+        return "Observed flow does not currently justify more depth. Keep the existing base liquidity and wait for a stronger confirmed move.";
+      }
+      return "The activity signal is not strong enough for a new liquidity step. Continue monitoring instead of forcing capital into the pool.";
+    }
+
+    function recommendationLabel(row) {
+      if (row.allocation > 0) return { text: "Add now", cls: "add" };
+      if (row.xMarked) return { text: "X event watch", cls: "xevent" };
+      if (row.signal >= 0.56 || row.accel5 >= 2) return { text: "Watch closely", cls: "watch" };
+      return { text: "Hold", cls: "" };
+    }
+
+    function allocateCapital(rows, settings) {
+      const deployable = settings.capital * (1 - settings.reserve / 100);
+      const candidates = [];
+
+      for (const row of rows) {
+        const observedActivity = row.v1 >= 2 || row.v24 >= 10 || row.tx1 >= 3 || row.xMarked;
+        const capacity = Math.max(0, row.targetHigh - row.liquidity);
+        const poolStepCap = row.liquidity > 0
+          ? Math.max(settings.minStep, row.liquidity * (0.06 + row.signal * 0.20))
+          : settings.minStep;
+
+        row.capacity = capacity;
+        row.stepCap = Math.min(settings.maxStep, capacity, poolStepCap);
+        row.allocation = 0;
+
+        const eligible = observedActivity && row.signal >= 0.24 && row.capacity >= settings.minStep;
+        if (eligible) {
+          row.weight = Math.max(0.01,
+            row.signal * 1.25 +
+            Math.min(row.accel5, 5) * 0.08 +
+            Math.min(row.accel1, 5) * 0.06 +
+            Math.min(row.turnover24, 5) * 0.05 +
+            (row.xMarked ? 0.08 : 0)
+          );
+          candidates.push(row);
+        } else {
+          row.weight = 0;
+        }
+      }
+
+      if (deployable < settings.minStep || !candidates.length) {
+        for (const row of rows) {
+          row.projectedLiquidity = row.liquidity;
+          row.projectedStaticYield = row.staticDailyYield;
+          row.reason = buildReason(row);
+          row.recommendation = recommendationLabel(row);
+        }
+        return { deployable, deployed: 0, reserve: settings.capital, selected: 0 };
+      }
+
+      const weightSum = candidates.reduce((sum, row) => sum + row.weight, 0);
+      const ordered = [...candidates].sort((a, b) => b.weight - a.weight);
+      let assigned = 0;
+      let remaining = deployable;
+
+      // Open only complete minimum-sized positions. This prevents tiny, impractical allocations.
+      for (const row of ordered) {
+        if (remaining < settings.minStep) break;
+        const proportional = roundMoney(deployable * row.weight / weightSum, 5);
+        const initial = Math.min(row.stepCap, Math.max(settings.minStep, proportional));
+        const roundedInitial = roundMoney(initial, 5);
+        if (roundedInitial >= settings.minStep && roundedInitial <= remaining) {
+          row.allocation = roundedInitial;
+          remaining -= roundedInitial;
+          assigned += roundedInitial;
+        }
+      }
+
+      // Use remaining five-dollar increments only on already opened recommendations.
+      let changed = true;
+      while (remaining >= 5 && changed) {
+        changed = false;
+        for (const row of ordered.filter(item => item.allocation >= settings.minStep)) {
+          const room = roundMoney(row.stepCap - row.allocation, 5);
+          if (room >= 5 && remaining >= 5) {
+            row.allocation += 5;
+            remaining -= 5;
+            assigned += 5;
+            changed = true;
+          }
+          if (remaining < 5) break;
+        }
+      }
+
+      for (const row of rows) {
+        row.projectedLiquidity = row.liquidity + row.allocation;
+        row.projectedStaticYield = row.projectedLiquidity > 0 ? row.fees24 / row.projectedLiquidity * 100 : 0;
+        row.reason = buildReason(row);
+        row.recommendation = recommendationLabel(row);
+      }
+
+      const deployed = rows.reduce((sum, row) => sum + row.allocation, 0);
+      return {
+        deployable,
+        deployed,
+        reserve: Math.max(0, settings.capital - deployed),
+        selected: rows.filter(row => row.allocation > 0).length
+      };
+    }
+
+    function renderSummary(summary) {
+      const strongest = [...poolRows].sort((a, b) => b.signal - a.signal)[0];
+      els.deployValue.textContent = fmtUsd(summary.deployed);
+      els.deploySub.textContent = summary.selected
+        ? `${summary.selected} controlled next step${summary.selected === 1 ? "" : "s"} calculated`
+        : "No pool currently confirms an additional step";
+
+      els.reserveValue.textContent = fmtUsd(summary.reserve);
+      els.reserveSub.textContent = summary.reserve > 0
+        ? "Remains available for the next confirmed impulse"
+        : "All entered capital is currently assigned";
+
+      els.selectedValue.textContent = String(summary.selected);
+      els.selectedSub.textContent = summary.selected
+        ? "Only pools with current capacity receive capital"
+        : "Quiet pools stay monitored instead of being discarded";
+
+      if (strongest) {
+        els.impulseValue.textContent = strongest.label.replace("ASTY / ", "");
+        els.impulseSub.textContent = `${fmtMultiple(strongest.accel5)} 5m volume pace · ${fmtUsd(strongest.v1, true)} 1h volume`;
+      } else {
+        els.impulseValue.textContent = "-";
+        els.impulseSub.textContent = "No activity data available";
+      }
+
+      const total = Math.max(getSettings().capital, 0.01);
+      const deployPercent = clamp(summary.deployed / total * 100, 0, 100);
+      els.allocationDeploy.style.width = deployPercent + "%";
+      els.allocationReserve.style.width = (100 - deployPercent) + "%";
+      els.barDeployLabel.textContent = `Suggested now: ${fmtUsd(summary.deployed)}`;
+      els.barReserveLabel.textContent = `Available reserve: ${fmtUsd(summary.reserve)}`;
+    }
+
+    function poolCardHtml(row) {
+      const recommendation = row.recommendation || recommendationLabel(row);
+      const cardClasses = ["pool-card"];
+      if (row.allocation > 0) cardClasses.push("recommended");
+      if (row.signal >= 0.58) cardClasses.push("hot");
+      if (row.xMarked) cardClasses.push("marked");
+
+      const targetText = row.targetHigh > 0
+        ? `${fmtUsd(row.targetLow, true)} - ${fmtUsd(row.targetHigh, true)}`
+        : "No active target";
+
+      const recommendationValue = row.allocation > 0
+        ? `+${fmtUsd(row.allocation)}`
+        : "No add now";
+
+      return `
+        <article class="${cardClasses.join(" ")}" tabindex="0" data-address="${row.address}">
+          <div class="pool-head">
+            <div>
+              <div class="pool-name">${row.label}</div>
+              <div class="pool-meta">${row.feePercent}% pool fee · ${shortAddress(row.address)}</div>
+            </div>
+            <span class="signal-badge ${recommendation.cls}">${recommendation.text}</span>
+          </div>
+
+          <div class="pool-main">
+            <div class="recommend-box">
+              <div class="box-label">NEXT LIQUIDITY STEP</div>
+              <div class="recommend-value ${row.allocation > 0 ? "" : "zero"}">${recommendationValue}</div>
+              <div class="box-sub">Current liquidity: ${fmtUsd(row.liquidity, true)}</div>
+            </div>
+            <div class="target-box">
+              <div class="box-label">CURRENT TARGET RANGE</div>
+              <div class="target-value">${targetText}</div>
+              <div class="box-sub">Recalculated from current flow</div>
+            </div>
+          </div>
+
+          <div class="metrics-row">
+            <div class="tiny-metric">
+              <div class="tiny-label">Volume 5m</div>
+              <div class="tiny-value ${row.accel5 >= 2 ? "cyan" : ""}">${fmtUsd(row.v5, true)}</div>
+            </div>
+            <div class="tiny-metric">
+              <div class="tiny-label">Volume 1h</div>
+              <div class="tiny-value">${fmtUsd(row.v1, true)}</div>
+            </div>
+            <div class="tiny-metric">
+              <div class="tiny-label">Fees 24h</div>
+              <div class="tiny-value green">${fmtUsd(row.fees24, true)}</div>
+            </div>
+            <div class="tiny-metric">
+              <div class="tiny-label">1h Pace</div>
+              <div class="tiny-value ${row.accel1 >= 1.8 ? "amber" : ""}">${fmtMultiple(row.accel1)}</div>
+            </div>
+          </div>
+
+          <div class="reason">${row.reason}</div>
+
+          <div class="card-footer">
+            <button class="pill micro-action x-event-button ${row.xMarked ? "active" : ""}" type="button" data-x-address="${row.address}">${row.xMarked ? "X Event Marked" : "Mark X Event"}</button>
+            <span class="updated-line">Click for full simulation</span>
+          </div>
+        </article>
+      `;
+    }
+
+    function filteredRows() {
+      const query = els.poolSearch.value.trim().toLowerCase();
+      let rows = poolRows.filter(row => {
+        if (query && !`${row.label} ${row.address} ${row.name}`.toLowerCase().includes(query)) return false;
+        if (currentFilter === "deploy") return row.allocation > 0;
+        if (currentFilter === "momentum") return row.signal >= 0.56 || row.accel5 >= 2 || row.accel1 >= 1.8;
+        if (currentFilter === "xwatch") return row.xMarked;
+        return true;
+      });
+
+      const sort = els.sortSelect.value;
+      rows = [...rows].sort((a, b) => {
+        if (sort === "impulse") return b.signal - a.signal;
+        if (sort === "fees") return b.fees24 - a.fees24;
+        if (sort === "volume") return b.v24 - a.v24;
+        if (sort === "liquidity") return b.liquidity - a.liquidity;
+        return (b.allocation - a.allocation) || (b.signal - a.signal) || (b.fees24 - a.fees24);
+      });
+      return rows;
+    }
+
+    function renderPools() {
+      const rows = filteredRows();
+      els.poolCount.textContent = `${rows.length} of ${poolRows.length} pools`;
+      els.poolGrid.innerHTML = rows.length
+        ? rows.map(poolCardHtml).join("")
+        : `<div class="empty-state">No pools match the current filter.</div>`;
+
+      els.poolGrid.querySelectorAll(".pool-card").forEach(card => {
+        card.addEventListener("click", event => {
+          if (event.target.closest("button, a")) return;
+          openPoolDialog(card.dataset.address);
+        });
+        card.addEventListener("keydown", event => {
+          if ((event.key === "Enter" || event.key === " ") && !event.target.closest("button, a")) {
+            event.preventDefault();
+            openPoolDialog(card.dataset.address);
+          }
+        });
+      });
+
+      els.poolGrid.querySelectorAll(".x-event-button").forEach(button => {
+        button.addEventListener("click", event => {
+          event.stopPropagation();
+          toggleXFlag(button.dataset.xAddress);
+        });
+      });
+    }
+
+    function simulationRows(row) {
+      const candidates = [25, 50, 100, row.allocation].filter((value, index, array) => value > 0 && array.indexOf(value) === index).sort((a, b) => a - b);
+      return candidates.map(step => {
+        const newLiquidity = row.liquidity + step;
+        const staticDailyYield = newLiquidity > 0 ? row.fees24 / newLiquidity * 100 : 0;
+        const withinCurrentRange = newLiquidity >= row.targetLow && newLiquidity <= row.targetHigh;
+        const effect = step === row.allocation && row.allocation > 0
+          ? "Recommended next step"
+          : withinCurrentRange
+            ? "Inside current range"
+            : newLiquidity > row.targetHigh
+              ? "Above current range"
+              : "Below current range";
+        return { step, newLiquidity, staticDailyYield, effect };
+      });
+    }
+
+    function openPoolDialog(address) {
+      const row = poolRows.find(item => item.address === address);
+      if (!row) return;
+
+      els.dialogTitle.textContent = row.label;
+      els.dialogSub.textContent = `${row.feePercent}% pool fee · ${row.dexId}`;
+      const simulations = simulationRows(row);
+
+      els.dialogBody.innerHTML = `
+        <div class="detail-grid">
+          <div class="detail-item">
+            <div class="detail-label">Current Liquidity</div>
+            <div class="detail-value highlight">${fmtUsd(row.liquidity)}</div>
+          </div>
+          <div class="detail-item">
+            <div class="detail-label">Recommended Step</div>
+            <div class="detail-value positive">${row.allocation > 0 ? "+" + fmtUsd(row.allocation) : "No add now"}</div>
+          </div>
+          <div class="detail-item">
+            <div class="detail-label">Current Target Range</div>
+            <div class="detail-value">${fmtUsd(row.targetLow)} - ${fmtUsd(row.targetHigh)}</div>
+          </div>
+          <div class="detail-item">
+            <div class="detail-label">Volume 5m / 1h</div>
+            <div class="detail-value">${fmtUsd(row.v5)} / ${fmtUsd(row.v1)}</div>
+          </div>
+          <div class="detail-item">
+            <div class="detail-label">Volume 6h / 24h</div>
+            <div class="detail-value">${fmtUsd(row.v6)} / ${fmtUsd(row.v24)}</div>
+          </div>
+          <div class="detail-item">
+            <div class="detail-label">Transactions 1h / 24h</div>
+            <div class="detail-value">${fmtNumber(row.tx1, 0)} / ${fmtNumber(row.tx24, 0)}</div>
+          </div>
+          <div class="detail-item">
+            <div class="detail-label">1h Volume Pace</div>
+            <div class="detail-value">${fmtMultiple(row.accel1)}</div>
+          </div>
+          <div class="detail-item">
+            <div class="detail-label">5m Volume Pace</div>
+            <div class="detail-value">${fmtMultiple(row.accel5)}</div>
+          </div>
+          <div class="detail-item">
+            <div class="detail-label">Estimated Fees 24h</div>
+            <div class="detail-value positive">${fmtUsd(row.fees24)}</div>
+          </div>
+          <div class="detail-item">
+            <div class="detail-label">Volume / Liquidity 24h</div>
+            <div class="detail-value">${fmtMultiple(row.turnover24)}</div>
+          </div>
+          <div class="detail-item">
+            <div class="detail-label">Static Daily Fee Yield</div>
+            <div class="detail-value">${fmtPercent(row.staticDailyYield, 2)}</div>
+          </div>
+          <div class="detail-item">
+            <div class="detail-label">X Event Watch</div>
+            <div class="detail-value">${row.xMarked ? "Active" : "Not marked"}</div>
+          </div>
+        </div>
+
+        <div class="detail-section">
+          <div class="detail-section-title">Current Recommendation</div>
+          <div class="detail-section-copy">${row.reason}</div>
+        </div>
+
+        <div class="detail-section">
+          <div class="detail-section-title">Liquidity Step Simulation</div>
+          <div class="detail-section-copy">Static fee yield assumes the last reported 24h fees stay unchanged. It shows dilution only and does not assume that additional liquidity will create more volume.</div>
+          <table class="simulation-table">
+            <thead>
+              <tr>
+                <th>Step</th>
+                <th>New Liquidity</th>
+                <th>Static Daily Yield</th>
+                <th>Position</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${simulations.map(item => `
+                <tr>
+                  <td>+${fmtUsd(item.step)}</td>
+                  <td>${fmtUsd(item.newLiquidity)}</td>
+                  <td>${fmtPercent(item.staticDailyYield, 2)}</td>
+                  <td>${item.effect}</td>
+                </tr>
+              `).join("")}
+            </tbody>
+          </table>
+        </div>
+
+        <div class="detail-section">
+          <div class="detail-section-title">Pool Address</div>
+          <div class="detail-section-copy" style="font-family:ui-monospace,SFMono-Regular,Menlo,monospace;word-break:break-all;">${row.address}</div>
+        </div>
+
+        <div class="dialog-actions">
+          <button class="pill" id="dialogXButton" type="button">${row.xMarked ? "Remove X Event" : "Mark X Event"}</button>
+          <a class="pill" href="https://www.geckoterminal.com/solana/pools/${row.address}" target="_blank" rel="noopener noreferrer">GeckoTerminal ↗</a>
+          <a class="pill" href="https://dexscreener.com/solana/${row.address}" target="_blank" rel="noopener noreferrer">DexScr ↗</a>
+        </div>
+      `;
+
+      document.getElementById("dialogXButton").addEventListener("click", () => {
+        toggleXFlag(row.address);
+        els.poolDialog.close();
+      });
+
+      if (typeof els.poolDialog.showModal === "function") els.poolDialog.showModal();
+      else els.poolDialog.setAttribute("open", "");
+    }
+
+    function recalculate() {
+      if (!poolRows.length) return;
+      const settings = getSettings();
+      poolRows.forEach(row => { row.xMarked = isXMarked(row.address); });
+      computeSignals(poolRows);
+      const summary = allocateCapital(poolRows, settings);
+      renderSummary(summary);
+      renderPools();
+    }
+
+    async function load() {
+      if (isLoading) return;
+      isLoading = true;
+      els.refreshButton.classList.add("spinning");
+      setStatus("loading", "Scanning the ASTY pool network...");
+
+      try {
+        let result;
+        try {
+          result = await fetchGeckoPools();
+        } catch (error) {
+          const cached = loadCachedPools();
+          if (!cached) throw error;
+          result = cached;
+        }
+
+        lastDataMode = result.mode;
+        poolRows = parsePoolRows(result.data);
+        computeSignals(poolRows);
+        saveHistory(poolRows);
+        const summary = allocateCapital(poolRows, getSettings());
+        renderSummary(summary);
+        renderPools();
+
+        const strongest = [...poolRows].sort((a, b) => b.signal - a.signal)[0];
+        const timeText = new Date(result.timestamp).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" });
+
+        if (result.mode === "live") {
+          setStatus("live", `Live · ${poolRows.length} pools · ${timeText}`);
+          els.liveProof.innerHTML = strongest
+            ? `Strongest current impulse: <strong>${strongest.label}</strong> · ${fmtUsd(strongest.v1, true)} volume in 1h · ${fmtNumber(strongest.tx1, 0)} transactions.`
+            : `Loaded <strong>${poolRows.length}</strong> ASTY pools.`;
+        } else {
+          setStatus("error", `Cached data · ${poolRows.length} pools · ${timeText}`);
+          els.liveProof.innerHTML = `Live API was unavailable. Showing the last locally saved scan from <strong>${timeText}</strong>.`;
+        }
+      } catch (error) {
+        console.error(error);
+        setStatus("error", "Pool data could not be loaded");
+        els.liveProof.textContent = "No live or cached GeckoTerminal data is currently available.";
+        els.poolGrid.innerHTML = `<div class="empty-state">The pool API could not be reached. Open the page through GitHub Pages rather than directly as a local file, then refresh.</div>`;
+      } finally {
+        isLoading = false;
+        els.refreshButton.classList.remove("spinning");
+      }
+    }
+
+    document.querySelectorAll(".filter-button").forEach(button => {
+      button.addEventListener("click", () => {
+        document.querySelectorAll(".filter-button").forEach(item => item.classList.remove("active"));
+        button.classList.add("active");
+        currentFilter = button.dataset.filter;
+        renderPools();
+      });
+    });
+
+    els.poolSearch.addEventListener("input", renderPools);
+    els.sortSelect.addEventListener("change", renderPools);
+    els.runButton.addEventListener("click", recalculate);
+    els.refreshButton.addEventListener("click", load);
+    els.dialogClose.addEventListener("click", () => els.poolDialog.close());
+    els.poolDialog.addEventListener("click", event => {
+      const rect = els.poolDialog.getBoundingClientRect();
+      const outside = event.clientX < rect.left || event.clientX > rect.right || event.clientY < rect.top || event.clientY > rect.bottom;
+      if (outside) els.poolDialog.close();
+    });
+
+    [els.capitalInput, els.reserveInput, els.minStepInput, els.maxStepInput].forEach(input => {
+      input.addEventListener("change", recalculate);
+    });
+
+    async function copyContract() {
+      try {
+        await navigator.clipboard.writeText(ASTY_MINT);
+        const original = els.copyContractButton.textContent;
+        els.copyContractButton.textContent = "Copied";
+        setTimeout(() => { els.copyContractButton.textContent = original; }, 1400);
+      } catch {
+        const textarea = document.createElement("textarea");
+        textarea.value = ASTY_MINT;
+        document.body.appendChild(textarea);
+        textarea.select();
+        document.execCommand("copy");
+        textarea.remove();
+      }
+    }
+
+    els.copyContractButton.addEventListener("click", event => {
+      event.stopPropagation();
+      copyContract();
+    });
+    els.contractCard.addEventListener("click", copyContract);
+
+    readSettings();
+    cleanXFlags();
+    load();
+    setInterval(load, REFRESH_MS);
+  </script>
+</body>
+</html>
