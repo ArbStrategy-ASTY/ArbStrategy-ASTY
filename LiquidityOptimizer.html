@@ -1070,7 +1070,7 @@
     <img class="footer-wolf" src="assets/wolf.png" alt="ASTY Wolf" onerror="if(!this.dataset.fallback){this.dataset.fallback='upper';this.src='assets/Wolf.png';}else if(this.dataset.fallback==='upper'){this.dataset.fallback='logo';this.src='assets/logo.png';}else{this.style.display='none';}">
 
     <div class="footer">
-      Live-Pooldaten und 30d-OHLCV: GeckoTerminal · Berechnungen erfolgen lokal im Browser<br>
+      Live-Pooldaten: DexScreener · 30d-OHLCV: GeckoTerminal · Berechnungen erfolgen lokal im Browser<br>
       Der Optimierer ist ein Analysewerkzeug und kein Ausführungs-Bot. Die Empfehlungen sind Schätzungen und garantieren weder höhere Gebühren noch mehr Volumen.
     </div>
   </main>
@@ -1090,9 +1090,9 @@
     const ASTY_MINT = "ASTYqeaoK83Zs1pTFEXZUB6BM8cG8YLTsN852NUkt7ZR";
     const REFRESH_MS = 60_000;
     const CHUNK_SIZE = 25;
-    const CACHE_KEY = "asty-liquidity-optimizer-cache-v1";
-    const HISTORY_KEY = "asty-liquidity-optimizer-history-v1";
-    const SETTINGS_KEY = "asty-liquidity-optimizer-settings-v4-de-30d";
+    const CACHE_KEY = "asty-liquidity-optimizer-cache-v2-dex";
+    const HISTORY_KEY = "asty-liquidity-optimizer-history-v2-hourly";
+    const SETTINGS_KEY = "asty-liquidity-optimizer-settings-v5-de-30d";
     const THIRTY_DAY_KEY = "asty-liquidity-optimizer-30d-v1";
     const THIRTY_DAY_TTL = 12 * 60 * 60 * 1000;
     const THIRTY_DAY_REQUEST_DELAY = 9_000;
@@ -1196,6 +1196,7 @@
     let currentFilter = "all";
     let lastDataMode = "live";
     let isLoading = false;
+    let isLoading30d = false;
 
     function clamp(value, min, max) {
       return Math.min(max, Math.max(min, value));
@@ -1313,17 +1314,16 @@
       const cutoff = now - 7 * 24 * 60 * 60 * 1000;
 
       for (const row of rows) {
+        if (!row.dataAvailable) continue;
         const list = Array.isArray(history[row.address]) ? history[row.address] : [];
         const last = list[list.length - 1];
         if (!last || now - num(last.t) >= 50_000) {
           list.push({
             t: now,
             liquidity: row.liquidity,
-            v5: row.v5,
             v1: row.v1,
             v6: row.v6,
             v24: row.v24,
-            tx5: row.tx5,
             tx1: row.tx1
           });
         }
@@ -1461,7 +1461,7 @@
       const timer = setTimeout(() => controller.abort(), timeoutMs);
       try {
         const response = await fetch(url, {
-          headers: { Accept: "application/json;version=20230302" },
+          headers: { Accept: "application/json" },
           signal: controller.signal
         });
         if (!response.ok) throw new Error("HTTP " + response.status);
@@ -1471,21 +1471,39 @@
       }
     }
 
-    async function fetchGeckoPools() {
+    async function fetchWithRetry(url, timeoutMs = 20_000, attempts = 2) {
+      let lastError;
+      for (let attempt = 1; attempt <= attempts; attempt++) {
+        try {
+          return await fetchWithTimeout(url, timeoutMs);
+        } catch (error) {
+          lastError = error;
+          if (attempt < attempts) await sleep(700 * attempt);
+        }
+      }
+      throw lastError || new Error("Request failed");
+    }
+
+    async function fetchLivePools() {
       const chunks = chunkArray(POOLS, CHUNK_SIZE);
       const all = [];
 
       for (let i = 0; i < chunks.length; i++) {
         const ids = chunks[i].map(([address]) => address).join(",");
-        const url = `https://api.geckoterminal.com/api/v2/networks/solana/pools/multi/${encodeURIComponent(ids)}?include=base_token,quote_token&include_volume_breakdown=false&include_composition=false`;
-        const payload = await fetchWithTimeout(url);
-        if (Array.isArray(payload?.data)) all.push(...payload.data);
-        if (i < chunks.length - 1) await sleep(260);
+        const url = `https://api.dexscreener.com/latest/dex/pairs/solana/${ids}`;
+        try {
+          const payload = await fetchWithRetry(url, 20_000, 2);
+          if (Array.isArray(payload?.pairs)) all.push(...payload.pairs);
+        } catch (error) {
+          console.warn(`Live-Datenblock ${i + 1} konnte nicht geladen werden`, error);
+        }
+        if (i < chunks.length - 1) await sleep(180);
       }
 
-      if (!all.length) throw new Error("No pool data returned");
-      saveJson(CACHE_KEY, { t: Date.now(), data: all });
-      return { data: all, mode: "live", timestamp: Date.now() };
+      const unique = [...new Map(all.filter(Boolean).map(item => [item.pairAddress, item])).values()];
+      if (!unique.length) throw new Error("No pool data returned");
+      saveJson(CACHE_KEY, { t: Date.now(), data: unique });
+      return { data: unique, mode: "live", timestamp: Date.now() };
     }
 
     function loadCachedPools() {
@@ -1505,17 +1523,15 @@
       const map = new Map();
       const thirtyDayCache = getThirtyDayCache();
       for (const item of items) {
-        const address = item?.attributes?.address;
+        const address = item?.pairAddress;
         if (address) map.set(address, item);
       }
 
       return POOLS.map(([address, label, feePercent]) => {
         const item = map.get(address);
-        if (!item) return null;
-        const a = item.attributes || {};
-        const tx = a.transactions || {};
-        const volume = a.volume_usd || {};
-        const priceChange = a.price_change_percentage || {};
+        const tx = item?.txns || {};
+        const volume = item?.volume || {};
+        const priceChange = item?.priceChange || {};
         const historyRef = getHistoryReference(address);
 
         const row = {
@@ -1523,20 +1539,18 @@
           label: formatLabel(label),
           rawLabel: label,
           feePercent,
-          name: a.name || label,
-          dexId: item.relationships?.dex?.data?.id || "-",
-          createdAt: a.pool_created_at || null,
-          liquidity: num(a.reserve_in_usd),
-          v5: num(volume.m5),
+          name: item ? `${item.baseToken?.symbol || "ASTY"} / ${item.quoteToken?.symbol || label.split("/")[1] || "-"}` : label,
+          dexId: item?.dexId || "-",
+          createdAt: item?.pairCreatedAt || null,
+          dataAvailable: Boolean(item),
+          liquidity: num(item?.liquidity?.usd),
           v1: num(volume.h1),
           v6: num(volume.h6),
           v24: num(volume.h24),
-          tx5: txTotal(tx.m5),
           tx1: txTotal(tx.h1),
           tx24: txTotal(tx.h24),
           buys1: num(tx.h1?.buys),
           sells1: num(tx.h1?.sells),
-          p5: num(priceChange.m5),
           p1: num(priceChange.h1),
           p6: num(priceChange.h6),
           p24: num(priceChange.h24),
@@ -1549,22 +1563,21 @@
         row.staticDailyYield = row.liquidity > 0 ? row.fees24 / row.liquidity * 100 : 0;
         applyThirtyDayEntry(row, thirtyDayCache[address]);
         return row;
-      }).filter(Boolean);
+      });
     }
 
     function computeSignals(rows) {
-      const maxV1 = Math.max(1, ...rows.map(row => row.v1));
-      const maxFees24 = Math.max(0.01, ...rows.map(row => row.fees24));
+      const availableRows = rows.filter(row => row.dataAvailable);
+      const maxV1 = Math.max(1, ...availableRows.map(row => row.v1));
+      const maxFees24 = Math.max(0.01, ...availableRows.map(row => row.fees24));
       const maxAvg30 = Math.max(1, ...rows.map(row => row.has30d ? row.avgDaily30 : 0));
 
       for (const row of rows) {
-        const previousFiveHourAverage = Math.max((row.v6 - row.v1) / 5, row.v24 / 24 * 0.18, 0.05);
-        const rollingFiveMinuteAverage = Math.max(row.v1 / 12, row.v24 / 288 * 0.25, 0.01);
-        const txFiveMinuteAverage = Math.max(row.tx1 / 12, row.tx24 / 288 * 0.25, 0.20);
+        const previousFiveHourAverage = Math.max((row.v6 - row.v1) / 5, row.v24 / 24 * 0.25, 0.05);
+        const previousTwentyThreeHourTxAverage = Math.max((row.tx24 - row.tx1) / 23, 0.25);
 
         row.accel1 = clamp(row.v1 / previousFiveHourAverage, 0, 12);
-        row.accel5 = clamp(row.v5 / rollingFiveMinuteAverage, 0, 12);
-        row.txAccel5 = clamp(row.tx5 / txFiveMinuteAverage, 0, 12);
+        row.txAccel1 = clamp(row.tx1 / previousTwentyThreeHourTxAverage, 0, 12);
 
         const localVolumeDelta = row.historyRef
           ? (row.v1 - num(row.historyRef.v1)) / Math.max(num(row.historyRef.v1), 1)
@@ -1578,32 +1591,32 @@
         row.relativeTo30 = row.has30d ? clamp(row.v24 / Math.max(row.avgDaily30, 0.10), 0, 20) : 1;
         row.turnover30 = row.has30d && row.liquidity > 0 ? row.avgDaily30 / row.liquidity : 0;
 
-        const accel5Score = clamp(Math.log1p(row.accel5) / Math.log(9), 0, 1);
         const accel1Score = clamp(Math.log1p(row.accel1) / Math.log(9), 0, 1);
-        const txScore = clamp(Math.log1p(row.txAccel5) / Math.log(9), 0, 1);
+        const txScore = clamp(Math.log1p(row.txAccel1) / Math.log(9), 0, 1);
         const turnoverScore = clamp(Math.log1p(row.turnover24) / Math.log(4), 0, 1);
         const currentActivityScore = clamp(Math.log1p(row.v1) / Math.log1p(maxV1), 0, 1);
         const outputScore = clamp(Math.log1p(row.fees24) / Math.log1p(maxFees24), 0, 1);
         const localScore = clamp(row.localMomentum / 1.5, 0, 1);
-        const shortVolatilityScore = clamp((Math.abs(row.p5) * 2 + Math.abs(row.p1)) / 30, 0, 1);
+        const shortVolatilityScore = clamp((Math.abs(row.p1) * 0.65 + Math.abs(row.p6) * 0.35) / 30, 0, 1);
         const baseline30Score = row.has30d ? clamp(Math.log1p(row.avgDaily30) / Math.log1p(maxAvg30), 0, 1) : 0;
         const turnover30Score = row.has30d ? clamp(Math.log1p(row.turnover30) / Math.log(2.5), 0, 1) : 0;
         const consistency30Score = row.has30d ? clamp(row.activeRatio30 * 1.25, 0, 1) : 0;
         const currentVs30Score = row.has30d ? clamp(Math.log1p(row.relativeTo30) / Math.log(5), 0, 1) : 0;
         const longVolatilityScore = row.has30d ? clamp(row.volatility30 / 25, 0, 1) : shortVolatilityScore;
 
-        const shortSignal = clamp(
-          accel5Score * 0.24 +
-          accel1Score * 0.21 +
-          txScore * 0.17 +
-          turnoverScore * 0.14 +
-          currentActivityScore * 0.10 +
-          outputScore * 0.08 +
-          localScore * 0.04 +
-          shortVolatilityScore * 0.02,
-          0,
-          1
-        );
+        const currentSignal = row.dataAvailable
+          ? clamp(
+              accel1Score * 0.26 +
+              txScore * 0.18 +
+              turnoverScore * 0.18 +
+              currentActivityScore * 0.13 +
+              outputScore * 0.12 +
+              localScore * 0.08 +
+              shortVolatilityScore * 0.05,
+              0,
+              1
+            )
+          : 0;
 
         const longSignal = row.has30d
           ? clamp(
@@ -1617,22 +1630,23 @@
             )
           : clamp(turnoverScore * 0.55 + outputScore * 0.30 + currentActivityScore * 0.15, 0, 1);
 
-        row.signal = clamp(shortSignal * 0.70 + longSignal * 0.30, 0, 1);
+        row.signal = clamp(currentSignal * 0.66 + longSignal * 0.34, 0, 1);
 
-        const dailyFrom5 = row.v5 * 288;
         const dailyFrom1 = row.v1 * 24;
         const dailyFrom6 = row.v6 * 4;
-        const shortDaily = dailyFrom5 * 0.08 + dailyFrom1 * 0.34 + dailyFrom6 * 0.30 + row.v24 * 0.28;
-        const shortForecastCap = Math.max(row.v24 * 5, row.v6 * 6, row.v1 * 26, 10);
-        const shortForecast = clamp(shortDaily * (0.78 + row.signal * 0.48), 0, shortForecastCap);
+        const currentDaily = dailyFrom1 * 0.38 + dailyFrom6 * 0.34 + row.v24 * 0.28;
+        const currentForecastCap = Math.max(row.v24 * 4, row.v6 * 5, row.v1 * 24, 10);
+        const currentForecast = row.dataAvailable
+          ? clamp(currentDaily * (0.80 + row.signal * 0.42), 0, currentForecastCap)
+          : 0;
 
         const reliability30 = row.has30d
           ? 0.45 + Math.sqrt(row.activeRatio30) * 0.55
           : 0;
         const supported30 = row.has30d ? row.avgDaily30 * reliability30 : 0;
-        row.forecast24 = Math.max(shortForecast, supported30, row.v24 * 0.55);
+        row.forecast24 = Math.max(currentForecast, supported30, row.dataAvailable ? row.v24 * 0.55 : 0);
 
-        const effectiveFeeRate = clamp(row.feePercent / 100, 0.001, 0.02);
+        const effectiveFeeRate = clamp(row.feePercent / 100, 0.001, 0.06);
         const inactivityPenalty = row.has30d ? (1 - row.activeRatio30) * 0.0012 : 0.0006;
         const volatilityPenalty = clamp((row.has30d ? row.volatility30 : Math.abs(row.p24)) / 100, 0, 0.60) * 0.003;
         row.requiredDailyYield = clamp(0.0024 + inactivityPenalty + volatilityPenalty, 0.0022, 0.0052);
@@ -1647,9 +1661,12 @@
     }
 
     function buildReason(row) {
+      if (!row.dataAvailable && !row.has30d) {
+        return "Für diesen Pool liegen aktuell keine Live- oder 30-Tage-Daten vor. Es wird keine Aufstockung empfohlen.";
+      }
       if (row.allocation > 0) {
-        if (row.accel5 >= 2.2 && row.txAccel5 >= 1.5) {
-          return `Frisches 5-Minuten-Volumen und steigende Transaktionsaktivität treten gleichzeitig auf. Der nächste Schritt bleibt auf ${fmtUsd(row.allocation)} begrenzt.`;
+        if (row.accel1 >= 1.8 && row.txAccel1 >= 1.4) {
+          return `1-Stunden-Volumen und Transaktionsaktivität steigen gleichzeitig. Der nächste Schritt bleibt auf ${fmtUsd(row.allocation)} begrenzt.`;
         }
         if (row.accel1 >= 1.8) {
           return `Das aktuelle 1-Stunden-Volumen liegt etwa ${fmtMultiple(row.accel1)} über seinem jüngsten Stunden-Durchschnitt. Nur den berechneten Schritt hinzufügen und danach erneut scannen.`;
@@ -1680,7 +1697,7 @@
 
     function recommendationLabel(row) {
       if (row.allocation > 0) return { text: "Jetzt erhöhen", cls: "add" };
-      if (row.signal >= 0.56 || row.accel5 >= 2) return { text: "Eng beobachten", cls: "watch" };
+      if (row.signal >= 0.56 || row.accel1 >= 1.8) return { text: "Eng beobachten", cls: "watch" };
       return { text: "Halten", cls: "" };
     }
 
@@ -1689,7 +1706,7 @@
       const candidates = [];
 
       for (const row of rows) {
-        const observedActivity = row.v1 >= 1 || row.v24 >= 5 || row.tx1 >= 2;
+        const observedActivity = row.dataAvailable && (row.v1 >= 1 || row.v24 >= 5 || row.tx1 >= 2);
         const historicalSupport = row.has30d && (row.avgDaily30 >= 1 || row.activeDays30 >= 3);
         const capacity = Math.max(0, row.targetHigh - row.liquidity);
         const poolStepCap = row.liquidity > 0
@@ -1704,8 +1721,8 @@
         if (eligible) {
           row.weight = Math.max(0.01,
             row.signal * 1.25 +
-            Math.min(row.accel5, 5) * 0.08 +
-            Math.min(row.accel1, 5) * 0.06 +
+            Math.min(row.accel1, 5) * 0.09 +
+            Math.min(row.txAccel1, 5) * 0.05 +
             Math.min(row.turnover24, 5) * 0.05 +
             Math.min(row.turnover30, 4) * 0.06 +
             row.activeRatio30 * 0.06 +
@@ -1777,7 +1794,10 @@
     }
 
     function renderSummary(summary) {
-      const strongest = [...poolRows].sort((a, b) => b.signal - a.signal)[0];
+      const strongest = [...poolRows].sort((a, b) => {
+        if (a.dataAvailable !== b.dataAvailable) return Number(b.dataAvailable) - Number(a.dataAvailable);
+        return b.signal - a.signal;
+      })[0];
       els.deployValue.textContent = fmtUsd(summary.deployed);
       els.deploySub.textContent = summary.selected
         ? `${summary.selected} kontrollierte${summary.selected === 1 ? "r Schritt" : " Schritte"} berechnet`
@@ -1790,7 +1810,7 @@
 
       if (strongest) {
         els.impulseValue.textContent = strongest.label.replace("ASTY / ", "");
-        els.impulseSub.textContent = `${fmtMultiple(strongest.accel5)} 5m-Tempo · ${fmtUsd(strongest.v1, true)} Volumen in 1h`;
+        els.impulseSub.textContent = `${fmtMultiple(strongest.accel1)} 1h-Tempo · ${fmtUsd(strongest.v1, true)} Volumen in 1h`;
       } else {
         els.impulseValue.textContent = "-";
         els.impulseSub.textContent = "Keine Aktivitätsdaten verfügbar";
@@ -1836,8 +1856,8 @@
 
           <div class="metrics-row">
             <div class="tiny-metric">
-              <div class="tiny-label">Volumen 5m</div>
-              <div class="tiny-value ${row.accel5 >= 2 ? "cyan" : ""}">${fmtUsd(row.v5, true)}</div>
+              <div class="tiny-label">Volumen 24h</div>
+              <div class="tiny-value">${fmtUsd(row.v24, true)}</div>
             </div>
             <div class="tiny-metric">
               <div class="tiny-label">Volumen 1h</div>
@@ -1871,7 +1891,7 @@
       let rows = poolRows.filter(row => {
         if (query && !`${row.label} ${row.address} ${row.name}`.toLowerCase().includes(query)) return false;
         if (currentFilter === "deploy") return row.allocation > 0;
-        if (currentFilter === "momentum") return row.signal >= 0.56 || row.accel5 >= 2 || row.accel1 >= 1.8;
+        if (currentFilter === "momentum") return row.signal >= 0.56 || row.accel1 >= 1.8 || row.txAccel1 >= 1.8;
         return true;
       });
 
@@ -1904,13 +1924,6 @@
             event.preventDefault();
             openPoolDialog(card.dataset.address);
           }
-        });
-      });
-
-      els.poolGrid.querySelectorAll(".x-event-button").forEach(button => {
-        button.addEventListener("click", event => {
-          event.stopPropagation();
-          toggleXFlag(button.dataset.xAddress);
         });
       });
     }
@@ -1955,8 +1968,8 @@
             <div class="detail-value">${fmtUsd(row.targetLow)} - ${fmtUsd(row.targetHigh)}</div>
           </div>
           <div class="detail-item">
-            <div class="detail-label">Volumen 5m / 1h</div>
-            <div class="detail-value">${fmtUsd(row.v5)} / ${fmtUsd(row.v1)}</div>
+            <div class="detail-label">Volumen 1h / 6h</div>
+            <div class="detail-value">${fmtUsd(row.v1)} / ${fmtUsd(row.v6)}</div>
           </div>
           <div class="detail-item">
             <div class="detail-label">Volumen 6h / 24h</div>
@@ -1987,8 +2000,8 @@
             <div class="detail-value">${fmtMultiple(row.accel1)}</div>
           </div>
           <div class="detail-item">
-            <div class="detail-label">5m-Volumentempo</div>
-            <div class="detail-value">${fmtMultiple(row.accel5)}</div>
+            <div class="detail-label">1h-Transaktionstempo</div>
+            <div class="detail-value">${fmtMultiple(row.txAccel1)}</div>
           </div>
           <div class="detail-item">
             <div class="detail-label">Gebühren 24h / erwartet pro Tag</div>
@@ -2068,7 +2081,7 @@
       try {
         let result;
         try {
-          result = await fetchGeckoPools();
+          result = await fetchLivePools();
         } catch (error) {
           const cached = loadCachedPools();
           if (!cached) throw error;
@@ -2085,23 +2098,26 @@
         updateThirtyDayStatus();
         syncThirtyDayData();
 
-        const strongest = [...poolRows].sort((a, b) => b.signal - a.signal)[0];
+        const strongest = [...poolRows].sort((a, b) => {
+        if (a.dataAvailable !== b.dataAvailable) return Number(b.dataAvailable) - Number(a.dataAvailable);
+        return b.signal - a.signal;
+      })[0];
         const timeText = new Date(result.timestamp).toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" });
 
         if (result.mode === "live") {
-          setStatus("live", `Live · ${poolRows.length} Pools · ${timeText}`);
+          setStatus("live", `Live · ${poolRows.filter(row => row.dataAvailable).length} von ${poolRows.length} Pools · ${timeText}`);
           els.liveProof.innerHTML = strongest
             ? `Stärkster aktueller Impuls: <strong>${strongest.label}</strong> · ${fmtUsd(strongest.v1, true)} Volumen in 1h · ${fmtNumber(strongest.tx1, 0)} Transaktionen.`
             : `<strong>${poolRows.length}</strong> ASTY-Pools geladen.`;
         } else {
-          setStatus("error", `Zwischengespeicherte Daten · ${poolRows.length} Pools · ${timeText}`);
+          setStatus("error", `Zwischengespeicherte Daten · ${poolRows.filter(row => row.dataAvailable).length} von ${poolRows.length} Pools · ${timeText}`);
           els.liveProof.innerHTML = `Die Live-API war nicht erreichbar. Angezeigt wird der letzte lokal gespeicherte Scan von <strong>${timeText}</strong>.`;
         }
       } catch (error) {
         console.error(error);
         setStatus("error", "Pooldaten konnten nicht geladen werden");
-        els.liveProof.textContent = "Aktuell sind weder Live- noch zwischengespeicherte GeckoTerminal-Daten verfügbar.";
-        els.poolGrid.innerHTML = `<div class="empty-state">Die Pool-API konnte nicht erreicht werden. Öffne die Seite über GitHub Pages statt direkt als lokale Datei und aktualisiere sie anschließend.</div>`;
+        els.liveProof.textContent = "Aktuell sind weder Live- noch zwischengespeicherte Pooldaten verfügbar.";
+        els.poolGrid.innerHTML = `<div class="empty-state">Die Live-Pooldaten konnten nicht erreicht werden. Prüfe die Internetverbindung und aktualisiere die Seite. Bereits gespeicherte Daten werden automatisch als Ersatz verwendet.</div>`;
       } finally {
         isLoading = false;
         els.refreshButton.classList.remove("spinning");
