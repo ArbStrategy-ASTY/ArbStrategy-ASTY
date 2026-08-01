@@ -181,6 +181,12 @@
       font-size: clamp(30px, 5vw, 48px);
       line-height: 1.02;
       letter-spacing: -1.6px;
+      background: linear-gradient(90deg, var(--purple-soft) 0%, var(--purple) 42%, var(--cyan) 100%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      -webkit-text-fill-color: transparent;
+      text-shadow: 0 0 24px rgba(139,92,246,0.10);
     }
 
     .hero-copy {
@@ -1214,7 +1220,7 @@
 
       <nav class="nav-links">
 
-        <a class="pill" href="https://arbstrategy-asty.github.io/ArbStrategy-ASTY/" target="_blank" rel="noopener noreferrer">System</a>
+        <a class="pill" href="https://arbstrategy-asty.github.io/ArbStrategy-ASTY/" target="_blank" rel="noopener noreferrer">Understand the System</a>
         <a class="pill" href="https://t.me/ArbStrategyASTY" target="_blank" rel="noopener noreferrer">Telegram</a>
         <a class="pill cyan" href="https://birdeye.so/solana/token/ASTYqeaoK83Zs1pTFEXZUB6BM8cG8YLTsN852NUkt7ZR" target="_blank" rel="noopener noreferrer">BirdEye</a>
         <a class="pill primary" id="buyLink" href="https://dexscreener.com/solana" target="_blank" rel="noopener noreferrer">DexScr</a>
@@ -1370,6 +1376,7 @@
       <div class="panel-head">
         <div>
           <div class="panel-title">ASTY Arbitrage Pools</div>
+          <div class="panel-sub">24h live performance</div>
         </div>
 
         <div class="tabs" role="tablist" aria-label="Liquidity view">
@@ -2211,17 +2218,14 @@
           : "";
 
       el("priceSub").innerHTML = Number.isFinite(reference.price)
-        ? (reference.method === "birdeye-usd"
-            ? "BirdEye USD price"
-            : reference.method === "primary-stable-pool"
-              ? `${reference.sourceLabel} fallback · ${fmtUsd(reference.usedLiquidity, true)} liquidity`
-              : `${reference.usedPools} pool fallback · ${fmtUsd(reference.usedLiquidity, true)} weighted liquidity`) +
-          (Number.isFinite(reference.change24h)
-            ? ` · <span class="${priceDirection}">${fmtPercent(reference.change24h)} 24h</span>`
-            : "") +
-          (Number.isFinite(summary.sincePresale)
-            ? ` · <span class="${summary.sincePresale >= 0 ? "positive" : "negative"}">${fmtPercent(summary.sincePresale)} since presale</span>`
-            : "")
+        ? [
+            Number.isFinite(reference.change24h)
+              ? `<span class="${priceDirection}">${fmtPercent(reference.change24h)} 24h</span>`
+              : "",
+            Number.isFinite(summary.sincePresale)
+              ? `<span class="${summary.sincePresale >= 0 ? "positive" : "negative"}">${fmtPercent(summary.sincePresale)} since presale</span>`
+              : ""
+          ].filter(Boolean).join(" · ")
         : "Reference price unavailable";
 
       setMetric("liquidityValue", fmtUsd(summary.liquidity, true));
