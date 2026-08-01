@@ -572,24 +572,25 @@
 
     .reserve-label {
       color: var(--purple-heading);
-      font-size: 11px;
-      font-weight: 850;
-      letter-spacing: .3px;
+      font-size: 12px;
+      font-weight: 780;
+      letter-spacing: .2px;
     }
 
     .reserve-value {
-      margin-top: 7px;
+      margin-top: 16px;
       color: var(--cyan);
-      font-size: clamp(23px, 3vw, 32px);
+      font-size: clamp(23px, 2.8vw, 31px);
+      line-height: 1;
       font-weight: 900;
-      letter-spacing: -0.7px;
+      letter-spacing: -0.8px;
     }
 
     .reserve-sub {
-      margin-top: 6px;
-      color: var(--muted);
-      font-size: 10px;
-      line-height: 1.45;
+      margin-top: 12px;
+      color: var(--muted-2);
+      font-size: 11px;
+      line-height: 1.4;
     }
 
     .reserve-usd {
@@ -602,14 +603,15 @@
     }
 
     .reserve-usd-label {
-      color: var(--muted-2);
-      font-size: 9px;
+      color: var(--purple-heading);
+      font-size: 11px;
+      font-weight: 700;
     }
 
     .reserve-usd-value {
-      margin-top: 5px;
+      margin-top: 8px;
       color: #f5f1ff;
-      font-size: 17px;
+      font-size: 20px;
       font-weight: 850;
     }
 
@@ -2009,6 +2011,7 @@
       }
 
       return {
+        owner: info.owner || null,
         amount: tokenAmount.amount,
         decimals: tokenAmount.decimals
       };
@@ -2035,7 +2038,7 @@
     }
 
     async function readReserveAddressFromEndpoint(address, endpoint) {
-      // Some supplied addresses may already be SPL token accounts.
+      // The supplied address may itself be an SPL token account.
       try {
         const direct = await rpcCall(endpoint, "getTokenAccountBalance", [
           address,
@@ -2053,8 +2056,7 @@
         }
       } catch {}
 
-      // Otherwise treat the supplied address as a wallet owner and add all of
-      // its ASTY token accounts. This mirrors the wallet-scanning approach.
+      // Otherwise treat it as a wallet owner and find its ASTY token accounts.
       const owned = await rpcCall(endpoint, "getTokenAccountsByOwner", [
         address,
         { mint: ASTY_MINT },
@@ -2120,50 +2122,158 @@
         }
       }
 
-      const runners = Array.from(
-        { length: Math.min(limit, items.length) },
-        () => runner()
+      await Promise.all(
+        Array.from(
+          { length: Math.min(limit, items.length) },
+          () => runner()
+        )
       );
 
-      await Promise.all(runners);
       return results;
     }
 
+    async function loadLargestHolderReserveMap() {
+      let lastError;
+
+      for (const endpoint of RPC_ENDPOINTS) {
+        try {
+          const largestResult = await rpcCall(
+            endpoint,
+            "getTokenLargestAccounts",
+            [ASTY_MINT, { commitment: "confirmed" }],
+            15_000
+          );
+
+          const largestAccounts = Array.isArray(largestResult?.value)
+            ? largestResult.value
+            : [];
+
+          if (!largestAccounts.length) {
+            throw new Error("No largest ASTY token accounts returned");
+          }
+
+          const tokenAccountAddresses = largestAccounts
+            .map(item => item?.address)
+            .filter(Boolean);
+
+          const accountResult = await rpcCall(
+            endpoint,
+            "getMultipleAccounts",
+            [
+              tokenAccountAddresses,
+              { encoding: "jsonParsed", commitment: "confirmed" }
+            ],
+            15_000
+          );
+
+          const accountInfos = Array.isArray(accountResult?.value)
+            ? accountResult.value
+            : [];
+
+          const reserveSet = new Set(LP_RESERVE_ADDRESSES);
+          const balances = new Map();
+          let decimals = 9;
+          let matchedTokenAccounts = 0;
+
+          accountInfos.forEach((accountInfo, index) => {
+            const parsed = parsedTokenAmount(accountInfo);
+            if (!parsed) return;
+
+            const tokenAccountAddress = tokenAccountAddresses[index];
+            const reserveAddress = reserveSet.has(parsed.owner)
+              ? parsed.owner
+              : reserveSet.has(tokenAccountAddress)
+                ? tokenAccountAddress
+                : null;
+
+            if (!reserveAddress) return;
+
+            balances.set(
+              reserveAddress,
+              (balances.get(reserveAddress) || 0n) + BigInt(parsed.amount)
+            );
+            decimals = parsed.decimals;
+            matchedTokenAccounts++;
+          });
+
+          return {
+            balances,
+            decimals,
+            matchedTokenAccounts,
+            source: "largest-token-accounts"
+          };
+        } catch (error) {
+          lastError = error;
+        }
+      }
+
+      throw lastError || new Error("Largest ASTY accounts unavailable");
+    }
+
     async function loadLpReserve() {
-      const results = await runWithConcurrency(
+      let largestSnapshot = null;
+
+      try {
+        largestSnapshot = await loadLargestHolderReserveMap();
+      } catch {}
+
+      // Attempt exact owner scans as well. Where a public RPC blocks this
+      // method, the largest-holder snapshot remains available as fallback.
+      const directResults = await runWithConcurrency(
         LP_RESERVE_ADDRESSES,
         4,
         readReserveAddress
       );
 
       let totalRaw = 0n;
-      let decimals = 9;
+      let decimals = largestSnapshot?.decimals ?? 9;
       let scannedAddresses = 0;
       let tokenAccounts = 0;
+      let exactAddresses = 0;
+      let holderFallbackAddresses = 0;
       let failedAddresses = 0;
 
-      for (const result of results) {
-        if (result?.status !== "fulfilled") {
-          failedAddresses++;
-          continue;
+      LP_RESERVE_ADDRESSES.forEach((address, index) => {
+        const direct = directResults[index];
+
+        if (direct?.status === "fulfilled") {
+          totalRaw += direct.value.amountRaw;
+          decimals = direct.value.decimals;
+          tokenAccounts += direct.value.accountsFound;
+          scannedAddresses++;
+          exactAddresses++;
+          return;
         }
 
-        scannedAddresses++;
-        totalRaw += result.value.amountRaw;
-        decimals = result.value.decimals;
-        tokenAccounts += result.value.accountsFound;
-      }
+        const holderAmount = largestSnapshot?.balances?.get(address);
+        if (typeof holderAmount === "bigint") {
+          totalRaw += holderAmount;
+          scannedAddresses++;
+          holderFallbackAddresses++;
+          return;
+        }
+
+        failedAddresses++;
+      });
 
       if (scannedAddresses === 0) {
-        throw new Error("No ASTY LP reserve address could be scanned");
+        throw new Error("No ASTY LP reserve balance source was available");
       }
+
+      tokenAccounts += largestSnapshot?.matchedTokenAccounts ?? 0;
 
       return {
         amount: bigintAmountToNumber(totalRaw.toString(), decimals),
         tokenAccounts,
         scannedAddresses,
+        exactAddresses,
+        holderFallbackAddresses,
         failedAddresses,
-        reserveAddresses: LP_RESERVE_ADDRESSES.length
+        reserveAddresses: LP_RESERVE_ADDRESSES.length,
+        source:
+          holderFallbackAddresses > 0
+            ? "Solana holder accounts + wallet scan"
+            : "Solana wallet scan"
       };
     }
 
@@ -2473,16 +2583,20 @@
       setMetric("lpReserveUsd", fmtUsd(summary.lpReserveUsd, true));
 
       if (state.lpReserve) {
+        const fallbackText = state.lpReserve.holderFallbackAddresses
+          ? ` · ${state.lpReserve.holderFallbackAddresses} matched through holder accounts`
+          : "";
         const failureText = state.lpReserve.failedAddresses
           ? ` · ${state.lpReserve.failedAddresses} unavailable`
           : "";
 
         el("lpReserveStatus").textContent =
-          `${state.lpReserve.scannedAddresses} reserve addresses scanned · ` +
-          `${state.lpReserve.tokenAccounts} ASTY balances found${failureText}`;
+          `${state.lpReserve.scannedAddresses} of ` +
+          `${state.lpReserve.reserveAddresses} reserve addresses included` +
+          `${fallbackText}${failureText}`;
       } else {
         el("lpReserveStatus").textContent =
-          "ASTY reserve balances are temporarily unavailable.";
+          "Scanning ASTY reserve balances from Solana holder accounts…";
       }
 
       if (Number.isFinite(summary.launchOnePercentNow)) {
