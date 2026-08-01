@@ -647,6 +647,36 @@
     .tiny-value.green { color: var(--green); }
     .tiny-value.amber { color: var(--amber); }
 
+    .loading-text,
+    .history-loading {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      color: var(--cyan);
+      animation: loadingPulse 1.15s ease-in-out infinite;
+    }
+
+    .loading-spinner {
+      width: 10px;
+      height: 10px;
+      flex: 0 0 10px;
+      border-radius: 50%;
+      border: 1.5px solid rgba(67, 221, 255, 0.24);
+      border-top-color: var(--cyan);
+      animation: spin 0.75s linear infinite;
+    }
+
+    .icon-button:disabled {
+      cursor: not-allowed;
+      opacity: 0.34;
+      filter: saturate(0.45);
+    }
+
+    @keyframes loadingPulse {
+      0%, 100% { opacity: 0.52; }
+      50% { opacity: 1; }
+    }
+
     .reason {
       margin-top: 10px;
       color: var(--muted);
@@ -940,16 +970,16 @@
         <div class="eyebrow">ArbStrategy auf Solana</div>
         <h1>ASTY Liquiditäts-Optimierer</h1>
         <p class="hero-copy">Dynamische Liquiditätsempfehlungen für das gesamte ASTY-Poolnetzwerk.</p>
-        <div class="live-proof" id="liveProof">Aktuelle Liquidität, Volumen, Transaktionen und kurzfristige Dynamik werden analysiert...</div>
+        <div class="live-proof" id="liveProof">Kapital einstellen und auf „Berechnen“ klicken.</div>
         <div class="trust-line">Keine festen Effizienzstufen. Jeder Pool wird anhand der neuesten verfügbaren Aktivität neu berechnet.</div>
       </div>
 
       <div class="status-wrap">
         <div class="status-line">
           <span class="status-dot" id="statusDot"></span>
-          <span id="statusText">Live-Pooldaten werden geladen...</span>
+          <span id="statusText">Bereit für die Berechnung</span>
         </div>
-        <button class="icon-button" id="refreshButton" type="button" aria-label="Optimierer aktualisieren">↻</button>
+        <button class="icon-button" id="refreshButton" type="button" aria-label="Optimierer aktualisieren" disabled>↻</button>
       </div>
     </section>
 
@@ -987,20 +1017,20 @@
           </div>
         </div>
 
-        <button class="pill run-button" id="runButton" type="button">Neu berechnen</button>
+        <button class="pill run-button" id="runButton" type="button">Berechnen</button>
       </div>
 
       <div class="model-note">
-        <strong>So funktioniert es:</strong> Der Optimierer kombiniert 5 Minuten, 1 Stunde, 6 Stunden, 24 Stunden und eine echte 30-Tage-Poolhistorie. Die Zielliquidität wird aus erwarteten Pool-Gebühren, aktiven Handelstagen, aktueller Dynamik und Volatilität berechnet. Empfohlen wird immer nur der nächste kontrollierte Schritt. Ein derzeit ruhiger Meme-Pool wird nicht aussortiert, wenn seine 30-Tage-Historie weiterhin Aktivität zeigt.
+        <strong>So funktioniert es:</strong> Der Optimierer kombiniert 1 Stunde, 6 Stunden, 24 Stunden und eine echte 30-Tage-Poolhistorie. Die Zielliquidität wird aus erwarteten Pool-Einnahmen, aktiven Handelstagen, aktueller Dynamik und Volatilität berechnet. Empfohlen wird immer nur der nächste kontrollierte Schritt. Ein derzeit ruhiger Meme-Pool wird nicht aussortiert, wenn seine 30-Tage-Historie weiterhin Aktivität zeigt.
       </div>
-      <div class="model-note" id="historyStatus"><strong>30-Tage-Daten:</strong> Lokaler Datenstand wird geprüft...</div>
+      <div class="model-note" id="historyStatus"><strong>30-Tage-Daten:</strong> Werden nach dem Start der Berechnung geladen.</div>
     </section>
 
     <section class="main-grid" aria-label="Optimizer summary">
       <article class="metric-card">
         <div class="metric-label">Empfohlener Einsatz</div>
         <div class="metric-value green" id="deployValue">$0.00</div>
-        <div class="metric-sub" id="deploySub">Warte auf Live-Pooldaten</div>
+        <div class="metric-sub" id="deploySub">Noch nicht berechnet</div>
       </article>
 
 
@@ -1013,7 +1043,7 @@
       <article class="metric-card">
         <div class="metric-label">Stärkster aktueller Impuls</div>
         <div class="metric-value live-color" id="impulseValue">-</div>
-        <div class="metric-sub" id="impulseSub">Warte auf Aktivitätsdaten</div>
+        <div class="metric-sub" id="impulseSub">Noch nicht berechnet</div>
       </article>
     </section>
 
@@ -1022,7 +1052,7 @@
       <div class="panel-head">
         <div>
           <div class="panel-title">Dynamische Pool-Empfehlungen</div>
-          <div class="panel-sub">Die Empfehlungen aktualisieren sich alle 60 Sekunden und reagieren auf plötzliche Aktivität.</div>
+          <div class="panel-sub">Nach dem Start aktualisieren sich die Empfehlungen automatisch alle 60 Sekunden.</div>
         </div>
       </div>
 
@@ -1040,7 +1070,7 @@
           <select class="control-select small" id="sortSelect" aria-label="Pools sortieren">
             <option value="recommended">Empfehlungen zuerst</option>
             <option value="impulse">Aktueller Impuls</option>
-            <option value="fees">Gebühren 24h</option>
+            <option value="fees">Einnahmen 24h</option>
             <option value="volume">Volumen 24h</option>
             <option value="volume30">Volumen 30d</option>
             <option value="liquidity">Liquidität</option>
@@ -1050,7 +1080,7 @@
       </div>
 
       <div class="pool-grid" id="poolGrid">
-        <div class="empty-state">Das ASTY-Poolnetzwerk wird geladen...</div>
+        <div class="empty-state">Kapital einstellen und anschließend auf „Berechnen“ klicken.</div>
       </div>
     </section>
 
@@ -1071,7 +1101,7 @@
 
     <div class="footer">
       Live-Pooldaten: DexScreener · 30d-OHLCV: GeckoTerminal · Berechnungen erfolgen lokal im Browser<br>
-      Der Optimierer ist ein Analysewerkzeug und kein Ausführungs-Bot. Die Empfehlungen sind Schätzungen und garantieren weder höhere Gebühren noch mehr Volumen.
+      Der Optimierer ist ein Analysewerkzeug und kein Ausführungs-Bot. Die Empfehlungen sind Schätzungen und garantieren weder höhere Einnahmen noch mehr Volumen.
     </div>
   </main>
 
@@ -1197,6 +1227,8 @@
     let lastDataMode = "live";
     let isLoading = false;
     let isLoading30d = false;
+    let hasStarted = false;
+    let refreshTimer = null;
 
     function clamp(value, min, max) {
       return Math.min(max, Math.max(min, value));
@@ -1407,7 +1439,7 @@
       const available = poolRows.filter(row => row.has30d).length;
       const total = poolRows.length || POOLS.length;
       if (isLoading30d) {
-        els.historyStatus.innerHTML = `<strong>30-Tage-Daten:</strong> ${available} von ${total} Pools verfügbar. Fehlende Historien werden rate-limit-schonend nachgeladen.`;
+        els.historyStatus.innerHTML = `<span class="history-loading"><span class="loading-spinner" aria-hidden="true"></span><span><strong>30-Tage-Daten:</strong> ${available} von ${total} Pools verfügbar. Fehlende Historien werden nachgeladen.</span></span>`;
       } else if (available) {
         els.historyStatus.innerHTML = `<strong>30-Tage-Daten:</strong> ${available} von ${total} Pools im lokalen Cache. Die Historie wird höchstens alle 12 Stunden erneuert.`;
       } else {
@@ -1836,7 +1868,7 @@
           <div class="pool-head">
             <div>
               <div class="pool-name">${row.label}</div>
-              <div class="pool-meta">${row.feePercent}% Pool-Gebühr · ${shortAddress(row.address)}</div>
+              <div class="pool-meta">${row.feePercent}% Pool-Einnahmenrate · ${shortAddress(row.address)}</div>
             </div>
             <span class="signal-badge ${recommendation.cls}">${recommendation.text}</span>
           </div>
@@ -1856,24 +1888,24 @@
 
           <div class="metrics-row">
             <div class="tiny-metric">
-              <div class="tiny-label">Volumen 24h</div>
-              <div class="tiny-value">${fmtUsd(row.v24, true)}</div>
-            </div>
-            <div class="tiny-metric">
               <div class="tiny-label">Volumen 1h</div>
               <div class="tiny-value">${fmtUsd(row.v1, true)}</div>
             </div>
             <div class="tiny-metric">
-              <div class="tiny-label">Gebühren 24h</div>
-              <div class="tiny-value green">${fmtUsd(row.fees24, true)}</div>
-            </div>
-            <div class="tiny-metric">
-              <div class="tiny-label">30d Ø / Tag</div>
-              <div class="tiny-value cyan">${row.has30d ? fmtUsd(row.avgDaily30, true) : "lädt..."}</div>
-            </div>
-            <div class="tiny-metric">
               <div class="tiny-label">1h-Tempo</div>
               <div class="tiny-value ${row.accel1 >= 1.8 ? "amber" : ""}">${fmtMultiple(row.accel1)}</div>
+            </div>
+            <div class="tiny-metric">
+              <div class="tiny-label">Volumen 24h</div>
+              <div class="tiny-value">${fmtUsd(row.v24, true)}</div>
+            </div>
+            <div class="tiny-metric">
+              <div class="tiny-label">Volumen 30d</div>
+              <div class="tiny-value cyan">${row.has30d ? fmtUsd(row.v30, true) : '<span class="loading-text"><span class="loading-spinner" aria-hidden="true"></span>lädt</span>'}</div>
+            </div>
+            <div class="tiny-metric">
+              <div class="tiny-label">Einnahmen 24h</div>
+              <div class="tiny-value green">${fmtUsd(row.fees24, true)}</div>
             </div>
           </div>
 
@@ -1950,7 +1982,7 @@
       if (!row) return;
 
       els.dialogTitle.textContent = row.label;
-      els.dialogSub.textContent = `${row.feePercent}% Pool-Gebühr · ${row.dexId}`;
+      els.dialogSub.textContent = `${row.feePercent}% Pool-Einnahmenrate · ${row.dexId}`;
       const simulations = simulationRows(row);
 
       els.dialogBody.innerHTML = `
@@ -1977,19 +2009,19 @@
           </div>
           <div class="detail-item">
             <div class="detail-label">Volumen 30d</div>
-            <div class="detail-value">${row.has30d ? fmtUsd(row.v30) : "wird geladen"}</div>
+            <div class="detail-value">${row.has30d ? fmtUsd(row.v30) : '<span class="loading-text"><span class="loading-spinner" aria-hidden="true"></span>wird geladen</span>'}</div>
           </div>
           <div class="detail-item">
             <div class="detail-label">30d Ø / aktiver Zeitraum</div>
-            <div class="detail-value">${row.has30d ? fmtUsd(row.avgDaily30) + " pro Tag" : "wird geladen"}</div>
+            <div class="detail-value">${row.has30d ? fmtUsd(row.avgDaily30) + " pro Tag" : '<span class="loading-text"><span class="loading-spinner" aria-hidden="true"></span>wird geladen</span>'}</div>
           </div>
           <div class="detail-item">
             <div class="detail-label">Aktive Tage 30d</div>
-            <div class="detail-value">${row.has30d ? fmtNumber(row.activeDays30, 0) + " / " + fmtNumber(row.days30, 0) : "wird geladen"}</div>
+            <div class="detail-value">${row.has30d ? fmtNumber(row.activeDays30, 0) + " / " + fmtNumber(row.days30, 0) : '<span class="loading-text"><span class="loading-spinner" aria-hidden="true"></span>wird geladen</span>'}</div>
           </div>
           <div class="detail-item">
             <div class="detail-label">24h vs. 30d-Ø</div>
-            <div class="detail-value">${row.has30d ? fmtMultiple(row.relativeTo30) : "wird geladen"}</div>
+            <div class="detail-value">${row.has30d ? fmtMultiple(row.relativeTo30) : '<span class="loading-text"><span class="loading-spinner" aria-hidden="true"></span>wird geladen</span>'}</div>
           </div>
           <div class="detail-item">
             <div class="detail-label">Transaktionen 1h / 24h</div>
@@ -2004,7 +2036,7 @@
             <div class="detail-value">${fmtMultiple(row.txAccel1)}</div>
           </div>
           <div class="detail-item">
-            <div class="detail-label">Gebühren 24h / erwartet pro Tag</div>
+            <div class="detail-label">Einnahmen 24h / erwartet pro Tag</div>
             <div class="detail-value positive">${fmtUsd(row.fees24)} / ${fmtUsd(row.expectedDailyFees)}</div>
           </div>
           <div class="detail-item">
@@ -2012,7 +2044,7 @@
             <div class="detail-value">${fmtMultiple(row.turnover24)}</div>
           </div>
           <div class="detail-item">
-            <div class="detail-label">Erwartete tägliche Gebührenrendite</div>
+            <div class="detail-label">Erwartete tägliche Einnahmenrendite</div>
             <div class="detail-value">${fmtPercent(row.staticDailyYield, 2)}</div>
           </div>
         </div>
@@ -2024,7 +2056,7 @@
 
         <div class="detail-section">
           <div class="detail-section-title">Simulation der Liquiditätsschritte</div>
-          <div class="detail-section-copy">Die erwartete Gebührenrendite nutzt eine Mischung aus aktueller Aktivität und 30-Tage-Durchschnitt. Sie zeigt die rechnerische Verwässerung nach einer Aufstockung, garantiert aber kein zukünftiges Volumen.</div>
+          <div class="detail-section-copy">Die erwartete Einnahmenrendite nutzt eine Mischung aus aktueller Aktivität und 30-Tage-Durchschnitt. Sie zeigt die rechnerische Verwässerung nach einer Aufstockung, garantiert aber kein zukünftiges Volumen.</div>
           <table class="simulation-table">
             <thead>
               <tr>
@@ -2061,6 +2093,22 @@
 
       if (typeof els.poolDialog.showModal === "function") els.poolDialog.showModal();
       else els.poolDialog.setAttribute("open", "");
+    }
+
+
+    async function startCalculation() {
+      if (isLoading) return;
+
+      if (!hasStarted) {
+        hasStarted = true;
+        els.refreshButton.disabled = false;
+      }
+
+      await load();
+
+      if (!refreshTimer) {
+        refreshTimer = setInterval(load, REFRESH_MS);
+      }
     }
 
     function recalculate() {
@@ -2135,8 +2183,10 @@
 
     els.poolSearch.addEventListener("input", renderPools);
     els.sortSelect.addEventListener("change", renderPools);
-    els.runButton.addEventListener("click", recalculate);
-    els.refreshButton.addEventListener("click", load);
+    els.runButton.addEventListener("click", startCalculation);
+    els.refreshButton.addEventListener("click", () => {
+      if (hasStarted) load();
+    });
     els.dialogClose.addEventListener("click", () => els.poolDialog.close());
     els.poolDialog.addEventListener("click", event => {
       const rect = els.poolDialog.getBoundingClientRect();
@@ -2144,9 +2194,6 @@
       if (outside) els.poolDialog.close();
     });
 
-    [els.capitalInput, els.minStepInput, els.maxStepInput].forEach(input => {
-      input.addEventListener("change", recalculate);
-    });
 
     async function copyContract() {
       try {
@@ -2171,8 +2218,7 @@
     els.contractCard.addEventListener("click", copyContract);
 
     readSettings();
-    load();
-    setInterval(load, REFRESH_MS);
+    setStatus("idle", "Bereit für die Berechnung");
   </script>
 </body>
 </html>
