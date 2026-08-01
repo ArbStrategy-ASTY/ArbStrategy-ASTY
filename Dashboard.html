@@ -20,6 +20,7 @@
       --purple: #8b5cf6;
       --purple-2: #6d28d9;
       --purple-soft: #c4b5fd;
+      --purple-heading: #cdbfff;
       --cyan: #67e8f9;
       --cyan-2: #06b6d4;
       --green: #34d399;
@@ -190,6 +191,34 @@
       font-size: 14px;
     }
 
+    .live-proof {
+      margin-top: 13px;
+      color: #aaa3bc;
+      font-size: 12px;
+      line-height: 1.5;
+    }
+
+    .live-proof strong {
+      color: #f3efff;
+      font-weight: 850;
+    }
+
+    .trust-line {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      margin-top: 7px;
+      color: var(--muted-2);
+      font-size: 10px;
+      line-height: 1.4;
+    }
+
+    .trust-line::before {
+      content: "✓";
+      color: var(--purple-soft);
+      font-weight: 900;
+    }
+
     .status-wrap {
       display: flex;
       align-items: center;
@@ -211,13 +240,23 @@
       width: 8px;
       height: 8px;
       border-radius: 50%;
-      background: var(--amber);
-      box-shadow: 0 0 0 5px rgba(251,191,36,0.08);
+      background: var(--purple);
+      box-shadow:
+        0 0 0 5px rgba(139,92,246,0.10),
+        0 0 16px rgba(139,92,246,0.42);
     }
 
     .status-dot.live {
-      background: var(--green);
-      box-shadow: 0 0 0 5px rgba(52,211,153,0.08);
+      background: var(--purple);
+      box-shadow:
+        0 0 0 5px rgba(139,92,246,0.10),
+        0 0 18px rgba(139,92,246,0.48);
+      animation: livePulse 2.3s ease-in-out infinite;
+    }
+
+    @keyframes livePulse {
+      0%, 100% { transform: scale(1); opacity: 0.85; }
+      50% { transform: scale(1.18); opacity: 1; }
     }
 
     .status-dot.error {
@@ -225,45 +264,85 @@
       box-shadow: 0 0 0 5px rgba(251,113,133,0.08);
     }
 
-    .contract-strip {
-      display: flex;
+    .contract-card {
+      display: grid;
+      grid-template-columns: auto minmax(0, 1fr) auto;
       align-items: center;
-      justify-content: space-between;
-      gap: 16px;
-      margin-top: 28px;
+      gap: 14px;
+      margin-top: 30px;
       margin-bottom: 16px;
-      padding: 13px 15px;
-      border-radius: 16px;
-      border: 1px solid var(--border);
-      background: rgba(255,255,255,0.035);
+      padding: 15px 16px;
+      border-radius: 18px;
+      border: 1px solid rgba(167,139,250,0.20);
+      background:
+        radial-gradient(circle at 88% 30%, rgba(6,182,212,0.07), transparent 24%),
+        linear-gradient(135deg, rgba(124,58,237,0.07), rgba(255,255,255,0.025));
       backdrop-filter: blur(12px);
+      box-shadow: 0 14px 42px rgba(0,0,0,0.18);
+      cursor: pointer;
     }
 
-    .footer-wolf {
-      display: block;
-      width: 56px;
-      height: auto;
-      margin: 18px auto 2px;
-      opacity: 0.78;
-      filter: drop-shadow(0 0 14px rgba(139,92,246,0.20));
+    .contract-icon {
+      width: 48px;
+      height: 48px;
+      display: grid;
+      place-items: center;
+      border-radius: 50%;
+      border: 1px solid rgba(196,181,253,0.26);
+      background: rgba(255,255,255,0.035);
+      box-shadow:
+        0 0 0 5px rgba(139,92,246,0.055),
+        0 0 22px rgba(103,232,249,0.10);
+      overflow: hidden;
+    }
+
+    .contract-icon img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .contract-content {
+      min-width: 0;
     }
 
     .contract-label {
-      color: var(--muted);
+      color: var(--purple-heading);
       font-size: 10px;
-      font-weight: 750;
-      letter-spacing: .45px;
+      font-weight: 850;
+      letter-spacing: 1.15px;
       text-transform: uppercase;
+    }
+
+    .contract-meta {
+      margin-top: 3px;
+      color: var(--muted-2);
+      font-size: 9px;
     }
 
     .contract-address {
       display: block;
-      margin-top: 5px;
+      margin-top: 7px;
       color: #f1edfb;
       font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
       font-size: 11px;
       line-height: 1.45;
       word-break: break-all;
+    }
+
+    .contract-address-short {
+      display: none;
+    }
+
+    .footer-wolf {
+      display: block;
+      width: 68px;
+      height: auto;
+      margin: 19px auto 3px;
+      opacity: 0.88;
+      filter:
+        drop-shadow(0 0 10px rgba(139,92,246,0.24))
+        drop-shadow(0 0 18px rgba(103,232,249,0.10));
     }
 
     .ownership-card {
@@ -293,11 +372,11 @@
 
     .ownership-message {
       margin-top: 6px;
-      color: #e4dfed;
-      font-size: clamp(15px, 1.8vw, 18px);
-      font-weight: 680;
-      line-height: 1.48;
-      letter-spacing: -0.15px;
+      color: #e9e4f1;
+      font-size: clamp(17px, 2.15vw, 21px);
+      font-weight: 720;
+      line-height: 1.45;
+      letter-spacing: -0.25px;
     }
 
     .ownership-highlight {
@@ -391,9 +470,9 @@
     }
 
     .metric-label {
-      color: #bdb6d0;
+      color: var(--purple-heading);
       font-size: 12px;
-      font-weight: 750;
+      font-weight: 780;
       letter-spacing: .2px;
     }
 
@@ -418,6 +497,25 @@
     .positive { color: var(--green) !important; }
     .negative { color: var(--red) !important; }
 
+    .value-updated {
+      animation: valueUpdated 0.75s ease-out;
+    }
+
+    @keyframes valueUpdated {
+      0% {
+        text-shadow: 0 0 0 rgba(139,92,246,0);
+        transform: translateY(0);
+      }
+      35% {
+        text-shadow: 0 0 20px rgba(139,92,246,0.52);
+        transform: translateY(-1px);
+      }
+      100% {
+        text-shadow: 0 0 0 rgba(139,92,246,0);
+        transform: translateY(0);
+      }
+    }
+
     .mini-grid {
       margin-top: 14px;
       display: grid;
@@ -432,8 +530,9 @@
     }
 
     .mini-label {
-      color: var(--muted);
+      color: var(--purple-heading);
       font-size: 11px;
+      font-weight: 700;
     }
 
     .mini-value {
@@ -449,6 +548,191 @@
       color: var(--muted-2);
       font-size: 10px;
       min-height: 13px;
+    }
+
+    .share-calculator {
+      margin-top: 12px;
+      border-radius: 16px;
+      border: 1px solid rgba(167,139,250,0.15);
+      background: rgba(255,255,255,0.022);
+      overflow: hidden;
+    }
+
+    .share-calculator summary {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      padding: 13px 16px;
+      color: var(--purple-heading);
+      font-size: 12px;
+      font-weight: 800;
+      cursor: pointer;
+      list-style: none;
+    }
+
+    .share-calculator summary::-webkit-details-marker { display: none; }
+
+    .share-calculator summary::after {
+      content: "+";
+      color: var(--purple-soft);
+      font-size: 18px;
+      line-height: 1;
+    }
+
+    .share-calculator[open] summary::after { content: "−"; }
+
+    .calculator-body {
+      display: grid;
+      grid-template-columns: minmax(190px, 0.85fr) minmax(0, 1.7fr);
+      gap: 14px;
+      padding: 0 16px 16px;
+      border-top: 1px solid rgba(255,255,255,0.055);
+    }
+
+    .calculator-input-wrap {
+      padding-top: 14px;
+    }
+
+    .calculator-label {
+      color: var(--muted);
+      font-size: 10px;
+    }
+
+    .calculator-input {
+      width: 100%;
+      height: 43px;
+      margin-top: 7px;
+      border-radius: 12px;
+      border: 1px solid rgba(167,139,250,0.22);
+      outline: none;
+      background: rgba(0,0,0,0.18);
+      color: #fff;
+      padding: 0 12px;
+      font-weight: 750;
+    }
+
+    .calculator-input:focus {
+      border-color: rgba(196,181,253,0.62);
+      box-shadow: 0 0 0 4px rgba(139,92,246,0.08);
+    }
+
+    .calculator-results {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 9px;
+      padding-top: 14px;
+    }
+
+    .calculator-result {
+      padding: 10px;
+      border-radius: 12px;
+      border: 1px solid rgba(255,255,255,0.06);
+      background: rgba(255,255,255,0.025);
+    }
+
+    .calculator-result-label {
+      color: var(--muted-2);
+      font-size: 9px;
+    }
+
+    .calculator-result-value {
+      margin-top: 5px;
+      color: #f5f1ff;
+      font-size: 14px;
+      font-weight: 850;
+    }
+
+    .calculator-result-value.highlight {
+      color: var(--cyan);
+    }
+
+    .effect-flow {
+      display: grid;
+      grid-template-columns: 1fr auto 1fr auto 1fr;
+      align-items: stretch;
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    .effect-step {
+      padding: 14px;
+      border-radius: 15px;
+      border: 1px solid rgba(167,139,250,0.14);
+      background: rgba(255,255,255,0.022);
+    }
+
+    .effect-step-title {
+      color: var(--purple-heading);
+      font-size: 11px;
+      font-weight: 850;
+    }
+
+    .effect-step-copy {
+      margin-top: 5px;
+      color: var(--muted);
+      font-size: 10px;
+      line-height: 1.45;
+    }
+
+    .effect-arrow {
+      display: grid;
+      place-items: center;
+      color: var(--purple-soft);
+      font-size: 18px;
+      opacity: 0.8;
+    }
+
+    .strongest-strip {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 9px;
+      padding: 12px 16px 0;
+    }
+
+    .strongest-card {
+      min-width: 0;
+      padding: 10px 11px;
+      border-radius: 13px;
+      border: 1px solid rgba(167,139,250,0.12);
+      background: rgba(255,255,255,0.022);
+    }
+
+    .strongest-label {
+      color: var(--purple-heading);
+      font-size: 9px;
+      font-weight: 800;
+      letter-spacing: .25px;
+    }
+
+    .strongest-pair {
+      margin-top: 5px;
+      color: #f5f1ff;
+      font-size: 11px;
+      font-weight: 800;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .strongest-value {
+      margin-top: 3px;
+      color: var(--muted);
+      font-size: 9px;
+    }
+
+    .brand-statement {
+      margin: 24px 0 4px;
+      padding: 18px 16px;
+      text-align: center;
+      color: #f4efff;
+      font-size: clamp(18px, 2.6vw, 27px);
+      font-weight: 900;
+      letter-spacing: -0.6px;
+    }
+
+    .brand-statement span {
+      color: var(--purple-soft);
     }
 
     .panel {
@@ -467,8 +751,9 @@
     }
 
     .panel-title {
+      color: var(--purple-heading);
       font-size: 14px;
-      font-weight: 800;
+      font-weight: 820;
     }
 
     .panel-sub {
@@ -546,17 +831,21 @@
 
     .tooltip {
       position: fixed;
-      z-index: 9999;
+      z-index: 2147483647;
       display: none;
-      width: min(250px, calc(100vw - 20px));
-      max-width: calc(100vw - 20px);
+      width: min(250px, calc(100vw - 24px));
+      max-width: calc(100vw - 24px);
       padding: 11px 12px;
       border-radius: 13px;
-      border: 1px solid rgba(196,181,253,0.32);
-      background: rgba(4,6,13,0.97);
-      box-shadow: 0 16px 44px rgba(0,0,0,0.48);
+      border: 1px solid rgba(196,181,253,0.38);
+      background: #070a13;
+      box-shadow:
+        0 18px 52px rgba(0,0,0,0.62),
+        0 0 18px rgba(139,92,246,0.16);
       pointer-events: none;
       font-size: 11px;
+      transform: translateZ(0);
+      isolation: isolate;
     }
 
     .tooltip strong { font-size: 12px; }
@@ -818,14 +1107,31 @@
         flex-direction: column;
       }
 
-      .contract-strip {
-        align-items: flex-start;
-        flex-direction: column;
+      .contract-card {
+        grid-template-columns: auto minmax(0, 1fr);
+      }
+
+      .contract-card .pill {
+        grid-column: 1 / -1;
+        width: 100%;
       }
 
       .ownership-card {
         align-items: flex-start;
         flex-direction: column;
+      }
+
+      .calculator-body {
+        grid-template-columns: 1fr;
+      }
+
+      .effect-flow {
+        grid-template-columns: 1fr;
+      }
+
+      .effect-arrow {
+        transform: rotate(90deg);
+        min-height: 16px;
       }
 
       .status-wrap {
@@ -874,6 +1180,17 @@
 
       .detail-grid { grid-template-columns: 1fr; }
 
+      .calculator-results {
+        grid-template-columns: 1fr;
+      }
+
+      .strongest-strip {
+        grid-template-columns: 1fr;
+      }
+
+      .contract-address-full { display: none; }
+      .contract-address-short { display: block; }
+
       .tabs { width: 100%; }
       .tab-button { flex: 1; }
     }
@@ -913,6 +1230,12 @@
         <p class="hero-copy">
           A clean insight into the power of the ASTY-Effect
         </p>
+        <div class="live-proof" id="liveProof">
+          Loading the live ASTY system footprint…
+        </div>
+        <div class="trust-line">
+          GeckoTerminal live pools · Solana on-chain supply · BirdEye chart and primary USD price
+        </div>
       </div>
 
       <div class="status-wrap">
@@ -979,16 +1302,68 @@
     <section class="ownership-card" aria-label="ASTY ownership effect">
       <div class="ownership-text-wrap">
         <div class="ownership-kicker">The ASTY-Effect</div>
-        <div class="ownership-message" id="ownershipMessage">
-          If you owned 1% of ASTY at launch, you now own
+        <div class="ownership-message">
+          1% at launch is now
           <span class="ownership-highlight" id="ownershipPercent">—</span>
-          of the network without buying a single additional token.
+          of the remaining ASTY network. No additional tokens required.
         </div>
         <div class="ownership-sub" id="ownershipSub">
-          Based on holding 100,000 ASTY, equal to 1% of the original launch supply.
+          Every burn permanently increases the ownership share of existing ASTY holders.
         </div>
       </div>
-      <div class="ownership-badge">Burns increase ownership</div>
+      <div class="ownership-badge">Ownership grows through burns</div>
+    </section>
+
+    <details class="share-calculator" id="shareCalculator">
+      <summary>
+        <span>Calculate your ASTY share</span>
+        <span style="color:var(--muted-2);font-size:9px;font-weight:600;">Personal ownership impact</span>
+      </summary>
+      <div class="calculator-body">
+        <div class="calculator-input-wrap">
+          <div class="calculator-label">Your ASTY amount</div>
+          <input
+            class="calculator-input"
+            id="shareAmountInput"
+            type="number"
+            min="0"
+            step="1"
+            value="100000"
+            inputmode="decimal">
+        </div>
+
+        <div class="calculator-results">
+          <div class="calculator-result">
+            <div class="calculator-result-label">Share at launch</div>
+            <div class="calculator-result-value" id="shareAtLaunch">—</div>
+          </div>
+          <div class="calculator-result">
+            <div class="calculator-result-label">Share today</div>
+            <div class="calculator-result-value highlight" id="shareToday">—</div>
+          </div>
+          <div class="calculator-result">
+            <div class="calculator-result-label">Ownership increase</div>
+            <div class="calculator-result-value" id="shareIncrease">—</div>
+          </div>
+        </div>
+      </div>
+    </details>
+
+    <section class="effect-flow" aria-label="How the ASTY-Effect works">
+      <article class="effect-step">
+        <div class="effect-step-title">Trades</div>
+        <div class="effect-step-copy">Activity moves through the growing network of ASTY arbitrage pools.</div>
+      </article>
+      <div class="effect-arrow">→</div>
+      <article class="effect-step">
+        <div class="effect-step-title">System Output</div>
+        <div class="effect-step-copy">Live volume generates measurable pool fees across the system.</div>
+      </article>
+      <div class="effect-arrow">→</div>
+      <article class="effect-step">
+        <div class="effect-step-title">Burns &amp; Growth</div>
+        <div class="effect-step-copy">Supply decreases while liquidity and the ASTY ecosystem continue to expand.</div>
+      </article>
     </section>
 
     <section class="panel">
@@ -1001,6 +1376,24 @@
           <button class="tab-button" id="networkTab" type="button" role="tab" aria-selected="false">Network</button>
           <button class="tab-button active" id="listTab" type="button" role="tab" aria-selected="true">Pool List</button>
         </div>
+      </div>
+
+      <div class="strongest-strip" aria-label="Today's strongest pools">
+        <article class="strongest-card">
+          <div class="strongest-label">Highest Output</div>
+          <div class="strongest-pair" id="strongestOutputPair">—</div>
+          <div class="strongest-value" id="strongestOutputValue">—</div>
+        </article>
+        <article class="strongest-card">
+          <div class="strongest-label">Highest Volume</div>
+          <div class="strongest-pair" id="strongestVolumePair">—</div>
+          <div class="strongest-value" id="strongestVolumeValue">—</div>
+        </article>
+        <article class="strongest-card">
+          <div class="strongest-label">Highest Liquidity</div>
+          <div class="strongest-pair" id="strongestLiquidityPair">—</div>
+          <div class="strongest-value" id="strongestLiquidityValue">—</div>
+        </article>
       </div>
 
       <div class="tab-panel" id="networkPanel" role="tabpanel">
@@ -1037,6 +1430,10 @@
       </div>
     </section>
 
+    <div class="brand-statement">
+      <span>ASTY is not a coin.</span> ASTY is a cashflow system.
+    </div>
+
     <section class="panel">
       <div class="panel-head">
         <div>
@@ -1055,23 +1452,43 @@
       </iframe>
     </section>
 
-    <section class="contract-strip" aria-label="ASTY contract address">
-      <div>
-        <div class="contract-label">ASTY Contract</div>
-        <code class="contract-address" id="contractAddress">ASTYqeaoK83Zs1pTFEXZUB6BM8cG8YLTsN852NUkt7ZR</code>
+    <section class="contract-card" id="contractCard" aria-label="ASTY contract address">
+      <div class="contract-icon">
+        <img
+          src="assets/logo.png"
+          alt="ASTY"
+          onerror="this.onerror=null;this.src='assets/wolf.png'">
       </div>
+
+      <div class="contract-content">
+        <div class="contract-label">ASTY Contract</div>
+        <div class="contract-meta">Solana Token Mint</div>
+        <code class="contract-address contract-address-full" id="contractAddress">ASTYqeaoK83Zs1pTFEXZUB6BM8cG8YLTsN852NUkt7ZR</code>
+        <code class="contract-address contract-address-short">ASTYqeao…NUkt7ZR</code>
+      </div>
+
       <button class="pill" id="copyContractButton" type="button">Copy</button>
     </section>
 
     <img
       class="footer-wolf"
-      src="assets/Wolf.png"
+      src="assets/wolf.png"
       alt="ASTY Wolf"
-      onerror="this.style.display='none'">
+      onerror="
+        if (!this.dataset.fallback) {
+          this.dataset.fallback='upper';
+          this.src='assets/Wolf.png';
+        } else if (this.dataset.fallback === 'upper') {
+          this.dataset.fallback='logo';
+          this.src='assets/logo.png';
+        } else {
+          this.style.display='none';
+        }
+      ">
 
     <div class="footer">
-      Pool data: GeckoTerminal · Supply data: Solana RPC · Chart: BirdEye<br>
-      Live values are informational and may differ slightly across providers.
+      Live pools: GeckoTerminal · Supply: Solana RPC · Chart: BirdEye<br>
+      Price uses BirdEye USD when a secure price proxy is available, with transparent market fallbacks.
     </div>
   </main>
 
@@ -1097,7 +1514,12 @@
     const PRESALE_PRICE = 0.0025;
     const CHUNK_SIZE = 25;
     const REFRESH_MS = 60_000;
-    const CACHE_KEY = "asty-live-dashboard-v1";
+    const CACHE_KEY = "asty-live-dashboard-v2";
+
+    // Optional secure server endpoint. It should return either:
+    // { price, priceChange24h } or a BirdEye-like { data: { price, ... } } object.
+    // Never place a BirdEye API key directly inside this public HTML file.
+    const BIRDEYE_PRICE_PROXY = "/api/birdeye-price";
 
     // [pool address, display label, configured pool fee in percent]
     const POOLS = [
@@ -1173,9 +1595,12 @@
     const state = {
       rows: [],
       supply: null,
+      birdEye: null,
       summary: null,
       updatedAt: null,
-      refreshing: false
+      refreshing: false,
+      statusTone: "live",
+      statusCustom: null
     };
 
     const el = id => document.getElementById(id);
@@ -1528,7 +1953,67 @@
       throw lastError || new Error("Supply unavailable");
     }
 
-    function buildReferencePrice(rows) {
+
+    function firstFiniteNumber(...values) {
+      for (const value of values) {
+        const number = safeNumber(value);
+        if (Number.isFinite(number)) return number;
+      }
+      return null;
+    }
+
+    async function loadBirdEyePrice() {
+      if (!BIRDEYE_PRICE_PROXY) return null;
+
+      const separator = BIRDEYE_PRICE_PROXY.includes("?") ? "&" : "?";
+      const url = `${BIRDEYE_PRICE_PROXY}${separator}address=${encodeURIComponent(ASTY_MINT)}`;
+
+      const payload = await fetchJson(url, {
+        headers: { Accept: "application/json" },
+        cache: "no-store"
+      }, 7_000);
+
+      const data = payload?.data ?? payload;
+      const price = firstFiniteNumber(
+        data?.price,
+        data?.value,
+        data?.priceUsd,
+        data?.price_usd
+      );
+      const priceChange24h = firstFiniteNumber(
+        data?.priceChange24h,
+        data?.priceChange24hPercent,
+        data?.price_change_24h_percent,
+        data?.price_change_percentage_24h,
+        data?.change24h
+      );
+
+      if (!Number.isFinite(price) || price <= 0) {
+        throw new Error("BirdEye price proxy returned no valid price");
+      }
+
+      return {
+        price,
+        priceChange24h,
+        source: "BirdEye USD"
+      };
+    }
+
+
+    function buildReferencePrice(rows, birdEye = null) {
+      if (Number.isFinite(birdEye?.price) && birdEye.price > 0) {
+        return {
+          price: birdEye.price,
+          change24h: Number.isFinite(birdEye.priceChange24h)
+            ? birdEye.priceChange24h
+            : null,
+          usedPools: 0,
+          usedLiquidity: 0,
+          method: "birdeye-usd",
+          sourceLabel: "BirdEye USD"
+        };
+      }
+
       const priced = rows.filter(row =>
         Number.isFinite(row.astyPrice) &&
         row.astyPrice > 0 &&
@@ -1547,8 +2032,6 @@
         };
       }
 
-      // BirdEye generally tracks the main quoted market closely. Prefer the
-      // most liquid ASTY/USDC pool, then fall back to a robust weighted price.
       const stableReference = priced
         .filter(row =>
           ["USDC", "USDT"].includes(row.marketLabel.toUpperCase()) &&
@@ -1640,7 +2123,7 @@
         .sort((a, b) => b.liquidity - a.liquidity);
     }
 
-    function calculateSummary(rows, supply) {
+    function calculateSummary(rows, supply, birdEye = null) {
       const loadedRows = rows.filter(row => row.status !== "unavailable");
       const liveRows = loadedRows.filter(row => Number.isFinite(row.liquidity) && row.liquidity > 0);
       const unavailableRows = rows.filter(row => row.status === "unavailable");
@@ -1650,8 +2133,10 @@
       const volume24h = liveRows.reduce((sum, row) => sum + (row.volume24h || 0), 0);
       const fees24h = liveRows.reduce((sum, row) => sum + (row.fees24h || 0), 0);
       const markets = aggregateMarkets(liveRows);
-      const reference = buildReferencePrice(liveRows);
+      const reference = buildReferencePrice(liveRows, birdEye);
       const topFeePool = [...liveRows].sort((a, b) => (b.fees24h || 0) - (a.fees24h || 0))[0] || null;
+      const topVolumePool = [...liveRows].sort((a, b) => (b.volume24h || 0) - (a.volume24h || 0))[0] || null;
+      const topLiquidityPool = [...liveRows].sort((a, b) => (b.liquidity || 0) - (a.liquidity || 0))[0] || null;
 
       const currentSupply = supply?.currentSupply ?? null;
       const burnedTokens = Number.isFinite(currentSupply)
@@ -1687,6 +2172,8 @@
         markets,
         reference,
         topFeePool,
+        topVolumePool,
+        topLiquidityPool,
         currentSupply,
         burnedTokens,
         burnedPercent,
@@ -1700,9 +2187,17 @@
 
     function setMetric(id, value, className = "") {
       const node = el(id);
+      const changed = node.textContent !== value;
+
       node.textContent = value;
       node.classList.remove("positive", "negative");
       if (className) node.classList.add(className);
+
+      if (changed && value !== "—") {
+        node.classList.remove("value-updated");
+        void node.offsetWidth;
+        node.classList.add("value-updated");
+      }
     }
 
     function renderSummary(summary) {
@@ -1716,9 +2211,11 @@
           : "";
 
       el("priceSub").innerHTML = Number.isFinite(reference.price)
-        ? (reference.method === "primary-stable-pool"
-            ? `${reference.sourceLabel} reference · ${fmtUsd(reference.usedLiquidity, true)} liquidity`
-            : `${reference.usedPools} eligible pools · ${fmtUsd(reference.usedLiquidity, true)} weighted liquidity`) +
+        ? (reference.method === "birdeye-usd"
+            ? "BirdEye USD price"
+            : reference.method === "primary-stable-pool"
+              ? `${reference.sourceLabel} fallback · ${fmtUsd(reference.usedLiquidity, true)} liquidity`
+              : `${reference.usedPools} pool fallback · ${fmtUsd(reference.usedLiquidity, true)} weighted liquidity`) +
           (Number.isFinite(reference.change24h)
             ? ` · <span class="${priceDirection}">${fmtPercent(reference.change24h)} 24h</span>`
             : "") +
@@ -1751,14 +2248,71 @@
         el("ownershipPercent").textContent =
           `${summary.launchOnePercentNow.toFixed(3)}%`;
         el("ownershipSub").textContent =
-          `${fmtNumber(summary.launchOnePercentTokens)} ASTY represented 1% at launch. Burns automatically increase that share of the remaining supply.`;
+          "Every burn permanently increases the ownership share of existing ASTY holders.";
       } else {
         el("ownershipPercent").textContent = "—";
         el("ownershipSub").textContent =
           "The ownership increase created by ASTY burns is temporarily unavailable.";
       }
 
+      el("liveProof").innerHTML =
+        `<strong>${summary.configuredPools}</strong> arbitrage pools · ` +
+        `<strong>${fmtUsd(summary.liquidity, true)}</strong> liquidity · ` +
+        `<strong>${fmtUsd(summary.fees24h, true)}</strong> system output in 24h`;
+
+      renderStrongestPools(summary);
+      renderShareCalculator();
       updateBuyLink(state.rows);
+    }
+
+    function renderStrongestPools(summary) {
+      const entries = [
+        {
+          pool: summary.topFeePool,
+          pairId: "strongestOutputPair",
+          valueId: "strongestOutputValue",
+          value: pool => `${fmtUsd(pool?.fees24h)} fees`
+        },
+        {
+          pool: summary.topVolumePool,
+          pairId: "strongestVolumePair",
+          valueId: "strongestVolumeValue",
+          value: pool => `${fmtUsd(pool?.volume24h)} volume`
+        },
+        {
+          pool: summary.topLiquidityPool,
+          pairId: "strongestLiquidityPair",
+          valueId: "strongestLiquidityValue",
+          value: pool => `${fmtUsd(pool?.liquidity)} liquidity`
+        }
+      ];
+
+      for (const entry of entries) {
+        el(entry.pairId).textContent = entry.pool?.displayLabel ?? "—";
+        el(entry.valueId).textContent = entry.pool ? entry.value(entry.pool) : "—";
+      }
+    }
+
+    function renderShareCalculator() {
+      const amount = safeNumber(el("shareAmountInput")?.value);
+      const currentSupply = state.summary?.currentSupply;
+
+      if (!Number.isFinite(amount) || amount < 0 || !Number.isFinite(currentSupply) || currentSupply <= 0) {
+        el("shareAtLaunch").textContent = "—";
+        el("shareToday").textContent = "—";
+        el("shareIncrease").textContent = "—";
+        return;
+      }
+
+      const launchShare = amount / INITIAL_SUPPLY * 100;
+      const currentShare = amount / currentSupply * 100;
+      const ownershipIncrease = launchShare > 0
+        ? (currentShare / launchShare - 1) * 100
+        : 0;
+
+      el("shareAtLaunch").textContent = `${launchShare.toFixed(4)}%`;
+      el("shareToday").textContent = `${currentShare.toFixed(4)}%`;
+      el("shareIncrease").textContent = `+${ownershipIncrease.toFixed(2)}%`;
     }
 
     function updateBuyLink(rows) {
@@ -2105,7 +2659,24 @@
       });
     }
 
+    function relativeUpdateLabel(timestamp) {
+      if (!timestamp) return "Updated —";
+
+      const seconds = Math.max(0, Math.floor((Date.now() - timestamp) / 1000));
+      if (seconds < 5) return "Updated just now";
+      if (seconds < 60) return `Updated ${seconds}s ago`;
+
+      const minutes = Math.floor(seconds / 60);
+      if (minutes < 60) return `Updated ${minutes}m ago`;
+
+      const hours = Math.floor(minutes / 60);
+      return `Updated ${hours}h ago`;
+    }
+
     function updateStatus(tone = "live", customText = null) {
+      state.statusTone = tone || "";
+      state.statusCustom = customText;
+
       const summary = state.summary;
       const dot = el("statusDot");
       dot.className = "status-dot" + (tone ? ` ${tone}` : "");
@@ -2120,20 +2691,18 @@
         return;
       }
 
-      const time = state.updatedAt
-        ? new Date(state.updatedAt).toLocaleTimeString("en-GB", {
-            hour: "2-digit",
-            minute: "2-digit",
-            second: "2-digit"
-          })
-        : "—";
-
       const staleText = summary.stalePools
         ? ` · ${summary.stalePools} cached`
         : "";
 
       el("statusText").textContent =
-        `${summary.configuredPools} configured · ${summary.livePools} live · ${summary.marketCount} markets${staleText} · Updated ${time}`;
+        `${summary.configuredPools} configured · ${summary.livePools} live · ` +
+        `${summary.marketCount} markets${staleText} · ${relativeUpdateLabel(state.updatedAt)}`;
+    }
+
+    function refreshRelativeStatus() {
+      if (!state.summary || state.refreshing || state.statusCustom) return;
+      updateStatus(state.statusTone || "live");
     }
 
     function persistCache() {
@@ -2141,7 +2710,8 @@
         localStorage.setItem(CACHE_KEY, JSON.stringify({
           savedAt: Date.now(),
           rows: state.rows,
-          supply: state.supply
+          supply: state.supply,
+          birdEye: state.birdEye
         }));
       } catch {}
     }
@@ -2153,8 +2723,9 @@
 
         state.rows = cached.rows;
         state.supply = cached.supply || null;
+        state.birdEye = cached.birdEye || null;
         state.updatedAt = cached.savedAt || null;
-        state.summary = calculateSummary(state.rows, state.supply);
+        state.summary = calculateSummary(state.rows, state.supply, state.birdEye);
 
         renderAll();
         updateStatus("", "Showing cached data while live values refresh…");
@@ -2178,9 +2749,10 @@
       el("refreshButton").classList.add("spinning");
       updateStatus("", "Refreshing live data…");
 
-      const [poolResult, supplyResult] = await Promise.allSettled([
+      const [poolResult, supplyResult, birdEyeResult] = await Promise.allSettled([
         loadPools(),
-        loadSupply()
+        loadSupply(),
+        loadBirdEyePrice()
       ]);
 
       let hadSuccess = false;
@@ -2195,8 +2767,13 @@
         hadSuccess = true;
       }
 
+      if (birdEyeResult.status === "fulfilled" && birdEyeResult.value) {
+        state.birdEye = birdEyeResult.value;
+        hadSuccess = true;
+      }
+
       if (state.rows.length) {
-        state.summary = calculateSummary(state.rows, state.supply);
+        state.summary = calculateSummary(state.rows, state.supply, state.birdEye);
         state.updatedAt = Date.now();
         renderAll();
         persistCache();
@@ -2259,8 +2836,13 @@
     el("networkTab").addEventListener("click", () => setActiveTab("network"));
     el("listTab").addEventListener("click", () => setActiveTab("list"));
     el("poolSearch").addEventListener("input", renderTable);
+    el("shareAmountInput").addEventListener("input", renderShareCalculator);
     el("refreshButton").addEventListener("click", refreshDashboard);
-    el("copyContractButton").addEventListener("click", copyContractAddress);
+    el("copyContractButton").addEventListener("click", event => {
+      event.stopPropagation();
+      copyContractAddress();
+    });
+    el("contractCard").addEventListener("click", copyContractAddress);
 
     el("dialogClose").addEventListener("click", () => el("poolDialog").close());
     el("poolDialog").addEventListener("click", event => {
@@ -2271,6 +2853,7 @@
     restoreCache();
     refreshDashboard();
     setInterval(refreshDashboard, REFRESH_MS);
+    setInterval(refreshRelativeStatus, 1_000);
   </script>
 </body>
 </html>
