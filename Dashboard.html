@@ -556,6 +556,63 @@
       min-height: 13px;
     }
 
+    .reserve-card {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      align-items: center;
+      gap: 18px;
+      margin-top: 14px;
+      padding: 17px 19px;
+      border-radius: 17px;
+      border: 1px solid rgba(167,139,250,0.18);
+      background:
+        radial-gradient(circle at 88% 22%, rgba(6,182,212,0.07), transparent 25%),
+        rgba(255,255,255,0.028);
+    }
+
+    .reserve-label {
+      color: var(--purple-heading);
+      font-size: 11px;
+      font-weight: 850;
+      letter-spacing: .3px;
+    }
+
+    .reserve-value {
+      margin-top: 7px;
+      color: var(--cyan);
+      font-size: clamp(23px, 3vw, 32px);
+      font-weight: 900;
+      letter-spacing: -0.7px;
+    }
+
+    .reserve-sub {
+      margin-top: 6px;
+      color: var(--muted);
+      font-size: 10px;
+      line-height: 1.45;
+    }
+
+    .reserve-usd {
+      min-width: max-content;
+      padding: 10px 13px;
+      border-radius: 13px;
+      border: 1px solid rgba(167,139,250,0.16);
+      background: rgba(0,0,0,0.15);
+      text-align: right;
+    }
+
+    .reserve-usd-label {
+      color: var(--muted-2);
+      font-size: 9px;
+    }
+
+    .reserve-usd-value {
+      margin-top: 5px;
+      color: #f5f1ff;
+      font-size: 17px;
+      font-weight: 850;
+    }
+
     .share-calculator {
       margin-top: 12px;
       border-radius: 16px;
@@ -651,42 +708,6 @@
 
     .calculator-result-value.highlight {
       color: var(--cyan);
-    }
-
-    .effect-flow {
-      display: grid;
-      grid-template-columns: 1fr auto 1fr auto 1fr;
-      align-items: stretch;
-      gap: 10px;
-      margin-top: 14px;
-    }
-
-    .effect-step {
-      padding: 14px;
-      border-radius: 15px;
-      border: 1px solid rgba(167,139,250,0.14);
-      background: rgba(255,255,255,0.022);
-    }
-
-    .effect-step-title {
-      color: var(--purple-heading);
-      font-size: 11px;
-      font-weight: 850;
-    }
-
-    .effect-step-copy {
-      margin-top: 5px;
-      color: var(--muted);
-      font-size: 10px;
-      line-height: 1.45;
-    }
-
-    .effect-arrow {
-      display: grid;
-      place-items: center;
-      color: var(--purple-soft);
-      font-size: 18px;
-      opacity: 0.8;
     }
 
     .strongest-strip {
@@ -1127,18 +1148,19 @@
         flex-direction: column;
       }
 
+      .reserve-card {
+        grid-template-columns: 1fr;
+      }
+
+      .reserve-usd {
+        width: 100%;
+        text-align: left;
+      }
+
       .calculator-body {
         grid-template-columns: 1fr;
       }
 
-      .effect-flow {
-        grid-template-columns: 1fr;
-      }
-
-      .effect-arrow {
-        transform: rotate(90deg);
-        min-height: 16px;
-      }
 
       .status-wrap {
         justify-content: flex-start;
@@ -1305,6 +1327,21 @@
       </article>
     </section>
 
+    <section class="reserve-card" aria-label="ASTY liquidity pool reserve">
+      <div>
+        <div class="reserve-label">ASTY LP Reserve</div>
+        <div class="reserve-value" id="lpReserveAsty">— ASTY</div>
+        <div class="reserve-sub">
+          Combined on-chain balance across 5 liquidity reserve addresses
+        </div>
+      </div>
+
+      <div class="reserve-usd">
+        <div class="reserve-usd-label">Current USD value</div>
+        <div class="reserve-usd-value" id="lpReserveUsd">—</div>
+      </div>
+    </section>
+
     <section class="ownership-card" aria-label="ASTY ownership effect">
       <div class="ownership-text-wrap">
         <div class="ownership-kicker">The ASTY-Effect</div>
@@ -1354,23 +1391,6 @@
         </div>
       </div>
     </details>
-
-    <section class="effect-flow" aria-label="How the ASTY-Effect works">
-      <article class="effect-step">
-        <div class="effect-step-title">Trades</div>
-        <div class="effect-step-copy">Activity moves through the growing network of ASTY arbitrage pools.</div>
-      </article>
-      <div class="effect-arrow">→</div>
-      <article class="effect-step">
-        <div class="effect-step-title">System Output</div>
-        <div class="effect-step-copy">Live volume generates measurable pool fees across the system.</div>
-      </article>
-      <div class="effect-arrow">→</div>
-      <article class="effect-step">
-        <div class="effect-step-title">Burns &amp; Growth</div>
-        <div class="effect-step-copy">Supply decreases while liquidity and the ASTY ecosystem continue to expand.</div>
-      </article>
-    </section>
 
     <section class="panel">
       <div class="panel-head">
@@ -1528,6 +1548,14 @@
     // Never place a BirdEye API key directly inside this public HTML file.
     const BIRDEYE_PRICE_PROXY = "/api/birdeye-price";
 
+    const LP_RESERVE_ADDRESSES = [
+      "8KgDtknVhs88sMjRckCGzVDhaFBre3V3FAvhwxfANmfq",
+      "9Hv3HPGSHS1vq1qjfumoER4TEhu2sgWUmL3S4EaUWrk6",
+      "4aGjJavF5fq15szkFTdDGQAz9mUUSZ1y1c74isQm2zYV",
+      "8aYomPkFRaetda3672NfVLZ1xhrJRm9fro2gzNxCPbyf",
+      "9EDJ8RnqnVhwEZF8w3whGgCumDbeexPcHpzWRaWr6USt"
+    ];
+
     // [pool address, display label, configured pool fee in percent]
     const POOLS = [
       ["3UvhqPrMyf13qgRodARDi5oGJGoxHYb2ykZdCaa1TV8i","ASTY/$WIF",1],
@@ -1603,6 +1631,7 @@
       rows: [],
       supply: null,
       birdEye: null,
+      lpReserve: null,
       summary: null,
       updatedAt: null,
       refreshing: false,
@@ -1961,6 +1990,109 @@
     }
 
 
+
+    function parsedTokenAmount(accountInfo) {
+      const parsed = accountInfo?.data?.parsed;
+      const info = parsed?.info;
+      const tokenAmount = info?.tokenAmount;
+
+      if (
+        parsed?.type !== "account" ||
+        info?.mint !== ASTY_MINT ||
+        !tokenAmount?.amount ||
+        !Number.isInteger(tokenAmount?.decimals)
+      ) {
+        return null;
+      }
+
+      return {
+        amount: tokenAmount.amount,
+        decimals: tokenAmount.decimals
+      };
+    }
+
+    async function loadLpReserve() {
+      let lastError;
+
+      for (const endpoint of RPC_ENDPOINTS) {
+        try {
+          const ownerRequests = LP_RESERVE_ADDRESSES.map((address, index) => ({
+            jsonrpc: "2.0",
+            id: `owner-${index}`,
+            method: "getTokenAccountsByOwner",
+            params: [
+              address,
+              { mint: ASTY_MINT },
+              { encoding: "jsonParsed", commitment: "confirmed" }
+            ]
+          }));
+
+          const directRequest = {
+            jsonrpc: "2.0",
+            id: "direct-accounts",
+            method: "getMultipleAccounts",
+            params: [
+              LP_RESERVE_ADDRESSES,
+              { encoding: "jsonParsed", commitment: "confirmed" }
+            ]
+          };
+
+          const payload = await fetchJsonWithRetry(endpoint, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify([...ownerRequests, directRequest]),
+            cache: "no-store"
+          }, 0);
+
+          if (!Array.isArray(payload)) {
+            throw new Error("Unexpected batch RPC response");
+          }
+
+          const byId = new Map(payload.map(item => [String(item?.id), item]));
+          const tokenAccounts = new Map();
+
+          for (let index = 0; index < LP_RESERVE_ADDRESSES.length; index++) {
+            const result = byId.get(`owner-${index}`)?.result?.value;
+            if (!Array.isArray(result)) continue;
+
+            for (const tokenAccount of result) {
+              const parsed = parsedTokenAmount(tokenAccount?.account);
+              if (!parsed || !tokenAccount?.pubkey) continue;
+              tokenAccounts.set(tokenAccount.pubkey, parsed);
+            }
+          }
+
+          const directAccounts = byId.get("direct-accounts")?.result?.value;
+          if (Array.isArray(directAccounts)) {
+            directAccounts.forEach((accountInfo, index) => {
+              const parsed = parsedTokenAmount(accountInfo);
+              if (!parsed) return;
+              tokenAccounts.set(LP_RESERVE_ADDRESSES[index], parsed);
+            });
+          }
+
+          let totalRaw = 0n;
+          let decimals = 9;
+
+          for (const item of tokenAccounts.values()) {
+            totalRaw += BigInt(item.amount);
+            decimals = item.decimals;
+          }
+
+          return {
+            amount: bigintAmountToNumber(totalRaw.toString(), decimals),
+            tokenAccounts: tokenAccounts.size,
+            reserveAddresses: LP_RESERVE_ADDRESSES.length
+          };
+        } catch (error) {
+          lastError = error;
+        }
+      }
+
+      throw lastError || new Error("ASTY LP Reserve unavailable");
+    }
+
+
     function firstFiniteNumber(...values) {
       for (const value of values) {
         const number = safeNumber(value);
@@ -2130,7 +2262,7 @@
         .sort((a, b) => b.liquidity - a.liquidity);
     }
 
-    function calculateSummary(rows, supply, birdEye = null) {
+    function calculateSummary(rows, supply, birdEye = null, lpReserve = null) {
       const loadedRows = rows.filter(row => row.status !== "unavailable");
       const liveRows = loadedRows.filter(row => Number.isFinite(row.liquidity) && row.liquidity > 0);
       const unavailableRows = rows.filter(row => row.status === "unavailable");
@@ -2161,6 +2293,13 @@
       const sincePresale = Number.isFinite(reference.price)
         ? (reference.price / PRESALE_PRICE - 1) * 100
         : null;
+      const lpReserveAsty = Number.isFinite(lpReserve?.amount)
+        ? lpReserve.amount
+        : null;
+      const lpReserveUsd =
+        Number.isFinite(lpReserveAsty) && Number.isFinite(reference.price)
+          ? lpReserveAsty * reference.price
+          : null;
       const launchOnePercentTokens = INITIAL_SUPPLY * 0.01;
       const launchOnePercentNow = Number.isFinite(currentSupply) && currentSupply > 0
         ? launchOnePercentTokens / currentSupply * 100
@@ -2187,6 +2326,8 @@
         marketCap,
         burnedUsd,
         sincePresale,
+        lpReserveAsty,
+        lpReserveUsd,
         launchOnePercentTokens,
         launchOnePercentNow
       };
@@ -2247,6 +2388,14 @@
       );
       el("burnedUsdSub").textContent =
         `Burn value: ${fmtUsd(summary.burnedUsd, true)}`;
+
+      setMetric(
+        "lpReserveAsty",
+        Number.isFinite(summary.lpReserveAsty)
+          ? `${fmtNumber(summary.lpReserveAsty, 0)} ASTY`
+          : "— ASTY"
+      );
+      setMetric("lpReserveUsd", fmtUsd(summary.lpReserveUsd, true));
 
       if (Number.isFinite(summary.launchOnePercentNow)) {
         el("ownershipPercent").textContent =
@@ -2715,7 +2864,8 @@
           savedAt: Date.now(),
           rows: state.rows,
           supply: state.supply,
-          birdEye: state.birdEye
+          birdEye: state.birdEye,
+          lpReserve: state.lpReserve
         }));
       } catch {}
     }
@@ -2728,8 +2878,14 @@
         state.rows = cached.rows;
         state.supply = cached.supply || null;
         state.birdEye = cached.birdEye || null;
+        state.lpReserve = cached.lpReserve || null;
         state.updatedAt = cached.savedAt || null;
-        state.summary = calculateSummary(state.rows, state.supply, state.birdEye);
+        state.summary = calculateSummary(
+          state.rows,
+          state.supply,
+          state.birdEye,
+          state.lpReserve
+        );
 
         renderAll();
         updateStatus("", "Showing cached data while live values refresh…");
@@ -2753,11 +2909,13 @@
       el("refreshButton").classList.add("spinning");
       updateStatus("", "Refreshing live data…");
 
-      const [poolResult, supplyResult, birdEyeResult] = await Promise.allSettled([
-        loadPools(),
-        loadSupply(),
-        loadBirdEyePrice()
-      ]);
+      const [poolResult, supplyResult, birdEyeResult, reserveResult] =
+        await Promise.allSettled([
+          loadPools(),
+          loadSupply(),
+          loadBirdEyePrice(),
+          loadLpReserve()
+        ]);
 
       let hadSuccess = false;
 
@@ -2776,8 +2934,18 @@
         hadSuccess = true;
       }
 
+      if (reserveResult.status === "fulfilled" && reserveResult.value) {
+        state.lpReserve = reserveResult.value;
+        hadSuccess = true;
+      }
+
       if (state.rows.length) {
-        state.summary = calculateSummary(state.rows, state.supply, state.birdEye);
+        state.summary = calculateSummary(
+          state.rows,
+          state.supply,
+          state.birdEye,
+          state.lpReserve
+        );
         state.updatedAt = Date.now();
         renderAll();
         persistCache();
