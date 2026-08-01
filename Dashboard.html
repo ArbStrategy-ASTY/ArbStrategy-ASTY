@@ -1329,10 +1329,10 @@
 
     <section class="reserve-card" aria-label="ASTY liquidity pool reserve">
       <div>
-        <div class="reserve-label">ASTY LP Reserve</div>
-        <div class="reserve-value" id="lpReserveAsty">— ASTY</div>
-        <div class="reserve-sub">
-          Combined on-chain balance across 5 liquidity reserve addresses
+        <div class="reserve-label">$ASTY LP Reserve</div>
+        <div class="reserve-value" id="lpReserveAsty">— $ASTY</div>
+        <div class="reserve-sub" id="lpReserveStatus">
+          Scanning 5 liquidity reserve addresses on Solana…
         </div>
       </div>
 
@@ -1623,8 +1623,11 @@
     ];
 
     const RPC_ENDPOINTS = [
-      "https://api.mainnet-beta.solana.com",
-      "https://solana-rpc.publicnode.com"
+      "https://solana.rpc.subquery.network/public",
+      "https://solana.drpc.org",
+      "https://solana.api.onfinality.io/public",
+      "https://solana-rpc.publicnode.com",
+      "https://api.mainnet-beta.solana.com"
     ];
 
     const state = {
@@ -2011,85 +2014,157 @@
       };
     }
 
-    async function loadLpReserve() {
+    async function rpcCall(endpoint, method, params, timeoutMs = 12_000) {
+      const payload = await fetchJson(endpoint, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          jsonrpc: "2.0",
+          id: 1,
+          method,
+          params
+        }),
+        cache: "no-store"
+      }, timeoutMs);
+
+      if (payload?.error) {
+        throw new Error(payload.error?.message || `${method} failed`);
+      }
+
+      return payload?.result;
+    }
+
+    async function readReserveAddressFromEndpoint(address, endpoint) {
+      // Some supplied addresses may already be SPL token accounts.
+      try {
+        const direct = await rpcCall(endpoint, "getTokenAccountBalance", [
+          address,
+          { commitment: "confirmed" }
+        ]);
+
+        const value = direct?.value;
+        if (value?.amount && Number.isInteger(value?.decimals)) {
+          return {
+            amountRaw: BigInt(value.amount),
+            decimals: value.decimals,
+            accountsFound: 1,
+            mode: "token-account"
+          };
+        }
+      } catch {}
+
+      // Otherwise treat the supplied address as a wallet owner and add all of
+      // its ASTY token accounts. This mirrors the wallet-scanning approach.
+      const owned = await rpcCall(endpoint, "getTokenAccountsByOwner", [
+        address,
+        { mint: ASTY_MINT },
+        { encoding: "jsonParsed", commitment: "confirmed" }
+      ]);
+
+      const accounts = Array.isArray(owned?.value) ? owned.value : [];
+      let amountRaw = 0n;
+      let decimals = 9;
+      let accountsFound = 0;
+
+      for (const tokenAccount of accounts) {
+        const parsed = parsedTokenAmount(tokenAccount?.account);
+        if (!parsed) continue;
+
+        amountRaw += BigInt(parsed.amount);
+        decimals = parsed.decimals;
+        accountsFound++;
+      }
+
+      return {
+        amountRaw,
+        decimals,
+        accountsFound,
+        mode: "wallet-owner"
+      };
+    }
+
+    async function readReserveAddress(address) {
       let lastError;
 
       for (const endpoint of RPC_ENDPOINTS) {
         try {
-          const ownerRequests = LP_RESERVE_ADDRESSES.map((address, index) => ({
-            jsonrpc: "2.0",
-            id: `owner-${index}`,
-            method: "getTokenAccountsByOwner",
-            params: [
-              address,
-              { mint: ASTY_MINT },
-              { encoding: "jsonParsed", commitment: "confirmed" }
-            ]
-          }));
-
-          const directRequest = {
-            jsonrpc: "2.0",
-            id: "direct-accounts",
-            method: "getMultipleAccounts",
-            params: [
-              LP_RESERVE_ADDRESSES,
-              { encoding: "jsonParsed", commitment: "confirmed" }
-            ]
-          };
-
-          const payload = await fetchJsonWithRetry(endpoint, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify([...ownerRequests, directRequest]),
-            cache: "no-store"
-          }, 0);
-
-          if (!Array.isArray(payload)) {
-            throw new Error("Unexpected batch RPC response");
-          }
-
-          const byId = new Map(payload.map(item => [String(item?.id), item]));
-          const tokenAccounts = new Map();
-
-          for (let index = 0; index < LP_RESERVE_ADDRESSES.length; index++) {
-            const result = byId.get(`owner-${index}`)?.result?.value;
-            if (!Array.isArray(result)) continue;
-
-            for (const tokenAccount of result) {
-              const parsed = parsedTokenAmount(tokenAccount?.account);
-              if (!parsed || !tokenAccount?.pubkey) continue;
-              tokenAccounts.set(tokenAccount.pubkey, parsed);
-            }
-          }
-
-          const directAccounts = byId.get("direct-accounts")?.result?.value;
-          if (Array.isArray(directAccounts)) {
-            directAccounts.forEach((accountInfo, index) => {
-              const parsed = parsedTokenAmount(accountInfo);
-              if (!parsed) return;
-              tokenAccounts.set(LP_RESERVE_ADDRESSES[index], parsed);
-            });
-          }
-
-          let totalRaw = 0n;
-          let decimals = 9;
-
-          for (const item of tokenAccounts.values()) {
-            totalRaw += BigInt(item.amount);
-            decimals = item.decimals;
-          }
-
-          return {
-            amount: bigintAmountToNumber(totalRaw.toString(), decimals),
-            tokenAccounts: tokenAccounts.size,
-            reserveAddresses: LP_RESERVE_ADDRESSES.length
-          };
+          return await readReserveAddressFromEndpoint(address, endpoint);
         } catch (error) {
           lastError = error;
         }
       }
 
-      throw lastError || new Error("ASTY LP Reserve unavailable");
+      throw lastError || new Error(`Reserve address unavailable: ${address}`);
+    }
+
+    async function runWithConcurrency(items, limit, worker) {
+      const results = new Array(items.length);
+      let nextIndex = 0;
+
+      async function runner() {
+        while (true) {
+          const index = nextIndex++;
+          if (index >= items.length) return;
+
+          try {
+            results[index] = {
+              status: "fulfilled",
+              value: await worker(items[index], index)
+            };
+          } catch (reason) {
+            results[index] = {
+              status: "rejected",
+              reason
+            };
+          }
+        }
+      }
+
+      const runners = Array.from(
+        { length: Math.min(limit, items.length) },
+        () => runner()
+      );
+
+      await Promise.all(runners);
+      return results;
+    }
+
+    async function loadLpReserve() {
+      const results = await runWithConcurrency(
+        LP_RESERVE_ADDRESSES,
+        4,
+        readReserveAddress
+      );
+
+      let totalRaw = 0n;
+      let decimals = 9;
+      let scannedAddresses = 0;
+      let tokenAccounts = 0;
+      let failedAddresses = 0;
+
+      for (const result of results) {
+        if (result?.status !== "fulfilled") {
+          failedAddresses++;
+          continue;
+        }
+
+        scannedAddresses++;
+        totalRaw += result.value.amountRaw;
+        decimals = result.value.decimals;
+        tokenAccounts += result.value.accountsFound;
+      }
+
+      if (scannedAddresses === 0) {
+        throw new Error("No ASTY LP reserve address could be scanned");
+      }
+
+      return {
+        amount: bigintAmountToNumber(totalRaw.toString(), decimals),
+        tokenAccounts,
+        scannedAddresses,
+        failedAddresses,
+        reserveAddresses: LP_RESERVE_ADDRESSES.length
+      };
     }
 
 
@@ -2392,10 +2467,23 @@
       setMetric(
         "lpReserveAsty",
         Number.isFinite(summary.lpReserveAsty)
-          ? `${fmtNumber(summary.lpReserveAsty, 0)} ASTY`
-          : "— ASTY"
+          ? `${fmtNumber(summary.lpReserveAsty, 0)} $ASTY`
+          : "— $ASTY"
       );
       setMetric("lpReserveUsd", fmtUsd(summary.lpReserveUsd, true));
+
+      if (state.lpReserve) {
+        const failureText = state.lpReserve.failedAddresses
+          ? ` · ${state.lpReserve.failedAddresses} unavailable`
+          : "";
+
+        el("lpReserveStatus").textContent =
+          `${state.lpReserve.scannedAddresses} reserve addresses scanned · ` +
+          `${state.lpReserve.tokenAccounts} ASTY balances found${failureText}`;
+      } else {
+        el("lpReserveStatus").textContent =
+          "ASTY reserve balances are temporarily unavailable.";
+      }
 
       if (Number.isFinite(summary.launchOnePercentNow)) {
         el("ownershipPercent").textContent =
@@ -2937,6 +3025,8 @@
       if (reserveResult.status === "fulfilled" && reserveResult.value) {
         state.lpReserve = reserveResult.value;
         hadSuccess = true;
+      } else if (!state.lpReserve) {
+        state.lpReserve = null;
       }
 
       if (state.rows.length) {
