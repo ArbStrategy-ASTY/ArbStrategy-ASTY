@@ -1582,10 +1582,10 @@
     const REFRESH_MS = 60_000;
     const CACHE_KEY = "asty-live-dashboard-v2";
 
-    // Optional secure server endpoint. It should return either:
-    // { price, priceChange24h } or a BirdEye-like { data: { price, ... } } object.
-    // Never place a BirdEye API key directly inside this public HTML file.
-    const BIRDEYE_PRICE_PROXY = "/api/birdeye-price";
+    // BirdEye Free Plan key embedded directly by project choice.
+    // This key will be public when the HTML is published on GitHub.
+    const BIRDEYE_API_KEY = "d920d9664acf463c87f6b6b17893b70a";
+    const BIRDEYE_API_BASE = "https://public-api.birdeye.so";
 
     const LP_RESERVE_ADDRESSES = [
       "8KgDtknVhs88sMjRckCGzVDhaFBre3V3FAvhwxfANmfq",
@@ -2254,35 +2254,121 @@
       return null;
     }
 
-    async function loadBirdEyePrice() {
-      if (!BIRDEYE_PRICE_PROXY) return null;
+    function birdEyeHeaders(includeJson = false) {
+      return {
+        Accept: "application/json",
+        "X-API-KEY": BIRDEYE_API_KEY,
+        "x-chain": "solana",
+        ...(includeJson ? { "Content-Type": "application/json" } : {})
+      };
+    }
 
-      const separator = BIRDEYE_PRICE_PROXY.includes("?") ? "&" : "?";
-      const url = `${BIRDEYE_PRICE_PROXY}${separator}address=${encodeURIComponent(ASTY_MINT)}`;
-
-      const payload = await fetchJson(url, {
-        headers: { Accept: "application/json" },
-        cache: "no-store"
-      }, 7_000);
-
+    function birdEyeRows(payload) {
       const data = payload?.data ?? payload;
-      const price = firstFiniteNumber(
-        data?.price,
-        data?.value,
-        data?.priceUsd,
-        data?.price_usd
+
+      if (Array.isArray(data)) return data;
+      if (Array.isArray(data?.items)) return data.items;
+      if (Array.isArray(data?.data)) return data.data;
+      if (Array.isArray(data?.tokens)) return data.tokens;
+      if (data && typeof data === "object") return [data];
+
+      return [];
+    }
+
+    async function birdEyeFetch(path, options = {}, timeoutMs = 12_000) {
+      const response = await fetch(
+        `${BIRDEYE_API_BASE}${path}`,
+        {
+          ...options,
+          headers: {
+            ...birdEyeHeaders(Boolean(options.body)),
+            ...(options.headers || {})
+          },
+          cache: "no-store"
+        }
       );
-      const priceChange24h = firstFiniteNumber(
-        data?.priceChange24h,
-        data?.priceChange24hPercent,
-        data?.price_change_24h_percent,
-        data?.price_change_percentage_24h,
-        data?.change24h
+
+      const payload = await response.json().catch(() => null);
+
+      if (!response.ok) {
+        const message =
+          payload?.message ||
+          payload?.error ||
+          `BirdEye HTTP ${response.status}`;
+
+        const error = new Error(String(message));
+        error.status = response.status;
+        throw error;
+      }
+
+      return payload;
+    }
+
+    async function loadBirdEyePrice() {
+      const priceParams = new URLSearchParams({
+        address: ASTY_MINT,
+        include_liquidity: "true",
+        ui_amount_mode: "raw"
+      });
+
+      const pricePayload = await birdEyeFetch(
+        `/defi/price?${priceParams.toString()}`
+      );
+
+      const priceData = pricePayload?.data ?? pricePayload;
+      const price = firstFiniteNumber(
+        priceData?.value,
+        priceData?.price,
+        priceData?.priceUsd,
+        priceData?.price_usd
       );
 
       if (!Number.isFinite(price) || price <= 0) {
-        throw new Error("BirdEye price proxy returned no valid price");
+        throw new Error("BirdEye returned no valid ASTY price");
       }
+
+      let priceChange24h = null;
+
+      // The current price endpoint is available on the free plan.
+      // Price stats are attempted separately; if the plan blocks them,
+      // the dashboard keeps the pool-derived 24h fallback.
+      try {
+        const statsParams = new URLSearchParams({
+          address: ASTY_MINT,
+          list_timeframe: "24h",
+          ui_amount_mode: "raw"
+        });
+
+        const statsPayload = await birdEyeFetch(
+          `/defi/v3/price/stats/single?${statsParams.toString()}`
+        );
+
+        const statsData = statsPayload?.data ?? statsPayload;
+        const candidates = birdEyeRows(statsPayload);
+
+        const stats24h =
+          candidates.find(item =>
+            ["24h", "24H"].includes(
+              String(
+                item?.timeframe ||
+                item?.frame ||
+                item?.interval ||
+                ""
+              )
+            )
+          ) ||
+          candidates[0] ||
+          statsData;
+
+        priceChange24h = firstFiniteNumber(
+          stats24h?.price_change_percent,
+          stats24h?.priceChangePercent,
+          stats24h?.price_change_percentage,
+          stats24h?.change_percent,
+          statsData?.price_change_percent_24h,
+          statsData?.priceChange24hPercent
+        );
+      } catch {}
 
       return {
         price,
@@ -2291,27 +2377,201 @@
       };
     }
 
+    function parseBirdEyeWalletBalance(payload) {
+      const rows = birdEyeRows(payload);
 
-    function buildReferencePrice(rows, birdEye = null) {
-      if (Number.isFinite(birdEye?.price) && birdEye.price > 0) {
-        return {
-          price: birdEye.price,
-          change24h: Number.isFinite(birdEye.priceChange24h)
-            ? birdEye.priceChange24h
-            : null,
-          usedPools: 0,
-          usedLiquidity: 0,
-          method: "birdeye-usd",
-          sourceLabel: "BirdEye USD"
-        };
+      const row =
+        rows.find(item =>
+          [
+            item?.address,
+            item?.token_address,
+            item?.tokenAddress,
+            item?.mint
+          ].includes(ASTY_MINT)
+        ) ||
+        (rows.length === 1 ? rows[0] : null);
+
+      if (!row) return null;
+
+      let amount = firstFiniteNumber(
+        row?.amount,
+        row?.ui_amount,
+        row?.uiAmount,
+        row?.balance_ui,
+        row?.balanceUi
+      );
+
+      if (!Number.isFinite(amount)) {
+        const rawBalance = firstFiniteNumber(row?.balance);
+        const decimals = firstFiniteNumber(row?.decimals);
+
+        if (
+          Number.isFinite(rawBalance) &&
+          Number.isFinite(decimals)
+        ) {
+          amount = rawBalance / (10 ** decimals);
+        }
       }
 
+      if (!Number.isFinite(amount)) return null;
+
+      return {
+        amount,
+        value: firstFiniteNumber(
+          row?.value,
+          row?.amountUsd,
+          row?.valueUsd
+        )
+      };
+    }
+
+    async function loadBirdEyeWalletBalance(address, maxAttempts = 3) {
+      let lastError;
+
+      for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+        try {
+          const payload = await birdEyeFetch(
+            "/wallet/v2/token-balance",
+            {
+              method: "POST",
+              body: JSON.stringify({
+                wallet: address,
+                token_addresses: [ASTY_MINT]
+              })
+            },
+            15_000
+          );
+
+          const balance = parseBirdEyeWalletBalance(payload);
+
+          // A wallet with no ASTY is still a valid resolved zero balance
+          // only when BirdEye returned a successful data container.
+          if (balance) {
+            return {
+              address,
+              amount: balance.amount,
+              value: balance.value
+            };
+          }
+
+          const data = payload?.data ?? payload;
+          if (Array.isArray(data) && data.length === 0) {
+            return {
+              address,
+              amount: 0,
+              value: 0
+            };
+          }
+
+          throw new Error("No ASTY balance row returned");
+        } catch (error) {
+          lastError = error;
+
+          if (attempt < maxAttempts) {
+            const delay =
+              error?.status === 429
+                ? 2_500 * attempt
+                : 900 * attempt;
+
+            await new Promise(resolve => setTimeout(resolve, delay));
+          }
+        }
+      }
+
+      throw lastError || new Error("BirdEye wallet balance failed");
+    }
+
+    async function loadBirdEyeLpReserve() {
+      setReserveLoading("Loading reserve balances from BirdEye");
+
+      const results = await runWithConcurrency(
+        LP_RESERVE_ADDRESSES,
+        2,
+        address => loadBirdEyeWalletBalance(address, 3)
+      );
+
+      let amount = 0;
+      let reportedUsd = 0;
+      let scannedAddresses = 0;
+      let failedAddresses = 0;
+
+      for (const result of results) {
+        if (result?.status !== "fulfilled") {
+          failedAddresses++;
+          continue;
+        }
+
+        scannedAddresses++;
+        amount += result.value.amount || 0;
+        reportedUsd += result.value.value || 0;
+      }
+
+      if (scannedAddresses === 0) {
+        throw new Error("BirdEye returned no reserve address balances");
+      }
+
+      return {
+        amount,
+        reportedUsd,
+        tokenAccounts: scannedAddresses,
+        scannedAddresses,
+        failedAddresses,
+        reserveAddresses: LP_RESERVE_ADDRESSES.length,
+        source: "BirdEye Wallet API"
+      };
+    }
+
+
+    function buildReferencePrice(rows, birdEye = null) {
       const priced = rows.filter(row =>
         Number.isFinite(row.astyPrice) &&
         row.astyPrice > 0 &&
         Number.isFinite(row.liquidity) &&
         row.liquidity > 0
       );
+
+      const stableReference = priced
+        .filter(row =>
+          ["USDC", "USDT"].includes(row.marketLabel.toUpperCase()) &&
+          row.liquidity >= 100
+        )
+        .sort((a, b) => b.liquidity - a.liquidity)[0];
+
+      let poolChange24h = Number.isFinite(stableReference?.priceChange24h)
+        ? stableReference.priceChange24h
+        : null;
+
+      if (!Number.isFinite(poolChange24h)) {
+        const changeRows = priced.filter(row =>
+          Number.isFinite(row.priceChange24h)
+        );
+        const changeWeight = changeRows.reduce(
+          (sum, row) => sum + row.liquidity,
+          0
+        );
+
+        if (changeWeight > 0) {
+          poolChange24h =
+            changeRows.reduce(
+              (sum, row) =>
+                sum + row.priceChange24h * row.liquidity,
+              0
+            ) / changeWeight;
+        }
+      }
+
+      if (Number.isFinite(birdEye?.price) && birdEye.price > 0) {
+        return {
+          price: birdEye.price,
+          change24h: Number.isFinite(birdEye.priceChange24h)
+            ? birdEye.priceChange24h
+            : poolChange24h,
+          usedPools: 0,
+          usedLiquidity: 0,
+          method: "birdeye-usd",
+          sourceLabel: "BirdEye USD"
+        };
+      }
 
       if (!priced.length) {
         return {
@@ -2323,13 +2583,6 @@
           sourceLabel: null
         };
       }
-
-      const stableReference = priced
-        .filter(row =>
-          ["USDC", "USDT"].includes(row.marketLabel.toUpperCase()) &&
-          row.liquidity >= 100
-        )
-        .sort((a, b) => b.liquidity - a.liquidity)[0];
 
       if (stableReference) {
         return {
@@ -2347,19 +2600,38 @@
 
       const med = median(candidates.map(row => row.astyPrice));
       const filtered = med
-        ? candidates.filter(row => Math.abs(row.astyPrice / med - 1) <= 0.15)
+        ? candidates.filter(row =>
+            Math.abs(row.astyPrice / med - 1) <= 0.15
+          )
         : candidates;
 
       const used = filtered.length >= 3 ? filtered : candidates;
-      const weight = used.reduce((sum, row) => sum + row.liquidity, 0);
+      const weight = used.reduce(
+        (sum, row) => sum + row.liquidity,
+        0
+      );
+
       const price = weight > 0
-        ? used.reduce((sum, row) => sum + row.astyPrice * row.liquidity, 0) / weight
+        ? used.reduce(
+            (sum, row) =>
+              sum + row.astyPrice * row.liquidity,
+            0
+          ) / weight
         : null;
 
-      const changeRows = used.filter(row => Number.isFinite(row.priceChange24h));
-      const changeWeight = changeRows.reduce((sum, row) => sum + row.liquidity, 0);
+      const changeRows = used.filter(row =>
+        Number.isFinite(row.priceChange24h)
+      );
+      const changeWeight = changeRows.reduce(
+        (sum, row) => sum + row.liquidity,
+        0
+      );
       const change24h = changeWeight > 0
-        ? changeRows.reduce((sum, row) => sum + row.priceChange24h * row.liquidity, 0) / changeWeight
+        ? changeRows.reduce(
+            (sum, row) =>
+              sum + row.priceChange24h * row.liquidity,
+            0
+          ) / changeWeight
         : null;
 
       return {
@@ -2557,10 +2829,14 @@
           ? ` · ${state.lpReserve.failedAddresses} still unavailable`
           : "";
 
+        const sourceText = state.lpReserve.source
+          ? ` via ${state.lpReserve.source}`
+          : "";
+
         el("lpReserveStatus").textContent =
           `${state.lpReserve.scannedAddresses} of ` +
           `${state.lpReserve.reserveAddresses} reserve addresses loaded` +
-          `${failureText}`;
+          `${sourceText}${failureText}`;
       } else if (!state.refreshing) {
         el("lpReserveStatus").textContent =
           "Reserve scan will retry automatically.";
@@ -3077,15 +3353,14 @@
       state.refreshing = true;
       el("refreshButton").classList.add("spinning");
       updateStatus("", "Refreshing live data…");
-
-      setReserveLoading("Loading reserve balances", 1);
+      setReserveLoading("Loading reserve balances from BirdEye");
 
       const [poolResult, supplyResult, birdEyeResult, reserveResult] =
         await Promise.allSettled([
           loadPools(),
           loadSupply(),
           loadBirdEyePrice(),
-          loadLpReserve()
+          loadBirdEyeLpReserve()
         ]);
 
       let hadSuccess = false;
@@ -3108,32 +3383,20 @@
       if (reserveResult.status === "fulfilled" && reserveResult.value) {
         state.lpReserve = reserveResult.value;
         hadSuccess = true;
-      } else if (!state.lpReserve) {
-        clearReserveLoading();
-        el("lpReserveStatus").textContent =
-          "No balance received yet. Retrying in 10 seconds…";
+      } else {
+        setReserveLoading("BirdEye unavailable, trying Solana RPC");
 
-        setTimeout(async () => {
-          try {
-            setReserveLoading("Retrying reserve balances");
-            state.lpReserve = await loadLpReserve();
+        try {
+          state.lpReserve = await loadLpReserve();
+          hadSuccess = true;
+        } catch {
+          clearReserveLoading();
 
-            if (state.rows.length) {
-              state.summary = calculateSummary(
-                state.rows,
-                state.supply,
-                state.birdEye,
-                state.lpReserve
-              );
-              renderAll();
-              persistCache();
-            }
-          } catch {
-            clearReserveLoading();
+          if (!state.lpReserve) {
             el("lpReserveStatus").textContent =
-              "Reserve scan will retry with the next dashboard update.";
+              "Reserve balances could not be loaded.";
           }
-        }, 10_000);
+        }
       }
 
       if (state.rows.length) {
@@ -3158,7 +3421,10 @@
       }
 
       if (!hadSuccess && state.rows.length) {
-        updateStatus("", "Live refresh failed. Showing the last successful data.");
+        updateStatus(
+          "",
+          "Live refresh failed. Showing the last successful data."
+        );
       }
 
       state.refreshing = false;
