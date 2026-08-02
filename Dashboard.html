@@ -229,7 +229,7 @@
       display: flex;
       align-items: center;
       justify-content: flex-end;
-      gap: 10px;
+      gap: 8px;
       min-width: max-content;
     }
 
@@ -413,28 +413,36 @@
     }
 
     .icon-button {
-      width: 35px;
-      height: 35px;
-      border-radius: 11px;
-      border: 1px solid rgba(167,139,250,0.28);
+      width: 16px;
+      height: 16px;
+      padding: 0;
+      border-radius: 50%;
+      border: 2px solid rgba(167,139,250,0.18);
+      border-top-color: var(--purple-soft);
+      border-right-color: var(--purple);
       background: transparent;
-      color: #ddd8eb;
+      color: transparent;
       cursor: pointer;
-      transition: transform .18s ease, border-color .18s ease, box-shadow .18s ease;
+      box-shadow:
+        0 0 0 1px rgba(167,139,250,0.12),
+        0 0 10px rgba(139,92,246,0.22);
+      animation: spin 0.9s linear infinite;
+      transition: border-color .18s ease, box-shadow .18s ease, transform .18s ease;
+      flex: 0 0 auto;
     }
 
     .icon-button:hover,
     .icon-button:focus-visible {
-      transform: translateY(-1px);
-      border-color: rgba(196,181,253,0.78);
+      border-top-color: #d8ccff;
+      border-right-color: var(--cyan);
       box-shadow:
-        0 0 0 1px rgba(167,139,250,0.22),
-        0 0 18px rgba(139,92,246,0.34);
+        0 0 0 1px rgba(167,139,250,0.18),
+        0 0 14px rgba(139,92,246,0.34);
       outline: none;
     }
 
     .icon-button.spinning {
-      animation: spin 0.9s linear infinite;
+      animation: spin 0.7s linear infinite;
       pointer-events: none;
     }
 
@@ -1297,12 +1305,7 @@
         <p class="hero-copy">
           A clean insight into the power of the ASTY-Effect
         </p>
-        <div class="live-proof" id="liveProof">
-          Loading the live ASTY system footprint…
-        </div>
-        <div class="trust-line">
-          GeckoTerminal live pools · Solana on-chain supply · BirdEye chart and primary USD price
-        </div>
+
       </div>
 
       <div class="status-wrap">
@@ -1310,7 +1313,7 @@
           <span class="status-dot" id="statusDot"></span>
           <span id="statusText">Loading live data…</span>
         </div>
-        <button class="icon-button" id="refreshButton" type="button" aria-label="Refresh dashboard">↻</button>
+        <button class="icon-button" id="refreshButton" type="button" aria-label="Refresh dashboard"></button>
       </div>
     </section>
 
@@ -1431,6 +1434,26 @@
       </div>
     </details>
 
+
+
+    <section class="panel">
+      <div class="panel-head">
+        <div>
+          <div class="panel-title">ASTY Price Chart</div>
+          <div class="panel-sub">Interactive market chart provided by BirdEye</div>
+        </div>
+        <a class="pill" href="https://birdeye.so/solana/token/ASTYqeaoK83Zs1pTFEXZUB6BM8cG8YLTsN852NUkt7ZR" target="_blank" rel="noopener noreferrer">Open full chart ↗</a>
+      </div>
+
+      <iframe
+        class="chart-frame"
+        src="https://embed.birdeye.so/tv-widget/ASTYqeaoK83Zs1pTFEXZUB6BM8cG8YLTsN852NUkt7ZR?chain=solana&viewMode=pair&chartInterval=240&chartType=Line&chartTimezone=Europe%2FBerlin&chartLeftToolbar=hide&theme=dark"
+        frameborder="0"
+        allowfullscreen
+        loading="lazy">
+      </iframe>
+    </section>
+
     <section class="panel">
       <div class="panel-head">
         <div>
@@ -1442,24 +1465,6 @@
           <button class="tab-button" id="networkTab" type="button" role="tab" aria-selected="false">Network</button>
           <button class="tab-button active" id="listTab" type="button" role="tab" aria-selected="true">Pool List</button>
         </div>
-      </div>
-
-      <div class="strongest-strip" aria-label="Today's strongest pools">
-        <article class="strongest-card">
-          <div class="strongest-label">Highest Output</div>
-          <div class="strongest-pair" id="strongestOutputPair">—</div>
-          <div class="strongest-value" id="strongestOutputValue">—</div>
-        </article>
-        <article class="strongest-card">
-          <div class="strongest-label">Highest Volume</div>
-          <div class="strongest-pair" id="strongestVolumePair">—</div>
-          <div class="strongest-value" id="strongestVolumeValue">—</div>
-        </article>
-        <article class="strongest-card">
-          <div class="strongest-label">Highest Liquidity</div>
-          <div class="strongest-pair" id="strongestLiquidityPair">—</div>
-          <div class="strongest-value" id="strongestLiquidityValue">—</div>
-        </article>
       </div>
 
       <div class="tab-panel" id="networkPanel" role="tabpanel">
@@ -1500,24 +1505,6 @@
       <span>ASTY is not a coin.</span> ASTY is a cashflow system.
     </div>
 
-    <section class="panel">
-      <div class="panel-head">
-        <div>
-          <div class="panel-title">ASTY Price Chart</div>
-          <div class="panel-sub">Interactive market chart provided by BirdEye</div>
-        </div>
-        <a class="pill" href="https://birdeye.so/solana/token/ASTYqeaoK83Zs1pTFEXZUB6BM8cG8YLTsN852NUkt7ZR" target="_blank" rel="noopener noreferrer">Open full chart ↗</a>
-      </div>
-
-      <iframe
-        class="chart-frame"
-        src="https://embed.birdeye.so/tv-widget/ASTYqeaoK83Zs1pTFEXZUB6BM8cG8YLTsN852NUkt7ZR?chain=solana&viewMode=pair&chartInterval=240&chartType=Line&chartTimezone=Europe%2FBerlin&chartLeftToolbar=hide&theme=dark"
-        frameborder="0"
-        allowfullscreen
-        loading="lazy">
-      </iframe>
-    </section>
-
     <section class="contract-card" id="contractCard" aria-label="ASTY contract address">
       <div class="contract-icon">
         <img
@@ -1552,10 +1539,7 @@
         }
       ">
 
-    <div class="footer">
-      Live pools: GeckoTerminal · Supply: Solana RPC · Chart: BirdEye<br>
-      Price uses BirdEye USD when a secure price proxy is available, with transparent market fallbacks.
-    </div>
+
   </main>
 
   <dialog id="poolDialog">
@@ -2088,7 +2072,7 @@
         ),
         reserveAddresses:
           Number.isFinite(total) ? total : LP_RESERVE_ADDRESSES.length,
-        source: "BirdEye",
+        source: "BirdEye via GitHub",
         updatedAt: safeNumber(payload?.updatedAt)
       };
     }
@@ -2838,12 +2822,14 @@
           "The ownership increase created by ASTY burns is temporarily unavailable.";
       }
 
-      el("liveProof").innerHTML =
-        `<strong>${summary.configuredPools}</strong> arbitrage pools · ` +
-        `<strong>${fmtUsd(summary.liquidity, true)}</strong> liquidity · ` +
-        `<strong>${fmtUsd(summary.fees24h, true)}</strong> system output in 24h`;
+      const liveProofEl = document.getElementById("liveProof");
+      if (liveProofEl) {
+        liveProofEl.innerHTML =
+          `<strong>${summary.configuredPools}</strong> arbitrage pools · ` +
+          `<strong>${fmtUsd(summary.liquidity, true)}</strong> liquidity · ` +
+          `<strong>${fmtUsd(summary.fees24h, true)}</strong> system output in 24h`;
+      }
 
-      renderStrongestPools(summary);
       renderShareCalculator();
       updateBuyLink(state.rows);
     }
@@ -2871,8 +2857,13 @@
       ];
 
       for (const entry of entries) {
-        el(entry.pairId).textContent = entry.pool?.displayLabel ?? "—";
-        el(entry.valueId).textContent = entry.pool ? entry.value(entry.pool) : "—";
+        const pairEl = document.getElementById(entry.pairId);
+        const valueEl = document.getElementById(entry.valueId);
+
+        if (!pairEl || !valueEl) continue;
+
+        pairEl.textContent = entry.pool?.displayLabel ?? "—";
+        valueEl.textContent = entry.pool ? entry.value(entry.pool) : "—";
       }
     }
 
