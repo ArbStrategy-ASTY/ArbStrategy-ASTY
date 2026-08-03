@@ -413,40 +413,64 @@
     }
 
     .icon-button {
-      width: 16px;
-      height: 16px;
+      width: 25px;
+      height: 25px;
       padding: 0;
+      display: grid;
+      place-items: center;
       border-radius: 50%;
-      border: 2px solid rgba(167,139,250,0.18);
-      border-top-color: var(--purple-soft);
-      border-right-color: var(--purple);
-      background: transparent;
-      color: transparent;
+      border: 1px solid rgba(167,139,250,0.28);
+      background: rgba(255,255,255,0.025);
+      color: var(--purple-soft);
       cursor: pointer;
-      box-shadow:
-        0 0 0 1px rgba(167,139,250,0.12),
-        0 0 10px rgba(139,92,246,0.22);
-      animation: spin 0.9s linear infinite;
-      transition: border-color .18s ease, box-shadow .18s ease, transform .18s ease;
+      box-shadow: 0 0 10px rgba(139,92,246,0.10);
+      transition:
+        border-color .18s ease,
+        box-shadow .18s ease,
+        transform .18s ease;
       flex: 0 0 auto;
+    }
+
+    .icon-button::before {
+      content: "↻";
+      font-size: 15px;
+      line-height: 1;
+      font-weight: 700;
+      transform: translateY(-0.5px);
     }
 
     .icon-button:hover,
     .icon-button:focus-visible {
-      border-top-color: #d8ccff;
-      border-right-color: var(--cyan);
+      transform: translateY(-1px);
+      border-color: rgba(196,181,253,0.76);
       box-shadow:
-        0 0 0 1px rgba(167,139,250,0.18),
-        0 0 14px rgba(139,92,246,0.34);
+        0 0 0 1px rgba(167,139,250,0.14),
+        0 0 13px rgba(139,92,246,0.26);
       outline: none;
     }
 
     .icon-button.spinning {
-      animation: spin 0.7s linear infinite;
+      border-color: transparent;
+      background: transparent;
+      box-shadow: none;
       pointer-events: none;
+      transform: none;
     }
 
-    @keyframes spin { to { transform: rotate(360deg); } }
+    .icon-button.spinning::before {
+      content: "";
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      border: 2px solid rgba(167,139,250,0.20);
+      border-top-color: var(--purple-soft);
+      border-right-color: var(--purple);
+      animation: spin 0.72s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
 
     .main-grid {
       display: grid;
@@ -1388,9 +1412,9 @@
       <div class="ownership-text-wrap">
         <div class="ownership-kicker">The ASTY-Effect</div>
         <div class="ownership-message">
-          1% at launch is now
+          Your capital grows simply by holding $ASTY. 1% at launch is now
           <span class="ownership-highlight" id="ownershipPercent">—</span>
-          of the remaining ASTY network. No additional tokens required.
+          of the remaining network.
         </div>
         <div class="ownership-sub" id="ownershipSub">
           Every burn permanently increases the ownership share of existing ASTY holders.
@@ -2072,7 +2096,7 @@
         ),
         reserveAddresses:
           Number.isFinite(total) ? total : LP_RESERVE_ADDRESSES.length,
-        source: "BirdEye via GitHub",
+        source: "BirdEye",
         updatedAt: safeNumber(payload?.updatedAt)
       };
     }
