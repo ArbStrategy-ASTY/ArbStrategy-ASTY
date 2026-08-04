@@ -1113,7 +1113,7 @@
       <div class="panel-head">
         <div>
           <div class="panel-title">Kapital-Einstellungen</div>
-          <div class="panel-sub">Trage das Kapital ein, das für den nächsten Liquiditätsschritt zur Verfügung steht.</div>
+          <div class="panel-sub">Trage das Kapital ein, das für den nächsten Liquiditätsschritt zur Verfügung steht. Das Tool konzentriert es auf die stärksten Kandidaten, statt jeden geeigneten Pool mit dem Mindestbetrag zu bedienen.</div>
         </div>
       </div>
 
@@ -1147,7 +1147,7 @@
       </div>
 
       <div class="model-note">
-        <strong>So funktioniert es:</strong> Der Optimierer kombiniert aktuelle Pooldaten, echte Meteora-Einnahmen, eine robuste 30-Tage-Historie, externe Aktivität des Partner-Tokens, ASTY-Preisabweichungen und die geschätzte Preiswirkung typischer Trades. Eigene Positionen werden nicht abgefragt. Die möglichen Einnahmen eines zusätzlichen Betrags werden anteilig aus Pool-Liquidität und erwarteten Pool-Einnahmen geschätzt.
+        <strong>So funktioniert es:</strong> Der Optimierer kombiniert aktuelle Pooldaten, echte Meteora-Einnahmen, eine robuste 30-Tage-Historie, externe Aktivität des Partner-Tokens, ASTY-Preisabweichungen und die geschätzte Preiswirkung typischer Trades. Eigene Positionen werden nicht abgefragt. Die möglichen Einnahmen eines zusätzlichen Betrags werden anteilig aus Pool-Liquidität und erwarteten Pool-Einnahmen geschätzt. Die Anzahl der zuerst berücksichtigten Pools ergibt sich ungefähr aus verfügbarem Kapital geteilt durch den größten Schritt.
       </div>
       <div class="model-note" id="dataStatus"><strong>Datenquellen:</strong> Werden nach dem Start geprüft.</div>
       <div class="model-note" id="historyStatus"><strong>30-Tage-Daten:</strong> Werden nach dem Start der Berechnung geladen.</div>
@@ -1256,7 +1256,7 @@
     const REFRESH_MS = 60_000;
     const CHUNK_SIZE = 25;
     const CACHE_KEY = "asty-liquidity-optimizer-cache-v6";
-    const SETTINGS_KEY = "asty-liquidity-optimizer-settings-v8";
+    const SETTINGS_KEY = "asty-liquidity-optimizer-settings-v9";
     const HISTORY_KEY = "asty-liquidity-optimizer-history-v6";
     const THIRTY_DAY_KEY = "asty-liquidity-optimizer-30d-v6";
     const EXTERNAL_KEY = "asty-liquidity-optimizer-external-v6";
@@ -1974,51 +1974,125 @@
 
     function allocateCapital(rows, settings) {
       const candidates = [];
+
       for (const row of rows) {
         row.allocation = 0;
-        const activity = row.v24 >= 3 || row.tx24 >= 3 || (row.has30d && row.activeDays30 >= 2) || row.externalScore >= .30 || row.netArbGap >= .4;
-        const eligible = activity && row.signal >= .17 && row.capacity >= settings.minStep;
-        const poolCap = row.liquidity > 0 ? Math.max(settings.minStep, row.liquidity * (.04 + row.signal * .12)) : settings.minStep;
+
+        const activity =
+          row.v24 >= 3 ||
+          row.tx24 >= 3 ||
+          (row.has30d && row.activeDays30 >= 2) ||
+          row.externalScore >= .30 ||
+          row.netArbGap >= .4;
+
+        const eligible =
+          activity &&
+          row.signal >= .17 &&
+          row.capacity >= settings.minStep;
+
+        const poolCap = row.liquidity > 0
+          ? Math.max(settings.minStep, row.liquidity * (.04 + row.signal * .12))
+          : settings.minStep;
+
         row.stepCap = Math.min(settings.maxStep, row.capacity, poolCap);
+
         if (eligible && row.stepCap >= settings.minStep) {
-          row.weight = Math.max(.01, row.signal * 1.25 + clamp(row.netArbGap / 4, 0, 1) * .35 + row.externalScore * .30 + clamp(row.depthBenefit / 2, 0, 1) * .20 + (row.incomeIsExact ? .08 : 0));
+          row.weight = Math.max(
+            .01,
+            row.signal * 1.25 +
+            clamp(row.netArbGap / 4, 0, 1) * .35 +
+            row.externalScore * .30 +
+            clamp(row.depthBenefit / 2, 0, 1) * .20 +
+            (row.incomeIsExact ? .08 : 0)
+          );
           candidates.push(row);
-        } else row.weight = 0;
+        } else {
+          row.weight = 0;
+        }
       }
 
       let remaining = settings.capital;
+
       if (remaining >= settings.minStep && candidates.length) {
         const ordered = [...candidates].sort((a, b) => b.weight - a.weight);
-        const sum = ordered.reduce((s, r) => s + r.weight, 0);
-        for (const row of ordered) {
+        const strongestWeight = ordered[0]?.weight || 0;
+
+        // Der größte Schritt bestimmt, auf wie viele starke Pools das Kapital
+        // zunächst konzentriert wird. Beispiel: 100 $ / 25 $ = maximal 4 Startplätze.
+        const targetSlots = Math.max(
+          1,
+          Math.min(
+            ordered.length,
+            Math.ceil(settings.capital / Math.max(settings.maxStep, settings.minStep))
+          )
+        );
+
+        // Sehr schwache Nachzügler werden nicht nur deshalb aufgenommen,
+        // weil noch ein Mindestbetrag verfügbar ist.
+        const relativeCutoff = strongestWeight * .55;
+        const selected = ordered
+          .filter((row, index) => index === 0 || row.weight >= relativeCutoff)
+          .slice(0, targetSlots);
+
+        // Jeder ausgewählte Top-Kandidat erhält zunächst genau einen Mindestschritt.
+        for (const row of selected) {
           if (remaining < settings.minStep) break;
-          const proportional = roundMoney(settings.capital * row.weight / sum, 5);
-          const amount = roundMoney(Math.min(row.stepCap, Math.max(settings.minStep, proportional)), 5);
-          if (amount >= settings.minStep && amount <= remaining) { row.allocation = amount; remaining -= amount; }
-        }
-        let changed = true;
-        while (remaining >= 5 && changed) {
-          changed = false;
-          for (const row of ordered.filter(r => r.allocation >= settings.minStep)) {
-            if (remaining < 5) break;
-            if (row.stepCap - row.allocation >= 5) { row.allocation += 5; remaining -= 5; changed = true; }
+          if (row.stepCap >= settings.minStep) {
+            row.allocation = settings.minStep;
+            remaining -= settings.minStep;
           }
+        }
+
+        // Restkapital wird in 5-$-Stufen nach marginaler Attraktivität verteilt.
+        // Je näher ein Pool an seinem Step-Cap liegt, desto stärker sinkt seine Priorität.
+        while (remaining >= 5) {
+          const expandable = selected
+            .filter(row => row.stepCap - row.allocation >= 5)
+            .map(row => {
+              const utilization = row.stepCap > 0 ? row.allocation / row.stepCap : 1;
+              const marginalWeight = row.weight * Math.pow(Math.max(.12, 1 - utilization), .72);
+              return { row, marginalWeight };
+            })
+            .sort((a, b) => b.marginalWeight - a.marginalWeight);
+
+          if (!expandable.length) break;
+
+          const best = expandable[0].row;
+          const amount = Math.min(5, remaining, best.stepCap - best.allocation);
+          if (amount < 5) break;
+
+          best.allocation += amount;
+          remaining -= amount;
         }
       }
 
       for (const row of rows) {
         row.projectedLiquidity = row.liquidity + row.allocation;
-        row.projectedImpact = estimatePriceImpact(row.representativeTrade, row.projectedLiquidity, row.concentrated);
-        row.incrementalDailyIncome = row.allocation > 0 && row.liquidity > 0
-          ? row.expectedDailyIncome * (row.allocation / (row.liquidity + row.allocation))
-          : 0;
-        row.targetLow = row.allocation > 0 ? row.liquidity + settings.minStep : row.liquidity;
-        row.targetHigh = row.allocation > 0 ? row.liquidity + row.stepCap : row.liquidity;
+        row.projectedImpact = estimatePriceImpact(
+          row.representativeTrade,
+          row.projectedLiquidity,
+          row.concentrated
+        );
+        row.incrementalDailyIncome =
+          row.allocation > 0 && row.liquidity > 0
+            ? row.expectedDailyIncome * (row.allocation / (row.liquidity + row.allocation))
+            : 0;
+        row.targetLow = row.allocation > 0
+          ? row.liquidity + settings.minStep
+          : row.liquidity;
+        row.targetHigh = row.allocation > 0
+          ? row.liquidity + row.stepCap
+          : row.liquidity;
         row.reason = buildReason(row);
         row.recommendation = recommendationLabel(row);
       }
-      const deployed = rows.reduce((s, r) => s + r.allocation, 0);
-      return { deployable: settings.capital, deployed, selected: rows.filter(r => r.allocation > 0).length };
+
+      const deployed = rows.reduce((sum, row) => sum + row.allocation, 0);
+      return {
+        deployable: settings.capital,
+        deployed,
+        selected: rows.filter(row => row.allocation > 0).length
+      };
     }
 
     function qualityDots(row) {
