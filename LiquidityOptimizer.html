@@ -1147,7 +1147,7 @@
       </div>
 
       <div class="model-note">
-        <strong>So funktioniert es:</strong> Der Optimierer kombiniert aktuelle Pooldaten, echte Meteora-Einnahmen, eine robuste 30-Tage-Historie, externe Aktivität des Partner-Tokens, ASTY-Preisabweichungen und die geschätzte Preiswirkung typischer Trades. Eigene Positionen werden nicht abgefragt. Die möglichen Einnahmen eines zusätzlichen Betrags werden anteilig aus Pool-Liquidität und erwarteten Pool-Einnahmen geschätzt. Die Anzahl der zuerst berücksichtigten Pools ergibt sich ungefähr aus verfügbarem Kapital geteilt durch den größten Schritt.
+        <strong>So funktioniert es:</strong> Der Optimierer kombiniert aktuelle Pooldaten, echte Meteora-Einnahmen, eine robuste 30-Tage-Historie, externe Aktivität des Partner-Tokens, ASTY-Preisabweichungen und die geschätzte Preiswirkung typischer Trades. Eigene Positionen werden nicht abgefragt. Die möglichen Einnahmen eines zusätzlichen Betrags werden anteilig aus Pool-Liquidität und erwarteten Pool-Einnahmen geschätzt. Bei der Auswahl und bei jedem weiteren 5-$-Schritt wird zusätzlich gewichtet, wie viele tägliche Einnahmen genau dieser nächste Schritt voraussichtlich erzeugt.
       </div>
       <div class="model-note" id="dataStatus"><strong>Datenquellen:</strong> Werden nach dem Start geprüft.</div>
       <div class="model-note" id="historyStatus"><strong>30-Tage-Daten:</strong> Werden nach dem Start der Berechnung geladen.</div>
@@ -1256,7 +1256,7 @@
     const REFRESH_MS = 60_000;
     const CHUNK_SIZE = 25;
     const CACHE_KEY = "asty-liquidity-optimizer-cache-v6";
-    const SETTINGS_KEY = "asty-liquidity-optimizer-settings-v9";
+    const SETTINGS_KEY = "asty-liquidity-optimizer-settings-v10";
     const HISTORY_KEY = "asty-liquidity-optimizer-history-v6";
     const THIRTY_DAY_KEY = "asty-liquidity-optimizer-30d-v6";
     const EXTERNAL_KEY = "asty-liquidity-optimizer-external-v6";
@@ -1959,7 +1959,7 @@
       if (row.allocation > 0 && row.externalScore >= .48) return `Der Partner-Token zeigt außerhalb des ASTY-Pools rund ${fmtUsd(row.externalVolume24, true)} Volumen in 24h. Der ASTY-Pool nimmt bisher nur ${fmtPercent(row.astyPoolShare * 100, 1)} des beobachteten Gesamtvolumens auf.`;
       if (row.allocation > 0 && row.incomeIsExact) return `Die Empfehlung stützt sich auf echte ${row.incomeSource}-Einnahmen von ${fmtUsd(row.income24)} in 24h sowie eine robuste 30-Tage-Basis. Der Schritt bleibt auf ${fmtUsd(row.allocation)} begrenzt.`;
       if (row.allocation > 0 && row.accel1 >= 1.6) return `Das 1h-Tempo liegt bei ${fmtMultiple(row.accel1)}. Zusätzliche Tiefe verbessert die Ausführung eines typischen ${fmtUsd(row.representativeTrade)}-Trades: Die geschätzte Preiswirkung sinkt von ${fmtPercent(row.impactCurrent, 1)} auf ${fmtPercent(estimatePriceImpact(row.representativeTrade, row.liquidity + row.allocation, row.concentrated), 1)}. Bei der Preiswirkung ist ein kleinerer Wert besser.`;
-      if (row.allocation > 0) return "Live-Aktivität, robuste 30-Tage-Basis und der mögliche Nutzen zusätzlicher Markttiefe ergeben gemeinsam einen kleinen nächsten Schritt.";
+      if (row.allocation > 0) return `Live-Aktivität, robuste 30-Tage-Basis und zusätzliche Markttiefe sprechen für diesen Schritt. Für den Zusatzbetrag werden etwa ${fmtUsd(row.incrementalDailyIncome, false, 4)} zusätzliche Einnahmen pro Tag geschätzt.`;
       if (!row.dataAvailable && !row.has30d) return "Für diesen Pool liegen aktuell keine ausreichenden Live- oder historischen Daten vor.";
       if (row.has30d && row.top3Share30 >= .70) return `Das 30d-Volumen ist stark auf wenige Ausbruchstage konzentriert: ${fmtPercent(row.top3Share30 * 100, 0)} entfallen auf die drei stärksten Tage. Aktuell wird deshalb kein weiterer Schritt empfohlen.`;
       if (row.signal >= .48) return "Mehrere Signale sind aktiv, die vorhandene Liquidität deckt den momentan erkennbaren Bedarf jedoch noch ab.";
@@ -1970,6 +1970,20 @@
       if (row.allocation > 0) return { text: "Jetzt erhöhen", cls: "add" };
       if (row.signal >= .45 || row.accel1 >= 1.7 || row.netArbGap >= .5) return { text: "Eng beobachten", cls: "watch" };
       return { text: "Halten", cls: "" };
+    }
+
+    function estimatedIncomeForAddedLiquidity(row, addedLiquidity) {
+      const added = Math.max(0, num(addedLiquidity));
+      const liquidity = Math.max(0, num(row.liquidity));
+      const expectedIncome = Math.max(0, num(row.expectedDailyIncome));
+      if (added <= 0 || liquidity <= 0 || expectedIncome <= 0) return 0;
+      return expectedIncome * (added / (liquidity + added));
+    }
+
+    function estimatedMarginalIncome(row, currentAdded, nextStep) {
+      const before = estimatedIncomeForAddedLiquidity(row, currentAdded);
+      const after = estimatedIncomeForAddedLiquidity(row, currentAdded + nextStep);
+      return Math.max(0, after - before);
     }
 
     function allocateCapital(rows, settings) {
@@ -1997,17 +2011,60 @@
         row.stepCap = Math.min(settings.maxStep, row.capacity, poolCap);
 
         if (eligible && row.stepCap >= settings.minStep) {
-          row.weight = Math.max(
+          row.strategicWeight = Math.max(
             .01,
-            row.signal * 1.25 +
-            clamp(row.netArbGap / 4, 0, 1) * .35 +
-            row.externalScore * .30 +
-            clamp(row.depthBenefit / 2, 0, 1) * .20 +
-            (row.incomeIsExact ? .08 : 0)
+            row.signal * 1.05 +
+            clamp(row.netArbGap / 4, 0, 1) * .28 +
+            row.externalScore * .22 +
+            clamp(row.depthBenefit / 2, 0, 1) * .16 +
+            (row.incomeIsExact ? .06 : 0)
           );
+
+          row.initialMarginalIncome = estimatedMarginalIncome(
+            row,
+            0,
+            settings.minStep
+          );
+          row.initialMarginalYield = settings.minStep > 0
+            ? row.initialMarginalIncome / settings.minStep
+            : 0;
+
           candidates.push(row);
         } else {
+          row.strategicWeight = 0;
+          row.initialMarginalIncome = 0;
+          row.initialMarginalYield = 0;
           row.weight = 0;
+        }
+      }
+
+      if (candidates.length) {
+        const maxIncomeLog = Math.max(
+          ...candidates.map(row => Math.log1p(row.initialMarginalIncome)),
+          .000001
+        );
+        const maxYield = Math.max(
+          ...candidates.map(row => row.initialMarginalYield),
+          .000001
+        );
+
+        for (const row of candidates) {
+          const absoluteIncomeScore =
+            Math.log1p(row.initialMarginalIncome) / maxIncomeLog;
+          const incomeYieldScore =
+            row.initialMarginalYield / maxYield;
+
+          row.incomeGainScore = clamp(
+            absoluteIncomeScore * .62 + incomeYieldScore * .38,
+            0,
+            1
+          );
+
+          // Die erwartete Einnahmensteigerung ist ein eigenständiger,
+          // deutlich gewichteter Bestandteil des ersten Rankings.
+          row.weight =
+            row.strategicWeight * .68 +
+            row.incomeGainScore * .72;
         }
       }
 
@@ -2017,24 +2074,23 @@
         const ordered = [...candidates].sort((a, b) => b.weight - a.weight);
         const strongestWeight = ordered[0]?.weight || 0;
 
-        // Der größte Schritt bestimmt, auf wie viele starke Pools das Kapital
-        // zunächst konzentriert wird. Beispiel: 100 $ / 25 $ = maximal 4 Startplätze.
         const targetSlots = Math.max(
           1,
           Math.min(
             ordered.length,
-            Math.ceil(settings.capital / Math.max(settings.maxStep, settings.minStep))
+            Math.ceil(
+              settings.capital /
+              Math.max(settings.maxStep, settings.minStep)
+            )
           )
         );
 
-        // Sehr schwache Nachzügler werden nicht nur deshalb aufgenommen,
-        // weil noch ein Mindestbetrag verfügbar ist.
         const relativeCutoff = strongestWeight * .55;
         const selected = ordered
           .filter((row, index) => index === 0 || row.weight >= relativeCutoff)
           .slice(0, targetSlots);
 
-        // Jeder ausgewählte Top-Kandidat erhält zunächst genau einen Mindestschritt.
+        // Startzuteilung: nur die stärksten Kandidaten erhalten einen Mindestschritt.
         for (const row of selected) {
           if (remaining < settings.minStep) break;
           if (row.stepCap >= settings.minStep) {
@@ -2043,26 +2099,80 @@
           }
         }
 
-        // Restkapital wird in 5-$-Stufen nach marginaler Attraktivität verteilt.
-        // Je näher ein Pool an seinem Step-Cap liegt, desto stärker sinkt seine Priorität.
+        // Jeder weitere 5-$-Schritt wird neu bewertet.
+        // Entscheidend sind sowohl strategische Qualität als auch die konkret
+        // geschätzte Einnahmensteigerung genau dieses nächsten Schritts.
         while (remaining >= 5) {
           const expandable = selected
             .filter(row => row.stepCap - row.allocation >= 5)
             .map(row => {
-              const utilization = row.stepCap > 0 ? row.allocation / row.stepCap : 1;
-              const marginalWeight = row.weight * Math.pow(Math.max(.12, 1 - utilization), .72);
-              return { row, marginalWeight };
-            })
-            .sort((a, b) => b.marginalWeight - a.marginalWeight);
+              const nextStep = Math.min(
+                5,
+                remaining,
+                row.stepCap - row.allocation
+              );
+
+              const marginalIncome = estimatedMarginalIncome(
+                row,
+                row.allocation,
+                nextStep
+              );
+              const marginalYield = nextStep > 0
+                ? marginalIncome / nextStep
+                : 0;
+
+              const utilization = row.stepCap > 0
+                ? row.allocation / row.stepCap
+                : 1;
+
+              return {
+                row,
+                nextStep,
+                marginalIncome,
+                marginalYield,
+                utilization
+              };
+            });
 
           if (!expandable.length) break;
 
-          const best = expandable[0].row;
-          const amount = Math.min(5, remaining, best.stepCap - best.allocation);
-          if (amount < 5) break;
+          const maxMarginalIncomeLog = Math.max(
+            ...expandable.map(item => Math.log1p(item.marginalIncome)),
+            .000001
+          );
+          const maxMarginalYield = Math.max(
+            ...expandable.map(item => item.marginalYield),
+            .000001
+          );
 
-          best.allocation += amount;
-          remaining -= amount;
+          for (const item of expandable) {
+            const absoluteIncomeScore =
+              Math.log1p(item.marginalIncome) / maxMarginalIncomeLog;
+            const incomeYieldScore =
+              item.marginalYield / maxMarginalYield;
+            const marginalIncomeScore = clamp(
+              absoluteIncomeScore * .65 + incomeYieldScore * .35,
+              0,
+              1
+            );
+
+            const diminishingFactor = Math.pow(
+              Math.max(.12, 1 - item.utilization),
+              .72
+            );
+
+            item.marginalWeight =
+              item.row.strategicWeight * .52 * diminishingFactor +
+              marginalIncomeScore * .92;
+          }
+
+          expandable.sort((a, b) => b.marginalWeight - a.marginalWeight);
+
+          const best = expandable[0];
+          if (!best || best.nextStep < 5) break;
+
+          best.row.allocation += best.nextStep;
+          remaining -= best.nextStep;
         }
       }
 
@@ -2073,10 +2183,17 @@
           row.projectedLiquidity,
           row.concentrated
         );
-        row.incrementalDailyIncome =
-          row.allocation > 0 && row.liquidity > 0
-            ? row.expectedDailyIncome * (row.allocation / (row.liquidity + row.allocation))
+
+        row.incrementalDailyIncome = estimatedIncomeForAddedLiquidity(
+          row,
+          row.allocation
+        );
+
+        row.incrementalDailyIncomeYield =
+          row.allocation > 0
+            ? row.incrementalDailyIncome / row.allocation * 100
             : 0;
+
         row.targetLow = row.allocation > 0
           ? row.liquidity + settings.minStep
           : row.liquidity;
@@ -2217,7 +2334,7 @@
           <div class="detail-item"><div class="detail-label">ASTY-Pool-Anteil am Volumen</div><div class="detail-value">${row.externalVolume24 ? fmtPercent(row.astyPoolShare * 100, 1) : "-"}</div></div>
           <div class="detail-item"><div class="detail-label">Typische Trade-Größe</div><div class="detail-value">${fmtUsd(row.representativeTrade)}</div></div>
           <div class="detail-item"><div class="detail-label">Preiswirkung eines typischen Trades</div><div class="detail-value">${fmtPercent(row.impactCurrent, 1)}<span class="lower-is-better">Niedriger ist besser</span></div></div>
-          <div class="detail-item"><div class="detail-label">Geschätzte Einnahmen des empfohlenen Zusatzbetrags</div><div class="detail-value">${row.allocation > 0 ? fmtUsd(row.incrementalDailyIncome, false, 4) + " pro Tag" : "-"}</div></div>
+          <div class="detail-item"><div class="detail-label">Geschätzte Einnahmenerhöhung durch den Zusatzbetrag</div><div class="detail-value">${row.allocation > 0 ? fmtUsd(row.incrementalDailyIncome, false, 4) + " pro Tag" : "-"}</div><div class="lower-is-better">${row.allocation > 0 ? fmtPercent(row.incrementalDailyIncomeYield, 3) + " geschätzte Tagesrendite des Zusatzbetrags" : ""}</div></div>
         </div>
         <div class="detail-section">
           <div class="detail-section-title">So ist der ASTY Netzwerk-Referenzpreis zu verstehen</div>
@@ -2227,7 +2344,7 @@
         <div class="detail-section">
           <div class="detail-section-title">Simulation der Liquiditätsschritte</div>
           <div class="impact-explainer"><strong>Wichtig:</strong> Die Prozentzahl ist keine Rendite. Sie schätzt, wie stark ein typischer Trade den Poolpreis bewegt. Mehr Liquidität macht diese Bewegung kleiner. Deshalb ist hier ein niedrigerer Wert besser.</div>
-          <div class="detail-section-copy">Die Einnahmen des Zusatzbetrags werden anteilig geschätzt. Dabei wird angenommen, dass die erwarteten Pool-Einnahmen unverändert bleiben und sich proportional auf die neue Gesamtliquidität verteilen.</div>
+          <div class="detail-section-copy">Die Einnahmen des Zusatzbetrags werden anteilig geschätzt. Diese geschätzte Einnahmenerhöhung fließt direkt in das Pool-Ranking ein. Auch jeder weitere 5-$-Schritt wird neu danach bewertet, wie viel zusätzliche tägliche Einnahmen er voraussichtlich noch erzeugt.</div>
           <table class="simulation-table"><thead><tr><th>Schritt</th><th>Neue Liquidität</th><th>Preiswirkung des typischen Trades</th><th>Verbesserung gegenüber heute</th><th>Geschätzte Einnahmen des Zusatzbetrags/Tag</th></tr></thead><tbody>${sims.map(x => `<tr><td>+${fmtUsd(x.step)}</td><td>${fmtUsd(x.newLiquidity)}</td><td>${fmtPercent(row.impactCurrent, 1)} → <strong>${fmtPercent(x.impact, 1)}</strong></td><td class="improvement-value">${x.improvement}</td><td>${fmtUsd(x.incremental, false, 4)}</td></tr>`).join("")}</tbody></table>
         </div>
         <div class="detail-section">
