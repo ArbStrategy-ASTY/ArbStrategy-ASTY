@@ -567,9 +567,67 @@
     }
 
     .pool-meta {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 6px;
       margin-top: 4px;
       color: var(--muted-2);
       font-size: 9px;
+    }
+
+    .pool-address-inline {
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+
+    .copy-pool-button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 23px;
+      padding: 3px 7px;
+      border-radius: 999px;
+      border: 1px solid rgba(167,139,250,0.24);
+      background: transparent;
+      color: #bfb8d2;
+      font-size: 8px;
+      font-weight: 800;
+      cursor: pointer;
+      transition: border-color .18s ease, color .18s ease, box-shadow .18s ease;
+    }
+
+    .copy-pool-button:hover,
+    .copy-pool-button:focus-visible {
+      color: #fff;
+      border-color: rgba(196,181,253,0.72);
+      box-shadow: 0 0 13px rgba(139,92,246,0.20);
+      outline: none;
+    }
+
+    .copy-pool-button.copied {
+      color: var(--green);
+      border-color: rgba(52,211,153,0.34);
+    }
+
+    .pool-address-box {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-top: 8px;
+      padding: 10px 11px;
+      border-radius: 12px;
+      border: 1px solid rgba(255,255,255,0.07);
+      background: rgba(0,0,0,0.16);
+    }
+
+    .pool-address-code {
+      min-width: 0;
+      color: #d7d0e7;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: 9px;
+      line-height: 1.45;
+      word-break: break-all;
     }
 
     .signal-badge {
@@ -1177,7 +1235,7 @@
 
     <div class="footer">
       Live-Pooldaten: DexScreener · Meteora DAMM v2 / DLMM · 30d-Fallback: GeckoTerminal · Berechnungen erfolgen lokal im Browser<br>
-      Echte Meteora-Pool-Einnahmen werden bevorzugt. Bei anderen DEXs sowie bei den Einnahmen eines zusätzlichen Betrags werden Schätzwerte verwendet. Preiswirkung und Arbitrage-Spielraum sind Näherungen, keine Ausführungsgarantie.
+      Pool-Liquidität: GeckoTerminal reserve_in_usd wie im ASTY Dashboard. Echte Meteora-Pool-Einnahmen werden bevorzugt. Bei anderen DEXs sowie bei den Einnahmen eines zusätzlichen Betrags werden Schätzwerte verwendet. Preiswirkung und Arbitrage-Spielraum sind Näherungen, keine Ausführungsgarantie.
     </div>
   </main>
 
@@ -1198,14 +1256,17 @@
     const REFRESH_MS = 60_000;
     const CHUNK_SIZE = 25;
     const CACHE_KEY = "asty-liquidity-optimizer-cache-v6";
-    const SETTINGS_KEY = "asty-liquidity-optimizer-settings-v7";
+    const SETTINGS_KEY = "asty-liquidity-optimizer-settings-v8";
     const HISTORY_KEY = "asty-liquidity-optimizer-history-v6";
     const THIRTY_DAY_KEY = "asty-liquidity-optimizer-30d-v6";
     const EXTERNAL_KEY = "asty-liquidity-optimizer-external-v6";
     const METEORA_KEY = "asty-liquidity-optimizer-meteora-v6";
+    const GECKO_LIQUIDITY_KEY = "asty-liquidity-optimizer-gecko-liquidity-v8";
     const THIRTY_DAY_TTL = 12 * 60 * 60 * 1000;
     const EXTERNAL_TTL = 10 * 60 * 1000;
     const METEORA_TTL = 5 * 60 * 1000;
+    const GECKO_LIQUIDITY_TTL = 3 * 60 * 1000;
+    const GECKO_CHUNK_SIZE = 20;
 
     const POOLS = [
       ["3UvhqPrMyf13qgRodARDi5oGJGoxHYb2ykZdCaa1TV8i","ASTY/$WIF",1],
@@ -1421,6 +1482,76 @@
       els.statusText.textContent = text;
     }
 
+    function geckoPoolAddress(item) {
+      const attrs = item?.attributes || {};
+      const direct = attrs.address || attrs.pool_address;
+      if (direct) return String(direct);
+      return String(item?.id || "").replace(/^solana_/, "");
+    }
+
+    function loadCachedGeckoLiquidity() {
+      const cached = loadJson(GECKO_LIQUIDITY_KEY, null);
+      if (!cached || !cached.data || typeof cached.data !== "object") return null;
+      return {
+        map: new Map(Object.entries(cached.data)),
+        timestamp: num(cached.t),
+        stale: Date.now() - num(cached.t) >= GECKO_LIQUIDITY_TTL
+      };
+    }
+
+    async function fetchGeckoLiquidityMap() {
+      const cached = loadCachedGeckoLiquidity();
+      if (cached && !cached.stale) return { ...cached, mode: "cache" };
+
+      const values = {};
+      let successfulBlocks = 0;
+
+      for (const block of chunkArray(POOLS, GECKO_CHUNK_SIZE)) {
+        const ids = block.map(([address]) => address);
+        const encodedIds = encodeURIComponent(ids.join(","));
+        const url =
+          `https://api.geckoterminal.com/api/v2/networks/solana/pools/multi/${encodedIds}` +
+          `?include=base_token,quote_token&include_volume_breakdown=false&include_composition=false`;
+
+        try {
+          const payload = await fetchWithRetry(url, 20_000, 2);
+          for (const item of Array.isArray(payload?.data) ? payload.data : []) {
+            const address = geckoPoolAddress(item);
+            const reserve = num(item?.attributes?.reserve_in_usd);
+            if (address && reserve > 0) values[address] = reserve;
+          }
+          successfulBlocks += 1;
+        } catch (error) {
+          console.warn("GeckoTerminal liquidity block failed", error);
+        }
+
+        await sleep(180);
+      }
+
+      if (Object.keys(values).length) {
+        saveJson(GECKO_LIQUIDITY_KEY, { t: Date.now(), data: values });
+        return { map: new Map(Object.entries(values)), timestamp: Date.now(), mode: "live" };
+      }
+
+      if (cached) return { ...cached, mode: "stale-cache" };
+      throw new Error("No GeckoTerminal liquidity values");
+    }
+
+    function applyGeckoLiquidity(rows, result) {
+      const liquidityMap = result?.map instanceof Map ? result.map : new Map();
+      for (const row of rows) {
+        const geckoLiquidity = num(liquidityMap.get(row.address));
+        if (geckoLiquidity > 0) {
+          row.liquidity = geckoLiquidity;
+          row.liquiditySource = "GeckoTerminal reserve_in_usd";
+          row.liquidityMatchesDashboard = true;
+        } else {
+          row.liquiditySource = row.liquiditySource || "DexScreener-Fallback";
+          row.liquidityMatchesDashboard = false;
+        }
+      }
+    }
+
     async function fetchLivePools() {
       const all = [];
       const chunks = chunkArray(POOLS, CHUNK_SIZE);
@@ -1498,6 +1629,8 @@
           createdAt: item?.pairCreatedAt || null,
           dataAvailable: Boolean(item),
           liquidity: num(item?.liquidity?.usd),
+          liquiditySource: "DexScreener-Fallback",
+          liquidityMatchesDashboard: false,
           v1: num(volume.h1),
           v6: num(volume.h6),
           v24: num(volume.h24),
@@ -1543,7 +1676,7 @@
       row.protocolIncome24 = num(detail?.protocol_fees?.["24h"] ?? detail?.protocol_fee_24h);
       row.v1 = num(detail?.volume?.["1h"] ?? detail?.volume_1h) || row.v1;
       row.v24 = num(detail?.volume?.["24h"] ?? detail?.volume_24h) || row.v24;
-      row.liquidity = num(detail?.tvl) || row.liquidity;
+      row.meteoraTvl = num(detail?.tvl);
       row.baseFeePct = num(detail?.pool_config?.base_fee_pct ?? detail?.base_fee_pct);
       row.dynamicFeePct = num(detail?.dynamic_fee_pct);
       row.maxFeePct = num(detail?.pool_config?.max_fee_pct);
@@ -1911,7 +2044,7 @@
       const rec = row.recommendation || recommendationLabel(row);
       const source = row.incomeIsExact ? `${row.incomeSource} live` : "Einnahmen geschätzt";
       return `<article class="pool-card ${row.allocation > 0 ? "recommended" : ""} ${row.signal >= .58 ? "hot" : ""}" tabindex="0" data-address="${row.address}">
-        <div class="pool-head"><div><div class="pool-name">${row.label}</div><div class="pool-meta">${shortAddress(row.address)} ${qualityDots(row)}</div><div class="source-chip ${row.incomeIsExact ? "" : "estimated"}">${source}</div></div><span class="signal-badge ${rec.cls}">${rec.text}</span></div>
+        <div class="pool-head"><div><div class="pool-name">${row.label}</div><div class="pool-meta"><span class="pool-address-inline">${shortAddress(row.address)}</span><button class="copy-pool-button" type="button" data-copy-address="${row.address}" aria-label="Pool-Adresse kopieren">Kopieren</button><span>${qualityDots(row)}</span></div><div class="source-chip ${row.incomeIsExact ? "" : "estimated"}">${source}</div></div><span class="signal-badge ${rec.cls}">${rec.text}</span></div>
         <div class="pool-main">
           <div class="recommend-box"><div class="box-label">NÄCHSTER LIQUIDITÄTSSCHRITT</div><div class="recommend-value ${row.allocation > 0 ? "" : "zero"}">${row.allocation > 0 ? "+" + fmtUsd(row.allocation) : "Jetzt nicht erhöhen"}</div><div class="box-sub">Aktuelle Liquidität: ${fmtUsd(row.liquidity, true)}</div></div>
           <div class="target-box"><div class="box-label">NÄCHSTER SINNVOLLER BEREICH</div><div class="target-value">${row.allocation > 0 ? `${fmtUsd(row.targetLow, true)} - ${fmtUsd(row.targetHigh, true)}` : fmtUsd(row.liquidity, true)}</div><div class="box-sub">Kontrollierter Schritt statt theoretischer Endwert</div></div>
@@ -1948,10 +2081,21 @@
       const rows = filteredRows();
       els.poolCount.textContent = `${rows.length} von ${poolRows.length} Pools`;
       els.poolGrid.innerHTML = rows.length ? rows.map(poolCardHtml).join("") : '<div class="empty-state">Keine Pools entsprechen dem aktuellen Filter.</div>';
+      els.poolGrid.querySelectorAll(".copy-pool-button").forEach(button => {
+        button.addEventListener("click", event => {
+          event.stopPropagation();
+          copyPoolAddress(button.dataset.copyAddress, button);
+        });
+      });
       els.poolGrid.querySelectorAll(".pool-card").forEach(card => {
         const open = () => openPoolDialog(card.dataset.address);
         card.addEventListener("click", open);
-        card.addEventListener("keydown", e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); open(); } });
+        card.addEventListener("keydown", e => {
+          if ((e.key === "Enter" || e.key === " ") && !e.target.closest(".copy-pool-button")) {
+            e.preventDefault();
+            open();
+          }
+        });
       });
     }
 
@@ -1980,10 +2124,10 @@
       if (!row) return;
       const sims = simulationRows(row);
       els.dialogTitle.textContent = row.label;
-      els.dialogSub.textContent = `${row.incomeSource} · ${row.dexId} · ${shortAddress(row.address)}`;
+      els.dialogSub.textContent = `${row.incomeSource} · ${row.dexId}`;
       els.dialogBody.innerHTML = `
         <div class="detail-grid">
-          <div class="detail-item"><div class="detail-label">Aktuelle Liquidität</div><div class="detail-value">${fmtUsd(row.liquidity)}</div></div>
+          <div class="detail-item"><div class="detail-label">Aktuelle Liquidität</div><div class="detail-value">${fmtUsd(row.liquidity)}</div><div class="lower-is-better">${row.liquiditySource}</div></div>
           <div class="detail-item"><div class="detail-label">Empfohlener Schritt</div><div class="detail-value positive">${row.allocation > 0 ? "+" + fmtUsd(row.allocation) : "Jetzt nicht erhöhen"}</div></div>
           <div class="detail-item"><div class="detail-label">Einnahmen 24h</div><div class="detail-value positive">${fmtUsd(row.income24)} ${row.incomeIsExact ? "(echt)" : "(geschätzt)"}</div></div>
           <div class="detail-item"><div class="detail-label">Effektive Einnahmenrate</div><div class="detail-value">${fmtPercent(row.effectiveIncomeRate * 100, 2)}</div></div>
@@ -2012,8 +2156,20 @@
           <div class="detail-section-copy">Die Einnahmen des Zusatzbetrags werden anteilig geschätzt. Dabei wird angenommen, dass die erwarteten Pool-Einnahmen unverändert bleiben und sich proportional auf die neue Gesamtliquidität verteilen.</div>
           <table class="simulation-table"><thead><tr><th>Schritt</th><th>Neue Liquidität</th><th>Preiswirkung des typischen Trades</th><th>Verbesserung gegenüber heute</th><th>Geschätzte Einnahmen des Zusatzbetrags/Tag</th></tr></thead><tbody>${sims.map(x => `<tr><td>+${fmtUsd(x.step)}</td><td>${fmtUsd(x.newLiquidity)}</td><td>${fmtPercent(row.impactCurrent, 1)} → <strong>${fmtPercent(x.impact, 1)}</strong></td><td class="improvement-value">${x.improvement}</td><td>${fmtUsd(x.incremental, false, 4)}</td></tr>`).join("")}</tbody></table>
         </div>
-        <div class="detail-section"><div class="detail-section-title">Pool-Adresse</div><div class="detail-section-copy" style="font-family:ui-monospace,SFMono-Regular,Menlo,monospace;word-break:break-all;">${row.address}</div></div>
+        <div class="detail-section">
+          <div class="detail-section-title">Pool-Adresse</div>
+          <div class="pool-address-box">
+            <div class="pool-address-code">${row.address}</div>
+            <button class="copy-pool-button" type="button" data-copy-address="${row.address}">Kopieren</button>
+          </div>
+        </div>
         <div class="dialog-actions"><a class="pill" href="https://www.geckoterminal.com/solana/pools/${row.address}" target="_blank" rel="noopener noreferrer">GeckoTerminal ↗</a><a class="pill" href="https://dexscreener.com/solana/${row.address}" target="_blank" rel="noopener noreferrer">DexScr ↗</a></div>`;
+      els.dialogBody.querySelectorAll(".copy-pool-button").forEach(button => {
+        button.addEventListener("click", event => {
+          event.stopPropagation();
+          copyPoolAddress(button.dataset.copyAddress, button);
+        });
+      });
       if (typeof els.poolDialog.showModal === "function") els.poolDialog.showModal(); else els.poolDialog.setAttribute("open", "");
     }
 
@@ -2026,7 +2182,8 @@
       renderPools();
       const exact = poolRows.filter(r => r.incomeIsExact).length;
       const external = poolRows.filter(r => r.externalVolume24 > 0).length;
-      els.dataStatus.innerHTML = `<strong>Datenquellen:</strong> ${exact} Pools mit echten Meteora-Einnahmen · ${external} Pools mit externem Partner-Marktvergleich · ${poolRows.filter(r => r.astyPrice > 0).length} Poolpreise im ASTY-Referenzpreis.`;
+      const dashboardLiquidity = poolRows.filter(r => r.liquidityMatchesDashboard).length;
+      els.dataStatus.innerHTML = `<strong>Datenquellen:</strong> ${dashboardLiquidity} Pools mit Dashboard-Liquidität aus GeckoTerminal · ${exact} Pools mit echten Meteora-Einnahmen · ${external} Pools mit externem Partner-Marktvergleich · ${poolRows.filter(r => r.astyPrice > 0).length} Poolpreise im ASTY-Referenzpreis.`;
     }
 
     async function load() {
@@ -2041,7 +2198,16 @@
         poolRows = parsePoolRows(result.data);
         getSettings();
         els.dataStatus.innerHTML = '<span class="history-loading"><span class="loading-spinner"></span><span><strong>Datenquellen:</strong> Echte Meteora-Einnahmen und Marktvergleich werden geprüft.</span></span>';
-        await enrichMeteora(poolRows);
+        const [meteoraResult, geckoLiquidityResult] = await Promise.allSettled([
+          enrichMeteora(poolRows),
+          fetchGeckoLiquidityMap()
+        ]);
+        if (meteoraResult.status === "rejected") console.warn("Meteora enrichment unavailable", meteoraResult.reason);
+        if (geckoLiquidityResult.status === "fulfilled") {
+          applyGeckoLiquidity(poolRows, geckoLiquidityResult.value);
+        } else {
+          console.warn("GeckoTerminal liquidity unavailable; using fallback", geckoLiquidityResult.reason);
+        }
         computeReferencePrice(poolRows);
         saveHistory(poolRows);
         recomputeAndRender();
@@ -2084,9 +2250,45 @@
     els.dialogClose.addEventListener("click", () => els.poolDialog.close());
     els.poolDialog.addEventListener("click", event => { const r = els.poolDialog.getBoundingClientRect(); if (event.clientX < r.left || event.clientX > r.right || event.clientY < r.top || event.clientY > r.bottom) els.poolDialog.close(); });
 
+    async function writeClipboard(value) {
+      try {
+        await navigator.clipboard.writeText(value);
+        return true;
+      } catch {
+        try {
+          const t = document.createElement("textarea");
+          t.value = value;
+          t.style.position = "fixed";
+          t.style.opacity = "0";
+          document.body.appendChild(t);
+          t.select();
+          const ok = document.execCommand("copy");
+          t.remove();
+          return ok;
+        } catch {
+          return false;
+        }
+      }
+    }
+
+    async function copyPoolAddress(address, button) {
+      if (!address) return;
+      const copied = await writeClipboard(address);
+      if (!button) return;
+      const original = button.textContent;
+      button.textContent = copied ? "Kopiert" : "Fehler";
+      button.classList.toggle("copied", copied);
+      setTimeout(() => {
+        button.textContent = original;
+        button.classList.remove("copied");
+      }, 1400);
+    }
+
     async function copyContract() {
-      try { await navigator.clipboard.writeText(ASTY_MINT); const original = els.copyContractButton.textContent; els.copyContractButton.textContent = "Kopiert"; setTimeout(() => els.copyContractButton.textContent = original, 1400); }
-      catch { const t = document.createElement("textarea"); t.value = ASTY_MINT; document.body.appendChild(t); t.select(); document.execCommand("copy"); t.remove(); }
+      const copied = await writeClipboard(ASTY_MINT);
+      const original = els.copyContractButton.textContent;
+      els.copyContractButton.textContent = copied ? "Kopiert" : "Fehler";
+      setTimeout(() => els.copyContractButton.textContent = original, 1400);
     }
     els.copyContractButton.addEventListener("click", e => { e.stopPropagation(); copyContract(); });
     els.contractCard.addEventListener("click", copyContract);
