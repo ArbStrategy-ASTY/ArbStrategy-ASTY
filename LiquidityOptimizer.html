@@ -364,42 +364,6 @@
     .control-input.with-prefix { padding-left: 28px; }
     .control-input.with-suffix { padding-right: 30px; }
 
-    .wallet-input-row {
-      padding: 0 18px 16px;
-    }
-
-    .control-textarea {
-      width: 100%;
-      min-height: 66px;
-      resize: vertical;
-      border-radius: 12px;
-      border: 1px solid rgba(167,139,250,0.22);
-      outline: none;
-      background: rgba(0,0,0,0.18);
-      color: #fff;
-      padding: 10px 12px;
-      font: 700 11px/1.45 ui-monospace, SFMono-Regular, Menlo, monospace;
-    }
-
-    .control-textarea:focus {
-      border-color: rgba(196,181,253,0.62);
-      box-shadow: 0 0 0 4px rgba(139,92,246,0.08);
-    }
-
-    .optional-label {
-      color: var(--muted-2);
-      font-weight: 650;
-      text-transform: none;
-      letter-spacing: 0;
-    }
-
-    .field-help {
-      margin-top: 6px;
-      color: var(--muted-2);
-      font-size: 9px;
-      line-height: 1.45;
-    }
-
     .source-chip {
       display: inline-flex;
       align-items: center;
@@ -849,6 +813,37 @@
     .detail-value.highlight { color: var(--cyan); }
     .detail-value.positive { color: var(--green); }
 
+    .metric-help {
+      margin-top: 7px;
+      color: var(--muted-2);
+      font-size: 9px;
+      line-height: 1.45;
+    }
+
+    .lower-is-better {
+      display: block;
+      margin-top: 4px;
+      color: var(--green);
+      font-size: 8px;
+      font-weight: 750;
+    }
+
+    .impact-explainer {
+      margin-top: 9px;
+      padding: 10px 11px;
+      border-radius: 12px;
+      border: 1px solid rgba(52,211,153,0.14);
+      background: rgba(52,211,153,0.045);
+      color: #c9d9d3;
+      font-size: 9px;
+      line-height: 1.5;
+    }
+
+    .improvement-value {
+      color: var(--green);
+      font-weight: 800;
+    }
+
     .detail-section {
       margin-top: 14px;
       padding: 14px;
@@ -1093,20 +1088,11 @@
         <button class="pill run-button" id="runButton" type="button">Berechnen</button>
       </div>
 
-      <div class="wallet-input-row">
-        <div class="field">
-          <label for="walletInput">Meteora-DLMM LP-Wallets <span class="optional-label">optional</span></label>
-          <textarea class="control-textarea" id="walletInput" rows="2" spellcheck="false" placeholder="Wallet-Adressen durch Komma oder Zeilenumbruch trennen"></textarea>
-          <div class="field-help">Nur öffentlich sichtbare DLMM-Positionen. Die Adressen bleiben lokal in diesem Browser.</div>
-        </div>
-      </div>
-
       <div class="model-note">
-        <strong>So funktioniert es:</strong> Der Optimierer kombiniert aktuelle Pooldaten, echte Meteora-Einnahmen, eine robuste 30-Tage-Historie, externe Aktivität des Partner-Tokens, ASTY-Preisabweichungen und die geschätzte Preiswirkung typischer Trades. Statt einer vermeintlich exakten Endsumme wird nur der nächste kontrollierte Liquiditätsschritt empfohlen.
+        <strong>So funktioniert es:</strong> Der Optimierer kombiniert aktuelle Pooldaten, echte Meteora-Einnahmen, eine robuste 30-Tage-Historie, externe Aktivität des Partner-Tokens, ASTY-Preisabweichungen und die geschätzte Preiswirkung typischer Trades. Eigene Positionen werden nicht abgefragt. Die möglichen Einnahmen eines zusätzlichen Betrags werden anteilig aus Pool-Liquidität und erwarteten Pool-Einnahmen geschätzt.
       </div>
       <div class="model-note" id="dataStatus"><strong>Datenquellen:</strong> Werden nach dem Start geprüft.</div>
       <div class="model-note" id="historyStatus"><strong>30-Tage-Daten:</strong> Werden nach dem Start der Berechnung geladen.</div>
-      <div class="model-note" id="walletStatus"><strong>Eigene Positionen:</strong> Optional über die LP-Wallets.</div>
     </section>
 
     <section class="main-grid" aria-label="Optimizer summary">
@@ -1130,9 +1116,10 @@
       </article>
 
       <article class="metric-card">
-        <div class="metric-label">ASTY Referenzpreis</div>
+        <div class="metric-label">ASTY Netzwerk-Referenzpreis</div>
         <div class="metric-value" id="referencePriceValue">-</div>
         <div class="metric-sub" id="referencePriceSub">Aus den ASTY-Pools berechnet</div>
+        <div class="metric-help">Robuster Vergleichspreis aus mehreren ASTY-Pools. Liquide Pools zählen stärker, starke Ausreißer werden ausgefiltert.</div>
       </article>
     </section>
 
@@ -1190,7 +1177,7 @@
 
     <div class="footer">
       Live-Pooldaten: DexScreener · Meteora DAMM v2 / DLMM · 30d-Fallback: GeckoTerminal · Berechnungen erfolgen lokal im Browser<br>
-      Echte Meteora-Einnahmen werden bevorzugt. Bei anderen DEXs werden Einnahmen klar als Schätzung ausgewiesen. Preiswirkung und Arbitrage-Spielraum sind Näherungen, keine Ausführungsgarantie.
+      Echte Meteora-Pool-Einnahmen werden bevorzugt. Bei anderen DEXs sowie bei den Einnahmen eines zusätzlichen Betrags werden Schätzwerte verwendet. Preiswirkung und Arbitrage-Spielraum sind Näherungen, keine Ausführungsgarantie.
     </div>
   </main>
 
@@ -1211,7 +1198,7 @@
     const REFRESH_MS = 60_000;
     const CHUNK_SIZE = 25;
     const CACHE_KEY = "asty-liquidity-optimizer-cache-v6";
-    const SETTINGS_KEY = "asty-liquidity-optimizer-settings-v6";
+    const SETTINGS_KEY = "asty-liquidity-optimizer-settings-v7";
     const HISTORY_KEY = "asty-liquidity-optimizer-history-v6";
     const THIRTY_DAY_KEY = "asty-liquidity-optimizer-30d-v6";
     const EXTERNAL_KEY = "asty-liquidity-optimizer-external-v6";
@@ -1294,7 +1281,6 @@
       capitalInput: document.getElementById("capitalInput"),
       minStepInput: document.getElementById("minStepInput"),
       maxStepInput: document.getElementById("maxStepInput"),
-      walletInput: document.getElementById("walletInput"),
       deployValue: document.getElementById("deployValue"),
       deploySub: document.getElementById("deploySub"),
       selectedValue: document.getElementById("selectedValue"),
@@ -1305,7 +1291,6 @@
       referencePriceSub: document.getElementById("referencePriceSub"),
       dataStatus: document.getElementById("dataStatus"),
       historyStatus: document.getElementById("historyStatus"),
-      walletStatus: document.getElementById("walletStatus"),
       poolSearch: document.getElementById("poolSearch"),
       sortSelect: document.getElementById("sortSelect"),
       poolCount: document.getElementById("poolCount"),
@@ -1324,7 +1309,6 @@
     let isLoading = false;
     let isLoading30d = false;
     let isLoadingContext = false;
-    let isLoadingWallets = false;
     let hasStarted = false;
     let refreshTimer = null;
     let astyReferencePrice = 0;
@@ -1351,6 +1335,11 @@
     function fmtNumber(value, digits = 1) { return new Intl.NumberFormat("de-DE", { maximumFractionDigits: digits }).format(num(value)); }
     function fmtPercent(value, digits = 1) { return num(value).toFixed(digits).replace(/\.0$/, "") + "%"; }
     function fmtMultiple(value) { const n = num(value); return n > 0 ? n.toFixed(n >= 10 ? 0 : 1) + "x" : "-"; }
+    function fmtImpactImprovement(current, next) {
+      const points = Math.max(0, num(current) - num(next));
+      const relative = num(current) > 0 ? points / num(current) * 100 : 0;
+      return `${fmtNumber(points, 1)} Prozentpunkte weniger (${fmtPercent(relative, 0)} geringer)`;
+    }
     function fmtPrice(value) {
       const n = num(value);
       if (!n) return "-";
@@ -1361,26 +1350,19 @@
     function loadJson(key, fallback) { try { return JSON.parse(localStorage.getItem(key)) ?? fallback; } catch { return fallback; } }
     function saveJson(key, value) { try { localStorage.setItem(key, JSON.stringify(value)); } catch { /* optional */ } }
 
-    function parseWallets(raw) {
-      return [...new Set(String(raw || "").split(/[\s,;]+/).map(v => v.trim()).filter(v => /^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(v)))];
-    }
-
     function readSettings() {
       const saved = loadJson(SETTINGS_KEY, {});
       if (Number.isFinite(Number(saved.capital))) els.capitalInput.value = saved.capital;
       if (Number.isFinite(Number(saved.minStep))) els.minStepInput.value = saved.minStep;
       if (Number.isFinite(Number(saved.maxStep))) els.maxStepInput.value = saved.maxStep;
-      if (typeof saved.walletsRaw === "string") els.walletInput.value = saved.walletsRaw;
     }
 
     function getSettings() {
       const capital = Math.max(25, num(els.capitalInput.value) || 25);
       const minStep = Math.max(5, num(els.minStepInput.value) || 5);
       const maxStep = Math.max(minStep, num(els.maxStepInput.value) || 25);
-      const walletsRaw = els.walletInput.value.trim();
-      const wallets = parseWallets(walletsRaw);
-      saveJson(SETTINGS_KEY, { capital, minStep, maxStep, walletsRaw });
-      return { capital, minStep, maxStep, wallets, walletsRaw };
+      saveJson(SETTINGS_KEY, { capital, minStep, maxStep });
+      return { capital, minStep, maxStep };
     }
 
     function median(values) {
@@ -1544,12 +1526,7 @@
           externalVolume24: 0,
           externalLiquidity: 0,
           externalTx24: 0,
-          astyPoolShare: 0,
-          ownLiquidity: 0,
-          ownUnclaimedIncome: 0,
-          ownPositions: 0,
-          ownPositionKnown: false,
-          outOfRange: false
+          astyPoolShare: 0
         };
         applyThirtyDayEntry(row, cache30[address]);
         return row;
@@ -1657,40 +1634,6 @@
         });
         saveJson(EXTERNAL_KEY, cache);
       } finally { isLoadingContext = false; }
-    }
-
-    async function syncWalletPositions(rows, wallets) {
-      for (const row of rows) {
-        row.ownLiquidity = 0; row.ownUnclaimedIncome = 0; row.ownPositions = 0; row.ownPositionKnown = false; row.outOfRange = false;
-      }
-      if (!wallets.length) {
-        els.walletStatus.innerHTML = "<strong>Eigene Positionen:</strong> Keine Wallet hinterlegt. Die Empfehlung nutzt ausschließlich Pool- und Marktdaten.";
-        return;
-      }
-      if (isLoadingWallets) return;
-      isLoadingWallets = true;
-      els.walletStatus.innerHTML = '<span class="history-loading"><span class="loading-spinner" aria-hidden="true"></span><span><strong>Eigene Positionen:</strong> Öffentliche Meteora-DLMM-Positionen werden geladen.</span></span>';
-      let loaded = 0;
-      try {
-        for (const wallet of wallets) {
-          try {
-            const payload = await fetchWithTimeout(`https://dlmm.datapi.meteora.ag/portfolio/open?user=${encodeURIComponent(wallet)}&page=1&page_size=50&sort_by=current_balances&sort_direction=desc`, 20_000);
-            for (const position of payload?.pools || []) {
-              const row = rows.find(r => r.address === position.poolAddress);
-              if (!row) continue;
-              row.ownPositionKnown = true;
-              row.ownLiquidity += num(position.balances);
-              row.ownUnclaimedIncome += num(position.unclaimedFees);
-              row.ownPositions += num(position.openPositionCount);
-              row.outOfRange = row.outOfRange || Boolean(position.outOfRange) || (Array.isArray(position.positionsOutOfRange) && position.positionsOutOfRange.length > 0);
-              loaded++;
-            }
-          } catch (error) { console.warn("Wallet portfolio unavailable", wallet, error); }
-        }
-      } finally {
-        isLoadingWallets = false;
-        els.walletStatus.innerHTML = `<strong>Eigene Positionen:</strong> ${loaded} passende DLMM-Poolpositionen aus ${wallets.length} Wallet${wallets.length === 1 ? "" : "s"} erkannt. DAMM-v2-Positionen sind in dieser öffentlichen Portfolio-Schnittstelle nicht enthalten.`;
-      }
     }
 
     function summarizeThirtyDay(volumes, incomes = [], closes = []) {
@@ -1853,7 +1796,7 @@
         const arbScore = clamp(row.netArbGap / 4, 0, 1);
         const consistencyScore = row.has30d ? clamp(row.activeRatio30 * (1 - row.top3Share30 * .65), 0, 1) : clamp(row.turnover24 / .8, 0, 1);
         const activityScore = clamp(Math.log1p(row.v1) / Math.log1p(maxV1), 0, 1);
-        row.dataQuality = [row.dataAvailable, row.incomeIsExact, row.has30d, row.externalVolume24 > 0, row.ownPositionKnown].filter(Boolean).length;
+        row.dataQuality = [row.dataAvailable, row.incomeIsExact, row.has30d, row.externalVolume24 > 0, row.astyPrice > 0].filter(Boolean).length;
         row.signal = clamp(momentumScore * .20 + incomeScore * .22 + depthScore * .18 + row.externalScore * .15 + arbScore * .15 + consistencyScore * .07 + activityScore * .03, 0, 1);
 
         const concentrationPenalty = row.has30d ? Math.max(0, row.top3Share30 - .45) * .0018 : .0004;
@@ -1870,35 +1813,27 @@
         const arbRoom = clamp(row.netArbGap / 4, 0, 1) * settings.maxStep * 2;
         row.capacity = Math.min(Math.max(incomeRoom, depthRoom, marketRoom, arbRoom), settings.maxStep * 4 + row.liquidity * .20);
 
-        if (row.ownPositionKnown && row.liquidity > 0) {
-          row.ownShare = clamp(row.ownLiquidity / row.liquidity, 0, 1);
-          const x = settings.minStep;
-          const newShare = clamp((row.ownLiquidity + x) / (row.liquidity + x), 0, 1);
-          row.incrementalIncomeMinStep = row.expectedDailyIncome * Math.max(0, newShare - row.ownShare);
-        } else {
-          row.ownShare = 0;
-          row.incrementalIncomeMinStep = 0;
-        }
+        const x = settings.minStep;
+        row.incrementalIncomeMinStep = row.liquidity > 0
+          ? row.expectedDailyIncome * (x / (row.liquidity + x))
+          : 0;
       }
       return rows;
     }
 
     function buildReason(row) {
-      if (row.outOfRange) return "Mindestens eine erkannte DLMM-Position liegt außerhalb der aktiven Range. Vor zusätzlicher Liquidität sollte zuerst die Position geprüft oder neu ausgerichtet werden.";
       if (row.allocation > 0 && row.netArbGap >= .5) return `Der ASTY-Preis dieses Pools weicht um ${fmtPercent(Math.abs(row.priceDeviationPct), 1)} vom Referenzpreis ab. Nach Transferkosten, Einnahmenrate und grob geschätzter Preiswirkung verbleibt ein möglicher Arbitrage-Spielraum von ${fmtPercent(row.netArbGap, 1)}.`;
       if (row.allocation > 0 && row.externalScore >= .48) return `Der Partner-Token zeigt außerhalb des ASTY-Pools rund ${fmtUsd(row.externalVolume24, true)} Volumen in 24h. Der ASTY-Pool nimmt bisher nur ${fmtPercent(row.astyPoolShare * 100, 1)} des beobachteten Gesamtvolumens auf.`;
       if (row.allocation > 0 && row.incomeIsExact) return `Die Empfehlung stützt sich auf echte ${row.incomeSource}-Einnahmen von ${fmtUsd(row.income24)} in 24h sowie eine robuste 30-Tage-Basis. Der Schritt bleibt auf ${fmtUsd(row.allocation)} begrenzt.`;
-      if (row.allocation > 0 && row.accel1 >= 1.6) return `Das 1h-Tempo liegt bei ${fmtMultiple(row.accel1)}. Zusätzliche Tiefe senkt die geschätzte Preiswirkung eines typischen ${fmtUsd(row.representativeTrade)}-Trades von ${fmtPercent(row.impactCurrent, 1)} auf ${fmtPercent(estimatePriceImpact(row.representativeTrade, row.liquidity + row.allocation, row.concentrated), 1)}.`;
+      if (row.allocation > 0 && row.accel1 >= 1.6) return `Das 1h-Tempo liegt bei ${fmtMultiple(row.accel1)}. Zusätzliche Tiefe verbessert die Ausführung eines typischen ${fmtUsd(row.representativeTrade)}-Trades: Die geschätzte Preiswirkung sinkt von ${fmtPercent(row.impactCurrent, 1)} auf ${fmtPercent(estimatePriceImpact(row.representativeTrade, row.liquidity + row.allocation, row.concentrated), 1)}. Bei der Preiswirkung ist ein kleinerer Wert besser.`;
       if (row.allocation > 0) return "Live-Aktivität, robuste 30-Tage-Basis und der mögliche Nutzen zusätzlicher Markttiefe ergeben gemeinsam einen kleinen nächsten Schritt.";
       if (!row.dataAvailable && !row.has30d) return "Für diesen Pool liegen aktuell keine ausreichenden Live- oder historischen Daten vor.";
-      if (row.ownPositionKnown && row.ownShare >= .90 && row.externalScore < .35 && row.netArbGap < .5) return `Die hinterlegten DLMM-Wallets halten bereits ungefähr ${fmtPercent(row.ownShare * 100, 1)} der Pool-Liquidität. Ohne erkennbaren Volumen- oder Arbitrage-Impuls würde zusätzliches Kapital den eigenen Einnahmenanteil kaum erhöhen.`;
       if (row.has30d && row.top3Share30 >= .70) return `Das 30d-Volumen ist stark auf wenige Ausbruchstage konzentriert: ${fmtPercent(row.top3Share30 * 100, 0)} entfallen auf die drei stärksten Tage. Aktuell wird deshalb kein weiterer Schritt empfohlen.`;
       if (row.signal >= .48) return "Mehrere Signale sind aktiv, die vorhandene Liquidität deckt den momentan erkennbaren Bedarf jedoch noch ab.";
       return "Aktuelle Einnahmen, Volumenbasis und Markttiefe rechtfertigen derzeit keinen weiteren Liquiditätsschritt.";
     }
 
     function recommendationLabel(row) {
-      if (row.outOfRange) return { text: "Position prüfen", cls: "watch" };
       if (row.allocation > 0) return { text: "Jetzt erhöhen", cls: "add" };
       if (row.signal >= .45 || row.accel1 >= 1.7 || row.netArbGap >= .5) return { text: "Eng beobachten", cls: "watch" };
       return { text: "Halten", cls: "" };
@@ -1909,8 +1844,7 @@
       for (const row of rows) {
         row.allocation = 0;
         const activity = row.v24 >= 3 || row.tx24 >= 3 || (row.has30d && row.activeDays30 >= 2) || row.externalScore >= .30 || row.netArbGap >= .4;
-        const ownershipBlock = row.ownPositionKnown && row.ownShare >= .95 && row.externalScore < .35 && row.netArbGap < .5 && row.depthBenefit < .35;
-        const eligible = activity && !row.outOfRange && !ownershipBlock && row.signal >= .17 && row.capacity >= settings.minStep;
+        const eligible = activity && row.signal >= .17 && row.capacity >= settings.minStep;
         const poolCap = row.liquidity > 0 ? Math.max(settings.minStep, row.liquidity * (.04 + row.signal * .12)) : settings.minStep;
         row.stepCap = Math.min(settings.maxStep, row.capacity, poolCap);
         if (eligible && row.stepCap >= settings.minStep) {
@@ -1942,11 +1876,9 @@
       for (const row of rows) {
         row.projectedLiquidity = row.liquidity + row.allocation;
         row.projectedImpact = estimatePriceImpact(row.representativeTrade, row.projectedLiquidity, row.concentrated);
-        if (row.ownPositionKnown && row.allocation > 0 && row.liquidity > 0) {
-          const currentShare = clamp(row.ownLiquidity / row.liquidity, 0, 1);
-          const newShare = clamp((row.ownLiquidity + row.allocation) / (row.liquidity + row.allocation), 0, 1);
-          row.incrementalDailyIncome = row.expectedDailyIncome * Math.max(0, newShare - currentShare);
-        } else row.incrementalDailyIncome = 0;
+        row.incrementalDailyIncome = row.allocation > 0 && row.liquidity > 0
+          ? row.expectedDailyIncome * (row.allocation / (row.liquidity + row.allocation))
+          : 0;
         row.targetLow = row.allocation > 0 ? row.liquidity + settings.minStep : row.liquidity;
         row.targetHigh = row.allocation > 0 ? row.liquidity + row.stepCap : row.liquidity;
         row.reason = buildReason(row);
@@ -2024,17 +1956,20 @@
     }
 
     function simulationRows(row) {
-      const settings = getSettings();
       const steps = [...new Set([5, 10, 25, row.allocation].filter(x => x > 0))].sort((a, b) => a - b);
       return steps.map(step => {
         const newLiquidity = row.liquidity + step;
-        let incremental = 0;
-        if (row.ownPositionKnown && row.liquidity > 0) {
-          const currentShare = clamp(row.ownLiquidity / row.liquidity, 0, 1);
-          const newShare = clamp((row.ownLiquidity + step) / newLiquidity, 0, 1);
-          incremental = row.expectedDailyIncome * Math.max(0, newShare - currentShare);
-        }
-        return { step, newLiquidity, impact: estimatePriceImpact(row.representativeTrade, newLiquidity, row.concentrated), incremental };
+        const impact = estimatePriceImpact(row.representativeTrade, newLiquidity, row.concentrated);
+        const incremental = row.liquidity > 0
+          ? row.expectedDailyIncome * (step / newLiquidity)
+          : 0;
+        return {
+          step,
+          newLiquidity,
+          impact,
+          improvement: fmtImpactImprovement(row.impactCurrent, impact),
+          incremental
+        };
       });
     }
 
@@ -2057,19 +1992,25 @@
           <div class="detail-item"><div class="detail-label">Top-3-Tage am 30d-Volumen</div><div class="detail-value">${row.has30d ? fmtPercent(row.top3Share30 * 100, 0) : loadingInline()}</div></div>
           <div class="detail-item"><div class="detail-label">Aktive Tage 30d</div><div class="detail-value">${row.has30d ? `${row.activeDays30} / ${row.days30}` : loadingInline()}</div></div>
           <div class="detail-item"><div class="detail-label">ASTY Poolpreis</div><div class="detail-value">${fmtPrice(row.astyPrice)}</div></div>
-          <div class="detail-item"><div class="detail-label">ASTY Referenzpreis</div><div class="detail-value">${fmtPrice(astyReferencePrice)}</div></div>
+          <div class="detail-item"><div class="detail-label">ASTY Netzwerk-Referenzpreis</div><div class="detail-value">${fmtPrice(astyReferencePrice)}</div></div>
           <div class="detail-item"><div class="detail-label">Preisabweichung</div><div class="detail-value">${fmtPercent(row.priceDeviationPct, 1)}</div></div>
           <div class="detail-item"><div class="detail-label">Möglicher Arbitrage-Spielraum</div><div class="detail-value">${fmtPercent(row.netArbGap, 1)} geschätzt</div></div>
           <div class="detail-item"><div class="detail-label">Externes Partner-Volumen 24h</div><div class="detail-value">${row.externalVolume24 ? fmtUsd(row.externalVolume24) : "-"}</div></div>
           <div class="detail-item"><div class="detail-label">ASTY-Pool-Anteil am Volumen</div><div class="detail-value">${row.externalVolume24 ? fmtPercent(row.astyPoolShare * 100, 1) : "-"}</div></div>
           <div class="detail-item"><div class="detail-label">Typische Trade-Größe</div><div class="detail-value">${fmtUsd(row.representativeTrade)}</div></div>
-          <div class="detail-item"><div class="detail-label">Geschätzte Preiswirkung</div><div class="detail-value">${fmtPercent(row.impactCurrent, 1)}</div></div>
-          <div class="detail-item"><div class="detail-label">Eigene DLMM-Liquidität</div><div class="detail-value">${row.ownPositionKnown ? fmtUsd(row.ownLiquidity) : "Nicht ermittelt"}</div></div>
-          <div class="detail-item"><div class="detail-label">Offene DLMM-Einnahmen</div><div class="detail-value">${row.ownPositionKnown ? fmtUsd(row.ownUnclaimedIncome) : "Nicht ermittelt"}</div></div>
+          <div class="detail-item"><div class="detail-label">Preiswirkung eines typischen Trades</div><div class="detail-value">${fmtPercent(row.impactCurrent, 1)}<span class="lower-is-better">Niedriger ist besser</span></div></div>
+          <div class="detail-item"><div class="detail-label">Geschätzte Einnahmen des empfohlenen Zusatzbetrags</div><div class="detail-value">${row.allocation > 0 ? fmtUsd(row.incrementalDailyIncome, false, 4) + " pro Tag" : "-"}</div></div>
+        </div>
+        <div class="detail-section">
+          <div class="detail-section-title">So ist der ASTY Netzwerk-Referenzpreis zu verstehen</div>
+          <div class="detail-section-copy">Er ist kein offizieller Börsen- oder Oracle-Preis. Er dient als robuster Vergleichswert aus mehreren verfügbaren ASTY-Pools. Liquide Pools erhalten mehr Gewicht, während starke Preis-Ausreißer ausgefiltert werden.</div>
         </div>
         <div class="detail-section"><div class="detail-section-title">Aktuelle Empfehlung</div><div class="detail-section-copy">${row.reason}</div></div>
-        <div class="detail-section"><div class="detail-section-title">Simulation der Liquiditätsschritte</div><div class="detail-section-copy">Die Preiswirkung ist eine konservative Näherung aus Pool-TVL und typischer Trade-Größe. Zusätzliche eigene Einnahmen können nur bei erkannten DLMM-Positionen korrekt anteilig berechnet werden.</div>
-          <table class="simulation-table"><thead><tr><th>Schritt</th><th>Neue Liquidität</th><th>Preiswirkung</th><th>Zusätzliche eigene Einnahmen/Tag</th></tr></thead><tbody>${sims.map(x => `<tr><td>+${fmtUsd(x.step)}</td><td>${fmtUsd(x.newLiquidity)}</td><td>${fmtPercent(x.impact, 1)}</td><td>${row.ownPositionKnown ? fmtUsd(x.incremental, false, 4) : "Wallet nötig"}</td></tr>`).join("")}</tbody></table>
+        <div class="detail-section">
+          <div class="detail-section-title">Simulation der Liquiditätsschritte</div>
+          <div class="impact-explainer"><strong>Wichtig:</strong> Die Prozentzahl ist keine Rendite. Sie schätzt, wie stark ein typischer Trade den Poolpreis bewegt. Mehr Liquidität macht diese Bewegung kleiner. Deshalb ist hier ein niedrigerer Wert besser.</div>
+          <div class="detail-section-copy">Die Einnahmen des Zusatzbetrags werden anteilig geschätzt. Dabei wird angenommen, dass die erwarteten Pool-Einnahmen unverändert bleiben und sich proportional auf die neue Gesamtliquidität verteilen.</div>
+          <table class="simulation-table"><thead><tr><th>Schritt</th><th>Neue Liquidität</th><th>Preiswirkung des typischen Trades</th><th>Verbesserung gegenüber heute</th><th>Geschätzte Einnahmen des Zusatzbetrags/Tag</th></tr></thead><tbody>${sims.map(x => `<tr><td>+${fmtUsd(x.step)}</td><td>${fmtUsd(x.newLiquidity)}</td><td>${fmtPercent(row.impactCurrent, 1)} → <strong>${fmtPercent(x.impact, 1)}</strong></td><td class="improvement-value">${x.improvement}</td><td>${fmtUsd(x.incremental, false, 4)}</td></tr>`).join("")}</tbody></table>
         </div>
         <div class="detail-section"><div class="detail-section-title">Pool-Adresse</div><div class="detail-section-copy" style="font-family:ui-monospace,SFMono-Regular,Menlo,monospace;word-break:break-all;">${row.address}</div></div>
         <div class="dialog-actions"><a class="pill" href="https://www.geckoterminal.com/solana/pools/${row.address}" target="_blank" rel="noopener noreferrer">GeckoTerminal ↗</a><a class="pill" href="https://dexscreener.com/solana/${row.address}" target="_blank" rel="noopener noreferrer">DexScr ↗</a></div>`;
@@ -2098,7 +2039,7 @@
         try { result = await fetchLivePools(); }
         catch (error) { const cached = loadCachedPools(); if (!cached) throw error; result = cached; }
         poolRows = parsePoolRows(result.data);
-        const settings = getSettings();
+        getSettings();
         els.dataStatus.innerHTML = '<span class="history-loading"><span class="loading-spinner"></span><span><strong>Datenquellen:</strong> Echte Meteora-Einnahmen und Marktvergleich werden geprüft.</span></span>';
         await enrichMeteora(poolRows);
         computeReferencePrice(poolRows);
@@ -2106,7 +2047,7 @@
         recomputeAndRender();
         updateThirtyDayStatus();
         syncThirtyDayData();
-        Promise.allSettled([syncExternalMarkets(poolRows), syncWalletPositions(poolRows, settings.wallets)]).then(() => recomputeAndRender());
+        syncExternalMarkets(poolRows).then(() => recomputeAndRender()).catch(error => console.warn("Partner market comparison unavailable", error));
 
         const strongest = [...poolRows].sort((a, b) => b.signal - a.signal)[0];
         const timeText = new Date(result.timestamp).toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" });
