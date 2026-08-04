@@ -364,6 +364,79 @@
     .control-input.with-prefix { padding-left: 28px; }
     .control-input.with-suffix { padding-right: 30px; }
 
+    .wallet-input-row {
+      padding: 0 18px 16px;
+    }
+
+    .control-textarea {
+      width: 100%;
+      min-height: 66px;
+      resize: vertical;
+      border-radius: 12px;
+      border: 1px solid rgba(167,139,250,0.22);
+      outline: none;
+      background: rgba(0,0,0,0.18);
+      color: #fff;
+      padding: 10px 12px;
+      font: 700 11px/1.45 ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+
+    .control-textarea:focus {
+      border-color: rgba(196,181,253,0.62);
+      box-shadow: 0 0 0 4px rgba(139,92,246,0.08);
+    }
+
+    .optional-label {
+      color: var(--muted-2);
+      font-weight: 650;
+      text-transform: none;
+      letter-spacing: 0;
+    }
+
+    .field-help {
+      margin-top: 6px;
+      color: var(--muted-2);
+      font-size: 9px;
+      line-height: 1.45;
+    }
+
+    .source-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      margin-top: 6px;
+      padding: 4px 7px;
+      border: 1px solid rgba(103,232,249,0.16);
+      border-radius: 999px;
+      color: var(--cyan);
+      background: rgba(6,182,212,0.055);
+      font-size: 8px;
+      font-weight: 820;
+      letter-spacing: .25px;
+    }
+
+    .source-chip.estimated {
+      color: var(--muted);
+      border-color: rgba(255,255,255,0.10);
+      background: rgba(255,255,255,0.025);
+    }
+
+    .quality-dots {
+      display: inline-flex;
+      gap: 3px;
+      vertical-align: middle;
+      margin-left: 5px;
+    }
+
+    .quality-dots i {
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.12);
+    }
+
+    .quality-dots i.on { background: var(--cyan); box-shadow: 0 0 7px rgba(103,232,249,.34); }
+
     .control-input:focus,
     .control-select:focus,
     .search:focus {
@@ -392,7 +465,7 @@
 
     .main-grid {
       display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
+      grid-template-columns: repeat(4, minmax(0, 1fr));
       gap: 14px;
       margin-top: 14px;
     }
@@ -759,7 +832,7 @@
 
     .detail-grid {
       display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
+      grid-template-columns: repeat(4, minmax(0, 1fr));
       gap: 10px;
     }
 
@@ -1020,10 +1093,20 @@
         <button class="pill run-button" id="runButton" type="button">Berechnen</button>
       </div>
 
-      <div class="model-note">
-        <strong>So funktioniert es:</strong> Der Optimierer kombiniert 1 Stunde, 6 Stunden, 24 Stunden und eine echte 30-Tage-Poolhistorie. Die Zielliquidität wird aus erwarteten Pool-Einnahmen, aktiven Handelstagen, aktueller Dynamik und Volatilität berechnet. Empfohlen wird immer nur der nächste kontrollierte Schritt. Ein derzeit ruhiger Meme-Pool wird nicht aussortiert, wenn seine 30-Tage-Historie weiterhin Aktivität zeigt.
+      <div class="wallet-input-row">
+        <div class="field">
+          <label for="walletInput">Meteora-DLMM LP-Wallets <span class="optional-label">optional</span></label>
+          <textarea class="control-textarea" id="walletInput" rows="2" spellcheck="false" placeholder="Wallet-Adressen durch Komma oder Zeilenumbruch trennen"></textarea>
+          <div class="field-help">Nur öffentlich sichtbare DLMM-Positionen. Die Adressen bleiben lokal in diesem Browser.</div>
+        </div>
       </div>
+
+      <div class="model-note">
+        <strong>So funktioniert es:</strong> Der Optimierer kombiniert aktuelle Pooldaten, echte Meteora-Einnahmen, eine robuste 30-Tage-Historie, externe Aktivität des Partner-Tokens, ASTY-Preisabweichungen und die geschätzte Preiswirkung typischer Trades. Statt einer vermeintlich exakten Endsumme wird nur der nächste kontrollierte Liquiditätsschritt empfohlen.
+      </div>
+      <div class="model-note" id="dataStatus"><strong>Datenquellen:</strong> Werden nach dem Start geprüft.</div>
       <div class="model-note" id="historyStatus"><strong>30-Tage-Daten:</strong> Werden nach dem Start der Berechnung geladen.</div>
+      <div class="model-note" id="walletStatus"><strong>Eigene Positionen:</strong> Optional über die LP-Wallets.</div>
     </section>
 
     <section class="main-grid" aria-label="Optimizer summary">
@@ -1044,6 +1127,12 @@
         <div class="metric-label">Stärkster aktueller Impuls</div>
         <div class="metric-value live-color" id="impulseValue">-</div>
         <div class="metric-sub" id="impulseSub">Noch nicht berechnet</div>
+      </article>
+
+      <article class="metric-card">
+        <div class="metric-label">ASTY Referenzpreis</div>
+        <div class="metric-value" id="referencePriceValue">-</div>
+        <div class="metric-sub" id="referencePriceSub">Aus den ASTY-Pools berechnet</div>
       </article>
     </section>
 
@@ -1100,8 +1189,8 @@
     <img class="footer-wolf" src="assets/wolf.png" alt="ASTY Wolf" onerror="if(!this.dataset.fallback){this.dataset.fallback='upper';this.src='assets/Wolf.png';}else if(this.dataset.fallback==='upper'){this.dataset.fallback='logo';this.src='assets/logo.png';}else{this.style.display='none';}">
 
     <div class="footer">
-      Live-Pooldaten: DexScreener · 30d-OHLCV: GeckoTerminal · Berechnungen erfolgen lokal im Browser<br>
-      Der Optimierer ist ein Analysewerkzeug und kein Ausführungs-Bot. Die Empfehlungen sind Schätzungen und garantieren weder höhere Einnahmen noch mehr Volumen.
+      Live-Pooldaten: DexScreener · Meteora DAMM v2 / DLMM · 30d-Fallback: GeckoTerminal · Berechnungen erfolgen lokal im Browser<br>
+      Echte Meteora-Einnahmen werden bevorzugt. Bei anderen DEXs werden Einnahmen klar als Schätzung ausgewiesen. Preiswirkung und Arbitrage-Spielraum sind Näherungen, keine Ausführungsgarantie.
     </div>
   </main>
 
@@ -1118,16 +1207,19 @@
 
   <script>
     const ASTY_MINT = "ASTYqeaoK83Zs1pTFEXZUB6BM8cG8YLTsN852NUkt7ZR";
+    const ASTY_TRANSFER_COST_PCT = 1;
     const REFRESH_MS = 60_000;
     const CHUNK_SIZE = 25;
-    const CACHE_KEY = "asty-liquidity-optimizer-cache-v2-dex";
-    const HISTORY_KEY = "asty-liquidity-optimizer-history-v2-hourly";
-    const SETTINGS_KEY = "asty-liquidity-optimizer-settings-v5-de-30d";
-    const THIRTY_DAY_KEY = "asty-liquidity-optimizer-30d-v1";
+    const CACHE_KEY = "asty-liquidity-optimizer-cache-v6";
+    const SETTINGS_KEY = "asty-liquidity-optimizer-settings-v6";
+    const HISTORY_KEY = "asty-liquidity-optimizer-history-v6";
+    const THIRTY_DAY_KEY = "asty-liquidity-optimizer-30d-v6";
+    const EXTERNAL_KEY = "asty-liquidity-optimizer-external-v6";
+    const METEORA_KEY = "asty-liquidity-optimizer-meteora-v6";
     const THIRTY_DAY_TTL = 12 * 60 * 60 * 1000;
-    const THIRTY_DAY_REQUEST_DELAY = 9_000;
+    const EXTERNAL_TTL = 10 * 60 * 1000;
+    const METEORA_TTL = 5 * 60 * 1000;
 
-    // [pool address, display label, configured pool fee in percent]
     const POOLS = [
       ["3UvhqPrMyf13qgRodARDi5oGJGoxHYb2ykZdCaa1TV8i","ASTY/$WIF",1],
       ["HeuivHLqCEmsgKhYhX1M6MGthEbtHrGmZdXQSCBVkstP","ASTY/ALCH",1],
@@ -1202,13 +1294,18 @@
       capitalInput: document.getElementById("capitalInput"),
       minStepInput: document.getElementById("minStepInput"),
       maxStepInput: document.getElementById("maxStepInput"),
+      walletInput: document.getElementById("walletInput"),
       deployValue: document.getElementById("deployValue"),
       deploySub: document.getElementById("deploySub"),
       selectedValue: document.getElementById("selectedValue"),
       selectedSub: document.getElementById("selectedSub"),
       impulseValue: document.getElementById("impulseValue"),
       impulseSub: document.getElementById("impulseSub"),
+      referencePriceValue: document.getElementById("referencePriceValue"),
+      referencePriceSub: document.getElementById("referencePriceSub"),
+      dataStatus: document.getElementById("dataStatus"),
       historyStatus: document.getElementById("historyStatus"),
+      walletStatus: document.getElementById("walletStatus"),
       poolSearch: document.getElementById("poolSearch"),
       sortSelect: document.getElementById("sortSelect"),
       poolCount: document.getElementById("poolCount"),
@@ -1224,94 +1321,48 @@
 
     let poolRows = [];
     let currentFilter = "all";
-    let lastDataMode = "live";
     let isLoading = false;
     let isLoading30d = false;
+    let isLoadingContext = false;
+    let isLoadingWallets = false;
     let hasStarted = false;
     let refreshTimer = null;
+    let astyReferencePrice = 0;
 
-    function clamp(value, min, max) {
-      return Math.min(max, Math.max(min, value));
-    }
+    function clamp(value, min, max) { return Math.min(max, Math.max(min, value)); }
+    function num(value) { const n = Number(value); return Number.isFinite(n) ? n : 0; }
+    function roundMoney(value, step = 5) { return value > 0 ? Math.floor(value / step) * step : 0; }
+    function sleep(ms) { return new Promise(resolve => setTimeout(resolve, ms)); }
+    function chunkArray(items, size) { const out = []; for (let i = 0; i < items.length; i += size) out.push(items.slice(i, i + size)); return out; }
+    function txTotal(source) { return num(source?.buys) + num(source?.sells); }
+    function shortAddress(address) { return address.slice(0, 6) + "..." + address.slice(-5); }
+    function formatLabel(label) { return label.replace("/", " / "); }
 
-    function num(value) {
-      const parsed = Number(value);
-      return Number.isFinite(parsed) ? parsed : 0;
-    }
-
-    function roundMoney(value, step = 5) {
-      if (value <= 0) return 0;
-      return Math.floor(value / step) * step;
-    }
-
-    function fmtUsd(value, compact = false) {
+    function fmtUsd(value, compact = false, digits = null) {
       const n = num(value);
       if (compact) {
         if (Math.abs(n) >= 1e9) return "$" + (n / 1e9).toFixed(1) + "B";
         if (Math.abs(n) >= 1e6) return "$" + (n / 1e6).toFixed(1) + "M";
         if (Math.abs(n) >= 1e3) return "$" + (n / 1e3).toFixed(1) + "K";
       }
-      return new Intl.NumberFormat("en-US", {
-        style: "currency",
-        currency: "USD",
-        minimumFractionDigits: n < 100 ? 2 : 0,
-        maximumFractionDigits: n < 100 ? 2 : 0
-      }).format(n);
+      const d = digits ?? (Math.abs(n) < 100 ? 2 : 0);
+      return new Intl.NumberFormat("de-DE", { style: "currency", currency: "USD", minimumFractionDigits: d, maximumFractionDigits: d }).format(n);
     }
-
-    function fmtNumber(value, digits = 1) {
+    function fmtNumber(value, digits = 1) { return new Intl.NumberFormat("de-DE", { maximumFractionDigits: digits }).format(num(value)); }
+    function fmtPercent(value, digits = 1) { return num(value).toFixed(digits).replace(/\.0$/, "") + "%"; }
+    function fmtMultiple(value) { const n = num(value); return n > 0 ? n.toFixed(n >= 10 ? 0 : 1) + "x" : "-"; }
+    function fmtPrice(value) {
       const n = num(value);
-      return new Intl.NumberFormat("en-US", {
-        maximumFractionDigits: digits,
-        minimumFractionDigits: 0
-      }).format(n);
+      if (!n) return "-";
+      const digits = n < 0.0001 ? 8 : n < 0.01 ? 6 : n < 1 ? 4 : 3;
+      return "$" + n.toFixed(digits);
     }
 
-    function fmtPercent(value, digits = 1) {
-      const n = num(value);
-      if (!Number.isFinite(n)) return "-";
-      return n.toFixed(digits).replace(/\.0$/, "") + "%";
-    }
+    function loadJson(key, fallback) { try { return JSON.parse(localStorage.getItem(key)) ?? fallback; } catch { return fallback; } }
+    function saveJson(key, value) { try { localStorage.setItem(key, JSON.stringify(value)); } catch { /* optional */ } }
 
-    function fmtMultiple(value) {
-      const n = num(value);
-      if (!Number.isFinite(n) || n <= 0) return "-";
-      return n.toFixed(n >= 10 ? 0 : 1) + "x";
-    }
-
-    function formatLabel(label) {
-      return label.replace("/", " / ");
-    }
-
-    function shortAddress(address) {
-      return address.slice(0, 6) + "..." + address.slice(-5);
-    }
-
-    function txTotal(source) {
-      return num(source?.buys) + num(source?.sells);
-    }
-
-    function chunkArray(items, size) {
-      const chunks = [];
-      for (let i = 0; i < items.length; i += size) chunks.push(items.slice(i, i + size));
-      return chunks;
-    }
-
-    function sleep(ms) {
-      return new Promise(resolve => setTimeout(resolve, ms));
-    }
-
-    function loadJson(key, fallback) {
-      try {
-        const value = JSON.parse(localStorage.getItem(key));
-        return value ?? fallback;
-      } catch {
-        return fallback;
-      }
-    }
-
-    function saveJson(key, value) {
-      try { localStorage.setItem(key, JSON.stringify(value)); } catch { /* storage is optional */ }
+    function parseWallets(raw) {
+      return [...new Set(String(raw || "").split(/[\s,;]+/).map(v => v.trim()).filter(v => /^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(v)))];
     }
 
     function readSettings() {
@@ -1319,229 +1370,66 @@
       if (Number.isFinite(Number(saved.capital))) els.capitalInput.value = saved.capital;
       if (Number.isFinite(Number(saved.minStep))) els.minStepInput.value = saved.minStep;
       if (Number.isFinite(Number(saved.maxStep))) els.maxStepInput.value = saved.maxStep;
+      if (typeof saved.walletsRaw === "string") els.walletInput.value = saved.walletsRaw;
     }
 
     function getSettings() {
       const capital = Math.max(25, num(els.capitalInput.value) || 25);
       const minStep = Math.max(5, num(els.minStepInput.value) || 5);
       const maxStep = Math.max(minStep, num(els.maxStepInput.value) || 25);
-      const settings = { capital, minStep, maxStep };
-      saveJson(SETTINGS_KEY, settings);
-      return settings;
+      const walletsRaw = els.walletInput.value.trim();
+      const wallets = parseWallets(walletsRaw);
+      saveJson(SETTINGS_KEY, { capital, minStep, maxStep, walletsRaw });
+      return { capital, minStep, maxStep, wallets, walletsRaw };
     }
 
-    function getHistoryReference(address) {
-      const history = loadJson(HISTORY_KEY, {});
-      const list = Array.isArray(history[address]) ? history[address] : [];
-      const target = Date.now() - 10 * 60 * 1000;
-      for (let i = list.length - 1; i >= 0; i--) {
-        if (num(list[i].t) <= target) return list[i];
-      }
-      return null;
+    function median(values) {
+      const arr = values.map(num).filter(Number.isFinite).sort((a, b) => a - b);
+      if (!arr.length) return 0;
+      const mid = Math.floor(arr.length / 2);
+      return arr.length % 2 ? arr[mid] : (arr[mid - 1] + arr[mid]) / 2;
     }
 
-    function saveHistory(rows) {
-      const history = loadJson(HISTORY_KEY, {});
-      const now = Date.now();
-      const cutoff = now - 7 * 24 * 60 * 60 * 1000;
+    function weightedMedian(items) {
+      const sorted = items.filter(x => x.value > 0 && x.weight > 0).sort((a, b) => a.value - b.value);
+      if (!sorted.length) return 0;
+      const total = sorted.reduce((s, x) => s + x.weight, 0);
+      let acc = 0;
+      for (const item of sorted) { acc += item.weight; if (acc >= total / 2) return item.value; }
+      return sorted[sorted.length - 1].value;
+    }
 
-      for (const row of rows) {
-        if (!row.dataAvailable) continue;
-        const list = Array.isArray(history[row.address]) ? history[row.address] : [];
-        const last = list[list.length - 1];
-        if (!last || now - num(last.t) >= 50_000) {
-          list.push({
-            t: now,
-            liquidity: row.liquidity,
-            v1: row.v1,
-            v6: row.v6,
-            v24: row.v24,
-            tx1: row.tx1
-          });
+    async function mapLimit(items, limit, worker) {
+      const results = new Array(items.length);
+      let cursor = 0;
+      async function run() {
+        while (cursor < items.length) {
+          const index = cursor++;
+          try { results[index] = await worker(items[index], index); }
+          catch (error) { results[index] = { error }; }
         }
-        history[row.address] = list.filter(item => num(item.t) >= cutoff).slice(-360);
       }
-
-      saveJson(HISTORY_KEY, history);
+      await Promise.all(Array.from({ length: Math.min(limit, items.length) }, run));
+      return results;
     }
 
-    function getThirtyDayCache() {
-      const cache = loadJson(THIRTY_DAY_KEY, {});
-      return cache && typeof cache === "object" ? cache : {};
-    }
-
-    function applyThirtyDayEntry(row, entry) {
-      const valid = entry && Number.isFinite(Number(entry.volume30)) && num(entry.days30) > 0;
-      row.has30d = Boolean(valid);
-      row.v30 = valid ? num(entry.volume30) : 0;
-      row.avgDaily30 = valid ? num(entry.avgDaily30) : 0;
-      row.activeDays30 = valid ? num(entry.activeDays30) : 0;
-      row.days30 = valid ? num(entry.days30) : 0;
-      row.volatility30 = valid ? num(entry.volatility30) : 0;
-      row.thirtyDayUpdatedAt = valid ? num(entry.t) : 0;
-      return row;
-    }
-
-    function parseThirtyDayPayload(payload) {
-      const raw = payload?.data?.attributes?.ohlcv_list;
-      if (!Array.isArray(raw) || !raw.length) throw new Error("No 30d OHLCV data");
-
-      const candles = raw
-        .filter(item => Array.isArray(item) && item.length >= 6 && Number.isFinite(Number(item[0])))
-        .map(item => ({
-          t: num(item[0]),
-          close: num(item[4]),
-          volume: Math.max(0, num(item[5]))
-        }))
-        .sort((a, b) => a.t - b.t)
-        .slice(-30);
-
-      if (!candles.length) throw new Error("No valid 30d candles");
-
-      const first = candles[0].t;
-      const last = candles[candles.length - 1].t;
-      const days30 = clamp(Math.round((last - first) / 86_400) + 1, 1, 30);
-      const volume30 = candles.reduce((sum, item) => sum + item.volume, 0);
-      const activeDays30 = candles.filter(item => item.volume > 0).length;
-
-      const logReturns = [];
-      for (let i = 1; i < candles.length; i++) {
-        const previous = candles[i - 1].close;
-        const current = candles[i].close;
-        if (previous > 0 && current > 0) logReturns.push(Math.log(current / previous));
-      }
-
-      let volatility30 = 0;
-      if (logReturns.length > 1) {
-        const mean = logReturns.reduce((sum, value) => sum + value, 0) / logReturns.length;
-        const variance = logReturns.reduce((sum, value) => sum + Math.pow(value - mean, 2), 0) / (logReturns.length - 1);
-        volatility30 = Math.sqrt(Math.max(0, variance)) * 100;
-      }
-
-      return {
-        t: Date.now(),
-        volume30,
-        avgDaily30: volume30 / Math.max(days30, 1),
-        activeDays30,
-        days30,
-        volatility30
-      };
-    }
-
-    async function fetchThirtyDayPool(address) {
-      const url = `https://api.geckoterminal.com/api/v2/networks/solana/pools/${address}/ohlcv/day?aggregate=1&limit=30&currency=usd&include_empty_intervals=true`;
-      const payload = await fetchWithTimeout(url, 20_000);
-      return parseThirtyDayPayload(payload);
-    }
-
-    function updateThirtyDayStatus() {
-      if (!els.historyStatus) return;
-      const available = poolRows.filter(row => row.has30d).length;
-      const total = poolRows.length || POOLS.length;
-      if (isLoading30d) {
-        els.historyStatus.innerHTML = `<span class="history-loading"><span class="loading-spinner" aria-hidden="true"></span><span><strong>30-Tage-Daten:</strong> ${available} von ${total} Pools verfügbar. Fehlende Historien werden nachgeladen.</span></span>`;
-      } else if (available) {
-        els.historyStatus.innerHTML = `<strong>30-Tage-Daten:</strong> ${available} von ${total} Pools im lokalen Cache. Die Historie wird höchstens alle 12 Stunden erneuert.`;
-      } else {
-        els.historyStatus.innerHTML = `<strong>30-Tage-Daten:</strong> Noch keine Historie im lokalen Cache. Die Empfehlungen arbeiten bis zum Nachladen mit Live- und 24h-Daten.`;
-      }
-    }
-
-    async function syncThirtyDayData() {
-      if (isLoading30d || !poolRows.length) return;
-      const cache = getThirtyDayCache();
-      const now = Date.now();
-      const staleRows = poolRows
-        .filter(row => !cache[row.address] || now - num(cache[row.address].t) >= THIRTY_DAY_TTL)
-        .sort((a, b) => (b.fees24 + b.v24 * 0.01 + b.tx24 * 0.02) - (a.fees24 + a.v24 * 0.01 + a.tx24 * 0.02));
-
-      if (!staleRows.length) {
-        updateThirtyDayStatus();
-        return;
-      }
-
-      isLoading30d = true;
-      updateThirtyDayStatus();
-
-      try {
-        for (let index = 0; index < staleRows.length; index++) {
-          const row = staleRows[index];
-          try {
-            const entry = await fetchThirtyDayPool(row.address);
-            cache[row.address] = entry;
-            saveJson(THIRTY_DAY_KEY, cache);
-            const currentRow = poolRows.find(item => item.address === row.address);
-            if (currentRow) applyThirtyDayEntry(currentRow, entry);
-            computeSignals(poolRows);
-            const summary = allocateCapital(poolRows, getSettings());
-            renderSummary(summary);
-            renderPools();
-          } catch (error) {
-            console.warn("30d data unavailable for", row.address, error);
-          }
-          updateThirtyDayStatus();
-          if (index < staleRows.length - 1) await sleep(THIRTY_DAY_REQUEST_DELAY);
-        }
-      } finally {
-        isLoading30d = false;
-        updateThirtyDayStatus();
-      }
-    }
-
-    async function fetchWithTimeout(url, timeoutMs = 16_000) {
+    async function fetchWithTimeout(url, timeoutMs = 18_000) {
       const controller = new AbortController();
       const timer = setTimeout(() => controller.abort(), timeoutMs);
       try {
-        const response = await fetch(url, {
-          headers: { Accept: "application/json" },
-          signal: controller.signal
-        });
+        const response = await fetch(url, { headers: { Accept: "application/json" }, signal: controller.signal });
         if (!response.ok) throw new Error("HTTP " + response.status);
         return await response.json();
-      } finally {
-        clearTimeout(timer);
-      }
+      } finally { clearTimeout(timer); }
     }
 
-    async function fetchWithRetry(url, timeoutMs = 20_000, attempts = 2) {
+    async function fetchWithRetry(url, timeoutMs = 18_000, attempts = 2) {
       let lastError;
-      for (let attempt = 1; attempt <= attempts; attempt++) {
-        try {
-          return await fetchWithTimeout(url, timeoutMs);
-        } catch (error) {
-          lastError = error;
-          if (attempt < attempts) await sleep(700 * attempt);
-        }
+      for (let i = 0; i < attempts; i++) {
+        try { return await fetchWithTimeout(url, timeoutMs); }
+        catch (error) { lastError = error; if (i + 1 < attempts) await sleep(600 * (i + 1)); }
       }
       throw lastError || new Error("Request failed");
-    }
-
-    async function fetchLivePools() {
-      const chunks = chunkArray(POOLS, CHUNK_SIZE);
-      const all = [];
-
-      for (let i = 0; i < chunks.length; i++) {
-        const ids = chunks[i].map(([address]) => address).join(",");
-        const url = `https://api.dexscreener.com/latest/dex/pairs/solana/${ids}`;
-        try {
-          const payload = await fetchWithRetry(url, 20_000, 2);
-          if (Array.isArray(payload?.pairs)) all.push(...payload.pairs);
-        } catch (error) {
-          console.warn(`Live-Datenblock ${i + 1} konnte nicht geladen werden`, error);
-        }
-        if (i < chunks.length - 1) await sleep(180);
-      }
-
-      const unique = [...new Map(all.filter(Boolean).map(item => [item.pairAddress, item])).values()];
-      if (!unique.length) throw new Error("No pool data returned");
-      saveJson(CACHE_KEY, { t: Date.now(), data: unique });
-      return { data: unique, mode: "live", timestamp: Date.now() };
-    }
-
-    function loadCachedPools() {
-      const cached = loadJson(CACHE_KEY, null);
-      if (!cached || !Array.isArray(cached.data) || !cached.data.length) return null;
-      return { data: cached.data, mode: "cache", timestamp: num(cached.t) };
     }
 
     function setStatus(mode, text) {
@@ -1551,27 +1439,79 @@
       els.statusText.textContent = text;
     }
 
-    function parsePoolRows(items) {
-      const map = new Map();
-      const thirtyDayCache = getThirtyDayCache();
-      for (const item of items) {
-        const address = item?.pairAddress;
-        if (address) map.set(address, item);
+    async function fetchLivePools() {
+      const all = [];
+      const chunks = chunkArray(POOLS, CHUNK_SIZE);
+      for (let i = 0; i < chunks.length; i++) {
+        const ids = chunks[i].map(([address]) => address).join(",");
+        try {
+          const payload = await fetchWithRetry(`https://api.dexscreener.com/latest/dex/pairs/solana/${ids}`, 20_000, 2);
+          if (Array.isArray(payload?.pairs)) all.push(...payload.pairs);
+        } catch (error) { console.warn("DexScreener block failed", i, error); }
+        if (i + 1 < chunks.length) await sleep(160);
       }
+      const unique = [...new Map(all.filter(Boolean).map(item => [item.pairAddress, item])).values()];
+      if (!unique.length) throw new Error("No live pools");
+      saveJson(CACHE_KEY, { t: Date.now(), data: unique });
+      return { data: unique, mode: "live", timestamp: Date.now() };
+    }
 
-      return POOLS.map(([address, label, feePercent]) => {
+    function loadCachedPools() {
+      const cached = loadJson(CACHE_KEY, null);
+      return cached && Array.isArray(cached.data) && cached.data.length ? { data: cached.data, mode: "cache", timestamp: num(cached.t) } : null;
+    }
+
+    function getHistoryReference(address) {
+      const history = loadJson(HISTORY_KEY, {});
+      const list = Array.isArray(history[address]) ? history[address] : [];
+      const target = Date.now() - 10 * 60 * 1000;
+      for (let i = list.length - 1; i >= 0; i--) if (num(list[i].t) <= target) return list[i];
+      return null;
+    }
+
+    function saveHistory(rows) {
+      const history = loadJson(HISTORY_KEY, {});
+      const now = Date.now();
+      const cutoff = now - 7 * 24 * 60 * 60 * 1000;
+      for (const row of rows) {
+        if (!row.dataAvailable) continue;
+        const list = Array.isArray(history[row.address]) ? history[row.address] : [];
+        const last = list[list.length - 1];
+        if (!last || now - num(last.t) >= 50_000) list.push({ t: now, liquidity: row.liquidity, v1: row.v1, v6: row.v6, v24: row.v24, tx1: row.tx1 });
+        history[row.address] = list.filter(item => num(item.t) >= cutoff).slice(-10080);
+      }
+      saveJson(HISTORY_KEY, history);
+    }
+
+    function astyPriceFromPair(item) {
+      const base = item?.baseToken?.address;
+      const quote = item?.quoteToken?.address;
+      const priceUsd = num(item?.priceUsd);
+      const priceNative = num(item?.priceNative);
+      if (base === ASTY_MINT) return priceUsd;
+      if (quote === ASTY_MINT && priceUsd > 0 && priceNative > 0) return priceUsd / priceNative;
+      return 0;
+    }
+
+    function parsePoolRows(items) {
+      const map = new Map(items.filter(Boolean).map(item => [item.pairAddress, item]));
+      const cache30 = loadJson(THIRTY_DAY_KEY, {});
+      return POOLS.map(([address, rawLabel, configuredFeePct]) => {
         const item = map.get(address);
         const tx = item?.txns || {};
         const volume = item?.volume || {};
         const priceChange = item?.priceChange || {};
-        const historyRef = getHistoryReference(address);
-
+        const baseMint = item?.baseToken?.address || "";
+        const quoteMint = item?.quoteToken?.address || "";
+        const astyIsBase = baseMint === ASTY_MINT;
+        const partnerMint = astyIsBase ? quoteMint : (quoteMint === ASTY_MINT ? baseMint : "");
+        const partnerSymbol = astyIsBase ? item?.quoteToken?.symbol : item?.baseToken?.symbol;
         const row = {
           address,
-          label: formatLabel(label),
-          rawLabel: label,
-          feePercent,
-          name: item ? `${item.baseToken?.symbol || "ASTY"} / ${item.quoteToken?.symbol || label.split("/")[1] || "-"}` : label,
+          rawLabel,
+          label: formatLabel(rawLabel),
+          name: item ? `${item.baseToken?.symbol || "ASTY"} / ${item.quoteToken?.symbol || rawLabel.split("/")[1] || "-"}` : rawLabel,
+          configuredFeePct,
           dexId: item?.dexId || "-",
           createdAt: item?.pairCreatedAt || null,
           dataAvailable: Boolean(item),
@@ -1586,355 +1526,488 @@
           p1: num(priceChange.h1),
           p6: num(priceChange.h6),
           p24: num(priceChange.h24),
-          historyRef
+          baseMint,
+          quoteMint,
+          partnerMint,
+          partnerSymbol: partnerSymbol || rawLabel.split("/")[1] || "-",
+          astyPrice: astyPriceFromPair(item),
+          historyRef: getHistoryReference(address),
+          income1: num(volume.h1) * configuredFeePct / 100,
+          income24: num(volume.h24) * configuredFeePct / 100,
+          incomeSource: "Schätzung aus Volumen",
+          incomeIsExact: false,
+          effectiveFeePct: configuredFeePct,
+          protocolIncome24: 0,
+          meteoraKind: "",
+          concentrated: false,
+          dynamicFee: false,
+          externalVolume24: 0,
+          externalLiquidity: 0,
+          externalTx24: 0,
+          astyPoolShare: 0,
+          ownLiquidity: 0,
+          ownUnclaimedIncome: 0,
+          ownPositions: 0,
+          ownPositionKnown: false,
+          outOfRange: false
         };
-
-        row.fees1 = row.v1 * feePercent / 100;
-        row.fees24 = row.v24 * feePercent / 100;
-        row.turnover24 = row.liquidity > 0 ? row.v24 / row.liquidity : 0;
-        row.staticDailyYield = row.liquidity > 0 ? row.fees24 / row.liquidity * 100 : 0;
-        applyThirtyDayEntry(row, thirtyDayCache[address]);
+        applyThirtyDayEntry(row, cache30[address]);
         return row;
       });
     }
 
-    function computeSignals(rows) {
-      const availableRows = rows.filter(row => row.dataAvailable);
-      const maxV1 = Math.max(1, ...availableRows.map(row => row.v1));
-      const maxFees24 = Math.max(0.01, ...availableRows.map(row => row.fees24));
-      const maxAvg30 = Math.max(1, ...rows.map(row => row.has30d ? row.avgDaily30 : 0));
+    function applyMeteoraDetail(row, detail, kind) {
+      if (!detail || !row) return;
+      row.meteoraKind = kind;
+      row.incomeSource = `Meteora ${kind}`;
+      row.incomeIsExact = true;
+      row.income1 = num(detail?.fees?.["1h"] ?? detail?.fee_1h ?? row.income1);
+      row.income24 = num(detail?.fees?.["24h"] ?? detail?.fee_24h ?? row.income24);
+      row.protocolIncome24 = num(detail?.protocol_fees?.["24h"] ?? detail?.protocol_fee_24h);
+      row.v1 = num(detail?.volume?.["1h"] ?? detail?.volume_1h) || row.v1;
+      row.v24 = num(detail?.volume?.["24h"] ?? detail?.volume_24h) || row.v24;
+      row.liquidity = num(detail?.tvl) || row.liquidity;
+      row.baseFeePct = num(detail?.pool_config?.base_fee_pct ?? detail?.base_fee_pct);
+      row.dynamicFeePct = num(detail?.dynamic_fee_pct);
+      row.maxFeePct = num(detail?.pool_config?.max_fee_pct);
+      row.protocolFeePct = num(detail?.pool_config?.protocol_fee_pct);
+      row.concentrated = kind === "DLMM" || Boolean(detail?.pool_config?.concentrated_liquidity);
+      row.dynamicFee = kind === "DLMM" || Boolean(detail?.pool_config?.dynamic_fee_initialized) || row.dynamicFeePct > 0;
+      if (row.income24 > 0 && row.v24 > 0) row.effectiveFeePct = row.income24 / row.v24 * 100;
+      else if (row.dynamicFeePct > 0) row.effectiveFeePct = row.dynamicFeePct;
+      else if (row.baseFeePct > 0) row.effectiveFeePct = row.baseFeePct;
+      if (num(detail?.token_x?.price) > 0 && detail?.token_x?.address === ASTY_MINT) row.astyPrice = num(detail.token_x.price);
+      if (num(detail?.token_y?.price) > 0 && detail?.token_y?.address === ASTY_MINT) row.astyPrice = num(detail.token_y.price);
+    }
+
+    async function fetchMeteoraCatalog(base, kind) {
+      const cache = loadJson(METEORA_KEY, {});
+      const cachedRows = Object.values(cache).filter(x => x?.kind === kind && Date.now() - num(x.t) < METEORA_TTL).map(x => x.detail);
+      const map = new Map(cachedRows.filter(Boolean).map(x => [x.address, x]));
+      const missing = POOLS.map(x => x[0]).filter(address => !map.has(address));
+      for (const part of chunkArray(missing, 18)) {
+        const filter = `pool_address=[${part.join("|")}]`;
+        const url = `${base}/pools?page=1&page_size=100&filter_by=${encodeURIComponent(filter)}`;
+        try {
+          const payload = await fetchWithTimeout(url, 18_000);
+          for (const detail of payload?.data || []) {
+            if (!detail?.address) continue;
+            map.set(detail.address, detail);
+            cache[`${kind}:${detail.address}`] = { t: Date.now(), kind, detail };
+          }
+        } catch (error) { console.warn(kind + " catalog failed", error); }
+      }
+      saveJson(METEORA_KEY, cache);
+      return map;
+    }
+
+    async function enrichMeteora(rows) {
+      const [damm, dlmm] = await Promise.all([
+        fetchMeteoraCatalog("https://damm-v2.datapi.meteora.ag", "DAMM v2"),
+        fetchMeteoraCatalog("https://dlmm.datapi.meteora.ag", "DLMM")
+      ]);
+      for (const row of rows) {
+        if (damm.has(row.address)) applyMeteoraDetail(row, damm.get(row.address), "DAMM v2");
+        else if (dlmm.has(row.address)) applyMeteoraDetail(row, dlmm.get(row.address), "DLMM");
+      }
+      return rows.filter(r => r.incomeIsExact).length;
+    }
+
+    function computeReferencePrice(rows) {
+      const raw = rows.filter(r => r.astyPrice > 0 && r.liquidity > 0).map(r => ({ value: r.astyPrice, weight: Math.sqrt(Math.max(r.liquidity, 1)) }));
+      if (!raw.length) { astyReferencePrice = 0; return 0; }
+      const center = median(raw.map(x => x.value));
+      const filtered = raw.filter(x => Math.abs(x.value / center - 1) <= 0.35);
+      astyReferencePrice = weightedMedian(filtered.length ? filtered : raw);
+      for (const row of rows) row.priceDeviationPct = astyReferencePrice > 0 && row.astyPrice > 0 ? (row.astyPrice / astyReferencePrice - 1) * 100 : 0;
+      return astyReferencePrice;
+    }
+
+    async function syncExternalMarkets(rows) {
+      if (isLoadingContext) return;
+      isLoadingContext = true;
+      const cache = loadJson(EXTERNAL_KEY, {});
+      const allAstyAddresses = new Set(POOLS.map(x => x[0]));
+      const mints = [...new Set(rows.map(r => r.partnerMint).filter(Boolean))];
+      try {
+        await mapLimit(mints, 5, async mint => {
+          let entry = cache[mint];
+          if (!entry || Date.now() - num(entry.t) >= EXTERNAL_TTL) {
+            const pairs = await fetchWithTimeout(`https://api.dexscreener.com/token-pairs/v1/solana/${mint}`, 18_000);
+            const list = Array.isArray(pairs) ? pairs : [];
+            const external = list.filter(p => !allAstyAddresses.has(p?.pairAddress));
+            entry = {
+              t: Date.now(),
+              volume24: external.reduce((s, p) => s + num(p?.volume?.h24), 0),
+              liquidity: external.reduce((s, p) => s + num(p?.liquidity?.usd), 0),
+              tx24: external.reduce((s, p) => s + txTotal(p?.txns?.h24), 0),
+              topChange1: external.length ? num([...external].sort((a, b) => num(b?.liquidity?.usd) - num(a?.liquidity?.usd))[0]?.priceChange?.h1) : 0,
+              pairCount: external.length
+            };
+            cache[mint] = entry;
+          }
+          for (const row of rows.filter(r => r.partnerMint === mint)) {
+            row.externalVolume24 = num(entry.volume24);
+            row.externalLiquidity = num(entry.liquidity);
+            row.externalTx24 = num(entry.tx24);
+            row.externalPairCount = num(entry.pairCount);
+            row.externalPriceChange1 = num(entry.topChange1);
+            row.astyPoolShare = (row.externalVolume24 + row.v24) > 0 ? row.v24 / (row.externalVolume24 + row.v24) : 0;
+          }
+        });
+        saveJson(EXTERNAL_KEY, cache);
+      } finally { isLoadingContext = false; }
+    }
+
+    async function syncWalletPositions(rows, wallets) {
+      for (const row of rows) {
+        row.ownLiquidity = 0; row.ownUnclaimedIncome = 0; row.ownPositions = 0; row.ownPositionKnown = false; row.outOfRange = false;
+      }
+      if (!wallets.length) {
+        els.walletStatus.innerHTML = "<strong>Eigene Positionen:</strong> Keine Wallet hinterlegt. Die Empfehlung nutzt ausschließlich Pool- und Marktdaten.";
+        return;
+      }
+      if (isLoadingWallets) return;
+      isLoadingWallets = true;
+      els.walletStatus.innerHTML = '<span class="history-loading"><span class="loading-spinner" aria-hidden="true"></span><span><strong>Eigene Positionen:</strong> Öffentliche Meteora-DLMM-Positionen werden geladen.</span></span>';
+      let loaded = 0;
+      try {
+        for (const wallet of wallets) {
+          try {
+            const payload = await fetchWithTimeout(`https://dlmm.datapi.meteora.ag/portfolio/open?user=${encodeURIComponent(wallet)}&page=1&page_size=50&sort_by=current_balances&sort_direction=desc`, 20_000);
+            for (const position of payload?.pools || []) {
+              const row = rows.find(r => r.address === position.poolAddress);
+              if (!row) continue;
+              row.ownPositionKnown = true;
+              row.ownLiquidity += num(position.balances);
+              row.ownUnclaimedIncome += num(position.unclaimedFees);
+              row.ownPositions += num(position.openPositionCount);
+              row.outOfRange = row.outOfRange || Boolean(position.outOfRange) || (Array.isArray(position.positionsOutOfRange) && position.positionsOutOfRange.length > 0);
+              loaded++;
+            }
+          } catch (error) { console.warn("Wallet portfolio unavailable", wallet, error); }
+        }
+      } finally {
+        isLoadingWallets = false;
+        els.walletStatus.innerHTML = `<strong>Eigene Positionen:</strong> ${loaded} passende DLMM-Poolpositionen aus ${wallets.length} Wallet${wallets.length === 1 ? "" : "s"} erkannt. DAMM-v2-Positionen sind in dieser öffentlichen Portfolio-Schnittstelle nicht enthalten.`;
+      }
+    }
+
+    function summarizeThirtyDay(volumes, incomes = [], closes = []) {
+      const days = Math.max(1, Math.min(30, volumes.length || 30));
+      const cleanVolumes = volumes.map(v => Math.max(0, num(v))).slice(-30);
+      const cleanIncomes = incomes.map(v => Math.max(0, num(v))).slice(-30);
+      const active = cleanVolumes.filter(v => v > 0);
+      const volume30 = cleanVolumes.reduce((s, v) => s + v, 0);
+      const income30 = cleanIncomes.reduce((s, v) => s + v, 0);
+      const top3 = [...cleanVolumes].sort((a, b) => b - a).slice(0, 3).reduce((s, v) => s + v, 0);
+      const logReturns = [];
+      for (let i = 1; i < closes.length; i++) if (num(closes[i - 1]) > 0 && num(closes[i]) > 0) logReturns.push(Math.log(num(closes[i]) / num(closes[i - 1])));
+      let volatility30 = 0;
+      if (logReturns.length > 1) {
+        const mean = logReturns.reduce((s, v) => s + v, 0) / logReturns.length;
+        const variance = logReturns.reduce((s, v) => s + (v - mean) ** 2, 0) / (logReturns.length - 1);
+        volatility30 = Math.sqrt(Math.max(0, variance)) * 100;
+      }
+      return {
+        t: Date.now(), volume30, income30,
+        avgDaily30: volume30 / days,
+        medianDaily30: median(cleanVolumes),
+        avgActiveDay30: active.length ? active.reduce((s, v) => s + v, 0) / active.length : 0,
+        activeDays30: active.length,
+        days30: days,
+        top3Share30: volume30 > 0 ? top3 / volume30 : 0,
+        volatility30,
+        incomeExact30: cleanIncomes.some(v => v > 0)
+      };
+    }
+
+    function applyThirtyDayEntry(row, entry) {
+      const valid = entry && num(entry.days30) > 0;
+      row.has30d = Boolean(valid);
+      row.v30 = valid ? num(entry.volume30) : 0;
+      row.income30 = valid ? num(entry.income30) : 0;
+      row.avgDaily30 = valid ? num(entry.avgDaily30) : 0;
+      row.medianDaily30 = valid ? num(entry.medianDaily30) : 0;
+      row.avgActiveDay30 = valid ? num(entry.avgActiveDay30) : 0;
+      row.activeDays30 = valid ? num(entry.activeDays30) : 0;
+      row.days30 = valid ? num(entry.days30) : 0;
+      row.top3Share30 = valid ? num(entry.top3Share30) : 0;
+      row.volatility30 = valid ? num(entry.volatility30) : 0;
+      row.incomeExact30 = valid ? Boolean(entry.incomeExact30) : false;
+      row.thirtyDayUpdatedAt = valid ? num(entry.t) : 0;
+    }
+
+    async function fetchThirtyDayPool(row) {
+      if (row.meteoraKind) {
+        const base = row.meteoraKind === "DLMM" ? "https://dlmm.datapi.meteora.ag" : "https://damm-v2.datapi.meteora.ag";
+        const end = Math.floor(Date.now() / 1000);
+        const start = end - 30 * 86400;
+        const payload = await fetchWithTimeout(`${base}/pools/${row.address}/volume/history?timeframe=24h&start_time=${start}&end_time=${end}`, 20_000);
+        const data = Array.isArray(payload?.data) ? payload.data.sort((a, b) => num(a.timestamp) - num(b.timestamp)) : [];
+        if (!data.length) throw new Error("No Meteora history");
+        return summarizeThirtyDay(data.map(x => x.volume), data.map(x => x.fees));
+      }
+      const payload = await fetchWithTimeout(`https://api.geckoterminal.com/api/v2/networks/solana/pools/${row.address}/ohlcv/day?aggregate=1&limit=30&currency=usd&include_empty_intervals=true`, 20_000);
+      const raw = payload?.data?.attributes?.ohlcv_list;
+      if (!Array.isArray(raw) || !raw.length) throw new Error("No Gecko history");
+      const candles = raw.filter(x => Array.isArray(x) && x.length >= 6).sort((a, b) => num(a[0]) - num(b[0])).slice(-30);
+      const summary = summarizeThirtyDay(candles.map(x => x[5]), [], candles.map(x => x[4]));
+      summary.income30 = summary.volume30 * clamp(row.effectiveFeePct / 100, 0.0001, 0.08);
+      summary.incomeExact30 = false;
+      return summary;
+    }
+
+    function updateThirtyDayStatus() {
+      const available = poolRows.filter(r => r.has30d).length;
+      const exact = poolRows.filter(r => r.incomeExact30).length;
+      const total = poolRows.length || POOLS.length;
+      if (isLoading30d) els.historyStatus.innerHTML = `<span class="history-loading"><span class="loading-spinner" aria-hidden="true"></span><span><strong>30-Tage-Daten:</strong> ${available} von ${total} Pools geladen, davon ${exact} mit echten historischen Einnahmen.</span></span>`;
+      else if (available) els.historyStatus.innerHTML = `<strong>30-Tage-Daten:</strong> ${available} von ${total} Pools verfügbar, davon ${exact} mit echten Meteora-Einnahmen. Median und Ausreißerkonzentration fließen in die Bewertung ein.`;
+      else els.historyStatus.innerHTML = "<strong>30-Tage-Daten:</strong> Noch keine Historie verfügbar. Die erste Empfehlung arbeitet vorläufig mit Live-Daten.";
+    }
+
+    async function syncThirtyDayData() {
+      if (isLoading30d || !poolRows.length) return;
+      isLoading30d = true;
+      updateThirtyDayStatus();
+      const cache = loadJson(THIRTY_DAY_KEY, {});
+      const stale = poolRows.filter(r => !cache[r.address] || Date.now() - num(cache[r.address].t) >= THIRTY_DAY_TTL);
+      const meteora = stale.filter(r => r.meteoraKind);
+      const fallback = stale.filter(r => !r.meteoraKind);
+      try {
+        await mapLimit(meteora, 5, async row => {
+          try { cache[row.address] = await fetchThirtyDayPool(row); applyThirtyDayEntry(row, cache[row.address]); }
+          catch (error) { console.warn("Meteora 30d unavailable", row.address, error); }
+        });
+        saveJson(THIRTY_DAY_KEY, cache);
+        recomputeAndRender();
+        updateThirtyDayStatus();
+        for (let i = 0; i < fallback.length; i++) {
+          const row = fallback[i];
+          try { cache[row.address] = await fetchThirtyDayPool(row); applyThirtyDayEntry(row, cache[row.address]); saveJson(THIRTY_DAY_KEY, cache); recomputeAndRender(); }
+          catch (error) { console.warn("Gecko 30d unavailable", row.address, error); }
+          updateThirtyDayStatus();
+          if (i + 1 < fallback.length) await sleep(7000);
+        }
+      } finally { isLoading30d = false; updateThirtyDayStatus(); }
+    }
+
+    function estimatePriceImpact(tradeUsd, liquidityUsd, concentrated = false) {
+      const trade = Math.max(0, num(tradeUsd));
+      const liquidity = Math.max(0, num(liquidityUsd));
+      if (!trade || !liquidity) return 100;
+      const reserveSide = Math.max(liquidity / 2, 0.01);
+      const raw = trade / (reserveSide + trade) * 100;
+      return clamp(raw * (concentrated ? 0.78 : 1), 0, 100);
+    }
+
+    function computeSignals(rows, settings) {
+      computeReferencePrice(rows);
+      const maxV1 = Math.max(1, ...rows.map(r => r.v1));
+      const maxIncome = Math.max(0.01, ...rows.map(r => r.income24));
+      const maxExternal = Math.max(1, ...rows.map(r => r.externalVolume24));
 
       for (const row of rows) {
-        const previousFiveHourAverage = Math.max((row.v6 - row.v1) / 5, row.v24 / 24 * 0.25, 0.05);
-        const previousTwentyThreeHourTxAverage = Math.max((row.tx24 - row.tx1) / 23, 0.25);
-
+        const previousFiveHourAverage = Math.max((row.v6 - row.v1) / 5, row.v24 / 24 * 0.2, 0.05);
+        const previousTxAverage = Math.max((row.tx24 - row.tx1) / 23, 0.25);
         row.accel1 = clamp(row.v1 / previousFiveHourAverage, 0, 12);
-        row.txAccel1 = clamp(row.tx1 / previousTwentyThreeHourTxAverage, 0, 12);
-
-        const localVolumeDelta = row.historyRef
-          ? (row.v1 - num(row.historyRef.v1)) / Math.max(num(row.historyRef.v1), 1)
-          : 0;
-        const localTxDelta = row.historyRef
-          ? (row.tx1 - num(row.historyRef.tx1)) / Math.max(num(row.historyRef.tx1), 1)
-          : 0;
-
-        row.localMomentum = clamp(Math.max(0, localVolumeDelta) * 0.7 + Math.max(0, localTxDelta) * 0.3, 0, 3);
+        row.txAccel1 = clamp(row.tx1 / previousTxAverage, 0, 12);
+        const localVolumeDelta = row.historyRef ? (row.v1 - num(row.historyRef.v1)) / Math.max(num(row.historyRef.v1), 1) : 0;
+        const localTxDelta = row.historyRef ? (row.tx1 - num(row.historyRef.tx1)) / Math.max(num(row.historyRef.tx1), 1) : 0;
+        row.localMomentum = clamp(Math.max(0, localVolumeDelta) * .7 + Math.max(0, localTxDelta) * .3, 0, 3);
+        row.turnover24 = row.liquidity > 0 ? row.v24 / row.liquidity : 0;
         row.activeRatio30 = row.has30d ? clamp(row.activeDays30 / Math.max(row.days30, 1), 0, 1) : 0;
-        row.relativeTo30 = row.has30d ? clamp(row.v24 / Math.max(row.avgDaily30, 0.10), 0, 20) : 1;
-        row.turnover30 = row.has30d && row.liquidity > 0 ? row.avgDaily30 / row.liquidity : 0;
 
-        const accel1Score = clamp(Math.log1p(row.accel1) / Math.log(9), 0, 1);
-        const txScore = clamp(Math.log1p(row.txAccel1) / Math.log(9), 0, 1);
-        const turnoverScore = clamp(Math.log1p(row.turnover24) / Math.log(4), 0, 1);
-        const currentActivityScore = clamp(Math.log1p(row.v1) / Math.log1p(maxV1), 0, 1);
-        const outputScore = clamp(Math.log1p(row.fees24) / Math.log1p(maxFees24), 0, 1);
-        const localScore = clamp(row.localMomentum / 1.5, 0, 1);
-        const shortVolatilityScore = clamp((Math.abs(row.p1) * 0.65 + Math.abs(row.p6) * 0.35) / 30, 0, 1);
-        const baseline30Score = row.has30d ? clamp(Math.log1p(row.avgDaily30) / Math.log1p(maxAvg30), 0, 1) : 0;
-        const turnover30Score = row.has30d ? clamp(Math.log1p(row.turnover30) / Math.log(2.5), 0, 1) : 0;
-        const consistency30Score = row.has30d ? clamp(row.activeRatio30 * 1.25, 0, 1) : 0;
-        const currentVs30Score = row.has30d ? clamp(Math.log1p(row.relativeTo30) / Math.log(5), 0, 1) : 0;
-        const longVolatilityScore = row.has30d ? clamp(row.volatility30 / 25, 0, 1) : shortVolatilityScore;
+        const robustActiveBase = row.has30d ? row.avgActiveDay30 * Math.sqrt(Math.max(row.activeRatio30, .02)) * .58 : 0;
+        const concentrationDiscount = row.has30d ? clamp(1 - Math.max(0, row.top3Share30 - .45) * .75, .48, 1) : 1;
+        row.robustDailyVolume = row.has30d ? Math.max(row.medianDaily30, robustActiveBase) * concentrationDiscount : row.v24 * .65;
 
-        const currentSignal = row.dataAvailable
-          ? clamp(
-              accel1Score * 0.26 +
-              txScore * 0.18 +
-              turnoverScore * 0.18 +
-              currentActivityScore * 0.13 +
-              outputScore * 0.12 +
-              localScore * 0.08 +
-              shortVolatilityScore * 0.05,
-              0,
-              1
-            )
-          : 0;
+        const currentDaily = row.v1 * 24 * .28 + row.v6 * 4 * .32 + row.v24 * .40;
+        const momentumWeight = clamp(.45 + Math.max(0, row.accel1 - 1) * .08, .45, .76);
+        const forecastRaw = currentDaily * momentumWeight + row.robustDailyVolume * (1 - momentumWeight);
+        const forecastCap = Math.max(row.v24 * 2.5, row.robustDailyVolume * 3.2, 10);
+        row.forecast24 = clamp(forecastRaw, 0, forecastCap);
 
-        const longSignal = row.has30d
-          ? clamp(
-              baseline30Score * 0.32 +
-              turnover30Score * 0.30 +
-              consistency30Score * 0.22 +
-              currentVs30Score * 0.10 +
-              longVolatilityScore * 0.06,
-              0,
-              1
-            )
-          : clamp(turnoverScore * 0.55 + outputScore * 0.30 + currentActivityScore * 0.15, 0, 1);
+        const exactRate = row.incomeIsExact && row.v24 > 0 ? row.income24 / row.v24 : 0;
+        row.effectiveIncomeRate = exactRate > 0 ? exactRate : clamp(row.effectiveFeePct / 100, .0001, .08);
+        row.expectedDailyIncome = row.forecast24 * row.effectiveIncomeRate;
+        row.currentIncomeYield = row.liquidity > 0 ? row.expectedDailyIncome / row.liquidity * 100 : 0;
 
-        row.signal = clamp(currentSignal * 0.66 + longSignal * 0.34, 0, 1);
+        const avgTrade1 = row.tx1 > 0 ? row.v1 / row.tx1 : 0;
+        const avgTrade24 = row.tx24 > 0 ? row.v24 / row.tx24 : 0;
+        row.representativeTrade = clamp(Math.max(settings.minStep, avgTrade1 * .65 + avgTrade24 * .35), settings.minStep, Math.max(100, settings.maxStep * 4));
+        row.impactCurrent = estimatePriceImpact(row.representativeTrade, row.liquidity, row.concentrated);
+        row.impactAfterMax = estimatePriceImpact(row.representativeTrade, row.liquidity + settings.maxStep, row.concentrated);
+        row.depthBenefit = Math.max(0, row.impactCurrent - row.impactAfterMax);
 
-        const dailyFrom1 = row.v1 * 24;
-        const dailyFrom6 = row.v6 * 4;
-        const currentDaily = dailyFrom1 * 0.38 + dailyFrom6 * 0.34 + row.v24 * 0.28;
-        const currentForecastCap = Math.max(row.v24 * 4, row.v6 * 5, row.v1 * 24, 10);
-        const currentForecast = row.dataAvailable
-          ? clamp(currentDaily * (0.80 + row.signal * 0.42), 0, currentForecastCap)
-          : 0;
+        const grossDeviation = Math.abs(row.priceDeviationPct);
+        const impactForStep = estimatePriceImpact(settings.minStep, row.liquidity, row.concentrated);
+        row.netArbGap = Math.max(0, grossDeviation - ASTY_TRANSFER_COST_PCT - row.effectiveIncomeRate * 100 - impactForStep);
 
-        const reliability30 = row.has30d
-          ? 0.45 + Math.sqrt(row.activeRatio30) * 0.55
-          : 0;
-        const supported30 = row.has30d ? row.avgDaily30 * reliability30 : 0;
-        row.forecast24 = Math.max(currentForecast, supported30, row.dataAvailable ? row.v24 * 0.55 : 0);
+        const shareGap = row.externalVolume24 > 0 ? 1 - clamp(row.astyPoolShare / .08, 0, 1) : 0;
+        row.externalScore = row.externalVolume24 > 0 ? clamp((Math.log1p(row.externalVolume24) / Math.log1p(maxExternal)) * .55 + shareGap * .35 + clamp(row.externalTx24 / 150, 0, 1) * .10, 0, 1) : 0;
+        const momentumScore = clamp(Math.log1p(row.accel1) / Math.log(9), 0, 1) * .55 + clamp(Math.log1p(row.txAccel1) / Math.log(9), 0, 1) * .30 + clamp(row.localMomentum / 1.5, 0, 1) * .15;
+        const incomeScore = clamp(Math.log1p(row.income24) / Math.log1p(maxIncome), 0, 1) * .55 + clamp(row.currentIncomeYield / .8, 0, 1) * .45;
+        const depthScore = clamp(row.impactCurrent / 8, 0, 1) * .65 + clamp(row.depthBenefit / 2, 0, 1) * .35;
+        const arbScore = clamp(row.netArbGap / 4, 0, 1);
+        const consistencyScore = row.has30d ? clamp(row.activeRatio30 * (1 - row.top3Share30 * .65), 0, 1) : clamp(row.turnover24 / .8, 0, 1);
+        const activityScore = clamp(Math.log1p(row.v1) / Math.log1p(maxV1), 0, 1);
+        row.dataQuality = [row.dataAvailable, row.incomeIsExact, row.has30d, row.externalVolume24 > 0, row.ownPositionKnown].filter(Boolean).length;
+        row.signal = clamp(momentumScore * .20 + incomeScore * .22 + depthScore * .18 + row.externalScore * .15 + arbScore * .15 + consistencyScore * .07 + activityScore * .03, 0, 1);
 
-        const effectiveFeeRate = clamp(row.feePercent / 100, 0.001, 0.06);
-        const inactivityPenalty = row.has30d ? (1 - row.activeRatio30) * 0.0012 : 0.0006;
-        const volatilityPenalty = clamp((row.has30d ? row.volatility30 : Math.abs(row.p24)) / 100, 0, 0.60) * 0.003;
-        row.requiredDailyYield = clamp(0.0024 + inactivityPenalty + volatilityPenalty, 0.0022, 0.0052);
-        row.expectedDailyFees = row.forecast24 * effectiveFeeRate;
-        row.targetLiquidity = row.expectedDailyFees / row.requiredDailyYield;
-        row.targetLow = row.targetLiquidity * 0.82;
-        row.targetHigh = row.targetLiquidity * 1.18;
-        row.expectedDailyYield = row.liquidity > 0 ? row.expectedDailyFees / row.liquidity * 100 : 0;
+        const concentrationPenalty = row.has30d ? Math.max(0, row.top3Share30 - .45) * .0018 : .0004;
+        const inactivityPenalty = row.has30d ? (1 - row.activeRatio30) * .0010 : .0005;
+        row.requiredDailyYield = clamp(.0018 + concentrationPenalty + inactivityPenalty + clamp(row.volatility30 / 100, 0, .5) * .0015, .0016, .0045);
+        row.incomeSupportedLiquidity = row.expectedDailyIncome / Math.max(row.requiredDailyYield, .0001);
+        const targetImpact = row.concentrated ? .035 : .05;
+        const desiredDepthRaw = 2 * row.representativeTrade * (1 / targetImpact - 1) * (row.concentrated ? .68 : 1);
+        row.depthSupportedLiquidity = Math.min(desiredDepthRaw, row.liquidity * 2 + settings.maxStep * 4);
+
+        const incomeRoom = Math.max(0, row.incomeSupportedLiquidity - row.liquidity);
+        const depthRoom = Math.max(0, row.depthSupportedLiquidity - row.liquidity) * .30;
+        const marketRoom = row.externalScore * settings.maxStep * 2;
+        const arbRoom = clamp(row.netArbGap / 4, 0, 1) * settings.maxStep * 2;
+        row.capacity = Math.min(Math.max(incomeRoom, depthRoom, marketRoom, arbRoom), settings.maxStep * 4 + row.liquidity * .20);
+
+        if (row.ownPositionKnown && row.liquidity > 0) {
+          row.ownShare = clamp(row.ownLiquidity / row.liquidity, 0, 1);
+          const x = settings.minStep;
+          const newShare = clamp((row.ownLiquidity + x) / (row.liquidity + x), 0, 1);
+          row.incrementalIncomeMinStep = row.expectedDailyIncome * Math.max(0, newShare - row.ownShare);
+        } else {
+          row.ownShare = 0;
+          row.incrementalIncomeMinStep = 0;
+        }
       }
-
       return rows;
     }
 
     function buildReason(row) {
-      if (!row.dataAvailable && !row.has30d) {
-        return "Für diesen Pool liegen aktuell keine Live- oder 30-Tage-Daten vor. Es wird keine Aufstockung empfohlen.";
-      }
-      if (row.allocation > 0) {
-        if (row.accel1 >= 1.8 && row.txAccel1 >= 1.4) {
-          return `1-Stunden-Volumen und Transaktionsaktivität steigen gleichzeitig. Der nächste Schritt bleibt auf ${fmtUsd(row.allocation)} begrenzt.`;
-        }
-        if (row.accel1 >= 1.8) {
-          return `Das aktuelle 1-Stunden-Volumen liegt etwa ${fmtMultiple(row.accel1)} über seinem jüngsten Stunden-Durchschnitt. Nur den berechneten Schritt hinzufügen und danach erneut scannen.`;
-        }
-        if (row.has30d && row.avgDaily30 > row.v24 * 1.25 && row.activeDays30 >= 3) {
-          return `Die 30-Tage-Historie stützt eine kleine Aufstockung: durchschnittlich ${fmtUsd(row.avgDaily30, true)} Volumen pro Tag an ${row.activeDays30} aktiven Tagen. Der Schritt bleibt bewusst begrenzt.`;
-        }
-        if (row.turnover24 >= 0.45 || row.turnover30 >= 0.30) {
-          return `Der Pool setzt seine Liquidität schnell genug um, um eine kontrollierte Erhöhung zu tragen, ohne den Pool unnötig stark zu überfüllen.`;
-        }
-        return `Aktuelle Aktivität und 30-Tage-Basis ergeben gemeinsam eine kleine Aufnahmekapazität. Die Empfehlung bleibt bewusst begrenzt.`;
-      }
-
-      if (row.signal >= 0.58) {
-        return "Dynamik ist sichtbar, aber die aktuelle Liquidität deckt die beobachtete Handelsaktivität bereits ab. Vor einer Aufstockung auf einen weiteren bestätigten Anstieg warten.";
-      }
-      if (row.v24 <= 1 && row.tx24 <= 2 && !(row.has30d && row.activeDays30 >= 3)) {
-        return "Aktuell ist keine relevante On-Chain-Aktivität sichtbar. Der Pool bleibt unter Beobachtung und kann nach einem neuen Impuls sofort wieder aktiv werden.";
-      }
-      if (row.has30d && row.activeDays30 >= 3 && row.targetHigh <= row.liquidity) {
-        return `Die 30-Tage-Historie zeigt Aktivität, die vorhandene Liquidität deckt den errechneten Bedarf aber bereits ab. 30d-Ø: ${fmtUsd(row.avgDaily30, true)} pro Tag.`;
-      }
-      if (row.targetHigh <= row.liquidity) {
-        return "Die beobachtete Handelsaktivität rechtfertigt derzeit keine größere Liquiditätstiefe. Die bestehende Basisliquidität halten und auf eine stärkere bestätigte Bewegung warten.";
-      }
-      return "Das Aktivitätssignal ist für einen neuen Liquiditätsschritt noch nicht stark genug. Weiter beobachten, statt Kapital in den Pool zu zwingen.";
+      if (row.outOfRange) return "Mindestens eine erkannte DLMM-Position liegt außerhalb der aktiven Range. Vor zusätzlicher Liquidität sollte zuerst die Position geprüft oder neu ausgerichtet werden.";
+      if (row.allocation > 0 && row.netArbGap >= .5) return `Der ASTY-Preis dieses Pools weicht um ${fmtPercent(Math.abs(row.priceDeviationPct), 1)} vom Referenzpreis ab. Nach Transferkosten, Einnahmenrate und grob geschätzter Preiswirkung verbleibt ein möglicher Arbitrage-Spielraum von ${fmtPercent(row.netArbGap, 1)}.`;
+      if (row.allocation > 0 && row.externalScore >= .48) return `Der Partner-Token zeigt außerhalb des ASTY-Pools rund ${fmtUsd(row.externalVolume24, true)} Volumen in 24h. Der ASTY-Pool nimmt bisher nur ${fmtPercent(row.astyPoolShare * 100, 1)} des beobachteten Gesamtvolumens auf.`;
+      if (row.allocation > 0 && row.incomeIsExact) return `Die Empfehlung stützt sich auf echte ${row.incomeSource}-Einnahmen von ${fmtUsd(row.income24)} in 24h sowie eine robuste 30-Tage-Basis. Der Schritt bleibt auf ${fmtUsd(row.allocation)} begrenzt.`;
+      if (row.allocation > 0 && row.accel1 >= 1.6) return `Das 1h-Tempo liegt bei ${fmtMultiple(row.accel1)}. Zusätzliche Tiefe senkt die geschätzte Preiswirkung eines typischen ${fmtUsd(row.representativeTrade)}-Trades von ${fmtPercent(row.impactCurrent, 1)} auf ${fmtPercent(estimatePriceImpact(row.representativeTrade, row.liquidity + row.allocation, row.concentrated), 1)}.`;
+      if (row.allocation > 0) return "Live-Aktivität, robuste 30-Tage-Basis und der mögliche Nutzen zusätzlicher Markttiefe ergeben gemeinsam einen kleinen nächsten Schritt.";
+      if (!row.dataAvailable && !row.has30d) return "Für diesen Pool liegen aktuell keine ausreichenden Live- oder historischen Daten vor.";
+      if (row.ownPositionKnown && row.ownShare >= .90 && row.externalScore < .35 && row.netArbGap < .5) return `Die hinterlegten DLMM-Wallets halten bereits ungefähr ${fmtPercent(row.ownShare * 100, 1)} der Pool-Liquidität. Ohne erkennbaren Volumen- oder Arbitrage-Impuls würde zusätzliches Kapital den eigenen Einnahmenanteil kaum erhöhen.`;
+      if (row.has30d && row.top3Share30 >= .70) return `Das 30d-Volumen ist stark auf wenige Ausbruchstage konzentriert: ${fmtPercent(row.top3Share30 * 100, 0)} entfallen auf die drei stärksten Tage. Aktuell wird deshalb kein weiterer Schritt empfohlen.`;
+      if (row.signal >= .48) return "Mehrere Signale sind aktiv, die vorhandene Liquidität deckt den momentan erkennbaren Bedarf jedoch noch ab.";
+      return "Aktuelle Einnahmen, Volumenbasis und Markttiefe rechtfertigen derzeit keinen weiteren Liquiditätsschritt.";
     }
 
     function recommendationLabel(row) {
+      if (row.outOfRange) return { text: "Position prüfen", cls: "watch" };
       if (row.allocation > 0) return { text: "Jetzt erhöhen", cls: "add" };
-      if (row.signal >= 0.56 || row.accel1 >= 1.8) return { text: "Eng beobachten", cls: "watch" };
+      if (row.signal >= .45 || row.accel1 >= 1.7 || row.netArbGap >= .5) return { text: "Eng beobachten", cls: "watch" };
       return { text: "Halten", cls: "" };
     }
 
     function allocateCapital(rows, settings) {
-      const deployable = settings.capital;
       const candidates = [];
-
       for (const row of rows) {
-        const observedActivity = row.dataAvailable && (row.v1 >= 1 || row.v24 >= 5 || row.tx1 >= 2);
-        const historicalSupport = row.has30d && (row.avgDaily30 >= 1 || row.activeDays30 >= 3);
-        const capacity = Math.max(0, row.targetHigh - row.liquidity);
-        const poolStepCap = row.liquidity > 0
-          ? Math.max(settings.minStep, row.liquidity * (0.06 + row.signal * 0.20))
-          : settings.minStep;
-
-        row.capacity = capacity;
-        row.stepCap = Math.min(settings.maxStep, capacity, poolStepCap);
         row.allocation = 0;
-
-        const eligible = (observedActivity || historicalSupport) && row.signal >= 0.13 && row.capacity >= settings.minStep;
-        if (eligible) {
-          row.weight = Math.max(0.01,
-            row.signal * 1.25 +
-            Math.min(row.accel1, 5) * 0.09 +
-            Math.min(row.txAccel1, 5) * 0.05 +
-            Math.min(row.turnover24, 5) * 0.05 +
-            Math.min(row.turnover30, 4) * 0.06 +
-            row.activeRatio30 * 0.06 +
-            Math.min(row.relativeTo30, 5) * 0.015
-          );
+        const activity = row.v24 >= 3 || row.tx24 >= 3 || (row.has30d && row.activeDays30 >= 2) || row.externalScore >= .30 || row.netArbGap >= .4;
+        const ownershipBlock = row.ownPositionKnown && row.ownShare >= .95 && row.externalScore < .35 && row.netArbGap < .5 && row.depthBenefit < .35;
+        const eligible = activity && !row.outOfRange && !ownershipBlock && row.signal >= .17 && row.capacity >= settings.minStep;
+        const poolCap = row.liquidity > 0 ? Math.max(settings.minStep, row.liquidity * (.04 + row.signal * .12)) : settings.minStep;
+        row.stepCap = Math.min(settings.maxStep, row.capacity, poolCap);
+        if (eligible && row.stepCap >= settings.minStep) {
+          row.weight = Math.max(.01, row.signal * 1.25 + clamp(row.netArbGap / 4, 0, 1) * .35 + row.externalScore * .30 + clamp(row.depthBenefit / 2, 0, 1) * .20 + (row.incomeIsExact ? .08 : 0));
           candidates.push(row);
-        } else {
-          row.weight = 0;
-        }
+        } else row.weight = 0;
       }
 
-      if (deployable < settings.minStep || !candidates.length) {
-        for (const row of rows) {
-          row.projectedLiquidity = row.liquidity;
-          row.projectedStaticYield = row.staticDailyYield;
-          row.reason = buildReason(row);
-          row.recommendation = recommendationLabel(row);
+      let remaining = settings.capital;
+      if (remaining >= settings.minStep && candidates.length) {
+        const ordered = [...candidates].sort((a, b) => b.weight - a.weight);
+        const sum = ordered.reduce((s, r) => s + r.weight, 0);
+        for (const row of ordered) {
+          if (remaining < settings.minStep) break;
+          const proportional = roundMoney(settings.capital * row.weight / sum, 5);
+          const amount = roundMoney(Math.min(row.stepCap, Math.max(settings.minStep, proportional)), 5);
+          if (amount >= settings.minStep && amount <= remaining) { row.allocation = amount; remaining -= amount; }
         }
-        return { deployable, deployed: 0, selected: 0 };
-      }
-
-      const weightSum = candidates.reduce((sum, row) => sum + row.weight, 0);
-      const ordered = [...candidates].sort((a, b) => b.weight - a.weight);
-      let assigned = 0;
-      let remaining = deployable;
-
-      // Open only complete minimum-sized positions. This prevents tiny, impractical allocations.
-      for (const row of ordered) {
-        if (remaining < settings.minStep) break;
-        const proportional = roundMoney(deployable * row.weight / weightSum, 5);
-        const initial = Math.min(row.stepCap, Math.max(settings.minStep, proportional));
-        const roundedInitial = roundMoney(initial, 5);
-        if (roundedInitial >= settings.minStep && roundedInitial <= remaining) {
-          row.allocation = roundedInitial;
-          remaining -= roundedInitial;
-          assigned += roundedInitial;
-        }
-      }
-
-      // Use remaining five-dollar increments only on already opened recommendations.
-      let changed = true;
-      while (remaining >= 5 && changed) {
-        changed = false;
-        for (const row of ordered.filter(item => item.allocation >= settings.minStep)) {
-          const room = roundMoney(row.stepCap - row.allocation, 5);
-          if (room >= 5 && remaining >= 5) {
-            row.allocation += 5;
-            remaining -= 5;
-            assigned += 5;
-            changed = true;
+        let changed = true;
+        while (remaining >= 5 && changed) {
+          changed = false;
+          for (const row of ordered.filter(r => r.allocation >= settings.minStep)) {
+            if (remaining < 5) break;
+            if (row.stepCap - row.allocation >= 5) { row.allocation += 5; remaining -= 5; changed = true; }
           }
-          if (remaining < 5) break;
         }
       }
 
       for (const row of rows) {
         row.projectedLiquidity = row.liquidity + row.allocation;
-        row.projectedStaticYield = row.projectedLiquidity > 0 ? row.expectedDailyFees / row.projectedLiquidity * 100 : 0;
+        row.projectedImpact = estimatePriceImpact(row.representativeTrade, row.projectedLiquidity, row.concentrated);
+        if (row.ownPositionKnown && row.allocation > 0 && row.liquidity > 0) {
+          const currentShare = clamp(row.ownLiquidity / row.liquidity, 0, 1);
+          const newShare = clamp((row.ownLiquidity + row.allocation) / (row.liquidity + row.allocation), 0, 1);
+          row.incrementalDailyIncome = row.expectedDailyIncome * Math.max(0, newShare - currentShare);
+        } else row.incrementalDailyIncome = 0;
+        row.targetLow = row.allocation > 0 ? row.liquidity + settings.minStep : row.liquidity;
+        row.targetHigh = row.allocation > 0 ? row.liquidity + row.stepCap : row.liquidity;
         row.reason = buildReason(row);
         row.recommendation = recommendationLabel(row);
       }
+      const deployed = rows.reduce((s, r) => s + r.allocation, 0);
+      return { deployable: settings.capital, deployed, selected: rows.filter(r => r.allocation > 0).length };
+    }
 
-      const deployed = rows.reduce((sum, row) => sum + row.allocation, 0);
-      return {
-        deployable,
-        deployed,
-        selected: rows.filter(row => row.allocation > 0).length
-      };
+    function qualityDots(row) {
+      return `<span class="quality-dots" title="Datenqualität ${row.dataQuality}/5">${[1,2,3,4,5].map(i => `<i class="${i <= row.dataQuality ? "on" : ""}"></i>`).join("")}</span>`;
     }
 
     function renderSummary(summary) {
-      const strongest = [...poolRows].sort((a, b) => {
-        if (a.dataAvailable !== b.dataAvailable) return Number(b.dataAvailable) - Number(a.dataAvailable);
-        return b.signal - a.signal;
-      })[0];
+      const strongest = [...poolRows].sort((a, b) => b.signal - a.signal)[0];
       els.deployValue.textContent = fmtUsd(summary.deployed);
-      els.deploySub.textContent = summary.selected
-        ? `${summary.selected} kontrollierte${summary.selected === 1 ? "r Schritt" : " Schritte"} berechnet`
-        : "Aktuell bestätigt kein Pool einen weiteren Schritt";
-
-      els.selectedValue.textContent = String(summary.selected);
-      els.selectedSub.textContent = summary.selected
-        ? "Das Kapital wird ausschließlich auf Pools mit aktueller Aufnahmekapazität verteilt"
-        : "Ruhige Pools bleiben unter Beobachtung, statt aussortiert zu werden";
-
+      els.deploySub.textContent = summary.selected ? `${summary.selected} kontrollierte${summary.selected === 1 ? "r Schritt" : " Schritte"} berechnet` : "Aktuell bestätigt kein Pool einen weiteren Schritt";
+      els.selectedValue.textContent = summary.selected;
+      els.selectedSub.textContent = summary.selected ? "Nur klar begründete nächste Schritte werden verteilt" : "Nicht eingesetztes Kapital wird nicht künstlich verteilt";
       if (strongest) {
         els.impulseValue.textContent = strongest.label.replace("ASTY / ", "");
-        els.impulseSub.textContent = `${fmtMultiple(strongest.accel1)} 1h-Tempo · ${fmtUsd(strongest.v1, true)} Volumen in 1h`;
-      } else {
-        els.impulseValue.textContent = "-";
-        els.impulseSub.textContent = "Keine Aktivitätsdaten verfügbar";
+        els.impulseSub.textContent = `${fmtMultiple(strongest.accel1)} 1h-Tempo · ${fmtUsd(strongest.v1, true)} Volumen`;
       }
+      els.referencePriceValue.textContent = fmtPrice(astyReferencePrice);
+      const deviations = poolRows.filter(r => r.priceDeviationPct).map(r => Math.abs(r.priceDeviationPct));
+      els.referencePriceSub.textContent = deviations.length ? `Größte Pool-Abweichung: ${fmtPercent(Math.max(...deviations), 1)}` : "Noch keine vergleichbaren Poolpreise";
     }
 
     function poolCardHtml(row) {
-      const recommendation = row.recommendation || recommendationLabel(row);
-      const cardClasses = ["pool-card"];
-      if (row.allocation > 0) cardClasses.push("recommended");
-      if (row.signal >= 0.58) cardClasses.push("hot");
-
-      const targetText = row.targetHigh > 0
-        ? `${fmtUsd(row.targetLow, true)} - ${fmtUsd(row.targetHigh, true)}`
-        : "Kein aktiver Zielbereich";
-
-      const recommendationValue = row.allocation > 0
-        ? `+${fmtUsd(row.allocation)}`
-        : "Jetzt nicht erhöhen";
-
-      return `
-        <article class="${cardClasses.join(" ")}" tabindex="0" data-address="${row.address}">
-          <div class="pool-head">
-            <div>
-              <div class="pool-name">${row.label}</div>
-              <div class="pool-meta">${row.feePercent}% Pool-Einnahmenrate · ${shortAddress(row.address)}</div>
-            </div>
-            <span class="signal-badge ${recommendation.cls}">${recommendation.text}</span>
-          </div>
-
-          <div class="pool-main">
-            <div class="recommend-box">
-              <div class="box-label">NÄCHSTER LIQUIDITÄTSSCHRITT</div>
-              <div class="recommend-value ${row.allocation > 0 ? "" : "zero"}">${recommendationValue}</div>
-              <div class="box-sub">Aktuelle Liquidität: ${fmtUsd(row.liquidity, true)}</div>
-            </div>
-            <div class="target-box">
-              <div class="box-label">AKTUELLER ZIELBEREICH</div>
-              <div class="target-value">${targetText}</div>
-              <div class="box-sub">Aus 30d-Historie und aktueller Aktivität berechnet</div>
-            </div>
-          </div>
-
-          <div class="metrics-row">
-            <div class="tiny-metric">
-              <div class="tiny-label">Volumen 1h</div>
-              <div class="tiny-value">${fmtUsd(row.v1, true)}</div>
-            </div>
-            <div class="tiny-metric">
-              <div class="tiny-label">1h-Tempo</div>
-              <div class="tiny-value ${row.accel1 >= 1.8 ? "amber" : ""}">${fmtMultiple(row.accel1)}</div>
-            </div>
-            <div class="tiny-metric">
-              <div class="tiny-label">Volumen 24h</div>
-              <div class="tiny-value">${fmtUsd(row.v24, true)}</div>
-            </div>
-            <div class="tiny-metric">
-              <div class="tiny-label">Volumen 30d</div>
-              <div class="tiny-value cyan">${row.has30d ? fmtUsd(row.v30, true) : '<span class="loading-text"><span class="loading-spinner" aria-hidden="true"></span>lädt</span>'}</div>
-            </div>
-            <div class="tiny-metric">
-              <div class="tiny-label">Einnahmen 24h</div>
-              <div class="tiny-value green">${fmtUsd(row.fees24, true)}</div>
-            </div>
-          </div>
-
-          <div class="reason">${row.reason}</div>
-
-          <div class="card-footer">
-            <span class="updated-line">Für vollständige Simulation anklicken</span>
-          </div>
-        </article>
-      `;
+      const rec = row.recommendation || recommendationLabel(row);
+      const source = row.incomeIsExact ? `${row.incomeSource} live` : "Einnahmen geschätzt";
+      return `<article class="pool-card ${row.allocation > 0 ? "recommended" : ""} ${row.signal >= .58 ? "hot" : ""}" tabindex="0" data-address="${row.address}">
+        <div class="pool-head"><div><div class="pool-name">${row.label}</div><div class="pool-meta">${shortAddress(row.address)} ${qualityDots(row)}</div><div class="source-chip ${row.incomeIsExact ? "" : "estimated"}">${source}</div></div><span class="signal-badge ${rec.cls}">${rec.text}</span></div>
+        <div class="pool-main">
+          <div class="recommend-box"><div class="box-label">NÄCHSTER LIQUIDITÄTSSCHRITT</div><div class="recommend-value ${row.allocation > 0 ? "" : "zero"}">${row.allocation > 0 ? "+" + fmtUsd(row.allocation) : "Jetzt nicht erhöhen"}</div><div class="box-sub">Aktuelle Liquidität: ${fmtUsd(row.liquidity, true)}</div></div>
+          <div class="target-box"><div class="box-label">NÄCHSTER SINNVOLLER BEREICH</div><div class="target-value">${row.allocation > 0 ? `${fmtUsd(row.targetLow, true)} - ${fmtUsd(row.targetHigh, true)}` : fmtUsd(row.liquidity, true)}</div><div class="box-sub">Kontrollierter Schritt statt theoretischer Endwert</div></div>
+        </div>
+        <div class="metrics-row">
+          <div class="tiny-metric"><div class="tiny-label">Volumen 1h</div><div class="tiny-value">${fmtUsd(row.v1, true)}</div></div>
+          <div class="tiny-metric"><div class="tiny-label">1h-Tempo</div><div class="tiny-value ${row.accel1 >= 1.8 ? "amber" : ""}">${fmtMultiple(row.accel1)}</div></div>
+          <div class="tiny-metric"><div class="tiny-label">Volumen 24h</div><div class="tiny-value">${fmtUsd(row.v24, true)}</div></div>
+          <div class="tiny-metric"><div class="tiny-label">Volumen 30d</div><div class="tiny-value cyan">${row.has30d ? fmtUsd(row.v30, true) : '<span class="loading-text"><span class="loading-spinner"></span>lädt</span>'}</div></div>
+          <div class="tiny-metric"><div class="tiny-label">Einnahmen 24h</div><div class="tiny-value green">${fmtUsd(row.income24, true)}</div></div>
+        </div>
+        <div class="card-foot"><span>${row.reason}</span><span class="updated-line">Details öffnen</span></div>
+      </article>`;
     }
 
     function filteredRows() {
-      const query = els.poolSearch.value.trim().toLowerCase();
-      let rows = poolRows.filter(row => {
-        if (query && !`${row.label} ${row.address} ${row.name}`.toLowerCase().includes(query)) return false;
-        if (currentFilter === "deploy") return row.allocation > 0;
-        if (currentFilter === "momentum") return row.signal >= 0.56 || row.accel1 >= 1.8 || row.txAccel1 >= 1.8;
-        return true;
-      });
-
+      const q = els.poolSearch.value.trim().toLowerCase();
+      let rows = poolRows.filter(r => !q || r.label.toLowerCase().includes(q) || r.address.toLowerCase().includes(q));
+      if (currentFilter === "deploy") rows = rows.filter(r => r.allocation > 0);
+      if (currentFilter === "momentum") rows = rows.filter(r => r.signal >= .45 || r.accel1 >= 1.7 || r.netArbGap >= .5);
       const sort = els.sortSelect.value;
-      rows = [...rows].sort((a, b) => {
+      rows.sort((a, b) => {
         if (sort === "impulse") return b.signal - a.signal;
-        if (sort === "fees") return b.fees24 - a.fees24;
+        if (sort === "fees") return b.income24 - a.income24;
         if (sort === "volume") return b.v24 - a.v24;
         if (sort === "volume30") return b.v30 - a.v30;
         if (sort === "liquidity") return b.liquidity - a.liquidity;
-        return (b.allocation - a.allocation) || (b.signal - a.signal) || (b.fees24 - a.fees24);
+        return (b.allocation > 0) - (a.allocation > 0) || b.weight - a.weight || b.signal - a.signal;
       });
       return rows;
     }
@@ -1942,182 +2015,77 @@
     function renderPools() {
       const rows = filteredRows();
       els.poolCount.textContent = `${rows.length} von ${poolRows.length} Pools`;
-      els.poolGrid.innerHTML = rows.length
-        ? rows.map(poolCardHtml).join("")
-        : `<div class="empty-state">Keine Pools entsprechen dem aktuellen Filter.</div>`;
-
+      els.poolGrid.innerHTML = rows.length ? rows.map(poolCardHtml).join("") : '<div class="empty-state">Keine Pools entsprechen dem aktuellen Filter.</div>';
       els.poolGrid.querySelectorAll(".pool-card").forEach(card => {
-        card.addEventListener("click", event => {
-          if (event.target.closest("button, a")) return;
-          openPoolDialog(card.dataset.address);
-        });
-        card.addEventListener("keydown", event => {
-          if ((event.key === "Enter" || event.key === " ") && !event.target.closest("button, a")) {
-            event.preventDefault();
-            openPoolDialog(card.dataset.address);
-          }
-        });
+        const open = () => openPoolDialog(card.dataset.address);
+        card.addEventListener("click", open);
+        card.addEventListener("keydown", e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); open(); } });
       });
     }
 
     function simulationRows(row) {
-      const candidates = [5, 10, 25, row.allocation].filter((value, index, array) => value > 0 && array.indexOf(value) === index).sort((a, b) => a - b);
-      return candidates.map(step => {
+      const settings = getSettings();
+      const steps = [...new Set([5, 10, 25, row.allocation].filter(x => x > 0))].sort((a, b) => a - b);
+      return steps.map(step => {
         const newLiquidity = row.liquidity + step;
-        const staticDailyYield = newLiquidity > 0 ? row.expectedDailyFees / newLiquidity * 100 : 0;
-        const withinCurrentRange = newLiquidity >= row.targetLow && newLiquidity <= row.targetHigh;
-        const effect = step === row.allocation && row.allocation > 0
-          ? "Empfohlener nächster Schritt"
-          : withinCurrentRange
-            ? "Im aktuellen Zielbereich"
-            : newLiquidity > row.targetHigh
-              ? "Über dem aktuellen Zielbereich"
-              : "Unter dem aktuellen Zielbereich";
-        return { step, newLiquidity, staticDailyYield, effect };
+        let incremental = 0;
+        if (row.ownPositionKnown && row.liquidity > 0) {
+          const currentShare = clamp(row.ownLiquidity / row.liquidity, 0, 1);
+          const newShare = clamp((row.ownLiquidity + step) / newLiquidity, 0, 1);
+          incremental = row.expectedDailyIncome * Math.max(0, newShare - currentShare);
+        }
+        return { step, newLiquidity, impact: estimatePriceImpact(row.representativeTrade, newLiquidity, row.concentrated), incremental };
       });
     }
 
+    function loadingInline() { return '<span class="loading-text"><span class="loading-spinner"></span>wird geladen</span>'; }
+
     function openPoolDialog(address) {
-      const row = poolRows.find(item => item.address === address);
+      const row = poolRows.find(r => r.address === address);
       if (!row) return;
-
+      const sims = simulationRows(row);
       els.dialogTitle.textContent = row.label;
-      els.dialogSub.textContent = `${row.feePercent}% Pool-Einnahmenrate · ${row.dexId}`;
-      const simulations = simulationRows(row);
-
+      els.dialogSub.textContent = `${row.incomeSource} · ${row.dexId} · ${shortAddress(row.address)}`;
       els.dialogBody.innerHTML = `
         <div class="detail-grid">
-          <div class="detail-item">
-            <div class="detail-label">Aktuelle Liquidität</div>
-            <div class="detail-value highlight">${fmtUsd(row.liquidity)}</div>
-          </div>
-          <div class="detail-item">
-            <div class="detail-label">Empfohlener Schritt</div>
-            <div class="detail-value positive">${row.allocation > 0 ? "+" + fmtUsd(row.allocation) : "Jetzt nicht erhöhen"}</div>
-          </div>
-          <div class="detail-item">
-            <div class="detail-label">Aktueller Zielbereich</div>
-            <div class="detail-value">${fmtUsd(row.targetLow)} - ${fmtUsd(row.targetHigh)}</div>
-          </div>
-          <div class="detail-item">
-            <div class="detail-label">Volumen 1h / 6h</div>
-            <div class="detail-value">${fmtUsd(row.v1)} / ${fmtUsd(row.v6)}</div>
-          </div>
-          <div class="detail-item">
-            <div class="detail-label">Volumen 6h / 24h</div>
-            <div class="detail-value">${fmtUsd(row.v6)} / ${fmtUsd(row.v24)}</div>
-          </div>
-          <div class="detail-item">
-            <div class="detail-label">Volumen 30d</div>
-            <div class="detail-value">${row.has30d ? fmtUsd(row.v30) : '<span class="loading-text"><span class="loading-spinner" aria-hidden="true"></span>wird geladen</span>'}</div>
-          </div>
-          <div class="detail-item">
-            <div class="detail-label">30d Ø / aktiver Zeitraum</div>
-            <div class="detail-value">${row.has30d ? fmtUsd(row.avgDaily30) + " pro Tag" : '<span class="loading-text"><span class="loading-spinner" aria-hidden="true"></span>wird geladen</span>'}</div>
-          </div>
-          <div class="detail-item">
-            <div class="detail-label">Aktive Tage 30d</div>
-            <div class="detail-value">${row.has30d ? fmtNumber(row.activeDays30, 0) + " / " + fmtNumber(row.days30, 0) : '<span class="loading-text"><span class="loading-spinner" aria-hidden="true"></span>wird geladen</span>'}</div>
-          </div>
-          <div class="detail-item">
-            <div class="detail-label">24h vs. 30d-Ø</div>
-            <div class="detail-value">${row.has30d ? fmtMultiple(row.relativeTo30) : '<span class="loading-text"><span class="loading-spinner" aria-hidden="true"></span>wird geladen</span>'}</div>
-          </div>
-          <div class="detail-item">
-            <div class="detail-label">Transaktionen 1h / 24h</div>
-            <div class="detail-value">${fmtNumber(row.tx1, 0)} / ${fmtNumber(row.tx24, 0)}</div>
-          </div>
-          <div class="detail-item">
-            <div class="detail-label">1h-Volumentempo</div>
-            <div class="detail-value">${fmtMultiple(row.accel1)}</div>
-          </div>
-          <div class="detail-item">
-            <div class="detail-label">1h-Transaktionstempo</div>
-            <div class="detail-value">${fmtMultiple(row.txAccel1)}</div>
-          </div>
-          <div class="detail-item">
-            <div class="detail-label">Einnahmen 24h / erwartet pro Tag</div>
-            <div class="detail-value positive">${fmtUsd(row.fees24)} / ${fmtUsd(row.expectedDailyFees)}</div>
-          </div>
-          <div class="detail-item">
-            <div class="detail-label">Volumen / Liquidität 24h</div>
-            <div class="detail-value">${fmtMultiple(row.turnover24)}</div>
-          </div>
-          <div class="detail-item">
-            <div class="detail-label">Erwartete tägliche Einnahmenrendite</div>
-            <div class="detail-value">${fmtPercent(row.staticDailyYield, 2)}</div>
-          </div>
+          <div class="detail-item"><div class="detail-label">Aktuelle Liquidität</div><div class="detail-value">${fmtUsd(row.liquidity)}</div></div>
+          <div class="detail-item"><div class="detail-label">Empfohlener Schritt</div><div class="detail-value positive">${row.allocation > 0 ? "+" + fmtUsd(row.allocation) : "Jetzt nicht erhöhen"}</div></div>
+          <div class="detail-item"><div class="detail-label">Einnahmen 24h</div><div class="detail-value positive">${fmtUsd(row.income24)} ${row.incomeIsExact ? "(echt)" : "(geschätzt)"}</div></div>
+          <div class="detail-item"><div class="detail-label">Effektive Einnahmenrate</div><div class="detail-value">${fmtPercent(row.effectiveIncomeRate * 100, 2)}</div></div>
+          <div class="detail-item"><div class="detail-label">Robustes 30d-Tagesvolumen</div><div class="detail-value">${row.has30d ? fmtUsd(row.robustDailyVolume) : loadingInline()}</div></div>
+          <div class="detail-item"><div class="detail-label">30d-Median</div><div class="detail-value">${row.has30d ? fmtUsd(row.medianDaily30) : loadingInline()}</div></div>
+          <div class="detail-item"><div class="detail-label">Top-3-Tage am 30d-Volumen</div><div class="detail-value">${row.has30d ? fmtPercent(row.top3Share30 * 100, 0) : loadingInline()}</div></div>
+          <div class="detail-item"><div class="detail-label">Aktive Tage 30d</div><div class="detail-value">${row.has30d ? `${row.activeDays30} / ${row.days30}` : loadingInline()}</div></div>
+          <div class="detail-item"><div class="detail-label">ASTY Poolpreis</div><div class="detail-value">${fmtPrice(row.astyPrice)}</div></div>
+          <div class="detail-item"><div class="detail-label">ASTY Referenzpreis</div><div class="detail-value">${fmtPrice(astyReferencePrice)}</div></div>
+          <div class="detail-item"><div class="detail-label">Preisabweichung</div><div class="detail-value">${fmtPercent(row.priceDeviationPct, 1)}</div></div>
+          <div class="detail-item"><div class="detail-label">Möglicher Arbitrage-Spielraum</div><div class="detail-value">${fmtPercent(row.netArbGap, 1)} geschätzt</div></div>
+          <div class="detail-item"><div class="detail-label">Externes Partner-Volumen 24h</div><div class="detail-value">${row.externalVolume24 ? fmtUsd(row.externalVolume24) : "-"}</div></div>
+          <div class="detail-item"><div class="detail-label">ASTY-Pool-Anteil am Volumen</div><div class="detail-value">${row.externalVolume24 ? fmtPercent(row.astyPoolShare * 100, 1) : "-"}</div></div>
+          <div class="detail-item"><div class="detail-label">Typische Trade-Größe</div><div class="detail-value">${fmtUsd(row.representativeTrade)}</div></div>
+          <div class="detail-item"><div class="detail-label">Geschätzte Preiswirkung</div><div class="detail-value">${fmtPercent(row.impactCurrent, 1)}</div></div>
+          <div class="detail-item"><div class="detail-label">Eigene DLMM-Liquidität</div><div class="detail-value">${row.ownPositionKnown ? fmtUsd(row.ownLiquidity) : "Nicht ermittelt"}</div></div>
+          <div class="detail-item"><div class="detail-label">Offene DLMM-Einnahmen</div><div class="detail-value">${row.ownPositionKnown ? fmtUsd(row.ownUnclaimedIncome) : "Nicht ermittelt"}</div></div>
         </div>
-
-        <div class="detail-section">
-          <div class="detail-section-title">Aktuelle Empfehlung</div>
-          <div class="detail-section-copy">${row.reason}</div>
+        <div class="detail-section"><div class="detail-section-title">Aktuelle Empfehlung</div><div class="detail-section-copy">${row.reason}</div></div>
+        <div class="detail-section"><div class="detail-section-title">Simulation der Liquiditätsschritte</div><div class="detail-section-copy">Die Preiswirkung ist eine konservative Näherung aus Pool-TVL und typischer Trade-Größe. Zusätzliche eigene Einnahmen können nur bei erkannten DLMM-Positionen korrekt anteilig berechnet werden.</div>
+          <table class="simulation-table"><thead><tr><th>Schritt</th><th>Neue Liquidität</th><th>Preiswirkung</th><th>Zusätzliche eigene Einnahmen/Tag</th></tr></thead><tbody>${sims.map(x => `<tr><td>+${fmtUsd(x.step)}</td><td>${fmtUsd(x.newLiquidity)}</td><td>${fmtPercent(x.impact, 1)}</td><td>${row.ownPositionKnown ? fmtUsd(x.incremental, false, 4) : "Wallet nötig"}</td></tr>`).join("")}</tbody></table>
         </div>
-
-        <div class="detail-section">
-          <div class="detail-section-title">Simulation der Liquiditätsschritte</div>
-          <div class="detail-section-copy">Die erwartete Einnahmenrendite nutzt eine Mischung aus aktueller Aktivität und 30-Tage-Durchschnitt. Sie zeigt die rechnerische Verwässerung nach einer Aufstockung, garantiert aber kein zukünftiges Volumen.</div>
-          <table class="simulation-table">
-            <thead>
-              <tr>
-                <th>Schritt</th>
-                <th>Neue Liquidität</th>
-                <th>Erwartete Tagesrendite</th>
-                <th>Einordnung</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${simulations.map(item => `
-                <tr>
-                  <td>+${fmtUsd(item.step)}</td>
-                  <td>${fmtUsd(item.newLiquidity)}</td>
-                  <td>${fmtPercent(item.staticDailyYield, 2)}</td>
-                  <td>${item.effect}</td>
-                </tr>
-              `).join("")}
-            </tbody>
-          </table>
-        </div>
-
-        <div class="detail-section">
-          <div class="detail-section-title">Pool-Adresse</div>
-          <div class="detail-section-copy" style="font-family:ui-monospace,SFMono-Regular,Menlo,monospace;word-break:break-all;">${row.address}</div>
-        </div>
-
-        <div class="dialog-actions">
-          <a class="pill" href="https://www.geckoterminal.com/solana/pools/${row.address}" target="_blank" rel="noopener noreferrer">GeckoTerminal ↗</a>
-          <a class="pill" href="https://dexscreener.com/solana/${row.address}" target="_blank" rel="noopener noreferrer">DexScr ↗</a>
-        </div>
-      `;
-
-
-      if (typeof els.poolDialog.showModal === "function") els.poolDialog.showModal();
-      else els.poolDialog.setAttribute("open", "");
+        <div class="detail-section"><div class="detail-section-title">Pool-Adresse</div><div class="detail-section-copy" style="font-family:ui-monospace,SFMono-Regular,Menlo,monospace;word-break:break-all;">${row.address}</div></div>
+        <div class="dialog-actions"><a class="pill" href="https://www.geckoterminal.com/solana/pools/${row.address}" target="_blank" rel="noopener noreferrer">GeckoTerminal ↗</a><a class="pill" href="https://dexscreener.com/solana/${row.address}" target="_blank" rel="noopener noreferrer">DexScr ↗</a></div>`;
+      if (typeof els.poolDialog.showModal === "function") els.poolDialog.showModal(); else els.poolDialog.setAttribute("open", "");
     }
 
-
-    async function startCalculation() {
-      if (isLoading) return;
-
-      if (!hasStarted) {
-        hasStarted = true;
-        els.refreshButton.disabled = false;
-      }
-
-      await load();
-
-      if (!refreshTimer) {
-        refreshTimer = setInterval(load, REFRESH_MS);
-      }
-    }
-
-    function recalculate() {
+    function recomputeAndRender() {
       if (!poolRows.length) return;
       const settings = getSettings();
-      computeSignals(poolRows);
+      computeSignals(poolRows, settings);
       const summary = allocateCapital(poolRows, settings);
       renderSummary(summary);
       renderPools();
+      const exact = poolRows.filter(r => r.incomeIsExact).length;
+      const external = poolRows.filter(r => r.externalVolume24 > 0).length;
+      els.dataStatus.innerHTML = `<strong>Datenquellen:</strong> ${exact} Pools mit echten Meteora-Einnahmen · ${external} Pools mit externem Partner-Marktvergleich · ${poolRows.filter(r => r.astyPrice > 0).length} Poolpreise im ASTY-Referenzpreis.`;
     }
 
     async function load() {
@@ -2125,96 +2093,61 @@
       isLoading = true;
       els.refreshButton.classList.add("spinning");
       setStatus("loading", "Das ASTY-Poolnetzwerk wird analysiert...");
-
       try {
         let result;
-        try {
-          result = await fetchLivePools();
-        } catch (error) {
-          const cached = loadCachedPools();
-          if (!cached) throw error;
-          result = cached;
-        }
-
-        lastDataMode = result.mode;
+        try { result = await fetchLivePools(); }
+        catch (error) { const cached = loadCachedPools(); if (!cached) throw error; result = cached; }
         poolRows = parsePoolRows(result.data);
-        computeSignals(poolRows);
+        const settings = getSettings();
+        els.dataStatus.innerHTML = '<span class="history-loading"><span class="loading-spinner"></span><span><strong>Datenquellen:</strong> Echte Meteora-Einnahmen und Marktvergleich werden geprüft.</span></span>';
+        await enrichMeteora(poolRows);
+        computeReferencePrice(poolRows);
         saveHistory(poolRows);
-        const summary = allocateCapital(poolRows, getSettings());
-        renderSummary(summary);
-        renderPools();
+        recomputeAndRender();
         updateThirtyDayStatus();
         syncThirtyDayData();
+        Promise.allSettled([syncExternalMarkets(poolRows), syncWalletPositions(poolRows, settings.wallets)]).then(() => recomputeAndRender());
 
-        const strongest = [...poolRows].sort((a, b) => {
-        if (a.dataAvailable !== b.dataAvailable) return Number(b.dataAvailable) - Number(a.dataAvailable);
-        return b.signal - a.signal;
-      })[0];
+        const strongest = [...poolRows].sort((a, b) => b.signal - a.signal)[0];
         const timeText = new Date(result.timestamp).toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" });
-
         if (result.mode === "live") {
-          setStatus("live", `Live · ${poolRows.filter(row => row.dataAvailable).length} von ${poolRows.length} Pools · ${timeText}`);
-          els.liveProof.innerHTML = strongest
-            ? `Stärkster aktueller Impuls: <strong>${strongest.label}</strong> · ${fmtUsd(strongest.v1, true)} Volumen in 1h · ${fmtNumber(strongest.tx1, 0)} Transaktionen.`
-            : `<strong>${poolRows.length}</strong> ASTY-Pools geladen.`;
+          setStatus("live", `Live · ${poolRows.filter(r => r.dataAvailable).length} von ${poolRows.length} Pools · ${timeText}`);
+          els.liveProof.innerHTML = strongest ? `Stärkster aktueller Impuls: <strong>${strongest.label}</strong> · ${fmtUsd(strongest.v1, true)} Volumen in 1h · ${fmtUsd(strongest.income24, true)} Einnahmen in 24h.` : `${poolRows.length} Pools geladen.`;
         } else {
-          setStatus("error", `Zwischengespeicherte Daten · ${poolRows.filter(row => row.dataAvailable).length} von ${poolRows.length} Pools · ${timeText}`);
-          els.liveProof.innerHTML = `Die Live-API war nicht erreichbar. Angezeigt wird der letzte lokal gespeicherte Scan von <strong>${timeText}</strong>.`;
+          setStatus("error", `Zwischengespeicherte Daten · ${timeText}`);
+          els.liveProof.innerHTML = `Die Live-API war nicht erreichbar. Angezeigt wird der lokale Datenstand von <strong>${timeText}</strong>.`;
         }
       } catch (error) {
         console.error(error);
         setStatus("error", "Pooldaten konnten nicht geladen werden");
         els.liveProof.textContent = "Aktuell sind weder Live- noch zwischengespeicherte Pooldaten verfügbar.";
-        els.poolGrid.innerHTML = `<div class="empty-state">Die Live-Pooldaten konnten nicht erreicht werden. Prüfe die Internetverbindung und aktualisiere die Seite. Bereits gespeicherte Daten werden automatisch als Ersatz verwendet.</div>`;
-      } finally {
-        isLoading = false;
-        els.refreshButton.classList.remove("spinning");
-      }
+        els.poolGrid.innerHTML = '<div class="empty-state">Die öffentlichen Pooldaten konnten nicht erreicht werden. Prüfe die Internetverbindung und öffne die Seite über GitHub Pages.</div>';
+      } finally { isLoading = false; els.refreshButton.classList.remove("spinning"); }
     }
 
-    document.querySelectorAll(".filter-button").forEach(button => {
-      button.addEventListener("click", () => {
-        document.querySelectorAll(".filter-button").forEach(item => item.classList.remove("active"));
-        button.classList.add("active");
-        currentFilter = button.dataset.filter;
-        renderPools();
-      });
-    });
+    async function startCalculation() {
+      if (isLoading) return;
+      if (!hasStarted) { hasStarted = true; els.refreshButton.disabled = false; }
+      await load();
+      if (!refreshTimer) refreshTimer = setInterval(load, REFRESH_MS);
+    }
 
+    document.querySelectorAll(".filter-button").forEach(button => button.addEventListener("click", () => {
+      document.querySelectorAll(".filter-button").forEach(x => x.classList.remove("active"));
+      button.classList.add("active"); currentFilter = button.dataset.filter; renderPools();
+    }));
     els.poolSearch.addEventListener("input", renderPools);
     els.sortSelect.addEventListener("change", renderPools);
     els.runButton.addEventListener("click", startCalculation);
-    els.refreshButton.addEventListener("click", () => {
-      if (hasStarted) load();
-    });
+    els.refreshButton.addEventListener("click", () => { if (hasStarted) load(); });
     els.dialogClose.addEventListener("click", () => els.poolDialog.close());
-    els.poolDialog.addEventListener("click", event => {
-      const rect = els.poolDialog.getBoundingClientRect();
-      const outside = event.clientX < rect.left || event.clientX > rect.right || event.clientY < rect.top || event.clientY > rect.bottom;
-      if (outside) els.poolDialog.close();
-    });
-
+    els.poolDialog.addEventListener("click", event => { const r = els.poolDialog.getBoundingClientRect(); if (event.clientX < r.left || event.clientX > r.right || event.clientY < r.top || event.clientY > r.bottom) els.poolDialog.close(); });
 
     async function copyContract() {
-      try {
-        await navigator.clipboard.writeText(ASTY_MINT);
-        const original = els.copyContractButton.textContent;
-        els.copyContractButton.textContent = "Kopiert";
-        setTimeout(() => { els.copyContractButton.textContent = original; }, 1400);
-      } catch {
-        const textarea = document.createElement("textarea");
-        textarea.value = ASTY_MINT;
-        document.body.appendChild(textarea);
-        textarea.select();
-        document.execCommand("copy");
-        textarea.remove();
-      }
+      try { await navigator.clipboard.writeText(ASTY_MINT); const original = els.copyContractButton.textContent; els.copyContractButton.textContent = "Kopiert"; setTimeout(() => els.copyContractButton.textContent = original, 1400); }
+      catch { const t = document.createElement("textarea"); t.value = ASTY_MINT; document.body.appendChild(t); t.select(); document.execCommand("copy"); t.remove(); }
     }
-
-    els.copyContractButton.addEventListener("click", event => {
-      event.stopPropagation();
-      copyContract();
-    });
+    els.copyContractButton.addEventListener("click", e => { e.stopPropagation(); copyContract(); });
     els.contractCard.addEventListener("click", copyContract);
 
     readSettings();
