@@ -8,7 +8,7 @@
 
 <meta
 name="description"
-content="ASTY is a performance-based liquidity system on Solana. Every ASTY transaction contributes to burn, growth and strategic reserves through the ASTY-Effect."
+content="ArbStrategy searches for volatile Solana tokens, creates liquidity pairs with ASTY and uses arbitrage activity to power burn, growth and strategic reserves."
 />
 
 <style>
@@ -492,13 +492,13 @@ display: block;
 /* HERO */
 
 .hero-intro {
-padding: 26px 0;
+padding: 26px 0 36px;
 }
 
 .hero-panel {
 position: relative;
 overflow: hidden;
-padding: clamp(28px, 5vw, 52px);
+padding: clamp(30px, 6vw, 58px);
 border: 1px solid var(--line);
 border-radius: var(--radius-large);
 background:
@@ -547,7 +547,7 @@ filter: blur(0);
 display: inline-flex;
 align-items: center;
 gap: 9px;
-margin-bottom: 18px;
+margin-bottom: 20px;
 padding: 8px 12px;
 border: 1px solid rgba(167, 139, 250, 0.22);
 border-radius: 999px;
@@ -582,11 +582,11 @@ transform: scale(1.25);
 }
 
 .hero-title {
-max-width: 920px;
+max-width: 940px;
 margin: 0;
-font-size: clamp(38px, 6vw, 66px);
-line-height: 1.04;
-letter-spacing: -2px;
+font-size: clamp(42px, 6.5vw, 72px);
+line-height: 1.03;
+letter-spacing: -2.2px;
 background: linear-gradient(
 90deg,
 #ffffff 0%,
@@ -598,191 +598,14 @@ background-clip: text;
 color: transparent;
 }
 
-.hero-description {
-max-width: 820px;
-margin: 22px 0 0;
-font-size: clamp(16px, 2vw, 19px);
-line-height: 1.75;
-color: var(--text-soft);
-}
-
-.hero-principles {
-display: flex;
-gap: 10px;
-flex-wrap: wrap;
-margin-top: 28px;
-}
-
-.hero-chip {
-display: inline-flex;
-align-items: center;
-gap: 8px;
-padding: 10px 13px;
-border: 1px solid var(--line);
-border-radius: 999px;
-background: rgba(255, 255, 255, 0.028);
-color: #e8e4f4;
-font-size: 13px;
-font-weight: 650;
-}
-
-.hero-chip::before {
-content: "";
-width: 6px;
-height: 6px;
-border-radius: 50%;
-background: var(--purple);
-box-shadow: 0 0 10px rgba(167, 139, 250, 0.65);
-}
-
-/* DASHBOARD */
-
-.dashboard-trust-wrap {
-padding: 4px 0 34px;
-}
-
-.dashboard-trust-card {
-position: relative;
-display: grid;
-grid-template-columns: auto minmax(0, 1fr) auto;
-align-items: center;
-gap: 18px;
-padding: 22px 24px;
-overflow: hidden;
-border: 1px solid rgba(167, 139, 250, 0.25);
-border-radius: var(--radius-large);
-background:
-linear-gradient(
-125deg,
-rgba(124, 58, 237, 0.12),
-rgba(255, 255, 255, 0.035) 52%,
-rgba(34, 211, 238, 0.055)
-);
-box-shadow: var(--shadow-panel);
-transition:
-transform 0.25s ease,
-border-color 0.25s ease,
-box-shadow 0.25s ease;
-}
-
-.dashboard-trust-card::before {
-content: "";
-position: absolute;
-top: -60%;
-left: -30%;
-width: 30%;
-height: 220%;
-background: linear-gradient(
-90deg,
-transparent,
-rgba(255, 255, 255, 0.11),
-transparent
-);
-transform: rotate(16deg);
-transition: left 0.7s ease;
-pointer-events: none;
-}
-
-.dashboard-trust-card:hover {
-transform: translateY(-3px);
-border-color: rgba(196, 181, 253, 0.48);
-box-shadow:
-0 20px 46px rgba(0, 0, 0, 0.30),
-0 0 28px rgba(124, 58, 237, 0.14);
-}
-
-.dashboard-trust-card:hover::before {
-left: 120%;
-}
-
-.live-status {
-display: grid;
-place-items: center;
-width: 46px;
-height: 46px;
-border: 1px solid rgba(167, 139, 250, 0.25);
-border-radius: 50%;
-background: rgba(124, 58, 237, 0.10);
-}
-
-.live-status-dot {
-width: 10px;
-height: 10px;
-border-radius: 50%;
-background: var(--purple);
-box-shadow:
-0 0 0 5px rgba(124, 58, 237, 0.09),
-0 0 18px rgba(167, 139, 250, 0.90);
-animation: livePulse 1.9s ease-in-out infinite;
-}
-
-@keyframes livePulse {
-0%,
-100% {
-transform: scale(0.92);
-opacity: 0.72;
-}
-
-50% {
-transform: scale(1.18);
-opacity: 1;
-}
-}
-
-.dashboard-trust-label {
-display: block;
-margin-bottom: 5px;
-color: var(--purple-light);
-font-size: 11px;
-font-weight: 850;
-letter-spacing: 0.9px;
-text-transform: uppercase;
-}
-
-.dashboard-trust-title {
-display: block;
-margin-bottom: 5px;
-color: #ffffff;
-font-size: 19px;
-font-weight: 750;
-}
-
-.dashboard-trust-description {
-display: block;
-max-width: 750px;
-color: var(--text-soft);
-font-size: 14px;
-line-height: 1.6;
-}
-
-.dashboard-trust-arrow {
-display: grid;
-place-items: center;
-width: 44px;
-height: 44px;
-border: 1px solid var(--line-cyan);
-border-radius: 50%;
-background: rgba(34, 211, 238, 0.045);
-color: var(--cyan);
-font-size: 19px;
-transition:
-transform 0.22s ease,
-background 0.22s ease;
-}
-
-.dashboard-trust-card:hover .dashboard-trust-arrow {
-transform: translateX(4px);
-background: rgba(34, 211, 238, 0.09);
-}
-
 /* SECTIONS */
 
 .section {
-padding: 40px 0;
+padding: 42px 0;
 }
 
 .section-head {
-max-width: 850px;
+max-width: 870px;
 }
 
 .section-title {
@@ -829,14 +652,14 @@ box-shadow:
 }
 
 .section-sub {
-max-width: 810px;
+max-width: 830px;
 margin: 0;
 color: var(--text-soft);
 font-size: 16px;
 line-height: 1.75;
 }
 
-/* FLOW PANELS */
+/* GENERAL FLOW */
 
 .flow-panel {
 position: relative;
@@ -925,14 +748,14 @@ font-size: 25px;
 .flow-icon {
 display: grid;
 place-items: center;
-width: 34px;
-height: 34px;
+width: 38px;
+height: 38px;
 margin-bottom: 14px;
 border: 1px solid rgba(167, 139, 250, 0.24);
 border-radius: 10px;
 background: rgba(124, 58, 237, 0.10);
 color: var(--purple-light);
-font-size: 14px;
+font-size: 13px;
 font-weight: 800;
 }
 
@@ -957,7 +780,7 @@ line-height: 1.55;
 
 .crypto-answer {
 margin-top: 20px;
-padding: 21px;
+padding: 22px;
 border: 1px solid rgba(103, 232, 249, 0.17);
 border-radius: var(--radius-medium);
 background:
@@ -972,7 +795,7 @@ rgba(124, 58, 237, 0.055)
 display: block;
 margin-bottom: 8px;
 color: #ffffff;
-font-size: 18px;
+font-size: 19px;
 }
 
 .crypto-answer p {
@@ -982,13 +805,116 @@ font-size: 14px;
 line-height: 1.7;
 }
 
+/* ARBSTRATEGY MECHANIC */
+
+.mechanic-panel {
+position: relative;
+overflow: hidden;
+margin-top: 28px;
+padding: 30px;
+border: 1px solid rgba(167, 139, 250, 0.25);
+border-radius: var(--radius-large);
+background:
+linear-gradient(
+135deg,
+rgba(124, 58, 237, 0.12),
+rgba(255, 255, 255, 0.03) 50%,
+rgba(34, 211, 238, 0.045)
+);
+box-shadow: var(--shadow-panel);
+}
+
+.mechanic-grid {
+display: grid;
+grid-template-columns: repeat(3, minmax(0, 1fr));
+gap: 15px;
+}
+
+.mechanic-step {
+position: relative;
+min-height: 180px;
+padding: 22px;
+overflow: hidden;
+border: 1px solid rgba(255, 255, 255, 0.09);
+border-radius: var(--radius-medium);
+background: rgba(5, 7, 16, 0.38);
+transition:
+transform 0.25s ease,
+border-color 0.25s ease,
+box-shadow 0.25s ease;
+}
+
+.mechanic-step:hover {
+transform: translateY(-4px);
+border-color: rgba(167, 139, 250, 0.30);
+box-shadow: 0 16px 34px rgba(0, 0, 0, 0.22);
+}
+
+.mechanic-step:nth-child(6) {
+border-color: rgba(103, 232, 249, 0.20);
+background:
+linear-gradient(
+145deg,
+rgba(34, 211, 238, 0.06),
+rgba(5, 7, 16, 0.38)
+);
+}
+
+.mechanic-number {
+display: inline-flex;
+align-items: center;
+justify-content: center;
+width: 31px;
+height: 31px;
+margin-bottom: 14px;
+border: 1px solid rgba(167, 139, 250, 0.25);
+border-radius: 50%;
+background: rgba(124, 58, 237, 0.10);
+color: var(--purple-light);
+font-size: 12px;
+font-weight: 850;
+}
+
+.mechanic-step:nth-child(6) .mechanic-number {
+border-color: rgba(103, 232, 249, 0.24);
+background: rgba(34, 211, 238, 0.07);
+color: var(--cyan);
+}
+
+.mechanic-step strong {
+display: block;
+margin-bottom: 9px;
+color: #ffffff;
+font-size: 17px;
+}
+
+.mechanic-step p {
+margin: 0;
+color: var(--text-soft);
+font-size: 14px;
+line-height: 1.65;
+}
+
+.mechanic-result {
+margin-top: 18px;
+padding: 20px;
+border: 1px solid rgba(167, 139, 250, 0.20);
+border-radius: var(--radius-medium);
+background: rgba(124, 58, 237, 0.075);
+text-align: center;
+color: #ffffff;
+font-size: 15px;
+font-weight: 750;
+line-height: 1.65;
+}
+
 /* ASTY EFFECT */
 
 .effect-stage {
 position: relative;
 display: grid;
-grid-template-columns: minmax(0, 1fr) 220px;
-gap: 24px;
+grid-template-columns: minmax(0, 1fr) 205px;
+gap: 22px;
 align-items: center;
 margin-top: 30px;
 padding: 30px;
@@ -1008,8 +934,8 @@ content: "";
 position: absolute;
 right: -80px;
 bottom: -100px;
-width: 280px;
-height: 280px;
+width: 270px;
+height: 270px;
 border-radius: 50%;
 background: rgba(124, 58, 237, 0.15);
 filter: blur(75px);
@@ -1150,19 +1076,19 @@ z-index: 2;
 display: flex;
 align-items: center;
 justify-content: center;
-min-height: 250px;
+min-height: 220px;
 }
 
 .wolf-wrap::before {
 content: "";
 position: absolute;
-width: 190px;
-height: 190px;
+width: 170px;
+height: 170px;
 border-radius: 50%;
 background:
 radial-gradient(
 circle,
-rgba(124, 58, 237, 0.28),
+rgba(124, 58, 237, 0.27),
 rgba(124, 58, 237, 0.07) 48%,
 transparent 72%
 );
@@ -1187,7 +1113,7 @@ opacity: 1;
 position: relative;
 z-index: 2;
 display: block;
-width: min(100%, 195px);
+width: min(100%, 165px);
 height: auto;
 object-fit: contain;
 filter:
@@ -1203,7 +1129,7 @@ transform: translateY(0) rotate(-0.5deg);
 }
 
 50% {
-transform: translateY(-8px) rotate(0.5deg);
+transform: translateY(-7px) rotate(0.5deg);
 }
 }
 
@@ -1392,6 +1318,146 @@ font-weight: 700;
 line-height: 1.6;
 }
 
+/* DASHBOARD TRUST CARD */
+
+.dashboard-trust-wrap {
+padding: 42px 0 18px;
+}
+
+.dashboard-trust-card {
+position: relative;
+display: grid;
+grid-template-columns: auto minmax(0, 1fr) auto;
+align-items: center;
+gap: 18px;
+padding: 22px 24px;
+overflow: hidden;
+border: 1px solid rgba(167, 139, 250, 0.25);
+border-radius: var(--radius-large);
+background:
+linear-gradient(
+125deg,
+rgba(124, 58, 237, 0.12),
+rgba(255, 255, 255, 0.035) 52%,
+rgba(34, 211, 238, 0.055)
+);
+box-shadow: var(--shadow-panel);
+transition:
+transform 0.25s ease,
+border-color 0.25s ease,
+box-shadow 0.25s ease;
+}
+
+.dashboard-trust-card::before {
+content: "";
+position: absolute;
+top: -60%;
+left: -30%;
+width: 30%;
+height: 220%;
+background: linear-gradient(
+90deg,
+transparent,
+rgba(255, 255, 255, 0.11),
+transparent
+);
+transform: rotate(16deg);
+transition: left 0.7s ease;
+pointer-events: none;
+}
+
+.dashboard-trust-card:hover {
+transform: translateY(-3px);
+border-color: rgba(196, 181, 253, 0.48);
+box-shadow:
+0 20px 46px rgba(0, 0, 0, 0.30),
+0 0 28px rgba(124, 58, 237, 0.14);
+}
+
+.dashboard-trust-card:hover::before {
+left: 120%;
+}
+
+.live-status {
+display: grid;
+place-items: center;
+width: 46px;
+height: 46px;
+border: 1px solid rgba(167, 139, 250, 0.25);
+border-radius: 50%;
+background: rgba(124, 58, 237, 0.10);
+}
+
+.live-status-dot {
+width: 10px;
+height: 10px;
+border-radius: 50%;
+background: var(--purple);
+box-shadow:
+0 0 0 5px rgba(124, 58, 237, 0.09),
+0 0 18px rgba(167, 139, 250, 0.90);
+animation: livePulse 1.9s ease-in-out infinite;
+}
+
+@keyframes livePulse {
+0%,
+100% {
+transform: scale(0.92);
+opacity: 0.72;
+}
+
+50% {
+transform: scale(1.18);
+opacity: 1;
+}
+}
+
+.dashboard-trust-label {
+display: block;
+margin-bottom: 5px;
+color: var(--purple-light);
+font-size: 11px;
+font-weight: 850;
+letter-spacing: 0.9px;
+text-transform: uppercase;
+}
+
+.dashboard-trust-title {
+display: block;
+margin-bottom: 5px;
+color: #ffffff;
+font-size: 19px;
+font-weight: 750;
+}
+
+.dashboard-trust-description {
+display: block;
+max-width: 750px;
+color: var(--text-soft);
+font-size: 14px;
+line-height: 1.6;
+}
+
+.dashboard-trust-arrow {
+display: grid;
+place-items: center;
+width: 44px;
+height: 44px;
+border: 1px solid var(--line-cyan);
+border-radius: 50%;
+background: rgba(34, 211, 238, 0.045);
+color: var(--cyan);
+font-size: 19px;
+transition:
+transform 0.22s ease,
+background 0.22s ease;
+}
+
+.dashboard-trust-card:hover .dashboard-trust-arrow {
+transform: translateX(4px);
+background: rgba(34, 211, 238, 0.09);
+}
+
 /* CONTRACT */
 
 .contract-section {
@@ -1567,11 +1633,11 @@ grid-template-columns: 1fr;
 }
 
 .wolf-wrap {
-min-height: 210px;
+min-height: 180px;
 }
 
 .wolf-image {
-width: min(55%, 185px);
+width: min(45%, 155px);
 }
 }
 
@@ -1582,6 +1648,10 @@ display: none;
 
 .menu-toggle {
 display: inline-flex;
+}
+
+.mechanic-grid {
+grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
 .flow-grid,
@@ -1660,34 +1730,27 @@ padding-top: 18px;
 }
 
 .hero-panel {
-padding: 27px 21px;
+padding: 30px 21px;
 }
 
 .hero-title {
-letter-spacing: -1.2px;
-}
-
-.dashboard-trust-card {
-grid-template-columns: auto minmax(0, 1fr);
-padding: 19px;
-}
-
-.dashboard-trust-arrow {
-display: none;
+letter-spacing: -1.3px;
 }
 
 .section {
-padding: 34px 0;
+padding: 35px 0;
 }
 
 .flow-grid,
 .flow-grid.three,
+.mechanic-grid,
 .tokenomics-grid,
 .holder-grid {
 grid-template-columns: 1fr;
 }
 
-.flow-step {
+.flow-step,
+.mechanic-step {
 min-height: auto;
 }
 
@@ -1729,11 +1792,20 @@ display: none;
 }
 
 .wolf-wrap {
-min-height: 185px;
+min-height: 160px;
 }
 
 .wolf-image {
-width: min(58%, 170px);
+width: min(43%, 140px);
+}
+
+.dashboard-trust-card {
+grid-template-columns: auto minmax(0, 1fr);
+padding: 19px;
+}
+
+.dashboard-trust-arrow {
+display: none;
 }
 
 .contract-card {
@@ -1765,15 +1837,6 @@ grid-template-columns: repeat(2, minmax(0, 1fr));
 min-height: 50px;
 padding: 12px;
 font-size: 12px;
-}
-
-.hero-principles {
-display: grid;
-grid-template-columns: 1fr;
-}
-
-.hero-chip {
-justify-content: flex-start;
 }
 
 .dashboard-trust-card {
@@ -1830,6 +1893,7 @@ transform: scaleX(1) !important;
 <div class="container nav">
 
 <a class="brand" href="#" aria-label="ASTY Home">
+
 <img
 src="assets/logo.png"
 alt="ASTY Logo"
@@ -1840,6 +1904,7 @@ class="brand-logo"
 <strong>$ASTY</strong>
 <span>ArbStrategy</span>
 </div>
+
 </a>
 
 <div class="header-actions">
@@ -1915,6 +1980,7 @@ id="mobileMenu"
 class="mobile-menu"
 aria-hidden="true"
 >
+
 <nav
 class="mobile-menu-grid"
 aria-label="Mobile navigation"
@@ -1966,11 +2032,13 @@ X Twitter
 
 <section class="hero-banner-wrap">
 <div class="hero-banner-box">
+
 <img
 src="assets/banner.png"
 alt="ASTY ArbStrategy Banner"
 class="hero-banner-img"
 />
+
 </div>
 </section>
 
@@ -1981,6 +2049,7 @@ class="hero-banner-img"
 class="hero-kicker hero-build"
 style="--hero-delay: 100ms;"
 >
+
 <span class="hero-kicker-dot"></span>
 
 <span
@@ -1989,110 +2058,19 @@ data-de="Performancebasiertes Liquiditätssystem auf Solana"
 >
 Performance-based liquidity system on Solana
 </span>
+
 </div>
 
 <h1
 class="hero-title hero-build"
-style="--hero-delay: 220ms;"
-data-en="ASTY turns market activity into burn, growth and reserves."
-data-de="ASTY verwandelt Marktaktivität in Burn, Wachstum und Reserven."
+style="--hero-delay: 240ms;"
+data-en="ASTY turns volatility into lasting system growth."
+data-de="ASTY verwandelt Volatilität in dauerhaftes Systemwachstum."
 >
-ASTY turns market activity into burn, growth and reserves.
+ASTY turns volatility into lasting system growth.
 </h1>
 
-<p
-class="hero-description hero-build"
-style="--hero-delay: 360ms;"
-data-en="ArbStrategy is a performance-based liquidity system built around $ASTY. Every ASTY buy, sell and transfer creates a fixed 1% fee. That fee reduces supply, funds future growth and builds a strategic treasury in SOL or USDC."
-data-de="ArbStrategy ist ein performancebasiertes Liquiditätssystem rund um $ASTY. Jeder Kauf, Verkauf und Transfer von ASTY erzeugt eine feste Gebühr von 1%. Diese reduziert die Supply, finanziert zukünftiges Wachstum und baut eine strategische Treasury in SOL oder USDC auf."
->
-ArbStrategy is a performance-based liquidity system built around $ASTY.
-Every ASTY buy, sell and transfer creates a fixed 1% fee. That fee
-reduces supply, funds future growth and builds a strategic treasury in
-SOL or USDC.
-</p>
-
-<div
-class="hero-principles hero-build"
-style="--hero-delay: 500ms;"
->
-
-<span
-class="hero-chip"
-data-en="Measured pool performance"
-data-de="Messbare Pool-Performance"
->
-Measured pool performance
-</span>
-
-<span
-class="hero-chip"
-data-en="Fixed 1% system fee"
-data-de="Feste Systemgebühr von 1%"
->
-Fixed 1% system fee
-</span>
-
-<span
-class="hero-chip"
-data-en="Transparent live data"
-data-de="Transparente Live-Daten"
->
-Transparent live data
-</span>
-
 </div>
-
-</div>
-</section>
-
-<section class="dashboard-trust-wrap reveal">
-
-<a
-class="dashboard-trust-card stagger-item"
-data-direction="up"
-href="https://htmlpreview.github.io/?https://github.com/ArbStrategy-ASTY/ArbStrategy-ASTY/blob/main/Dashboard.html"
-target="_blank"
-rel="noopener noreferrer"
->
-
-<span class="live-status">
-<span class="live-status-dot"></span>
-</span>
-
-<span>
-
-<span
-class="dashboard-trust-label"
-data-en="ASTY system live"
-data-de="ASTY-System live"
->
-ASTY system live
-</span>
-
-<span
-class="dashboard-trust-title"
-data-en="Open the Live Dashboard"
-data-de="Live Dashboard öffnen"
->
-Open the Live Dashboard
-</span>
-
-<span
-class="dashboard-trust-description"
-data-en="Follow pool activity, liquidity, supply, burn progress and system development through transparent live data."
-data-de="Verfolge Pool-Aktivität, Liquidität, Supply, Burn-Fortschritt und die Entwicklung des Systems anhand transparenter Live-Daten."
->
-Follow pool activity, liquidity, supply, burn progress and system
-development through transparent live data.
-</span>
-
-</span>
-
-<span class="dashboard-trust-arrow">↗</span>
-
-</a>
-
 </section>
 
 <section class="section reveal">
@@ -2206,14 +2184,188 @@ Does that happen in crypto?
 </strong>
 
 <p
-data-en="Yes. The same token can trade at slightly different prices across exchanges and liquidity pools. Arbitrage traders use these temporary differences. Their trades create activity and volume inside the pools."
-data-de="Ja. Derselbe Token kann an verschiedenen Börsen und in Liquiditätspools leicht unterschiedliche Preise haben. Arbitrage-Trader nutzen diese vorübergehenden Unterschiede. Ihre Trades erzeugen Aktivität und Volumen in den Pools."
+data-en="Yes. The same token can trade at slightly different prices across exchanges and liquidity pools. Arbitrage bots detect these temporary differences and execute trades to capture them."
+data-de="Ja. Derselbe Token kann an verschiedenen Börsen und in Liquiditätspools leicht unterschiedliche Preise haben. Arbitrage-Bots erkennen diese vorübergehenden Unterschiede und führen Trades aus, um sie zu nutzen."
 >
 Yes. The same token can trade at slightly different prices across
-exchanges and liquidity pools. Arbitrage traders use these temporary
-differences. Their trades create activity and volume inside the pools.
+exchanges and liquidity pools. Arbitrage bots detect these temporary
+differences and execute trades to capture them.
 </p>
 
+</div>
+
+</div>
+
+</section>
+
+<section class="section reveal">
+
+<div class="section-head">
+
+<h2
+class="section-title"
+data-en="How ArbStrategy turns volatility into system activity"
+data-de="Wie ArbStrategy Volatilität in Systemaktivität verwandelt"
+>
+How ArbStrategy turns volatility into system activity
+</h2>
+
+<p
+class="section-sub"
+data-en="ArbStrategy searches the Solana market for volatile coins with suitable liquidity, volume and trading activity. Selected coins are paired with $ASTY in dedicated liquidity pools. Price differences attract arbitrage bots, and their ASTY trades trigger the fixed 1% fee."
+data-de="ArbStrategy durchsucht den Solana-Markt nach volatilen Coins mit geeigneter Liquidität, ausreichendem Volumen und aktiver Handelsbewegung. Ausgewählte Coins werden in eigenen Liquiditätspools mit $ASTY verbunden. Preisunterschiede ziehen Arbitrage-Bots an, und ihre ASTY-Trades lösen die feste Gebühr von 1% aus."
+>
+ArbStrategy searches the Solana market for volatile coins with suitable
+liquidity, volume and trading activity. Selected coins are paired with
+$ASTY in dedicated liquidity pools. Price differences attract arbitrage
+bots, and their ASTY trades trigger the fixed 1% fee.
+</p>
+
+</div>
+
+<div
+class="mechanic-panel stagger-item"
+data-direction="up"
+>
+
+<div class="mechanic-grid">
+
+<div class="mechanic-step">
+
+<span class="mechanic-number">1</span>
+
+<strong
+data-en="Search for volatility"
+data-de="Volatilität suchen"
+>
+Search for volatility
+</strong>
+
+<p
+data-en="ArbStrategy scans Solana for coins with active price movement and potential arbitrage opportunities."
+data-de="ArbStrategy scannt Solana nach Coins mit aktiven Preisbewegungen und potenziellen Arbitrage-Chancen."
+>
+ArbStrategy scans Solana for coins with active price movement and
+potential arbitrage opportunities.
+</p>
+
+</div>
+
+<div class="mechanic-step">
+
+<span class="mechanic-number">2</span>
+
+<strong
+data-en="Analyze market conditions"
+data-de="Marktbedingungen analysieren"
+>
+Analyze market conditions
+</strong>
+
+<p
+data-en="Liquidity, volume, activity and potential capital efficiency are evaluated before a pool is considered."
+data-de="Liquidität, Volumen, Aktivität und die mögliche Kapitaleffizienz werden geprüft, bevor ein Pool in Betracht kommt."
+>
+Liquidity, volume, activity and potential capital efficiency are
+evaluated before a pool is considered.
+</p>
+
+</div>
+
+<div class="mechanic-step">
+
+<span class="mechanic-number">3</span>
+
+<strong
+data-en="Select suitable coins"
+data-de="Geeignete Coins auswählen"
+>
+Select suitable coins
+</strong>
+
+<p
+data-en="Coins with suitable market behavior can be selected for the ArbStrategy pool network."
+data-de="Coins mit geeigneter Marktdynamik können für das ArbStrategy-Poolnetzwerk ausgewählt werden."
+>
+Coins with suitable market behavior can be selected for the ArbStrategy
+pool network.
+</p>
+
+</div>
+
+<div class="mechanic-step">
+
+<span class="mechanic-number">4</span>
+
+<strong
+data-en="Create ASTY liquidity pairs"
+data-de="ASTY-Liquiditätspaare erstellen"
+>
+Create ASTY liquidity pairs
+</strong>
+
+<p
+data-en="The selected coin is paired with $ASTY, meaning the pool consists of ASTY and the respective partner token."
+data-de="Der ausgewählte Coin wird mit $ASTY gepaart. Der Pool besteht damit aus ASTY und dem jeweiligen Partner-Token."
+>
+The selected coin is paired with $ASTY, meaning the pool consists of
+ASTY and the respective partner token.
+</p>
+
+</div>
+
+<div class="mechanic-step">
+
+<span class="mechanic-number">5</span>
+
+<strong
+data-en="Arbitrage bots trade"
+data-de="Arbitrage-Bots handeln"
+>
+Arbitrage bots trade
+</strong>
+
+<p
+data-en="Price differences between pools and markets create opportunities that automated arbitrage bots can use."
+data-de="Preisunterschiede zwischen Pools und Märkten erzeugen Chancen, die automatisierte Arbitrage-Bots nutzen können."
+>
+Price differences between pools and markets create opportunities that
+automated arbitrage bots can use.
+</p>
+
+</div>
+
+<div class="mechanic-step">
+
+<span class="mechanic-number">6</span>
+
+<strong
+data-en="The 1% fee is generated"
+data-de="Die 1%-Gebühr wird erzeugt"
+>
+The 1% fee is generated
+</strong>
+
+<p
+data-en="When bots buy or sell through ASTY pairs, ASTY is moved and the fixed 1% system fee is triggered."
+data-de="Wenn Bots über ASTY-Paare kaufen oder verkaufen, wird ASTY bewegt und die feste Systemgebühr von 1% ausgelöst."
+>
+When bots buy or sell through ASTY pairs, ASTY is moved and the fixed
+1% system fee is triggered.
+</p>
+
+</div>
+
+</div>
+
+<div
+class="mechanic-result"
+data-en="Volatility creates price differences. Price differences attract arbitrage activity. Arbitrage activity moves ASTY and generates the 1% fee that powers the ASTY-Effect."
+data-de="Volatilität erzeugt Preisunterschiede. Preisunterschiede ziehen Arbitrage-Aktivität an. Arbitrage-Aktivität bewegt ASTY und erzeugt die 1%-Gebühr, die den ASTY-Effect antreibt."
+>
+Volatility creates price differences. Price differences attract
+arbitrage activity. Arbitrage activity moves ASTY and generates the 1%
+fee that powers the ASTY-Effect.
 </div>
 
 </div>
@@ -2234,12 +2386,12 @@ How ArbStrategy decides where capital goes
 
 <p
 class="section-sub"
-data-en="Not every liquidity pool performs equally well. ArbStrategy compares real activity and capital efficiency, then directs growth capital toward pools that can use it most effectively."
-data-de="Nicht jeder Liquiditätspool arbeitet gleich effizient. ArbStrategy vergleicht reale Aktivität und Kapitaleffizienz und lenkt Wachstumskapital anschließend in Pools, die es am wirkungsvollsten einsetzen können."
+data-en="Creating a pool is only the beginning. ArbStrategy continuously compares measurable pool performance so growth capital can be directed toward pools that use liquidity most efficiently."
+data-de="Die Erstellung eines Pools ist nur der Anfang. ArbStrategy vergleicht fortlaufend die messbare Pool-Performance, damit Wachstumskapital in Pools fließen kann, die Liquidität besonders effizient einsetzen."
 >
-Not every liquidity pool performs equally well. ArbStrategy compares
-real activity and capital efficiency, then directs growth capital toward
-pools that can use it most effectively.
+Creating a pool is only the beginning. ArbStrategy continuously compares
+measurable pool performance so growth capital can be directed toward
+pools that use liquidity most efficiently.
 </p>
 
 </div>
@@ -2264,17 +2416,17 @@ Performance-based allocation
 <div class="flow-icon">1</div>
 
 <strong
-data-en="Collect pool data"
-data-de="Pool-Daten erfassen"
+data-en="Measure pool data"
+data-de="Pool-Daten messen"
 >
-Collect pool data
+Measure pool data
 </strong>
 
 <span
-data-en="Activity, volume and existing liquidity are measured."
-data-de="Aktivität, Volumen und bestehende Liquidität werden gemessen."
+data-en="Volume, activity, income and existing liquidity are evaluated."
+data-de="Volumen, Aktivität, Einnahmen und bestehende Liquidität werden ausgewertet."
 >
-Activity, volume and existing liquidity are measured.
+Volume, activity, income and existing liquidity are evaluated.
 </span>
 
 </div>
@@ -2304,17 +2456,18 @@ Pools are compared with the strongest current performers.
 <div class="flow-icon">3</div>
 
 <strong
-data-en="Rank efficiency"
-data-de="Effizienz bewerten"
+data-en="Identify efficiency"
+data-de="Effizienz erkennen"
 >
-Rank efficiency
+Identify efficiency
 </strong>
 
 <span
-data-en="The system identifies where capital is working most effectively."
-data-de="Das System erkennt, wo Kapital am effizientesten arbeitet."
+data-en="The system identifies where the available capital is working most effectively."
+data-de="Das System erkennt, wo das verfügbare Kapital am effizientesten arbeitet."
 >
-The system identifies where capital is working most effectively.
+The system identifies where the available capital is working most
+effectively.
 </span>
 
 </div>
@@ -2331,11 +2484,11 @@ Allocate growth capital
 </strong>
 
 <span
-data-en="Efficient pools can receive more capital. Weak pools are not automatically expanded."
-data-de="Effiziente Pools können mehr Kapital erhalten. Schwache Pools werden nicht automatisch erweitert."
+data-en="Strong pools can receive more capital. Weak pools are not automatically expanded."
+data-de="Starke Pools können mehr Kapital erhalten. Schwache Pools werden nicht automatisch erweitert."
 >
-Efficient pools can receive more capital. Weak pools are not
-automatically expanded.
+Strong pools can receive more capital. Weak pools are not automatically
+expanded.
 </span>
 
 </div>
@@ -2360,12 +2513,12 @@ The ASTY-Effect
 
 <p
 class="section-sub"
-data-en="Every ASTY buy, sell and transfer creates the same fixed 1% fee. The fee is divided into three defined functions: reducing supply, funding growth and building strategic reserves."
-data-de="Jeder Kauf, Verkauf und Transfer von ASTY erzeugt dieselbe feste Gebühr von 1%. Diese erfüllt drei klar definierte Funktionen: Supply reduzieren, Wachstum finanzieren und strategische Reserven aufbauen."
+data-en="Every ASTY buy, sell and wallet-to-wallet transfer creates the same fixed 1% fee. This fee reduces supply, funds future liquidity growth and builds strategic reserves."
+data-de="Jeder Kauf, Verkauf und Wallet-zu-Wallet-Transfer von ASTY erzeugt dieselbe feste Gebühr von 1%. Diese reduziert die Supply, finanziert zukünftiges Liquiditätswachstum und baut strategische Reserven auf."
 >
-Every ASTY buy, sell and transfer creates the same fixed 1% fee. The fee
-is divided into three defined functions: reducing supply, funding growth
-and building strategic reserves.
+Every ASTY buy, sell and wallet-to-wallet transfer creates the same
+fixed 1% fee. This fee reduces supply, funds future liquidity growth and
+builds strategic reserves.
 </p>
 
 </div>
@@ -2384,17 +2537,17 @@ style="--effect-delay: 300ms;"
 >
 
 <strong
-data-en="ASTY activity"
-data-de="ASTY-Aktivität"
+data-en="Volatility"
+data-de="Volatilität"
 >
-ASTY activity
+Volatility
 </strong>
 
 <span
-data-en="ASTY is bought, sold or transferred."
-data-de="ASTY wird gekauft, verkauft oder transferiert."
+data-en="Price movements create opportunities across the pool network."
+data-de="Preisbewegungen erzeugen Chancen im Poolnetzwerk."
 >
-ASTY is bought, sold or transferred.
+Price movements create opportunities across the pool network.
 </span>
 
 </div>
@@ -2405,17 +2558,17 @@ style="--effect-delay: 520ms;"
 >
 
 <strong
-data-en="1% system fee"
-data-de="1% Systemgebühr"
+data-en="Bot activity"
+data-de="Bot-Aktivität"
 >
-1% system fee
+Bot activity
 </strong>
 
 <span
-data-en="Every transaction contributes to the system."
-data-de="Jede Transaktion trägt zum System bei."
+data-en="Arbitrage bots trade through ASTY liquidity pairs."
+data-de="Arbitrage-Bots handeln über ASTY-Liquiditätspaare."
 >
-Every transaction contributes to the system.
+Arbitrage bots trade through ASTY liquidity pairs.
 </span>
 
 </div>
@@ -2426,17 +2579,17 @@ style="--effect-delay: 740ms;"
 >
 
 <strong
-data-en="Fixed allocation"
-data-de="Feste Verteilung"
+data-en="1% ASTY fee"
+data-de="1% ASTY-Gebühr"
 >
-Fixed allocation
+1% ASTY fee
 </strong>
 
 <span
-data-en="The fee is assigned to burn, growth and treasury."
-data-de="Die Gebühr wird Burn, Wachstum und Treasury zugeordnet."
+data-en="ASTY activity feeds one connected system."
+data-de="ASTY-Aktivität speist ein zusammenhängendes System."
 >
-The fee is assigned to burn, growth and treasury.
+ASTY activity feeds one connected system.
 </span>
 
 </div>
@@ -2447,17 +2600,17 @@ style="--effect-delay: 960ms;"
 >
 
 <strong
-data-en="Stronger structure"
-data-de="Stärkere Struktur"
+data-en="System growth"
+data-de="Systemwachstum"
 >
-Stronger structure
+System growth
 </strong>
 
 <span
-data-en="Supply falls while productive capital and reserves can grow."
-data-de="Die Supply sinkt, während produktives Kapital und Reserven wachsen können."
+data-en="Supply decreases while liquidity and reserves can grow."
+data-de="Die Supply sinkt, während Liquidität und Reserven wachsen können."
 >
-Supply falls while productive capital and reserves can grow.
+Supply decreases while liquidity and reserves can grow.
 </span>
 
 </div>
@@ -2468,17 +2621,17 @@ style="--effect-delay: 1180ms;"
 >
 
 <strong
-data-en="The cycle continues"
-data-de="Der Kreislauf läuft weiter"
+data-en="Next cycle"
+data-de="Nächster Zyklus"
 >
-The cycle continues
+Next cycle
 </strong>
 
 <span
-data-en="A stronger system can support future activity."
-data-de="Ein stärkeres System kann zukünftige Aktivität unterstützen."
+data-en="A stronger system can support more future activity."
+data-de="Ein stärkeres System kann mehr zukünftige Aktivität unterstützen."
 >
-A stronger system can support future activity.
+A stronger system can support more future activity.
 </span>
 
 </div>
@@ -2507,10 +2660,10 @@ Permanent burn
 </strong>
 
 <p
-data-en="ASTY is permanently removed from circulation. This reduces the remaining supply over time."
+data-en="ASTY is permanently removed from circulation, reducing the remaining supply over time."
 data-de="ASTY wird dauerhaft aus dem Umlauf entfernt. Dadurch sinkt die verbleibende Supply im Laufe der Zeit."
 >
-ASTY is permanently removed from circulation. This reduces the remaining
+ASTY is permanently removed from circulation, reducing the remaining
 supply over time.
 </p>
 
@@ -2540,11 +2693,11 @@ Growth wallet
 </strong>
 
 <p
-data-en="Capital is accumulated for performance-based liquidity expansion and future system growth."
-data-de="Kapital wird für performancebasierte Liquiditätserweiterungen und zukünftiges Systemwachstum angesammelt."
+data-en="Capital is accumulated to expand efficient ASTY liquidity pools and strengthen future system activity."
+data-de="Kapital wird gesammelt, um effiziente ASTY-Liquiditätspools auszubauen und zukünftige Systemaktivität zu stärken."
 >
-Capital is accumulated for performance-based liquidity expansion and
-future system growth.
+Capital is accumulated to expand efficient ASTY liquidity pools and
+strengthen future system activity.
 </p>
 
 <div class="tokenomics-bar">
@@ -2573,10 +2726,10 @@ Treasury reserve
 </strong>
 
 <p
-data-en="Value is converted into SOL or USDC and held as an external strategic reserve."
-data-de="Wert wird in SOL oder USDC umgewandelt und als externe strategische Reserve gehalten."
+data-en="Value is converted into SOL or USDC and held outside ASTY as a strategic reserve."
+data-de="Wert wird in SOL oder USDC umgewandelt und außerhalb von ASTY als strategische Reserve gehalten."
 >
-Value is converted into SOL or USDC and held as an external strategic
+Value is converted into SOL or USDC and held outside ASTY as a strategic
 reserve.
 </p>
 
@@ -2621,12 +2774,13 @@ How holders participate in the ASTY-Effect
 
 <p
 class="section-sub"
-data-en="The number of ASTY tokens in your wallet does not increase automatically. The holder effect is structural: when burns reduce the total supply, the same ASTY balance represents a larger share of the remaining network."
-data-de="Die Anzahl deiner ASTY-Token steigt nicht automatisch. Der Holder-Effekt ist strukturell: Wenn Burns die gesamte Supply reduzieren, repräsentiert dieselbe ASTY-Menge einen größeren Anteil am verbleibenden Netzwerk."
+data-en="Your ASTY balance does not automatically increase. The holder effect comes from the system around your tokens: burns reduce total supply, growth capital can strengthen productive pools and the treasury builds reserves outside ASTY."
+data-de="Dein ASTY-Bestand steigt nicht automatisch. Der Holder-Effekt entsteht durch das System rund um deine Token: Burns reduzieren die gesamte Supply, Wachstumskapital kann produktive Pools stärken und die Treasury baut Reserven außerhalb von ASTY auf."
 >
-The number of ASTY tokens in your wallet does not increase automatically.
-The holder effect is structural: when burns reduce the total supply, the
-same ASTY balance represents a larger share of the remaining network.
+Your ASTY balance does not automatically increase. The holder effect
+comes from the system around your tokens: burns reduce total supply,
+growth capital can strengthen productive pools and the treasury builds
+reserves outside ASTY.
 </p>
 
 </div>
@@ -2653,17 +2807,17 @@ Your balance
 </span>
 
 <strong
-data-en="Your token amount stays the same"
-data-de="Deine Token-Menge bleibt gleich"
+data-en="Your token amount remains unchanged"
+data-de="Deine Token-Menge bleibt unverändert"
 >
-Your token amount stays the same
+Your token amount remains unchanged
 </strong>
 
 <p
-data-en="Burning tokens elsewhere does not add tokens to your wallet."
-data-de="Der Burn an anderer Stelle fügt deiner Wallet keine neuen Token hinzu."
+data-en="The system does not automatically add new ASTY to your wallet."
+data-de="Das System fügt deiner Wallet nicht automatisch neue ASTY hinzu."
 >
-Burning tokens elsewhere does not add tokens to your wallet.
+The system does not automatically add new ASTY to your wallet.
 </p>
 
 </div>
@@ -2672,10 +2826,10 @@ Burning tokens elsewhere does not add tokens to your wallet.
 
 <div
 class="holder-mini"
-data-en="Total supply"
-data-de="Gesamte Supply"
+data-en="Example supply"
+data-de="Beispiel-Supply"
 >
-Total supply
+Example supply
 </div>
 
 <span class="holder-value">
@@ -2690,10 +2844,10 @@ The remaining supply decreases
 </strong>
 
 <p
-data-en="The permanent burn removes ASTY from circulation over time."
-data-de="Der permanente Burn entfernt ASTY im Laufe der Zeit aus dem Umlauf."
+data-en="Permanent burns continuously remove ASTY from circulation."
+data-de="Permanente Burns entfernen fortlaufend ASTY aus dem Umlauf."
 >
-The permanent burn removes ASTY from circulation over time.
+Permanent burns continuously remove ASTY from circulation.
 </p>
 
 </div>
@@ -2702,10 +2856,10 @@ The permanent burn removes ASTY from circulation over time.
 
 <div
 class="holder-mini"
-data-en="Relative share"
+data-en="Relative ownership"
 data-de="Relativer Anteil"
 >
-Relative share
+Relative ownership
 </div>
 
 <span class="holder-value">
@@ -2713,18 +2867,18 @@ Relative share
 </span>
 
 <strong
-data-en="Your share of the network can rise"
-data-de="Dein Anteil am Netzwerk kann steigen"
+data-en="The same balance can represent more"
+data-de="Derselbe Bestand kann mehr repräsentieren"
 >
-Your share of the network rises
+The same balance can represent more
 </strong>
 
 <p
-data-en="The same balance represents a larger share of the smaller remaining supply."
-data-de="Dieselbe Token-Menge repräsentiert einen größeren Anteil an der kleineren verbleibenden Supply."
+data-en="When total supply falls, the same ASTY balance represents a larger share of the remaining network."
+data-de="Wenn die gesamte Supply sinkt, repräsentiert derselbe ASTY-Bestand einen größeren Anteil am verbleibenden Netzwerk."
 >
-The same balance represents a larger share of the smaller remaining
-supply.
+When total supply falls, the same ASTY balance represents a larger share
+of the remaining network.
 </p>
 
 </div>
@@ -2733,15 +2887,64 @@ supply.
 
 <div
 class="holder-note"
-data-en="At the same time, the Growth wallet can strengthen efficient liquidity pools and the Treasury can build reserves in SOL or USDC. This is a structural effect, not a guarantee of price performance."
-data-de="Gleichzeitig kann die Growth Wallet effiziente Liquiditätspools stärken und die Treasury Reserven in SOL oder USDC aufbauen. Das ist ein struktureller Effekt und keine Garantie für eine Preisentwicklung."
+data-en="At the same time, Growth capital can strengthen efficient ASTY pools and Treasury reserves in SOL or USDC can increase system resilience. These are structural effects, not a guarantee of price performance."
+data-de="Gleichzeitig kann Wachstumskapital effiziente ASTY-Pools stärken und Treasury-Reserven in SOL oder USDC können die Widerstandsfähigkeit des Systems erhöhen. Das sind strukturelle Effekte und keine Garantie für eine Preisentwicklung."
 >
-At the same time, the Growth wallet can strengthen efficient liquidity
-pools and the Treasury can build reserves in SOL or USDC. This is a
-structural effect, not a guarantee of price performance.
+At the same time, Growth capital can strengthen efficient ASTY pools and
+Treasury reserves in SOL or USDC can increase system resilience. These
+are structural effects, not a guarantee of price performance.
 </div>
 
 </div>
+
+</section>
+
+<section class="dashboard-trust-wrap reveal">
+
+<a
+class="dashboard-trust-card stagger-item"
+data-direction="up"
+href="https://htmlpreview.github.io/?https://github.com/ArbStrategy-ASTY/ArbStrategy-ASTY/blob/main/Dashboard.html"
+target="_blank"
+rel="noopener noreferrer"
+>
+
+<span class="live-status">
+<span class="live-status-dot"></span>
+</span>
+
+<span>
+
+<span
+class="dashboard-trust-label"
+data-en="Transparent live data"
+data-de="Transparente Live-Daten"
+>
+Transparent live data
+</span>
+
+<span
+class="dashboard-trust-title"
+data-en="Verify the ASTY system in the Live Dashboard"
+data-de="Prüfe das ASTY-System im Live Dashboard"
+>
+Verify the ASTY system in the Live Dashboard
+</span>
+
+<span
+class="dashboard-trust-description"
+data-en="Follow the ASTY pool network, liquidity, market activity, supply, burn progress and system development through live data."
+data-de="Verfolge das ASTY-Poolnetzwerk, die Liquidität, Marktaktivität, Supply, Burn-Fortschritt und die Systementwicklung anhand von Live-Daten."
+>
+Follow the ASTY pool network, liquidity, market activity, supply, burn
+progress and system development through live data.
+</span>
+
+</span>
+
+<span class="dashboard-trust-arrow">↗</span>
+
+</a>
 
 </section>
 
@@ -3041,8 +3244,10 @@ temporaryInput.style.position = "fixed";
 temporaryInput.style.opacity = "0";
 
 document.body.appendChild(temporaryInput);
+
 temporaryInput.select();
 document.execCommand("copy");
+
 document.body.removeChild(temporaryInput);
 }
 
