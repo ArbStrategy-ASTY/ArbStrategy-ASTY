@@ -643,48 +643,86 @@ font-size: 16px;
 line-height: 1.78;
 }
 
-/* UNIVERSAL NUMBER BADGE */
+/* COMPACT STEP BADGES */
 
 .number-badge {
 display: inline-flex;
 align-items: center;
 justify-content: center;
-width: 48px;
-min-width: 48px;
-height: 48px;
-margin-bottom: 16px;
-padding: 0 10px;
-border: 1px solid rgba(167, 139, 250, 0.32);
-border-radius: 12px;
+
+width: 28px;
+min-width: 28px;
+height: 28px;
+
+margin-bottom: 12px;
+padding: 0;
+
+border: 1px solid rgba(167, 139, 250, 0.34);
+border-radius: 8px;
+
 background:
 linear-gradient(
 145deg,
 rgba(124, 58, 237, 0.18),
-rgba(124, 58, 237, 0.07)
+rgba(124, 58, 237, 0.06)
 );
+
 box-shadow:
-inset 0 1px 0 rgba(255,255,255,0.05),
-0 0 18px rgba(124,58,237,0.08);
+inset 0 1px 0 rgba(255,255,255,0.06),
+0 0 10px rgba(124,58,237,0.12);
+
 color: var(--purple-light);
-font-size: 15px;
+
+font-size: 11px;
 font-weight: 850;
 line-height: 1;
+
+transition:
+transform 0.2s ease,
+border-color 0.2s ease,
+box-shadow 0.2s ease;
 }
+
+.number-badge:hover {
+transform: translateY(-1px) scale(1.05);
+
+border-color: rgba(196,181,253,0.55);
+
+box-shadow:
+0 0 13px rgba(139,92,246,0.23);
+}
+
+/* $100 / $110 / +$10 */
 
 .number-badge.wide {
 width: auto;
-min-width: 58px;
+min-width: 48px;
+height: 28px;
+
+padding: 0 9px;
+
+border-radius: 8px;
+
+font-size: 11px;
 }
 
+/* Cyan highlight */
+
 .number-badge.cyan {
-border-color: rgba(103, 232, 249, 0.28);
+border-color: rgba(103, 232, 249, 0.30);
+
 background:
 linear-gradient(
 145deg,
 rgba(34, 211, 238, 0.12),
-rgba(34, 211, 238, 0.04)
+rgba(34, 211, 238, 0.035)
 );
+
 color: var(--cyan);
+
+box-shadow:
+inset 0 1px 0 rgba(255,255,255,0.05),
+0 0 10px rgba(34,211,238,0.10);
 }
 
 /* GENERAL FLOW */
@@ -3293,7 +3331,6 @@ aria-label="Back to top"
 
 /* ==================================================
    ASTY LIVE DATA CONFIG
-   SAME CORE DATA LOGIC AS Dashboard.html
 ================================================== */
 
 const ASTY_MINT =
@@ -3312,11 +3349,6 @@ const RPC_ENDPOINTS = [
 "https://solana-rpc.publicnode.com",
 "https://api.mainnet-beta.solana.com"
 ];
-
-/*
-Same configured ASTY pools as the current Live Dashboard.
-[pool address, display label, configured fee]
-*/
 
 const ASTY_POOLS = [
 
@@ -3393,9 +3425,7 @@ marketCap: null,
 liquidity: null
 };
 
-/* ==================================================
-   GENERAL UI
-================================================== */
+/* PAGE LOAD */
 
 document.addEventListener("DOMContentLoaded", () => {
 requestAnimationFrame(() => {
@@ -3710,9 +3740,7 @@ counters.forEach(counter => {
 counterObserver.observe(counter);
 });
 
-/* ==================================================
-   LIVE DATA HELPERS
-================================================== */
+/* HELPERS */
 
 function safeNumber(value) {
 
@@ -3934,9 +3962,7 @@ return map;
 
 }
 
-/* ==================================================
-   GECKOTERMINAL
-================================================== */
+/* GECKOTERMINAL */
 
 async function fetchGeckoChunk(
 chunk
@@ -4183,12 +4209,6 @@ tokenSymbols
 
 }
 
-/*
-Same principle as Dashboard:
-keep last successful value if
-the corresponding request failed.
-*/
-
 if (
 !successfulIds.has(id) &&
 previous.has(id)
@@ -4216,9 +4236,7 @@ status: "unavailable"
 
 }
 
-/* ==================================================
-   SUPPLY
-================================================== */
+/* SUPPLY */
 
 async function loadCurrentSupply() {
 
@@ -4298,9 +4316,7 @@ new Error(
 
 }
 
-/* ==================================================
-   BIRDEYE PRICE
-================================================== */
+/* BIRDEYE PRICE */
 
 function firstFiniteNumber(
 ...values
@@ -4377,16 +4393,12 @@ price
 
 }
 
-/* ==================================================
-   SAME REFERENCE PRICE LOGIC AS DASHBOARD
-================================================== */
+/* REFERENCE PRICE */
 
 function buildReferencePrice(
 rows,
 birdEye = null
 ) {
-
-/* 1. BirdEye */
 
 if (
 Number.isFinite(
@@ -4403,8 +4415,6 @@ method:
 };
 
 }
-
-/* Valid Gecko prices */
 
 const priced =
 rows.filter(
@@ -4428,12 +4438,6 @@ method:
 };
 
 }
-
-/*
-2. Preferred stablecoin pool
-ASTY/USDC or ASTY/USDT
-with minimum $100 liquidity.
-*/
 
 const stableReference =
 priced
@@ -4463,14 +4467,6 @@ method:
 };
 
 }
-
-/*
-3. Same weighted fallback:
-- minimum liquidity where possible
-- median filtering
-- ±15% price band
-- liquidity weighted price
-*/
 
 let candidates =
 priced.filter(
@@ -4537,9 +4533,7 @@ method:
 
 }
 
-/* ==================================================
-   LIVE SUMMARY
-================================================== */
+/* LIVE SUMMARY */
 
 function calculateLandingLiveSummary(
 rows,
@@ -4593,9 +4587,7 @@ marketCap
 
 }
 
-/* ==================================================
-   SAME DISPLAY FORMATTING AS DASHBOARD
-================================================== */
+/* FORMATTING */
 
 function fmtPrice(value) {
 
@@ -4683,9 +4675,7 @@ abs < 100 ? 2 : 0
 
 }
 
-/* ==================================================
-   LIVE VALUE ANIMATION
-================================================== */
+/* LIVE VALUE ANIMATION */
 
 const livePrice =
 document.getElementById(
@@ -4781,9 +4771,7 @@ frame
 
 }
 
-/* ==================================================
-   REFRESH EXACT LIVE METRICS
-================================================== */
+/* LIVE REFRESH */
 
 let liveRefreshRunning =
 false;
@@ -4948,18 +4936,12 @@ false;
 
 }
 
-/* Initial load */
-
 refreshLandingLiveData();
-
-/* Same 60 second refresh rhythm */
 
 setInterval(
 refreshLandingLiveData,
 LIVE_REFRESH_MS
 );
-
-/* Refresh immediately when tab becomes active again */
 
 document.addEventListener(
 "visibilitychange",
@@ -4977,9 +4959,7 @@ refreshLandingLiveData();
 }
 );
 
-/* ==================================================
-   COPY CONTRACT
-================================================== */
+/* COPY CONTRACT */
 
 const copyContractBtn =
 document.getElementById(
