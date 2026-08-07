@@ -482,11 +482,11 @@ function chooseAutoAngle(s){
 }
 
 function buildKeywords(s,focus){
-  const token = tokenCashtag(focus.poolToken);
+  const token = (focus.poolToken || "SOL").replace(/[^A-Za-z0-9]/g,"").toUpperCase();
   const banks = [
     [`${token}`,`Solana DeFi`,`on-chain liquidity`],
     [`${token}`,`liquidity pools`,`LP revenue`],
-    [`$ASTY`,`${token}`,`Solana liquidity`],
+    [`ASTY`,`${token}`,`Solana liquidity`],
     [`${token}`,`Solana`,`DeFi liquidity`]
   ];
   return banks[generationIndex % banks.length].join(" · ");
@@ -502,8 +502,7 @@ function postHeading(mode){
 }
 
 function shortCandidates(angle,s,focus,mode){
-  const cashtag = tokenCashtag(focus.poolToken);
-  const pool = focus.label;
+  const pair = focus.label;
   const revenue = fmtUsd(focus.revenue24h);
   const volume = fmtUsd(focus.volume24h);
   const count = s.loadedCount;
@@ -513,54 +512,63 @@ Community: ${TG_LINK}`;
 
   const base = {
     leader:[
-`🟣 $ASTY ${postHeading(mode)}
+`🟣 ASTY ${postHeading(mode)}
 
-${pool} leads the 24h snapshot across ${count} live $ASTY pools on Solana.
+${pair}
+
+Leads the 24h snapshot across ${count} live ASTY pools on Solana.
 
 Est. LP revenue: ${revenue}
 Volume: ${volume}
 
-Capital follows measurable performance. ${cashtag}
+Capital follows measurable performance.
 
 ${links}
 #ASTY #ArbiTrage`,
-`🟣 $ASTY ${postHeading(mode)}
+`🟣 ASTY ${postHeading(mode)}
 
-Live Solana liquidity data puts ${pool} at the top of the $ASTY network today.
+${pair}
+
+Currently leads the ASTY liquidity network on Solana.
 
 24h revenue: ${revenue}
 24h volume: ${volume}
 
-Data first. Capital second. ${cashtag}
+Data first. Capital second.
 
 ${links}
 #ASTY #ArbiTrage`,
-`🟣 $ASTY ${postHeading(mode)}
+`🟣 ASTY ${postHeading(mode)}
 
-${pool} is the strongest 24h revenue pool in the current $ASTY snapshot.
+${pair}
+
+The strongest 24h revenue pool in the current ASTY snapshot.
 
 Revenue: ${revenue} | Volume: ${volume}
 
-$ASTY turns liquidity data into capital allocation. ${cashtag}
+ASTY turns liquidity data into capital allocation.
 
 ${links}
 #ASTY #ArbiTrage`
     ],
     system:[
-`🟣 $ASTY ${postHeading(mode)}
+`🟣 ASTY ${postHeading(mode)}
+
+${pair}
 
 ${count} live Solana pools
 24h volume: ${fmtUsd(s.totalVolume)}
 Est. LP revenue: ${fmtUsd(s.totalRevenue)}
-Top pool: ${s.topPool.label}
 
-$ASTY is building a measurable DeFi liquidity system, not a single-pair token.
+ASTY is building a measurable DeFi liquidity system, not a single-pair token.
 
 ${links}
 #ASTY #ArbiTrage`,
-`🟣 $ASTY ${postHeading(mode)}
+`🟣 ASTY ${postHeading(mode)}
 
-Across ${count} loaded liquidity pools, $ASTY processed ${fmtUsd(s.totalVolume)} in 24h trading volume with ${fmtUsd(s.totalRevenue)} in estimated LP revenue.
+${pair}
+
+Across ${count} loaded liquidity pools, ASTY processed ${fmtUsd(s.totalVolume)} in 24h trading volume with ${fmtUsd(s.totalRevenue)} in estimated LP revenue.
 
 Performance decides where capital goes next.
 
@@ -568,19 +576,23 @@ ${links}
 #ASTY #ArbiTrage`
     ],
     effect:[
-`🟣 $ASTY ${postHeading(mode)}
+`🟣 ASTY ${postHeading(mode)}
+
+${pair}
 
 Trading activity creates data. Data reveals efficient pools. Efficient pools receive capital.
 
-At the token level, the 1% $ASTY fee splits 40% burn, 40% growth and 20% treasury.
+At the token level, the 1% ASTY fee splits 40% burn, 40% growth and 20% treasury.
 
 ${links}
 #ASTY #ArbiTrage`,
-`🟣 $ASTY ${postHeading(mode)}
+`🟣 ASTY ${postHeading(mode)}
 
-Pool performance guides liquidity allocation while the 1% $ASTY transaction fee feeds burn, growth and treasury.
+${pair}
 
-That feedback loop is the $ASTY Effect.
+Pool performance guides liquidity allocation while the 1% ASTY transaction fee feeds burn, growth and treasury.
+
+That feedback loop is the ASTY Effect.
 
 ${links}
 #ASTY #ArbiTrage`
@@ -595,9 +607,11 @@ function fitShort(candidates,mode){
     const text = ordered[(generationIndex+i)%ordered.length];
     if(xWeightedLength(text) <= 280) return text;
   }
-  const fallback = `🟣 $ASTY ${postHeading(mode)}
+  const fallback = `🟣 ASTY ${postHeading(mode)}
 
-${currentSnapshot.topPool.label} leads the live 24h pool snapshot.
+${currentSnapshot.topPool.label}
+
+Leads the live 24h pool snapshot.
 Revenue: ${fmtUsd(currentSnapshot.topPool.revenue24h)}
 Volume: ${fmtUsd(currentSnapshot.topPool.volume24h)}
 
@@ -605,9 +619,11 @@ Live Dashboard: ${SITE_LINK}
 Community: ${TG_LINK}
 #ASTY #ArbiTrage`;
   if(xWeightedLength(fallback) <= 280) return fallback;
-  return `🟣 $ASTY ${postHeading(mode)}
+  return `🟣 ASTY ${postHeading(mode)}
 
-${currentSnapshot.topPool.label} leads 24h.
+${currentSnapshot.topPool.label}
+
+Leads the 24h snapshot.
 Revenue: ${fmtUsd(currentSnapshot.topPool.revenue24h)}
 
 Live Dashboard: ${SITE_LINK}
@@ -616,33 +632,34 @@ Community: ${TG_LINK}
 }
 
 function buildLong(angle,s,focus,mode){
-  const cashtag = tokenCashtag(focus.poolToken);
-  const pool = focus.label;
+  const pair = focus.label;
   const revenue = fmtUsd(focus.revenue24h);
   const volume = fmtUsd(focus.volume24h);
   const keywords = buildKeywords(s,focus);
 
   const intros = {
-    leader:`${pool} is currently the strongest 24h revenue contributor in the $ASTY liquidity network on Solana.`,
-    system:`The latest $ASTY snapshot shows how broad the liquidity network has become across Solana.`,
-    effect:`The $ASTY Effect becomes easier to understand when the live pool data and the token mechanics are viewed together.`
+    leader:`This pair is currently the strongest 24h revenue contributor in the ASTY liquidity network on Solana.`,
+    system:`The latest ASTY snapshot shows how broad the liquidity network has become across Solana.`,
+    effect:`The ASTY Effect becomes easier to understand when live pool data and token mechanics are viewed together.`
   };
 
   const context = angle === "system"
-    ? `Across ${s.loadedCount} loaded pools, the network shows ${fmtUsd(s.totalVolume)} in 24h trading volume and ${fmtUsd(s.totalRevenue)} in estimated LP revenue. The current top revenue pool is ${s.topPool.label}.`
+    ? `Across ${s.loadedCount} loaded pools, the network shows ${fmtUsd(s.totalVolume)} in 24h trading volume and ${fmtUsd(s.totalRevenue)} in estimated LP revenue.`
     : `Current pool data:
 • 24h volume: ${volume}
 • Estimated 24h LP revenue: ${revenue}`;
 
-  const mechanics = `$ASTY connects a growing Solana liquidity network with a simple idea: real activity should strengthen the ecosystem. Active pools create revenue, the network keeps expanding and the $ASTY Effect becomes visible on-chain.`;
+  const mechanics = `ASTY connects a growing Solana liquidity network with a simple idea: real activity should strengthen the ecosystem. Active pools create revenue, the network keeps expanding and the ASTY Effect becomes visible on-chain.`;
 
   const closers = [
-`The result is a Solana DeFi network where real trading activity keeps feeding the wider $ASTY ecosystem.`,
-`More activity, more pool revenue and a stronger network. That is the $ASTY Effect in motion.`,
-`The interesting part is not one isolated pool. It is the growing network behind $ASTY and the activity flowing through it.`
+`The result is a Solana DeFi network where real trading activity keeps feeding the wider ASTY ecosystem.`,
+`More activity, more pool revenue and a stronger network. That is the ASTY Effect in motion.`,
+`The interesting part is not one isolated pool. It is the growing network behind ASTY and the activity flowing through it.`
   ];
 
-  return `🟣 $ASTY ${postHeading(mode)}
+  return `🟣 ASTY ${postHeading(mode)}
+
+${pair}
 
 ${intros[angle] || intros.leader}
 
@@ -655,7 +672,7 @@ ${shufflePick(closers,2)}
 Live Dashboard: ${SITE_LINK}
 Community: ${TG_LINK}
 
-${cashtag} | ${keywords}
+${keywords}
 #ASTY #ArbiTrage`;
 }
 
@@ -865,7 +882,7 @@ async function drawCanvas(s,focus,angle,mode){
   drawNetworkArt();
 
   ctx.shadowColor="#a78bfa";ctx.shadowBlur=18;ctx.fillStyle="#a78bfa";ctx.beginPath();ctx.arc(72,78,7,0,Math.PI*2);ctx.fill();ctx.shadowBlur=0;
-  ctx.fillStyle="#c4b5fd";ctx.font="900 18px Arial";ctx.fillText("$ASTY INTELLIGENCE",92,84);
+  ctx.fillStyle="#c4b5fd";ctx.font="900 18px Arial";ctx.fillText("ASTY INTELLIGENCE",92,84);
   ctx.fillStyle="#7f8bab";ctx.font="800 13px Arial";ctx.fillText(`${s.loadedCount} LIVE POOLS • SOLANA`,92,108);
 
   if(logo){ctx.drawImage(logo,1041,61,84,84)}
@@ -884,18 +901,18 @@ async function drawCanvas(s,focus,angle,mode){
   drawMetricCanvas("Network Revenue",fmtUsd(s.totalRevenue),570,398,238);
   drawMetricCanvas("Network Volume",fmtUsd(s.totalVolume),820,398,260);
 
-  ctx.fillStyle="#f8f7ff";ctx.font="900 22px Arial";ctx.fillText("Live activity across the growing $ASTY network.",70,531);
+  ctx.fillStyle="#f8f7ff";ctx.font="900 22px Arial";ctx.fillText("Live activity across the growing ASTY network.",70,531);
   ctx.fillStyle="#9da8c7";ctx.font="700 16px Arial";ctx.fillText(`Network: ${fmtUsd(s.totalRevenue)} est. LP revenue • ${fmtUsd(s.totalVolume)} volume / 24h`,70,560);
 
   card(70,586,1010,35,"rgba(103,232,249,.035)","rgba(103,232,249,.10)",14);
-  ctx.fillStyle="#c4b5fd";ctx.font="900 12px Arial";ctx.fillText("$ASTY • SOLANA • DEFI • LIVE POOL DATA",88,608);
+  ctx.fillStyle="#c4b5fd";ctx.font="900 12px Arial";ctx.fillText("ASTY • SOLANA • DEFI • LIVE POOL DATA",88,608);
   ctx.fillStyle="#67e8f9";ctx.fillText("ArbStrategy.net",904,608);
 }
 
 function drawEmptyCanvas(message){
   ctx.clearRect(0,0,1200,675);
   ctx.fillStyle="#070b17";ctx.fillRect(0,0,1200,675);
-  ctx.fillStyle="#a78bfa";ctx.font="900 22px Arial";ctx.fillText("$ASTY INTELLIGENCE",70,90);
+  ctx.fillStyle="#a78bfa";ctx.font="900 22px Arial";ctx.fillText("ASTY INTELLIGENCE",70,90);
   ctx.fillStyle="#ffffff";ctx.font="900 48px Arial";ctx.fillText(message,70,220);
   ctx.fillStyle="#8d99b8";ctx.font="700 20px Arial";ctx.fillText("Refresh the live data to generate a new signal.",70,260);
 }
