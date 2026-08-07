@@ -1,160 +1,271 @@
-<!-- signals.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>ASTY Signal Generator</title>
-
+<meta name="color-scheme" content="dark" />
+<title>ASTY X Signal Lab</title>
 <style>
+:root{
+  --bg:#060914;
+  --bg2:#090d1a;
+  --panel:rgba(12,17,34,.82);
+  --panel2:rgba(18,24,46,.72);
+  --line:rgba(196,181,253,.17);
+  --line2:rgba(103,232,249,.14);
+  --text:#f8f7ff;
+  --muted:#9da8c7;
+  --lilac:#c4b5fd;
+  --purple:#a78bfa;
+  --violet:#8b5cf6;
+  --cyan:#67e8f9;
+  --green:#86efac;
+  --red:#fca5a5;
+  --shadow:0 24px 90px rgba(0,0,0,.42);
+}
 *{box-sizing:border-box}
-
+html{scroll-behavior:smooth}
 body{
   margin:0;
-  font-family:Inter,Arial,sans-serif;
-  background:
-    radial-gradient(circle at top,rgba(124,58,237,.28),transparent 30%),
-    radial-gradient(circle at 80% 10%,rgba(167,139,250,.13),transparent 24%),
-    linear-gradient(180deg,#0b1020 0%,#060914 100%);
-  color:#fff;
   min-height:100vh;
-  padding:22px;
-}
-
-.wrap{max-width:980px;margin:auto}
-
-.card{
-  background:rgba(255,255,255,.045);
-  border:1px solid rgba(167,139,250,.22);
-  border-radius:28px;
+  color:var(--text);
+  font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  background:
+    radial-gradient(circle at 16% 0%,rgba(139,92,246,.25),transparent 31%),
+    radial-gradient(circle at 92% 13%,rgba(103,232,249,.10),transparent 27%),
+    radial-gradient(circle at 52% 100%,rgba(99,102,241,.10),transparent 34%),
+    linear-gradient(180deg,#080b16 0%,#050711 62%,#03050c 100%);
   padding:24px;
-  box-shadow:0 0 46px rgba(124,58,237,.22);
 }
-
-.brand{
+body::before{
+  content:"";
+  position:fixed;
+  inset:0;
+  pointer-events:none;
+  opacity:.18;
+  background-image:
+    linear-gradient(rgba(255,255,255,.025) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(255,255,255,.025) 1px,transparent 1px);
+  background-size:42px 42px;
+  mask-image:linear-gradient(to bottom,rgba(0,0,0,.75),transparent 86%);
+}
+button,select{font:inherit}
+button{border:0}
+a{color:inherit}
+.wrap{width:min(1180px,100%);margin:0 auto;position:relative;z-index:1}
+.topbar{
   display:flex;
   align-items:center;
-  gap:14px;
+  justify-content:space-between;
+  gap:18px;
   margin-bottom:18px;
 }
-
-.brand img{
-  width:52px;
-  height:52px;
-  border-radius:50%;
-  box-shadow:0 0 26px rgba(167,139,250,.5);
+.brand{display:flex;align-items:center;gap:14px;min-width:0}
+.logoShell{
+  width:58px;height:58px;border-radius:18px;padding:1px;
+  background:linear-gradient(135deg,rgba(196,181,253,.95),rgba(103,232,249,.6),rgba(139,92,246,.7));
+  box-shadow:0 0 34px rgba(139,92,246,.28);
+  flex:0 0 auto;
 }
-
-h1{
-  margin:0;
-  font-size:34px;
-  letter-spacing:-.5px;
+.logoShellInner{
+  width:100%;height:100%;border-radius:17px;background:#090c18;display:grid;place-items:center;overflow:hidden;
 }
-
-.sub{
-  color:#c4b5fd;
-  margin-top:4px;
-  font-size:14px;
+.logoShell img{width:46px;height:46px;object-fit:cover;border-radius:50%}
+.eyebrow{
+  display:flex;align-items:center;gap:8px;
+  color:var(--lilac);font-weight:800;font-size:12px;letter-spacing:.16em;text-transform:uppercase;
 }
-
-canvas{
-  width:100%;
-  border-radius:22px;
-  border:1px solid rgba(255,255,255,.1);
-  background:#05050b;
-  box-shadow:0 0 34px rgba(124,58,237,.18);
+.dot{width:8px;height:8px;border-radius:50%;background:var(--purple);box-shadow:0 0 18px rgba(167,139,250,.95)}
+h1{margin:4px 0 0;font-size:clamp(28px,4vw,44px);letter-spacing:-.045em;line-height:1}
+.gradientText{
+  background:linear-gradient(90deg,#ffffff 0%,#d8ccff 42%,#8eeeff 100%);
+  -webkit-background-clip:text;background-clip:text;color:transparent;
 }
-
-textarea{
-  margin-top:16px;
-  width:100%;
-  min-height:190px;
-  border-radius:18px;
-  border:1px solid rgba(167,139,250,.3);
-  background:#080b18;
-  color:#fff;
-  padding:16px;
-  font-size:15px;
-  line-height:1.5;
-  resize:vertical;
+.topActions{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:9px}
+.navBtn,.ghostBtn,.primaryBtn,.copyBtn{
+  border-radius:999px;cursor:pointer;font-weight:800;transition:.18s ease;text-decoration:none;display:inline-flex;align-items:center;justify-content:center;gap:8px;
 }
-
-.buttons{
-  display:flex;
-  flex-wrap:wrap;
-  gap:12px;
-  margin-top:16px;
+.navBtn{
+  padding:10px 14px;border:1px solid rgba(196,181,253,.16);background:rgba(255,255,255,.035);color:#d8d9e8;font-size:13px;
 }
-
-button{
-  border:0;
-  border-radius:999px;
-  padding:13px 18px;
-  cursor:pointer;
-  font-weight:800;
-  color:#fff;
-  background:linear-gradient(135deg,#8b5cf6,#6d28d9);
-  box-shadow:0 0 22px rgba(168,85,247,.26);
-  transition:all .12s ease;
+.navBtn:hover,.ghostBtn:hover,.copyBtn:hover{border-color:rgba(196,181,253,.48);background:rgba(167,139,250,.08);transform:translateY(-1px)}
+.heroCard{
+  border:1px solid var(--line);border-radius:30px;background:linear-gradient(180deg,rgba(15,20,39,.92),rgba(7,10,21,.9));box-shadow:var(--shadow);overflow:hidden;position:relative;
 }
-
-button:hover{
-  transform:translateY(-2px) scale(1.03);
-  box-shadow:0 0 38px rgba(168,85,247,.55);
-  filter:brightness(1.12);
+.heroCard::before{
+  content:"";position:absolute;inset:0;pointer-events:none;
+  background:radial-gradient(circle at 85% 12%,rgba(103,232,249,.08),transparent 28%),radial-gradient(circle at 15% 0%,rgba(167,139,250,.10),transparent 30%);
 }
-
-button:active{
-  transform:scale(.90);
-  box-shadow:0 0 18px rgba(168,85,247,.3);
+.heroHeader{
+  padding:22px 22px 0;display:flex;align-items:flex-end;justify-content:space-between;gap:18px;position:relative;z-index:1;
 }
-
-button.clicked{
-  animation:buttonPop .42s ease;
+.heroCopy{max-width:700px}
+.heroCopy p{margin:9px 0 0;color:var(--muted);font-size:14px;line-height:1.6}
+.livePill{
+  display:inline-flex;align-items:center;gap:8px;padding:9px 12px;border-radius:999px;border:1px solid rgba(134,239,172,.2);background:rgba(134,239,172,.055);color:#c6f6d5;font-size:12px;font-weight:850;white-space:nowrap;
 }
-
-@keyframes buttonPop{
-  0%{transform:scale(.88)}
-  35%{transform:scale(1.13)}
-  65%{transform:scale(.97)}
-  100%{transform:scale(1)}
+.livePulse{width:8px;height:8px;border-radius:50%;background:var(--green);box-shadow:0 0 18px rgba(134,239,172,.8);animation:pulse 1.8s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:.55;transform:scale(.85)}50%{opacity:1;transform:scale(1.12)}}
+.previewWrap{padding:18px 22px 0;position:relative;z-index:1}
+.canvasFrame{
+  position:relative;border-radius:24px;padding:1px;background:linear-gradient(135deg,rgba(196,181,253,.28),rgba(103,232,249,.09),rgba(255,255,255,.05));
 }
-
-.status{
-  margin-top:14px;
-  color:#c4b5fd;
-  font-size:14px;
+.canvasInner{border-radius:23px;overflow:hidden;background:#050711;position:relative}
+canvas{display:block;width:100%;height:auto;background:#050711}
+.canvasBadge{
+  position:absolute;right:14px;bottom:14px;background:rgba(5,8,18,.78);backdrop-filter:blur(10px);border:1px solid rgba(196,181,253,.17);border-radius:999px;padding:8px 11px;color:#c7cee4;font-size:11px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;
+}
+.metricGrid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;padding:14px 22px 0;position:relative;z-index:1}
+.metric{
+  min-width:0;padding:14px 15px;border-radius:18px;border:1px solid rgba(196,181,253,.12);background:rgba(255,255,255,.025);
+}
+.metricLabel{font-size:11px;text-transform:uppercase;letter-spacing:.11em;color:#7f8bab;font-weight:800}
+.metricValue{margin-top:7px;font-size:17px;font-weight:900;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.metricSub{margin-top:5px;color:#8e9ab8;font-size:11px}
+.controls{
+  display:grid;grid-template-columns:minmax(180px,1fr) auto auto auto;gap:10px;padding:14px 22px 22px;position:relative;z-index:1;
+}
+.selectWrap{position:relative}
+select{
+  appearance:none;width:100%;height:46px;border-radius:15px;border:1px solid rgba(196,181,253,.16);background:#0a0f20;color:#e8e7f3;padding:0 42px 0 14px;outline:none;font-weight:750;cursor:pointer;
+}
+.selectWrap::after{content:"⌄";position:absolute;right:15px;top:9px;color:var(--lilac);font-size:20px;pointer-events:none}
+.primaryBtn,.ghostBtn{height:46px;padding:0 17px}
+.primaryBtn{
+  color:#0a0a12;background:linear-gradient(135deg,#d8ccff 0%,#a78bfa 52%,#67e8f9 135%);box-shadow:0 0 28px rgba(167,139,250,.2);
+}
+.primaryBtn:hover{transform:translateY(-1px);filter:brightness(1.05);box-shadow:0 0 36px rgba(167,139,250,.34)}
+.ghostBtn{color:#e6e7f1;background:rgba(255,255,255,.035);border:1px solid rgba(196,181,253,.16)}
+.spin{width:14px;height:14px;border:2px solid rgba(196,181,253,.23);border-top-color:var(--lilac);border-radius:50%;display:none;animation:spin .8s linear infinite}
+.loading .spin{display:inline-block}
+@keyframes spin{to{transform:rotate(360deg)}}
+.outputGrid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:14px}
+.outputCard{
+  border:1px solid var(--line);border-radius:25px;background:linear-gradient(180deg,rgba(12,17,34,.86),rgba(7,10,20,.86));box-shadow:0 18px 55px rgba(0,0,0,.24);overflow:hidden;
+}
+.outputHead{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:17px 18px 12px}
+.outputTitle{font-weight:900;font-size:16px;display:flex;align-items:center;gap:8px}
+.tag{font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--lilac);border:1px solid rgba(196,181,253,.17);padding:5px 8px;border-radius:999px;background:rgba(167,139,250,.055)}
+.counter{font-size:12px;color:#93a0bd;font-weight:800;white-space:nowrap}
+.counter.good{color:#a7f3d0}.counter.bad{color:var(--red)}
+.textBox{
+  width:calc(100% - 36px);margin:0 18px 14px;min-height:280px;resize:vertical;border-radius:18px;border:1px solid rgba(196,181,253,.13);background:#070b17;color:#f5f5fa;padding:15px 15px 18px;font:500 14px/1.58 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;outline:none;
+}
+.textBox:focus{border-color:rgba(167,139,250,.42);box-shadow:0 0 0 3px rgba(139,92,246,.07)}
+.outputFoot{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:0 18px 18px}
+.hint{color:#7f8bab;font-size:11px;line-height:1.4}
+.copyBtn{padding:10px 13px;background:rgba(167,139,250,.08);border:1px solid rgba(196,181,253,.18);color:#eeeaff;font-size:12px}
+.systemNote{
+  margin-top:14px;border:1px solid rgba(103,232,249,.11);border-radius:22px;padding:15px 17px;background:rgba(103,232,249,.025);color:#aeb8d3;font-size:12px;line-height:1.6;
+}
+.systemNote strong{color:#dfdef0}
+.statusRow{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:12px;padding:0 3px;color:#8c98b6;font-size:12px;min-height:18px}
+.statusLeft{display:flex;align-items:center;gap:8px}
+.statusDot{width:7px;height:7px;border-radius:50%;background:#64748b}
+.statusDot.ok{background:var(--green);box-shadow:0 0 14px rgba(134,239,172,.5)}
+.statusDot.error{background:var(--red)}
+@media(max-width:900px){
+  body{padding:14px}.topbar{align-items:flex-start}.topActions{display:none}.heroHeader{align-items:flex-start;flex-direction:column}.metricGrid{grid-template-columns:repeat(2,minmax(0,1fr))}.controls{grid-template-columns:1fr 1fr}.controls .selectWrap{grid-column:1/-1}.outputGrid{grid-template-columns:1fr}.textBox{min-height:250px}
+}
+@media(max-width:560px){
+  .heroHeader,.previewWrap,.metricGrid,.controls{padding-left:14px;padding-right:14px}.metricGrid{grid-template-columns:1fr 1fr}.metricValue{font-size:15px}.controls{grid-template-columns:1fr}.controls .selectWrap{grid-column:auto}.primaryBtn,.ghostBtn{width:100%}.brand{align-items:flex-start}.logoShell{width:50px;height:50px}.logoShell img{width:40px;height:40px}.outputFoot{align-items:flex-start;flex-direction:column}.copyBtn{width:100%}.textBox{width:calc(100% - 28px);margin-left:14px;margin-right:14px}.outputHead,.outputFoot{padding-left:14px;padding-right:14px}
 }
 </style>
 </head>
-
 <body>
 <div class="wrap">
-  <div class="card">
+  <div class="topbar">
     <div class="brand">
-      <img src="https://raw.githubusercontent.com/ArbStrategy-ASTY/ArbStrategy-ASTY/main/assets/logo.png" alt="ASTY Logo">
+      <div class="logoShell"><div class="logoShellInner"><img src="https://raw.githubusercontent.com/ArbStrategy-ASTY/ArbStrategy-ASTY/main/assets/logo.png" alt="ASTY Logo"></div></div>
       <div>
-        <h1>ASTY Signal Generator</h1>
-        <div class="sub">X-ready post and image from live pool data.</div>
+        <div class="eyebrow"><span class="dot"></span> ASTY Intelligence</div>
+        <h1 class="gradientText">X Signal Lab</h1>
+      </div>
+    </div>
+    <div class="topActions">
+      <a class="navBtn" href="https://ArbStrategy.net" target="_blank" rel="noopener">System Overview</a>
+      <a class="navBtn" href="https://htmlpreview.github.io/?https://github.com/ArbStrategy-ASTY/ArbStrategy-ASTY/blob/main/Dashboard.html" target="_blank" rel="noopener">Live Dashboard</a>
+      <a class="navBtn" href="https://t.me/ArbStrategyASTY" target="_blank" rel="noopener">Telegram</a>
+    </div>
+  </div>
+
+  <section class="heroCard">
+    <div class="heroHeader">
+      <div class="heroCopy">
+        <div class="eyebrow"><span class="dot"></span> Live Solana Pool Intelligence</div>
+        <p>Turn live ASTY pool performance into ready-to-post X content. Choose a short version for standard X or a stronger long-form version for X Premium.</p>
+      </div>
+      <div class="livePill"><span class="livePulse"></span><span id="livePillText">LIVE DATA READY</span></div>
+    </div>
+
+    <div class="previewWrap">
+      <div class="canvasFrame">
+        <div class="canvasInner">
+          <canvas id="signalCanvas" width="1200" height="675"></canvas>
+          <div class="canvasBadge" id="canvasBadge">ASTY • SOLANA • LIVE</div>
+        </div>
       </div>
     </div>
 
-    <canvas id="signalCanvas" width="1200" height="675"></canvas>
-
-    <textarea id="postText" readonly></textarea>
-
-    <div class="buttons">
-      <button onclick="generateSignal(event)">Generate Signal</button>
-      <button onclick="copyText(event)">Copy X Post</button>
-      <button onclick="downloadImage(event)">Download Image</button>
+    <div class="metricGrid">
+      <div class="metric"><div class="metricLabel">Top Pool</div><div class="metricValue" id="mTopPool">--</div><div class="metricSub">24h leader</div></div>
+      <div class="metric"><div class="metricLabel">Top Pool Revenue</div><div class="metricValue" id="mTopRevenue">--</div><div class="metricSub">24h live estimate</div></div>
+      <div class="metric"><div class="metricLabel">Network Revenue</div><div class="metricValue" id="mNetworkRevenue">--</div><div class="metricSub">24h across ASTY pools</div></div>
+      <div class="metric"><div class="metricLabel">Pools Loaded</div><div class="metricValue" id="mPoolCount">--</div><div class="metricSub">current live snapshot</div></div>
     </div>
 
-    <div id="status" class="status">Loading...</div>
+    <div class="controls">
+      <div class="selectWrap">
+        <select id="angleSelect" aria-label="Post angle">
+          <option value="auto">Smart Auto Angle</option>
+          <option value="leader">Top Pool Spotlight</option>
+              <option value="system">System Pulse</option>
+          <option value="effect">ASTY Effect</option>
+        </select>
+      </div>
+      <button class="primaryBtn" id="generateBtn" type="button">Generate New Copy</button>
+      <button class="ghostBtn" id="refreshBtn" type="button"><span class="spin"></span><span>Refresh Live Data</span></button>
+    </div>
+  </section>
+
+  <section class="outputGrid">
+    <article class="outputCard">
+      <div class="outputHead">
+        <div class="outputTitle">Short Post <span class="tag">Standard X</span></div>
+        <div class="counter" id="shortCounter">0 / 280</div>
+      </div>
+      <textarea id="shortText" class="textBox" spellcheck="false"></textarea>
+      <div class="outputFoot">
+        <div class="hint">Weighted X count: URLs count as 23 characters. Designed to stay below 280.</div>
+        <button class="copyBtn" id="copyShortBtn" type="button">Copy Short</button>
+      </div>
+    </article>
+
+    <article class="outputCard">
+      <div class="outputHead">
+        <div class="outputTitle">Long Post <span class="tag">X Premium</span></div>
+        <div class="counter" id="longCounter">0 chars</div>
+      </div>
+      <textarea id="longText" class="textBox" spellcheck="false"></textarea>
+      <div class="outputFoot">
+        <div class="hint">More space for the story, the numbers and the strongest ASTY angle.</div>
+        <button class="copyBtn" id="copyLongBtn" type="button">Copy Long</button>
+      </div>
+    </article>
+  </section>
+
+  <div class="statusRow">
+    <div class="statusLeft"><span class="statusDot" id="statusDot"></span><span id="status">Starting live data load…</span></div>
+    <div id="stamp"></div>
   </div>
 </div>
 
 <script>
 const ASSET_BASE = "https://raw.githubusercontent.com/ArbStrategy-ASTY/ArbStrategy-ASTY/main/assets/";
+const SITE_LINK = "https://ArbStrategy.net";
+const TG_LINK = "https://t.me/ArbStrategyASTY";
+const DASHBOARD_LINK = "https://htmlpreview.github.io/?https://github.com/ArbStrategy-ASTY/ArbStrategy-ASTY/blob/main/Dashboard.html";
+const CHUNK_SIZE = 25;
 
 const pools = [
 ["3UvhqPrMyf13qgRodARDi5oGJGoxHYb2ykZdCaa1TV8i","ASTY/$WIF",1],
@@ -218,37 +329,55 @@ const pools = [
 ["444uxc7K8jDZhtRUiuDAM822Pe93RYkHytzWuLKNyxVs","ASTY/TAO",1],
 ["EDrT8LWDRuYE7v75Dkc9gUjLk7MvDYdezvDcnoHGqwuq","ASTY/TROLL",1],
 ["ArKpj5vcNtHJTLhUKeADCmvuBpn1ZZoGNHZZYQ1QXq5n","ASTY/CUPSEY",1],
-["DGuvY79xbLuJRb3CzwQL59z5zoit7KLnFwyL2t6EQCcj","ASTY/SERIOUS",1]
+["DGuvY79xbLuJRb3CzwQL59z5zoit7KLnFwyL2t6EQCcj","ASTY/SERIOUS",1],
+["9zrdaC8tHges3JLTfsRVuibQ2xhXivZx3keymkZV2PAa","ASTY/three",1]
 ];
 
-const TG_LINK = "https://t.me/ArbStrategyASTY/1";
-const CHUNK_SIZE = 25;
 const canvas = document.getElementById("signalCanvas");
 const ctx = canvas.getContext("2d");
-const postText = document.getElementById("postText");
+const shortText = document.getElementById("shortText");
+const longText = document.getElementById("longText");
+const shortCounter = document.getElementById("shortCounter");
+const longCounter = document.getElementById("longCounter");
 const statusEl = document.getElementById("status");
+const statusDot = document.getElementById("statusDot");
+const stampEl = document.getElementById("stamp");
+const refreshBtn = document.getElementById("refreshBtn");
+const angleSelect = document.getElementById("angleSelect");
 
-function setStatus(t){ statusEl.textContent = t; }
+let liveRows = [];
+let currentSnapshot = null;
+let generationIndex = 0;
 
-function pressEffect(el){
-  if(!el) return;
-  el.classList.remove("clicked");
-  void el.offsetWidth;
-  el.classList.add("clicked");
+function setStatus(text,type="idle"){
+  statusEl.textContent = text;
+  statusDot.className = "statusDot" + (type === "ok" ? " ok" : type === "error" ? " error" : "");
+}
+
+function setLoading(on){
+  refreshBtn.classList.toggle("loading",on);
+  refreshBtn.disabled = on;
+  document.getElementById("livePillText").textContent = on ? "UPDATING LIVE DATA" : "LIVE DATA READY";
 }
 
 function chunkArray(arr,size){
-  const chunks=[];
-  for(let i=0;i<arr.length;i+=size) chunks.push(arr.slice(i,i+size));
-  return chunks;
+  const out=[];
+  for(let i=0;i<arr.length;i+=size) out.push(arr.slice(i,i+size));
+  return out;
 }
 
 function fmtUsd(n){
-  if(!n || Number.isNaN(n)) return "$0.00";
+  n = Number(n) || 0;
   if(n >= 1e9) return "$" + (n/1e9).toFixed(2) + "B";
   if(n >= 1e6) return "$" + (n/1e6).toFixed(2) + "M";
   if(n >= 1e3) return "$" + (n/1e3).toFixed(2) + "K";
+  if(n >= 100) return "$" + n.toFixed(0);
   return "$" + n.toFixed(2);
+}
+
+function fmtPct(n,digits=1){
+  n = Number(n) || 0;
+  return n.toFixed(digits) + "%";
 }
 
 function cleanPoolName(label){
@@ -257,211 +386,294 @@ function cleanPoolName(label){
 
 function getPoolToken(label){
   const parts = label.split("/");
-  const raw = (parts[1] || parts[0] || "DeFi").trim();
-  return raw.replace(/[^a-zA-Z0-9]/g,"");
+  const raw = (parts[1] || parts[0] || "SOL").trim();
+  return raw.replace(/[^a-zA-Z0-9]/g,"").toUpperCase();
 }
 
-function buildHashtags(poolToken){
-  const tokenTag = poolToken || "SOL";
-  return `#ArbStrategy #ArbiTrage $${tokenTag} #DeFi`;
+function tokenCashtag(token){
+  if(!token) return "$SOL";
+  const normalized = token.replace(/[^A-Za-z0-9]/g,"");
+  return normalized ? "$" + normalized : "$SOL";
 }
 
-function limitText(str, max = 280){
-  return str.length <= max ? str : str.slice(0, max - 3) + "...";
-}
-
-function pickPostText(data){
-
-  const styles = [
-
-`🟣 ASTY Signal
-
-${data.signal} detected.
-
-Top Pool: ${data.topPool}
-24h Fees: ${data.fees}
-
-Flow: ${data.flow} | Burn: ${data.burn}
-
-$ASTY is doing what it was built for.
-
-${TG_LINK}
-
-${data.hashtags}`,
-
-`🟣 ASTY Signal
-
-${data.signal}
-
-Top: ${data.topPool}
-Fees 24h: ${data.fees}
-
-Flow: ${data.flow}
-Burn: ${data.burn}
-
-$ASTY is doing what it was built for.
-
-${TG_LINK}
-
-${data.hashtags}`,
-
-`🟣 ASTY Signal
-
-${data.topPool} leads the 24h snapshot.
-
-Fees: ${data.fees}
-Signal: ${data.signal}
-
-Flow: ${data.flow} | Burn: ${data.burn}
-
-$ASTY is doing what it was built for.
-
-${TG_LINK}
-
-${data.hashtags}`
-  ];
-
-  let text = styles[Math.floor(Math.random() * styles.length)];
-
-  // Sicherheits-Logik: NIE den Link abschneiden
-  if(text.length <= 280) return text;
-
-  const fallback =
-`🟣 ASTY Signal
-
-${data.signal}
-
-Top: ${data.topPool}
-Fees: ${data.fees}
-
-$ASTY is doing what it was built for.
-
-${TG_LINK}
-
-${data.hashtags}`;
-
-  return fallback.length <= 280
-    ? fallback
-    : fallback.slice(0, 277) + "...";
+function shufflePick(arr,offset=0){
+  if(!arr.length) return "";
+  const idx = (generationIndex + offset + Math.floor(Math.random()*arr.length)) % arr.length;
+  return arr[idx];
 }
 
 async function fetchGeckoChunk(chunk){
-  const ids = chunk.map(([id]) => id).join(",");
+  const ids = chunk.map(([id])=>id).join(",");
   const url = `https://api.geckoterminal.com/api/v2/networks/solana/pools/multi/${encodeURIComponent(ids)}?include=base_token&include_volume_breakdown=false&include_composition=false`;
-  const res = await fetch(url);
-  const json = await res.json();
-  return Array.isArray(json.data) ? json.data : [];
+  const controller = new AbortController();
+  const timer = setTimeout(()=>controller.abort(),12000);
+  try{
+    const res = await fetch(url,{cache:"no-store",signal:controller.signal});
+    if(!res.ok) throw new Error(`HTTP ${res.status}`);
+    const json = await res.json();
+    return Array.isArray(json.data) ? json.data : [];
+  }finally{
+    clearTimeout(timer);
+  }
 }
 
 async function loadPoolData(){
-  const chunks = chunkArray(pools, CHUNK_SIZE);
-  const responses = await Promise.all(chunks.map(fetchGeckoChunk));
-  const flat = responses.flat();
-
+  const chunks = chunkArray(pools,CHUNK_SIZE);
+  const settled = await Promise.allSettled(chunks.map(fetchGeckoChunk));
+  const flat = settled.filter(r=>r.status === "fulfilled").flatMap(r=>r.value);
   const map = new Map();
   for(const item of flat){
     const address = item?.attributes?.address;
-    if(address) map.set(address, item);
+    if(address) map.set(address,item);
   }
 
-  return pools.map(([id,label,feePercent])=>{
+  const rows = pools.map(([id,label,feePercent])=>{
     const item = map.get(id);
     if(!item) return null;
-
-    const attrs = item.attributes || {};
-    const volume24h = parseFloat(attrs.volume_usd?.h24 || "0");
-    const tvl = parseFloat(attrs.reserve_in_usd || "0");
+    const a = item.attributes || {};
+    const volume24h = Number.parseFloat(a.volume_usd?.h24 || "0") || 0;
+    const volume1h = Number.parseFloat(a.volume_usd?.h1 || "0") || 0;
+    const tvl = Number.parseFloat(a.reserve_in_usd || "0") || 0;
     const feeRate = feePercent / 100;
-    const fees24h = volume24h * feeRate;
-    const efficiency = tvl > 0 ? fees24h / tvl : 0;
-
+    const revenue24h = volume24h * feeRate;
     return {
       id,
-      label: cleanPoolName(label),
-      rawLabel: label,
-      poolToken: getPoolToken(label),
+      label:cleanPoolName(label),
+      rawLabel:label,
+      poolToken:getPoolToken(label),
       feePercent,
       volume24h,
+      volume1h,
       tvl,
-      fees24h,
-      efficiency
+      revenue24h
     };
   }).filter(Boolean);
+
+  return {rows,failedChunks:settled.filter(r=>r.status === "rejected").length};
 }
 
-async function generateSignal(e){
-  if(e) pressEffect(e.currentTarget);
-  setStatus("Loading GeckoTerminal pool data...");
+function buildSnapshot(rows){
+  const byRevenue = [...rows].sort((a,b)=>b.revenue24h-a.revenue24h);
+  const topPool = byRevenue[0];
+  const totalRevenue = rows.reduce((s,p)=>s+p.revenue24h,0);
+  const totalVolume = rows.reduce((s,p)=>s+p.volume24h,0);
+  const totalTvl = rows.reduce((s,p)=>s+p.tvl,0);
+  const topShare = totalRevenue>0 ? topPool.revenue24h/totalRevenue : 0;
+  const top3Revenue = byRevenue.slice(0,3).reduce((s,p)=>s+p.revenue24h,0);
+  const top3Share = totalRevenue>0 ? top3Revenue/totalRevenue : 0;
 
-  let rows = [];
+  return {
+    rows,
+    topPool,
+    totalRevenue,
+    totalVolume,
+    totalTvl,
+    topShare,
+    top3Share,
+    loadedCount:rows.length,
+    configuredCount:pools.length
+  };
+}
 
+function chooseAutoAngle(s){
+  if(s.topShare >= .34) return "leader";
+  if(s.totalRevenue >= 20 || s.totalVolume >= 2500) return "system";
+  return generationIndex % 2 ? "effect" : "leader";
+}
+
+function buildKeywords(s,focus){
+  const token = tokenCashtag(focus.poolToken);
+  const banks = [
+    [`Solana DeFi`,`on-chain liquidity`,`liquidity pools`],
+    [`liquidity pools`,`LP revenue`,`Solana trading volume`],
+    [`$ASTY`,`Solana liquidity`,`on-chain data`],
+    [`Solana`,`DeFi liquidity`,`arbitrage infrastructure`]
+  ];
+  return banks[generationIndex % banks.length].join(" · ");
+}
+
+function shortCandidates(angle,s,focus){
+  const cashtag = tokenCashtag(focus.poolToken);
+  const pool = focus.label;
+  const revenue = fmtUsd(focus.revenue24h);
+  const volume = fmtUsd(focus.volume24h);
+  const count = s.loadedCount;
+
+  const base = {
+    leader:[
+`🟣 ASTY Signal\n\n${pool} leads the 24h snapshot across ${count} live $ASTY pools on Solana.\n\nEst. LP revenue: ${revenue}\nVolume: ${volume}\n\nCapital follows measurable performance. ${cashtag}\n\n${SITE_LINK}\n${TG_LINK}\n#ASTY #ArbiTrage`,
+`🟣 ASTY Signal\n\nLive Solana liquidity data puts ${pool} at the top of the $ASTY network today.\n\n24h revenue: ${revenue}\n24h volume: ${volume}\n\nData first. Capital second. ${cashtag}\n\n${SITE_LINK}\n#ASTY #ArbiTrage`,
+`🟣 ASTY Signal\n\n${pool} is the strongest 24h revenue pool in the current ArbStrategy snapshot.\n\nRevenue: ${revenue} | Volume: ${volume}\n\n$ASTY turns liquidity data into capital allocation. ${cashtag}\n\n${SITE_LINK}\n#ASTY #ArbiTrage`
+    ],
+    system:[
+`🟣 ASTY System Pulse\n\n${count} live Solana pools\n24h volume: ${fmtUsd(s.totalVolume)}\nEst. LP revenue: ${fmtUsd(s.totalRevenue)}\nTop pool: ${s.topPool.label}\n\n$ASTY is building a measurable DeFi liquidity system, not a single-pair token.\n\n${SITE_LINK}\n#ASTY #ArbiTrage`,
+`🟣 ASTY System Pulse\n\nAcross ${count} loaded liquidity pools, $ASTY processed ${fmtUsd(s.totalVolume)} in 24h trading volume with ${fmtUsd(s.totalRevenue)} in estimated LP revenue.\n\nPerformance decides where capital goes next.\n\n${SITE_LINK}\n#ASTY #ArbiTrage`
+    ],
+    effect:[
+`🟣 The ASTY Effect\n\nTrading activity creates data. Data reveals efficient pools. Efficient pools receive capital.\n\nAt the token level, the 1% $ASTY fee splits 40% burn, 40% growth and 20% treasury.\n\n${SITE_LINK}\n#ASTY #ArbiTrage`,
+`🟣 ASTY is more than a token pair.\n\nPool performance guides liquidity allocation while the 1% $ASTY transaction fee feeds burn, growth and treasury.\n\nThat feedback loop is the ASTY Effect.\n\n${SITE_LINK}\n${TG_LINK}\n#ASTY #ArbiTrage`
+    ]
+  };
+  return base[angle] || base.leader;
+}
+
+function fitShort(candidates){
+  const ordered = [...candidates];
+  for(let i=0;i<ordered.length;i++){
+    const text = ordered[(generationIndex+i)%ordered.length];
+    if(xWeightedLength(text) <= 280) return text;
+  }
+  const fallback = `🟣 ASTY Signal\n\n${currentSnapshot.topPool.label} leads the live 24h pool snapshot.\nRevenue: ${fmtUsd(currentSnapshot.topPool.revenue24h)}\nVolume: ${fmtUsd(currentSnapshot.topPool.volume24h)}\n\n$ASTY liquidity on Solana follows measurable performance.\n\n${SITE_LINK}\n#ASTY #ArbiTrage`;
+  if(xWeightedLength(fallback) <= 280) return fallback;
+  return `🟣 ASTY Signal\n\n${currentSnapshot.topPool.label} leads 24h.\nRevenue: ${fmtUsd(currentSnapshot.topPool.revenue24h)}\n\n$ASTY on Solana.\n\n${SITE_LINK}\n#ASTY #ArbiTrage`;
+}
+
+function buildLong(angle,s,focus){
+  const cashtag = tokenCashtag(focus.poolToken);
+  const pool = focus.label;
+  const revenue = fmtUsd(focus.revenue24h);
+  const volume = fmtUsd(focus.volume24h);
+  const tvl = fmtUsd(focus.tvl);
+  const share = fmtPct(s.totalRevenue>0 ? (focus.revenue24h/s.totalRevenue)*100 : 0,1);
+  const keywords = buildKeywords(s,focus);
+
+  const intros = {
+    leader:`${pool} is currently the strongest 24h revenue contributor in the ArbStrategy liquidity network on Solana.`,
+    system:`The latest ArbStrategy snapshot shows how broad the $ASTY liquidity network has become across Solana.`,
+    effect:`The ASTY Effect becomes easier to understand when the live pool data and the token mechanics are viewed together.`
+  };
+
+  const context = angle === "system"
+    ? `Across ${s.loadedCount} loaded pools, the network shows ${fmtUsd(s.totalVolume)} in 24h trading volume and ${fmtUsd(s.totalRevenue)} in estimated LP revenue. The current top revenue pool is ${s.topPool.label}.`
+    : `Current pool data:\n• 24h volume: ${volume}\n• Estimated 24h LP revenue: ${revenue}\n• TVL: ${tvl}\n• Share of loaded network LP revenue: ${share}`;
+
+  const mechanics = `$ASTY connects a growing Solana liquidity network with a simple idea: real activity should strengthen the ecosystem. Active pools create revenue, the network keeps expanding and the ASTY Effect becomes visible on-chain.`;
+
+  const closers = [
+`The result is a Solana DeFi network where real trading activity keeps feeding the wider $ASTY ecosystem.`,
+`More activity, more pool revenue and a stronger network. That is the ASTY Effect in motion.`,
+`The interesting part is not one isolated pool. It is the growing network behind $ASTY and the activity flowing through it.`
+  ];
+
+  return `🟣 ASTY Signal\n\n${intros[angle] || intros.leader}\n\n${context}\n\n${mechanics}\n\n${shufflePick(closers,2)}\n\nSystem Overview: ${SITE_LINK}\nLive Dashboard: ${DASHBOARD_LINK}\nCommunity: ${TG_LINK}\n\n${cashtag} | ${keywords}\n#ASTY #ArbiTrage`;
+}
+
+function generateCopy(){
+  if(!currentSnapshot) return;
+  generationIndex++;
+  let angle = angleSelect.value;
+  if(angle === "auto") angle = chooseAutoAngle(currentSnapshot);
+  const focus = currentSnapshot.topPool;
+
+  const short = fitShort(shortCandidates(angle,currentSnapshot,focus));
+  const long = buildLong(angle,currentSnapshot,focus);
+
+  shortText.value = short;
+  longText.value = long;
+  updateCounters();
+  drawCanvas(currentSnapshot,focus,angle);
+  setStatus(`Generated ${angle.replace("effect","ASTY Effect")} copy from ${currentSnapshot.loadedCount}/${currentSnapshot.configuredCount} live pools.`,"ok");
+}
+
+function xWeightedLength(text){
+  const normalized = (text || "").normalize("NFC");
+  const urlRegex = /https?:\/\/[^\s]+/gi;
+  let total = 0;
+  let last = 0;
+  let match;
+
+  const countSegment = segment => {
+    if(!segment) return 0;
+    let subtotal = 0;
+    const graphemes = typeof Intl !== "undefined" && Intl.Segmenter
+      ? [...new Intl.Segmenter(undefined,{granularity:"grapheme"}).segment(segment)].map(x=>x.segment)
+      : Array.from(segment);
+
+    for(const g of graphemes){
+      const cp = g.codePointAt(0) || 0;
+      const isEmojiLike = /\p{Extended_Pictographic}/u.test(g);
+      const isCJK = (cp>=0x2E80 && cp<=0x9FFF) || (cp>=0xAC00 && cp<=0xD7AF) || (cp>=0xF900 && cp<=0xFAFF);
+      subtotal += (isEmojiLike || isCJK) ? 2 : 1;
+    }
+    return subtotal;
+  };
+
+  while((match=urlRegex.exec(normalized))){
+    total += countSegment(normalized.slice(last,match.index));
+    total += 23;
+    last = match.index + match[0].length;
+  }
+  total += countSegment(normalized.slice(last));
+  return total;
+}
+
+function updateCounters(){
+  const shortLen = xWeightedLength(shortText.value);
+  shortCounter.textContent = `${shortLen} / 280`;
+  shortCounter.className = "counter " + (shortLen<=280 ? "good" : "bad");
+  longCounter.textContent = `${xWeightedLength(longText.value)} weighted chars`;
+}
+
+async function copyToClipboard(text,button,label){
   try{
-    rows = await loadPoolData();
+    await navigator.clipboard.writeText(text);
+    const old = button.textContent;
+    button.textContent = "Copied ✓";
+    setTimeout(()=>button.textContent=old,1200);
+    setStatus(`${label} copied to clipboard.`,"ok");
+  }catch{
+    setStatus("Clipboard access was blocked by the browser.","error");
+  }
+}
+
+function downloadImage(){
+  canvas.toBlob(blob=>{
+    if(!blob){
+      setStatus("Image export was blocked. Open the page via GitHub Pages or another normal web host.","error");
+      return;
+    }
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "asty-x-signal.png";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(()=>URL.revokeObjectURL(url),1000);
+    setStatus("Signal image downloaded.","ok");
+  },"image/png");
+}
+
+async function refreshData(){
+  setLoading(true);
+  setStatus("Loading live GeckoTerminal data…");
+  try{
+    const {rows,failedChunks} = await loadPoolData();
+    if(!rows.length) throw new Error("No pool data returned");
+    liveRows = rows;
+    currentSnapshot = buildSnapshot(rows);
+    updateMetricCards(currentSnapshot);
+    generateCopy();
+    const now = new Date();
+    stampEl.textContent = `Updated ${now.toLocaleTimeString([], {hour:"2-digit",minute:"2-digit"})}`;
+    document.getElementById("canvasBadge").textContent = `${currentSnapshot.loadedCount} POOLS • SOLANA • LIVE`;
+    if(failedChunks){
+      setStatus(`Live snapshot loaded with ${failedChunks} partial API request issue(s): ${rows.length}/${pools.length} pools available.`,"ok");
+    }
   }catch(err){
     console.error(err);
-    setStatus("API error. Could not load pool data.");
-    return;
+    setStatus("Pool data could not be loaded. Check the network/CORS response and try again.","error");
+    drawEmptyCanvas("LIVE DATA UNAVAILABLE");
+  }finally{
+    setLoading(false);
   }
+}
 
-  if(!rows.length){
-    setStatus("No pool data available.");
-    return;
-  }
-
-  rows.sort((a,b)=>b.fees24h-a.fees24h);
-
-  const topPool = rows[0];
-  const totalFees = rows.reduce((s,p)=>s+p.fees24h,0);
-  const totalVolume = rows.reduce((s,p)=>s+p.volume24h,0);
-
-  const efficiencySorted = [...rows].sort((a,b)=>b.efficiency-a.efficiency);
-  const benchmark = efficiencySorted[0].efficiency || 1;
-
-  const ranked = efficiencySorted.map(p=>({
-    ...p,
-    rel: Math.round((p.efficiency / benchmark) * 100)
-  }));
-
-  const above75 = ranked.filter(p=>p.rel >= 75).length;
-  const above50 = ranked.filter(p=>p.rel >= 50).length;
-
-  let signal = "EFFICIENCY CONCENTRATION";
-  let flow = "FOCUSED";
-
-  if(above75 >= 3){
-    signal = "DISTRIBUTED STRENGTH";
-    flow = "WIDE";
-  }else if(above50 >= 4){
-    signal = "MULTI POOL MOMENTUM";
-    flow = "EXPANDING";
-  }
-
-  const burn = totalFees > 0 ? "ACTIVE" : "WAITING";
-  const hashtags = buildHashtags(topPool.poolToken);
-
-  const text = pickPostText({
-    signal,
-    topPool: topPool.label,
-    fees: fmtUsd(totalFees),
-    volume: fmtUsd(totalVolume),
-    burn,
-    flow,
-    hashtags
-  });
-
-  postText.value = text;
-
-  await drawCanvas({
-    signal,
-    topPool: topPool.label,
-    fees: fmtUsd(totalFees),
-    volume: fmtUsd(totalVolume),
-    burn,
-    flow,
-    hashtags
-  });
-
-  setStatus(`Signal generated from ${rows.length} live pools. X text: ${text.length}/280 characters.`);
+function updateMetricCards(s){
+  document.getElementById("mTopPool").textContent = s.topPool.label;
+  document.getElementById("mTopRevenue").textContent = fmtUsd(s.topPool.revenue24h);
+  document.getElementById("mNetworkRevenue").textContent = fmtUsd(s.totalRevenue);
+  document.getElementById("mPoolCount").textContent = `${s.loadedCount} / ${s.configuredCount}`;
 }
 
 function loadImage(src){
@@ -474,175 +686,136 @@ function loadImage(src){
   });
 }
 
-function drawImageContain(img,x,y,w,h,alpha=1){
-  if(!img) return;
-
-  const ratio = Math.min(w / img.width, h / img.height);
-  const newW = img.width * ratio;
-  const newH = img.height * ratio;
-  const offsetX = x + (w - newW) / 2;
-  const offsetY = y + (h - newH) / 2;
-
-  ctx.globalAlpha = alpha;
-  ctx.drawImage(img, offsetX, offsetY, newW, newH);
-  ctx.globalAlpha = 1;
+function roundRectPath(x,y,w,h,r){
+  const rr = Math.min(r,w/2,h/2);
+  ctx.beginPath();
+  ctx.moveTo(x+rr,y);
+  ctx.arcTo(x+w,y,x+w,y+h,rr);
+  ctx.arcTo(x+w,y+h,x,y+h,rr);
+  ctx.arcTo(x,y+h,x,y,rr);
+  ctx.arcTo(x,y,x+w,y,rr);
+  ctx.closePath();
 }
 
-async function drawCanvas(data){
-  const logo = await loadImage(ASSET_BASE + "logo.png");
-  const wolf = await loadImage(ASSET_BASE + "wolf.png");
+function card(x,y,w,h,fill="rgba(255,255,255,.045)",stroke="rgba(196,181,253,.15)",r=22){
+  roundRectPath(x,y,w,h,r);
+  ctx.fillStyle=fill;ctx.fill();ctx.strokeStyle=stroke;ctx.lineWidth=1.2;ctx.stroke();
+}
 
+function truncateCanvasText(text,maxWidth,font){
+  ctx.font=font;
+  if(ctx.measureText(text).width<=maxWidth) return text;
+  let s=text;
+  while(s.length>3 && ctx.measureText(s+"…").width>maxWidth) s=s.slice(0,-1);
+  return s+"…";
+}
+
+function drawMetricCanvas(label,value,x,y,w=250){
+  card(x,y,w,84,"rgba(255,255,255,.038)","rgba(196,181,253,.12)",18);
+  ctx.fillStyle="#8d99b8";ctx.font="800 14px Arial";ctx.fillText(label.toUpperCase(),x+18,y+27);
+  ctx.fillStyle="#f8f7ff";ctx.font="900 26px Arial";ctx.fillText(truncateCanvasText(value,w-36,"900 26px Arial"),x+18,y+61);
+}
+
+function drawNetworkArt(){
+  const nodes=[
+    [930,145,7],[1030,205,4],[905,255,5],[1085,320,7],[970,365,4],[1110,455,5],[1000,510,6],[875,465,4]
+  ];
+  ctx.save();
+  ctx.globalAlpha=.42;
+  for(let i=0;i<nodes.length;i++){
+    const [x,y,r]=nodes[i];
+    for(let j=i+1;j<nodes.length;j++){
+      const [x2,y2]=nodes[j];
+      const d=Math.hypot(x-x2,y-y2);
+      if(d<190){
+        ctx.strokeStyle=d<130?"rgba(103,232,249,.22)":"rgba(167,139,250,.13)";
+        ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x2,y2);ctx.stroke();
+      }
+    }
+  }
+  for(const [x,y,r] of nodes){
+    ctx.shadowColor="#a78bfa";ctx.shadowBlur=18;ctx.fillStyle=r>5?"#c4b5fd":"#67e8f9";ctx.beginPath();ctx.arc(x,y,r,0,Math.PI*2);ctx.fill();
+  }
+  ctx.restore();ctx.shadowBlur=0;
+}
+
+async function drawCanvas(s,focus,angle){
+  const logo = await loadImage(ASSET_BASE+"logo.png");
   ctx.clearRect(0,0,1200,675);
 
-  const bg = ctx.createLinearGradient(0,0,1200,675);
-  bg.addColorStop(0,"#17062b");
-  bg.addColorStop(.48,"#070914");
-  bg.addColorStop(1,"#13071f");
-  ctx.fillStyle = bg;
-  ctx.fillRect(0,0,1200,675);
+  const bg=ctx.createLinearGradient(0,0,1200,675);
+  bg.addColorStop(0,"#10091f");bg.addColorStop(.46,"#070b17");bg.addColorStop(1,"#06101a");
+  ctx.fillStyle=bg;ctx.fillRect(0,0,1200,675);
 
-  ctx.shadowColor = "#a855f7";
-  ctx.shadowBlur = 110;
-  ctx.fillStyle = "rgba(168,85,247,.22)";
-  ctx.beginPath();
-  ctx.arc(950,130,270,0,Math.PI*2);
-  ctx.fill();
+  const glow1=ctx.createRadialGradient(170,40,0,170,40,360);
+  glow1.addColorStop(0,"rgba(139,92,246,.26)");glow1.addColorStop(1,"rgba(139,92,246,0)");ctx.fillStyle=glow1;ctx.fillRect(0,0,620,500);
+  const glow2=ctx.createRadialGradient(1050,140,0,1050,140,320);
+  glow2.addColorStop(0,"rgba(103,232,249,.12)");glow2.addColorStop(1,"rgba(103,232,249,0)");ctx.fillStyle=glow2;ctx.fillRect(730,0,470,470);
 
-  ctx.shadowBlur = 85;
-  ctx.fillStyle = "rgba(124,58,237,.18)";
-  ctx.beginPath();
-  ctx.arc(155,565,190,0,Math.PI*2);
-  ctx.fill();
-
-  ctx.shadowBlur = 0;
-
-  ctx.strokeStyle = "rgba(167,139,250,.22)";
-  ctx.lineWidth = 2;
-  roundRect(42,36,1116,603,34,false);
-
-  drawImageContain(wolf, 875, 410, 260, 210, .32);
-
-  if(logo){
-    ctx.drawImage(logo, 1028, 46, 104, 104);
+  for(let x=0;x<1200;x+=48){
+    ctx.strokeStyle="rgba(255,255,255,.018)";ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,675);ctx.stroke();
+  }
+  for(let y=0;y<675;y+=48){
+    ctx.strokeStyle="rgba(255,255,255,.018)";ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(1200,y);ctx.stroke();
   }
 
-  ctx.fillStyle = "#c4b5fd";
-  ctx.font = "900 32px Arial";
-  ctx.fillText("🟣 ASTY SYSTEM SIGNAL",70,88);
+  card(36,34,1128,607,"rgba(4,7,16,.26)","rgba(196,181,253,.16)",30);
+  drawNetworkArt();
 
-  ctx.fillStyle = "#a78bfa";
-  ctx.font = "700 22px Arial";
-  ctx.fillText("ArbStrategy Intelligence",70,122);
+  ctx.shadowColor="#a78bfa";ctx.shadowBlur=18;ctx.fillStyle="#a78bfa";ctx.beginPath();ctx.arc(72,78,7,0,Math.PI*2);ctx.fill();ctx.shadowBlur=0;
+  ctx.fillStyle="#c4b5fd";ctx.font="900 18px Arial";ctx.fillText("ASTY INTELLIGENCE",92,84);
+  ctx.fillStyle="#7f8bab";ctx.font="800 13px Arial";ctx.fillText(`${s.loadedCount} LIVE POOLS • SOLANA`,92,108);
 
-  ctx.fillStyle = "#ffffff";
-  ctx.font = "900 56px Arial";
-  wrapText(data.signal,70,210,760,62);
+  if(logo){ctx.drawImage(logo,1041,61,84,84)}
 
-  ctx.fillStyle = "#a855f7";
-  ctx.font = "900 26px Arial";
-  ctx.fillText("LIVE 24H POOL SNAPSHOT",70,325);
+  const angleTitle={leader:"24H REVENUE LEADER",system:"SYSTEM PULSE",effect:"THE ASTY EFFECT"}[angle] || "ASTY SIGNAL";
+  ctx.fillStyle="#f8f7ff";ctx.font="900 51px Arial";ctx.fillText(angleTitle,70,195);
 
-  drawMetric("Top Pool",data.topPool,70,405);
-  drawMetric("System Output",data.fees,70,500);
-  drawMetric("Burn Engine",data.burn,570,405);
-  drawMetric("Capital Flow",data.flow,570,500);
+  ctx.fillStyle="#67e8f9";ctx.font="900 20px Arial";ctx.fillText("LIVE LIQUIDITY SNAPSHOT",70,232);
 
-  ctx.fillStyle = "#ffffff";
-  ctx.font = "900 29px Arial";
-  ctx.fillText("$ASTY is doing what it was built for.",70,590);
+  card(70,266,760,108,"rgba(167,139,250,.055)","rgba(196,181,253,.16)",22);
+  ctx.fillStyle="#8d99b8";ctx.font="800 14px Arial";ctx.fillText("FOCUS POOL",92,298);
+  ctx.fillStyle="#ffffff";ctx.font="900 34px Arial";ctx.fillText(truncateCanvasText(focus.label,700,"900 34px Arial"),92,340);
 
-  ctx.fillStyle = "#8b5cf6";
-  ctx.font = "800 20px Arial";
-  ctx.fillText(data.hashtags.replaceAll("#"," #").trim(),70,625);
+  drawMetricCanvas("24H Pool Revenue",fmtUsd(focus.revenue24h),70,398,238);
+  drawMetricCanvas("24H Volume",fmtUsd(focus.volume24h),320,398,238);
+  drawMetricCanvas("Pool TVL",fmtUsd(focus.tvl),570,398,238);
+  drawMetricCanvas("Network Revenue",fmtUsd(s.totalRevenue),820,398,260);
+
+  ctx.fillStyle="#f8f7ff";ctx.font="900 22px Arial";ctx.fillText("Live activity across the growing $ASTY network.",70,531);
+  ctx.fillStyle="#9da8c7";ctx.font="700 16px Arial";ctx.fillText(`Network: ${fmtUsd(s.totalRevenue)} est. LP revenue • ${fmtUsd(s.totalVolume)} volume / 24h`,70,560);
+
+  card(70,586,1010,35,"rgba(103,232,249,.035)","rgba(103,232,249,.10)",14);
+  ctx.fillStyle="#c4b5fd";ctx.font="900 12px Arial";ctx.fillText("$ASTY • SOLANA • DEFI • LIVE POOL DATA",88,608);
+  ctx.fillStyle="#67e8f9";ctx.fillText("ArbStrategy.net",904,608);
 }
 
-function drawMetric(label,value,x,y){
-  ctx.fillStyle = "rgba(255,255,255,.07)";
-  roundRect(x,y-52,410,82,22,true);
-
-  ctx.strokeStyle = "rgba(167,139,250,.18)";
-  ctx.lineWidth = 1;
-  roundRect(x,y-52,410,82,22,false);
-
-  ctx.fillStyle = "#c4b5fd";
-  ctx.font = "800 19px Arial";
-  ctx.fillText(label,x+24,y-18);
-
-  ctx.fillStyle = "#ffffff";
-  ctx.font = "900 29px Arial";
-
-  let shown = value;
-  if(ctx.measureText(shown).width > 340){
-    while(ctx.measureText(shown + "...").width > 340 && shown.length > 4){
-      shown = shown.slice(0,-1);
-    }
-    shown += "...";
-  }
-
-  ctx.fillText(shown,x+24,y+19);
+function drawEmptyCanvas(message){
+  ctx.clearRect(0,0,1200,675);
+  ctx.fillStyle="#070b17";ctx.fillRect(0,0,1200,675);
+  ctx.fillStyle="#a78bfa";ctx.font="900 22px Arial";ctx.fillText("ASTY INTELLIGENCE",70,90);
+  ctx.fillStyle="#ffffff";ctx.font="900 48px Arial";ctx.fillText(message,70,220);
+  ctx.fillStyle="#8d99b8";ctx.font="700 20px Arial";ctx.fillText("Refresh the live data to generate a new signal.",70,260);
 }
 
-function roundRect(x,y,w,h,r,fill){
-  ctx.beginPath();
-  ctx.moveTo(x+r,y);
-  ctx.arcTo(x+w,y,x+w,y+h,r);
-  ctx.arcTo(x+w,y+h,x,y+h,r);
-  ctx.arcTo(x,y+h,x,y,r);
-  ctx.arcTo(x,y,x+w,y,r);
-  ctx.closePath();
-  if(fill) ctx.fill();
-  else ctx.stroke();
-}
+document.getElementById("generateBtn").addEventListener("click",generateCopy);
+refreshBtn.addEventListener("click",refreshData);
+document.getElementById("copyShortBtn").addEventListener("click",e=>copyToClipboard(shortText.value,e.currentTarget,"Short post"));
+document.getElementById("copyLongBtn").addEventListener("click",e=>copyToClipboard(longText.value,e.currentTarget,"Long post"));
+shortText.addEventListener("input",updateCounters);
+longText.addEventListener("input",updateCounters);
+angleSelect.addEventListener("change",()=>currentSnapshot && generateCopy());
+canvas.addEventListener("dblclick",downloadImage);
 
-function wrapText(text,x,y,maxWidth,lineHeight){
-  const words = text.split(" ");
-  let line = "";
-  for(const word of words){
-    const test = line + word + " ";
-    if(ctx.measureText(test).width > maxWidth){
-      ctx.fillText(line,x,y);
-      line = word + " ";
-      y += lineHeight;
-    }else{
-      line = test;
-    }
-  }
-  ctx.fillText(line,x,y);
-}
+// Add an explicit image download button to the preview without making the main controls crowded.
+const downloadBtn=document.createElement("button");
+downloadBtn.type="button";
+downloadBtn.className="ghostBtn";
+downloadBtn.textContent="Download Image";
+downloadBtn.addEventListener("click",downloadImage);
+document.querySelector(".controls").appendChild(downloadBtn);
 
-async function copyText(e){
-  pressEffect(e.currentTarget);
-  await navigator.clipboard.writeText(postText.value);
-  setStatus(`X post copied. ${postText.value.length}/280 characters.`);
-}
-
-function downloadImage(e){
-  pressEffect(e.currentTarget);
-
-  canvas.toBlob(blob=>{
-    if(!blob){
-      setStatus("Download blocked. Use the real GitHub Pages URL instead of HTML Preview.");
-      return;
-    }
-
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-
-    link.href = url;
-    link.download = "asty-system-signal.png";
-    link.style.display = "none";
-
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-
-    setTimeout(()=>URL.revokeObjectURL(url),1000);
-
-    setStatus("Image download started.");
-  }, "image/png");
-}
-
-generateSignal();
+refreshData();
 </script>
 </body>
 </html>
