@@ -161,12 +161,12 @@ tbody tr:hover{background:rgba(169,138,255,.045)}
 </div>
 
 <section class="kpis">
-  <div class="kpi"><div class="kpi-label">Gesamte Pool-Liquidität</div><div class="kpi-value" id="kpiTvl">–</div><div class="kpi-note">Geladene ASTY-Pools</div></div>
+  <div class="kpi"><div class="kpi-label">Gesamte Pool-Liquidität</div><div class="kpi-value" id="kpiTvl">–</div><div class="kpi-note">Alle geladenen ASTY-Pools</div></div>
   <div class="kpi"><div class="kpi-label">Volumen 24h</div><div class="kpi-value" id="kpiVol">–</div><div class="kpi-note">Summe über alle geladenen Pools</div></div>
   <div class="kpi"><div class="kpi-label">Einnahmen 24h</div><div class="kpi-value" id="kpiFees">–</div><div class="kpi-note">API-Poolgebühren</div></div>
   <div class="kpi"><div class="kpi-label">Einnahmen 7d</div><div class="kpi-value" id="kpiFees7">–</div><div class="kpi-note">Historisch aggregiert</div></div>
   <div class="kpi"><div class="kpi-label">Einnahmen 30d</div><div class="kpi-value" id="kpiFees30">–</div><div class="kpi-note">Historisch aggregiert</div></div>
-  <div class="kpi"><div class="kpi-label">Ø Einnahmen / TVL 30d</div><div class="kpi-value" id="kpiEff">–</div><div class="kpi-note">Aktuelle TVL als Nenner</div></div>
+  <div class="kpi"><div class="kpi-label">Ø Einnahmen / TVL 30d</div><div class="kpi-value" id="kpiEff">–</div><div class="kpi-note">Nur 58 aktive Bewertungs-Pools</div></div>
   <div class="kpi"><div class="kpi-label">Pools geladen</div><div class="kpi-value" id="kpiLoaded">0 / 64</div><div class="kpi-note" id="kpiDex">63 Meteora · 1 Raydium</div></div>
   <div class="kpi disabled"><div class="kpi-label">Beanspruchbare Einnahmen</div><div class="kpi-value">später</div><div class="kpi-note">Owner-Wallets noch nicht angebunden</div></div>
 </section>
@@ -1088,21 +1088,31 @@ function filteredRows(){
   return arr;
 }
 function renderKPIs(){
-  const a=rows.filter(r=>r.loaded && !r.excluded);
-  const tvl=a.reduce((s,r)=>s+(r.tvl||0),0);
-  const vol=a.reduce((s,r)=>s+(r.volume24||0),0);
-  const fees=a.reduce((s,r)=>s+(r.fees24||0),0);
-  const fees7=a.reduce((s,r)=>s+(r.fees7||0),0);
-  const fees30=a.reduce((s,r)=>s+(r.fees30||0),0);
-  const eff30=tvl>0?(fees30/tvl*100):null;
+  // Reine Netzwerk-/System-KPIs: alle geladenen Pools einbeziehen.
+  const all=rows.filter(r=>r.loaded);
+
+  // Bewertungsbasis: ausgeklammerte Pools bleiben aus Effizienz/Score/Benchmark draußen.
+  const active=rows.filter(r=>r.loaded && !r.excluded);
+
+  const tvl=all.reduce((s,r)=>s+(r.tvl||0),0);
+  const vol=all.reduce((s,r)=>s+(r.volume24||0),0);
+  const fees=all.reduce((s,r)=>s+(r.fees24||0),0);
+  const fees7=all.reduce((s,r)=>s+(r.fees7||0),0);
+  const fees30=all.reduce((s,r)=>s+(r.fees30||0),0);
+
+  const activeTvl=active.reduce((s,r)=>s+(r.tvl||0),0);
+  const activeFees30=active.reduce((s,r)=>s+(r.fees30||0),0);
+  const eff30=activeTvl>0 ? (activeFees30/activeTvl*100) : null;
+
   $("#kpiTvl").textContent=fmtUSD(tvl);
   $("#kpiVol").textContent=fmtUSD(vol);
   $("#kpiFees").textContent=fmtUSD(fees);
   $("#kpiFees7").textContent=fmtUSD(fees7);
   $("#kpiFees30").textContent=fmtUSD(fees30);
   $("#kpiEff").textContent=fmtPct(eff30);
-  $("#kpiLoaded").textContent=`${a.length} / 58`;
-  $("#kpiDex").textContent="57 Meteora + 1 Raydium in der Berechnung · 6 Pools ausgeklammert";
+
+  $("#kpiLoaded").textContent=`${all.length} / 64`;
+  $("#kpiDex").textContent=`${all.filter(r=>r.dex==="Meteora").length} Meteora · ${all.filter(r=>r.dex==="Raydium").length} Raydium geladen · 6 Pools nur aus Bewertung ausgeklammert`;
 }
 function renderRank(){
   const a=rows.filter(r=>r.loaded && !r.excluded && Number.isFinite(r.score)).sort((x,y)=>y.score-x.score);
