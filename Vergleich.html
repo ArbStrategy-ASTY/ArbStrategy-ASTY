@@ -253,18 +253,18 @@ tbody tr:hover{background:rgba(169,138,255,.045)}
         <tr>
           <th>Pool</th><th>DEX</th>
           <th>Native TVL</th><th>Gecko TVL</th><th>Δ TVL</th>
-          <th>Native Vol. 24h</th><th>Gecko Vol. 24h</th><th>Δ Vol. 24h</th>
+          <th>Native Vol. 24h</th><th>Gecko Vol. 24h</th><th>Δ Vol. 24h</th><th>Fallback</th>
         </tr>
       </thead>
       <tbody id="compareBody">
-        <tr><td colspan="8" class="na" style="text-align:center">Vergleich noch nicht geladen.</td></tr>
+        <tr><td colspan="9" class="na" style="text-align:center">Vergleich noch nicht geladen.</td></tr>
       </tbody>
     </table>
   </div>
 
   <div class="compare-note">
     <b>Native:</b> Meteora DAMM v2 für 63 Pools und Raydium API v3 für den Raydium-Pool.
-    <b>Gecko:</b> dieselben Pool-Adressen über GeckoTerminal. Dieser Bereich verändert weder ASTY Score noch Rankings oder die KPI-Berechnung.
+    <b>Gecko:</b> dieselben Pool-Adressen über GeckoTerminal. Wenn die Native API TVL oder 24h-Volumen mit 0/leer meldet, darf Gecko für diese Kennzahl als operativer Fallback einspringen. Fees bleiben immer native/historisch.
   </div>
 </section>
 
@@ -625,6 +625,10 @@ async function loadGeckoComparison(){
 
     sourceCompareState.gecko=map;
     sourceCompareState.loadedAt=Date.now();
+
+    applyGeckoFallbacks();
+    saveCache();
+    render();
   }catch(e){
     sourceCompareState.error=e?.message||"GeckoTerminal-Vergleich fehlgeschlagen";
   }finally{
@@ -633,11 +637,67 @@ async function loadGeckoComparison(){
     renderSourceCompare();
   }
 }
+
+function captureNativeBaselines(){
+  for(const r of rows){
+    // Native values are preserved separately so the diagnostic comparison
+    // continues to show the real Meteora/Raydium response.
+    if(!Object.prototype.hasOwnProperty.call(r,"nativeTvl")){
+      r.nativeTvl=Number.isFinite(r.tvl)?r.tvl:null;
+    }
+    if(!Object.prototype.hasOwnProperty.call(r,"nativeVolume24")){
+      r.nativeVolume24=Number.isFinite(r.volume24)?r.volume24:null;
+    }
+  }
+}
+function applyGeckoFallbacks(){
+  captureNativeBaselines();
+
+  for(const r of rows){
+    const g=sourceCompareState.gecko.get(r.address);
+
+    // Always restore the effective values from the preserved native baseline
+    // before deciding whether the current Gecko result is needed as fallback.
+    r.tvl=r.nativeTvl;
+    r.volume24=r.nativeVolume24;
+    r.tvlSource="Native";
+    r.volume24Source="Native";
+    r.tvlGeckoFallback=false;
+    r.volume24GeckoFallback=false;
+
+    if(!g) continue;
+
+    const nativeTvlMissing=!Number.isFinite(r.nativeTvl) || r.nativeTvl<=0;
+    const nativeVolMissing=!Number.isFinite(r.nativeVolume24) || r.nativeVolume24<=0;
+
+    if(nativeTvlMissing && Number.isFinite(g.tvl) && g.tvl>0){
+      r.tvl=g.tvl;
+      r.tvlSource="Gecko";
+      r.tvlGeckoFallback=true;
+    }
+
+    if(nativeVolMissing && Number.isFinite(g.volume24) && g.volume24>0){
+      r.volume24=g.volume24;
+      r.volume24Source="Gecko";
+      r.volume24GeckoFallback=true;
+    }
+  }
+
+  // Recalculate capital-efficiency metrics because a TVL fallback changes
+  // the denominator. Fee data itself remains native/historical and is never estimated.
+  deriveMetrics();
+}
+function fallbackSourceBadge(source){
+  return source==="Gecko"
+    ? `<span class="badge b-mid" title="Native API meldet 0/leer · GeckoTerminal-Fallback">GECKO</span>`
+    : "";
+}
+
 function sourceCompareRows(){
   const out=rows.map(r=>{
     const g=sourceCompareState.gecko.get(r.address);
-    const nativeTvl=r.loaded&&Number.isFinite(r.tvl)?r.tvl:null;
-    const nativeVol=r.loaded&&Number.isFinite(r.volume24)?r.volume24:null;
+    const nativeTvl=r.loaded&&Number.isFinite(r.nativeTvl)?r.nativeTvl:(r.loaded&&Number.isFinite(r.tvl)?r.tvl:null);
+    const nativeVol=r.loaded&&Number.isFinite(r.nativeVolume24)?r.nativeVolume24:(r.loaded&&Number.isFinite(r.volume24)?r.volume24:null);
     const geckoTvl=Number.isFinite(g?.tvl)?g.tvl:null;
     const geckoVol=Number.isFinite(g?.volume24)?g.volume24:null;
     return {
@@ -714,7 +774,7 @@ function renderSourceCompare(){
 
   const body=$("#compareBody");
   if(sourceCompareState.loading && !sourceCompareState.gecko.size){
-    body.innerHTML=`<tr><td colspan="8" class="na" style="text-align:center">GeckoTerminal-Daten werden geladen…</td></tr>`;
+    body.innerHTML=`<tr><td colspan="9" class="na" style="text-align:center">GeckoTerminal-Daten werden geladen…</td></tr>`;
     return;
   }
 
@@ -729,8 +789,15 @@ function renderSourceCompare(){
       <td>${fmtUSD(x.nativeVol)}</td>
       <td>${fmtUSD(x.geckoVol)}</td>
       <td class="${deltaClass(x.volDelta)} ${Number.isFinite(x.volDelta)&&Math.abs(x.volDelta)>10?"compare-big":""}">${signedUsd(x.volDelta)}</td>
+      <td>${(()=>{
+        const r=rows.find(rr=>rr.address===x.address);
+        const parts=[];
+        if(r?.tvlGeckoFallback) parts.push("TVL");
+        if(r?.volume24GeckoFallback) parts.push("VOL");
+        return parts.length?`<span class="badge b-mid">GECKO ${parts.join("+")}</span>`:`<span class="na">–</span>`;
+      })()}</td>
     </tr>
-  `).join(""):`<tr><td colspan="8" class="na" style="text-align:center">Keine Vergleichsdaten für diesen Filter.</td></tr>`;
+  `).join(""):`<tr><td colspan="9" class="na" style="text-align:center">Keine Vergleichsdaten für diesen Filter.</td></tr>`;
 }
 
 function getHistoryCache(){
@@ -856,7 +923,7 @@ function loadCache(){
   try{
     const c=JSON.parse(localStorage.getItem(CACHE_KEY)||"null");
     if(c?.rows?.length===64){
-      rows=c.rows; deriveMetrics(); render();
+      rows=c.rows; captureNativeBaselines(); deriveMetrics(); render();
       $("#updatedText").textContent=`Zwischenspeicher: ${new Date(c.ts).toLocaleString("de-DE")}`;
       $("#statusText").textContent="Letzten gespeicherten Datenstand geladen";
       $("#statusDot").className="dot warn";
@@ -878,6 +945,7 @@ async function refresh(forceHistory=false){
     const m=await loadMeteoraHistory(mBase,progressCb,forceHistory);
     const map=new Map([...m,ray].map(x=>[x.address,x]));
     rows=POOLS.map(p=>map.get(p.address)||markError(p,"Keine Daten"));
+    captureNativeBaselines();
     deriveMetrics(); saveCache(); render();
 
     const ok=rows.filter(r=>r.loaded).length;
@@ -1403,7 +1471,8 @@ function renderKPIs(){
   $("#kpiEff").textContent=fmtPct(eff30);
 
   $("#kpiLoaded").textContent=`${all.length} / 64`;
-  $("#kpiDex").textContent=`${all.filter(r=>r.dex==="Meteora").length} Meteora · ${all.filter(r=>r.dex==="Raydium").length} Raydium geladen · 6 Pools nur aus Bewertung ausgeklammert`;
+  const fallbackPools=all.filter(r=>r.tvlGeckoFallback||r.volume24GeckoFallback).length;
+  $("#kpiDex").textContent=`${all.filter(r=>r.dex==="Meteora").length} Meteora · ${all.filter(r=>r.dex==="Raydium").length} Raydium geladen · 6 Pools nur aus Bewertung ausgeklammert${fallbackPools?` · ${fallbackPools} mit Gecko-Fallback`:""}`;
 }
 function renderRank(){
   const a=rows.filter(r=>r.loaded && !r.excluded && Number.isFinite(r.score)).sort((x,y)=>y.score-x.score);
@@ -1426,8 +1495,11 @@ function renderTable(){
     return `<tr onclick="openDetail('${r.address}')">
       <td><div class="pair">${r.name}</div><div class="addr">${shortAddr(r.address)}${r.excluded ? " · aus Berechnung" : ""}</div></td>
       <td><span class="dex ${r.dex==="Raydium"?"ray":""}">${r.dex}</span></td>
-      <td>${feeDisplay(r)}</td><td>${fmtUSD(r.tvl)}</td>
-      <td>${fmtUSD(r.volume1)}</td><td>${fmtUSD(r.volume24)}</td><td>${fmtUSD(r.volume7)}</td><td>${fmtUSD(r.volume30)}</td>
+      <td>${feeDisplay(r)}</td>
+      <td>${fmtUSD(r.tvl)} ${fallbackSourceBadge(r.tvlSource)}</td>
+      <td>${fmtUSD(r.volume1)}</td>
+      <td>${fmtUSD(r.volume24)} ${fallbackSourceBadge(r.volume24Source)}</td>
+      <td>${fmtUSD(r.volume7)}</td><td>${fmtUSD(r.volume30)}</td>
       <td>${fmtUSD(r.fees1)}</td><td>${fmtUSD(r.fees24)}</td><td>${fmtUSD(r.fees7)}</td><td>${fmtUSD(r.fees30)}</td>
       <td>${fmtPct(r.feeTvl24)}</td><td>${fmtPct(r.feeTvl7)}</td><td>${fmtPct(r.feeTvl30)}</td>
       <td class="${trendClass(r.trend)}">${r.trend}</td>
@@ -1443,8 +1515,14 @@ window.openDetail=function(address){
   $("#modalTitle").textContent=r.name; $("#modalSub").textContent=`${r.dex}${r.poolType?` · ${r.poolType}`:""}${r.excluded ? " · aus der ASTY-Score-Berechnung ausgeschlossen" : ""}`;
   let html=`<div class="detail-grid">`;
   if(r.loaded){
-    html+=detailCard("Pool-Gebühr",feeDisplay(r))+detailCard("Liquidität",fmtUSD(r.tvl))+detailCard("Effizienz-Score",r.score!==null?`${r.score} / 100`:"–")+detailCard("Trend",r.trend||"–");
-    html+=detailCard("Volumen 1h",fmtUSD(r.volume1))+detailCard("Volumen 24h",fmtUSD(r.volume24))+detailCard("Volumen 7d",fmtUSD(r.volume7))+detailCard("Volumen 30d",fmtUSD(r.volume30));
+    html+=detailCard("Pool-Gebühr",feeDisplay(r))
+      +detailCard("Liquidität",`${fmtUSD(r.tvl)}${r.tvlGeckoFallback?` <span class="badge b-mid">GECKO</span>`:""}`)
+      +detailCard("Effizienz-Score",r.score!==null?`${r.score} / 100`:"–")
+      +detailCard("Trend",r.trend||"–");
+    html+=detailCard("Volumen 1h",fmtUSD(r.volume1))
+      +detailCard("Volumen 24h",`${fmtUSD(r.volume24)}${r.volume24GeckoFallback?` <span class="badge b-mid">GECKO</span>`:""}`)
+      +detailCard("Volumen 7d",fmtUSD(r.volume7))
+      +detailCard("Volumen 30d",fmtUSD(r.volume30));
     html+=detailCard("Einnahmen 1h",fmtUSD(r.fees1))+detailCard("Einnahmen 24h",fmtUSD(r.fees24))+detailCard("Einnahmen 7d",fmtUSD(r.fees7))+detailCard("Einnahmen 30d",fmtUSD(r.fees30));
     html+=detailCard("Einn. / TVL 24h",fmtPct(r.feeTvl24))+detailCard("Einn. / TVL 7d",fmtPct(r.feeTvl7))+detailCard("Einn. / TVL 30d",fmtPct(r.feeTvl30))+detailCard("APR 30d",fmtPct(r.apr30,1));
     html+=detailCard("Volumen / TVL 24h",Number.isFinite(r.turnover24)?fmtNum(r.turnover24,2)+"x":"–")+detailCard("Volumen / TVL 7d",Number.isFinite(r.turnover7)?fmtNum(r.turnover7,2)+"x":"–")+detailCard("Volumen / TVL 30d",Number.isFinite(r.turnover30)?fmtNum(r.turnover30,2)+"x":"–")+detailCard("History-Abdeckung",Number.isFinite(r.coverage30)?`${fmtNum(r.coverage30,0)} Tage`:"–");
@@ -1455,7 +1533,7 @@ window.openDetail=function(address){
     html+=`<div class="detail full"><div class="l">Status</div><div class="v">Daten nicht geladen</div><div class="kpi-note">${r.error||"Unbekannter Fehler"}</div></div>`;
   }
   html+=`<div class="detail full"><div class="l">Pool-Adresse</div><div class="address-row"><div class="address-box">${r.address}</div><button class="copy" onclick="copyText('${r.address}')">Kopieren</button></div></div>`;
-  html+=`</div><div class="explain"><b>Score-Mechanik:</b> 20 % 24h-, 35 % 7d- und 45 % 30d-Kapital-Effizienz. Bewertet wird jeweils die durchschnittliche tägliche Einnahmen/TVL-Effizienz relativ zu den anderen aktiven, nicht ausgeklammerten ASTY-Pools. Dadurch zählt nachhaltige Performance stärker als ein einzelner guter Tag. Fehlende Zeitfenster werden nicht mit 0 gewertet, sondern die verfügbaren Gewichte werden neu normiert. Pools mit strategisch abgezogener Liquidität werden nicht in Score, Benchmark oder Ranking einbezogen.<br><br><b>7d / 30d bei Meteora:</b> Die Werte werden aus 24h-Buckets der Historical-Volume-API aggregiert. Für Einnahmen/TVL wird die aktuelle Pool-Liquidität als Nenner verwendet; es handelt sich nicht um eine historische Durchschnitts-TVL.<br><br><b>Wichtig:</b> „Einnahmen“ sind API-Poolgebühren. Die tatsächlich von ASTY beanspruchbaren LP-Einnahmen werden erst nach Anbindung der öffentlichen Owner-Wallets ergänzt.</div>`;
+  html+=`</div><div class="explain"><b>Score-Mechanik:</b> 20 % 24h-, 35 % 7d- und 45 % 30d-Kapital-Effizienz. Bewertet wird jeweils die durchschnittliche tägliche Einnahmen/TVL-Effizienz relativ zu den anderen aktiven, nicht ausgeklammerten ASTY-Pools. Dadurch zählt nachhaltige Performance stärker als ein einzelner guter Tag. Fehlende Zeitfenster werden nicht mit 0 gewertet, sondern die verfügbaren Gewichte werden neu normiert. Pools mit strategisch abgezogener Liquidität werden nicht in Score, Benchmark oder Ranking einbezogen.<br><br><b>Gecko-Fallback:</b> Wenn Meteora/Raydium für TVL oder 24h-Volumen 0 bzw. keinen Wert liefert und GeckoTerminal für dieselbe Pool-Adresse einen positiven Wert meldet, wird ausschließlich für diese beiden Kennzahlen GeckoTerminal verwendet. Einnahmen/Fees werden niemals aus dem Gecko-Volumen geschätzt.<br><br><b>7d / 30d bei Meteora:</b> Die Werte werden aus 24h-Buckets der Historical-Volume-API aggregiert. Für Einnahmen/TVL wird die aktuelle Pool-Liquidität als Nenner verwendet; es handelt sich nicht um eine historische Durchschnitts-TVL.<br><br><b>Wichtig:</b> „Einnahmen“ sind API-Poolgebühren. Die tatsächlich von ASTY beanspruchbaren LP-Einnahmen werden erst nach Anbindung der öffentlichen Owner-Wallets ergänzt.</div>`;
   $("#modalBody").innerHTML=html; $("#modalBackdrop").classList.add("show");
 }
 window.copyText=async function(t){
