@@ -74,13 +74,13 @@ h1{font-size:clamp(25px,4vw,38px);margin:0;letter-spacing:-.035em;
 .control{width:100%;border:1px solid var(--line2);background:#0b0f20;color:var(--text);border-radius:11px;padding:10px 11px;outline:none}
 .control:focus{border-color:rgba(169,138,255,.5)}
 .tablewrap{overflow:auto;max-height:72vh;border-top:1px solid var(--line2)}
-table{width:100%;border-collapse:collapse;min-width:1685px}
+table{width:100%;border-collapse:collapse;min-width:1670px}
 th{position:sticky;top:0;background:#0d1123;color:var(--muted);font-size:10.5px;text-transform:uppercase;letter-spacing:.055em;text-align:right;padding:11px 10px;white-space:nowrap;z-index:1}
 th:first-child,th:nth-child(2){text-align:left}
 td{padding:11px 10px;border-top:1px solid rgba(255,255,255,.045);text-align:right;font-size:12.5px;font-variant-numeric:tabular-nums;white-space:nowrap}
 td:first-child,td:nth-child(2){text-align:left}
-th:first-child{left:0;position:sticky;z-index:4;background:#0d1123;width:168px;min-width:168px;max-width:168px}
-td:first-child{left:0;position:sticky;z-index:1;background:#0a0f24;width:168px;min-width:168px;max-width:168px;overflow:hidden}
+th:first-child{left:0;position:sticky;z-index:4;background:#0d1123;width:154px;min-width:154px;max-width:154px}
+td:first-child{left:0;position:sticky;z-index:1;background:#0a0f24;width:154px;min-width:154px;max-width:154px;overflow:hidden}
 tbody tr{transition:background .15s ease}
 tbody tr:hover{background:rgba(169,138,255,.045)}
 .pair{font-weight:780;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -261,6 +261,10 @@ const USDC_MINT="EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v";
 const SOL_MINT="So11111111111111111111111111111111111111112";
 const BIRDEYE_API_BASE="https://public-api.birdeye.so";
 const BIRDEYE_WALLET_API_KEY="d920d9664acf463c87f6b6b17893b70a";
+const BIRDEYE_MIN_REQUEST_GAP_MS=1350;
+const BIRDEYE_MAX_429_RETRIES=4;
+let birdEyeLastRequestAt=0;
+
 const CLAIM_SNAPSHOT_KEY="asty-team-dashboard-claiming-day-snapshot-v1";
 let walletState={loading:false,loadedAt:null,wallets:{},aggregate:{},error:null};
 let claimSnapshot=null;
@@ -664,40 +668,87 @@ function normalizeBirdEyeAsset(item){
     value
   };
 }
+async function birdEyeWaitForSlot(){
+  const elapsed=Date.now()-birdEyeLastRequestAt;
+  const wait=Math.max(0,BIRDEYE_MIN_REQUEST_GAP_MS-elapsed);
+  if(wait>0) await sleep(wait);
+  birdEyeLastRequestAt=Date.now();
+}
 async function birdEyeFetch(path,timeoutMs=18000){
-  const ctrl=new AbortController();
-  const timer=setTimeout(()=>ctrl.abort(),timeoutMs);
-  try{
-    const res=await fetch(`${BIRDEYE_API_BASE}${path}`,{
-      method:"GET",
-      headers:{
-        Accept:"application/json",
-        "X-API-KEY":BIRDEYE_WALLET_API_KEY,
-        "x-chain":"solana"
-      },
-      cache:"no-store",
-      signal:ctrl.signal
-    });
+  let lastError=null;
 
-    const payload=await res.json().catch(()=>null);
-    if(!res.ok){
-      const message=
-        payload?.message??payload?.error??
-        (res.status===401?"BirdEye API-Key nicht autorisiert":
-         res.status===403?"BirdEye Zugriff abgelehnt":
-         res.status===429?"BirdEye Rate-Limit erreicht":
-         `BirdEye HTTP ${res.status}`);
-      const error=new Error(String(message));
-      error.status=res.status;
-      throw error;
+  for(let attempt=0;attempt<=BIRDEYE_MAX_429_RETRIES;attempt++){
+    await birdEyeWaitForSlot();
+
+    const ctrl=new AbortController();
+    const timer=setTimeout(()=>ctrl.abort(),timeoutMs);
+
+    try{
+      const res=await fetch(`${BIRDEYE_API_BASE}${path}`,{
+        method:"GET",
+        headers:{
+          Accept:"application/json",
+          "X-API-KEY":BIRDEYE_WALLET_API_KEY,
+          "x-chain":"solana"
+        },
+        cache:"no-store",
+        signal:ctrl.signal
+      });
+
+      const payload=await res.json().catch(()=>null);
+
+      if(res.status===429){
+        const retryHeader=Number(res.headers.get("retry-after"));
+        const retryMs=Number.isFinite(retryHeader)&&retryHeader>0
+          ? retryHeader*1000
+          : Math.min(6000,1600*Math.pow(1.55,attempt));
+
+        lastError=new Error("Birdeye Rate-Limit erreicht");
+        if(attempt<BIRDEYE_MAX_429_RETRIES){
+          await sleep(retryMs);
+          continue;
+        }
+      }
+
+      if(!res.ok){
+        const message=
+          payload?.message??payload?.error??
+          (res.status===401?"BirdEye API-Key nicht autorisiert":
+           res.status===403?"BirdEye Zugriff abgelehnt":
+           res.status===429?"BirdEye Rate-Limit erreicht":
+           `BirdEye HTTP ${res.status}`);
+        const error=new Error(String(message));
+        error.status=res.status;
+        throw error;
+      }
+
+      if(payload?.success===false){
+        const msg=String(payload?.message||"BirdEye meldet einen Fehler");
+        // Some BirdEye responses return a rate-limit message with HTTP 200.
+        if(/too many requests|rate.?limit/i.test(msg) && attempt<BIRDEYE_MAX_429_RETRIES){
+          lastError=new Error(msg);
+          await sleep(Math.min(6000,1600*Math.pow(1.55,attempt)));
+          continue;
+        }
+        throw new Error(msg);
+      }
+
+      return payload;
+    }catch(e){
+      lastError=e;
+
+      // Only automatically retry actual throttling. Other errors should remain visible.
+      if(/too many requests|rate.?limit|429/i.test(String(e?.message||"")) && attempt<BIRDEYE_MAX_429_RETRIES){
+        await sleep(Math.min(6000,1600*Math.pow(1.55,attempt)));
+        continue;
+      }
+      throw e;
+    }finally{
+      clearTimeout(timer);
     }
-    if(payload?.success===false){
-      throw new Error(String(payload?.message||"BirdEye meldet einen Fehler"));
-    }
-    return payload;
-  }finally{
-    clearTimeout(timer);
   }
+
+  throw lastError||new Error("BirdEye-Abfrage fehlgeschlagen");
 }
 async function loadOneWallet(w){
   const assets={};
@@ -856,7 +907,7 @@ function renderWalletState(){
   const st=$("#walletLoadStatus");
   if(walletState.loading){
     st.className="claim-status loading";
-    st.textContent="BirdEye lädt Bestände…";
+    st.textContent="BirdEye lädt Wallets nacheinander…";
   }else if(walletState.error&&walletState.loadedAt){
     st.className="claim-status warn";
     st.textContent="Teilweise geladen";
@@ -947,7 +998,7 @@ async function refreshWalletBalances(){
     const successes=[];
     const failures=[];
 
-    // Drei Wallets bewusst nacheinander laden, damit die kostenlose Wallet-API geschont wird.
+    // Drei Wallets bewusst nacheinander laden. birdEyeFetch erzwingt zusätzlich global mindestens 1,35 s Abstand pro API-Aufruf.
     for(let i=0;i<OWNER_WALLETS.length;i++){
       const w=OWNER_WALLETS[i];
       try{
@@ -955,7 +1006,7 @@ async function refreshWalletBalances(){
       }catch(e){
         failures.push({wallet:w,error:e?.message||"Unbekannter BirdEye-Fehler"});
       }
-      if(i<OWNER_WALLETS.length-1) await sleep(300);
+      if(i<OWNER_WALLETS.length-1) await sleep(100);
     }
 
     if(!successes.length){
@@ -1120,7 +1171,7 @@ loadClaimSnapshot();
 loadCache();
 render();
 renderWalletState();
-refresh(false).then(()=>setTimeout(refreshWalletBalances,450));
+refresh(false).then(()=>setTimeout(refreshWalletBalances,400));
 </script>
 </body>
 </html>
