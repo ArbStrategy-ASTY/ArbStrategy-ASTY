@@ -39,8 +39,10 @@ h1{font-size:clamp(25px,4vw,38px);margin:0;letter-spacing:-.035em;
 .btn:hover{border-color:rgba(169,138,255,.45);background:rgba(169,138,255,.07)}
 .btn.primary{background:linear-gradient(135deg,rgba(128,103,255,.26),rgba(103,232,249,.08));border-color:rgba(169,138,255,.42)}
 .btn:disabled{opacity:.55;cursor:not-allowed}
-.statusbar{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:8px 0 18px;padding:10px 12px;
+.statusbar{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:8px 0 10px;padding:10px 12px;
   border:1px solid var(--line2);background:rgba(255,255,255,.022);border-radius:12px;color:var(--muted);font-size:12px}
+.info-note{margin:0 0 18px;padding:13px 14px;border:1px solid var(--line2);border-radius:14px;background:rgba(169,138,255,.04);color:var(--muted);font-size:12px;line-height:1.6}
+.info-note b{color:var(--text)}
 .status-left{display:flex;align-items:center;gap:9px;min-width:0}
 .dot{width:8px;height:8px;border-radius:50%;background:var(--muted2);box-shadow:0 0 0 4px rgba(255,255,255,.025)}
 .dot.live{background:var(--green);box-shadow:0 0 0 4px rgba(74,222,128,.08)}
@@ -71,12 +73,14 @@ h1{font-size:clamp(25px,4vw,38px);margin:0;letter-spacing:-.035em;
 .tools{display:grid;grid-template-columns:minmax(220px,1fr) repeat(3,minmax(140px,190px));gap:8px;padding:0 16px 14px}
 .control{width:100%;border:1px solid var(--line2);background:#0b0f20;color:var(--text);border-radius:11px;padding:10px 11px;outline:none}
 .control:focus{border-color:rgba(169,138,255,.5)}
-.tablewrap{overflow:auto;border-top:1px solid var(--line2)}
+.tablewrap{overflow:auto;max-height:72vh;border-top:1px solid var(--line2)}
 table{width:100%;border-collapse:collapse;min-width:1740px}
 th{position:sticky;top:0;background:#0d1123;color:var(--muted);font-size:10.5px;text-transform:uppercase;letter-spacing:.055em;text-align:right;padding:11px 10px;white-space:nowrap;z-index:1}
 th:first-child,th:nth-child(2){text-align:left}
 td{padding:11px 10px;border-top:1px solid rgba(255,255,255,.045);text-align:right;font-size:12.5px;font-variant-numeric:tabular-nums;white-space:nowrap}
 td:first-child,td:nth-child(2){text-align:left}
+th:first-child{left:0;position:sticky;z-index:4;background:#0d1123;min-width:224px}
+td:first-child{left:0;position:sticky;z-index:1;background:#0a0f24;min-width:224px}
 tbody tr{transition:background .15s ease}
 tbody tr:hover{background:rgba(169,138,255,.045)}
 .pair{font-weight:780;font-size:13px}
@@ -88,6 +92,7 @@ tbody tr:hover{background:rgba(169,138,255,.045)}
 .b-high{background:rgba(74,222,128,.11);color:#86efac}
 .b-mid{background:rgba(250,204,21,.09);color:#fde047}
 .b-low{background:rgba(251,113,133,.10);color:#fda4af}
+.b-excluded{background:rgba(148,163,184,.12);color:#cbd5e1}
 .trend-up{color:#86efac}.trend-flat{color:#cbd5e1}.trend-down{color:#fda4af}.na{color:var(--muted2)}
 .fee-mismatch{color:var(--yellow)}
 .empty{padding:30px;text-align:center;color:var(--muted)}
@@ -124,7 +129,7 @@ tbody tr:hover{background:rgba(169,138,255,.045)}
 <header>
   <div class="header-row">
     <div class="brand">
-      <div class="mark">A</div>
+      <div class="mark"><img src="assets/logo.png" alt="ASTY Logo" onerror="this.style.display='none'; this.parentElement.classList.add('fallback'); this.parentElement.textContent='A';"></div>
       <div>
         <h1>ASTY Team Dashboard</h1>
         <div class="sub">Interne Pool-Analyse · 64 ASTY-Pools · Live + 7d/30d Historie</div>
@@ -142,6 +147,12 @@ tbody tr:hover{background:rgba(169,138,255,.045)}
   <div id="updatedText">Noch nicht aktualisiert</div>
 </div>
 <div class="progress"><i id="progressBar"></i></div>
+<div class="info-note">
+  <b>Hinweis zur ASTY-Score-Berechnung:</b> Der Score bewertet die durchschnittliche tägliche Kapital-Effizienz der Pools relativ zueinander.
+  Gewichtet werden aktuell <b>24h = 20 %</b>, <b>7d = 35 %</b> und <b>30d = 45 %</b>.
+  Grundlage ist vor allem <b>Einnahmen / TVL</b>. Die drei alten Meteora-SOL-Pools mit <b>1 %</b>, <b>0,3 %</b> und <b>2 %</b> sind von der Berechnung ausgeschlossen,
+  weil ihre Liquidität auf die anderen SOL-Pools umgeschichtet wurde. Sie bleiben nur zur Ansicht in der Tabelle.
+</div>
 
 <section class="kpis">
   <div class="kpi"><div class="kpi-label">Gesamte Pool-Liquidität</div><div class="kpi-value" id="kpiTvl">–</div><div class="kpi-note">Geladene ASTY-Pools</div></div>
@@ -206,7 +217,7 @@ tbody tr:hover{background:rgba(169,138,255,.045)}
 
 <div class="footer">
   ASTY Team Dashboard · Interne Analyse. Meteora-Daten werden aus der öffentlichen DAMM-v2 Data API geladen; 7d/30d werden aus der Historical-Volume-API mit 24h-Buckets aggregiert. Raydium-Daten kommen aus API v3.
-  Der Effizienz-Score ist ein relativer Vergleich der aktuell geladenen ASTY-Pools und keine Renditeprognose.
+  Der Effizienz-Score ist ein relativer Vergleich der aktuell geladenen ASTY-Pools und keine Renditeprognose. Drei frühere Meteora-SOL-Pools sind bewusst aus der Berechnung ausgeschlossen.
   „Einnahmen“ bezeichnet die von den APIs gemeldeten Poolgebühren. Individuell beanspruchbare LP-Einnahmen werden erst mit den Owner-Wallets ergänzt.
 </div>
 </div>
@@ -226,6 +237,7 @@ tbody tr:hover{background:rgba(169,138,255,.045)}
 const POOLS = [{"address":"3UvhqPrMyf13qgRodARDi5oGJGoxHYb2ykZdCaa1TV8i","name":"ASTY/WIF","configuredFee":1,"dex":"Meteora"},{"address":"HeuivHLqCEmsgKhYhX1M6MGthEbtHrGmZdXQSCBVkstP","name":"ASTY/ALCH","configuredFee":1,"dex":"Meteora"},{"address":"CSD1NpGwhnohByefBp73Jyk6u6ZCkwwDFDVqvmkDrfxE","name":"ASTY/ARBX","configuredFee":1,"dex":"Meteora"},{"address":"DxMFG4kn8pxuf7AoKD1ffXjUhPpj4a8WAdgw87gyM2mj","name":"ASTY/ARBX","configuredFee":0.3,"dex":"Meteora"},{"address":"CoD6KLgnW2wKe2UtnNjSQk4RSS6fMU4P2vwKqsUxK9Bf","name":"ASTY/Bonk","configuredFee":1,"dex":"Meteora"},{"address":"7T6HixJyUfzSR88dhWC9tAjasXcdFyDrKmDtuzrXgt9j","name":"ASTY/ETH","configuredFee":1,"dex":"Meteora"},{"address":"B6fq1uNpMkyGANAQo5D9GJfMCkcaNewc6q8sWZAfWZ4M","name":"ASTY/Fartcoin","configuredFee":1,"dex":"Meteora"},{"address":"8aXv2DDRG3k5N3ADTw37Di4ytHGJ3ZaS2tPp1f2EW5ZD","name":"ASTY/GEOD","configuredFee":1,"dex":"Meteora"},{"address":"CRGcFA8f577F2BEZSmgohd4cuBTVsBpLjwqfVHrG8krE","name":"ASTY/BOME","configuredFee":1,"dex":"Meteora"},{"address":"3UapB8rB3T88Kac7CG3F44SKCa5xSBsKaJndbx8YrxWG","name":"ASTY/RTM","configuredFee":1,"dex":"Meteora"},{"address":"92RKFRJSctMAuw8Tym7cZgd2yjMcHeZ5hDUMdnZd54zV","name":"ASTY/Grandma","configuredFee":1,"dex":"Meteora"},{"address":"Gec7ENkk9irtsmmwpwLHk1i4VntB4vFGRAe1ET3LeT3J","name":"ASTY/JTO","configuredFee":1,"dex":"Meteora"},{"address":"iZXTZMMS51US5erGnviWfc8CNGx5QDDzp6DERH25EtW","name":"ASTY/JUP","configuredFee":1,"dex":"Meteora"},{"address":"29eKi5ipMR9fLgkYpM91Xrab2LVBnUU75SYG8kCt1nis","name":"ASTY/MET","configuredFee":1,"dex":"Meteora"},{"address":"CSiAzSiCMNGjLwYKRdhDUjNwz4obf3Q5ZnMQECnmxshV","name":"ASTY/PENGU","configuredFee":1,"dex":"Meteora"},{"address":"2uNbRDLDeMizdJNEqKaapzAGJWVwa3uuJ3w4trVud4ZW","name":"ASTY/pippin","configuredFee":1,"dex":"Meteora"},{"address":"GyVyv2H2SB4fYaC7C6raWNSQqNhShdzNuSqQwG9uUUcE","name":"ASTY/POPCAT","configuredFee":1,"dex":"Meteora"},{"address":"RYztJXyPCmwUmfi7punwCf7q6FbxoJbRtBEodZ7j7GH","name":"ASTY/PsyopAnime","configuredFee":1,"dex":"Meteora"},{"address":"DfJsn7Ui6YBUC25kM5FoqrCYrqfRVCoSxpTeyEzWv4vT","name":"ASTY/RAY","configuredFee":1,"dex":"Meteora"},{"address":"2ufiEWc5wF8gJB1a9YiPkFuLwrFn4Zgyma1kdQRakoAr","name":"ASTY/SOL","configuredFee":0.25,"dex":"Meteora"},{"address":"7tbbdGzFZpjrPmM7jQderyyv1x8Ebz1vhwqNhEW97osb","name":"ASTY/SOL","configuredFee":1,"dex":"Meteora"},{"address":"HAieGroddWr3NZpSZYqqm39w2aTUuknWNXxfF6vWNpaR","name":"ASTY/SOL","configuredFee":0.3,"dex":"Meteora"},{"address":"BBVxTUtaagQgG5AgmNSYS9Pqwidc7yAbRF6avt48iF2u","name":"ASTY/TAX","configuredFee":1,"dex":"Meteora"},{"address":"CFcyQpye4K4pyhVPoSAgj3BAqNoWpZCvHpNncXssy7qH","name":"ASTY/TAX","configuredFee":1,"dex":"Meteora"},{"address":"tDqqTi8tJds88AkxFvhjZTQK5iDtV5ZG9ZkNYxh23MG","name":"ASTY/UNI","configuredFee":1,"dex":"Meteora"},{"address":"3HhGsPNMtSg1dNV9SVSfzGCQLx3Zp5giAvYJdQuuNqU9","name":"ASTY/USDC","configuredFee":0.3,"dex":"Meteora"},{"address":"5zCsWjFoEQ7jGNaHNwBRvZq7RMqVh6vQhmiYv4NWkDZK","name":"ASTY/USDC","configuredFee":1,"dex":"Meteora"},{"address":"BqdoyTYoXpnAzRafoBQPrY4ubVSzYE42rxJzNJwoxmZP","name":"ASTY/USDC","configuredFee":0.25,"dex":"Meteora"},{"address":"BWFDr72tjXJsRdUyAfqghv6sGXgQr2zJ78KdeV3c74q1","name":"ASTY/USDC","configuredFee":2,"dex":"Meteora"},{"address":"2Hjjn2aoVdUeGraV4vRak94GGAAW5w9syfVBeXU4Ad5J","name":"ASTY/WBTC","configuredFee":1,"dex":"Meteora"},{"address":"7Fr58kHKW85XiFgZ8WibumE7P5CLZFo4A8qsQxKNEWaE","name":"ASTY/WhiteWhale","configuredFee":1,"dex":"Meteora"},{"address":"4TgvcTKzq9zZR5znyak2y3tvaXg4q6hvKWEZgxesQqkx","name":"ASTY/WLFI","configuredFee":1,"dex":"Meteora"},{"address":"5wpSZwUmdXy5kB96n7U24iFzvbSNEvFd4BvERhhqYjQY","name":"ASTY/WOJAK","configuredFee":1,"dex":"Meteora"},{"address":"2aWCx2qrYmjen1N8UW3eLBzNu7fCPqxjL9NKXqHGXPHc","name":"ASTY/ZBCN","configuredFee":1,"dex":"Meteora"},{"address":"2WRrdtnKKr2eq67o4ZK2VQv7dXu4Pm8iz6TMN8UXvhbV","name":"ASTY/SOL","configuredFee":2,"dex":"Meteora"},{"address":"4iHVvcWHNYFDPFySosAx1qGZoFsDN7gXHxKqUFnGq6oJ","name":"ASTY/BAT","configuredFee":1,"dex":"Meteora"},{"address":"4kWT67c13svR9EfxM4TGn8inNqFsXeuAWQhn8KBVajBs","name":"ASTY/ACC","configuredFee":1,"dex":"Meteora"},{"address":"5fEodJwZNUTwXbiTRKU2KPCc4Xr15fPKVmxbAph7yX7v","name":"ASTY/BTAX","configuredFee":1,"dex":"Meteora"},{"address":"61HTuoKeWhEfscoBcd5zSNvmAyGpxdaUNMriLNnyyREz","name":"ASTY/USDC","configuredFee":6,"dex":"Meteora"},{"address":"8fBYS2Kq9f4Lm1SYdt4sdHRL27Ni8UcRMPtFNLdEcnAH","name":"ASTY/Cake","configuredFee":1,"dex":"Meteora"},{"address":"DdK87cRD7uzoUWc9JZNRNxPoLHXeAcGkfU2b49YTZrm3","name":"ASTY/AVA","configuredFee":1,"dex":"Meteora"},{"address":"DwZZHyqnzWEqNP4VuczHHwfJsni6xqo57TBm7SoeJ62u","name":"ASTY/RENDER","configuredFee":1,"dex":"Meteora"},{"address":"HvmNZyopYSwHRUXCUti4D6YANpfWscVLSQVv9nw2XYhx","name":"ASTY/TURBO","configuredFee":1,"dex":"Meteora"},{"address":"m1e9swvUoggDm2zLXzrzKRrbVwmGEP8aQy7BQigFZgK","name":"ASTY/SOL","configuredFee":0.25,"dex":"Raydium"},{"address":"3PVPMEseLJxE6yyB5eBJ3qzRCzCGN6L9qa85stcZH4FM","name":"ASTY/testicle","configuredFee":1,"dex":"Meteora"},{"address":"BM9W33kccA1GCdbkuGoNDvJLTQW5xKbKwXht8sCXayc3","name":"ASTY/Buttcoin","configuredFee":1,"dex":"Meteora"},{"address":"AiazXNe6ShtCbQHZbmpnkuuswVHFKh5rLZKeudzWU3aq","name":"ASTY/BP","configuredFee":1,"dex":"Meteora"},{"address":"DitqC25rriaMeZyiQPeXLNgfxqRTZL2qxFHp3MHrxM6t","name":"ASTY/Punch","configuredFee":1,"dex":"Meteora"},{"address":"mwsmVXehTt2aFonhJDyZWbwgpxDVM9MMfo7GUYrYL7K","name":"ASTY/Restart","configuredFee":1,"dex":"Meteora"},{"address":"39dM3NfQuPiGwC3M93BUsXKrRdXTAZWPX6VxianCSevn","name":"ASTY/GREM","configuredFee":1,"dex":"Meteora"},{"address":"Fmna4bQBthaFT51VRtKR6QfgHisjxzcrzCWmPCP9dMNy","name":"ASTY/INCOME","configuredFee":1,"dex":"Meteora"},{"address":"AwmLBQ3keEicdD93gTr22avcJqsXwDTGMaLt25Jvyexo","name":"ASTY/ORCA","configuredFee":1,"dex":"Meteora"},{"address":"4UPuDZPPkrC5YHdpFnfv4RX7dfHYnjz8BYZaTCewSn5v","name":"ASTY/MOODENG","configuredFee":1,"dex":"Meteora"},{"address":"9dvPJ67AEzZZD9ThHAEJzkzVwxiVQrvC2Virv8KyGgZb","name":"ASTY/SEARCH","configuredFee":1,"dex":"Meteora"},{"address":"Dz8AuKtEJLrVeuAvhBg4gbTkBeNqC89wfLt3fJKZKk8v","name":"ASTY/USD","configuredFee":4,"dex":"Meteora"},{"address":"28yNWBwCvNLaC8h2Lf8AFcZqzfRpKMQMynwjjMibRwRU","name":"ASTY/HYPE","configuredFee":1,"dex":"Meteora"},{"address":"7wCaiBEGFHPhB5iDTCERsNXbzsc7bZyamqQsHNxuhdYU","name":"ASTY/SATO","configuredFee":1,"dex":"Meteora"},{"address":"Ax38rDrpRMturM59zKBEGsNn2HjE96rC9Jz3WbAgXtYw","name":"ASTY/SIMPLR","configuredFee":1,"dex":"Meteora"},{"address":"444uxc7K8jDZhtRUiuDAM822Pe93RYkHytzWuLKNyxVs","name":"ASTY/TAO","configuredFee":1,"dex":"Meteora"},{"address":"EDrT8LWDRuYE7v75Dkc9gUjLk7MvDYdezvDcnoHGqwuq","name":"ASTY/TROLL","configuredFee":1,"dex":"Meteora"},{"address":"ArKpj5vcNtHJTLhUKeADCmvuBpn1ZZoGNHZZYQ1QXq5n","name":"ASTY/CUPSEY","configuredFee":1,"dex":"Meteora"},{"address":"DGuvY79xbLuJRb3CzwQL59z5zoit7KLnFwyL2t6EQCcj","name":"ASTY/SERIOUS","configuredFee":1,"dex":"Meteora"},{"address":"5rwRQ4KprvvM1Z7h3QQ5WtUPUG5NMYEw1JtehSAxWeh3","name":"ASTY/Chiikawa","configuredFee":1,"dex":"Meteora"},{"address":"9zrdaC8tHges3JLTfsRVuibQ2xhXivZx3keymkZV2PAa","name":"ASTY/three","configuredFee":1,"dex":"Meteora"}];
 const METEORA_BASE = "https://damm-v2.datapi.meteora.ag";
 const RAYDIUM_BASE = "https://api-v3.raydium.io";
+const EXCLUDED_POOL_IDS = new Set(["7tbbdGzFZpjrPmM7jQderyyv1x8Ebz1vhwqNhEW97osb", "HAieGroddWr3NZpSZYqqm39w2aTUuknWNXxfF6vWNpaR", "2WRrdtnKKr2eq67o4ZK2VQv7dXu4Pm8iz6TMN8UXvhbV"]);
 const CACHE_KEY = "asty-team-dashboard-v2-cache";
 const HISTORY_CACHE_KEY = "asty-team-dashboard-meteora-history-v1";
 const HISTORY_CACHE_TTL = 30 * 60 * 1000;
@@ -236,6 +248,7 @@ const $ = s => document.querySelector(s);
 const fmtUSD = n => Number.isFinite(+n) ? new Intl.NumberFormat("de-DE",{style:"currency",currency:"USD",maximumFractionDigits:+n<10?2:0}).format(+n) : "–";
 const fmtNum = (n,d=2) => Number.isFinite(+n) ? new Intl.NumberFormat("de-DE",{maximumFractionDigits:d}).format(+n) : "–";
 const fmtPct = (n,d=2) => Number.isFinite(+n) ? `${fmtNum(+n,d)} %` : "–";
+const poolFeeValue = r => Number.isFinite(r.apiFee) ? r.apiFee : r.configuredFee;
 const shortAddr = a => a ? `${a.slice(0,5)}…${a.slice(-5)}` : "–";
 const safe = (o,path,fb=null) => path.split(".").reduce((x,k)=>x!=null?x[k]:undefined,o) ?? fb;
 const num = v => (v===null||v===undefined||v==="") ? null : (Number.isFinite(+v)?+v:null);
@@ -259,6 +272,7 @@ function percentile(values, value){
 function deriveMetrics(){
   const nowSec = Date.now()/1000;
   rows.forEach(r=>{
+    r.excluded = EXCLUDED_POOL_IDS.has(r.address);
     r.turnover24 = r.tvl>0 && Number.isFinite(r.volume24) ? r.volume24/r.tvl : null;
     r.turnover7 = r.tvl>0 && Number.isFinite(r.volume7) ? r.volume7/r.tvl : null;
     r.turnover30 = r.tvl>0 && Number.isFinite(r.volume30) ? r.volume30/r.tvl : null;
@@ -299,12 +313,13 @@ function deriveMetrics(){
     }
   });
 
-  const loaded = rows.filter(r=>r.loaded);
+  const loaded = rows.filter(r=>r.loaded && !r.excluded);
   const e24 = loaded.map(r=>r.effDaily24).filter(Number.isFinite);
   const e7 = loaded.map(r=>r.effDaily7).filter(Number.isFinite);
   const e30 = loaded.map(r=>r.effDaily30).filter(Number.isFinite);
 
   loaded.forEach(r=>{
+    if(r.excluded){ r.score=null; r.level="AUSGEKLAMMERT"; return; }
     const parts=[];
     const p24=percentile(e24,r.effDaily24); if(p24!==null) parts.push([p24,0.20]);
     const p7=percentile(e7,r.effDaily7); if(p7!==null) parts.push([p7,0.35]);
@@ -572,11 +587,12 @@ function filteredRows(){
   });
   const key={score:"score",fees24:"fees24",fees7:"fees7",fees30:"fees30",feeTvl24:"feeTvl24",feeTvl7:"feeTvl7",feeTvl30:"feeTvl30",volume24:"volume24",volume7:"volume7",volume30:"volume30",tvl:"tvl"}[sort];
   if(sort==="name") arr.sort((a,b)=>a.name.localeCompare(b.name,"de"));
+  else if(sort==="score") arr.sort((a,b)=>((b.excluded ? -1 : (Number.isFinite(b[key])?b[key]:-Infinity)))-((a.excluded ? -1 : (Number.isFinite(a[key])?a[key]:-Infinity))));
   else arr.sort((a,b)=>(Number.isFinite(b[key])?b[key]:-Infinity)-(Number.isFinite(a[key])?a[key]:-Infinity));
   return arr;
 }
 function renderKPIs(){
-  const a=rows.filter(r=>r.loaded);
+  const a=rows.filter(r=>r.loaded && !r.excluded);
   const tvl=a.reduce((s,r)=>s+(r.tvl||0),0);
   const vol=a.reduce((s,r)=>s+(r.volume24||0),0);
   const fees=a.reduce((s,r)=>s+(r.fees24||0),0);
@@ -589,13 +605,14 @@ function renderKPIs(){
   $("#kpiFees7").textContent=fmtUSD(fees7);
   $("#kpiFees30").textContent=fmtUSD(fees30);
   $("#kpiEff").textContent=fmtPct(eff30);
-  $("#kpiLoaded").textContent=`${a.length} / 64`;
+  $("#kpiLoaded").textContent=`${a.length} / 61`;
+  $("#kpiDex").textContent="60 Meteora + 1 Raydium in der Berechnung · 3 alte SOL-Pools ausgeklammert";
 }
 function renderRank(){
-  const a=rows.filter(r=>r.loaded&&Number.isFinite(r.score)).sort((x,y)=>y.score-x.score);
+  const a=rows.filter(r=>r.loaded && !r.excluded && Number.isFinite(r.score)).sort((x,y)=>y.score-x.score);
   function block(list){
     if(!list.length)return `<div class="empty">Noch keine Live-Daten</div>`;
-    return list.map((r,i)=>`<div class="rankrow" onclick="openDetail('${r.address}')"><div class="ranknum">${i+1}</div><div><div class="rankname">${r.name}</div><div class="rankmeta">${r.dex} · ${fmtPct(r.feeTvl30)} Einn./TVL 30d</div></div><div class="score">${r.score}</div></div>`).join("");
+    return list.map((r,i)=>`<div class="rankrow" onclick="openDetail('${r.address}')"><div class="ranknum">${i+1}</div><div><div class="rankname">${r.name}</div><div class="rankmeta">${r.dex} · Fee ${fmtPct(poolFeeValue(r))} · ${fmtPct(r.feeTvl30)} Einn./TVL 30d</div></div><div class="score">${r.score}</div></div>`).join("");
   }
   $("#topRank").innerHTML=block(a.slice(0,5));
   const low=[...a].sort((x,y)=>x.score-y.score).slice(0,5);
@@ -606,15 +623,18 @@ function renderTable(){
   $("#emptyState").style.display=arr.length?"none":"block";
   tb.innerHTML=arr.map(r=>{
     if(!r.loaded) return `<tr onclick="openDetail('${r.address}')"><td><div class="pair">${r.name}</div><div class="addr">${shortAddr(r.address)}</div></td><td><span class="dex ${r.dex==="Raydium"?"ray":""}">${r.dex}</span></td><td>${fmtPct(r.configuredFee)}</td><td colspan="13" class="na" style="text-align:center">Daten nicht geladen</td><td><span class="badge b-low">FEHLER</span></td></tr>`;
+    const effBadge = r.excluded
+      ? `<span class="badge b-excluded">AUSGEKLAMMERT</span>`
+      : `<span class="badge ${levelClass(r.level)}">${r.level} · ${r.score}</span>`;
     return `<tr onclick="openDetail('${r.address}')">
-      <td><div class="pair">${r.name}</div><div class="addr">${shortAddr(r.address)}</div></td>
+      <td><div class="pair">${r.name}</div><div class="addr">${shortAddr(r.address)}${r.excluded ? " · aus Berechnung" : ""}</div></td>
       <td><span class="dex ${r.dex==="Raydium"?"ray":""}">${r.dex}</span></td>
       <td>${feeDisplay(r)}</td><td>${fmtUSD(r.tvl)}</td>
       <td>${fmtUSD(r.volume1)}</td><td>${fmtUSD(r.volume24)}</td><td>${fmtUSD(r.volume7)}</td><td>${fmtUSD(r.volume30)}</td>
       <td>${fmtUSD(r.fees1)}</td><td>${fmtUSD(r.fees24)}</td><td>${fmtUSD(r.fees7)}</td><td>${fmtUSD(r.fees30)}</td>
       <td>${fmtPct(r.feeTvl24)}</td><td>${fmtPct(r.feeTvl7)}</td><td>${fmtPct(r.feeTvl30)}</td>
       <td class="${trendClass(r.trend)}">${r.trend}</td>
-      <td><span class="badge ${levelClass(r.level)}">${r.level} · ${r.score}</span></td>
+      <td>${effBadge}</td>
     </tr>`;
   }).join("");
 }
@@ -623,7 +643,7 @@ function render(){ renderKPIs(); renderRank(); renderTable(); }
 function detailCard(l,v){ return `<div class="detail"><div class="l">${l}</div><div class="v">${v}</div></div>`; }
 window.openDetail=function(address){
   const r=rows.find(x=>x.address===address); if(!r)return;
-  $("#modalTitle").textContent=r.name; $("#modalSub").textContent=`${r.dex}${r.poolType?` · ${r.poolType}`:""}`;
+  $("#modalTitle").textContent=r.name; $("#modalSub").textContent=`${r.dex}${r.poolType?` · ${r.poolType}`:""}${r.excluded ? " · aus der ASTY-Score-Berechnung ausgeschlossen" : ""}`;
   let html=`<div class="detail-grid">`;
   if(r.loaded){
     html+=detailCard("Pool-Gebühr",feeDisplay(r))+detailCard("Liquidität",fmtUSD(r.tvl))+detailCard("Effizienz-Score",r.score!==null?`${r.score} / 100`:"–")+detailCard("Trend",r.trend||"–");
@@ -647,8 +667,8 @@ window.copyText=async function(t){
 }
 function showToast(t){const el=$("#toast");el.textContent=t;el.classList.add("show");setTimeout(()=>el.classList.remove("show"),1400)}
 function exportCSV(){
-  const hdr=["Pool","DEX","Adresse","Gebühr API %","Gebühr Liste %","TVL USD","Volumen 1h USD","Volumen 24h USD","Volumen 7d USD","Volumen 30d USD","Einnahmen 1h USD","Einnahmen 24h USD","Einnahmen 7d USD","Einnahmen 30d USD","Einnahmen/TVL 24h %","Einnahmen/TVL 7d %","Einnahmen/TVL 30d %","APR 24h %","APR 7d %","APR 30d %","Trend","Effizienz Score","Effizienz","History Tage"];
-  const data=rows.map(r=>[r.name,r.dex,r.address,r.apiFee??"",r.configuredFee,r.tvl??"",r.volume1??"",r.volume24??"",r.volume7??"",r.volume30??"",r.fees1??"",r.fees24??"",r.fees7??"",r.fees30??"",r.feeTvl24??"",r.feeTvl7??"",r.feeTvl30??"",r.apr24??"",r.apr7??"",r.apr30??"",r.trend??"",r.score??"",r.level??"",r.coverage30??""]);
+  const hdr=["Pool","DEX","Adresse","Ausgeklammert","Gebühr API %","Gebühr Liste %","TVL USD","Volumen 1h USD","Volumen 24h USD","Volumen 7d USD","Volumen 30d USD","Einnahmen 1h USD","Einnahmen 24h USD","Einnahmen 7d USD","Einnahmen 30d USD","Einnahmen/TVL 24h %","Einnahmen/TVL 7d %","Einnahmen/TVL 30d %","APR 24h %","APR 7d %","APR 30d %","Trend","Effizienz Score","Effizienz","History Tage"];
+  const data=rows.map(r=>[r.name,r.dex,r.address,r.excluded?"ja":"nein",r.apiFee??"",r.configuredFee,r.tvl??"",r.volume1??"",r.volume24??"",r.volume7??"",r.volume30??"",r.fees1??"",r.fees24??"",r.fees7??"",r.fees30??"",r.feeTvl24??"",r.feeTvl7??"",r.feeTvl30??"",r.apr24??"",r.apr7??"",r.apr30??"",r.trend??"",r.score??"",r.level??"",r.coverage30??""]);
   const esc=v=>`"${String(v).replaceAll('"','""')}"`;
   const csv=[hdr,...data].map(row=>row.map(esc).join(";")).join("\n");
   const blob=new Blob(["\ufeff"+csv],{type:"text/csv;charset=utf-8"});
