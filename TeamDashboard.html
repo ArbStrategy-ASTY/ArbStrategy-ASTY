@@ -79,9 +79,9 @@ sowie die Meteora-USDC-Pools mit <b>0,30 %</b>, <b>2 %</b> und <b>6 %</b>.
 <div class="owner-grid">
 <div class="owner-card"><div class="owner-head"><span class="dex">Meteora</span><span class="owner-status" id="meteoraOwnerStatus">Wartet</span></div><div class="owner-value" id="meteoraClaimable">–</div><div class="owner-label">beanspruchbare DAMM-v2-LP-Einnahmen</div><div class="owner-wallet" id="meteoraOwnerMeta">2 Owner-Wallets</div></div>
 <div class="owner-card"><div class="owner-head"><span class="dex ray">Raydium</span><span class="owner-status" id="raydiumOwnerStatus">Wartet</span></div><div class="owner-value" id="raydiumClaimable">–</div><div class="owner-label">aktueller CPMM-LP-Positionswert</div><div class="owner-wallet" id="raydiumOwnerMeta">1 Owner-Wallet</div></div>
-<div class="owner-card owner-total"><div class="owner-head"><span>Owner-Positionen</span><span class="owner-status" id="ownerUpdated">–</span></div><div class="owner-value" id="ownerClaimableTotal">–</div><div class="owner-label">erkannte Positionen in ASTY-Pools</div><div class="owner-wallet">Meteora + Raydium</div></div>
+<div class="owner-card owner-total"><div class="owner-head"><span>Owner-Positionen</span><span class="owner-status" id="ownerUpdated">–</span></div><div class="owner-value" id="ownerClaimableTotal">–</div><div class="owner-label">erkannte Positionen in ASTY-Pools · nur bei vollständiger Owner-Auswertung</div><div class="owner-wallet">Meteora + Raydium</div></div>
 </div>
-<div class="owner-note"><b>Meteora:</b> Alle 63 Meteora-Pools sind DAMM v2. Die beiden Owner-Wallets werden direkt aus dieser HTML über die ASTY-Mint-Adresse auf DAMM-v2-Positionen geprüft; gezählt wird nur die claimbare ASTY-Seite der LP-Fee. <b>Raydium:</b> Beim ASTY/SOL-CPMM wird der LP-Mint direkt in der Owner-Wallet gesucht. Die Browser-Abfrage probiert mehrere öffentliche Solana-RPCs automatisch durch.</div>
+<div class="owner-note"><b>Meteora:</b> Alle 63 Meteora-Pools sind DAMM v2. Die HTML liest die Token-2022-Konten der beiden Owner-Wallets direkt, erkennt daraus die DAMM-v2-Position-NFTs und berechnet ausschließlich die claimbare ASTY-Seite der LP-Fee. <b>Raydium:</b> Beim ASTY/SOL-CPMM wird nach frei in der Owner-Wallet liegenden LP-Tokens gesucht. Gestakte oder anderweitig verwahrte LP-Tokens erscheinen dort nicht als freier Wallet-Bestand.</div>
 </section>
 
 <section class="section"><div class="section-head"><div><div class="section-title">Effizienz-Ranking</div><div class="section-note">Relativer ASTY-Score aus 24h-, 7d- und 30d-Kapital-Effizienz. Langfristige Performance zählt stärker.</div></div></div><div class="rankgrid"><div class="rankbox"><div class="rank-title">Effizienteste Pools</div><div id="topRank"></div></div><div class="rankbox"><div class="rank-title">Niedrigste Kapital-Effizienz</div><div id="lowRank"></div></div></div></section>
@@ -101,14 +101,15 @@ sowie die Meteora-USDC-Pools mit <b>0,30 %</b>, <b>2 %</b> und <b>6 %</b>.
 <script>
 const POOLS=[{"address":"3UvhqPrMyf13qgRodARDi5oGJGoxHYb2ykZdCaa1TV8i","name":"ASTY/WIF","configuredFee":1,"dex":"Meteora"},{"address":"HeuivHLqCEmsgKhYhX1M6MGthEbtHrGmZdXQSCBVkstP","name":"ASTY/ALCH","configuredFee":1,"dex":"Meteora"},{"address":"CSD1NpGwhnohByefBp73Jyk6u6ZCkwwDFDVqvmkDrfxE","name":"ASTY/ARBX","configuredFee":1,"dex":"Meteora"},{"address":"DxMFG4kn8pxuf7AoKD1ffXjUhPpj4a8WAdgw87gyM2mj","name":"ASTY/ARBX","configuredFee":0.3,"dex":"Meteora"},{"address":"CoD6KLgnW2wKe2UtnNjSQk4RSS6fMU4P2vwKqsUxK9Bf","name":"ASTY/Bonk","configuredFee":1,"dex":"Meteora"},{"address":"7T6HixJyUfzSR88dhWC9tAjasXcdFyDrKmDtuzrXgt9j","name":"ASTY/ETH","configuredFee":1,"dex":"Meteora"},{"address":"B6fq1uNpMkyGANAQo5D9GJfMCkcaNewc6q8sWZAfWZ4M","name":"ASTY/Fartcoin","configuredFee":1,"dex":"Meteora"},{"address":"8aXv2DDRG3k5N3ADTw37Di4ytHGJ3ZaS2tPp1f2EW5ZD","name":"ASTY/GEOD","configuredFee":1,"dex":"Meteora"},{"address":"CRGcFA8f577F2BEZSmgohd4cuBTVsBpLjwqfVHrG8krE","name":"ASTY/BOME","configuredFee":1,"dex":"Meteora"},{"address":"3UapB8rB3T88Kac7CG3F44SKCa5xSBsKaJndbx8YrxWG","name":"ASTY/RTM","configuredFee":1,"dex":"Meteora"},{"address":"92RKFRJSctMAuw8Tym7cZgd2yjMcHeZ5hDUMdnZd54zV","name":"ASTY/Grandma","configuredFee":1,"dex":"Meteora"},{"address":"Gec7ENkk9irtsmmwpwLHk1i4VntB4vFGRAe1ET3LeT3J","name":"ASTY/JTO","configuredFee":1,"dex":"Meteora"},{"address":"iZXTZMMS51US5erGnviWfc8CNGx5QDDzp6DERH25EtW","name":"ASTY/JUP","configuredFee":1,"dex":"Meteora"},{"address":"29eKi5ipMR9fLgkYpM91Xrab2LVBnUU75SYG8kCt1nis","name":"ASTY/MET","configuredFee":1,"dex":"Meteora"},{"address":"CSiAzSiCMNGjLwYKRdhDUjNwz4obf3Q5ZnMQECnmxshV","name":"ASTY/PENGU","configuredFee":1,"dex":"Meteora"},{"address":"2uNbRDLDeMizdJNEqKaapzAGJWVwa3uuJ3w4trVud4ZW","name":"ASTY/pippin","configuredFee":1,"dex":"Meteora"},{"address":"GyVyv2H2SB4fYaC7C6raWNSQqNhShdzNuSqQwG9uUUcE","name":"ASTY/POPCAT","configuredFee":1,"dex":"Meteora"},{"address":"RYztJXyPCmwUmfi7punwCf7q6FbxoJbRtBEodZ7j7GH","name":"ASTY/PsyopAnime","configuredFee":1,"dex":"Meteora"},{"address":"DfJsn7Ui6YBUC25kM5FoqrCYrqfRVCoSxpTeyEzWv4vT","name":"ASTY/RAY","configuredFee":1,"dex":"Meteora"},{"address":"2ufiEWc5wF8gJB1a9YiPkFuLwrFn4Zgyma1kdQRakoAr","name":"ASTY/SOL","configuredFee":0.25,"dex":"Meteora"},{"address":"7tbbdGzFZpjrPmM7jQderyyv1x8Ebz1vhwqNhEW97osb","name":"ASTY/SOL","configuredFee":1,"dex":"Meteora"},{"address":"HAieGroddWr3NZpSZYqqm39w2aTUuknWNXxfF6vWNpaR","name":"ASTY/SOL","configuredFee":0.3,"dex":"Meteora"},{"address":"BBVxTUtaagQgG5AgmNSYS9Pqwidc7yAbRF6avt48iF2u","name":"ASTY/TAX","configuredFee":1,"dex":"Meteora"},{"address":"CFcyQpye4K4pyhVPoSAgj3BAqNoWpZCvHpNncXssy7qH","name":"ASTY/TAX","configuredFee":1,"dex":"Meteora"},{"address":"tDqqTi8tJds88AkxFvhjZTQK5iDtV5ZG9ZkNYxh23MG","name":"ASTY/UNI","configuredFee":1,"dex":"Meteora"},{"address":"3HhGsPNMtSg1dNV9SVSfzGCQLx3Zp5giAvYJdQuuNqU9","name":"ASTY/USDC","configuredFee":0.3,"dex":"Meteora"},{"address":"5zCsWjFoEQ7jGNaHNwBRvZq7RMqVh6vQhmiYv4NWkDZK","name":"ASTY/USDC","configuredFee":1,"dex":"Meteora"},{"address":"BqdoyTYoXpnAzRafoBQPrY4ubVSzYE42rxJzNJwoxmZP","name":"ASTY/USDC","configuredFee":0.25,"dex":"Meteora"},{"address":"BWFDr72tjXJsRdUyAfqghv6sGXgQr2zJ78KdeV3c74q1","name":"ASTY/USDC","configuredFee":2,"dex":"Meteora"},{"address":"2Hjjn2aoVdUeGraV4vRak94GGAAW5w9syfVBeXU4Ad5J","name":"ASTY/WBTC","configuredFee":1,"dex":"Meteora"},{"address":"7Fr58kHKW85XiFgZ8WibumE7P5CLZFo4A8qsQxKNEWaE","name":"ASTY/WhiteWhale","configuredFee":1,"dex":"Meteora"},{"address":"4TgvcTKzq9zZR5znyak2y3tvaXg4q6hvKWEZgxesQqkx","name":"ASTY/WLFI","configuredFee":1,"dex":"Meteora"},{"address":"5wpSZwUmdXy5kB96n7U24iFzvbSNEvFd4BvERhhqYjQY","name":"ASTY/WOJAK","configuredFee":1,"dex":"Meteora"},{"address":"2aWCx2qrYmjen1N8UW3eLBzNu7fCPqxjL9NKXqHGXPHc","name":"ASTY/ZBCN","configuredFee":1,"dex":"Meteora"},{"address":"2WRrdtnKKr2eq67o4ZK2VQv7dXu4Pm8iz6TMN8UXvhbV","name":"ASTY/SOL","configuredFee":2,"dex":"Meteora"},{"address":"4iHVvcWHNYFDPFySosAx1qGZoFsDN7gXHxKqUFnGq6oJ","name":"ASTY/BAT","configuredFee":1,"dex":"Meteora"},{"address":"4kWT67c13svR9EfxM4TGn8inNqFsXeuAWQhn8KBVajBs","name":"ASTY/ACC","configuredFee":1,"dex":"Meteora"},{"address":"5fEodJwZNUTwXbiTRKU2KPCc4Xr15fPKVmxbAph7yX7v","name":"ASTY/BTAX","configuredFee":1,"dex":"Meteora"},{"address":"61HTuoKeWhEfscoBcd5zSNvmAyGpxdaUNMriLNnyyREz","name":"ASTY/USDC","configuredFee":6,"dex":"Meteora"},{"address":"8fBYS2Kq9f4Lm1SYdt4sdHRL27Ni8UcRMPtFNLdEcnAH","name":"ASTY/Cake","configuredFee":1,"dex":"Meteora"},{"address":"DdK87cRD7uzoUWc9JZNRNxPoLHXeAcGkfU2b49YTZrm3","name":"ASTY/AVA","configuredFee":1,"dex":"Meteora"},{"address":"DwZZHyqnzWEqNP4VuczHHwfJsni6xqo57TBm7SoeJ62u","name":"ASTY/RENDER","configuredFee":1,"dex":"Meteora"},{"address":"HvmNZyopYSwHRUXCUti4D6YANpfWscVLSQVv9nw2XYhx","name":"ASTY/TURBO","configuredFee":1,"dex":"Meteora"},{"address":"m1e9swvUoggDm2zLXzrzKRrbVwmGEP8aQy7BQigFZgK","name":"ASTY/SOL","configuredFee":0.25,"dex":"Raydium"},{"address":"3PVPMEseLJxE6yyB5eBJ3qzRCzCGN6L9qa85stcZH4FM","name":"ASTY/testicle","configuredFee":1,"dex":"Meteora"},{"address":"BM9W33kccA1GCdbkuGoNDvJLTQW5xKbKwXht8sCXayc3","name":"ASTY/Buttcoin","configuredFee":1,"dex":"Meteora"},{"address":"AiazXNe6ShtCbQHZbmpnkuuswVHFKh5rLZKeudzWU3aq","name":"ASTY/BP","configuredFee":1,"dex":"Meteora"},{"address":"DitqC25rriaMeZyiQPeXLNgfxqRTZL2qxFHp3MHrxM6t","name":"ASTY/Punch","configuredFee":1,"dex":"Meteora"},{"address":"mwsmVXehTt2aFonhJDyZWbwgpxDVM9MMfo7GUYrYL7K","name":"ASTY/Restart","configuredFee":1,"dex":"Meteora"},{"address":"39dM3NfQuPiGwC3M93BUsXKrRdXTAZWPX6VxianCSevn","name":"ASTY/GREM","configuredFee":1,"dex":"Meteora"},{"address":"Fmna4bQBthaFT51VRtKR6QfgHisjxzcrzCWmPCP9dMNy","name":"ASTY/INCOME","configuredFee":1,"dex":"Meteora"},{"address":"AwmLBQ3keEicdD93gTr22avcJqsXwDTGMaLt25Jvyexo","name":"ASTY/ORCA","configuredFee":1,"dex":"Meteora"},{"address":"4UPuDZPPkrC5YHdpFnfv4RX7dfHYnjz8BYZaTCewSn5v","name":"ASTY/MOODENG","configuredFee":1,"dex":"Meteora"},{"address":"9dvPJ67AEzZZD9ThHAEJzkzVwxiVQrvC2Virv8KyGgZb","name":"ASTY/SEARCH","configuredFee":1,"dex":"Meteora"},{"address":"Dz8AuKtEJLrVeuAvhBg4gbTkBeNqC89wfLt3fJKZKk8v","name":"ASTY/USD","configuredFee":4,"dex":"Meteora"},{"address":"28yNWBwCvNLaC8h2Lf8AFcZqzfRpKMQMynwjjMibRwRU","name":"ASTY/HYPE","configuredFee":1,"dex":"Meteora"},{"address":"7wCaiBEGFHPhB5iDTCERsNXbzsc7bZyamqQsHNxuhdYU","name":"ASTY/SATO","configuredFee":1,"dex":"Meteora"},{"address":"Ax38rDrpRMturM59zKBEGsNn2HjE96rC9Jz3WbAgXtYw","name":"ASTY/SIMPLR","configuredFee":1,"dex":"Meteora"},{"address":"444uxc7K8jDZhtRUiuDAM822Pe93RYkHytzWuLKNyxVs","name":"ASTY/TAO","configuredFee":1,"dex":"Meteora"},{"address":"EDrT8LWDRuYE7v75Dkc9gUjLk7MvDYdezvDcnoHGqwuq","name":"ASTY/TROLL","configuredFee":1,"dex":"Meteora"},{"address":"ArKpj5vcNtHJTLhUKeADCmvuBpn1ZZoGNHZZYQ1QXq5n","name":"ASTY/CUPSEY","configuredFee":1,"dex":"Meteora"},{"address":"DGuvY79xbLuJRb3CzwQL59z5zoit7KLnFwyL2t6EQCcj","name":"ASTY/SERIOUS","configuredFee":1,"dex":"Meteora"},{"address":"5rwRQ4KprvvM1Z7h3QQ5WtUPUG5NMYEw1JtehSAxWeh3","name":"ASTY/Chiikawa","configuredFee":1,"dex":"Meteora"},{"address":"9zrdaC8tHges3JLTfsRVuibQ2xhXivZx3keymkZV2PAa","name":"ASTY/three","configuredFee":1,"dex":"Meteora"}];
 const ASTY_MINT="ASTYqeaoK83Zs1pTFEXZUB6BM8cG8YLTsN852NUkt7ZR";
+const TOKEN_2022_PROGRAM_ID_STR="TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb";
 const METEORA_BASE="https://damm-v2.datapi.meteora.ag";
 const RAYDIUM_BASE="https://api-v3.raydium.io";
 const EXCLUDED_POOL_IDS=new Set(["7tbbdGzFZpjrPmM7jQderyyv1x8Ebz1vhwqNhEW97osb","HAieGroddWr3NZpSZYqqm39w2aTUuknWNXxfF6vWNpaR","2WRrdtnKKr2eq67o4ZK2VQv7dXu4Pm8iz6TMN8UXvhbV","3HhGsPNMtSg1dNV9SVSfzGCQLx3Zp5giAvYJdQuuNqU9","BWFDr72tjXJsRdUyAfqghv6sGXgQr2zJ78KdeV3c74q1","61HTuoKeWhEfscoBcd5zSNvmAyGpxdaUNMriLNnyyREz"]);
-const CACHE_KEY="asty-team-dashboard-single-html-v1";
+const CACHE_KEY="asty-team-dashboard-single-html-v2";
 const HISTORY_CACHE_KEY="asty-team-dashboard-meteora-history-v1";
 const HISTORY_CACHE_TTL=30*60*1000;
 const OWNER_WALLETS={raydium:"9Hv3HPGSHS1vq1qjfumoER4TEhu2sgWUmL3S4EaUWrk6",meteora:["8KgDtknVhs88sMjRckCGzVDhaFBre3V3FAvhwxfANmfq","4aGjJavF5fq15szkFTdDGQAz9mUUSZ1y1c74isQm2zYV"]};
-const SOLANA_RPC_ENDPOINTS=["https://rpc.ankr.com/solana","https://solana.drpc.org/","https://solana-rpc.publicnode.com","https://api.mainnet-beta.solana.com"];
+const SOLANA_RPC_ENDPOINTS=["https://solana-rpc.publicnode.com","https://rpc.ankr.com/solana","https://solana.drpc.org/","https://api.mainnet-beta.solana.com"];
 let activeSolanaRpc=null;
 let ownerState={loading:false,meteoraStatus:"wartet",raydiumStatus:"wartet",meteoraClaimableUsd:null,raydiumPositionUsd:null,meteoraPositions:0,raydiumPositions:0,updatedAt:null,meteoraError:null,raydiumError:null};
 let rows=POOLS.map(p=>({...p,loaded:false,error:null}));
@@ -280,11 +281,112 @@ function pkString(v){if(!v)return null;if(typeof v==="string")return v;try{retur
 function bnToDecimal(raw,decimals=0){if(raw===null||raw===undefined)return 0;let s;try{s=raw.toString()}catch(e){s=String(raw)}if(!/^-?\d+$/.test(s)){const n=Number(s);return Number.isFinite(n)?n:0}const neg=s.startsWith("-");if(neg)s=s.slice(1);const d=Math.max(0,Number(decimals)||0);if(!d)return Number((neg?"-":"")+s)||0;s=s.padStart(d+1,"0");const n=Number(`${neg?"-":""}${s.slice(0,-d)||"0"}.${s.slice(-d)}`);return Number.isFinite(n)?n:0}
 function getRowTokenInfo(row,mint){if(!row)return null;if(row.tokenXMint===mint)return{symbol:row.tokenX||"Token X",decimals:row.tokenXDecimals||0,price:row.tokenXPrice||0};if(row.tokenYMint===mint)return{symbol:row.tokenY||"Token Y",decimals:row.tokenYDecimals||0,price:row.tokenYPrice||0};return null}
 
+async function scanMeteoraWalletPositions(cpAmm,connection,web3,wallet,knownPools){
+ const {PublicKey}=web3;
+ const walletPk=new PublicKey(wallet);
+ const token2022Program=new PublicKey(TOKEN_2022_PROGRAM_ID_STR);
+
+ // We deliberately use the parsed standard RPC method here instead of
+ // CpAmm.getPositionsByUser(). Meteora's helper also starts by reading
+ // Token-2022 accounts owned by the wallet. This version exposes each
+ // stage so a browser/RPC error can be diagnosed correctly.
+ let tokenAccounts;
+ try{
+  tokenAccounts=await connection.getParsedTokenAccountsByOwner(
+   walletPk,
+   {programId:token2022Program},
+   "confirmed"
+  );
+ }catch(e){
+  throw new Error(`Token-2022 Owner-Scan: ${e?.message||e}`);
+ }
+
+ const nftMints=[];
+ const nftAccounts=[];
+
+ for(const entry of tokenAccounts?.value||[]){
+  const info=entry?.account?.data?.parsed?.info;
+  const amount=String(info?.tokenAmount?.amount??"");
+  const decimals=Number(info?.tokenAmount?.decimals);
+  const mint=info?.mint;
+
+  // DAMM-v2 position ownership is represented by Token-2022 position
+  // NFTs with a balance of exactly one. Decimals=0 removes ordinary
+  // fungible Token-2022 balances from the candidate set.
+  if(mint && amount==="1" && decimals===0){
+   nftMints.push(new PublicKey(mint));
+   nftAccounts.push(entry.pubkey);
+  }
+ }
+
+ if(!nftMints.length){
+  return [];
+ }
+
+ const {derivePositionAddress}=await import(
+  "https://esm.sh/@meteora-ag/cp-amm-sdk@1.4.5?bundle&target=es2022"
+ );
+
+ const positionAddresses=nftMints.map(mint=>derivePositionAddress(mint));
+
+ // Anchor's fetchMultiple returns null for candidate NFTs that are not
+ // DAMM-v2 positions. We intentionally access the public _program client
+ // so unrelated Token-2022 NFTs do not make the entire batch fail.
+ let states;
+ try{
+  states=await cpAmm._program.account.position.fetchMultiple(positionAddresses);
+ }catch(e){
+  throw new Error(`Position-State Batch: ${e?.message||e}`);
+ }
+
+ const positions=[];
+
+ states.forEach((state,index)=>{
+  if(!state)return;
+  const poolAddr=pkString(state.pool);
+  if(!poolAddr||!knownPools.has(poolAddr))return;
+
+  positions.push({
+   positionNftAccount:nftAccounts[index],
+   position:positionAddresses[index],
+   positionState:state,
+   pool:new PublicKey(poolAddr)
+  });
+ });
+
+ if(!positions.length){
+  return [];
+ }
+
+ const uniquePoolStrings=[...new Set(positions.map(p=>p.pool.toBase58()))];
+ const uniquePoolKeys=uniquePoolStrings.map(x=>new PublicKey(x));
+
+ let poolStates;
+ try{
+  poolStates=await cpAmm._program.account.pool.fetchMultiple(uniquePoolKeys);
+ }catch(e){
+  throw new Error(`Pool-State Batch: ${e?.message||e}`);
+ }
+
+ const poolMap=new Map();
+ uniquePoolStrings.forEach((address,index)=>{
+  if(poolStates[index])poolMap.set(address,poolStates[index]);
+ });
+
+ return positions
+  .map(position=>({
+   ...position,
+   poolState:poolMap.get(position.pool.toBase58())||null
+  }))
+  .filter(position=>position.poolState);
+}
+
 async function loadMeteoraOwnerFees(){
  ownerState.meteoraStatus="lädt…";
  ownerState.meteoraError=null;
 
  const meteoraRows=rows.filter(r=>r.dex==="Meteora");
+
  meteoraRows.forEach(r=>{
   r.claimableLoading=true;
   r.claimableError=null;
@@ -304,67 +406,63 @@ async function loadMeteoraOwnerFees(){
   ]);
 
   const {CpAmm,getUnClaimLpFee}=sdk;
-  const {PublicKey}=web3;
 
   if(!CpAmm||!getUnClaimLpFee){
-   throw new Error("Meteora SDK-Funktionen nicht verfügbar");
+   throw new Error("Meteora DAMM-v2 SDK konnte nicht initialisiert werden");
   }
 
   const knownPools=new Set(meteoraRows.map(r=>r.address));
-  const astyMintPk=new PublicKey(ASTY_MINT);
 
   const {result,endpoint}=await withRpcFailover(web3,async connection=>{
    const cpAmm=new CpAmm(connection);
    const accum=new Map();
 
    for(const wallet of OWNER_WALLETS.meteora){
-    // SDK 1.4.5 resolves the wallet's Token-2022 position NFTs, fetches
-    // the PositionStates and then returns only pools containing ASTY.
-    const positions=await cpAmm.getPositionsByUserAndTokenMint(
-     new PublicKey(wallet),
-     astyMintPk
+    const positions=await scanMeteoraWalletPositions(
+     cpAmm,
+     connection,
+     web3,
+     wallet,
+     knownPools
     );
 
-    for(const item of positions||[]){
-     const poolAddr=pkString(item?.pool)||pkString(item?.positionState?.pool);
-     if(!poolAddr||!knownPools.has(poolAddr))continue;
-
+    for(const item of positions){
+     const poolAddr=item.pool.toBase58();
      const row=meteoraRows.find(r=>r.address===poolAddr);
-     const poolState=item?.poolState;
-     const positionState=item?.positionState;
-     if(!row||!poolState||!positionState)continue;
+     if(!row)continue;
 
-     const pending=getUnClaimLpFee(poolState,positionState);
+     const poolState=item.poolState;
+     const positionState=item.positionState;
+
+     let pending;
+     try{
+      pending=getUnClaimLpFee(poolState,positionState);
+     }catch(e){
+      throw new Error(`Fee-Berechnung ${row.name}: ${e?.message||e}`);
+     }
 
      const tokenAMint=pkString(poolState.tokenAMint);
      const tokenBMint=pkString(poolState.tokenBMint);
-
      const astyIsA=tokenAMint===ASTY_MINT;
      const astyIsB=tokenBMint===ASTY_MINT;
 
      if(!astyIsA&&!astyIsB)continue;
 
-     const astyDecimals=
-      astyIsA
-       ? (row.tokenXMint===ASTY_MINT?row.tokenXDecimals:row.tokenYDecimals)
-       : (row.tokenYMint===ASTY_MINT?row.tokenYDecimals:row.tokenXDecimals);
+     const astyRaw=astyIsA
+      ? (pending?.feeTokenA??0)
+      : (pending?.feeTokenB??0);
 
-     const astyPrice=
-      astyIsA
-       ? (row.tokenXMint===ASTY_MINT?row.tokenXPrice:row.tokenYPrice)
-       : (row.tokenYMint===ASTY_MINT?row.tokenYPrice:row.tokenXPrice);
+     const astyAmount=bnToDecimal(astyRaw,9);
 
-     const rawA=pending?.feeTokenA??0;
-     const rawB=pending?.feeTokenB??0;
-
-     const astyRaw=astyIsA?rawA:rawB;
-     const astyAmount=bnToDecimal(astyRaw,astyDecimals||9);
+     let astyPrice=0;
+     if(row.tokenXMint===ASTY_MINT)astyPrice=Number(row.tokenXPrice)||0;
+     if(row.tokenYMint===ASTY_MINT)astyPrice=Number(row.tokenYPrice)||0;
 
      if(!accum.has(poolAddr)){
       accum.set(poolAddr,{
        positions:0,
        astyAmount:0,
-       astyPrice:Number(astyPrice)||0,
+       astyPrice,
        wallets:new Set()
       });
      }
@@ -372,7 +470,7 @@ async function loadMeteoraOwnerFees(){
      const a=accum.get(poolAddr);
      a.positions++;
      a.astyAmount+=astyAmount;
-     if(!a.astyPrice&&Number(astyPrice)>0)a.astyPrice=Number(astyPrice);
+     if(!a.astyPrice&&astyPrice)a.astyPrice=astyPrice;
      a.wallets.add(wallet);
     }
    }
@@ -389,12 +487,13 @@ async function loadMeteoraOwnerFees(){
    r.claimableLoading=false;
    r.ownerPositionCount=a?.positions||0;
    r.claimableAsty=a?.astyAmount||0;
-
-   // Only ASTY is intentionally included in the Owner fee KPI.
    r.claimableTokens=r.claimableAsty>0
-    ? [{symbol:"ASTY",amount:r.claimableAsty,price:a?.astyPrice||0}]
+    ? [{
+       symbol:"ASTY",
+       amount:r.claimableAsty,
+       price:a?.astyPrice||0
+      }]
     : [];
-
    r.claimableUsd=r.claimableAsty*(a?.astyPrice||0);
    r.claimableError=null;
 
@@ -452,7 +551,7 @@ async function loadRaydiumOwnerData(){
    return{lpBalance,lpSupply,poolShare,positionUsd};
   });
   target.claimableLoading=false;target.claimableUsd=null;target.ownerLpBalance=result.lpBalance;target.ownerLpSupply=result.lpSupply;target.ownerPoolSharePct=result.poolShare*100;target.ownerPositionUsd=Number.isFinite(result.positionUsd)?result.positionUsd:null;target.ownerPositionCount=result.lpBalance>0?1:0;target.claimableError=null;
-  ownerState.raydiumPositions=target.ownerPositionCount;ownerState.raydiumPositionUsd=target.ownerPositionUsd;ownerState.raydiumStatus=result.lpBalance>0?"LP-Position geladen":"keine LP-Tokens gefunden";ownerState.raydiumError=null;ownerState.raydiumRpc=endpoint;
+  ownerState.raydiumPositions=target.ownerPositionCount;ownerState.raydiumPositionUsd=target.ownerPositionUsd;ownerState.raydiumStatus=result.lpBalance>0?"LP-Position geladen":"keine freien LP-Tokens in Wallet";ownerState.raydiumError=null;ownerState.raydiumRpc=endpoint;
  }catch(e){
   const msg=e?.message||"Raydium Owner-Daten nicht verfügbar";target.claimableLoading=false;target.claimableUsd=null;target.ownerPositionUsd=null;target.ownerPositionCount=null;target.claimableError=msg;ownerState.raydiumPositions=0;ownerState.raydiumPositionUsd=null;ownerState.raydiumStatus="nicht verfügbar";ownerState.raydiumError=msg;console.error("Raydium Owner-Auswertung",e);
  }
@@ -478,7 +577,7 @@ function renderClaimableCell(r){
  if(r.claimableError)return`<span class="claim-warn" title="${String(r.claimableError).replaceAll('"','&quot;')}">nicht verfügbar</span>`;
  if(r.dex==="Raydium"){
   if(Number.isFinite(r.ownerPositionUsd)){const meta=[`LP-Wert ${fmtUSD(r.ownerPositionUsd)}`,Number.isFinite(r.ownerPoolSharePct)?`Poolanteil ${fmtPct(r.ownerPoolSharePct,4)}`:null].filter(Boolean).join(" · ");return`<span class="na">im LP-Wert</span><div class="claim-mini">${meta}</div>`}
-  return`<span class="na">keine LP-Position</span>`;
+  return`<span class="na">keine freien LP-Tokens</span>`;
  }
  if(Number.isFinite(r.claimableUsd)){const detail=(r.claimableTokens||[]).map(x=>`${fmtNum(x.amount,6)} ${x.symbol||"Token"}`).join(" · ");return`<span class="${r.claimableUsd>0?"claim-ok":""}" title="${detail}">${fmtUSD(r.claimableUsd)}</span>${detail?`<div class="claim-mini">${detail}</div>`:""}`}
  return`<span class="na">–</span>`;
@@ -487,11 +586,23 @@ function renderClaimableCell(r){
 function compactOwnerError(message){
  const s=String(message||"");
  if(!s)return "nicht verfügbar";
- if(/403|Access forbidden/i.test(s))return "RPC-Zugriff durch Website blockiert";
- if(/Load failed|Failed to fetch|NetworkError/i.test(s))return "Browser konnte RPC nicht erreichen";
+
+ // Prefer the PublicNode task error if it is present, because PublicNode
+ // is demonstrably reachable from htmlpreview in this browser.
+ const publicNodeMatch=s.match(/PublicNode:\s*([^|]+)/i);
+ if(publicNodeMatch){
+  const p=publicNodeMatch[1].trim();
+  if(/403|Access forbidden/i.test(p))return "PublicNode blockiert diesen Owner-Scan";
+  if(/429|rate limit/i.test(p))return "PublicNode-Limit beim Owner-Scan";
+  if(/timeout/i.test(p))return "PublicNode-Zeitüberschreitung";
+  return p.length>120?p.slice(0,117)+"…":p;
+ }
+
+ if(/403|Access forbidden/i.test(s))return "einige RPC-Fallbacks blockiert";
+ if(/Load failed|Failed to fetch|NetworkError/i.test(s))return "einige RPC-Fallbacks nicht erreichbar";
  if(/429|rate limit/i.test(s))return "RPC-Limit erreicht";
  if(/timeout/i.test(s))return "RPC-Zeitüberschreitung";
- return s.length>110?s.slice(0,107)+"…":s;
+ return s.length>120?s.slice(0,117)+"…":s;
 }
 
 function setOwnerUi(){
@@ -500,7 +611,15 @@ function setOwnerUi(){
  ownerState.meteoraClaimableUsd=mRows.length?mClaim:null;ownerState.raydiumPositionUsd=rayUsd;ownerState.meteoraPositions=mPos;ownerState.raydiumPositions=rayPos;
  if($("#meteoraClaimable"))$("#meteoraClaimable").textContent=mRows.length?fmtUSD(mClaim):"–";
  if($("#raydiumClaimable"))$("#raydiumClaimable").textContent=rayUsd!==null?fmtUSD(rayUsd):"–";
- if($("#ownerClaimableTotal"))$("#ownerClaimableTotal").textContent=ownerState.loading&&!totalPos?"…":fmtNum(totalPos,0);
+ if($("#ownerClaimableTotal")){
+ const meteoraKnown=!ownerState.meteoraError && ownerState.meteoraStatus!=="nicht verfügbar";
+ $("#ownerClaimableTotal").textContent=
+  ownerState.loading&&!totalPos
+   ? "…"
+   : !meteoraKnown
+    ? "–"
+    : fmtNum(totalPos,0);
+}
  if($("#kpiClaimable"))$("#kpiClaimable").textContent=mRows.length?fmtUSD(mClaim):"–";
  if($("#meteoraOwnerStatus"))$("#meteoraOwnerStatus").textContent=ownerState.meteoraStatus;
  if($("#raydiumOwnerStatus"))$("#raydiumOwnerStatus").textContent=ownerState.raydiumStatus;
