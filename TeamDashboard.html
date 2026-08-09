@@ -74,7 +74,7 @@ h1{font-size:clamp(25px,4vw,38px);margin:0;letter-spacing:-.035em;
 .control{width:100%;border:1px solid var(--line2);background:#0b0f20;color:var(--text);border-radius:11px;padding:10px 11px;outline:none}
 .control:focus{border-color:rgba(169,138,255,.5)}
 .tablewrap{overflow:auto;max-height:72vh;border-top:1px solid var(--line2)}
-table{width:100%;border-collapse:collapse;min-width:1670px}
+table{width:100%;border-collapse:collapse;min-width:1740px}
 th{position:sticky;top:0;background:#0d1123;color:var(--muted);font-size:10.5px;text-transform:uppercase;letter-spacing:.055em;text-align:right;padding:11px 10px;white-space:nowrap;z-index:1}
 th:first-child,th:nth-child(2){text-align:left}
 td{padding:11px 10px;border-top:1px solid rgba(255,255,255,.045);text-align:right;font-size:12.5px;font-variant-numeric:tabular-nums;white-space:nowrap}
@@ -128,6 +128,46 @@ tbody tr:hover{background:rgba(169,138,255,.045)}
 .wallet-error{margin-top:8px;padding:9px 10px;border:1px solid rgba(250,204,21,.22);border-radius:10px;background:rgba(250,204,21,.05);color:#fde68a;font-size:10.5px;line-height:1.5;max-width:760px}
 .wallet-error code{color:#fff;word-break:break-all}
 .rpc-active{color:#86efac}
+
+/* Datenquellenvergleich */
+.compare-controls{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.compare-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:11px;padding:0 16px 14px}
+.compare-card{border:1px solid var(--line2);border-radius:14px;background:rgba(255,255,255,.018);padding:14px}
+.compare-card .l{font-size:10px;text-transform:uppercase;letter-spacing:.075em;color:var(--muted)}
+.compare-card .v{font-size:20px;font-weight:850;letter-spacing:-.025em;margin-top:8px}
+.compare-card .n{font-size:10px;color:var(--muted2);margin-top:5px;line-height:1.45}
+.compare-status{display:inline-flex;align-items:center;gap:6px;color:var(--muted);font-size:10px}
+.compare-status:before{content:"";width:7px;height:7px;border-radius:50%;background:var(--muted2)}
+.compare-status.live:before{background:var(--green)}
+.compare-status.loading:before{background:var(--purple);animation:pulse 1s infinite}
+.compare-status.warn:before{background:var(--yellow)}
+.compare-toolbar{display:flex;align-items:center;gap:8px;padding:0 16px 12px;flex-wrap:wrap}
+.compare-toolbar .control{width:auto;min-width:180px}
+.compare-tablewrap{overflow:auto;max-height:520px;border-top:1px solid var(--line2)}
+.compare-table{width:100%;border-collapse:collapse;min-width:1120px}
+.compare-table th{position:sticky;top:0;background:#0d1123;z-index:2;color:var(--muted);font-size:10px;text-transform:uppercase;letter-spacing:.055em;padding:10px;text-align:right;white-space:nowrap}
+.compare-table th:first-child,.compare-table th:nth-child(2){text-align:left}
+.compare-table td{padding:10px;border-top:1px solid rgba(255,255,255,.045);font-size:11.5px;text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}
+.compare-table td:first-child,.compare-table td:nth-child(2){text-align:left}
+.compare-table tbody tr:hover{background:rgba(169,138,255,.045)}
+.compare-pos{color:#86efac}
+.compare-neg{color:#fda4af}
+.compare-big{font-weight:850}
+.compare-note{margin:0 16px 16px;padding:10px 12px;border:1px solid var(--line2);border-radius:12px;background:rgba(255,255,255,.017);color:var(--muted);font-size:10.5px;line-height:1.55}
+.compare-note b{color:var(--text)}
+@media(max-width:860px){.compare-grid{grid-template-columns:1fr}.compare-toolbar .control{width:100%}}
+
+
+.source-pill{
+  display:inline-flex;align-items:center;justify-content:center;
+  min-width:66px;padding:4px 8px;border-radius:999px;
+  border:1px solid var(--line2);font-size:10px;font-weight:800;
+  letter-spacing:.02em;white-space:nowrap
+}
+.source-pill.meteora{color:#d8ccff;background:rgba(169,138,255,.08);border-color:rgba(169,138,255,.20)}
+.source-pill.raydium{color:#a5f3fc;background:rgba(103,232,249,.07);border-color:rgba(103,232,249,.18)}
+.source-pill.gecko{color:#fde68a;background:rgba(250,204,21,.07);border-color:rgba(250,204,21,.20)}
+
 </style>
 </head>
 <body>
@@ -170,6 +210,7 @@ tbody tr:hover{background:rgba(169,138,255,.045)}
   <div class="kpi"><div class="kpi-label">Pools geladen</div><div class="kpi-value" id="kpiLoaded">0 / 64</div><div class="kpi-note" id="kpiDex">63 Meteora · 1 Raydium</div></div>
   <div class="kpi disabled"><div class="kpi-label">Beanspruchbare Einnahmen</div><div class="kpi-value">später</div><div class="kpi-note">Owner-Wallets noch nicht angebunden</div></div>
 </section>
+
 
 <section class="section claim-section">
   <div class="section-head"><div><div class="section-title">Claiming Day · Owner-Bestände</div><div class="section-note">Freie Wallet-Bestände vor und nach dem Claim vergleichen.</div></div><div class="claim-controls"><span class="claim-status" id="walletLoadStatus">Noch nicht geladen</span><button class="btn primary" id="walletRefreshBtn">Bestände aktualisieren</button></div></div>
@@ -217,7 +258,7 @@ tbody tr:hover{background:rgba(169,138,255,.045)}
     <table>
       <thead>
         <tr>
-          <th>Pool</th><th>DEX</th><th>Gebühr</th><th>Liquidität</th>
+          <th>Pool</th><th>DEX</th><th>Quelle</th><th>Gebühr</th><th>Liquidität</th>
           <th>Volumen 1h</th><th>Volumen 24h</th><th>Volumen 7d</th><th>Volumen 30d</th>
           <th>Einnahmen 1h</th><th>Einnahmen 24h</th><th>Einnahmen 7d</th><th>Einnahmen 30d</th>
           <th>Einn./TVL 24h</th><th>Einn./TVL 7d</th><th>Einn./TVL 30d</th>
@@ -247,6 +288,14 @@ tbody tr:hover{background:rgba(169,138,255,.045)}
 const POOLS = [{"address":"3UvhqPrMyf13qgRodARDi5oGJGoxHYb2ykZdCaa1TV8i","name":"ASTY/WIF","configuredFee":1,"dex":"Meteora"},{"address":"HeuivHLqCEmsgKhYhX1M6MGthEbtHrGmZdXQSCBVkstP","name":"ASTY/ALCH","configuredFee":1,"dex":"Meteora"},{"address":"CSD1NpGwhnohByefBp73Jyk6u6ZCkwwDFDVqvmkDrfxE","name":"ASTY/ARBX","configuredFee":1,"dex":"Meteora"},{"address":"DxMFG4kn8pxuf7AoKD1ffXjUhPpj4a8WAdgw87gyM2mj","name":"ASTY/ARBX","configuredFee":0.3,"dex":"Meteora"},{"address":"CoD6KLgnW2wKe2UtnNjSQk4RSS6fMU4P2vwKqsUxK9Bf","name":"ASTY/Bonk","configuredFee":1,"dex":"Meteora"},{"address":"7T6HixJyUfzSR88dhWC9tAjasXcdFyDrKmDtuzrXgt9j","name":"ASTY/ETH","configuredFee":1,"dex":"Meteora"},{"address":"B6fq1uNpMkyGANAQo5D9GJfMCkcaNewc6q8sWZAfWZ4M","name":"ASTY/Fartcoin","configuredFee":1,"dex":"Meteora"},{"address":"8aXv2DDRG3k5N3ADTw37Di4ytHGJ3ZaS2tPp1f2EW5ZD","name":"ASTY/GEOD","configuredFee":1,"dex":"Meteora"},{"address":"CRGcFA8f577F2BEZSmgohd4cuBTVsBpLjwqfVHrG8krE","name":"ASTY/BOME","configuredFee":1,"dex":"Meteora"},{"address":"3UapB8rB3T88Kac7CG3F44SKCa5xSBsKaJndbx8YrxWG","name":"ASTY/RTM","configuredFee":1,"dex":"Meteora"},{"address":"92RKFRJSctMAuw8Tym7cZgd2yjMcHeZ5hDUMdnZd54zV","name":"ASTY/Grandma","configuredFee":1,"dex":"Meteora"},{"address":"Gec7ENkk9irtsmmwpwLHk1i4VntB4vFGRAe1ET3LeT3J","name":"ASTY/JTO","configuredFee":1,"dex":"Meteora"},{"address":"iZXTZMMS51US5erGnviWfc8CNGx5QDDzp6DERH25EtW","name":"ASTY/JUP","configuredFee":1,"dex":"Meteora"},{"address":"29eKi5ipMR9fLgkYpM91Xrab2LVBnUU75SYG8kCt1nis","name":"ASTY/MET","configuredFee":1,"dex":"Meteora"},{"address":"CSiAzSiCMNGjLwYKRdhDUjNwz4obf3Q5ZnMQECnmxshV","name":"ASTY/PENGU","configuredFee":1,"dex":"Meteora"},{"address":"2uNbRDLDeMizdJNEqKaapzAGJWVwa3uuJ3w4trVud4ZW","name":"ASTY/pippin","configuredFee":1,"dex":"Meteora"},{"address":"GyVyv2H2SB4fYaC7C6raWNSQqNhShdzNuSqQwG9uUUcE","name":"ASTY/POPCAT","configuredFee":1,"dex":"Meteora"},{"address":"RYztJXyPCmwUmfi7punwCf7q6FbxoJbRtBEodZ7j7GH","name":"ASTY/PsyopAnime","configuredFee":1,"dex":"Meteora"},{"address":"DfJsn7Ui6YBUC25kM5FoqrCYrqfRVCoSxpTeyEzWv4vT","name":"ASTY/RAY","configuredFee":1,"dex":"Meteora"},{"address":"2ufiEWc5wF8gJB1a9YiPkFuLwrFn4Zgyma1kdQRakoAr","name":"ASTY/SOL","configuredFee":0.25,"dex":"Meteora"},{"address":"7tbbdGzFZpjrPmM7jQderyyv1x8Ebz1vhwqNhEW97osb","name":"ASTY/SOL","configuredFee":1,"dex":"Meteora"},{"address":"HAieGroddWr3NZpSZYqqm39w2aTUuknWNXxfF6vWNpaR","name":"ASTY/SOL","configuredFee":0.3,"dex":"Meteora"},{"address":"BBVxTUtaagQgG5AgmNSYS9Pqwidc7yAbRF6avt48iF2u","name":"ASTY/TAX","configuredFee":1,"dex":"Meteora"},{"address":"CFcyQpye4K4pyhVPoSAgj3BAqNoWpZCvHpNncXssy7qH","name":"ASTY/TAX","configuredFee":1,"dex":"Meteora"},{"address":"tDqqTi8tJds88AkxFvhjZTQK5iDtV5ZG9ZkNYxh23MG","name":"ASTY/UNI","configuredFee":1,"dex":"Meteora"},{"address":"3HhGsPNMtSg1dNV9SVSfzGCQLx3Zp5giAvYJdQuuNqU9","name":"ASTY/USDC","configuredFee":0.3,"dex":"Meteora"},{"address":"5zCsWjFoEQ7jGNaHNwBRvZq7RMqVh6vQhmiYv4NWkDZK","name":"ASTY/USDC","configuredFee":1,"dex":"Meteora"},{"address":"BqdoyTYoXpnAzRafoBQPrY4ubVSzYE42rxJzNJwoxmZP","name":"ASTY/USDC","configuredFee":0.25,"dex":"Meteora"},{"address":"BWFDr72tjXJsRdUyAfqghv6sGXgQr2zJ78KdeV3c74q1","name":"ASTY/USDC","configuredFee":2,"dex":"Meteora"},{"address":"2Hjjn2aoVdUeGraV4vRak94GGAAW5w9syfVBeXU4Ad5J","name":"ASTY/WBTC","configuredFee":1,"dex":"Meteora"},{"address":"7Fr58kHKW85XiFgZ8WibumE7P5CLZFo4A8qsQxKNEWaE","name":"ASTY/WhiteWhale","configuredFee":1,"dex":"Meteora"},{"address":"4TgvcTKzq9zZR5znyak2y3tvaXg4q6hvKWEZgxesQqkx","name":"ASTY/WLFI","configuredFee":1,"dex":"Meteora"},{"address":"5wpSZwUmdXy5kB96n7U24iFzvbSNEvFd4BvERhhqYjQY","name":"ASTY/WOJAK","configuredFee":1,"dex":"Meteora"},{"address":"2aWCx2qrYmjen1N8UW3eLBzNu7fCPqxjL9NKXqHGXPHc","name":"ASTY/ZBCN","configuredFee":1,"dex":"Meteora"},{"address":"2WRrdtnKKr2eq67o4ZK2VQv7dXu4Pm8iz6TMN8UXvhbV","name":"ASTY/SOL","configuredFee":2,"dex":"Meteora"},{"address":"4iHVvcWHNYFDPFySosAx1qGZoFsDN7gXHxKqUFnGq6oJ","name":"ASTY/BAT","configuredFee":1,"dex":"Meteora"},{"address":"4kWT67c13svR9EfxM4TGn8inNqFsXeuAWQhn8KBVajBs","name":"ASTY/ACC","configuredFee":1,"dex":"Meteora"},{"address":"5fEodJwZNUTwXbiTRKU2KPCc4Xr15fPKVmxbAph7yX7v","name":"ASTY/BTAX","configuredFee":1,"dex":"Meteora"},{"address":"61HTuoKeWhEfscoBcd5zSNvmAyGpxdaUNMriLNnyyREz","name":"ASTY/USDC","configuredFee":6,"dex":"Meteora"},{"address":"8fBYS2Kq9f4Lm1SYdt4sdHRL27Ni8UcRMPtFNLdEcnAH","name":"ASTY/Cake","configuredFee":1,"dex":"Meteora"},{"address":"DdK87cRD7uzoUWc9JZNRNxPoLHXeAcGkfU2b49YTZrm3","name":"ASTY/AVA","configuredFee":1,"dex":"Meteora"},{"address":"DwZZHyqnzWEqNP4VuczHHwfJsni6xqo57TBm7SoeJ62u","name":"ASTY/RENDER","configuredFee":1,"dex":"Meteora"},{"address":"HvmNZyopYSwHRUXCUti4D6YANpfWscVLSQVv9nw2XYhx","name":"ASTY/TURBO","configuredFee":1,"dex":"Meteora"},{"address":"m1e9swvUoggDm2zLXzrzKRrbVwmGEP8aQy7BQigFZgK","name":"ASTY/SOL","configuredFee":0.25,"dex":"Raydium"},{"address":"3PVPMEseLJxE6yyB5eBJ3qzRCzCGN6L9qa85stcZH4FM","name":"ASTY/testicle","configuredFee":1,"dex":"Meteora"},{"address":"BM9W33kccA1GCdbkuGoNDvJLTQW5xKbKwXht8sCXayc3","name":"ASTY/Buttcoin","configuredFee":1,"dex":"Meteora"},{"address":"AiazXNe6ShtCbQHZbmpnkuuswVHFKh5rLZKeudzWU3aq","name":"ASTY/BP","configuredFee":1,"dex":"Meteora"},{"address":"DitqC25rriaMeZyiQPeXLNgfxqRTZL2qxFHp3MHrxM6t","name":"ASTY/Punch","configuredFee":1,"dex":"Meteora"},{"address":"mwsmVXehTt2aFonhJDyZWbwgpxDVM9MMfo7GUYrYL7K","name":"ASTY/Restart","configuredFee":1,"dex":"Meteora"},{"address":"39dM3NfQuPiGwC3M93BUsXKrRdXTAZWPX6VxianCSevn","name":"ASTY/GREM","configuredFee":1,"dex":"Meteora"},{"address":"Fmna4bQBthaFT51VRtKR6QfgHisjxzcrzCWmPCP9dMNy","name":"ASTY/INCOME","configuredFee":1,"dex":"Meteora"},{"address":"AwmLBQ3keEicdD93gTr22avcJqsXwDTGMaLt25Jvyexo","name":"ASTY/ORCA","configuredFee":1,"dex":"Meteora"},{"address":"4UPuDZPPkrC5YHdpFnfv4RX7dfHYnjz8BYZaTCewSn5v","name":"ASTY/MOODENG","configuredFee":1,"dex":"Meteora"},{"address":"9dvPJ67AEzZZD9ThHAEJzkzVwxiVQrvC2Virv8KyGgZb","name":"ASTY/SEARCH","configuredFee":1,"dex":"Meteora"},{"address":"Dz8AuKtEJLrVeuAvhBg4gbTkBeNqC89wfLt3fJKZKk8v","name":"ASTY/USD","configuredFee":4,"dex":"Meteora"},{"address":"28yNWBwCvNLaC8h2Lf8AFcZqzfRpKMQMynwjjMibRwRU","name":"ASTY/HYPE","configuredFee":1,"dex":"Meteora"},{"address":"7wCaiBEGFHPhB5iDTCERsNXbzsc7bZyamqQsHNxuhdYU","name":"ASTY/SATO","configuredFee":1,"dex":"Meteora"},{"address":"Ax38rDrpRMturM59zKBEGsNn2HjE96rC9Jz3WbAgXtYw","name":"ASTY/SIMPLR","configuredFee":1,"dex":"Meteora"},{"address":"444uxc7K8jDZhtRUiuDAM822Pe93RYkHytzWuLKNyxVs","name":"ASTY/TAO","configuredFee":1,"dex":"Meteora"},{"address":"EDrT8LWDRuYE7v75Dkc9gUjLk7MvDYdezvDcnoHGqwuq","name":"ASTY/TROLL","configuredFee":1,"dex":"Meteora"},{"address":"ArKpj5vcNtHJTLhUKeADCmvuBpn1ZZoGNHZZYQ1QXq5n","name":"ASTY/CUPSEY","configuredFee":1,"dex":"Meteora"},{"address":"DGuvY79xbLuJRb3CzwQL59z5zoit7KLnFwyL2t6EQCcj","name":"ASTY/SERIOUS","configuredFee":1,"dex":"Meteora"},{"address":"5rwRQ4KprvvM1Z7h3QQ5WtUPUG5NMYEw1JtehSAxWeh3","name":"ASTY/Chiikawa","configuredFee":1,"dex":"Meteora"},{"address":"9zrdaC8tHges3JLTfsRVuibQ2xhXivZx3keymkZV2PAa","name":"ASTY/three","configuredFee":1,"dex":"Meteora"}];
 const METEORA_BASE = "https://damm-v2.datapi.meteora.ag";
 const RAYDIUM_BASE = "https://api-v3.raydium.io";
+const GECKO_BASE = "https://api.geckoterminal.com/api/v2";
+const GECKO_API_VERSION = "20230203";
+let sourceCompareState = {
+  loading:false,
+  loadedAt:null,
+  error:null,
+  gecko:new Map()
+};
 const EXCLUDED_POOL_IDS = new Set(["7tbbdGzFZpjrPmM7jQderyyv1x8Ebz1vhwqNhEW97osb", "HAieGroddWr3NZpSZYqqm39w2aTUuknWNXxfF6vWNpaR", "2WRrdtnKKr2eq67o4ZK2VQv7dXu4Pm8iz6TMN8UXvhbV", "3HhGsPNMtSg1dNV9SVSfzGCQLx3Zp5giAvYJdQuuNqU9", "BWFDr72tjXJsRdUyAfqghv6sGXgQr2zJ78KdeV3c74q1", "61HTuoKeWhEfscoBcd5zSNvmAyGpxdaUNMriLNnyyREz"]);
 const CACHE_KEY = "asty-team-dashboard-v2-cache";
 const HISTORY_CACHE_KEY = "asty-team-dashboard-meteora-history-v1";
@@ -442,6 +491,259 @@ async function fetchJson(url, timeout=18000, retries=2){
 function sleep(ms){return new Promise(r=>setTimeout(r,ms));}
 
 
+
+async function fetchGeckoMulti(addresses){
+  const url=`${GECKO_BASE}/networks/solana/pools/multi/${addresses.join(",")}`;
+  const ctrl=new AbortController();
+  const timer=setTimeout(()=>ctrl.abort(),22000);
+  try{
+    const res=await fetch(url,{
+      method:"GET",
+      headers:{
+        "Accept":`application/json;version=${GECKO_API_VERSION}`
+      },
+      cache:"no-store",
+      signal:ctrl.signal
+    });
+    if(res.status===429) throw new Error("GeckoTerminal Rate-Limit erreicht");
+    if(!res.ok) throw new Error(`GeckoTerminal HTTP ${res.status}`);
+    return await res.json();
+  }finally{
+    clearTimeout(timer);
+  }
+}
+function geckoAddress(item){
+  const attr=item?.attributes||{};
+  if(attr.address) return String(attr.address);
+  const id=String(item?.id||"");
+  if(id.startsWith("solana_")) return id.slice(7);
+  return id.includes("_")?id.split("_").slice(1).join("_"):id;
+}
+function normalizeGeckoPool(item){
+  const a=item?.attributes||{};
+  return {
+    address:geckoAddress(item),
+    tvl:num(a.reserve_in_usd),
+    volume24:num(a?.volume_usd?.h24),
+    name:a.name||null,
+    raw:item
+  };
+}
+async function loadGeckoComparison(){
+  if(sourceCompareState.loading) return;
+  sourceCompareState.loading=true;
+  sourceCompareState.error=null;
+  renderSourceCompare();
+  if($("#compareRefreshBtn")) $("#compareRefreshBtn").disabled=true;
+
+  try{
+    const map=new Map();
+    const list=POOLS.map(p=>p.address);
+    const chunkSize=25;
+
+    for(let i=0;i<list.length;i+=chunkSize){
+      const chunk=list.slice(i,i+chunkSize);
+      let j=null;
+      let lastError=null;
+
+      for(let attempt=0;attempt<3;attempt++){
+        try{
+          j=await fetchGeckoMulti(chunk);
+          break;
+        }catch(e){
+          lastError=e;
+          if(attempt<2) await sleep(1800*(attempt+1));
+        }
+      }
+      if(!j) throw lastError||new Error("GeckoTerminal konnte nicht geladen werden");
+
+      const data=Array.isArray(j?.data)?j.data:[];
+      for(const item of data){
+        const g=normalizeGeckoPool(item);
+        if(g.address) map.set(g.address,g);
+      }
+
+      // Public API: bewusst wenige Multi-Pool-Requests und Abstand zwischen Chunks.
+      if(i+chunkSize<list.length) await sleep(1300);
+    }
+
+    sourceCompareState.gecko=map;
+    sourceCompareState.loadedAt=Date.now();
+
+    applyGeckoFallbacks();
+    saveCache();
+    render();
+  }catch(e){
+    sourceCompareState.error=e?.message||"GeckoTerminal-Vergleich fehlgeschlagen";
+  }finally{
+    sourceCompareState.loading=false;
+    if($("#compareRefreshBtn")) $("#compareRefreshBtn").disabled=false;
+    renderSourceCompare();
+  }
+}
+
+function captureNativeBaselines(){
+  for(const r of rows){
+    // Native values are preserved separately so the diagnostic comparison
+    // continues to show the real Meteora/Raydium response.
+    if(!Object.prototype.hasOwnProperty.call(r,"nativeTvl")){
+      r.nativeTvl=Number.isFinite(r.tvl)?r.tvl:null;
+    }
+    if(!Object.prototype.hasOwnProperty.call(r,"nativeVolume24")){
+      r.nativeVolume24=Number.isFinite(r.volume24)?r.volume24:null;
+    }
+  }
+}
+function applyGeckoFallbacks(){
+  captureNativeBaselines();
+
+  for(const r of rows){
+    const g=sourceCompareState.gecko.get(r.address);
+
+    // Always restore the effective values from the preserved native baseline
+    // before deciding whether the current Gecko result is needed as fallback.
+    r.tvl=r.nativeTvl;
+    r.volume24=r.nativeVolume24;
+    r.tvlSource="Native";
+    r.volume24Source="Native";
+    r.tvlGeckoFallback=false;
+    r.volume24GeckoFallback=false;
+
+    if(!g) continue;
+
+    const nativeTvlMissing=!Number.isFinite(r.nativeTvl) || r.nativeTvl<=0;
+    const nativeVolMissing=!Number.isFinite(r.nativeVolume24) || r.nativeVolume24<=0;
+
+    if(nativeTvlMissing && Number.isFinite(g.tvl) && g.tvl>0){
+      r.tvl=g.tvl;
+      r.tvlSource="Gecko";
+      r.tvlGeckoFallback=true;
+    }
+
+    if(nativeVolMissing && Number.isFinite(g.volume24) && g.volume24>0){
+      r.volume24=g.volume24;
+      r.volume24Source="Gecko";
+      r.volume24GeckoFallback=true;
+    }
+  }
+
+  // Recalculate capital-efficiency metrics because a TVL fallback changes
+  // the denominator. Fee data itself remains native/historical and is never estimated.
+  deriveMetrics();
+}
+function fallbackSourceBadge(source){
+  return source==="Gecko"
+    ? `<span class="badge b-mid" title="Native API meldet 0/leer · GeckoTerminal-Fallback">GECKO</span>`
+    : "";
+}
+
+function sourceCompareRows(){
+  const out=rows.map(r=>{
+    const g=sourceCompareState.gecko.get(r.address);
+    const nativeTvl=r.loaded&&Number.isFinite(r.nativeTvl)?r.nativeTvl:(r.loaded&&Number.isFinite(r.tvl)?r.tvl:null);
+    const nativeVol=r.loaded&&Number.isFinite(r.nativeVolume24)?r.nativeVolume24:(r.loaded&&Number.isFinite(r.volume24)?r.volume24:null);
+    const geckoTvl=Number.isFinite(g?.tvl)?g.tvl:null;
+    const geckoVol=Number.isFinite(g?.volume24)?g.volume24:null;
+    return {
+      address:r.address,name:r.name,dex:r.dex,fee:poolFeeValue(r),
+      nativeTvl,geckoTvl,
+      nativeVol,geckoVol,
+      tvlDelta:Number.isFinite(nativeTvl)&&Number.isFinite(geckoTvl)?geckoTvl-nativeTvl:null,
+      volDelta:Number.isFinite(nativeVol)&&Number.isFinite(geckoVol)?geckoVol-nativeVol:null,
+      matched:!!g
+    };
+  });
+
+  const filter=$("#compareFilter")?.value||"all";
+  let filtered=out.filter(x=>{
+    if(filter==="different"){
+      return (Number.isFinite(x.tvlDelta)&&Math.abs(x.tvlDelta)>=0.01) ||
+             (Number.isFinite(x.volDelta)&&Math.abs(x.volDelta)>=0.01);
+    }
+    if(filter==="sol") return x.name==="ASTY/SOL";
+    if(filter==="usdc") return x.name==="ASTY/USDC";
+    return true;
+  });
+
+  const sort=$("#compareSort")?.value||"volDeltaAbs";
+  filtered.sort((a,b)=>{
+    if(sort==="name") return a.name.localeCompare(b.name,"de") || b.fee-a.fee;
+    if(sort==="tvlDeltaAbs") return Math.abs(b.tvlDelta??-Infinity)-Math.abs(a.tvlDelta??-Infinity);
+    if(sort==="geckoVol") return (b.geckoVol??-Infinity)-(a.geckoVol??-Infinity);
+    if(sort==="nativeVol") return (b.nativeVol??-Infinity)-(a.nativeVol??-Infinity);
+    return Math.abs(b.volDelta??-Infinity)-Math.abs(a.volDelta??-Infinity);
+  });
+  return filtered;
+}
+function signedUsd(v){
+  if(!Number.isFinite(v)) return "–";
+  return `${v>0?"+":""}${fmtUSD(v)}`;
+}
+function deltaClass(v){
+  if(!Number.isFinite(v)||Math.abs(v)<0.005) return "na";
+  return v>0?"compare-pos":"compare-neg";
+}
+function renderSourceCompare(){
+  const status=$("#compareStatus");
+  if(!status) return;
+
+  if(sourceCompareState.loading){
+    status.className="compare-status loading";
+    status.textContent="GeckoTerminal wird geladen…";
+  }else if(sourceCompareState.error){
+    status.className="compare-status warn";
+    status.textContent=sourceCompareState.error;
+  }else if(sourceCompareState.loadedAt){
+    status.className="compare-status live";
+    status.textContent=`Geladen ${new Date(sourceCompareState.loadedAt).toLocaleTimeString("de-DE",{hour:"2-digit",minute:"2-digit"})}`;
+  }else{
+    status.className="compare-status";
+    status.textContent="Noch nicht geladen";
+  }
+
+  const comparable=rows.map(r=>({r,g:sourceCompareState.gecko.get(r.address)}))
+    .filter(x=>x.r.loaded&&x.g);
+
+  const nativeTvl=comparable.reduce((s,x)=>s+(Number.isFinite(x.r.tvl)?x.r.tvl:0),0);
+  const geckoTvl=comparable.reduce((s,x)=>s+(Number.isFinite(x.g.tvl)?x.g.tvl:0),0);
+  const nativeVol=comparable.reduce((s,x)=>s+(Number.isFinite(x.r.volume24)?x.r.volume24:0),0);
+  const geckoVol=comparable.reduce((s,x)=>s+(Number.isFinite(x.g.volume24)?x.g.volume24:0),0);
+
+  $("#compareTvl").textContent=comparable.length?`${fmtUSD(nativeTvl)} ↔ ${fmtUSD(geckoTvl)}`:"–";
+  $("#compareTvlNote").textContent=comparable.length?`Native → Gecko · Δ ${signedUsd(geckoTvl-nativeTvl)}`:"–";
+  $("#compareVol").textContent=comparable.length?`${fmtUSD(nativeVol)} ↔ ${fmtUSD(geckoVol)}`:"–";
+  $("#compareVolNote").textContent=comparable.length?`Native → Gecko · Δ ${signedUsd(geckoVol-nativeVol)}`:"–";
+  $("#compareLoaded").textContent=`${comparable.length} / 64`;
+  $("#compareLoadedNote").textContent=sourceCompareState.error?sourceCompareState.error:`${sourceCompareState.gecko.size} Gecko-Pools erkannt`;
+
+  const body=$("#compareBody");
+  if(sourceCompareState.loading && !sourceCompareState.gecko.size){
+    body.innerHTML=`<tr><td colspan="9" class="na" style="text-align:center">GeckoTerminal-Daten werden geladen…</td></tr>`;
+    return;
+  }
+
+  const data=sourceCompareRows();
+  body.innerHTML=data.length?data.map(x=>`
+    <tr onclick="openDetail('${x.address}')">
+      <td><div class="tokenname">${x.name}</div><div class="mint">Fee ${fmtPct(x.fee)}</div></td>
+      <td><span class="dex ${x.dex==="Raydium"?"ray":""}">${x.dex}</span></td>
+      <td>${fmtUSD(x.nativeTvl)}</td>
+      <td>${fmtUSD(x.geckoTvl)}</td>
+      <td class="${deltaClass(x.tvlDelta)} ${Number.isFinite(x.tvlDelta)&&Math.abs(x.tvlDelta)>100?"compare-big":""}">${signedUsd(x.tvlDelta)}</td>
+      <td>${fmtUSD(x.nativeVol)}</td>
+      <td>${fmtUSD(x.geckoVol)}</td>
+      <td class="${deltaClass(x.volDelta)} ${Number.isFinite(x.volDelta)&&Math.abs(x.volDelta)>10?"compare-big":""}">${signedUsd(x.volDelta)}</td>
+      <td>${(()=>{
+        const r=rows.find(rr=>rr.address===x.address);
+        const parts=[];
+        if(r?.tvlGeckoFallback) parts.push("TVL");
+        if(r?.volume24GeckoFallback) parts.push("VOL");
+        return parts.length?`<span class="badge b-mid">GECKO ${parts.join("+")}</span>`:`<span class="na">–</span>`;
+      })()}</td>
+    </tr>
+  `).join(""):`<tr><td colspan="9" class="na" style="text-align:center">Keine Vergleichsdaten für diesen Filter.</td></tr>`;
+}
+
 function getHistoryCache(){
   try{ return JSON.parse(localStorage.getItem(HISTORY_CACHE_KEY)||"{}") || {}; }catch(e){ return {}; }
 }
@@ -565,7 +867,7 @@ function loadCache(){
   try{
     const c=JSON.parse(localStorage.getItem(CACHE_KEY)||"null");
     if(c?.rows?.length===64){
-      rows=c.rows; deriveMetrics(); render();
+      rows=c.rows; captureNativeBaselines(); deriveMetrics(); render();
       $("#updatedText").textContent=`Zwischenspeicher: ${new Date(c.ts).toLocaleString("de-DE")}`;
       $("#statusText").textContent="Letzten gespeicherten Datenstand geladen";
       $("#statusDot").className="dot warn";
@@ -587,6 +889,7 @@ async function refresh(forceHistory=false){
     const m=await loadMeteoraHistory(mBase,progressCb,forceHistory);
     const map=new Map([...m,ray].map(x=>[x.address,x]));
     rows=POOLS.map(p=>map.get(p.address)||markError(p,"Keine Daten"));
+    captureNativeBaselines();
     deriveMetrics(); saveCache(); render();
 
     const ok=rows.filter(r=>r.loaded).length;
@@ -1072,6 +1375,16 @@ function feeDisplay(r){
   const mismatch=Number.isFinite(r.apiFee) && Math.abs(r.apiFee-r.configuredFee)>0.015;
   return `<span class="${mismatch?"fee-mismatch":""}" title="${mismatch?`API ${fmtPct(r.apiFee)} · Liste ${fmtPct(r.configuredFee)}`:`Konfiguriert ${fmtPct(r.configuredFee)}`}">${fmtPct(v,2)}${mismatch?" ⚠":""}</span>`;
 }
+
+function rowSource(r){
+  if(r?.tvlGeckoFallback || r?.volume24GeckoFallback) return "Gecko";
+  return r?.dex==="Raydium" ? "Raydium" : "Meteora";
+}
+function sourceBubble(r){
+  const s=rowSource(r);
+  return `<span class="source-pill ${s.toLowerCase()}">${s}</span>`;
+}
+
 function filteredRows(){
   const q=$("#searchInput").value.trim().toLowerCase();
   const dex=$("#dexFilter").value, ef=$("#effFilter").value, sort=$("#sortSelect").value;
@@ -1112,7 +1425,8 @@ function renderKPIs(){
   $("#kpiEff").textContent=fmtPct(eff30);
 
   $("#kpiLoaded").textContent=`${all.length} / 64`;
-  $("#kpiDex").textContent=`${all.filter(r=>r.dex==="Meteora").length} Meteora · ${all.filter(r=>r.dex==="Raydium").length} Raydium geladen · 6 Pools nur aus Bewertung ausgeklammert`;
+  const fallbackPools=all.filter(r=>r.tvlGeckoFallback||r.volume24GeckoFallback).length;
+  $("#kpiDex").textContent=`${all.filter(r=>r.dex==="Meteora").length} Meteora · ${all.filter(r=>r.dex==="Raydium").length} Raydium geladen · 6 Pools nur aus Bewertung ausgeklammert${fallbackPools?` · ${fallbackPools} mit Gecko-Fallback`:""}`;
 }
 function renderRank(){
   const a=rows.filter(r=>r.loaded && !r.excluded && Number.isFinite(r.score)).sort((x,y)=>y.score-x.score);
@@ -1128,15 +1442,19 @@ function renderTable(){
   const arr=filteredRows(), tb=$("#poolBody"); tb.innerHTML="";
   $("#emptyState").style.display=arr.length?"none":"block";
   tb.innerHTML=arr.map(r=>{
-    if(!r.loaded) return `<tr onclick="openDetail('${r.address}')"><td><div class="pair">${r.name}</div><div class="addr">${shortAddr(r.address)}</div></td><td><span class="dex ${r.dex==="Raydium"?"ray":""}">${r.dex}</span></td><td>${fmtPct(r.configuredFee)}</td><td colspan="13" class="na" style="text-align:center">Daten nicht geladen</td><td><span class="badge b-low">FEHLER</span></td></tr>`;
+    if(!r.loaded) return `<tr onclick="openDetail('${r.address}')"><td><div class="pair">${r.name}</div><div class="addr">${shortAddr(r.address)}</div></td><td><span class="dex ${r.dex==="Raydium"?"ray":""}">${r.dex}</span></td><td>${sourceBubble(r)}</td><td>${fmtPct(r.configuredFee)}</td><td colspan="13" class="na" style="text-align:center">Daten nicht geladen</td><td><span class="badge b-low">FEHLER</span></td></tr>`;
     const effBadge = r.excluded
       ? `<span class="badge b-excluded">AUSGEKLAMMERT</span>`
       : `<span class="badge ${levelClass(r.level)}">${r.level} · ${r.score}</span>`;
     return `<tr onclick="openDetail('${r.address}')">
       <td><div class="pair">${r.name}</div><div class="addr">${shortAddr(r.address)}${r.excluded ? " · aus Berechnung" : ""}</div></td>
       <td><span class="dex ${r.dex==="Raydium"?"ray":""}">${r.dex}</span></td>
-      <td>${feeDisplay(r)}</td><td>${fmtUSD(r.tvl)}</td>
-      <td>${fmtUSD(r.volume1)}</td><td>${fmtUSD(r.volume24)}</td><td>${fmtUSD(r.volume7)}</td><td>${fmtUSD(r.volume30)}</td>
+      <td>${sourceBubble(r)}</td>
+      <td>${feeDisplay(r)}</td>
+      <td>${fmtUSD(r.tvl)}</td>
+      <td>${fmtUSD(r.volume1)}</td>
+      <td>${fmtUSD(r.volume24)}</td>
+      <td>${fmtUSD(r.volume7)}</td><td>${fmtUSD(r.volume30)}</td>
       <td>${fmtUSD(r.fees1)}</td><td>${fmtUSD(r.fees24)}</td><td>${fmtUSD(r.fees7)}</td><td>${fmtUSD(r.fees30)}</td>
       <td>${fmtPct(r.feeTvl24)}</td><td>${fmtPct(r.feeTvl7)}</td><td>${fmtPct(r.feeTvl30)}</td>
       <td class="${trendClass(r.trend)}">${r.trend}</td>
@@ -1152,8 +1470,15 @@ window.openDetail=function(address){
   $("#modalTitle").textContent=r.name; $("#modalSub").textContent=`${r.dex}${r.poolType?` · ${r.poolType}`:""}${r.excluded ? " · aus der ASTY-Score-Berechnung ausgeschlossen" : ""}`;
   let html=`<div class="detail-grid">`;
   if(r.loaded){
-    html+=detailCard("Pool-Gebühr",feeDisplay(r))+detailCard("Liquidität",fmtUSD(r.tvl))+detailCard("Effizienz-Score",r.score!==null?`${r.score} / 100`:"–")+detailCard("Trend",r.trend||"–");
-    html+=detailCard("Volumen 1h",fmtUSD(r.volume1))+detailCard("Volumen 24h",fmtUSD(r.volume24))+detailCard("Volumen 7d",fmtUSD(r.volume7))+detailCard("Volumen 30d",fmtUSD(r.volume30));
+    html+=detailCard("Pool-Gebühr",feeDisplay(r))
+      +detailCard("Quelle",sourceBubble(r))
+      +detailCard("Liquidität",fmtUSD(r.tvl))
+      +detailCard("Effizienz-Score",r.score!==null?`${r.score} / 100`:"–");
+    html+=detailCard("Trend",r.trend||"–")
+      +detailCard("Volumen 1h",fmtUSD(r.volume1))
+      +detailCard("Volumen 24h",fmtUSD(r.volume24))
+      +detailCard("Volumen 7d",fmtUSD(r.volume7))
+      +detailCard("Volumen 30d",fmtUSD(r.volume30));
     html+=detailCard("Einnahmen 1h",fmtUSD(r.fees1))+detailCard("Einnahmen 24h",fmtUSD(r.fees24))+detailCard("Einnahmen 7d",fmtUSD(r.fees7))+detailCard("Einnahmen 30d",fmtUSD(r.fees30));
     html+=detailCard("Einn. / TVL 24h",fmtPct(r.feeTvl24))+detailCard("Einn. / TVL 7d",fmtPct(r.feeTvl7))+detailCard("Einn. / TVL 30d",fmtPct(r.feeTvl30))+detailCard("APR 30d",fmtPct(r.apr30,1));
     html+=detailCard("Volumen / TVL 24h",Number.isFinite(r.turnover24)?fmtNum(r.turnover24,2)+"x":"–")+detailCard("Volumen / TVL 7d",Number.isFinite(r.turnover7)?fmtNum(r.turnover7,2)+"x":"–")+detailCard("Volumen / TVL 30d",Number.isFinite(r.turnover30)?fmtNum(r.turnover30,2)+"x":"–")+detailCard("History-Abdeckung",Number.isFinite(r.coverage30)?`${fmtNum(r.coverage30,0)} Tage`:"–");
@@ -1164,7 +1489,7 @@ window.openDetail=function(address){
     html+=`<div class="detail full"><div class="l">Status</div><div class="v">Daten nicht geladen</div><div class="kpi-note">${r.error||"Unbekannter Fehler"}</div></div>`;
   }
   html+=`<div class="detail full"><div class="l">Pool-Adresse</div><div class="address-row"><div class="address-box">${r.address}</div><button class="copy" onclick="copyText('${r.address}')">Kopieren</button></div></div>`;
-  html+=`</div><div class="explain"><b>Score-Mechanik:</b> 20 % 24h-, 35 % 7d- und 45 % 30d-Kapital-Effizienz. Bewertet wird jeweils die durchschnittliche tägliche Einnahmen/TVL-Effizienz relativ zu den anderen aktiven, nicht ausgeklammerten ASTY-Pools. Dadurch zählt nachhaltige Performance stärker als ein einzelner guter Tag. Fehlende Zeitfenster werden nicht mit 0 gewertet, sondern die verfügbaren Gewichte werden neu normiert. Pools mit strategisch abgezogener Liquidität werden nicht in Score, Benchmark oder Ranking einbezogen.<br><br><b>7d / 30d bei Meteora:</b> Die Werte werden aus 24h-Buckets der Historical-Volume-API aggregiert. Für Einnahmen/TVL wird die aktuelle Pool-Liquidität als Nenner verwendet; es handelt sich nicht um eine historische Durchschnitts-TVL.<br><br><b>Wichtig:</b> „Einnahmen“ sind API-Poolgebühren. Die tatsächlich von ASTY beanspruchbaren LP-Einnahmen werden erst nach Anbindung der öffentlichen Owner-Wallets ergänzt.</div>`;
+  html+=`</div><div class="explain"><b>Score-Mechanik:</b> 20 % 24h-, 35 % 7d- und 45 % 30d-Kapital-Effizienz. Bewertet wird jeweils die durchschnittliche tägliche Einnahmen/TVL-Effizienz relativ zu den anderen aktiven, nicht ausgeklammerten ASTY-Pools. Dadurch zählt nachhaltige Performance stärker als ein einzelner guter Tag. Fehlende Zeitfenster werden nicht mit 0 gewertet, sondern die verfügbaren Gewichte werden neu normiert. Pools mit strategisch abgezogener Liquidität werden nicht in Score, Benchmark oder Ranking einbezogen.<br><br><b>Gecko-Fallback:</b> Wenn Meteora/Raydium für TVL oder 24h-Volumen 0 bzw. keinen Wert liefert und GeckoTerminal für dieselbe Pool-Adresse einen positiven Wert meldet, wird ausschließlich für diese beiden Kennzahlen GeckoTerminal verwendet. Einnahmen/Fees werden niemals aus dem Gecko-Volumen geschätzt.<br><br><b>7d / 30d bei Meteora:</b> Die Werte werden aus 24h-Buckets der Historical-Volume-API aggregiert. Für Einnahmen/TVL wird die aktuelle Pool-Liquidität als Nenner verwendet; es handelt sich nicht um eine historische Durchschnitts-TVL.<br><br><b>Wichtig:</b> „Einnahmen“ sind API-Poolgebühren. Die tatsächlich von ASTY beanspruchbaren LP-Einnahmen werden erst nach Anbindung der öffentlichen Owner-Wallets ergänzt.</div>`;
   $("#modalBody").innerHTML=html; $("#modalBackdrop").classList.add("show");
 }
 window.copyText=async function(t){
@@ -1180,7 +1505,10 @@ function exportCSV(){
   const blob=new Blob(["\ufeff"+csv],{type:"text/csv;charset=utf-8"});
   const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=`ASTY-Team-Dashboard-${new Date().toISOString().slice(0,10)}.csv`;a.click();URL.revokeObjectURL(a.href);
 }
-$("#refreshBtn").addEventListener("click",()=>refresh(true));
+$("#refreshBtn").addEventListener("click",async()=>{
+  await refresh(true);
+  await loadGeckoComparison();
+});
 $("#walletRefreshBtn").addEventListener("click",refreshWalletBalances);
 $("#saveSnapshotBtn").addEventListener("click",saveClaimSnapshot);
 $("#deleteSnapshotBtn").addEventListener("click",deleteClaimSnapshot);
@@ -1194,7 +1522,10 @@ loadClaimSnapshot();
 loadCache();
 render();
 renderWalletState();
-refresh(false).then(()=>setTimeout(refreshWalletBalances,400));
+refresh(false).then(async()=>{
+  await loadGeckoComparison();
+  setTimeout(refreshWalletBalances,400);
+});
 </script>
 </body>
 </html>
