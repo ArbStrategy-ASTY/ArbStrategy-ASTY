@@ -122,6 +122,20 @@ tbody tr:hover{background:rgba(169,138,255,.045)}
   .tools .search{grid-column:1/-1}.detail-grid{grid-template-columns:1fr 1fr}
 }
 @media(max-width:480px){.kpis{grid-template-columns:1fr 1fr}.kpi{padding:13px;min-height:96px}.kpi-value{font-size:20px}.tools{grid-template-columns:1fr}.tools .search{grid-column:auto}.detail-grid{grid-template-columns:1fr}}
+
+.owner-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;padding:0 16px 14px}
+.owner-card{border:1px solid var(--line2);border-radius:14px;background:rgba(255,255,255,.018);padding:14px}
+.owner-total{background:linear-gradient(145deg,rgba(169,138,255,.07),rgba(103,232,249,.025))}
+.owner-head{display:flex;align-items:center;justify-content:space-between;gap:10px;color:var(--muted);font-size:11px}
+.owner-status{color:var(--muted2)}
+.owner-value{font-size:24px;font-weight:850;letter-spacing:-.025em;margin-top:12px}
+.owner-label{font-size:11px;color:var(--muted);margin-top:4px}
+.owner-wallet{font-size:10px;color:var(--muted2);margin-top:9px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
+.owner-note{margin:0 16px 16px;padding:11px 12px;border:1px solid var(--line2);border-radius:12px;background:rgba(255,255,255,.018);color:var(--muted);font-size:11px;line-height:1.6}
+.owner-note b{color:var(--text)}
+.claim-mini{font-size:10px;color:var(--muted2);margin-top:2px}
+.claim-ok{color:#86efac}.claim-warn{color:#fde047}
+@media(max-width:760px){.owner-grid{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
@@ -165,9 +179,21 @@ tbody tr:hover{background:rgba(169,138,255,.045)}
   <div class="kpi"><div class="kpi-label">Einnahmen 30d</div><div class="kpi-value" id="kpiFees30">–</div><div class="kpi-note">Historisch aggregiert</div></div>
   <div class="kpi"><div class="kpi-label">Ø Einnahmen / TVL 30d</div><div class="kpi-value" id="kpiEff">–</div><div class="kpi-note">Aktuelle TVL als Nenner</div></div>
   <div class="kpi"><div class="kpi-label">Pools geladen</div><div class="kpi-value" id="kpiLoaded">0 / 64</div><div class="kpi-note" id="kpiDex">63 Meteora · 1 Raydium</div></div>
-  <div class="kpi disabled"><div class="kpi-label">Beanspruchbare Einnahmen</div><div class="kpi-value">später</div><div class="kpi-note">Owner-Wallets noch nicht angebunden</div></div>
+  <div class="kpi"><div class="kpi-label">Beanspruchbare Einnahmen</div><div class="kpi-value" id="kpiClaimable">–</div><div class="kpi-note" id="kpiClaimableNote">Owner-Daten werden geladen</div></div>
 </section>
 
+<section class="section owner-section">
+  <div class="section-head">
+    <div><div class="section-title">Owner-Positionen & beanspruchbare Einnahmen</div><div class="section-note">Öffentliche Wallet-Auswertung ohne Signatur oder Wallet-Verbindung.</div></div>
+    <button class="btn" id="ownerRefreshBtn">Owner-Daten aktualisieren</button>
+  </div>
+  <div class="owner-grid">
+    <div class="owner-card"><div class="owner-head"><span class="dex">Meteora</span><span class="owner-status" id="meteoraOwnerStatus">Wartet</span></div><div class="owner-value" id="meteoraClaimable">–</div><div class="owner-label">beanspruchbare LP-Einnahmen</div><div class="owner-wallet">2 Owner-Wallets</div></div>
+    <div class="owner-card"><div class="owner-head"><span class="dex ray">Raydium</span><span class="owner-status" id="raydiumOwnerStatus">Wartet</span></div><div class="owner-value" id="raydiumClaimable">–</div><div class="owner-label">Owner-/Reward-Daten</div><div class="owner-wallet">1 Owner-Wallet</div></div>
+    <div class="owner-card owner-total"><div class="owner-head"><span>Gesamt</span><span class="owner-status" id="ownerUpdated">–</span></div><div class="owner-value" id="ownerClaimableTotal">–</div><div class="owner-label">aktuell ermittelbarer USD-Wert</div><div class="owner-wallet">Meteora + Raydium</div></div>
+  </div>
+  <div class="owner-note"><b>Meteora:</b> DAMM-v2-Positionen werden über die öffentlichen Owner-Wallets gelesen und die unbeanspruchten LP-Fees aus Pool- und Positionszustand berechnet. <b>Raydium:</b> Die Owner API liefert walletbezogene Positions- und Reward-Daten. Bei CPMM können Handelsgebühren im LP-Anteil akkumulieren und deshalb nicht als separat claimbarer Fee-Betrag erscheinen.</div>
+</section>
 <section class="section">
   <div class="section-head">
     <div><div class="section-title">Effizienz-Ranking</div><div class="section-note">Relativer ASTY-Score aus 24h-, 7d- und 30d-Kapital-Effizienz. Langfristige Performance zählt stärker.</div></div>
@@ -209,7 +235,7 @@ tbody tr:hover{background:rgba(169,138,255,.045)}
           <th>Volumen 1h</th><th>Volumen 24h</th><th>Volumen 7d</th><th>Volumen 30d</th>
           <th>Einnahmen 1h</th><th>Einnahmen 24h</th><th>Einnahmen 7d</th><th>Einnahmen 30d</th>
           <th>Einn./TVL 24h</th><th>Einn./TVL 7d</th><th>Einn./TVL 30d</th>
-          <th>Trend</th><th>Effizienz</th>
+          <th>Beanspruchbar</th><th>Trend</th><th>Effizienz</th>
         </tr>
       </thead>
       <tbody id="poolBody"></tbody>
@@ -221,7 +247,7 @@ tbody tr:hover{background:rgba(169,138,255,.045)}
 <div class="footer">
   ASTY Team Dashboard · Interne Analyse. Meteora-Daten werden aus der öffentlichen DAMM-v2 Data API geladen; 7d/30d werden aus der Historical-Volume-API mit 24h-Buckets aggregiert. Raydium-Daten kommen aus API v3.
   Der Effizienz-Score ist ein relativer Vergleich der aktuell geladenen ASTY-Pools und keine Renditeprognose. Drei frühere Meteora-SOL-Pools sowie die USDC-Pools mit 0,30 %, 2 % und 6 % sind wegen der Liquiditätsumschichtung bewusst aus der Berechnung ausgeschlossen.
-  „Einnahmen“ bezeichnet die von den APIs gemeldeten Poolgebühren. Individuell beanspruchbare LP-Einnahmen werden erst mit den Owner-Wallets ergänzt.
+  „Einnahmen“ bezeichnet die von den APIs gemeldeten Poolgebühren. „Beanspruchbare Einnahmen“ werden separat aus den öffentlichen Owner-Positionen ermittelt.
 </div>
 </div>
 
@@ -244,6 +270,13 @@ const EXCLUDED_POOL_IDS = new Set(["7tbbdGzFZpjrPmM7jQderyyv1x8Ebz1vhwqNhEW97osb
 const CACHE_KEY = "asty-team-dashboard-v2-cache";
 const HISTORY_CACHE_KEY = "asty-team-dashboard-meteora-history-v1";
 const HISTORY_CACHE_TTL = 30 * 60 * 1000;
+const OWNER_WALLETS = {
+  raydium: "9Hv3HPGSHS1vq1qjfumoER4TEhu2sgWUmL3S4EaUWrk6",
+  meteora: ["8KgDtknVhs88sMjRckCGzVDhaFBre3V3FAvhwxfANmfq","4aGjJavF5fq15szkFTdDGQAz9mUUSZ1y1c74isQm2zYV"]
+};
+const SOLANA_RPC = "https://api.mainnet-beta.solana.com";
+const RAYDIUM_OWNER_BASE = "https://owner-v1.raydium.io";
+let ownerState={loading:false,meteoraStatus:"wartet",raydiumStatus:"wartet",totalUsd:0,updatedAt:null};
 let rows = POOLS.map(p => ({...p, loaded:false, error:null}));
 let isLoading = false;
 
@@ -353,6 +386,12 @@ function adaptMeteora(base, d){
     currentPrice:num(d.current_price),
     tokenX:safe(d,"token_x.symbol"),
     tokenY:safe(d,"token_y.symbol"),
+    tokenXMint:safe(d,"token_x.address"),
+    tokenYMint:safe(d,"token_y.address"),
+    tokenXDecimals:num(safe(d,"token_x.decimals")),
+    tokenYDecimals:num(safe(d,"token_y.decimals")),
+    tokenXPrice:num(safe(d,"token_x.price")),
+    tokenYPrice:num(safe(d,"token_y.price")),
     createdAt:num(d.created_at),
     raw:d
   };
@@ -377,6 +416,12 @@ function adaptRaydium(base,d){
     currentPrice:num(d.price),
     tokenX:safe(d,"mintA.symbol"),
     tokenY:safe(d,"mintB.symbol"),
+    tokenXMint:safe(d,"mintA.address"),
+    tokenYMint:safe(d,"mintB.address"),
+    tokenXDecimals:num(safe(d,"mintA.decimals")),
+    tokenYDecimals:num(safe(d,"mintB.decimals")),
+    tokenXPrice:num(safe(d,"mintA.price")),
+    tokenYPrice:num(safe(d,"mintB.price")),
     createdAt:num(d.openTime),
     raw:d
   };
@@ -539,6 +584,139 @@ function loadCache(){
   return false;
 }
 
+
+function normalizePositionPoolAddress(item){
+  const candidates=[
+    item?.pool,item?.poolId,item?.poolId?.toBase58?.(),item?.positionState?.pool,
+    item?.positionState?.pool?.toBase58?.(),item?.account?.pool,item?.account?.pool?.toBase58?.()
+  ];
+  for(const c of candidates){
+    if(typeof c==="string") return c;
+    if(c?.toBase58) return c.toBase58();
+  }
+  return null;
+}
+function getPositionState(item){ return item?.positionState || item?.account || item?.state || item; }
+
+async function loadMeteoraOwnerFees(){
+  ownerState.meteoraStatus="lädt…";
+  rows.filter(r=>r.dex==="Meteora").forEach(r=>{r.claimableLoading=true;r.claimableError=null;r.claimableUsd=null;r.claimableTokens=[];});
+  setOwnerUi(); renderTable();
+  try{
+    const [sdk,web3]=await Promise.all([
+      import("https://esm.sh/@meteora-ag/cp-amm-sdk?bundle"),
+      import("https://esm.sh/@solana/web3.js@1.98.4?bundle")
+    ]);
+    const {CpAmm,getUnClaimLpFee}=sdk;
+    const {Connection,PublicKey}=web3;
+    if(!CpAmm||!getUnClaimLpFee) throw new Error("Meteora SDK-Funktionen nicht verfügbar");
+    const connection=new Connection(SOLANA_RPC,"confirmed");
+    const cpAmm=new CpAmm(connection);
+    const accum=new Map();
+
+    for(const wallet of OWNER_WALLETS.meteora){
+      const positions=await cpAmm.getPositionsByUser(new PublicKey(wallet));
+      for(const item of (positions||[])){
+        const posState=getPositionState(item);
+        let poolAddr=normalizePositionPoolAddress(item);
+        if(!poolAddr&&posState?.pool?.toBase58) poolAddr=posState.pool.toBase58();
+        const row=rows.find(r=>r.address===poolAddr&&r.dex==="Meteora");
+        if(!row) continue;
+        let poolState=item?.poolState;
+        if(!poolState) poolState=await cpAmm.fetchPoolState(new PublicKey(poolAddr));
+        const fee=getUnClaimLpFee(poolState,posState);
+        const mintA=poolState.tokenAMint?.toBase58?.()||row.tokenXMint;
+        const mintB=poolState.tokenBMint?.toBase58?.()||row.tokenYMint;
+        const rawA=fee?.tokenA ?? fee?.feeA ?? fee?.amountA ?? fee?.[0] ?? 0;
+        const rawB=fee?.tokenB ?? fee?.feeB ?? fee?.amountB ?? fee?.[1] ?? 0;
+        const infoA=getRowTokenInfo(row,mintA)||{symbol:row.tokenX||"Token A",decimals:row.tokenXDecimals||0,price:row.tokenXPrice||0};
+        const infoB=getRowTokenInfo(row,mintB)||{symbol:row.tokenY||"Token B",decimals:row.tokenYDecimals||0,price:row.tokenYPrice||0};
+        const amtA=rawToUi(rawA,infoA.decimals), amtB=rawToUi(rawB,infoB.decimals);
+        if(!accum.has(poolAddr)) accum.set(poolAddr,{tokens:new Map(),positions:0});
+        const a=accum.get(poolAddr); a.positions++;
+        for(const x of [{mint:mintA,symbol:infoA.symbol,amount:amtA,price:infoA.price},{mint:mintB,symbol:infoB.symbol,amount:amtB,price:infoB.price}]){
+          if(!a.tokens.has(x.mint)) a.tokens.set(x.mint,{symbol:x.symbol,amount:0,price:x.price||0});
+          const t=a.tokens.get(x.mint); t.amount+=x.amount; if(!t.price&&x.price)t.price=x.price;
+        }
+      }
+    }
+
+    for(const r of rows.filter(r=>r.dex==="Meteora")){
+      const a=accum.get(r.address);
+      r.claimableLoading=false;
+      r.ownerPositionCount=a?.positions||0;
+      r.claimableTokens=a?[...a.tokens.values()]:[];
+      r.claimableUsd=r.claimableTokens.reduce((s,t)=>s+t.amount*(t.price||0),0);
+      r.claimableError=null;
+    }
+    ownerState.meteoraStatus="geladen";
+  }catch(e){
+    const msg=e?.message||"Meteora Owner-Daten konnten nicht geladen werden";
+    for(const r of rows.filter(r=>r.dex==="Meteora")){
+      r.claimableLoading=false;r.claimableError=msg;r.claimableUsd=null;
+    }
+    ownerState.meteoraStatus="nicht verfügbar";
+  }
+}
+
+function collectNumericClaims(obj,path="",out=[]){
+  if(obj==null)return out;
+  if(Array.isArray(obj)){obj.forEach((v,i)=>collectNumericClaims(v,`${path}[${i}]`,out));return out;}
+  if(typeof obj!=="object")return out;
+  for(const [k,v] of Object.entries(obj)){
+    const p=path?`${path}.${k}`:k, kl=k.toLowerCase();
+    if((kl.includes("claim")||kl.includes("reward")||kl.includes("pending"))&&(typeof v==="number"||typeof v==="string")&&Number.isFinite(+v))out.push({path:p,value:+v});
+    if(v&&typeof v==="object")collectNumericClaims(v,p,out);
+  }
+  return out;
+}
+function findPoolIdDeep(obj){
+  if(!obj||typeof obj!=="object")return null;
+  for(const k of ["poolId","pool","id","ammId"]){
+    const v=obj[k]; if(typeof v==="string"&&v.length>30)return v;
+  }
+  return null;
+}
+async function loadRaydiumOwnerData(){
+  ownerState.raydiumStatus="lädt…";
+  const rayRows=rows.filter(r=>r.dex==="Raydium");
+  rayRows.forEach(r=>{r.claimableLoading=true;r.claimableError=null;r.claimableUsd=null;r.claimableTokens=[];});
+  setOwnerUi();renderTable();
+  try{
+    const owner=OWNER_WALLETS.raydium;
+    let j;
+    try{j=await fetchJson(`${RAYDIUM_OWNER_BASE}/position/stake/${owner}`,18000,1);}
+    catch(e){if(String(e?.message||"").includes("404"))j={data:[]};else throw e;}
+    const items=Array.isArray(j)?j:(Array.isArray(j?.data)?j.data:(Array.isArray(j?.data?.data)?j.data.data:[]));
+    const target=rayRows[0];
+    const relevant=items.filter(x=>findPoolIdDeep(x)===target?.address||JSON.stringify(x).includes(target?.address||"__"));
+    const source=relevant.length?relevant:items;
+    const claims=[];source.forEach(x=>collectNumericClaims(x,"",claims));
+    target.claimableLoading=false;target.ownerRaw=j;target.ownerPositionCount=source.length;
+    let usd=0;for(const c of claims){if(c.path.toLowerCase().includes("usd"))usd+=c.value;}
+    target.claimableUsd=usd;target.claimableTokens=[];target.claimableExplicitFields=claims;target.claimableError=null;
+    ownerState.raydiumStatus=source.length?"geladen":"keine separate Position";
+  }catch(e){
+    const target=rayRows[0];
+    if(target){target.claimableLoading=false;target.claimableError=e?.message||"Raydium Owner-Daten nicht verfügbar";target.claimableUsd=null;}
+    ownerState.raydiumStatus="nicht verfügbar";
+  }
+}
+async function refreshOwnerData(){
+  if(ownerState.loading)return;
+  ownerState.loading=true;
+  if($("#ownerRefreshBtn"))$("#ownerRefreshBtn").disabled=true;
+  setOwnerUi();
+  try{
+    await Promise.all([loadMeteoraOwnerFees(),loadRaydiumOwnerData()]);
+    ownerState.updatedAt=Date.now();
+  }finally{
+    ownerState.loading=false;
+    if($("#ownerRefreshBtn"))$("#ownerRefreshBtn").disabled=false;
+    setOwnerUi();renderTable();
+  }
+}
+
 async function refresh(forceHistory=false){
   if(isLoading)return;
   isLoading=true; $("#refreshBtn").disabled=true;
@@ -569,6 +747,43 @@ async function refresh(forceHistory=false){
   }finally{
     isLoading=false; $("#refreshBtn").disabled=false;
   }
+}
+
+
+function renderClaimableCell(r){
+  if(r.claimableLoading) return `<span class="na">lädt…</span>`;
+  if(r.claimableError) return `<span class="claim-warn" title="${String(r.claimableError).replaceAll('"','&quot;')}">nicht verfügbar</span>`;
+  if(Number.isFinite(r.claimableUsd)){
+    const detail=(r.claimableTokens||[]).map(x=>`${fmtNum(x.amount,6)} ${x.symbol||"Token"}`).join(" · ");
+    return `<span class="${r.claimableUsd>0?"claim-ok":""}" title="${detail}">${fmtUSD(r.claimableUsd)}</span>${detail?`<div class="claim-mini">${detail}</div>`:""}`;
+  }
+  return `<span class="na">–</span>`;
+}
+function setOwnerUi(){
+  const meteoraClaimRows=rows.filter(r=>r.dex==="Meteora"&&Number.isFinite(r.claimableUsd));
+  const rayClaimRows=rows.filter(r=>r.dex==="Raydium"&&Number.isFinite(r.claimableUsd));
+  const m=meteoraClaimRows.reduce((s,r)=>s+r.claimableUsd,0);
+  const y=rayClaimRows.reduce((s,r)=>s+r.claimableUsd,0);
+  const hasM=meteoraClaimRows.length>0, hasR=rayClaimRows.length>0, hasAny=hasM||hasR;
+  const total=m+y; ownerState.totalUsd=hasAny?total:null;
+  if($("#meteoraClaimable")) $("#meteoraClaimable").textContent=hasM?fmtUSD(m):"–";
+  if($("#raydiumClaimable")) $("#raydiumClaimable").textContent=hasR?fmtUSD(y):"–";
+  if($("#ownerClaimableTotal")) $("#ownerClaimableTotal").textContent=hasAny?fmtUSD(total):"–";
+  if($("#kpiClaimable")) $("#kpiClaimable").textContent=hasAny?fmtUSD(total):"–";
+  if($("#meteoraOwnerStatus")) $("#meteoraOwnerStatus").textContent=ownerState.meteoraStatus;
+  if($("#raydiumOwnerStatus")) $("#raydiumOwnerStatus").textContent=ownerState.raydiumStatus;
+  if($("#ownerUpdated")) $("#ownerUpdated").textContent=ownerState.updatedAt?new Date(ownerState.updatedAt).toLocaleTimeString("de-DE",{hour:"2-digit",minute:"2-digit"}):"–";
+  if($("#kpiClaimableNote")) $("#kpiClaimableNote").textContent=ownerState.loading?"Owner-Daten werden geladen…":ownerState.updatedAt?"Öffentliche Owner-Positionen":"Noch nicht geladen";
+}
+function rawToUi(amount,decimals){
+  const n=Number(amount?.toString?.() ?? amount);
+  return Number.isFinite(n)?n/Math.pow(10,decimals||0):0;
+}
+function getRowTokenInfo(row,mint){
+  if(!row)return null;
+  if(row.tokenXMint===mint)return {symbol:row.tokenX||"Token X",decimals:row.tokenXDecimals||0,price:row.tokenXPrice||0};
+  if(row.tokenYMint===mint)return {symbol:row.tokenY||"Token Y",decimals:row.tokenYDecimals||0,price:row.tokenYPrice||0};
+  return null;
 }
 
 function levelClass(level){ return ["SEHR HOCH","HOCH"].includes(level)?"b-high":level==="MITTEL"?"b-mid":"b-low"; }
@@ -625,7 +840,7 @@ function renderTable(){
   const arr=filteredRows(), tb=$("#poolBody"); tb.innerHTML="";
   $("#emptyState").style.display=arr.length?"none":"block";
   tb.innerHTML=arr.map(r=>{
-    if(!r.loaded) return `<tr onclick="openDetail('${r.address}')"><td><div class="pair">${r.name}</div><div class="addr">${shortAddr(r.address)}</div></td><td><span class="dex ${r.dex==="Raydium"?"ray":""}">${r.dex}</span></td><td>${fmtPct(r.configuredFee)}</td><td colspan="13" class="na" style="text-align:center">Daten nicht geladen</td><td><span class="badge b-low">FEHLER</span></td></tr>`;
+    if(!r.loaded) return `<tr onclick="openDetail('${r.address}')"><td><div class="pair">${r.name}</div><div class="addr">${shortAddr(r.address)}</div></td><td><span class="dex ${r.dex==="Raydium"?"ray":""}">${r.dex}</span></td><td>${fmtPct(r.configuredFee)}</td><td colspan="14" class="na" style="text-align:center">Daten nicht geladen</td><td><span class="badge b-low">FEHLER</span></td></tr>`;
     const effBadge = r.excluded
       ? `<span class="badge b-excluded">AUSGEKLAMMERT</span>`
       : `<span class="badge ${levelClass(r.level)}">${r.level} · ${r.score}</span>`;
@@ -636,12 +851,13 @@ function renderTable(){
       <td>${fmtUSD(r.volume1)}</td><td>${fmtUSD(r.volume24)}</td><td>${fmtUSD(r.volume7)}</td><td>${fmtUSD(r.volume30)}</td>
       <td>${fmtUSD(r.fees1)}</td><td>${fmtUSD(r.fees24)}</td><td>${fmtUSD(r.fees7)}</td><td>${fmtUSD(r.fees30)}</td>
       <td>${fmtPct(r.feeTvl24)}</td><td>${fmtPct(r.feeTvl7)}</td><td>${fmtPct(r.feeTvl30)}</td>
+      <td>${renderClaimableCell(r)}</td>
       <td class="${trendClass(r.trend)}">${r.trend}</td>
       <td>${effBadge}</td>
     </tr>`;
   }).join("");
 }
-function render(){ renderKPIs(); renderRank(); renderTable(); }
+function render(){ renderKPIs(); renderRank(); renderTable(); setOwnerUi(); }
 
 function detailCard(l,v){ return `<div class="detail"><div class="l">${l}</div><div class="v">${v}</div></div>`; }
 window.openDetail=function(address){
@@ -649,7 +865,9 @@ window.openDetail=function(address){
   $("#modalTitle").textContent=r.name; $("#modalSub").textContent=`${r.dex}${r.poolType?` · ${r.poolType}`:""}${r.excluded ? " · aus der ASTY-Score-Berechnung ausgeschlossen" : ""}`;
   let html=`<div class="detail-grid">`;
   if(r.loaded){
-    html+=detailCard("Pool-Gebühr",feeDisplay(r))+detailCard("Liquidität",fmtUSD(r.tvl))+detailCard("Effizienz-Score",r.score!==null?`${r.score} / 100`:"–")+detailCard("Trend",r.trend||"–");
+    html+=detailCard("Pool-Gebühr",feeDisplay(r))+detailCard("Liquidität",fmtUSD(r.tvl))+detailCard("Effizienz-Score",r.excluded?"AUSGEKLAMMERT":(r.score!==null?`${r.score} / 100`:"–"))+detailCard("Trend",r.trend||"–");
+    const claimText=r.claimableLoading?"lädt…":r.claimableError?"nicht verfügbar":Number.isFinite(r.claimableUsd)?fmtUSD(r.claimableUsd):"–";
+    html+=detailCard("Beanspruchbar",claimText)+detailCard("Owner-Positionen",Number.isFinite(r.ownerPositionCount)?fmtNum(r.ownerPositionCount,0):"–");
     html+=detailCard("Volumen 1h",fmtUSD(r.volume1))+detailCard("Volumen 24h",fmtUSD(r.volume24))+detailCard("Volumen 7d",fmtUSD(r.volume7))+detailCard("Volumen 30d",fmtUSD(r.volume30));
     html+=detailCard("Einnahmen 1h",fmtUSD(r.fees1))+detailCard("Einnahmen 24h",fmtUSD(r.fees24))+detailCard("Einnahmen 7d",fmtUSD(r.fees7))+detailCard("Einnahmen 30d",fmtUSD(r.fees30));
     html+=detailCard("Einn. / TVL 24h",fmtPct(r.feeTvl24))+detailCard("Einn. / TVL 7d",fmtPct(r.feeTvl7))+detailCard("Einn. / TVL 30d",fmtPct(r.feeTvl30))+detailCard("APR 30d",fmtPct(r.apr30,1));
@@ -659,6 +877,13 @@ window.openDetail=function(address){
     }
   } else {
     html+=`<div class="detail full"><div class="l">Status</div><div class="v">Daten nicht geladen</div><div class="kpi-note">${r.error||"Unbekannter Fehler"}</div></div>`;
+  }
+  if(r.claimableTokens?.length){
+    const tokenLines=r.claimableTokens.map(t=>`${fmtNum(t.amount,8)} ${t.symbol}${t.price?` · ${fmtUSD(t.amount*t.price)}`:""}`).join("<br>");
+    html+=`<div class="detail full"><div class="l">Beanspruchbare Token</div><div class="v" style="font-size:14px;line-height:1.6">${tokenLines}</div></div>`;
+  }
+  if(r.claimableError){
+    html+=`<div class="detail full"><div class="l">Owner-Daten</div><div class="kpi-note">${r.claimableError}</div></div>`;
   }
   html+=`<div class="detail full"><div class="l">Pool-Adresse</div><div class="address-row"><div class="address-box">${r.address}</div><button class="copy" onclick="copyText('${r.address}')">Kopieren</button></div></div>`;
   html+=`</div><div class="explain"><b>Score-Mechanik:</b> 20 % 24h-, 35 % 7d- und 45 % 30d-Kapital-Effizienz. Bewertet wird jeweils die durchschnittliche tägliche Einnahmen/TVL-Effizienz relativ zu den anderen aktiven, nicht ausgeklammerten ASTY-Pools. Dadurch zählt nachhaltige Performance stärker als ein einzelner guter Tag. Fehlende Zeitfenster werden nicht mit 0 gewertet, sondern die verfügbaren Gewichte werden neu normiert. Pools mit strategisch abgezogener Liquidität werden nicht in Score, Benchmark oder Ranking einbezogen.<br><br><b>7d / 30d bei Meteora:</b> Die Werte werden aus 24h-Buckets der Historical-Volume-API aggregiert. Für Einnahmen/TVL wird die aktuelle Pool-Liquidität als Nenner verwendet; es handelt sich nicht um eine historische Durchschnitts-TVL.<br><br><b>Wichtig:</b> „Einnahmen“ sind API-Poolgebühren. Die tatsächlich von ASTY beanspruchbaren LP-Einnahmen werden erst nach Anbindung der öffentlichen Owner-Wallets ergänzt.</div>`;
@@ -670,14 +895,15 @@ window.copyText=async function(t){
 }
 function showToast(t){const el=$("#toast");el.textContent=t;el.classList.add("show");setTimeout(()=>el.classList.remove("show"),1400)}
 function exportCSV(){
-  const hdr=["Pool","DEX","Adresse","Ausgeklammert","Gebühr API %","Gebühr Liste %","TVL USD","Volumen 1h USD","Volumen 24h USD","Volumen 7d USD","Volumen 30d USD","Einnahmen 1h USD","Einnahmen 24h USD","Einnahmen 7d USD","Einnahmen 30d USD","Einnahmen/TVL 24h %","Einnahmen/TVL 7d %","Einnahmen/TVL 30d %","APR 24h %","APR 7d %","APR 30d %","Trend","Effizienz Score","Effizienz","History Tage"];
-  const data=rows.map(r=>[r.name,r.dex,r.address,r.excluded?"ja":"nein",r.apiFee??"",r.configuredFee,r.tvl??"",r.volume1??"",r.volume24??"",r.volume7??"",r.volume30??"",r.fees1??"",r.fees24??"",r.fees7??"",r.fees30??"",r.feeTvl24??"",r.feeTvl7??"",r.feeTvl30??"",r.apr24??"",r.apr7??"",r.apr30??"",r.trend??"",r.score??"",r.level??"",r.coverage30??""]);
+  const hdr=["Pool","DEX","Adresse","Ausgeklammert","Gebühr API %","Gebühr Liste %","TVL USD","Volumen 1h USD","Volumen 24h USD","Volumen 7d USD","Volumen 30d USD","Einnahmen 1h USD","Einnahmen 24h USD","Einnahmen 7d USD","Einnahmen 30d USD","Einnahmen/TVL 24h %","Einnahmen/TVL 7d %","Einnahmen/TVL 30d %","Beanspruchbar USD","Owner Positionen","APR 24h %","APR 7d %","APR 30d %","Trend","Effizienz Score","Effizienz","History Tage"];
+  const data=rows.map(r=>[r.name,r.dex,r.address,r.excluded?"ja":"nein",r.apiFee??"",r.configuredFee,r.tvl??"",r.volume1??"",r.volume24??"",r.volume7??"",r.volume30??"",r.fees1??"",r.fees24??"",r.fees7??"",r.fees30??"",r.feeTvl24??"",r.feeTvl7??"",r.feeTvl30??"",r.claimableUsd??"",r.ownerPositionCount??"",r.apr24??"",r.apr7??"",r.apr30??"",r.trend??"",r.score??"",r.level??"",r.coverage30??""]);
   const esc=v=>`"${String(v).replaceAll('"','""')}"`;
   const csv=[hdr,...data].map(row=>row.map(esc).join(";")).join("\n");
   const blob=new Blob(["\ufeff"+csv],{type:"text/csv;charset=utf-8"});
   const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=`ASTY-Team-Dashboard-${new Date().toISOString().slice(0,10)}.csv`;a.click();URL.revokeObjectURL(a.href);
 }
 $("#refreshBtn").addEventListener("click",()=>refresh(true));
+$("#ownerRefreshBtn")?.addEventListener("click",refreshOwnerData);
 $("#exportBtn").addEventListener("click",exportCSV);
 ["searchInput","dexFilter","effFilter","sortSelect"].forEach(id=>$("#"+id).addEventListener(id==="searchInput"?"input":"change",renderTable));
 $("#modalClose").addEventListener("click",()=>$("#modalBackdrop").classList.remove("show"));
@@ -686,7 +912,7 @@ document.addEventListener("keydown",e=>{if(e.key==="Escape")$("#modalBackdrop").
 
 loadCache();
 render();
-refresh(false);
+refresh(false).then(()=>setTimeout(refreshOwnerData,350));
 </script>
 </body>
 </html>
