@@ -124,6 +124,10 @@ tbody tr:hover{background:rgba(169,138,255,.045)}
 @media(max-width:480px){.kpis{grid-template-columns:1fr 1fr}.kpi{padding:13px;min-height:96px}.kpi-value{font-size:20px}.tools{grid-template-columns:1fr}.tools .search{grid-column:auto}.detail-grid{grid-template-columns:1fr}}
 
 .claim-controls{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.claim-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:11px;padding:0 16px 14px}.claim-kpi{border:1px solid var(--line2);border-radius:14px;background:rgba(255,255,255,.018);padding:14px;min-height:98px}.claim-kpi .l{font-size:10px;text-transform:uppercase;letter-spacing:.075em;color:var(--muted)}.claim-kpi .v{font-size:22px;font-weight:850;letter-spacing:-.025em;margin-top:9px}.claim-kpi .n{font-size:10px;color:var(--muted2);margin-top:5px}.wallet-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:11px;padding:0 16px 14px}.wallet-card{border:1px solid var(--line2);border-radius:14px;background:rgba(255,255,255,.018);padding:13px}.wallet-card-head{display:flex;align-items:center;justify-content:space-between;gap:10px}.wallet-name{font-weight:780;font-size:13px}.wallet-address{font-size:9px;color:var(--muted2);font-family:ui-monospace,SFMono-Regular,Menlo,monospace;margin-top:4px}.wallet-main{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-top:12px}.wallet-stat{padding:8px;border:1px solid rgba(255,255,255,.045);border-radius:10px;background:rgba(0,0,0,.08)}.wallet-stat .l{font-size:9px;color:var(--muted)}.wallet-stat .v{font-size:13px;font-weight:750;margin-top:4px}.wallet-total{font-size:10px;color:var(--muted);margin-top:9px}.snapshotbar{margin:0 16px 14px;padding:12px;border:1px solid var(--line2);border-radius:13px;background:rgba(169,138,255,.035);display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}.snapshot-title{font-weight:750;font-size:12px}.snapshot-meta{color:var(--muted);font-size:11px;margin-top:3px}.snapshot-actions{display:flex;gap:7px;flex-wrap:wrap}.claim-table-title{padding:13px 16px 9px;font-weight:750;font-size:13px;border-top:1px solid var(--line2)}.claimtablewrap{overflow:auto;max-height:430px}.claimtable{width:100%;border-collapse:collapse;min-width:980px}.claimtable th{position:sticky;top:0;background:#0d1123;z-index:2;color:var(--muted);font-size:10px;text-transform:uppercase;letter-spacing:.055em;padding:10px;text-align:right;white-space:nowrap}.claimtable th:first-child,.claimtable th:nth-child(2){text-align:left}.claimtable td{padding:10px;border-top:1px solid rgba(255,255,255,.045);font-size:11.5px;text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}.claimtable td:first-child,.claimtable td:nth-child(2){text-align:left}.tokenname{font-weight:780}.mint{font-size:9px;color:var(--muted2);font-family:ui-monospace,SFMono-Regular,Menlo,monospace}.delta-pos{color:#86efac;font-weight:800}.delta-neg{color:#fda4af;font-weight:800}.delta-zero{color:var(--muted2)}.claim-note{margin:0 16px 16px;padding:11px 12px;border:1px solid var(--line2);border-radius:12px;background:rgba(255,255,255,.017);color:var(--muted);font-size:11px;line-height:1.6}.claim-note b{color:var(--text)}.rpc-row{display:flex;gap:7px;align-items:center;margin-top:8px}.rpc-input{flex:1;min-width:220px;border:1px solid var(--line2);background:#0b0f20;color:var(--muted);border-radius:9px;padding:7px 9px;font-size:10px}.claim-status{display:inline-flex;align-items:center;gap:6px;color:var(--muted);font-size:10px}.claim-status:before{content:"";width:7px;height:7px;border-radius:50%;background:var(--muted2)}.claim-status.live:before{background:var(--green)}.claim-status.loading:before{background:var(--purple);animation:pulse 1s infinite}.claim-status.warn:before{background:var(--yellow)}@media(max-width:1050px){.claim-grid{grid-template-columns:repeat(2,1fr)}.wallet-grid{grid-template-columns:1fr}}@media(max-width:560px){.claim-grid{grid-template-columns:1fr 1fr}.wallet-main{grid-template-columns:1fr}.snapshot-actions{width:100%}.snapshot-actions .btn{flex:1}}
+
+.wallet-error{margin-top:8px;padding:9px 10px;border:1px solid rgba(250,204,21,.22);border-radius:10px;background:rgba(250,204,21,.05);color:#fde68a;font-size:10.5px;line-height:1.5;max-width:760px}
+.wallet-error code{color:#fff;word-break:break-all}
+.rpc-active{color:#86efac}
 </style>
 </head>
 <body>
@@ -153,10 +157,7 @@ tbody tr:hover{background:rgba(169,138,255,.045)}
   <b>Hinweis zur ASTY-Score-Berechnung:</b> Der Score bewertet die durchschnittliche tägliche Kapital-Effizienz der Pools relativ zueinander.
   Gewichtet werden aktuell <b>24h = 20 %</b>, <b>7d = 35 %</b> und <b>30d = 45 %</b>. Grundlage ist vor allem <b>Einnahmen / TVL</b>.
   Von der Berechnung ausgeschlossen sind aktuell <b>6 Pools</b>: die drei alten Meteora-SOL-Pools mit <b>1 %</b>, <b>0,3 %</b> und <b>2 %</b>
-  sowie die Meteora-USDC-Pools mit <b>0,30 %</b>, <b>2 %</b> und <b>6 %</b>. Bei diesen Pools wurde die Liquidität strategisch auf andere aktive Pools umgeschichtet.
-  Dadurch ist das aktuelle TVL sehr niedrig, während die 7d- und 30d-Einnahmen noch teilweise aus der Zeit mit deutlich höherer Liquidität stammen.
-  Eine Division dieser historischen Einnahmen durch das heutige Mini-TVL würde die Einnahmen/TVL-Werte und damit den ASTY Score künstlich aufblasen.
-  Die ausgeklammerten Pools bleiben zur Transparenz vollständig in der Tabelle sichtbar.
+  sowie die Meteora-USDC-Pools mit <b>0,30 %</b>, <b>2 %</b> und <b>6 %</b>.
 </div>
 
 <section class="kpis">
@@ -171,10 +172,10 @@ tbody tr:hover{background:rgba(169,138,255,.045)}
 </section>
 
 <section class="section claim-section">
-  <div class="section-head"><div><div class="section-title">Claiming Day · Owner-Bestände</div><div class="section-note">Freie Wallet-Bestände vor und nach dem Claim vergleichen. Keine Wallet-Verbindung und keine Signatur erforderlich.</div></div><div class="claim-controls"><span class="claim-status" id="walletLoadStatus">Noch nicht geladen</span><button class="btn primary" id="walletRefreshBtn">Bestände aktualisieren</button></div></div>
+  <div class="section-head"><div><div class="section-title">Claiming Day · Owner-Bestände</div><div class="section-note">Freie Wallet-Bestände vor und nach dem Claim vergleichen.</div></div><div class="claim-controls"><span class="claim-status" id="walletLoadStatus">Noch nicht geladen</span><button class="btn primary" id="walletRefreshBtn">Bestände aktualisieren</button></div></div>
   <div class="claim-grid"><div class="claim-kpi"><div class="l">Freie ASTY</div><div class="v" id="claimAsty">–</div><div class="n" id="claimAstyUsd">USD-Wert: –</div></div><div class="claim-kpi"><div class="l">Freies SOL</div><div class="v" id="claimSol">–</div><div class="n" id="claimSolUsd">USD-Wert: –</div></div><div class="claim-kpi"><div class="l">Freies USDC</div><div class="v" id="claimUsdc">–</div><div class="n">über alle drei Owner-Wallets</div></div><div class="claim-kpi"><div class="l">Freies Kapital</div><div class="v" id="claimKnownUsd">–</div><div class="n">nur Assets mit verfügbarem USD-Preis</div></div></div>
   <div class="wallet-grid" id="walletCards"></div>
-  <div class="snapshotbar"><div><div class="snapshot-title">Snapshot vor dem Claim</div><div class="snapshot-meta" id="snapshotMeta">Noch kein Snapshot gespeichert.</div><div class="rpc-row"><span class="snapshot-meta">RPC</span><input id="rpcInput" class="rpc-input" value="https://api.mainnet-beta.solana.com" aria-label="Solana RPC Endpoint"></div></div><div class="snapshot-actions"><button class="btn primary" id="saveSnapshotBtn">Snapshot vor Claim speichern</button><button class="btn" id="deleteSnapshotBtn">Snapshot löschen</button></div></div>
+  <div class="snapshotbar"><div><div class="snapshot-title">Snapshot vor dem Claim</div><div class="snapshot-meta" id="snapshotMeta">Noch kein Snapshot gespeichert.</div><div class="rpc-row"><span class="snapshot-meta">RPC</span><input id="rpcInput" class="rpc-input" value="https://api.mainnet.solana.com" aria-label="Solana RPC Endpoint"></div><div id="walletErrorBox" class="wallet-error" style="display:none"></div></div><div class="snapshot-actions"><button class="btn primary" id="saveSnapshotBtn">Snapshot vor Claim speichern</button><button class="btn" id="deleteSnapshotBtn">Snapshot löschen</button></div></div>
   <div class="claim-table-title">Aktuelle freie Bestände</div><div class="claimtablewrap"><table class="claimtable"><thead><tr><th>Token</th><th>Mint</th><th>Gesamt</th><th>Meteora 1</th><th>Meteora 2</th><th>Raydium</th><th>Preis</th><th>Wert</th></tr></thead><tbody id="walletAssetBody"><tr><td colspan="8" class="na" style="text-align:center">Bestände noch nicht geladen.</td></tr></tbody></table></div>
   <div class="claim-table-title">Veränderung seit Snapshot</div><div class="claimtablewrap"><table class="claimtable"><thead><tr><th>Token</th><th>Mint</th><th>Vorher</th><th>Aktuell</th><th>Veränderung</th><th>USD-Änderung</th></tr></thead><tbody id="claimDeltaBody"><tr><td colspan="6" class="na" style="text-align:center">Erst einen Snapshot vor dem Claim speichern.</td></tr></tbody></table></div>
   <div class="claim-note"><b>So funktioniert es:</b> Vor dem Claim zuerst die Bestände laden und dann „Snapshot vor Claim speichern“ drücken. Nach dem Claim erneut „Bestände aktualisieren“. Das Dashboard vergleicht die aggregierten Bestände aller drei Owner-Wallets. Transfers nur zwischen diesen drei Wallets verändern die Gesamtsumme deshalb nicht. <b>Wichtig:</b> Andere externe Transfers, Käufe, Verkäufe oder Swaps zwischen den beiden Snapshots erscheinen ebenfalls als Veränderung und sind nicht automatisch Claim-Einnahmen. LP-gebundenes Kapital wird hier bewusst nicht gezählt; angezeigt werden nur freie SOL- und SPL-Token-Bestände auf den Owner-Wallets.</div>
@@ -191,7 +192,7 @@ tbody tr:hover{background:rgba(169,138,255,.045)}
 
 <section class="section">
   <div class="section-head">
-    <div><div class="section-title">Alle ASTY-Pools</div><div class="section-note">Zeile anklicken für Detailansicht. Die Pool-Adresse ist die eindeutige ID.</div></div>
+    <div><div class="section-title">Alle ASTY-Pools</div><div class="section-note">Zeile anklicken für Detailansicht. </div></div>
   </div>
   <div class="tools">
     <input class="control search" id="searchInput" placeholder="Pool oder Adresse suchen…">
@@ -229,11 +230,6 @@ tbody tr:hover{background:rgba(169,138,255,.045)}
   </div>
 </section>
 
-<div class="footer">
-  ASTY Team Dashboard · Interne Analyse. Meteora-Daten werden aus der öffentlichen DAMM-v2 Data API geladen; 7d/30d werden aus der Historical-Volume-API mit 24h-Buckets aggregiert. Raydium-Daten kommen aus API v3.
-  Der Effizienz-Score ist ein relativer Vergleich der aktuell geladenen ASTY-Pools und keine Renditeprognose. Drei frühere Meteora-SOL-Pools sowie die USDC-Pools mit 0,30 %, 2 % und 6 % sind wegen der Liquiditätsumschichtung bewusst aus der Berechnung ausgeschlossen.
-  „Einnahmen“ bezeichnet die von den APIs gemeldeten Poolgebühren. Der Claiming-Day-Bereich liest ausschließlich freie Bestände der öffentlichen Owner-Wallets und vergleicht Vorher-/Nachher-Snapshots.
-</div>
 </div>
 
 <div class="modal-backdrop" id="modalBackdrop">
@@ -264,7 +260,13 @@ const ASTY_MINT="ASTYqeaoK83Zs1pTFEXZUB6BM8cG8YLTsN852NUkt7ZR";
 const USDC_MINT="EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v";
 const TOKEN_PROGRAM_ID="TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA";
 const TOKEN_2022_PROGRAM_ID="TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb";
-const DEFAULT_SOLANA_RPC="https://api.mainnet-beta.solana.com";
+const DEFAULT_SOLANA_RPC="https://api.mainnet.solana.com";
+const SOLANA_RPC_FALLBACKS=[
+  "https://api.mainnet.solana.com",
+  "https://solana-rpc.publicnode.com",
+  "https://api.mainnet-beta.solana.com"
+];
+let activeRpc=null;
 const CLAIM_SNAPSHOT_KEY="asty-team-dashboard-claiming-day-snapshot-v1";
 let walletState={loading:false,loadedAt:null,wallets:{},aggregate:{},error:null};
 let claimSnapshot=null;
@@ -608,11 +610,72 @@ async function refresh(forceHistory=false){
 }
 
 
-function currentRpc(){return ($("#rpcInput")?.value||DEFAULT_SOLANA_RPC).trim()||DEFAULT_SOLANA_RPC;}
-async function rpcCall(method,params,retries=2){let last=null;for(let i=0;i<=retries;i++){try{const res=await fetch(currentRpc(),{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({jsonrpc:"2.0",id:Date.now()+Math.random(),method,params}),cache:"no-store"});if(!res.ok)throw new Error(`RPC HTTP ${res.status}`);const j=await res.json();if(j.error)throw new Error(j.error.message||"RPC-Fehler");return j.result;}catch(e){last=e;if(i<retries)await sleep(500*(i+1));}}throw last||new Error("RPC nicht erreichbar");}
-async function tokenAccountsByProgram(owner,programId){const r=await rpcCall("getTokenAccountsByOwner",[owner,{programId},{encoding:"jsonParsed",commitment:"confirmed"}]);return Array.isArray(r?.value)?r.value:[];}
+function currentRpc(){
+  const input=$("#rpcInput");
+  return (input?.value||DEFAULT_SOLANA_RPC).trim() || DEFAULT_SOLANA_RPC;
+}
+function rpcCandidates(){
+  const preferred=currentRpc();
+  return [...new Set([preferred,...SOLANA_RPC_FALLBACKS].filter(Boolean))];
+}
+async function rpcCallAt(endpoint,method,params,timeout=15000){
+  const ctrl=new AbortController();
+  const timer=setTimeout(()=>ctrl.abort(),timeout);
+  try{
+    const res=await fetch(endpoint,{
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({jsonrpc:"2.0",id:Date.now()+Math.random(),method,params}),
+      cache:"no-store",
+      signal:ctrl.signal
+    });
+    if(!res.ok) throw new Error(`HTTP ${res.status}`);
+    const j=await res.json();
+    if(j.error) throw new Error(j.error.message||`RPC ${j.error.code||""}`);
+    activeRpc=endpoint;
+    return j.result;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+async function rpcCall(method,params){
+  const errors=[];
+  for(const endpoint of rpcCandidates()){
+    try{
+      return await rpcCallAt(endpoint,method,params);
+    }catch(e){
+      errors.push(`${endpoint}: ${e?.message||"Fehler"}`);
+    }
+  }
+  throw new Error(errors.join(" | "));
+}
+async function tokenAccountsByProgram(owner,programId,optional=false){
+  try{
+    const r=await rpcCall("getTokenAccountsByOwner",[
+      owner,
+      {programId},
+      {encoding:"jsonParsed",commitment:"confirmed"}
+    ]);
+    return Array.isArray(r?.value)?r.value:[];
+  }catch(e){
+    if(optional) return [];
+    throw e;
+  }
+},{encoding:"jsonParsed",commitment:"confirmed"}]);return Array.isArray(r?.value)?r.value:[];}
 function parseTokenAccount(x){try{const info=x.account.data.parsed.info,ta=info.tokenAmount||{},amount=Number(ta.uiAmountString??ta.uiAmount??0);return {mint:info.mint,amount:Number.isFinite(amount)?amount:0,decimals:Number(ta.decimals||0)};}catch(e){return null;}}
-async function loadOneWallet(w){const [bal,legacy,t2022]=await Promise.all([rpcCall("getBalance",[w.address,{commitment:"confirmed"}]),tokenAccountsByProgram(w.address,TOKEN_PROGRAM_ID),tokenAccountsByProgram(w.address,TOKEN_2022_PROGRAM_ID)]);const assets={SOL:{mint:"SOL",amount:(Number(bal?.value)||0)/1e9,decimals:9}};for(const a of [...legacy,...t2022].map(parseTokenAccount).filter(Boolean)){if(!assets[a.mint])assets[a.mint]={mint:a.mint,amount:0,decimals:a.decimals};assets[a.mint].amount+=a.amount;}return {...w,assets};}
+async function loadOneWallet(w){
+  const [bal,legacy]=await Promise.all([
+    rpcCall("getBalance",[w.address,{commitment:"confirmed"}]),
+    tokenAccountsByProgram(w.address,TOKEN_PROGRAM_ID,false)
+  ]);
+  const t2022=await tokenAccountsByProgram(w.address,TOKEN_2022_PROGRAM_ID,true);
+  const assets={SOL:{mint:"SOL",amount:(Number(bal?.value)||0)/1e9,decimals:9}};
+  for(const a of [...legacy,...t2022].map(parseTokenAccount).filter(Boolean)){
+    if(!assets[a.mint]) assets[a.mint]={mint:a.mint,amount:0,decimals:a.decimals};
+    assets[a.mint].amount+=a.amount;
+  }
+  return {...w,assets,error:null};
+}
 function buildTokenRegistry(){const reg=new Map();reg.set("SOL",{symbol:"SOL",price:null,decimals:9});reg.set(ASTY_MINT,{symbol:"ASTY",price:null,decimals:9});reg.set(USDC_MINT,{symbol:"USDC",price:1,decimals:6});for(const r of rows){for(const side of ["X","Y"]){const mint=r[`token${side}Mint`],symbol=r[`token${side}`],price=r[`token${side}Price`],decimals=r[`token${side}Decimals`];if(!mint)continue;const old=reg.get(mint)||{};reg.set(mint,{symbol:symbol||old.symbol||shortAddr(mint),price:Number.isFinite(price)&&price>0?price:(old.price??null),decimals:Number.isFinite(decimals)?decimals:(old.decimals??null)});if(Number.isFinite(price)&&price>0){if((symbol||"").toUpperCase()==="ASTY")reg.set(ASTY_MINT,{...(reg.get(ASTY_MINT)||{}),symbol:"ASTY",price});if(["SOL","WSOL"].includes((symbol||"").toUpperCase()))reg.set("SOL",{...(reg.get("SOL")||{}),symbol:"SOL",price});}}}return reg;}
 function aggregateWallets(wallets){const agg={};for(const w of Object.values(wallets)){for(const [mint,a] of Object.entries(w.assets||{})){if(!agg[mint])agg[mint]={mint,amount:0};agg[mint].amount+=Number(a.amount)||0;}}return agg;}
 function walletKnownUsd(wallet,reg){let total=0;for(const [mint,a] of Object.entries(wallet.assets||{})){const p=reg.get(mint)?.price;if(Number.isFinite(p)&&p>0)total+=(Number(a.amount)||0)*p;}return total;}
@@ -621,7 +684,61 @@ function amountText(amount,symbol){const n=Number(amount)||0,d=Math.abs(n)>=1000
 function renderSnapshotMeta(){$("#snapshotMeta").textContent=claimSnapshot?`Gespeichert: ${new Date(claimSnapshot.ts).toLocaleString("de-DE")} · ${Object.keys(claimSnapshot.aggregate||{}).length} Assets`:"Noch kein Snapshot gespeichert.";}
 function renderWalletState(){const reg=buildTokenRegistry(),agg=walletState.aggregate||{},asty=agg[ASTY_MINT]?.amount||0,sol=agg.SOL?.amount||0,usdc=agg[USDC_MINT]?.amount||0,astyP=reg.get(ASTY_MINT)?.price,solP=reg.get("SOL")?.price;$("#claimAsty").textContent=amountText(asty,"ASTY");$("#claimSol").textContent=amountText(sol,"SOL");$("#claimUsdc").textContent=fmtUSD(usdc);$("#claimAstyUsd").textContent=`USD-Wert: ${Number.isFinite(astyP)?fmtUSD(asty*astyP):"–"}`;$("#claimSolUsd").textContent=`USD-Wert: ${Number.isFinite(solP)?fmtUSD(sol*solP):"–"}`;let known=0;for(const [mint,a] of Object.entries(agg)){const p=reg.get(mint)?.price;if(Number.isFinite(p)&&p>0)known+=(Number(a.amount)||0)*p;}$("#claimKnownUsd").textContent=fmtUSD(known);const st=$("#walletLoadStatus");if(walletState.loading){st.className="claim-status loading";st.textContent="Bestände werden geladen…";}else if(walletState.error){st.className="claim-status warn";st.textContent="Fehler beim Laden";}else if(walletState.loadedAt){st.className="claim-status live";st.textContent=`Geladen ${new Date(walletState.loadedAt).toLocaleTimeString("de-DE",{hour:"2-digit",minute:"2-digit"})}`;}else{st.className="claim-status";st.textContent="Noch nicht geladen";}$("#walletCards").innerHTML=OWNER_WALLETS.map(w=>{const x=walletState.wallets[w.id],assets=x?.assets||{},a=assets[ASTY_MINT]?.amount||0,s=assets.SOL?.amount||0,u=assets[USDC_MINT]?.amount||0,total=x?walletKnownUsd(x,reg):0;return `<div class="wallet-card"><div class="wallet-card-head"><div><div class="wallet-name">${w.name}</div><div class="wallet-address">${shortAddr(w.address)}</div></div><span class="dex ${w.dex==="Raydium"?"ray":""}">${w.dex}</span></div><div class="wallet-main"><div class="wallet-stat"><div class="l">ASTY</div><div class="v">${x?fmtNum(a,2):"–"}</div></div><div class="wallet-stat"><div class="l">SOL</div><div class="v">${x?fmtNum(s,5):"–"}</div></div><div class="wallet-stat"><div class="l">USDC</div><div class="v">${x?fmtNum(u,2):"–"}</div></div></div><div class="wallet-total">Bekannter USD-Wert: ${x?fmtUSD(total):"–"}</div></div>`;}).join("");const mints=Object.keys(agg).filter(m=>(agg[m]?.amount||0)>0).sort((a,b)=>{const ai=assetInfo(a,reg),bi=assetInfo(b,reg),av=(agg[a].amount||0)*(ai.price||0),bv=(agg[b].amount||0)*(bi.price||0);return bv-av||String(ai.symbol).localeCompare(String(bi.symbol));});$("#walletAssetBody").innerHTML=mints.length?mints.map(mint=>{const inf=assetInfo(mint,reg),amount=agg[mint]?.amount||0,price=inf.price,value=Number.isFinite(price)?amount*price:null,per=id=>walletState.wallets[id]?.assets?.[mint]?.amount||0;return `<tr><td><div class="tokenname">${inf.symbol||shortAddr(mint)}</div></td><td><div class="mint">${mint==="SOL"?"native SOL":shortAddr(mint)}</div></td><td>${fmtNum(amount,8)}</td><td>${fmtNum(per("meteora1"),8)}</td><td>${fmtNum(per("meteora2"),8)}</td><td>${fmtNum(per("raydium"),8)}</td><td>${Number.isFinite(price)?fmtUSD(price):"–"}</td><td>${Number.isFinite(value)?fmtUSD(value):"–"}</td></tr>`;}).join(""):`<tr><td colspan="8" class="na" style="text-align:center">${walletState.loading?"Bestände werden geladen…":"Keine freien Tokenbestände gefunden."}</td></tr>`;renderClaimDelta();}
 function renderClaimDelta(){const tb=$("#claimDeltaBody");if(!claimSnapshot){tb.innerHTML=`<tr><td colspan="6" class="na" style="text-align:center">Erst einen Snapshot vor dem Claim speichern.</td></tr>`;return;}if(!walletState.loadedAt){tb.innerHTML=`<tr><td colspan="6" class="na" style="text-align:center">Aktuelle Bestände laden, um den Snapshot zu vergleichen.</td></tr>`;return;}const reg=buildTokenRegistry(),before=claimSnapshot.aggregate||{},after=walletState.aggregate||{},mints=[...new Set([...Object.keys(before),...Object.keys(after)])],changed=mints.map(mint=>{const b=Number(before[mint]?.amount)||0,a=Number(after[mint]?.amount)||0,d=a-b,inf=assetInfo(mint,reg),usd=Number.isFinite(inf.price)?d*inf.price:null;return {mint,b,a,d,usd,inf};}).filter(x=>Math.abs(x.d)>1e-12).sort((x,y)=>(y.usd??0)-(x.usd??0));tb.innerHTML=changed.length?changed.map(x=>{const cls=x.d>0?"delta-pos":x.d<0?"delta-neg":"delta-zero",sign=x.d>0?"+":"";return `<tr><td><div class="tokenname">${x.inf.symbol||shortAddr(x.mint)}</div></td><td><div class="mint">${x.mint==="SOL"?"native SOL":shortAddr(x.mint)}</div></td><td>${fmtNum(x.b,8)}</td><td>${fmtNum(x.a,8)}</td><td class="${cls}">${sign}${fmtNum(x.d,8)}</td><td class="${cls}">${Number.isFinite(x.usd)?`${x.usd>0?"+":""}${fmtUSD(x.usd)}`:"–"}</td></tr>`;}).join(""):`<tr><td colspan="6" class="na" style="text-align:center">Keine Bestandsveränderung seit dem Snapshot erkannt.</td></tr>`;}
-async function refreshWalletBalances(){if(walletState.loading)return;walletState.loading=true;walletState.error=null;renderWalletState();$("#walletRefreshBtn").disabled=true;try{const result=await Promise.all(OWNER_WALLETS.map(loadOneWallet));walletState.wallets=Object.fromEntries(result.map(w=>[w.id,w]));walletState.aggregate=aggregateWallets(walletState.wallets);walletState.loadedAt=Date.now();}catch(e){walletState.error=e?.message||"Wallet-Bestände konnten nicht geladen werden";showToast("Wallet-Bestände konnten nicht geladen werden");}finally{walletState.loading=false;$("#walletRefreshBtn").disabled=false;renderWalletState();}}
+async function refreshWalletBalances(){
+  if(walletState.loading)return;
+  walletState.loading=true;
+  walletState.error=null;
+  activeRpc=null;
+  renderWalletState();
+  $("#walletRefreshBtn").disabled=true;
+  const errorBox=$("#walletErrorBox");
+  if(errorBox){errorBox.style.display="none";errorBox.innerHTML="";}
+  try{
+    const settled=await Promise.allSettled(OWNER_WALLETS.map(loadOneWallet));
+    const successes=[];
+    const failures=[];
+    settled.forEach((r,i)=>{
+      if(r.status==="fulfilled") successes.push(r.value);
+      else failures.push({wallet:OWNER_WALLETS[i],error:r.reason?.message||"Unbekannter Fehler"});
+    });
+
+    if(!successes.length){
+      throw new Error(failures.map(x=>`${x.wallet.name}: ${x.error}`).join(" || "));
+    }
+
+    walletState.wallets=Object.fromEntries(successes.map(w=>[w.id,w]));
+    for(const f of failures){
+      walletState.wallets[f.wallet.id]={...f.wallet,assets:{},error:f.error};
+    }
+    walletState.aggregate=aggregateWallets(walletState.wallets);
+    walletState.loadedAt=Date.now();
+
+    if(failures.length){
+      walletState.error=`${failures.length} Wallet(s) konnten nicht geladen werden`;
+      if(errorBox){
+        errorBox.style.display="block";
+        errorBox.innerHTML=`Teilweise geladen. ${failures.map(f=>`<b>${f.wallet.name}:</b> ${f.error}`).join("<br>")}<br>Verwendeter RPC: <code>${activeRpc||"–"}</code>`;
+      }
+    }else if(errorBox && activeRpc){
+      errorBox.style.display="block";
+      errorBox.style.borderColor="rgba(74,222,128,.20)";
+      errorBox.style.background="rgba(74,222,128,.04)";
+      errorBox.style.color="#86efac";
+      errorBox.innerHTML=`Bestände erfolgreich geladen über <code>${activeRpc}</code>`;
+    }
+  }catch(e){
+    walletState.error=e?.message||"Wallet-Bestände konnten nicht geladen werden";
+    if(errorBox){
+      errorBox.style.display="block";
+      errorBox.innerHTML=`<b>Wallet-Abfrage fehlgeschlagen.</b><br>${walletState.error}<br><br>Das Dashboard hat automatisch mehrere RPC-Endpunkte getestet. Du kannst im RPC-Feld zusätzlich einen eigenen Endpoint eintragen.`;
+    }
+    showToast("Wallet-Bestände konnten nicht geladen werden");
+  }finally{
+    walletState.loading=false;
+    $("#walletRefreshBtn").disabled=false;
+    renderWalletState();
+  }
+}
 function saveClaimSnapshot(){if(!walletState.loadedAt||!Object.keys(walletState.aggregate||{}).length){showToast("Bitte zuerst die aktuellen Bestände laden");return;}claimSnapshot={ts:Date.now(),aggregate:JSON.parse(JSON.stringify(walletState.aggregate)),wallets:JSON.parse(JSON.stringify(walletState.wallets))};try{localStorage.setItem(CLAIM_SNAPSHOT_KEY,JSON.stringify(claimSnapshot));}catch(e){}renderSnapshotMeta();renderClaimDelta();showToast("Snapshot vor Claim gespeichert");}
 function deleteClaimSnapshot(){claimSnapshot=null;try{localStorage.removeItem(CLAIM_SNAPSHOT_KEY);}catch(e){}renderSnapshotMeta();renderClaimDelta();showToast("Snapshot gelöscht");}
 function loadClaimSnapshot(){try{const s=JSON.parse(localStorage.getItem(CLAIM_SNAPSHOT_KEY)||"null");if(s?.ts&&s?.aggregate)claimSnapshot=s;}catch(e){}renderSnapshotMeta();}
