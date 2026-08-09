@@ -1147,7 +1147,7 @@
       </div>
 
       <div class="model-note">
-        <strong>So funktioniert es:</strong> Der Optimierer kombiniert aktuelle Pooldaten, echte Meteora-Einnahmen, eine robuste 30-Tage-Historie, externe Aktivität des Partner-Tokens, ASTY-Preisabweichungen und die geschätzte Preiswirkung typischer Trades. Eigene Positionen werden nicht abgefragt. Die möglichen Einnahmen eines zusätzlichen Betrags werden anteilig aus Pool-Liquidität und erwarteten Pool-Einnahmen geschätzt. Bei der Auswahl und bei jedem weiteren 5-$-Schritt wird zusätzlich gewichtet, wie viele tägliche Einnahmen genau dieser nächste Schritt voraussichtlich erzeugt.
+        <strong>So funktioniert es:</strong> Der Optimierer verwendet für die Kernanalyse direkt die nativen DEX-Daten von Meteora DAMM v2 und Raydium API v3. Analysiert werden Liquidität, Volumen, LP-Einnahmen, 30-Tage-Historie, externe Aktivität des Partner-Tokens, ASTY-Preisabweichungen und die geschätzte Preiswirkung typischer Trades. Eigene Positionen werden nicht abgefragt. Die möglichen Einnahmen eines zusätzlichen Betrags werden anteilig aus Pool-Liquidität und erwarteten Pool-Einnahmen geschätzt. Bei der Auswahl und bei jedem weiteren 5-$-Schritt wird zusätzlich gewichtet, wie viele tägliche Einnahmen genau dieser nächste Schritt voraussichtlich erzeugt.
       </div>
       <div class="model-note" id="dataStatus"><strong>Datenquellen:</strong> Werden nach dem Start geprüft.</div>
       <div class="model-note" id="historyStatus"><strong>30-Tage-Daten:</strong> Werden nach dem Start der Berechnung geladen.</div>
@@ -1235,7 +1235,7 @@
 
     <div class="footer">
       Live-Pooldaten: DexScreener · Meteora DAMM v2 / DLMM · 30d-Fallback: GeckoTerminal · Berechnungen erfolgen lokal im Browser<br>
-      Pool-Liquidität: GeckoTerminal reserve_in_usd wie im ASTY Dashboard. Echte Meteora-Pool-Einnahmen werden bevorzugt. Bei anderen DEXs sowie bei den Einnahmen eines zusätzlichen Betrags werden Schätzwerte verwendet. Preiswirkung und Arbitrage-Spielraum sind Näherungen, keine Ausführungsgarantie.
+      Kern-Pooldaten: Meteora DAMM v2 Data API und Raydium API v3. Meteora-LP-Einnahmen werden aus Trading Fees abzüglich Protocol Fees berechnet; beim Raydium-Pool wird bevorzugt die native Fee-APR verwendet. Externe Marktdaten dienen nur als Zusatzsignal. Preiswirkung und Arbitrage-Spielraum sind Näherungen, keine Ausführungsgarantie.
     </div>
   </main>
 
@@ -1256,84 +1256,90 @@
     const REFRESH_MS = 60_000;
     const CHUNK_SIZE = 25;
     const CACHE_KEY = "asty-liquidity-optimizer-cache-v6";
-    const SETTINGS_KEY = "asty-liquidity-optimizer-settings-v10";
+    const SETTINGS_KEY = "asty-liquidity-optimizer-settings-v11";
     const HISTORY_KEY = "asty-liquidity-optimizer-history-v6";
     const THIRTY_DAY_KEY = "asty-liquidity-optimizer-30d-v6";
     const EXTERNAL_KEY = "asty-liquidity-optimizer-external-v6";
     const METEORA_KEY = "asty-liquidity-optimizer-meteora-v6";
-    const GECKO_LIQUIDITY_KEY = "asty-liquidity-optimizer-gecko-liquidity-v8";
+    const GECKO_LIQUIDITY_KEY = "asty-liquidity-optimizer-gecko-liquidity-v8"; // legacy cache, not used by core analysis
     const THIRTY_DAY_TTL = 12 * 60 * 60 * 1000;
     const EXTERNAL_TTL = 10 * 60 * 1000;
     const METEORA_TTL = 5 * 60 * 1000;
     const GECKO_LIQUIDITY_TTL = 3 * 60 * 1000;
     const GECKO_CHUNK_SIZE = 20;
+    const RAYDIUM_POOL_ADDRESS = "m1e9swvUoggDm2zLXzrzKRrbVwmGEP8aQy7BQigFZgK";
+    const EXCLUDED_FROM_OPTIMIZATION = new Set([
+      "3HhGsPNMtSg1dNV9SVSfzGCQLx3Zp5giAvYJdQuuNqU9",
+      "BWFDr72tjXJsRdUyAfqghv6sGXgQr2zJ78KdeV3c74q1",
+      "61HTuoKeWhEfscoBcd5zSNvmAyGpxdaUNMriLNnyyREz"
+    ]);
 
     const POOLS = [
-["3UvhqPrMyf13qgRodARDi5oGJGoxHYb2ykZdCaa1TV8i","ASTY/$WIF",1],
-["HeuivHLqCEmsgKhYhX1M6MGthEbtHrGmZdXQSCBVkstP","ASTY/ALCH",1],
-["CSD1NpGwhnohByefBp73Jyk6u6ZCkwwDFDVqvmkDrfxE","ASTY/ARBX",1],
-["DxMFG4kn8pxuf7AoKD1ffXjUhPpj4a8WAdgw87gyM2mj","ASTY/ARBX",0.3],
-["CoD6KLgnW2wKe2UtnNjSQk4RSS6fMU4P2vwKqsUxK9Bf","ASTY/Bonk",1],
-["7T6HixJyUfzSR88dhWC9tAjasXcdFyDrKmDtuzrXgt9j","ASTY/ETH",1],
-["B6fq1uNpMkyGANAQo5D9GJfMCkcaNewc6q8sWZAfWZ4M","ASTY/Fartcoin",1],
-["8aXv2DDRG3k5N3ADTw37Di4ytHGJ3ZaS2tPp1f2EW5ZD","ASTY/GEOD",1],
-["CRGcFA8f577F2BEZSmgohd4cuBTVsBpLjwqfVHrG8krE","ASTY/BOME",1],
-["3UapB8rB3T88Kac7CG3F44SKCa5xSBsKaJndbx8YrxWG","ASTY/RTM",1],
-["92RKFRJSctMAuw8Tym7cZgd2yjMcHeZ5hDUMdnZd54zV","ASTY/Grandma",1],
-["Gec7ENkk9irtsmmwpwLHk1i4VntB4vFGRAe1ET3LeT3J","ASTY/JTO",1],
-["iZXTZMMS51US5erGnviWfc8CNGx5QDDzp6DERH25EtW","ASTY/JUP",1],
-["29eKi5ipMR9fLgkYpM91Xrab2LVBnUU75SYG8kCt1nis","ASTY/MET",1],
-["CSiAzSiCMNGjLwYKRdhDUjNwz4obf3Q5ZnMQECnmxshV","ASTY/PENGU",1],
-["2uNbRDLDeMizdJNEqKaapzAGJWVwa3uuJ3w4trVud4ZW","ASTY/pippin",1],
-["GyVyv2H2SB4fYaC7C6raWNSQqNhShdzNuSqQwG9uUUcE","ASTY/POPCAT",1],
-["RYztJXyPCmwUmfi7punwCf7q6FbxoJbRtBEodZ7j7GH","ASTY/PsyopAnime",1],
-["DfJsn7Ui6YBUC25kM5FoqrCYrqfRVCoSxpTeyEzWv4vT","ASTY/RAY",1],
-["2ufiEWc5wF8gJB1a9YiPkFuLwrFn4Zgyma1kdQRakoAr","ASTY/SOL",0.25],
-["7tbbdGzFZpjrPmM7jQderyyv1x8Ebz1vhwqNhEW97osb","ASTY/SOL",1],
-["HAieGroddWr3NZpSZYqqm39w2aTUuknWNXxfF6vWNpaR","ASTY/SOL",0.3],
-["BBVxTUtaagQgG5AgmNSYS9Pqwidc7yAbRF6avt48iF2u","ASTY/TAX",1],
-["CFcyQpye4K4pyhVPoSAgj3BAqNoWpZCvHpNncXssy7qH","ASTY/TAX",1],
-["tDqqTi8tJds88AkxFvhjZTQK5iDtV5ZG9ZkNYxh23MG","ASTY/UNI",1],
-["3HhGsPNMtSg1dNV9SVSfzGCQLx3Zp5giAvYJdQuuNqU9","ASTY/USDC",0.3],
-["5zCsWjFoEQ7jGNaHNwBRvZq7RMqVh6vQhmiYv4NWkDZK","ASTY/USDC",1],
-["BqdoyTYoXpnAzRafoBQPrY4ubVSzYE42rxJzNJwoxmZP","ASTY/USDC",0.25],
-["BWFDr72tjXJsRdUyAfqghv6sGXgQr2zJ78KdeV3c74q1","ASTY/USDC",2],
-["2Hjjn2aoVdUeGraV4vRak94GGAAW5w9syfVBeXU4Ad5J","ASTY/WBTC",1],
-["7Fr58kHKW85XiFgZ8WibumE7P5CLZFo4A8qsQxKNEWaE","ASTY/WhiteWhale",1],
-["4TgvcTKzq9zZR5znyak2y3tvaXg4q6hvKWEZgxesQqkx","ASTY/WLFI",1],
-["5wpSZwUmdXy5kB96n7U24iFzvbSNEvFd4BvERhhqYjQY","ASTY/WOJAK",1],
-["2aWCx2qrYmjen1N8UW3eLBzNu7fCPqxjL9NKXqHGXPHc","ASTY/ZBCN",1],
-["2WRrdtnKKr2eq67o4ZK2VQv7dXu4Pm8iz6TMN8UXvhbV","ASTY/SOL",2],
-["4iHVvcWHNYFDPFySosAx1qGZoFsDN7gXHxKqUFnGq6oJ","ASTY/BAT",1],
-["4kWT67c13svR9EfxM4TGn8inNqFsXeuAWQhn8KBVajBs","ASTY/ACC",1],
-["5fEodJwZNUTwXbiTRKU2KPCc4Xr15fPKVmxbAph7yX7v","ASTY/BTAX",1],
-["61HTuoKeWhEfscoBcd5zSNvmAyGpxdaUNMriLNnyyREz","ASTY/USDC",6],
-["8fBYS2Kq9f4Lm1SYdt4sdHRL27Ni8UcRMPtFNLdEcnAH","ASTY/Cake",1],
-["DdK87cRD7uzoUWc9JZNRNxPoLHXeAcGkfU2b49YTZrm3","ASTY/AVA",1],
-["DwZZHyqnzWEqNP4VuczHHwfJsni6xqo57TBm7SoeJ62u","ASTY/RENDER",1],
-["HvmNZyopYSwHRUXCUti4D6YANpfWscVLSQVv9nw2XYhx","ASTY/TURBO",1],
-["m1e9swvUoggDm2zLXzrzKRrbVwmGEP8aQy7BQigFZgK","ASTY/SOL",0.25],
-["3PVPMEseLJxE6yyB5eBJ3qzRCzCGN6L9qa85stcZH4FM","ASTY/testicle",1],
-["BM9W33kccA1GCdbkuGoNDvJLTQW5xKbKwXht8sCXayc3","ASTY/Buttcoin",1],
-["AiazXNe6ShtCbQHZbmpnkuuswVHFKh5rLZKeudzWU3aq","ASTY/BP",1],
-["DitqC25rriaMeZyiQPeXLNgfxqRTZL2qxFHp3MHrxM6t","ASTY/Punch",1],
-["mwsmVXehTt2aFonhJDyZWbwgpxDVM9MMfo7GUYrYL7K","ASTY/Restart",1],
-["39dM3NfQuPiGwC3M93BUsXKrRdXTAZWPX6VxianCSevn","ASTY/GREM",1],
-["Fmna4bQBthaFT51VRtKR6QfgHisjxzcrzCWmPCP9dMNy","ASTY/INCOME",1],
-["AwmLBQ3keEicdD93gTr22avcJqsXwDTGMaLt25Jvyexo","ASTY/ORCA",1],
-["4UPuDZPPkrC5YHdpFnfv4RX7dfHYnjz8BYZaTCewSn5v","ASTY/MOODENG",1],
-["9dvPJ67AEzZZD9ThHAEJzkzVwxiVQrvC2Virv8KyGgZb","ASTY/SEARCH",1],
-["Dz8AuKtEJLrVeuAvhBg4gbTkBeNqC89wfLt3fJKZKk8v","ASTY/USD",4],
-["28yNWBwCvNLaC8h2Lf8AFcZqzfRpKMQMynwjjMibRwRU","ASTY/HYPE",1],
-["7wCaiBEGFHPhB5iDTCERsNXbzsc7bZyamqQsHNxuhdYU","ASTY/SATO",1],
-["Ax38rDrpRMturM59zKBEGsNn2HjE96rC9Jz3WbAgXtYw","ASTY/SIMPLR",1],
-["444uxc7K8jDZhtRUiuDAM822Pe93RYkHytzWuLKNyxVs","ASTY/TAO",1],
-["EDrT8LWDRuYE7v75Dkc9gUjLk7MvDYdezvDcnoHGqwuq","ASTY/TROLL",1],
-["ArKpj5vcNtHJTLhUKeADCmvuBpn1ZZoGNHZZYQ1QXq5n","ASTY/CUPSEY",1],
-["DGuvY79xbLuJRb3CzwQL59z5zoit7KLnFwyL2t6EQCcj","ASTY/SERIOUS",1],
-["5rwRQ4KprvvM1Z7h3QQ5WtUPUG5NMYEw1JtehSAxWeh3","ASTY/Chiikawa",1],
-["9zrdaC8tHges3JLTfsRVuibQ2xhXivZx3keymkZV2PAa","ASTY/three",1]
-];
+      ["3UvhqPrMyf13qgRodARDi5oGJGoxHYb2ykZdCaa1TV8i","ASTY/$WIF",1],
+      ["HeuivHLqCEmsgKhYhX1M6MGthEbtHrGmZdXQSCBVkstP","ASTY/ALCH",1],
+      ["CSD1NpGwhnohByefBp73Jyk6u6ZCkwwDFDVqvmkDrfxE","ASTY/ARBX",1],
+      ["DxMFG4kn8pxuf7AoKD1ffXjUhPpj4a8WAdgw87gyM2mj","ASTY/ARBX",0.3],
+      ["CoD6KLgnW2wKe2UtnNjSQk4RSS6fMU4P2vwKqsUxK9Bf","ASTY/Bonk",1],
+      ["7T6HixJyUfzSR88dhWC9tAjasXcdFyDrKmDtuzrXgt9j","ASTY/ETH",1],
+      ["B6fq1uNpMkyGANAQo5D9GJfMCkcaNewc6q8sWZAfWZ4M","ASTY/Fartcoin",1],
+      ["8aXv2DDRG3k5N3ADTw37Di4ytHGJ3ZaS2tPp1f2EW5ZD","ASTY/GEOD",1],
+      ["CRGcFA8f577F2BEZSmgohd4cuBTVsBpLjwqfVHrG8krE","ASTY/BOME",1],
+      ["3UapB8rB3T88Kac7CG3F44SKCa5xSBsKaJndbx8YrxWG","ASTY/RTM",1],
+      ["92RKFRJSctMAuw8Tym7cZgd2yjMcHeZ5hDUMdnZd54zV","ASTY/Grandma",1],
+      ["Gec7ENkk9irtsmmwpwLHk1i4VntB4vFGRAe1ET3LeT3J","ASTY/JTO",1],
+      ["iZXTZMMS51US5erGnviWfc8CNGx5QDDzp6DERH25EtW","ASTY/JUP",1],
+      ["29eKi5ipMR9fLgkYpM91Xrab2LVBnUU75SYG8kCt1nis","ASTY/MET",1],
+      ["CSiAzSiCMNGjLwYKRdhDUjNwz4obf3Q5ZnMQECnmxshV","ASTY/PENGU",1],
+      ["2uNbRDLDeMizdJNEqKaapzAGJWVwa3uuJ3w4trVud4ZW","ASTY/pippin",1],
+      ["GyVyv2H2SB4fYaC7C6raWNSQqNhShdzNuSqQwG9uUUcE","ASTY/POPCAT",1],
+      ["RYztJXyPCmwUmfi7punwCf7q6FbxoJbRtBEodZ7j7GH","ASTY/PsyopAnime",1],
+      ["DfJsn7Ui6YBUC25kM5FoqrCYrqfRVCoSxpTeyEzWv4vT","ASTY/RAY",1],
+      ["2ufiEWc5wF8gJB1a9YiPkFuLwrFn4Zgyma1kdQRakoAr","ASTY/SOL",0.25],
+      ["7tbbdGzFZpjrPmM7jQderyyv1x8Ebz1vhwqNhEW97osb","ASTY/SOL",1],
+      ["HAieGroddWr3NZpSZYqqm39w2aTUuknWNXxfF6vWNpaR","ASTY/SOL",0.3],
+      ["BBVxTUtaagQgG5AgmNSYS9Pqwidc7yAbRF6avt48iF2u","ASTY/TAX",1],
+      ["CFcyQpye4K4pyhVPoSAgj3BAqNoWpZCvHpNncXssy7qH","ASTY/TAX",1],
+      ["tDqqTi8tJds88AkxFvhjZTQK5iDtV5ZG9ZkNYxh23MG","ASTY/UNI",1],
+      ["3HhGsPNMtSg1dNV9SVSfzGCQLx3Zp5giAvYJdQuuNqU9","ASTY/USDC",0.3],
+      ["5zCsWjFoEQ7jGNaHNwBRvZq7RMqVh6vQhmiYv4NWkDZK","ASTY/USDC",1],
+      ["BqdoyTYoXpnAzRafoBQPrY4ubVSzYE42rxJzNJwoxmZP","ASTY/USDC",0.25],
+      ["BWFDr72tjXJsRdUyAfqghv6sGXgQr2zJ78KdeV3c74q1","ASTY/USDC",2],
+      ["2Hjjn2aoVdUeGraV4vRak94GGAAW5w9syfVBeXU4Ad5J","ASTY/WBTC",1],
+      ["7Fr58kHKW85XiFgZ8WibumE7P5CLZFo4A8qsQxKNEWaE","ASTY/WhiteWhale",1],
+      ["4TgvcTKzq9zZR5znyak2y3tvaXg4q6hvKWEZgxesQqkx","ASTY/WLFI",1],
+      ["5wpSZwUmdXy5kB96n7U24iFzvbSNEvFd4BvERhhqYjQY","ASTY/WOJAK",1],
+      ["2aWCx2qrYmjen1N8UW3eLBzNu7fCPqxjL9NKXqHGXPHc","ASTY/ZBCN",1],
+      ["2WRrdtnKKr2eq67o4ZK2VQv7dXu4Pm8iz6TMN8UXvhbV","ASTY/SOL",2],
+      ["4iHVvcWHNYFDPFySosAx1qGZoFsDN7gXHxKqUFnGq6oJ","ASTY/BAT",1],
+      ["4kWT67c13svR9EfxM4TGn8inNqFsXeuAWQhn8KBVajBs","ASTY/ACC",1],
+      ["5fEodJwZNUTwXbiTRKU2KPCc4Xr15fPKVmxbAph7yX7v","ASTY/BTAX",1],
+      ["61HTuoKeWhEfscoBcd5zSNvmAyGpxdaUNMriLNnyyREz","ASTY/USDC",6],
+      ["8fBYS2Kq9f4Lm1SYdt4sdHRL27Ni8UcRMPtFNLdEcnAH","ASTY/Cake",1],
+      ["DdK87cRD7uzoUWc9JZNRNxPoLHXeAcGkfU2b49YTZrm3","ASTY/AVA",1],
+      ["DwZZHyqnzWEqNP4VuczHHwfJsni6xqo57TBm7SoeJ62u","ASTY/RENDER",1],
+      ["HvmNZyopYSwHRUXCUti4D6YANpfWscVLSQVv9nw2XYhx","ASTY/TURBO",1],
+      ["m1e9swvUoggDm2zLXzrzKRrbVwmGEP8aQy7BQigFZgK","ASTY/SOL",0.25],
+      ["3PVPMEseLJxE6yyB5eBJ3qzRCzCGN6L9qa85stcZH4FM","ASTY/testicle",1],
+      ["BM9W33kccA1GCdbkuGoNDvJLTQW5xKbKwXht8sCXayc3","ASTY/Buttcoin",1],
+      ["AiazXNe6ShtCbQHZbmpnkuuswVHFKh5rLZKeudzWU3aq","ASTY/BP",1],
+      ["DitqC25rriaMeZyiQPeXLNgfxqRTZL2qxFHp3MHrxM6t","ASTY/Punch",1],
+      ["mwsmVXehTt2aFonhJDyZWbwgpxDVM9MMfo7GUYrYL7K","ASTY/Restart",1],
+      ["Fmna4bQBthaFT51VRtKR6QfgHisjxzcrzCWmPCP9dMNy","ASTY/INCOME",1],
+      ["AwmLBQ3keEicdD93gTr22avcJqsXwDTGMaLt25Jvyexo","ASTY/ORCA",1],
+      ["4UPuDZPPkrC5YHdpFnfv4RX7dfHYnjz8BYZaTCewSn5v","ASTY/MOODENG",1],
+      ["9dvPJ67AEzZZD9ThHAEJzkzVwxiVQrvC2Virv8KyGgZb","ASTY/SEARCH",1],
+      ["Dz8AuKtEJLrVeuAvhBg4gbTkBeNqC89wfLt3fJKZKk8v","ASTY/USD",4],
+      ["28yNWBwCvNLaC8h2Lf8AFcZqzfRpKMQMynwjjMibRwRU","ASTY/HYPE",1],
+      ["7wCaiBEGFHPhB5iDTCERsNXbzsc7bZyamqQsHNxuhdYU","ASTY/SATO",1],
+      ["Ax38rDrpRMturM59zKBEGsNn2HjE96rC9Jz3WbAgXtYw","ASTY/SIMPLR",1],
+      ["444uxc7K8jDZhtRUiuDAM822Pe93RYkHytzWuLKNyxVs","ASTY/TAO",1],
+      ["EDrT8LWDRuYE7v75Dkc9gUjLk7MvDYdezvDcnoHGqwuq","ASTY/TROLL",1],
+      ["39dM3NfQuPiGwC3M93BUsXKrRdXTAZWPX6VxianCSevn","ASTY/GREM",1],
+      ["ArKpj5vcNtHJTLhUKeADCmvuBpn1ZZoGNHZZYQ1QXq5n","ASTY/CUPSEY",1],
+      ["DGuvY79xbLuJRb3CzwQL59z5zoit7KLnFwyL2t6EQCcj","ASTY/SERIOUS",1],
+      ["5rwRQ4KprvvM1Z7h3QQ5WtUPUG5NMYEw1JtehSAxWeh3","ASTY/Chiikawa",1],
+      ["9zrdaC8tHges3JLTfsRVuibQ2xhXivZx3keymkZV2PAa","ASTY/three",1]
+    ];
 
     const els = {
       statusDot: document.getElementById("statusDot"),
@@ -1608,9 +1614,14 @@
       return 0;
     }
 
-    function parsePoolRows(items) {
-      const map = new Map(items.filter(Boolean).map(item => [item.pairAddress, item]));
+    function parsePoolRows(items = []) {
+      const map = new Map(
+        (Array.isArray(items) ? items : [])
+          .filter(Boolean)
+          .map(item => [item.pairAddress, item])
+      );
       const cache30 = loadJson(THIRTY_DAY_KEY, {});
+
       return POOLS.map(([address, rawLabel, configuredFeePct]) => {
         const item = map.get(address);
         const tx = item?.txns || {};
@@ -1619,20 +1630,29 @@
         const baseMint = item?.baseToken?.address || "";
         const quoteMint = item?.quoteToken?.address || "";
         const astyIsBase = baseMint === ASTY_MINT;
-        const partnerMint = astyIsBase ? quoteMint : (quoteMint === ASTY_MINT ? baseMint : "");
-        const partnerSymbol = astyIsBase ? item?.quoteToken?.symbol : item?.baseToken?.symbol;
+        const partnerMint = astyIsBase
+          ? quoteMint
+          : (quoteMint === ASTY_MINT ? baseMint : "");
+        const partnerSymbol = astyIsBase
+          ? item?.quoteToken?.symbol
+          : item?.baseToken?.symbol;
+
         const row = {
           address,
           rawLabel,
           label: formatLabel(rawLabel),
-          name: item ? `${item.baseToken?.symbol || "ASTY"} / ${item.quoteToken?.symbol || rawLabel.split("/")[1] || "-"}` : rawLabel,
+          name: rawLabel,
           configuredFeePct,
-          dexId: item?.dexId || "-",
+          dexId: address === RAYDIUM_POOL_ADDRESS ? "raydium" : "meteora",
+          dexNativeKind: address === RAYDIUM_POOL_ADDRESS ? "Raydium API v3" : "Meteora DAMM v2",
           createdAt: item?.pairCreatedAt || null,
-          dataAvailable: Boolean(item),
-          liquidity: num(item?.liquidity?.usd),
-          liquiditySource: "DexScreener-Fallback",
+          dataAvailable: false,
+          excludedFromOptimization: EXCLUDED_FROM_OPTIMIZATION.has(address),
+
+          liquidity: 0,
+          liquiditySource: "DEX-native Daten werden geladen",
           liquidityMatchesDashboard: false,
+
           v1: num(volume.h1),
           v6: num(volume.h6),
           v24: num(volume.h24),
@@ -1643,26 +1663,39 @@
           p1: num(priceChange.h1),
           p6: num(priceChange.h6),
           p24: num(priceChange.h24),
+
           baseMint,
           quoteMint,
           partnerMint,
           partnerSymbol: partnerSymbol || rawLabel.split("/")[1] || "-",
-          astyPrice: astyPriceFromPair(item),
+          astyPrice: item ? astyPriceFromPair(item) : 0,
           historyRef: getHistoryReference(address),
-          income1: num(volume.h1) * configuredFeePct / 100,
-          income24: num(volume.h24) * configuredFeePct / 100,
-          incomeSource: "Schätzung aus Volumen",
+
+          income1: 0,
+          income24: 0,
+          grossIncome1: 0,
+          grossIncome24: 0,
+          incomeSource: "DEX-native Daten werden geladen",
           incomeIsExact: false,
           effectiveFeePct: configuredFeePct,
           protocolIncome24: 0,
+
           meteoraKind: "",
+          raydiumKind: "",
+          raydiumFeeApr24: 0,
+          raydiumFeeApr30: 0,
+          thirtyDayAggregate: false,
+          v1Estimated: false,
+
           concentrated: false,
           dynamicFee: false,
+
           externalVolume24: 0,
           externalLiquidity: 0,
           externalTx24: 0,
           astyPoolShare: 0
         };
+
         applyThirtyDayEntry(row, cache30[address]);
         return row;
       });
@@ -1670,33 +1703,68 @@
 
     function applyMeteoraDetail(row, detail, kind) {
       if (!detail || !row) return;
-      row.meteoraKind = kind;
-      row.incomeSource = `Meteora ${kind}`;
-      row.incomeIsExact = true;
-      row.income1 = num(detail?.fees?.["1h"] ?? detail?.fee_1h ?? row.income1);
-      row.income24 = num(detail?.fees?.["24h"] ?? detail?.fee_24h ?? row.income24);
+
+      row.meteoraKind = "DAMM v2";
+      row.dexId = "meteora";
+      row.dexNativeKind = "Meteora DAMM v2";
+      row.dataAvailable = true;
+
+      row.liquidity = num(detail?.tvl);
+      row.liquiditySource = "Meteora DAMM v2 · tvl";
+      row.liquidityMatchesDashboard = true;
+
+      row.grossIncome1 = num(detail?.fees?.["1h"] ?? detail?.fee_1h);
+      row.grossIncome24 = num(detail?.fees?.["24h"] ?? detail?.fee_24h);
+      const protocol1 = num(detail?.protocol_fees?.["1h"] ?? detail?.protocol_fee_1h);
       row.protocolIncome24 = num(detail?.protocol_fees?.["24h"] ?? detail?.protocol_fee_24h);
-      row.v1 = num(detail?.volume?.["1h"] ?? detail?.volume_1h) || row.v1;
-      row.v24 = num(detail?.volume?.["24h"] ?? detail?.volume_24h) || row.v24;
-      row.meteoraTvl = num(detail?.tvl);
+
+      // For the optimizer we use the LP portion, not the gross trading fee.
+      row.income1 = Math.max(0, row.grossIncome1 - protocol1);
+      row.income24 = Math.max(0, row.grossIncome24 - row.protocolIncome24);
+      row.incomeSource = "Meteora DAMM v2 · LP-Einnahmen";
+      row.incomeIsExact = true;
+
+      row.v1 = num(detail?.volume?.["1h"] ?? detail?.volume_1h);
+      row.v24 = num(detail?.volume?.["24h"] ?? detail?.volume_24h);
+
       row.baseFeePct = num(detail?.pool_config?.base_fee_pct ?? detail?.base_fee_pct);
-      row.dynamicFeePct = num(detail?.dynamic_fee_pct);
-      row.maxFeePct = num(detail?.pool_config?.max_fee_pct);
       row.protocolFeePct = num(detail?.pool_config?.protocol_fee_pct);
-      row.concentrated = kind === "DLMM" || Boolean(detail?.pool_config?.concentrated_liquidity);
-      row.dynamicFee = kind === "DLMM" || Boolean(detail?.pool_config?.dynamic_fee_initialized) || row.dynamicFeePct > 0;
-      if (row.income24 > 0 && row.v24 > 0) row.effectiveFeePct = row.income24 / row.v24 * 100;
-      else if (row.dynamicFeePct > 0) row.effectiveFeePct = row.dynamicFeePct;
-      else if (row.baseFeePct > 0) row.effectiveFeePct = row.baseFeePct;
-      if (num(detail?.token_x?.price) > 0 && detail?.token_x?.address === ASTY_MINT) row.astyPrice = num(detail.token_x.price);
-      if (num(detail?.token_y?.price) > 0 && detail?.token_y?.address === ASTY_MINT) row.astyPrice = num(detail.token_y.price);
+      row.concentrated = Boolean(detail?.pool_config?.concentrated_liquidity);
+      row.dynamicFee = Boolean(detail?.pool_config?.dynamic_fee_initialized);
+
+      if (row.income24 > 0 && row.v24 > 0) {
+        row.effectiveFeePct = row.income24 / row.v24 * 100;
+      } else if (row.baseFeePct > 0) {
+        row.effectiveFeePct = row.baseFeePct * Math.max(0, 1 - row.protocolFeePct / 100);
+      }
+
+      const tx = detail?.token_x;
+      const ty = detail?.token_y;
+
+      if (tx?.address) row.baseMint = tx.address;
+      if (ty?.address) row.quoteMint = ty.address;
+
+      if (tx?.address === ASTY_MINT) {
+        row.partnerMint = ty?.address || row.partnerMint;
+        row.partnerSymbol = ty?.symbol || row.partnerSymbol;
+        row.astyPrice = num(tx?.price) || row.astyPrice;
+      } else if (ty?.address === ASTY_MINT) {
+        row.partnerMint = tx?.address || row.partnerMint;
+        row.partnerSymbol = tx?.symbol || row.partnerSymbol;
+        row.astyPrice = num(ty?.price) || row.astyPrice;
+      }
+
+      row.name = detail?.name || row.rawLabel;
     }
 
     async function fetchMeteoraCatalog(base, kind) {
       const cache = loadJson(METEORA_KEY, {});
       const cachedRows = Object.values(cache).filter(x => x?.kind === kind && Date.now() - num(x.t) < METEORA_TTL).map(x => x.detail);
       const map = new Map(cachedRows.filter(Boolean).map(x => [x.address, x]));
-      const missing = POOLS.map(x => x[0]).filter(address => !map.has(address));
+      const missing = POOLS
+        .map(x => x[0])
+        .filter(address => address !== RAYDIUM_POOL_ADDRESS)
+        .filter(address => !map.has(address));
       for (const part of chunkArray(missing, 18)) {
         const filter = `pool_address=[${part.join("|")}]`;
         const url = `${base}/pools?page=1&page_size=100&filter_by=${encodeURIComponent(filter)}`;
@@ -1713,16 +1781,194 @@
       return map;
     }
 
-    async function enrichMeteora(rows) {
-      const [damm, dlmm] = await Promise.all([
-        fetchMeteoraCatalog("https://damm-v2.datapi.meteora.ag", "DAMM v2"),
-        fetchMeteoraCatalog("https://dlmm.datapi.meteora.ag", "DLMM")
-      ]);
-      for (const row of rows) {
-        if (damm.has(row.address)) applyMeteoraDetail(row, damm.get(row.address), "DAMM v2");
-        else if (dlmm.has(row.address)) applyMeteoraDetail(row, dlmm.get(row.address), "DLMM");
+    function normalizeRaydiumFeePct(value, fallbackPct) {
+      const n = num(value);
+      if (n <= 0) return fallbackPct;
+      if (n < 0.1) return n * 100;
+      if (n <= 100) return n;
+      if (n <= 10000) return n / 10000 * 100;
+      if (n <= 1000000) return n / 1000000 * 100;
+      return fallbackPct;
+    }
+
+    async function fetchRaydiumMintPrices(mints) {
+      const unique = [...new Set((mints || []).filter(Boolean))];
+      if (!unique.length) return {};
+      try {
+        const payload = await fetchWithTimeout(
+          `https://api-v3.raydium.io/mint/price?mints=${encodeURIComponent(unique.join(","))}`,
+          18_000
+        );
+        return payload?.data && typeof payload.data === "object" ? payload.data : {};
+      } catch (error) {
+        console.warn("Raydium mint prices unavailable", error);
+        return {};
       }
-      return rows.filter(r => r.incomeIsExact).length;
+    }
+
+    async function enrichRaydium(rows) {
+      const row = rows.find(r => r.address === RAYDIUM_POOL_ADDRESS);
+      if (!row) return 0;
+
+      const payload = await fetchWithTimeout(
+        `https://api-v3.raydium.io/pools/info/ids?ids=${encodeURIComponent(RAYDIUM_POOL_ADDRESS)}`,
+        18_000
+      );
+      const detail = Array.isArray(payload?.data) ? payload.data[0] : null;
+      if (!detail) throw new Error("Raydium pool not returned");
+
+      row.dexId = "raydium";
+      row.dexNativeKind = "Raydium API v3";
+      row.raydiumKind = detail?.type || "Raydium";
+      row.dataAvailable = true;
+
+      row.liquidity = num(detail?.tvl);
+      row.liquiditySource = "Raydium API v3 · tvl";
+      row.liquidityMatchesDashboard = true;
+
+      const mintA = detail?.mintA || detail?.mint1 || {};
+      const mintB = detail?.mintB || detail?.mint2 || {};
+      row.baseMint = mintA?.address || row.baseMint;
+      row.quoteMint = mintB?.address || row.quoteMint;
+
+      if (mintA?.address === ASTY_MINT) {
+        row.partnerMint = mintB?.address || row.partnerMint;
+        row.partnerSymbol = mintB?.symbol || row.partnerSymbol;
+      } else if (mintB?.address === ASTY_MINT) {
+        row.partnerMint = mintA?.address || row.partnerMint;
+        row.partnerSymbol = mintA?.symbol || row.partnerSymbol;
+      }
+
+      row.v24 = num(detail?.day?.volume);
+      row.grossIncome24 = num(detail?.day?.volumeFee);
+      row.raydiumFeeApr24 = num(detail?.day?.feeApr);
+
+      // Raydium feeApr is the better LP-oriented value when available.
+      const aprDailyIncome =
+        row.liquidity > 0 && row.raydiumFeeApr24 > 0
+          ? row.liquidity * (row.raydiumFeeApr24 / 100) / 365
+          : 0;
+
+      row.income24 = aprDailyIncome > 0 ? aprDailyIncome : row.grossIncome24;
+      row.income1 = row.income24 / 24;
+      row.incomeSource = aprDailyIncome > 0
+        ? "Raydium API v3 · Fee-APR"
+        : "Raydium API v3 · volumeFee";
+      row.incomeIsExact = true;
+
+      row.effectiveFeePct =
+        row.v24 > 0 && row.income24 > 0
+          ? row.income24 / row.v24 * 100
+          : normalizeRaydiumFeePct(detail?.feeRate, row.configuredFeePct);
+
+      row.concentrated = String(detail?.type || "").toLowerCase().includes("concentrated");
+      row.dynamicFee = Boolean(detail?.hasDynamicFee);
+
+      // API v3 does not expose pool-level 1h volume in this endpoint.
+      // Use a neutral 24h hourly average until the optional market-context
+      // enrichment provides a real 1h value.
+      if (row.v1 <= 0 && row.v24 > 0) {
+        row.v1 = row.v24 / 24;
+        row.v1Estimated = true;
+      }
+
+      const monthVolume = num(detail?.month?.volume);
+      const monthVolumeFee = num(detail?.month?.volumeFee);
+      row.raydiumFeeApr30 = num(detail?.month?.feeApr);
+
+      if (monthVolume > 0) {
+        const monthDailyIncome =
+          row.liquidity > 0 && row.raydiumFeeApr30 > 0
+            ? row.liquidity * (row.raydiumFeeApr30 / 100) / 365
+            : monthVolumeFee / 30;
+
+        const aggregate = {
+          t: Date.now(),
+          volume30: monthVolume,
+          income30: Math.max(0, monthDailyIncome * 30),
+          avgDaily30: monthVolume / 30,
+          medianDaily30: monthVolume / 30,
+          avgActiveDay30: monthVolume / 30,
+          activeDays30: 0,
+          days30: 30,
+          top3Share30: 0,
+          volatility30: 0,
+          incomeExact30: true,
+          aggregate30: true
+        };
+        applyThirtyDayEntry(row, aggregate);
+        row.thirtyDayAggregate = true;
+        const cache30 = loadJson(THIRTY_DAY_KEY, {});
+        cache30[row.address] = aggregate;
+        saveJson(THIRTY_DAY_KEY, cache30);
+      }
+
+      const prices = await fetchRaydiumMintPrices([
+        ASTY_MINT,
+        row.partnerMint
+      ]);
+
+      const globalAsty = num(prices?.[ASTY_MINT]);
+      const partnerUsd = num(prices?.[row.partnerMint]);
+      const poolPrice = num(detail?.price);
+
+      if (poolPrice > 0 && partnerUsd > 0) {
+        if (mintA?.address === ASTY_MINT) row.astyPrice = poolPrice * partnerUsd;
+        else if (mintB?.address === ASTY_MINT) row.astyPrice = partnerUsd / poolPrice;
+      }
+      if (row.astyPrice <= 0 && globalAsty > 0) row.astyPrice = globalAsty;
+
+      return 1;
+    }
+
+    async function enrichMeteora(rows) {
+      const damm = await fetchMeteoraCatalog(
+        "https://damm-v2.datapi.meteora.ag",
+        "DAMM v2"
+      );
+
+      for (const row of rows) {
+        if (row.address === RAYDIUM_POOL_ADDRESS) continue;
+        if (damm.has(row.address)) {
+          applyMeteoraDetail(row, damm.get(row.address), "DAMM v2");
+        }
+      }
+
+      return rows.filter(r => r.meteoraKind === "DAMM v2" && r.dataAvailable).length;
+    }
+
+    async function syncPairContext(rows) {
+      try {
+        const result = await fetchLivePools();
+        const map = new Map(
+          (result?.data || []).filter(Boolean).map(item => [item.pairAddress, item])
+        );
+
+        for (const row of rows) {
+          const item = map.get(row.address);
+          if (!item) continue;
+
+          const tx = item?.txns || {};
+          const volume = item?.volume || {};
+          const changes = item?.priceChange || {};
+
+          row.tx1 = txTotal(tx.h1);
+          row.tx24 = txTotal(tx.h24);
+          row.buys1 = num(tx.h1?.buys);
+          row.sells1 = num(tx.h1?.sells);
+          row.p1 = num(changes.h1);
+          row.p6 = num(changes.h6);
+          row.p24 = num(changes.h24);
+
+          // For Raydium only, this supplies the missing pool-level 1h volume.
+          if (row.address === RAYDIUM_POOL_ADDRESS && num(volume.h1) > 0) {
+            row.v1 = num(volume.h1);
+            row.v1Estimated = false;
+          }
+        }
+      } catch (error) {
+        console.warn("Optional pair context unavailable", error);
+      }
     }
 
     function computeReferencePrice(rows) {
@@ -1813,6 +2059,7 @@
       row.top3Share30 = valid ? num(entry.top3Share30) : 0;
       row.volatility30 = valid ? num(entry.volatility30) : 0;
       row.incomeExact30 = valid ? Boolean(entry.incomeExact30) : false;
+      row.thirtyDayAggregate = valid ? Boolean(entry.aggregate30) : false;
       row.thirtyDayUpdatedAt = valid ? num(entry.t) : 0;
     }
 
@@ -1824,7 +2071,10 @@
         const payload = await fetchWithTimeout(`${base}/pools/${row.address}/volume/history?timeframe=24h&start_time=${start}&end_time=${end}`, 20_000);
         const data = Array.isArray(payload?.data) ? payload.data.sort((a, b) => num(a.timestamp) - num(b.timestamp)) : [];
         if (!data.length) throw new Error("No Meteora history");
-        return summarizeThirtyDay(data.map(x => x.volume), data.map(x => x.fees));
+        return summarizeThirtyDay(
+          data.map(x => x.volume),
+          data.map(x => Math.max(0, num(x.fees) - num(x.protocol_fees)))
+        );
       }
       const payload = await fetchWithTimeout(`https://api.geckoterminal.com/api/v2/networks/solana/pools/${row.address}/ohlcv/day?aggregate=1&limit=30&currency=usd&include_empty_intervals=true`, 20_000);
       const raw = payload?.data?.attributes?.ohlcv_list;
@@ -1841,7 +2091,7 @@
       const exact = poolRows.filter(r => r.incomeExact30).length;
       const total = poolRows.length || POOLS.length;
       if (isLoading30d) els.historyStatus.innerHTML = `<span class="history-loading"><span class="loading-spinner" aria-hidden="true"></span><span><strong>30-Tage-Daten:</strong> ${available} von ${total} Pools geladen, davon ${exact} mit echten historischen Einnahmen.</span></span>`;
-      else if (available) els.historyStatus.innerHTML = `<strong>30-Tage-Daten:</strong> ${available} von ${total} Pools verfügbar, davon ${exact} mit echten Meteora-Einnahmen. Median und Ausreißerkonzentration fließen in die Bewertung ein.`;
+      else if (available) els.historyStatus.innerHTML = `<strong>30-Tage-Daten:</strong> ${available} von ${total} Pools verfügbar, davon ${exact} mit DEX-nativen Einnahmen. Median und Ausreißerkonzentration fließen in die Bewertung ein.`;
       else els.historyStatus.innerHTML = "<strong>30-Tage-Daten:</strong> Noch keine Historie verfügbar. Die erste Empfehlung arbeitet vorläufig mit Live-Daten.";
     }
 
@@ -1852,7 +2102,7 @@
       const cache = loadJson(THIRTY_DAY_KEY, {});
       const stale = poolRows.filter(r => !cache[r.address] || Date.now() - num(cache[r.address].t) >= THIRTY_DAY_TTL);
       const meteora = stale.filter(r => r.meteoraKind);
-      const fallback = stale.filter(r => !r.meteoraKind);
+      const fallback = stale.filter(r => !r.meteoraKind && r.address !== RAYDIUM_POOL_ADDRESS);
       try {
         await mapLimit(meteora, 5, async row => {
           try { cache[row.address] = await fetchThirtyDayPool(row); applyThirtyDayEntry(row, cache[row.address]); }
@@ -1887,21 +2137,29 @@
       const maxExternal = Math.max(1, ...rows.map(r => r.externalVolume24));
 
       for (const row of rows) {
-        const previousFiveHourAverage = Math.max((row.v6 - row.v1) / 5, row.v24 / 24 * 0.2, 0.05);
+        const recentHourlyBaseline = Math.max((row.v24 - row.v1) / 23, row.v24 / 24 * 0.35, 0.05);
         const previousTxAverage = Math.max((row.tx24 - row.tx1) / 23, 0.25);
-        row.accel1 = clamp(row.v1 / previousFiveHourAverage, 0, 12);
+        row.accel1 = clamp(row.v1 / recentHourlyBaseline, 0, 12);
         row.txAccel1 = clamp(row.tx1 / previousTxAverage, 0, 12);
         const localVolumeDelta = row.historyRef ? (row.v1 - num(row.historyRef.v1)) / Math.max(num(row.historyRef.v1), 1) : 0;
         const localTxDelta = row.historyRef ? (row.tx1 - num(row.historyRef.tx1)) / Math.max(num(row.historyRef.tx1), 1) : 0;
         row.localMomentum = clamp(Math.max(0, localVolumeDelta) * .7 + Math.max(0, localTxDelta) * .3, 0, 3);
         row.turnover24 = row.liquidity > 0 ? row.v24 / row.liquidity : 0;
-        row.activeRatio30 = row.has30d ? clamp(row.activeDays30 / Math.max(row.days30, 1), 0, 1) : 0;
+        row.activeRatio30 = row.has30d && !row.thirtyDayAggregate
+          ? clamp(row.activeDays30 / Math.max(row.days30, 1), 0, 1)
+          : 0;
 
-        const robustActiveBase = row.has30d ? row.avgActiveDay30 * Math.sqrt(Math.max(row.activeRatio30, .02)) * .58 : 0;
-        const concentrationDiscount = row.has30d ? clamp(1 - Math.max(0, row.top3Share30 - .45) * .75, .48, 1) : 1;
-        row.robustDailyVolume = row.has30d ? Math.max(row.medianDaily30, robustActiveBase) * concentrationDiscount : row.v24 * .65;
+        const robustActiveBase = row.has30d && !row.thirtyDayAggregate
+          ? row.avgActiveDay30 * Math.sqrt(Math.max(row.activeRatio30, .02)) * .58
+          : 0;
+        const concentrationDiscount = row.has30d && !row.thirtyDayAggregate
+          ? clamp(1 - Math.max(0, row.top3Share30 - .45) * .75, .48, 1)
+          : 1;
+        row.robustDailyVolume = row.thirtyDayAggregate
+          ? row.avgDaily30
+          : (row.has30d ? Math.max(row.medianDaily30, robustActiveBase) * concentrationDiscount : row.v24 * .65);
 
-        const currentDaily = row.v1 * 24 * .28 + row.v6 * 4 * .32 + row.v24 * .40;
+        const currentDaily = row.v1 * 24 * .45 + row.v24 * .55;
         const momentumWeight = clamp(.45 + Math.max(0, row.accel1 - 1) * .08, .45, .76);
         const forecastRaw = currentDaily * momentumWeight + row.robustDailyVolume * (1 - momentumWeight);
         const forecastCap = Math.max(row.v24 * 2.5, row.robustDailyVolume * 3.2, 10);
@@ -1929,13 +2187,15 @@
         const incomeScore = clamp(Math.log1p(row.income24) / Math.log1p(maxIncome), 0, 1) * .55 + clamp(row.currentIncomeYield / .8, 0, 1) * .45;
         const depthScore = clamp(row.impactCurrent / 8, 0, 1) * .65 + clamp(row.depthBenefit / 2, 0, 1) * .35;
         const arbScore = clamp(row.netArbGap / 4, 0, 1);
-        const consistencyScore = row.has30d ? clamp(row.activeRatio30 * (1 - row.top3Share30 * .65), 0, 1) : clamp(row.turnover24 / .8, 0, 1);
+        const consistencyScore = row.thirtyDayAggregate
+          ? clamp(Math.min(row.v24, row.avgDaily30) / Math.max(row.avgDaily30, 1), 0, 1)
+          : (row.has30d ? clamp(row.activeRatio30 * (1 - row.top3Share30 * .65), 0, 1) : clamp(row.turnover24 / .8, 0, 1));
         const activityScore = clamp(Math.log1p(row.v1) / Math.log1p(maxV1), 0, 1);
         row.dataQuality = [row.dataAvailable, row.incomeIsExact, row.has30d, row.externalVolume24 > 0, row.astyPrice > 0].filter(Boolean).length;
         row.signal = clamp(momentumScore * .20 + incomeScore * .22 + depthScore * .18 + row.externalScore * .15 + arbScore * .15 + consistencyScore * .07 + activityScore * .03, 0, 1);
 
-        const concentrationPenalty = row.has30d ? Math.max(0, row.top3Share30 - .45) * .0018 : .0004;
-        const inactivityPenalty = row.has30d ? (1 - row.activeRatio30) * .0010 : .0005;
+        const concentrationPenalty = row.has30d && !row.thirtyDayAggregate ? Math.max(0, row.top3Share30 - .45) * .0018 : .0004;
+        const inactivityPenalty = row.has30d && !row.thirtyDayAggregate ? (1 - row.activeRatio30) * .0010 : .0005;
         row.requiredDailyYield = clamp(.0018 + concentrationPenalty + inactivityPenalty + clamp(row.volatility30 / 100, 0, .5) * .0015, .0016, .0045);
         row.incomeSupportedLiquidity = row.expectedDailyIncome / Math.max(row.requiredDailyYield, .0001);
         const targetImpact = row.concentrated ? .035 : .05;
@@ -1957,6 +2217,7 @@
     }
 
     function buildReason(row) {
+      if (row.excludedFromOptimization) return "Dieser Pool bleibt sichtbar, ist aber gemäß aktueller USDC-Liquiditätsstrategie von Ranking und Kapitalempfehlung ausgeschlossen.";
       if (row.allocation > 0 && row.netArbGap >= .5) return `Der ASTY-Preis dieses Pools weicht um ${fmtPercent(Math.abs(row.priceDeviationPct), 1)} vom Referenzpreis ab. Nach Transferkosten, Einnahmenrate und grob geschätzter Preiswirkung verbleibt ein möglicher Arbitrage-Spielraum von ${fmtPercent(row.netArbGap, 1)}.`;
       if (row.allocation > 0 && row.externalScore >= .48) return `Der Partner-Token zeigt außerhalb des ASTY-Pools rund ${fmtUsd(row.externalVolume24, true)} Volumen in 24h. Der ASTY-Pool nimmt bisher nur ${fmtPercent(row.astyPoolShare * 100, 1)} des beobachteten Gesamtvolumens auf.`;
       if (row.allocation > 0 && row.incomeIsExact) return `Die Empfehlung stützt sich auf echte ${row.incomeSource}-Einnahmen von ${fmtUsd(row.income24)} in 24h sowie eine robuste 30-Tage-Basis. Der Schritt bleibt auf ${fmtUsd(row.allocation)} begrenzt.`;
@@ -1969,6 +2230,7 @@
     }
 
     function recommendationLabel(row) {
+      if (row.excludedFromOptimization) return { text: "Ausgeklammert", cls: "watch" };
       if (row.allocation > 0) return { text: "Jetzt erhöhen", cls: "add" };
       if (row.signal >= .45 || row.accel1 >= 1.7 || row.netArbGap >= .5) return { text: "Eng beobachten", cls: "watch" };
       return { text: "Halten", cls: "" };
@@ -2002,6 +2264,7 @@
           row.netArbGap >= .4;
 
         const eligible =
+          !row.excludedFromOptimization &&
           activity &&
           row.signal >= .17 &&
           row.capacity >= settings.minStep;
@@ -2321,13 +2584,13 @@
       els.dialogBody.innerHTML = `
         <div class="detail-grid">
           <div class="detail-item"><div class="detail-label">Aktuelle Liquidität</div><div class="detail-value">${fmtUsd(row.liquidity)}</div><div class="lower-is-better">${row.liquiditySource}</div></div>
-          <div class="detail-item"><div class="detail-label">Empfohlener Schritt</div><div class="detail-value positive">${row.allocation > 0 ? "+" + fmtUsd(row.allocation) : "Jetzt nicht erhöhen"}</div></div>
-          <div class="detail-item"><div class="detail-label">Einnahmen 24h</div><div class="detail-value positive">${fmtUsd(row.income24)} ${row.incomeIsExact ? "(echt)" : "(geschätzt)"}</div></div>
+          <div class="detail-item"><div class="detail-label">Empfohlener Schritt</div><div class="detail-value positive">${row.excludedFromOptimization ? "Ausgeklammert" : (row.allocation > 0 ? "+" + fmtUsd(row.allocation) : "Jetzt nicht erhöhen")}</div></div>
+          <div class="detail-item"><div class="detail-label">Einnahmen 24h</div><div class="detail-value positive">${fmtUsd(row.income24)} ${row.incomeIsExact ? "(DEX-nativ)" : "(geschätzt)"}</div></div>
           <div class="detail-item"><div class="detail-label">Effektive Einnahmenrate</div><div class="detail-value">${fmtPercent(row.effectiveIncomeRate * 100, 2)}</div></div>
           <div class="detail-item"><div class="detail-label">Robustes 30d-Tagesvolumen</div><div class="detail-value">${row.has30d ? fmtUsd(row.robustDailyVolume) : loadingInline()}</div></div>
-          <div class="detail-item"><div class="detail-label">30d-Median</div><div class="detail-value">${row.has30d ? fmtUsd(row.medianDaily30) : loadingInline()}</div></div>
-          <div class="detail-item"><div class="detail-label">Top-3-Tage am 30d-Volumen</div><div class="detail-value">${row.has30d ? fmtPercent(row.top3Share30 * 100, 0) : loadingInline()}</div></div>
-          <div class="detail-item"><div class="detail-label">Aktive Tage 30d</div><div class="detail-value">${row.has30d ? `${row.activeDays30} / ${row.days30}` : loadingInline()}</div></div>
+          <div class="detail-item"><div class="detail-label">30d-Tagesbasis</div><div class="detail-value">${row.has30d ? fmtUsd(row.medianDaily30) : loadingInline()}</div><div class="lower-is-better">${row.thirtyDayAggregate ? "Raydium 30d-Aggregat / 30 Tage" : "Meteora Tagesmedian"}</div></div>
+          <div class="detail-item"><div class="detail-label">Top-3-Tage am 30d-Volumen</div><div class="detail-value">${row.thirtyDayAggregate ? "Nicht verfügbar" : (row.has30d ? fmtPercent(row.top3Share30 * 100, 0) : loadingInline())}</div></div>
+          <div class="detail-item"><div class="detail-label">Aktive Tage 30d</div><div class="detail-value">${row.thirtyDayAggregate ? "Nicht verfügbar" : (row.has30d ? `${row.activeDays30} / ${row.days30}` : loadingInline())}</div></div>
           <div class="detail-item"><div class="detail-label">ASTY Poolpreis</div><div class="detail-value">${fmtPrice(row.astyPrice)}</div></div>
           <div class="detail-item"><div class="detail-label">ASTY Netzwerk-Referenzpreis</div><div class="detail-value">${fmtPrice(astyReferencePrice)}</div></div>
           <div class="detail-item"><div class="detail-label">Preisabweichung</div><div class="detail-value">${fmtPercent(row.priceDeviationPct, 1)}</div></div>
@@ -2375,54 +2638,94 @@
       renderPools();
       const exact = poolRows.filter(r => r.incomeIsExact).length;
       const external = poolRows.filter(r => r.externalVolume24 > 0).length;
-      const dashboardLiquidity = poolRows.filter(r => r.liquidityMatchesDashboard).length;
-      els.dataStatus.innerHTML = `<strong>Datenquellen:</strong> ${dashboardLiquidity} Pools mit Dashboard-Liquidität aus GeckoTerminal · ${exact} Pools mit echten Meteora-Einnahmen · ${external} Pools mit externem Partner-Marktvergleich · ${poolRows.filter(r => r.astyPrice > 0).length} Poolpreise im ASTY-Referenzpreis.`;
+      const meteoraNative = poolRows.filter(r => r.meteoraKind === "DAMM v2" && r.dataAvailable).length;
+      const raydiumNative = poolRows.filter(r => r.address === RAYDIUM_POOL_ADDRESS && r.dataAvailable).length;
+      const excluded = poolRows.filter(r => r.excludedFromOptimization).length;
+      els.dataStatus.innerHTML = `<strong>Datenquellen:</strong> ${meteoraNative} Meteora DAMM v2 Pools · ${raydiumNative} Raydium API v3 Pool · ${exact} Pools mit DEX-nativen Einnahmen · ${external} Pools mit externem Partner-Marktvergleich · ${excluded} Pools von Kapitalempfehlungen ausgeklammert.`;
     }
 
     async function load() {
       if (isLoading) return;
       isLoading = true;
       els.refreshButton.classList.add("spinning");
-      setStatus("loading", "Das ASTY-Poolnetzwerk wird analysiert...");
+      setStatus("loading", "Meteora- und Raydium-Pooldaten werden geladen...");
+
       try {
-        let result;
-        try { result = await fetchLivePools(); }
-        catch (error) { const cached = loadCachedPools(); if (!cached) throw error; result = cached; }
-        poolRows = parsePoolRows(result.data);
+        poolRows = parsePoolRows([]);
         getSettings();
-        els.dataStatus.innerHTML = '<span class="history-loading"><span class="loading-spinner"></span><span><strong>Datenquellen:</strong> Echte Meteora-Einnahmen und Marktvergleich werden geprüft.</span></span>';
-        const [meteoraResult, geckoLiquidityResult] = await Promise.allSettled([
+
+        els.dataStatus.innerHTML =
+          '<span class="history-loading"><span class="loading-spinner"></span><span><strong>Datenquellen:</strong> Meteora DAMM v2 und Raydium API v3 werden abgefragt.</span></span>';
+
+        const [meteoraResult, raydiumResult] = await Promise.allSettled([
           enrichMeteora(poolRows),
-          fetchGeckoLiquidityMap()
+          enrichRaydium(poolRows)
         ]);
-        if (meteoraResult.status === "rejected") console.warn("Meteora enrichment unavailable", meteoraResult.reason);
-        if (geckoLiquidityResult.status === "fulfilled") {
-          applyGeckoLiquidity(poolRows, geckoLiquidityResult.value);
-        } else {
-          console.warn("GeckoTerminal liquidity unavailable; using fallback", geckoLiquidityResult.reason);
+
+        if (meteoraResult.status === "rejected") {
+          console.warn("Meteora core data unavailable", meteoraResult.reason);
         }
+        if (raydiumResult.status === "rejected") {
+          console.warn("Raydium core data unavailable", raydiumResult.reason);
+        }
+
+        const nativeCount = poolRows.filter(r => r.dataAvailable).length;
+        if (!nativeCount) throw new Error("No DEX-native pool data");
+
         computeReferencePrice(poolRows);
         saveHistory(poolRows);
         recomputeAndRender();
         updateThirtyDayStatus();
-        syncThirtyDayData();
-        syncExternalMarkets(poolRows).then(() => recomputeAndRender()).catch(error => console.warn("Partner market comparison unavailable", error));
 
-        const strongest = [...poolRows].sort((a, b) => b.signal - a.signal)[0];
-        const timeText = new Date(result.timestamp).toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" });
-        if (result.mode === "live") {
-          setStatus("live", `Live · ${poolRows.filter(r => r.dataAvailable).length} von ${poolRows.length} Pools · ${timeText}`);
-          els.liveProof.innerHTML = strongest ? `Stärkster aktueller Impuls: <strong>${strongest.label}</strong> · ${fmtUsd(strongest.v1, true)} Volumen in 1h · ${fmtUsd(strongest.income24, true)} Einnahmen in 24h.` : `${poolRows.length} Pools geladen.`;
-        } else {
-          setStatus("error", `Zwischengespeicherte Daten · ${timeText}`);
-          els.liveProof.innerHTML = `Die Live-API war nicht erreichbar. Angezeigt wird der lokale Datenstand von <strong>${timeText}</strong>.`;
-        }
+        // 30d Meteora history and optional market context load independently.
+        syncThirtyDayData().catch(error =>
+          console.warn("30d history unavailable", error)
+        );
+
+        syncPairContext(poolRows)
+          .then(() => {
+            saveHistory(poolRows);
+            recomputeAndRender();
+          })
+          .catch(error =>
+            console.warn("Optional pair context unavailable", error)
+          );
+
+        syncExternalMarkets(poolRows)
+          .then(() => recomputeAndRender())
+          .catch(error =>
+            console.warn("Partner market comparison unavailable", error)
+          );
+
+        const strongest = [...poolRows]
+          .filter(r => !r.excludedFromOptimization)
+          .sort((a, b) => b.signal - a.signal)[0];
+
+        const timeText = new Date().toLocaleTimeString("de-DE", {
+          hour: "2-digit",
+          minute: "2-digit"
+        });
+
+        setStatus(
+          "live",
+          `Live · ${nativeCount} von ${poolRows.length} Pools · ${timeText}`
+        );
+
+        els.liveProof.innerHTML = strongest
+          ? `Stärkster aktueller Kandidat: <strong>${strongest.label}</strong> · ${fmtUsd(strongest.v1, true)} Volumen in 1h · ${fmtUsd(strongest.income24, true)} LP-Einnahmen in 24h.`
+          : `${nativeCount} DEX-native Pools geladen.`;
+
       } catch (error) {
         console.error(error);
         setStatus("error", "Pooldaten konnten nicht geladen werden");
-        els.liveProof.textContent = "Aktuell sind weder Live- noch zwischengespeicherte Pooldaten verfügbar.";
-        els.poolGrid.innerHTML = '<div class="empty-state">Die öffentlichen Pooldaten konnten nicht erreicht werden. Prüfe die Internetverbindung und öffne die Seite über GitHub Pages.</div>';
-      } finally { isLoading = false; els.refreshButton.classList.remove("spinning"); }
+        els.liveProof.textContent =
+          "Die nativen Meteora- und Raydium-Pooldaten konnten aktuell nicht erreicht werden.";
+        els.poolGrid.innerHTML =
+          '<div class="empty-state">Die öffentlichen DEX-APIs konnten nicht erreicht werden. Prüfe die Internetverbindung und öffne die Seite über GitHub Pages.</div>';
+      } finally {
+        isLoading = false;
+        els.refreshButton.classList.remove("spinning");
+      }
     }
 
     async function startCalculation() {
