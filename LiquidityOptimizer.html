@@ -1257,7 +1257,7 @@
     const REFRESH_MS = 60_000;
     const CHUNK_SIZE = 25;
     const CACHE_KEY = "asty-liquidity-optimizer-cache-v6";
-    const SETTINGS_KEY = "asty-liquidity-optimizer-settings-v12";
+    const SETTINGS_KEY = "asty-liquidity-optimizer-settings-v13";
     const HISTORY_KEY = "asty-liquidity-optimizer-history-v6";
     const THIRTY_DAY_KEY = "asty-liquidity-optimizer-30d-v12-native";
     const EXTERNAL_KEY = "asty-liquidity-optimizer-external-v6";
@@ -1269,10 +1269,19 @@
     const GECKO_LIQUIDITY_TTL = 3 * 60 * 1000;
     const GECKO_CHUNK_SIZE = 20;
     const RAYDIUM_POOL_ADDRESS = "m1e9swvUoggDm2zLXzrzKRrbVwmGEP8aQy7BQigFZgK";
+    // Pools whose liquidity was intentionally consolidated into the
+    // remaining strategic SOL / USDC pools. They stay visible for transparency,
+    // but are excluded from scoring, ranking and capital allocation.
     const EXCLUDED_FROM_OPTIMIZATION = new Set([
-      "3HhGsPNMtSg1dNV9SVSfzGCQLx3Zp5giAvYJdQuuNqU9",
-      "BWFDr72tjXJsRdUyAfqghv6sGXgQr2zJ78KdeV3c74q1",
-      "61HTuoKeWhEfscoBcd5zSNvmAyGpxdaUNMriLNnyyREz"
+      // ASTY/SOL · Meteora DAMM v2
+      "7tbbdGzFZpjrPmM7jQderyyv1x8Ebz1vhwqNhEW97osb", // 1 %
+      "HAieGroddWr3NZpSZYqqm39w2aTUuknWNXxfF6vWNpaR", // 0.3 %
+      "2WRrdtnKKr2eq67o4ZK2VQv7dXu4Pm8iz6TMN8UXvhbV", // 2 %
+
+      // ASTY/USDC · Meteora DAMM v2
+      "3HhGsPNMtSg1dNV9SVSfzGCQLx3Zp5giAvYJdQuuNqU9", // 0.3 %
+      "BWFDr72tjXJsRdUyAfqghv6sGXgQr2zJ78KdeV3c74q1", // 2 %
+      "61HTuoKeWhEfscoBcd5zSNvmAyGpxdaUNMriLNnyyREz"  // 6 %
     ]);
 
     const POOLS = [
@@ -2875,7 +2884,7 @@
         `<strong>Kern-Daten:</strong> ${nativeLive} von ${poolRows.length} Pools DEX-nativ live ` +
         `(${meteoraNative} Meteora · ${raydiumNative} Raydium). ` +
         `<strong>30d:</strong> ${native30} von ${poolRows.length} DEX-nativ. ` +
-        `${excluded} Pools sind von Kapitalempfehlungen ausgeklammert.`;
+        `${excluded} Pools mit umgeschichteter Liquidität sind vollständig von Ranking und Kapitalempfehlungen ausgeklammert.`;
     }
 
     async function load() {
