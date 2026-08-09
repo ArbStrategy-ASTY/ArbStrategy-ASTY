@@ -1,0 +1,669 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="color-scheme" content="dark">
+<title>ASTY Team Dashboard</title>
+<style>
+:root{
+  --bg:#070914; --bg2:#0b0e1d; --card:#11152a; --card2:#0e1224;
+  --text:#f4f3ff; --muted:#8e93ad; --muted2:#69708e;
+  --line:rgba(171,144,255,.14); --line2:rgba(255,255,255,.07);
+  --purple:#a98aff; --purple2:#8067ff; --cyan:#67e8f9;
+  --green:#4ade80; --yellow:#facc15; --red:#fb7185;
+  --shadow:0 18px 55px rgba(0,0,0,.28);
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0;background:
+  radial-gradient(900px 420px at 20% -8%,rgba(129,92,246,.18),transparent 58%),
+  radial-gradient(700px 380px at 85% 0%,rgba(34,211,238,.08),transparent 62%),
+  var(--bg); color:var(--text); font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+}
+button,input,select{font:inherit}
+button{cursor:pointer}
+.wrap{width:min(1500px,calc(100% - 30px));margin:0 auto}
+header{padding:32px 0 18px}
+.header-row{display:flex;align-items:flex-start;justify-content:space-between;gap:18px}
+.brand{display:flex;align-items:center;gap:14px}
+.mark{width:46px;height:46px;border-radius:14px;display:grid;place-items:center;font-weight:900;font-size:20px;
+  background:linear-gradient(145deg,rgba(169,138,255,.25),rgba(103,232,249,.08));
+  border:1px solid rgba(169,138,255,.35);box-shadow:0 0 28px rgba(169,138,255,.12)}
+h1{font-size:clamp(25px,4vw,38px);margin:0;letter-spacing:-.035em;
+  background:linear-gradient(90deg,#fff 0%,#d7cbff 45%,#8feaf7 100%);-webkit-background-clip:text;color:transparent}
+.sub{margin:5px 0 0;color:var(--muted);font-size:14px}
+.actions{display:flex;gap:9px;flex-wrap:wrap;justify-content:flex-end}
+.btn{border:1px solid var(--line);background:rgba(255,255,255,.035);color:var(--text);padding:10px 13px;border-radius:12px}
+.btn:hover{border-color:rgba(169,138,255,.45);background:rgba(169,138,255,.07)}
+.btn.primary{background:linear-gradient(135deg,rgba(128,103,255,.26),rgba(103,232,249,.08));border-color:rgba(169,138,255,.42)}
+.btn:disabled{opacity:.55;cursor:not-allowed}
+.statusbar{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:8px 0 18px;padding:10px 12px;
+  border:1px solid var(--line2);background:rgba(255,255,255,.022);border-radius:12px;color:var(--muted);font-size:12px}
+.status-left{display:flex;align-items:center;gap:9px;min-width:0}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--muted2);box-shadow:0 0 0 4px rgba(255,255,255,.025)}
+.dot.live{background:var(--green);box-shadow:0 0 0 4px rgba(74,222,128,.08)}
+.dot.loading{background:var(--purple);animation:pulse 1s infinite}
+.dot.warn{background:var(--yellow)}
+@keyframes pulse{50%{opacity:.35;transform:scale(.8)}}
+.progress{height:2px;background:rgba(255,255,255,.05);overflow:hidden;border-radius:99px;margin:-16px 0 18px}
+.progress>i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--purple),var(--cyan));transition:width .25s ease}
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:11px;margin-bottom:18px}
+.kpi{background:linear-gradient(180deg,rgba(19,24,48,.94),rgba(13,17,35,.94));border:1px solid var(--line2);border-radius:16px;padding:16px;min-height:108px;box-shadow:var(--shadow)}
+.kpi-label{font-size:11px;text-transform:uppercase;letter-spacing:.09em;color:var(--muted)}
+.kpi-value{font-size:25px;font-weight:800;margin-top:10px;letter-spacing:-.03em}
+.kpi-note{font-size:11px;color:var(--muted2);margin-top:6px}
+.kpi.disabled{opacity:.62}
+.section{background:rgba(12,15,31,.82);border:1px solid var(--line2);border-radius:18px;overflow:hidden;margin-bottom:18px;box-shadow:var(--shadow)}
+.section-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:16px 16px 12px}
+.section-title{font-weight:750;font-size:15px}
+.section-note{color:var(--muted);font-size:12px;margin-top:3px}
+.rankgrid{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:0 16px 16px}
+.rankbox{border:1px solid var(--line2);border-radius:14px;background:rgba(255,255,255,.018);overflow:hidden}
+.rank-title{padding:11px 12px;border-bottom:1px solid var(--line2);font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.07em}
+.rankrow{display:grid;grid-template-columns:28px 1fr auto;gap:10px;align-items:center;padding:10px 12px;border-bottom:1px solid rgba(255,255,255,.045)}
+.rankrow:last-child{border-bottom:0}
+.ranknum{font-weight:800;color:var(--muted2)}
+.rankname{font-weight:700}
+.rankmeta{font-size:11px;color:var(--muted)}
+.score{font-weight:850;font-variant-numeric:tabular-nums}
+.tools{display:grid;grid-template-columns:minmax(220px,1fr) repeat(3,minmax(140px,190px));gap:8px;padding:0 16px 14px}
+.control{width:100%;border:1px solid var(--line2);background:#0b0f20;color:var(--text);border-radius:11px;padding:10px 11px;outline:none}
+.control:focus{border-color:rgba(169,138,255,.5)}
+.tablewrap{overflow:auto;border-top:1px solid var(--line2)}
+table{width:100%;border-collapse:collapse;min-width:1740px}
+th{position:sticky;top:0;background:#0d1123;color:var(--muted);font-size:10.5px;text-transform:uppercase;letter-spacing:.055em;text-align:right;padding:11px 10px;white-space:nowrap;z-index:1}
+th:first-child,th:nth-child(2){text-align:left}
+td{padding:11px 10px;border-top:1px solid rgba(255,255,255,.045);text-align:right;font-size:12.5px;font-variant-numeric:tabular-nums;white-space:nowrap}
+td:first-child,td:nth-child(2){text-align:left}
+tbody tr{transition:background .15s ease}
+tbody tr:hover{background:rgba(169,138,255,.045)}
+.pair{font-weight:780;font-size:13px}
+.addr{font-size:10px;color:var(--muted2);font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
+.dex{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line2);border-radius:999px;padding:4px 7px;color:var(--muted);font-size:10.5px}
+.dex:before{content:"";width:6px;height:6px;border-radius:50%;background:var(--purple)}
+.dex.ray:before{background:var(--cyan)}
+.badge{display:inline-flex;align-items:center;justify-content:center;border-radius:999px;padding:4px 7px;font-size:10px;font-weight:800;letter-spacing:.02em}
+.b-high{background:rgba(74,222,128,.11);color:#86efac}
+.b-mid{background:rgba(250,204,21,.09);color:#fde047}
+.b-low{background:rgba(251,113,133,.10);color:#fda4af}
+.trend-up{color:#86efac}.trend-flat{color:#cbd5e1}.trend-down{color:#fda4af}.na{color:var(--muted2)}
+.fee-mismatch{color:var(--yellow)}
+.empty{padding:30px;text-align:center;color:var(--muted)}
+.footer{padding:4px 2px 34px;color:var(--muted2);font-size:11px;line-height:1.55}
+.modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.62);display:none;align-items:center;justify-content:center;padding:20px;z-index:50}
+.modal-backdrop.show{display:flex}
+.modal{width:min(860px,100%);max-height:90vh;overflow:auto;background:#0c1022;border:1px solid rgba(169,138,255,.22);border-radius:18px;box-shadow:0 25px 90px rgba(0,0,0,.55)}
+.modal-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;padding:18px;border-bottom:1px solid var(--line2)}
+.modal-title{font-size:20px;font-weight:850}
+.close{border:1px solid var(--line2);background:transparent;color:var(--text);border-radius:10px;width:36px;height:36px}
+.modal-body{padding:18px}
+.detail-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.detail{border:1px solid var(--line2);border-radius:12px;padding:12px;background:rgba(255,255,255,.02)}
+.detail .l{font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+.detail .v{font-size:17px;font-weight:800;margin-top:6px}
+.full{grid-column:1/-1}
+.address-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:8px}
+.address-box{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11px;color:var(--muted);overflow-wrap:anywhere}
+.copy{border:1px solid var(--line2);background:rgba(255,255,255,.03);color:var(--text);border-radius:9px;padding:6px 8px;font-size:11px}
+.explain{margin-top:14px;padding:12px;border:1px solid var(--line2);border-radius:12px;background:rgba(169,138,255,.035);color:var(--muted);font-size:12px;line-height:1.55}
+.toast{position:fixed;right:18px;bottom:18px;background:#151a31;border:1px solid var(--line);color:var(--text);padding:10px 13px;border-radius:12px;font-size:12px;opacity:0;transform:translateY(8px);pointer-events:none;transition:.2s;z-index:100}
+.toast.show{opacity:1;transform:none}
+@media(max-width:1100px){.kpis{grid-template-columns:repeat(3,1fr)}.detail-grid{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:760px){
+  .wrap{width:min(100% - 20px,1500px)} header{padding-top:20px}.header-row{flex-direction:column}.actions{justify-content:flex-start}
+  .kpis{grid-template-columns:repeat(2,1fr)}.rankgrid{grid-template-columns:1fr}.tools{grid-template-columns:1fr 1fr}
+  .tools .search{grid-column:1/-1}.detail-grid{grid-template-columns:1fr 1fr}
+}
+@media(max-width:480px){.kpis{grid-template-columns:1fr 1fr}.kpi{padding:13px;min-height:96px}.kpi-value{font-size:20px}.tools{grid-template-columns:1fr}.tools .search{grid-column:auto}.detail-grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <div class="header-row">
+    <div class="brand">
+      <div class="mark">A</div>
+      <div>
+        <h1>ASTY Team Dashboard</h1>
+        <div class="sub">Interne Pool-Analyse · 64 ASTY-Pools · Live + 7d/30d Historie</div>
+      </div>
+    </div>
+    <div class="actions">
+      <button class="btn" id="exportBtn">CSV exportieren</button>
+      <button class="btn primary" id="refreshBtn">Daten aktualisieren</button>
+    </div>
+  </div>
+</header>
+
+<div class="statusbar">
+  <div class="status-left"><span class="dot" id="statusDot"></span><span id="statusText">Bereit</span></div>
+  <div id="updatedText">Noch nicht aktualisiert</div>
+</div>
+<div class="progress"><i id="progressBar"></i></div>
+
+<section class="kpis">
+  <div class="kpi"><div class="kpi-label">Gesamte Pool-Liquidität</div><div class="kpi-value" id="kpiTvl">–</div><div class="kpi-note">Geladene ASTY-Pools</div></div>
+  <div class="kpi"><div class="kpi-label">Volumen 24h</div><div class="kpi-value" id="kpiVol">–</div><div class="kpi-note">Summe über alle geladenen Pools</div></div>
+  <div class="kpi"><div class="kpi-label">Einnahmen 24h</div><div class="kpi-value" id="kpiFees">–</div><div class="kpi-note">API-Poolgebühren</div></div>
+  <div class="kpi"><div class="kpi-label">Einnahmen 7d</div><div class="kpi-value" id="kpiFees7">–</div><div class="kpi-note">Historisch aggregiert</div></div>
+  <div class="kpi"><div class="kpi-label">Einnahmen 30d</div><div class="kpi-value" id="kpiFees30">–</div><div class="kpi-note">Historisch aggregiert</div></div>
+  <div class="kpi"><div class="kpi-label">Ø Einnahmen / TVL 30d</div><div class="kpi-value" id="kpiEff">–</div><div class="kpi-note">Aktuelle TVL als Nenner</div></div>
+  <div class="kpi"><div class="kpi-label">Pools geladen</div><div class="kpi-value" id="kpiLoaded">0 / 64</div><div class="kpi-note" id="kpiDex">63 Meteora · 1 Raydium</div></div>
+  <div class="kpi disabled"><div class="kpi-label">Beanspruchbare Einnahmen</div><div class="kpi-value">später</div><div class="kpi-note">Owner-Wallets noch nicht angebunden</div></div>
+</section>
+
+<section class="section">
+  <div class="section-head">
+    <div><div class="section-title">Effizienz-Ranking</div><div class="section-note">Relativer ASTY-Score aus 24h-, 7d- und 30d-Kapital-Effizienz. Langfristige Performance zählt stärker.</div></div>
+  </div>
+  <div class="rankgrid">
+    <div class="rankbox"><div class="rank-title">Effizienteste Pools</div><div id="topRank"></div></div>
+    <div class="rankbox"><div class="rank-title">Niedrigste Kapital-Effizienz</div><div id="lowRank"></div></div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="section-head">
+    <div><div class="section-title">Alle ASTY-Pools</div><div class="section-note">Zeile anklicken für Detailansicht. Die Pool-Adresse ist die eindeutige ID.</div></div>
+  </div>
+  <div class="tools">
+    <input class="control search" id="searchInput" placeholder="Pool oder Adresse suchen…">
+    <select class="control" id="dexFilter"><option value="all">Alle DEX</option><option>Meteora</option><option>Raydium</option></select>
+    <select class="control" id="effFilter"><option value="all">Alle Effizienzstufen</option><option value="high">Hoch / Sehr hoch</option><option value="mid">Mittel</option><option value="low">Niedrig / Sehr niedrig</option></select>
+    <select class="control" id="sortSelect">
+      <option value="score">Effizienz-Score</option>
+      <option value="fees24">Einnahmen 24h</option>
+      <option value="fees7">Einnahmen 7d</option>
+      <option value="fees30">Einnahmen 30d</option>
+      <option value="feeTvl24">Einnahmen / TVL 24h</option>
+      <option value="feeTvl7">Einnahmen / TVL 7d</option>
+      <option value="feeTvl30">Einnahmen / TVL 30d</option>
+      <option value="volume24">Volumen 24h</option>
+      <option value="volume7">Volumen 7d</option>
+      <option value="volume30">Volumen 30d</option>
+      <option value="tvl">Liquidität</option>
+      <option value="name">Poolname</option>
+    </select>
+  </div>
+  <div class="tablewrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Pool</th><th>DEX</th><th>Gebühr</th><th>Liquidität</th>
+          <th>Volumen 1h</th><th>Volumen 24h</th><th>Volumen 7d</th><th>Volumen 30d</th>
+          <th>Einnahmen 1h</th><th>Einnahmen 24h</th><th>Einnahmen 7d</th><th>Einnahmen 30d</th>
+          <th>Einn./TVL 24h</th><th>Einn./TVL 7d</th><th>Einn./TVL 30d</th>
+          <th>Trend</th><th>Effizienz</th>
+        </tr>
+      </thead>
+      <tbody id="poolBody"></tbody>
+    </table>
+    <div id="emptyState" class="empty" style="display:none">Keine Pools entsprechen dem Filter.</div>
+  </div>
+</section>
+
+<div class="footer">
+  ASTY Team Dashboard · Interne Analyse. Meteora-Daten werden aus der öffentlichen DAMM-v2 Data API geladen; 7d/30d werden aus der Historical-Volume-API mit 24h-Buckets aggregiert. Raydium-Daten kommen aus API v3.
+  Der Effizienz-Score ist ein relativer Vergleich der aktuell geladenen ASTY-Pools und keine Renditeprognose.
+  „Einnahmen“ bezeichnet die von den APIs gemeldeten Poolgebühren. Individuell beanspruchbare LP-Einnahmen werden erst mit den Owner-Wallets ergänzt.
+</div>
+</div>
+
+<div class="modal-backdrop" id="modalBackdrop">
+  <div class="modal">
+    <div class="modal-head">
+      <div><div class="modal-title" id="modalTitle"></div><div class="sub" id="modalSub"></div></div>
+      <button class="close" id="modalClose">✕</button>
+    </div>
+    <div class="modal-body" id="modalBody"></div>
+  </div>
+</div>
+<div class="toast" id="toast">Kopiert</div>
+
+<script>
+const POOLS = [{"address":"3UvhqPrMyf13qgRodARDi5oGJGoxHYb2ykZdCaa1TV8i","name":"ASTY/WIF","configuredFee":1,"dex":"Meteora"},{"address":"HeuivHLqCEmsgKhYhX1M6MGthEbtHrGmZdXQSCBVkstP","name":"ASTY/ALCH","configuredFee":1,"dex":"Meteora"},{"address":"CSD1NpGwhnohByefBp73Jyk6u6ZCkwwDFDVqvmkDrfxE","name":"ASTY/ARBX","configuredFee":1,"dex":"Meteora"},{"address":"DxMFG4kn8pxuf7AoKD1ffXjUhPpj4a8WAdgw87gyM2mj","name":"ASTY/ARBX","configuredFee":0.3,"dex":"Meteora"},{"address":"CoD6KLgnW2wKe2UtnNjSQk4RSS6fMU4P2vwKqsUxK9Bf","name":"ASTY/Bonk","configuredFee":1,"dex":"Meteora"},{"address":"7T6HixJyUfzSR88dhWC9tAjasXcdFyDrKmDtuzrXgt9j","name":"ASTY/ETH","configuredFee":1,"dex":"Meteora"},{"address":"B6fq1uNpMkyGANAQo5D9GJfMCkcaNewc6q8sWZAfWZ4M","name":"ASTY/Fartcoin","configuredFee":1,"dex":"Meteora"},{"address":"8aXv2DDRG3k5N3ADTw37Di4ytHGJ3ZaS2tPp1f2EW5ZD","name":"ASTY/GEOD","configuredFee":1,"dex":"Meteora"},{"address":"CRGcFA8f577F2BEZSmgohd4cuBTVsBpLjwqfVHrG8krE","name":"ASTY/BOME","configuredFee":1,"dex":"Meteora"},{"address":"3UapB8rB3T88Kac7CG3F44SKCa5xSBsKaJndbx8YrxWG","name":"ASTY/RTM","configuredFee":1,"dex":"Meteora"},{"address":"92RKFRJSctMAuw8Tym7cZgd2yjMcHeZ5hDUMdnZd54zV","name":"ASTY/Grandma","configuredFee":1,"dex":"Meteora"},{"address":"Gec7ENkk9irtsmmwpwLHk1i4VntB4vFGRAe1ET3LeT3J","name":"ASTY/JTO","configuredFee":1,"dex":"Meteora"},{"address":"iZXTZMMS51US5erGnviWfc8CNGx5QDDzp6DERH25EtW","name":"ASTY/JUP","configuredFee":1,"dex":"Meteora"},{"address":"29eKi5ipMR9fLgkYpM91Xrab2LVBnUU75SYG8kCt1nis","name":"ASTY/MET","configuredFee":1,"dex":"Meteora"},{"address":"CSiAzSiCMNGjLwYKRdhDUjNwz4obf3Q5ZnMQECnmxshV","name":"ASTY/PENGU","configuredFee":1,"dex":"Meteora"},{"address":"2uNbRDLDeMizdJNEqKaapzAGJWVwa3uuJ3w4trVud4ZW","name":"ASTY/pippin","configuredFee":1,"dex":"Meteora"},{"address":"GyVyv2H2SB4fYaC7C6raWNSQqNhShdzNuSqQwG9uUUcE","name":"ASTY/POPCAT","configuredFee":1,"dex":"Meteora"},{"address":"RYztJXyPCmwUmfi7punwCf7q6FbxoJbRtBEodZ7j7GH","name":"ASTY/PsyopAnime","configuredFee":1,"dex":"Meteora"},{"address":"DfJsn7Ui6YBUC25kM5FoqrCYrqfRVCoSxpTeyEzWv4vT","name":"ASTY/RAY","configuredFee":1,"dex":"Meteora"},{"address":"2ufiEWc5wF8gJB1a9YiPkFuLwrFn4Zgyma1kdQRakoAr","name":"ASTY/SOL","configuredFee":0.25,"dex":"Meteora"},{"address":"7tbbdGzFZpjrPmM7jQderyyv1x8Ebz1vhwqNhEW97osb","name":"ASTY/SOL","configuredFee":1,"dex":"Meteora"},{"address":"HAieGroddWr3NZpSZYqqm39w2aTUuknWNXxfF6vWNpaR","name":"ASTY/SOL","configuredFee":0.3,"dex":"Meteora"},{"address":"BBVxTUtaagQgG5AgmNSYS9Pqwidc7yAbRF6avt48iF2u","name":"ASTY/TAX","configuredFee":1,"dex":"Meteora"},{"address":"CFcyQpye4K4pyhVPoSAgj3BAqNoWpZCvHpNncXssy7qH","name":"ASTY/TAX","configuredFee":1,"dex":"Meteora"},{"address":"tDqqTi8tJds88AkxFvhjZTQK5iDtV5ZG9ZkNYxh23MG","name":"ASTY/UNI","configuredFee":1,"dex":"Meteora"},{"address":"3HhGsPNMtSg1dNV9SVSfzGCQLx3Zp5giAvYJdQuuNqU9","name":"ASTY/USDC","configuredFee":0.3,"dex":"Meteora"},{"address":"5zCsWjFoEQ7jGNaHNwBRvZq7RMqVh6vQhmiYv4NWkDZK","name":"ASTY/USDC","configuredFee":1,"dex":"Meteora"},{"address":"BqdoyTYoXpnAzRafoBQPrY4ubVSzYE42rxJzNJwoxmZP","name":"ASTY/USDC","configuredFee":0.25,"dex":"Meteora"},{"address":"BWFDr72tjXJsRdUyAfqghv6sGXgQr2zJ78KdeV3c74q1","name":"ASTY/USDC","configuredFee":2,"dex":"Meteora"},{"address":"2Hjjn2aoVdUeGraV4vRak94GGAAW5w9syfVBeXU4Ad5J","name":"ASTY/WBTC","configuredFee":1,"dex":"Meteora"},{"address":"7Fr58kHKW85XiFgZ8WibumE7P5CLZFo4A8qsQxKNEWaE","name":"ASTY/WhiteWhale","configuredFee":1,"dex":"Meteora"},{"address":"4TgvcTKzq9zZR5znyak2y3tvaXg4q6hvKWEZgxesQqkx","name":"ASTY/WLFI","configuredFee":1,"dex":"Meteora"},{"address":"5wpSZwUmdXy5kB96n7U24iFzvbSNEvFd4BvERhhqYjQY","name":"ASTY/WOJAK","configuredFee":1,"dex":"Meteora"},{"address":"2aWCx2qrYmjen1N8UW3eLBzNu7fCPqxjL9NKXqHGXPHc","name":"ASTY/ZBCN","configuredFee":1,"dex":"Meteora"},{"address":"2WRrdtnKKr2eq67o4ZK2VQv7dXu4Pm8iz6TMN8UXvhbV","name":"ASTY/SOL","configuredFee":2,"dex":"Meteora"},{"address":"4iHVvcWHNYFDPFySosAx1qGZoFsDN7gXHxKqUFnGq6oJ","name":"ASTY/BAT","configuredFee":1,"dex":"Meteora"},{"address":"4kWT67c13svR9EfxM4TGn8inNqFsXeuAWQhn8KBVajBs","name":"ASTY/ACC","configuredFee":1,"dex":"Meteora"},{"address":"5fEodJwZNUTwXbiTRKU2KPCc4Xr15fPKVmxbAph7yX7v","name":"ASTY/BTAX","configuredFee":1,"dex":"Meteora"},{"address":"61HTuoKeWhEfscoBcd5zSNvmAyGpxdaUNMriLNnyyREz","name":"ASTY/USDC","configuredFee":6,"dex":"Meteora"},{"address":"8fBYS2Kq9f4Lm1SYdt4sdHRL27Ni8UcRMPtFNLdEcnAH","name":"ASTY/Cake","configuredFee":1,"dex":"Meteora"},{"address":"DdK87cRD7uzoUWc9JZNRNxPoLHXeAcGkfU2b49YTZrm3","name":"ASTY/AVA","configuredFee":1,"dex":"Meteora"},{"address":"DwZZHyqnzWEqNP4VuczHHwfJsni6xqo57TBm7SoeJ62u","name":"ASTY/RENDER","configuredFee":1,"dex":"Meteora"},{"address":"HvmNZyopYSwHRUXCUti4D6YANpfWscVLSQVv9nw2XYhx","name":"ASTY/TURBO","configuredFee":1,"dex":"Meteora"},{"address":"m1e9swvUoggDm2zLXzrzKRrbVwmGEP8aQy7BQigFZgK","name":"ASTY/SOL","configuredFee":0.25,"dex":"Raydium"},{"address":"3PVPMEseLJxE6yyB5eBJ3qzRCzCGN6L9qa85stcZH4FM","name":"ASTY/testicle","configuredFee":1,"dex":"Meteora"},{"address":"BM9W33kccA1GCdbkuGoNDvJLTQW5xKbKwXht8sCXayc3","name":"ASTY/Buttcoin","configuredFee":1,"dex":"Meteora"},{"address":"AiazXNe6ShtCbQHZbmpnkuuswVHFKh5rLZKeudzWU3aq","name":"ASTY/BP","configuredFee":1,"dex":"Meteora"},{"address":"DitqC25rriaMeZyiQPeXLNgfxqRTZL2qxFHp3MHrxM6t","name":"ASTY/Punch","configuredFee":1,"dex":"Meteora"},{"address":"mwsmVXehTt2aFonhJDyZWbwgpxDVM9MMfo7GUYrYL7K","name":"ASTY/Restart","configuredFee":1,"dex":"Meteora"},{"address":"39dM3NfQuPiGwC3M93BUsXKrRdXTAZWPX6VxianCSevn","name":"ASTY/GREM","configuredFee":1,"dex":"Meteora"},{"address":"Fmna4bQBthaFT51VRtKR6QfgHisjxzcrzCWmPCP9dMNy","name":"ASTY/INCOME","configuredFee":1,"dex":"Meteora"},{"address":"AwmLBQ3keEicdD93gTr22avcJqsXwDTGMaLt25Jvyexo","name":"ASTY/ORCA","configuredFee":1,"dex":"Meteora"},{"address":"4UPuDZPPkrC5YHdpFnfv4RX7dfHYnjz8BYZaTCewSn5v","name":"ASTY/MOODENG","configuredFee":1,"dex":"Meteora"},{"address":"9dvPJ67AEzZZD9ThHAEJzkzVwxiVQrvC2Virv8KyGgZb","name":"ASTY/SEARCH","configuredFee":1,"dex":"Meteora"},{"address":"Dz8AuKtEJLrVeuAvhBg4gbTkBeNqC89wfLt3fJKZKk8v","name":"ASTY/USD","configuredFee":4,"dex":"Meteora"},{"address":"28yNWBwCvNLaC8h2Lf8AFcZqzfRpKMQMynwjjMibRwRU","name":"ASTY/HYPE","configuredFee":1,"dex":"Meteora"},{"address":"7wCaiBEGFHPhB5iDTCERsNXbzsc7bZyamqQsHNxuhdYU","name":"ASTY/SATO","configuredFee":1,"dex":"Meteora"},{"address":"Ax38rDrpRMturM59zKBEGsNn2HjE96rC9Jz3WbAgXtYw","name":"ASTY/SIMPLR","configuredFee":1,"dex":"Meteora"},{"address":"444uxc7K8jDZhtRUiuDAM822Pe93RYkHytzWuLKNyxVs","name":"ASTY/TAO","configuredFee":1,"dex":"Meteora"},{"address":"EDrT8LWDRuYE7v75Dkc9gUjLk7MvDYdezvDcnoHGqwuq","name":"ASTY/TROLL","configuredFee":1,"dex":"Meteora"},{"address":"ArKpj5vcNtHJTLhUKeADCmvuBpn1ZZoGNHZZYQ1QXq5n","name":"ASTY/CUPSEY","configuredFee":1,"dex":"Meteora"},{"address":"DGuvY79xbLuJRb3CzwQL59z5zoit7KLnFwyL2t6EQCcj","name":"ASTY/SERIOUS","configuredFee":1,"dex":"Meteora"},{"address":"5rwRQ4KprvvM1Z7h3QQ5WtUPUG5NMYEw1JtehSAxWeh3","name":"ASTY/Chiikawa","configuredFee":1,"dex":"Meteora"},{"address":"9zrdaC8tHges3JLTfsRVuibQ2xhXivZx3keymkZV2PAa","name":"ASTY/three","configuredFee":1,"dex":"Meteora"}];
+const METEORA_BASE = "https://damm-v2.datapi.meteora.ag";
+const RAYDIUM_BASE = "https://api-v3.raydium.io";
+const CACHE_KEY = "asty-team-dashboard-v2-cache";
+const HISTORY_CACHE_KEY = "asty-team-dashboard-meteora-history-v1";
+const HISTORY_CACHE_TTL = 30 * 60 * 1000;
+let rows = POOLS.map(p => ({...p, loaded:false, error:null}));
+let isLoading = false;
+
+const $ = s => document.querySelector(s);
+const fmtUSD = n => Number.isFinite(+n) ? new Intl.NumberFormat("de-DE",{style:"currency",currency:"USD",maximumFractionDigits:+n<10?2:0}).format(+n) : "–";
+const fmtNum = (n,d=2) => Number.isFinite(+n) ? new Intl.NumberFormat("de-DE",{maximumFractionDigits:d}).format(+n) : "–";
+const fmtPct = (n,d=2) => Number.isFinite(+n) ? `${fmtNum(+n,d)} %` : "–";
+const shortAddr = a => a ? `${a.slice(0,5)}…${a.slice(-5)}` : "–";
+const safe = (o,path,fb=null) => path.split(".").reduce((x,k)=>x!=null?x[k]:undefined,o) ?? fb;
+const num = v => (v===null||v===undefined||v==="") ? null : (Number.isFinite(+v)?+v:null);
+
+function normalizeRayFeePercent(d){
+  const trade = num(safe(d,"config.tradeFeeRate"));
+  if (trade !== null) return trade / 10000;
+  const fr = num(d.feeRate);
+  if (fr === null) return null;
+  return fr <= 0.05 ? fr * 100 : fr;
+}
+function calcAnnualAprFromDailyPct(p){ return Number.isFinite(+p) ? +p * 365 : null; }
+function percentile(values, value){
+  const arr = values.filter(Number.isFinite).sort((a,b)=>a-b);
+  if (!arr.length || !Number.isFinite(value)) return null;
+  if (arr.length===1) return 100;
+  let below = 0, equal = 0;
+  for(const v of arr){ if(v<value) below++; else if(v===value) equal++; }
+  return ((below + 0.5*equal) / arr.length) * 100;
+}
+function deriveMetrics(){
+  const nowSec = Date.now()/1000;
+  rows.forEach(r=>{
+    r.turnover24 = r.tvl>0 && Number.isFinite(r.volume24) ? r.volume24/r.tvl : null;
+    r.turnover7 = r.tvl>0 && Number.isFinite(r.volume7) ? r.volume7/r.tvl : null;
+    r.turnover30 = r.tvl>0 && Number.isFinite(r.volume30) ? r.volume30/r.tvl : null;
+
+    r.feeTvl24 = r.tvl>0 && Number.isFinite(r.fees24) ? (r.fees24/r.tvl)*100 : r.feeTvl24Api;
+    r.feeTvl7 = r.tvl>0 && Number.isFinite(r.fees7) ? (r.fees7/r.tvl)*100 : null;
+    r.feeTvl30 = r.tvl>0 && Number.isFinite(r.fees30) ? (r.fees30/r.tvl)*100 : null;
+
+    const ageDays = Number.isFinite(r.createdAt) ? Math.max(1,(nowSec-r.createdAt)/86400) : null;
+    r.coverage7 = Number.isFinite(r.historyBuckets7) ? Math.max(1,r.historyBuckets7) : (ageDays ? Math.min(7,ageDays) : 7);
+    r.coverage30 = Number.isFinite(r.historyBuckets30) ? Math.max(1,r.historyBuckets30) : (ageDays ? Math.min(30,ageDays) : 30);
+
+    r.effDaily24 = Number.isFinite(r.feeTvl24) ? r.feeTvl24 : null;
+    r.effDaily7 = Number.isFinite(r.feeTvl7) ? r.feeTvl7 / r.coverage7 : null;
+    r.effDaily30 = Number.isFinite(r.feeTvl30) ? r.feeTvl30 / r.coverage30 : null;
+
+    r.apr7 = Number.isFinite(r.feeTvl7) ? r.feeTvl7 * (365/r.coverage7) : r.apr7;
+    r.apr30 = Number.isFinite(r.feeTvl30) ? r.feeTvl30 * (365/r.coverage30) : r.apr30;
+
+    const d24 = Number.isFinite(r.fees24) ? r.fees24 : null;
+    const d7 = Number.isFinite(r.fees7) && r.coverage7>0 ? r.fees7/r.coverage7 : null;
+    const d30 = Number.isFinite(r.fees30) && r.coverage30>0 ? r.fees30/r.coverage30 : null;
+
+    if(d24!==null && d7!==null && d30!==null && d30>0){
+      const r24_30=d24/d30, r7_30=d7/d30, r24_7=d7>0?d24/d7:1;
+      if(r24_30>=1.45 && r7_30>=1.10 && r24_7>=1.15) r.trend="STARK STEIGEND";
+      else if(r24_30>=1.15 || r7_30>=1.10) r.trend="STEIGEND";
+      else if(r24_30<=0.55 && r7_30<=0.85) r.trend="STARK RÜCKLÄUFIG";
+      else if(r24_30<=0.80 || r7_30<=0.88) r.trend="RÜCKLÄUFIG";
+      else r.trend="STABIL";
+    } else {
+      r.pace1h = Number.isFinite(r.volume1) && r.volume24>0 ? (r.volume1*24/r.volume24) : null;
+      r.trend = r.pace1h===null ? "ZU WENIG HISTORIE" :
+        r.pace1h>=1.6?"STARK STEIGEND":
+        r.pace1h>=1.15?"STEIGEND":
+        r.pace1h>=0.75?"STABIL":
+        r.pace1h>=0.5?"RÜCKLÄUFIG":"STARK RÜCKLÄUFIG";
+    }
+  });
+
+  const loaded = rows.filter(r=>r.loaded);
+  const e24 = loaded.map(r=>r.effDaily24).filter(Number.isFinite);
+  const e7 = loaded.map(r=>r.effDaily7).filter(Number.isFinite);
+  const e30 = loaded.map(r=>r.effDaily30).filter(Number.isFinite);
+
+  loaded.forEach(r=>{
+    const parts=[];
+    const p24=percentile(e24,r.effDaily24); if(p24!==null) parts.push([p24,0.20]);
+    const p7=percentile(e7,r.effDaily7); if(p7!==null) parts.push([p7,0.35]);
+    const p30=percentile(e30,r.effDaily30); if(p30!==null) parts.push([p30,0.45]);
+    const weight=parts.reduce((s,x)=>s+x[1],0);
+    r.score=weight ? Math.round(parts.reduce((s,x)=>s+x[0]*x[1],0)/weight) : null;
+    r.level = r.score>=80?"SEHR HOCH":r.score>=65?"HOCH":r.score>=45?"MITTEL":r.score>=25?"NIEDRIG":"SEHR NIEDRIG";
+  });
+}
+
+function adaptMeteora(base, d){
+  return {
+    ...base, loaded:true, error:null,
+    apiName:d.name || base.name,
+    poolType:"DAMM v2",
+    apiFee:num(safe(d,"pool_config.base_fee_pct")),
+    dynamicFee:!!safe(d,"pool_config.dynamic_fee_initialized",false),
+    protocolFeePct:num(safe(d,"pool_config.protocol_fee_pct")),
+    partnerFeePct:num(safe(d,"pool_config.partner_fee_pct")),
+    referralFeePct:num(safe(d,"pool_config.referral_fee_pct")),
+    tvl:num(d.tvl),
+    volume1:num(safe(d,"volume.1h")),
+    volume24:num(safe(d,"volume.24h")),
+    fees1:num(safe(d,"fees.1h")),
+    fees24:num(safe(d,"fees.24h")),
+    feeTvl24Api:num(safe(d,"fee_tvl_ratio.24h")),
+    apr24: num(safe(d,"apr.24h")) ?? calcAnnualAprFromDailyPct(num(safe(d,"fee_tvl_ratio.24h"))),
+    currentPrice:num(d.current_price),
+    tokenX:safe(d,"token_x.symbol"),
+    tokenY:safe(d,"token_y.symbol"),
+    createdAt:num(d.created_at),
+    raw:d
+  };
+}
+function adaptRaydium(base,d){
+  const day=safe(d,"day",{})||{}, week=safe(d,"week",{})||{}, month=safe(d,"month",{})||{};
+  return {
+    ...base, loaded:true, error:null,
+    apiName:`${safe(d,"mintA.symbol","?")}/${safe(d,"mintB.symbol","?")}`,
+    poolType:d.type || "Raydium",
+    apiFee:normalizeRayFeePercent(d),
+    dynamicFee:!!d.hasDynamicFee,
+    tvl:num(d.tvl),
+    volume1:null,
+    volume24:num(day.volume),
+    fees1:null,
+    fees24:num(day.volumeFee),
+    feeTvl24Api:null,
+    apr24:num(day.feeApr) ?? num(day.apr),
+    volume7:num(week.volume), fees7:num(week.volumeFee), apr7:num(week.feeApr) ?? num(week.apr), historyBuckets7:7,
+    volume30:num(month.volume), fees30:num(month.volumeFee), apr30:num(month.feeApr) ?? num(month.apr), historyBuckets30:30, historyLoaded:true,
+    currentPrice:num(d.price),
+    tokenX:safe(d,"mintA.symbol"),
+    tokenY:safe(d,"mintB.symbol"),
+    createdAt:num(d.openTime),
+    raw:d
+  };
+}
+function markError(base,msg){ return {...base,loaded:false,error:msg}; }
+
+async function fetchJson(url, timeout=18000, retries=2){
+  let lastErr=null;
+  for(let attempt=0; attempt<=retries; attempt++){
+    const ctrl=new AbortController();
+    const t=setTimeout(()=>ctrl.abort(),timeout);
+    try{
+      const r=await fetch(url,{signal:ctrl.signal,cache:"no-store"});
+      if(r.status===429){
+        const retryAfter=Math.max(1,Number(r.headers.get("Retry-After"))||1);
+        if(attempt<retries){ await sleep(retryAfter*1000); continue; }
+      }
+      if(!r.ok) throw new Error(`HTTP ${r.status}`);
+      return await r.json();
+    }catch(e){
+      lastErr=e;
+      if(attempt<retries) await sleep(500*(attempt+1));
+    }finally{ clearTimeout(t); }
+  }
+  throw lastErr || new Error("API-Fehler");
+}
+function sleep(ms){return new Promise(r=>setTimeout(r,ms));}
+
+
+function getHistoryCache(){
+  try{ return JSON.parse(localStorage.getItem(HISTORY_CACHE_KEY)||"{}") || {}; }catch(e){ return {}; }
+}
+function saveHistoryCache(cache){
+  try{ localStorage.setItem(HISTORY_CACHE_KEY,JSON.stringify(cache)); }catch(e){}
+}
+function sumHistory(points,key){
+  return points.reduce((s,x)=>s+(num(x?.[key])||0),0);
+}
+function applyMeteoraHistory(row,j){
+  const points=(Array.isArray(j?.data)?j.data:[])
+    .filter(x=>Number.isFinite(num(x?.timestamp)))
+    .sort((a,b)=>num(a.timestamp)-num(b.timestamp));
+  const last30=points.slice(-30);
+  const last7=last30.slice(-7);
+  return {
+    ...row,
+    volume7:sumHistory(last7,"volume"),
+    fees7:sumHistory(last7,"fees"),
+    protocolFees7:sumHistory(last7,"protocol_fees"),
+    volume30:sumHistory(last30,"volume"),
+    fees30:sumHistory(last30,"fees"),
+    protocolFees30:sumHistory(last30,"protocol_fees"),
+    historyBuckets7:last7.length,
+    historyBuckets30:last30.length,
+    historyLoaded:last30.length>0,
+    historyError:last30.length ? null : "Keine History-Buckets"
+  };
+}
+async function loadMeteoraHistory(baseRows, progressCb, force=false){
+  const cache=getHistoryCache();
+  const now=Date.now();
+  const end=Math.floor(now/1000);
+  const start=end-(31*86400);
+  const output=new Map();
+  const needs=[];
+
+  for(const r of baseRows){
+    const c=cache[r.address];
+    if(!force && c?.ts && (now-c.ts)<HISTORY_CACHE_TTL && c?.data){
+      output.set(r.address,applyMeteoraHistory(r,c.data));
+    } else {
+      needs.push(r);
+    }
+  }
+
+  let done=baseRows.length-needs.length;
+  progressCb(35+Math.round((done/Math.max(1,baseRows.length))*58));
+
+  for(let i=0;i<needs.length;i+=8){
+    const batch=needs.slice(i,i+8);
+    const res=await Promise.all(batch.map(async r=>{
+      const url=`${METEORA_BASE}/pools/${r.address}/volume/history?timeframe=24h&start_time=${start}&end_time=${end}`;
+      try{
+        const j=await fetchJson(url,22000,2);
+        cache[r.address]={ts:Date.now(),data:j};
+        return [r.address,applyMeteoraHistory(r,j)];
+      }catch(e){
+        return [r.address,{...r,historyLoaded:false,historyError:e?.message||"History nicht geladen"}];
+      }
+    }));
+    res.forEach(([a,r])=>output.set(a,r));
+    done+=batch.length;
+    progressCb(35+Math.round((done/Math.max(1,baseRows.length))*58));
+    saveHistoryCache(cache);
+    if(i+8<needs.length) await sleep(1100);
+  }
+  return baseRows.map(r=>output.get(r.address)||r);
+}
+
+async function loadMeteora(progressCb){
+  const list=POOLS.filter(p=>p.dex==="Meteora");
+  const found=new Map();
+  // Bevorzugt: wenige Bulk-Requests mit OR-Filter, um die 10-RPS-Grenze nicht zu belasten.
+  const chunks=[]; for(let i=0;i<list.length;i+=20) chunks.push(list.slice(i,i+20));
+  for(let i=0;i<chunks.length;i++){
+    const c=chunks[i];
+    const filter=`pool_address=[${c.map(x=>x.address).join("|")}]`;
+    try{
+      const url=`${METEORA_BASE}/pools?page=1&page_size=1000&filter_by=${encodeURIComponent(filter)}`;
+      const j=await fetchJson(url);
+      const arr=Array.isArray(j)?j:(Array.isArray(j.data)?j.data:[]);
+      arr.forEach(x=>{ if(x?.address) found.set(x.address,x); });
+    }catch(e){}
+    progressCb(Math.round(((i+1)/chunks.length)*22));
+    await sleep(120);
+  }
+  // Fallback: nur fehlende Pools einzeln, gedrosselt.
+  const missing=list.filter(p=>!found.has(p.address));
+  for(let i=0;i<missing.length;i+=8){
+    const batch=missing.slice(i,i+8);
+    const res=await Promise.all(batch.map(async p=>{
+      try{ return [p.address, await fetchJson(`${METEORA_BASE}/pools/${p.address}`)]; }
+      catch(e){ return [p.address, null, e?.message||"Fehler"]; }
+    }));
+    res.forEach(([a,d])=>{ if(d) found.set(a,d); });
+    progressCb(22+Math.round(((i+batch.length)/Math.max(1,missing.length))*13));
+    if(i+8<missing.length) await sleep(1050);
+  }
+  return list.map(p=>found.has(p.address)?adaptMeteora(p,found.get(p.address)):markError(p,"Meteora-Daten nicht geladen"));
+}
+async function loadRaydium(progressCb){
+  const p=POOLS.find(x=>x.dex==="Raydium");
+  try{
+    const j=await fetchJson(`${RAYDIUM_BASE}/pools/info/ids?ids=${encodeURIComponent(p.address)}`);
+    const arr=Array.isArray(j?.data)?j.data:[];
+    const d=arr.find(x=>x.id===p.address)||arr[0];
+    if(!d) throw new Error(j?.msg||"Pool nicht gefunden");
+    progressCb(97);
+    return adaptRaydium(p,d);
+  }catch(e){
+    progressCb(97);
+    return markError(p,e?.message||"Raydium-Daten nicht geladen");
+  }
+}
+
+function saveCache(){
+  try{ localStorage.setItem(CACHE_KEY,JSON.stringify({ts:Date.now(),rows})); }catch(e){}
+}
+function loadCache(){
+  try{
+    const c=JSON.parse(localStorage.getItem(CACHE_KEY)||"null");
+    if(c?.rows?.length===64){
+      rows=c.rows; deriveMetrics(); render();
+      $("#updatedText").textContent=`Zwischenspeicher: ${new Date(c.ts).toLocaleString("de-DE")}`;
+      $("#statusText").textContent="Letzten gespeicherten Datenstand geladen";
+      $("#statusDot").className="dot warn";
+      return true;
+    }
+  }catch(e){}
+  return false;
+}
+
+async function refresh(forceHistory=false){
+  if(isLoading)return;
+  isLoading=true; $("#refreshBtn").disabled=true;
+  $("#statusDot").className="dot loading"; $("#statusText").textContent="Pooldaten werden geladen…";
+  $("#progressBar").style.width="2%";
+  const progressCb=p=>$("#progressBar").style.width=`${Math.min(99,p)}%`;
+  try{
+    const [mBase,ray]=await Promise.all([loadMeteora(progressCb),loadRaydium(progressCb)]);
+    $("#statusText").textContent="7d- und 30d-Historie von Meteora wird geladen…";
+    const m=await loadMeteoraHistory(mBase,progressCb,forceHistory);
+    const map=new Map([...m,ray].map(x=>[x.address,x]));
+    rows=POOLS.map(p=>map.get(p.address)||markError(p,"Keine Daten"));
+    deriveMetrics(); saveCache(); render();
+
+    const ok=rows.filter(r=>r.loaded).length;
+    const hist=rows.filter(r=>r.dex==="Meteora"&&r.loaded&&r.historyLoaded).length;
+    const err=64-ok;
+    $("#statusDot").className=(err||hist<63)?"dot warn":"dot live";
+    $("#statusText").textContent=
+      err ? `${ok} Pools geladen · ${err} ohne aktuelle Daten · History ${hist}/63` :
+      hist<63 ? `Alle Pooldaten geladen · Meteora-History ${hist}/63` :
+      `Alle 64 Pools inkl. 7d/30d-Historie erfolgreich geladen`;
+    $("#updatedText").textContent=`Aktualisiert: ${new Date().toLocaleString("de-DE")}`;
+    $("#progressBar").style.width="100%";
+    setTimeout(()=>$("#progressBar").style.width="0%",800);
+  }catch(e){
+    $("#statusDot").className="dot warn"; $("#statusText").textContent="Aktualisierung fehlgeschlagen · gespeicherte Daten bleiben erhalten";
+  }finally{
+    isLoading=false; $("#refreshBtn").disabled=false;
+  }
+}
+
+function levelClass(level){ return ["SEHR HOCH","HOCH"].includes(level)?"b-high":level==="MITTEL"?"b-mid":"b-low"; }
+function effGroup(level){ return ["SEHR HOCH","HOCH"].includes(level)?"high":level==="MITTEL"?"mid":"low"; }
+function trendClass(t){ return t.includes("STEIGEND")?"trend-up":t==="STABIL"?"trend-flat":t.includes("RÜCKLÄUFIG")?"trend-down":"na"; }
+function feeDisplay(r){
+  const v=Number.isFinite(r.apiFee)?r.apiFee:r.configuredFee;
+  const mismatch=Number.isFinite(r.apiFee) && Math.abs(r.apiFee-r.configuredFee)>0.015;
+  return `<span class="${mismatch?"fee-mismatch":""}" title="${mismatch?`API ${fmtPct(r.apiFee)} · Liste ${fmtPct(r.configuredFee)}`:`Konfiguriert ${fmtPct(r.configuredFee)}`}">${fmtPct(v,2)}${mismatch?" ⚠":""}</span>`;
+}
+function filteredRows(){
+  const q=$("#searchInput").value.trim().toLowerCase();
+  const dex=$("#dexFilter").value, ef=$("#effFilter").value, sort=$("#sortSelect").value;
+  let arr=rows.filter(r=>{
+    if(q && !(`${r.name} ${r.address}`.toLowerCase().includes(q)))return false;
+    if(dex!=="all"&&r.dex!==dex)return false;
+    if(ef!=="all" && (!r.loaded || effGroup(r.level)!==ef))return false;
+    return true;
+  });
+  const key={score:"score",fees24:"fees24",fees7:"fees7",fees30:"fees30",feeTvl24:"feeTvl24",feeTvl7:"feeTvl7",feeTvl30:"feeTvl30",volume24:"volume24",volume7:"volume7",volume30:"volume30",tvl:"tvl"}[sort];
+  if(sort==="name") arr.sort((a,b)=>a.name.localeCompare(b.name,"de"));
+  else arr.sort((a,b)=>(Number.isFinite(b[key])?b[key]:-Infinity)-(Number.isFinite(a[key])?a[key]:-Infinity));
+  return arr;
+}
+function renderKPIs(){
+  const a=rows.filter(r=>r.loaded);
+  const tvl=a.reduce((s,r)=>s+(r.tvl||0),0);
+  const vol=a.reduce((s,r)=>s+(r.volume24||0),0);
+  const fees=a.reduce((s,r)=>s+(r.fees24||0),0);
+  const fees7=a.reduce((s,r)=>s+(r.fees7||0),0);
+  const fees30=a.reduce((s,r)=>s+(r.fees30||0),0);
+  const eff30=tvl>0?(fees30/tvl*100):null;
+  $("#kpiTvl").textContent=fmtUSD(tvl);
+  $("#kpiVol").textContent=fmtUSD(vol);
+  $("#kpiFees").textContent=fmtUSD(fees);
+  $("#kpiFees7").textContent=fmtUSD(fees7);
+  $("#kpiFees30").textContent=fmtUSD(fees30);
+  $("#kpiEff").textContent=fmtPct(eff30);
+  $("#kpiLoaded").textContent=`${a.length} / 64`;
+}
+function renderRank(){
+  const a=rows.filter(r=>r.loaded&&Number.isFinite(r.score)).sort((x,y)=>y.score-x.score);
+  function block(list){
+    if(!list.length)return `<div class="empty">Noch keine Live-Daten</div>`;
+    return list.map((r,i)=>`<div class="rankrow" onclick="openDetail('${r.address}')"><div class="ranknum">${i+1}</div><div><div class="rankname">${r.name}</div><div class="rankmeta">${r.dex} · ${fmtPct(r.feeTvl30)} Einn./TVL 30d</div></div><div class="score">${r.score}</div></div>`).join("");
+  }
+  $("#topRank").innerHTML=block(a.slice(0,5));
+  const low=[...a].sort((x,y)=>x.score-y.score).slice(0,5);
+  $("#lowRank").innerHTML=block(low);
+}
+function renderTable(){
+  const arr=filteredRows(), tb=$("#poolBody"); tb.innerHTML="";
+  $("#emptyState").style.display=arr.length?"none":"block";
+  tb.innerHTML=arr.map(r=>{
+    if(!r.loaded) return `<tr onclick="openDetail('${r.address}')"><td><div class="pair">${r.name}</div><div class="addr">${shortAddr(r.address)}</div></td><td><span class="dex ${r.dex==="Raydium"?"ray":""}">${r.dex}</span></td><td>${fmtPct(r.configuredFee)}</td><td colspan="13" class="na" style="text-align:center">Daten nicht geladen</td><td><span class="badge b-low">FEHLER</span></td></tr>`;
+    return `<tr onclick="openDetail('${r.address}')">
+      <td><div class="pair">${r.name}</div><div class="addr">${shortAddr(r.address)}</div></td>
+      <td><span class="dex ${r.dex==="Raydium"?"ray":""}">${r.dex}</span></td>
+      <td>${feeDisplay(r)}</td><td>${fmtUSD(r.tvl)}</td>
+      <td>${fmtUSD(r.volume1)}</td><td>${fmtUSD(r.volume24)}</td><td>${fmtUSD(r.volume7)}</td><td>${fmtUSD(r.volume30)}</td>
+      <td>${fmtUSD(r.fees1)}</td><td>${fmtUSD(r.fees24)}</td><td>${fmtUSD(r.fees7)}</td><td>${fmtUSD(r.fees30)}</td>
+      <td>${fmtPct(r.feeTvl24)}</td><td>${fmtPct(r.feeTvl7)}</td><td>${fmtPct(r.feeTvl30)}</td>
+      <td class="${trendClass(r.trend)}">${r.trend}</td>
+      <td><span class="badge ${levelClass(r.level)}">${r.level} · ${r.score}</span></td>
+    </tr>`;
+  }).join("");
+}
+function render(){ renderKPIs(); renderRank(); renderTable(); }
+
+function detailCard(l,v){ return `<div class="detail"><div class="l">${l}</div><div class="v">${v}</div></div>`; }
+window.openDetail=function(address){
+  const r=rows.find(x=>x.address===address); if(!r)return;
+  $("#modalTitle").textContent=r.name; $("#modalSub").textContent=`${r.dex}${r.poolType?` · ${r.poolType}`:""}`;
+  let html=`<div class="detail-grid">`;
+  if(r.loaded){
+    html+=detailCard("Pool-Gebühr",feeDisplay(r))+detailCard("Liquidität",fmtUSD(r.tvl))+detailCard("Effizienz-Score",r.score!==null?`${r.score} / 100`:"–")+detailCard("Trend",r.trend||"–");
+    html+=detailCard("Volumen 1h",fmtUSD(r.volume1))+detailCard("Volumen 24h",fmtUSD(r.volume24))+detailCard("Volumen 7d",fmtUSD(r.volume7))+detailCard("Volumen 30d",fmtUSD(r.volume30));
+    html+=detailCard("Einnahmen 1h",fmtUSD(r.fees1))+detailCard("Einnahmen 24h",fmtUSD(r.fees24))+detailCard("Einnahmen 7d",fmtUSD(r.fees7))+detailCard("Einnahmen 30d",fmtUSD(r.fees30));
+    html+=detailCard("Einn. / TVL 24h",fmtPct(r.feeTvl24))+detailCard("Einn. / TVL 7d",fmtPct(r.feeTvl7))+detailCard("Einn. / TVL 30d",fmtPct(r.feeTvl30))+detailCard("APR 30d",fmtPct(r.apr30,1));
+    html+=detailCard("Volumen / TVL 24h",Number.isFinite(r.turnover24)?fmtNum(r.turnover24,2)+"x":"–")+detailCard("Volumen / TVL 7d",Number.isFinite(r.turnover7)?fmtNum(r.turnover7,2)+"x":"–")+detailCard("Volumen / TVL 30d",Number.isFinite(r.turnover30)?fmtNum(r.turnover30,2)+"x":"–")+detailCard("History-Abdeckung",Number.isFinite(r.coverage30)?`${fmtNum(r.coverage30,0)} Tage`:"–");
+    if(r.dex==="Meteora"){
+      html+=detailCard("Dynamic Fee",r.dynamicFee?"AKTIV":"AUS")+detailCard("Protocol Fee",fmtPct(r.protocolFeePct))+detailCard("Partner Fee",fmtPct(r.partnerFeePct))+detailCard("Referral Fee",fmtPct(r.referralFeePct));
+    }
+  } else {
+    html+=`<div class="detail full"><div class="l">Status</div><div class="v">Daten nicht geladen</div><div class="kpi-note">${r.error||"Unbekannter Fehler"}</div></div>`;
+  }
+  html+=`<div class="detail full"><div class="l">Pool-Adresse</div><div class="address-row"><div class="address-box">${r.address}</div><button class="copy" onclick="copyText('${r.address}')">Kopieren</button></div></div>`;
+  html+=`</div><div class="explain"><b>Score-Mechanik:</b> 20 % 24h-, 35 % 7d- und 45 % 30d-Kapital-Effizienz. Bewertet wird jeweils die durchschnittliche tägliche Einnahmen/TVL-Effizienz relativ zu den anderen geladenen ASTY-Pools. Dadurch zählt nachhaltige Performance stärker als ein einzelner guter Tag. Fehlende Zeitfenster werden nicht mit 0 gewertet, sondern die verfügbaren Gewichte werden neu normiert.<br><br><b>7d / 30d bei Meteora:</b> Die Werte werden aus 24h-Buckets der Historical-Volume-API aggregiert. Für Einnahmen/TVL wird die aktuelle Pool-Liquidität als Nenner verwendet; es handelt sich nicht um eine historische Durchschnitts-TVL.<br><br><b>Wichtig:</b> „Einnahmen“ sind API-Poolgebühren. Die tatsächlich von ASTY beanspruchbaren LP-Einnahmen werden erst nach Anbindung der öffentlichen Owner-Wallets ergänzt.</div>`;
+  $("#modalBody").innerHTML=html; $("#modalBackdrop").classList.add("show");
+}
+window.copyText=async function(t){
+  try{await navigator.clipboard.writeText(t); showToast("Adresse kopiert");}
+  catch(e){const x=document.createElement("textarea");x.value=t;document.body.appendChild(x);x.select();document.execCommand("copy");x.remove();showToast("Adresse kopiert");}
+}
+function showToast(t){const el=$("#toast");el.textContent=t;el.classList.add("show");setTimeout(()=>el.classList.remove("show"),1400)}
+function exportCSV(){
+  const hdr=["Pool","DEX","Adresse","Gebühr API %","Gebühr Liste %","TVL USD","Volumen 1h USD","Volumen 24h USD","Volumen 7d USD","Volumen 30d USD","Einnahmen 1h USD","Einnahmen 24h USD","Einnahmen 7d USD","Einnahmen 30d USD","Einnahmen/TVL 24h %","Einnahmen/TVL 7d %","Einnahmen/TVL 30d %","APR 24h %","APR 7d %","APR 30d %","Trend","Effizienz Score","Effizienz","History Tage"];
+  const data=rows.map(r=>[r.name,r.dex,r.address,r.apiFee??"",r.configuredFee,r.tvl??"",r.volume1??"",r.volume24??"",r.volume7??"",r.volume30??"",r.fees1??"",r.fees24??"",r.fees7??"",r.fees30??"",r.feeTvl24??"",r.feeTvl7??"",r.feeTvl30??"",r.apr24??"",r.apr7??"",r.apr30??"",r.trend??"",r.score??"",r.level??"",r.coverage30??""]);
+  const esc=v=>`"${String(v).replaceAll('"','""')}"`;
+  const csv=[hdr,...data].map(row=>row.map(esc).join(";")).join("\n");
+  const blob=new Blob(["\ufeff"+csv],{type:"text/csv;charset=utf-8"});
+  const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=`ASTY-Team-Dashboard-${new Date().toISOString().slice(0,10)}.csv`;a.click();URL.revokeObjectURL(a.href);
+}
+$("#refreshBtn").addEventListener("click",()=>refresh(true));
+$("#exportBtn").addEventListener("click",exportCSV);
+["searchInput","dexFilter","effFilter","sortSelect"].forEach(id=>$("#"+id).addEventListener(id==="searchInput"?"input":"change",renderTable));
+$("#modalClose").addEventListener("click",()=>$("#modalBackdrop").classList.remove("show"));
+$("#modalBackdrop").addEventListener("click",e=>{if(e.target===$("#modalBackdrop"))$("#modalBackdrop").classList.remove("show")});
+document.addEventListener("keydown",e=>{if(e.key==="Escape")$("#modalBackdrop").classList.remove("show")});
+
+loadCache();
+render();
+refresh(false);
+</script>
+</body>
+</html>
