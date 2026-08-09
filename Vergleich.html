@@ -1,0 +1,1499 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="color-scheme" content="dark">
+<title>ASTY Team Dashboard</title>
+<style>
+:root{
+  --bg:#070914; --bg2:#0b0e1d; --card:#11152a; --card2:#0e1224;
+  --text:#f4f3ff; --muted:#8e93ad; --muted2:#69708e;
+  --line:rgba(171,144,255,.14); --line2:rgba(255,255,255,.07);
+  --purple:#a98aff; --purple2:#8067ff; --cyan:#67e8f9;
+  --green:#4ade80; --yellow:#facc15; --red:#fb7185;
+  --shadow:0 18px 55px rgba(0,0,0,.28);
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0;background:
+  radial-gradient(900px 420px at 20% -8%,rgba(129,92,246,.18),transparent 58%),
+  radial-gradient(700px 380px at 85% 0%,rgba(34,211,238,.08),transparent 62%),
+  var(--bg); color:var(--text); font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+}
+button,input,select{font:inherit}
+button{cursor:pointer}
+.wrap{width:min(1500px,calc(100% - 30px));margin:0 auto}
+header{padding:32px 0 18px}
+.header-row{display:flex;align-items:flex-start;justify-content:space-between;gap:18px}
+.brand{display:flex;align-items:center;gap:10px}
+.mark{width:30px;height:30px;display:grid;place-items:center;flex:0 0 30px;overflow:hidden}
+.mark img{width:30px;height:30px;object-fit:contain;display:block}
+.mark.fallback{font-size:16px;font-weight:900;color:var(--purple)}
+h1{font-size:clamp(25px,4vw,38px);margin:0;letter-spacing:-.035em;
+  background:linear-gradient(90deg,#fff 0%,#d7cbff 45%,#8feaf7 100%);-webkit-background-clip:text;color:transparent}
+.sub{margin:5px 0 0;color:var(--muted);font-size:14px}
+.actions{display:flex;gap:9px;flex-wrap:wrap;justify-content:flex-end}
+.btn{border:1px solid var(--line);background:rgba(255,255,255,.035);color:var(--text);padding:10px 13px;border-radius:12px}
+.btn:hover{border-color:rgba(169,138,255,.45);background:rgba(169,138,255,.07)}
+.btn.primary{background:linear-gradient(135deg,rgba(128,103,255,.26),rgba(103,232,249,.08));border-color:rgba(169,138,255,.42)}
+.btn:disabled{opacity:.55;cursor:not-allowed}
+.statusbar{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:8px 0 10px;padding:10px 12px;
+  border:1px solid var(--line2);background:rgba(255,255,255,.022);border-radius:12px;color:var(--muted);font-size:12px}
+.info-note{margin:0 0 18px;padding:13px 14px;border:1px solid var(--line2);border-radius:14px;background:rgba(169,138,255,.04);color:var(--muted);font-size:12px;line-height:1.6}
+.info-note b{color:var(--text)}
+.status-left{display:flex;align-items:center;gap:9px;min-width:0}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--muted2);box-shadow:0 0 0 4px rgba(255,255,255,.025)}
+.dot.live{background:var(--green);box-shadow:0 0 0 4px rgba(74,222,128,.08)}
+.dot.loading{background:var(--purple);animation:pulse 1s infinite}
+.dot.warn{background:var(--yellow)}
+@keyframes pulse{50%{opacity:.35;transform:scale(.8)}}
+.progress{height:2px;background:rgba(255,255,255,.05);overflow:hidden;border-radius:99px;margin:-16px 0 18px}
+.progress>i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--purple),var(--cyan));transition:width .25s ease}
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:11px;margin-bottom:18px}
+.kpi{background:linear-gradient(180deg,rgba(19,24,48,.94),rgba(13,17,35,.94));border:1px solid var(--line2);border-radius:16px;padding:16px;min-height:108px;box-shadow:var(--shadow)}
+.kpi-label{font-size:11px;text-transform:uppercase;letter-spacing:.09em;color:var(--muted)}
+.kpi-value{font-size:25px;font-weight:800;margin-top:10px;letter-spacing:-.03em}
+.kpi-note{font-size:11px;color:var(--muted2);margin-top:6px}
+.kpi.disabled{opacity:.62}
+.section{background:rgba(12,15,31,.82);border:1px solid var(--line2);border-radius:18px;overflow:hidden;margin-bottom:18px;box-shadow:var(--shadow)}
+.section-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:16px 16px 12px}
+.section-title{font-weight:750;font-size:15px}
+.section-note{color:var(--muted);font-size:12px;margin-top:3px}
+.rankgrid{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:0 16px 16px}
+.rankbox{border:1px solid var(--line2);border-radius:14px;background:rgba(255,255,255,.018);overflow:hidden}
+.rank-title{padding:11px 12px;border-bottom:1px solid var(--line2);font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.07em}
+.rankrow{display:grid;grid-template-columns:28px 1fr auto;gap:10px;align-items:center;padding:10px 12px;border-bottom:1px solid rgba(255,255,255,.045)}
+.rankrow:last-child{border-bottom:0}
+.ranknum{font-weight:800;color:var(--muted2)}
+.rankname{font-weight:700}
+.rankmeta{font-size:11px;color:var(--muted)}
+.score{font-weight:850;font-variant-numeric:tabular-nums}
+.tools{display:grid;grid-template-columns:minmax(220px,1fr) repeat(3,minmax(140px,190px));gap:8px;padding:0 16px 14px}
+.control{width:100%;border:1px solid var(--line2);background:#0b0f20;color:var(--text);border-radius:11px;padding:10px 11px;outline:none}
+.control:focus{border-color:rgba(169,138,255,.5)}
+.tablewrap{overflow:auto;max-height:72vh;border-top:1px solid var(--line2)}
+table{width:100%;border-collapse:collapse;min-width:1670px}
+th{position:sticky;top:0;background:#0d1123;color:var(--muted);font-size:10.5px;text-transform:uppercase;letter-spacing:.055em;text-align:right;padding:11px 10px;white-space:nowrap;z-index:1}
+th:first-child,th:nth-child(2){text-align:left}
+td{padding:11px 10px;border-top:1px solid rgba(255,255,255,.045);text-align:right;font-size:12.5px;font-variant-numeric:tabular-nums;white-space:nowrap}
+td:first-child,td:nth-child(2){text-align:left}
+th:first-child{left:0;position:sticky;z-index:4;background:#0d1123;width:154px;min-width:154px;max-width:154px}
+td:first-child{left:0;position:sticky;z-index:1;background:#0a0f24;width:154px;min-width:154px;max-width:154px;overflow:hidden}
+tbody tr{transition:background .15s ease}
+tbody tr:hover{background:rgba(169,138,255,.045)}
+.pair{font-weight:780;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.addr{font-size:10px;color:var(--muted2);font-family:ui-monospace,SFMono-Regular,Menlo,monospace;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.dex{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line2);border-radius:999px;padding:4px 7px;color:var(--muted);font-size:10.5px}
+.dex:before{content:"";width:6px;height:6px;border-radius:50%;background:var(--purple)}
+.dex.ray:before{background:var(--cyan)}
+.badge{display:inline-flex;align-items:center;justify-content:center;border-radius:999px;padding:4px 7px;font-size:10px;font-weight:800;letter-spacing:.02em}
+.b-high{background:rgba(74,222,128,.11);color:#86efac}
+.b-mid{background:rgba(250,204,21,.09);color:#fde047}
+.b-low{background:rgba(251,113,133,.10);color:#fda4af}
+.b-excluded{background:rgba(148,163,184,.12);color:#cbd5e1}
+.trend-up{color:#86efac}.trend-flat{color:#cbd5e1}.trend-down{color:#fda4af}.na{color:var(--muted2)}
+.fee-mismatch{color:var(--yellow)}
+.empty{padding:30px;text-align:center;color:var(--muted)}
+.footer{padding:4px 2px 34px;color:var(--muted2);font-size:11px;line-height:1.55}
+.modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.62);display:none;align-items:center;justify-content:center;padding:20px;z-index:50}
+.modal-backdrop.show{display:flex}
+.modal{width:min(860px,100%);max-height:90vh;overflow:auto;background:#0c1022;border:1px solid rgba(169,138,255,.22);border-radius:18px;box-shadow:0 25px 90px rgba(0,0,0,.55)}
+.modal-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;padding:18px;border-bottom:1px solid var(--line2)}
+.modal-title{font-size:20px;font-weight:850}
+.close{border:1px solid var(--line2);background:transparent;color:var(--text);border-radius:10px;width:36px;height:36px}
+.modal-body{padding:18px}
+.detail-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.detail{border:1px solid var(--line2);border-radius:12px;padding:12px;background:rgba(255,255,255,.02)}
+.detail .l{font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+.detail .v{font-size:17px;font-weight:800;margin-top:6px}
+.full{grid-column:1/-1}
+.address-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:8px}
+.address-box{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11px;color:var(--muted);overflow-wrap:anywhere}
+.copy{border:1px solid var(--line2);background:rgba(255,255,255,.03);color:var(--text);border-radius:9px;padding:6px 8px;font-size:11px}
+.explain{margin-top:14px;padding:12px;border:1px solid var(--line2);border-radius:12px;background:rgba(169,138,255,.035);color:var(--muted);font-size:12px;line-height:1.55}
+.toast{position:fixed;right:18px;bottom:18px;background:#151a31;border:1px solid var(--line);color:var(--text);padding:10px 13px;border-radius:12px;font-size:12px;opacity:0;transform:translateY(8px);pointer-events:none;transition:.2s;z-index:100}
+.toast.show{opacity:1;transform:none}
+@media(max-width:1100px){.kpis{grid-template-columns:repeat(3,1fr)}.detail-grid{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:760px){
+  .wrap{width:min(100% - 20px,1500px)} header{padding-top:20px}.header-row{flex-direction:column}.actions{justify-content:flex-start}
+  .kpis{grid-template-columns:repeat(2,1fr)}.rankgrid{grid-template-columns:1fr}.tools{grid-template-columns:1fr 1fr}
+  .tools .search{grid-column:1/-1}.detail-grid{grid-template-columns:1fr 1fr}
+}
+@media(max-width:480px){.kpis{grid-template-columns:1fr 1fr}.kpi{padding:13px;min-height:96px}.kpi-value{font-size:20px}.tools{grid-template-columns:1fr}.tools .search{grid-column:auto}.detail-grid{grid-template-columns:1fr}}
+
+.claim-controls{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.claim-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:11px;padding:0 16px 14px}.claim-kpi{border:1px solid var(--line2);border-radius:14px;background:rgba(255,255,255,.018);padding:14px;min-height:98px}.claim-kpi .l{font-size:10px;text-transform:uppercase;letter-spacing:.075em;color:var(--muted)}.claim-kpi .v{font-size:22px;font-weight:850;letter-spacing:-.025em;margin-top:9px}.claim-kpi .n{font-size:10px;color:var(--muted2);margin-top:5px}.wallet-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:11px;padding:0 16px 14px}.wallet-card{border:1px solid var(--line2);border-radius:14px;background:rgba(255,255,255,.018);padding:13px}.wallet-card-head{display:flex;align-items:center;justify-content:space-between;gap:10px}.wallet-name{font-weight:780;font-size:13px}.wallet-address{font-size:9px;color:var(--muted2);font-family:ui-monospace,SFMono-Regular,Menlo,monospace;margin-top:4px}.wallet-main{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-top:12px}.wallet-stat{padding:8px;border:1px solid rgba(255,255,255,.045);border-radius:10px;background:rgba(0,0,0,.08)}.wallet-stat .l{font-size:9px;color:var(--muted)}.wallet-stat .v{font-size:13px;font-weight:750;margin-top:4px}.wallet-total{font-size:10px;color:var(--muted);margin-top:9px}.snapshotbar{margin:0 16px 14px;padding:12px;border:1px solid var(--line2);border-radius:13px;background:rgba(169,138,255,.035);display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}.snapshot-title{font-weight:750;font-size:12px}.snapshot-meta{color:var(--muted);font-size:11px;margin-top:3px}.snapshot-actions{display:flex;gap:7px;flex-wrap:wrap}.claim-table-title{padding:13px 16px 9px;font-weight:750;font-size:13px;border-top:1px solid var(--line2)}.claimtablewrap{overflow:auto;max-height:430px}.claimtable{width:100%;border-collapse:collapse;min-width:980px}.claimtable th{position:sticky;top:0;background:#0d1123;z-index:2;color:var(--muted);font-size:10px;text-transform:uppercase;letter-spacing:.055em;padding:10px;text-align:right;white-space:nowrap}.claimtable th:first-child,.claimtable th:nth-child(2){text-align:left}.claimtable td{padding:10px;border-top:1px solid rgba(255,255,255,.045);font-size:11.5px;text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}.claimtable td:first-child,.claimtable td:nth-child(2){text-align:left}.tokenname{font-weight:780}.tokenname + .mint{margin-top:2px}.mint{font-size:9px;color:var(--muted2);font-family:ui-monospace,SFMono-Regular,Menlo,monospace}.delta-pos{color:#86efac;font-weight:800}.delta-neg{color:#fda4af;font-weight:800}.delta-zero{color:var(--muted2)}.claim-note{margin:0 16px 16px;padding:11px 12px;border:1px solid var(--line2);border-radius:12px;background:rgba(255,255,255,.017);color:var(--muted);font-size:11px;line-height:1.6}.claim-note b{color:var(--text)}.claim-status{display:inline-flex;align-items:center;gap:6px;color:var(--muted);font-size:10px}.claim-status:before{content:"";width:7px;height:7px;border-radius:50%;background:var(--muted2)}.claim-status.live:before{background:var(--green)}.claim-status.loading:before{background:var(--purple);animation:pulse 1s infinite}.claim-status.warn:before{background:var(--yellow)}@media(max-width:1050px){.claim-grid{grid-template-columns:repeat(2,1fr)}.wallet-grid{grid-template-columns:1fr}}@media(max-width:560px){.claim-grid{grid-template-columns:1fr 1fr}.wallet-main{grid-template-columns:1fr}.snapshot-actions{width:100%}.snapshot-actions .btn{flex:1}}
+
+.wallet-error{margin-top:8px;padding:9px 10px;border:1px solid rgba(250,204,21,.22);border-radius:10px;background:rgba(250,204,21,.05);color:#fde68a;font-size:10.5px;line-height:1.5;max-width:760px}
+.wallet-error code{color:#fff;word-break:break-all}
+.rpc-active{color:#86efac}
+
+/* Datenquellenvergleich */
+.compare-controls{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.compare-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:11px;padding:0 16px 14px}
+.compare-card{border:1px solid var(--line2);border-radius:14px;background:rgba(255,255,255,.018);padding:14px}
+.compare-card .l{font-size:10px;text-transform:uppercase;letter-spacing:.075em;color:var(--muted)}
+.compare-card .v{font-size:20px;font-weight:850;letter-spacing:-.025em;margin-top:8px}
+.compare-card .n{font-size:10px;color:var(--muted2);margin-top:5px;line-height:1.45}
+.compare-status{display:inline-flex;align-items:center;gap:6px;color:var(--muted);font-size:10px}
+.compare-status:before{content:"";width:7px;height:7px;border-radius:50%;background:var(--muted2)}
+.compare-status.live:before{background:var(--green)}
+.compare-status.loading:before{background:var(--purple);animation:pulse 1s infinite}
+.compare-status.warn:before{background:var(--yellow)}
+.compare-toolbar{display:flex;align-items:center;gap:8px;padding:0 16px 12px;flex-wrap:wrap}
+.compare-toolbar .control{width:auto;min-width:180px}
+.compare-tablewrap{overflow:auto;max-height:520px;border-top:1px solid var(--line2)}
+.compare-table{width:100%;border-collapse:collapse;min-width:1120px}
+.compare-table th{position:sticky;top:0;background:#0d1123;z-index:2;color:var(--muted);font-size:10px;text-transform:uppercase;letter-spacing:.055em;padding:10px;text-align:right;white-space:nowrap}
+.compare-table th:first-child,.compare-table th:nth-child(2){text-align:left}
+.compare-table td{padding:10px;border-top:1px solid rgba(255,255,255,.045);font-size:11.5px;text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}
+.compare-table td:first-child,.compare-table td:nth-child(2){text-align:left}
+.compare-table tbody tr:hover{background:rgba(169,138,255,.045)}
+.compare-pos{color:#86efac}
+.compare-neg{color:#fda4af}
+.compare-big{font-weight:850}
+.compare-note{margin:0 16px 16px;padding:10px 12px;border:1px solid var(--line2);border-radius:12px;background:rgba(255,255,255,.017);color:var(--muted);font-size:10.5px;line-height:1.55}
+.compare-note b{color:var(--text)}
+@media(max-width:860px){.compare-grid{grid-template-columns:1fr}.compare-toolbar .control{width:100%}}
+
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <div class="header-row">
+    <div class="brand">
+      <div class="mark"><img src="assets/logo.png" alt="ASTY Logo" onerror="this.style.display='none'; this.parentElement.classList.add('fallback'); this.parentElement.textContent='A';"></div>
+      <div>
+        <h1>ASTY Team Dashboard</h1>
+        <div class="sub">Interne Pool-Analyse · 64 ASTY-Pools · Performance + Claiming Day</div>
+      </div>
+    </div>
+    <div class="actions">
+      <button class="btn" id="exportBtn">CSV exportieren</button>
+      <button class="btn primary" id="refreshBtn">Daten aktualisieren</button>
+    </div>
+  </div>
+</header>
+
+<div class="statusbar">
+  <div class="status-left"><span class="dot" id="statusDot"></span><span id="statusText">Bereit</span></div>
+  <div id="updatedText">Noch nicht aktualisiert</div>
+</div>
+<div class="progress"><i id="progressBar"></i></div>
+<div class="info-note">
+  <b>Hinweis zur ASTY-Score-Berechnung:</b> Der Score bewertet die durchschnittliche tägliche Kapital-Effizienz der Pools relativ zueinander.
+  Gewichtet werden aktuell <b>24h = 20 %</b>, <b>7d = 35 %</b> und <b>30d = 45 %</b>. Grundlage ist vor allem <b>Einnahmen / TVL</b>.
+  Von der Berechnung ausgeschlossen sind aktuell <b>6 Pools</b>: die drei alten Meteora-SOL-Pools mit <b>1 %</b>, <b>0,3 %</b> und <b>2 %</b>
+  sowie die Meteora-USDC-Pools mit <b>0,30 %</b>, <b>2 %</b> und <b>6 %</b>.
+</div>
+
+<section class="kpis">
+  <div class="kpi"><div class="kpi-label">Gesamte Pool-Liquidität</div><div class="kpi-value" id="kpiTvl">–</div><div class="kpi-note">Alle geladenen ASTY-Pools</div></div>
+  <div class="kpi"><div class="kpi-label">Volumen 24h</div><div class="kpi-value" id="kpiVol">–</div><div class="kpi-note">Summe über alle geladenen Pools</div></div>
+  <div class="kpi"><div class="kpi-label">Einnahmen 24h</div><div class="kpi-value" id="kpiFees">–</div><div class="kpi-note">API-Poolgebühren</div></div>
+  <div class="kpi"><div class="kpi-label">Einnahmen 7d</div><div class="kpi-value" id="kpiFees7">–</div><div class="kpi-note">Historisch aggregiert</div></div>
+  <div class="kpi"><div class="kpi-label">Einnahmen 30d</div><div class="kpi-value" id="kpiFees30">–</div><div class="kpi-note">Historisch aggregiert</div></div>
+  <div class="kpi"><div class="kpi-label">Ø Einnahmen / TVL 30d</div><div class="kpi-value" id="kpiEff">–</div><div class="kpi-note">Nur 58 aktive Bewertungs-Pools</div></div>
+  <div class="kpi"><div class="kpi-label">Pools geladen</div><div class="kpi-value" id="kpiLoaded">0 / 64</div><div class="kpi-note" id="kpiDex">63 Meteora · 1 Raydium</div></div>
+  <div class="kpi disabled"><div class="kpi-label">Beanspruchbare Einnahmen</div><div class="kpi-value">später</div><div class="kpi-note">Owner-Wallets noch nicht angebunden</div></div>
+</section>
+
+
+<section class="section" id="sourceCompareSection">
+  <div class="section-head">
+    <div>
+      <div class="section-title">Datenquellenvergleich</div>
+      <div class="section-note">Meteora/Raydium direkt gegen GeckoTerminal · identische 64 Pool-Adressen</div>
+    </div>
+    <div class="compare-controls">
+      <span class="compare-status" id="compareStatus">Noch nicht geladen</span>
+      <button class="btn" id="compareRefreshBtn">Vergleich aktualisieren</button>
+    </div>
+  </div>
+
+  <div class="compare-grid">
+    <div class="compare-card">
+      <div class="l">TVL · Native vs. Gecko</div>
+      <div class="v" id="compareTvl">–</div>
+      <div class="n" id="compareTvlNote">–</div>
+    </div>
+    <div class="compare-card">
+      <div class="l">Volumen 24h · Native vs. Gecko</div>
+      <div class="v" id="compareVol">–</div>
+      <div class="n" id="compareVolNote">–</div>
+    </div>
+    <div class="compare-card">
+      <div class="l">Pools verglichen</div>
+      <div class="v" id="compareLoaded">0 / 64</div>
+      <div class="n" id="compareLoadedNote">Wartet auf GeckoTerminal</div>
+    </div>
+  </div>
+
+  <div class="compare-toolbar">
+    <select class="control" id="compareSort">
+      <option value="volDeltaAbs">Größte Volumen-Abweichung</option>
+      <option value="tvlDeltaAbs">Größte TVL-Abweichung</option>
+      <option value="geckoVol">Gecko Volumen 24h</option>
+      <option value="nativeVol">Native Volumen 24h</option>
+      <option value="name">Poolname</option>
+    </select>
+    <select class="control" id="compareFilter">
+      <option value="all">Alle Pools</option>
+      <option value="different">Nur Abweichungen</option>
+      <option value="sol">Nur ASTY/SOL</option>
+      <option value="usdc">Nur ASTY/USDC</option>
+    </select>
+  </div>
+
+  <div class="compare-tablewrap">
+    <table class="compare-table">
+      <thead>
+        <tr>
+          <th>Pool</th><th>DEX</th>
+          <th>Native TVL</th><th>Gecko TVL</th><th>Δ TVL</th>
+          <th>Native Vol. 24h</th><th>Gecko Vol. 24h</th><th>Δ Vol. 24h</th>
+        </tr>
+      </thead>
+      <tbody id="compareBody">
+        <tr><td colspan="8" class="na" style="text-align:center">Vergleich noch nicht geladen.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="compare-note">
+    <b>Native:</b> Meteora DAMM v2 für 63 Pools und Raydium API v3 für den Raydium-Pool.
+    <b>Gecko:</b> dieselben Pool-Adressen über GeckoTerminal. Dieser Bereich verändert weder ASTY Score noch Rankings oder die KPI-Berechnung.
+  </div>
+</section>
+
+<section class="section claim-section">
+  <div class="section-head"><div><div class="section-title">Claiming Day · Owner-Bestände</div><div class="section-note">Freie Wallet-Bestände vor und nach dem Claim vergleichen.</div></div><div class="claim-controls"><span class="claim-status" id="walletLoadStatus">Noch nicht geladen</span><button class="btn primary" id="walletRefreshBtn">Bestände aktualisieren</button></div></div>
+  <div class="claim-grid"><div class="claim-kpi"><div class="l">Freie ASTY</div><div class="v" id="claimAsty">–</div><div class="n" id="claimAstyUsd">USD-Wert: –</div></div><div class="claim-kpi"><div class="l">Freies SOL</div><div class="v" id="claimSol">–</div><div class="n" id="claimSolUsd">USD-Wert: –</div></div><div class="claim-kpi"><div class="l">Freies USDC</div><div class="v" id="claimUsdc">–</div><div class="n">über alle drei Owner-Wallets</div></div><div class="claim-kpi"><div class="l">Freies Kapital</div><div class="v" id="claimKnownUsd">–</div><div class="n">nur Assets mit verfügbarem USD-Preis</div></div></div>
+  <div class="wallet-grid" id="walletCards"></div>
+  <div class="snapshotbar"><div><div class="snapshot-title">Snapshot vor dem Claim</div><div class="snapshot-meta" id="snapshotMeta">Noch kein Snapshot gespeichert.</div><div class="snapshot-meta" style="margin-top:8px">Datenquelle: BirdEye Wallet Portfolio</div><div id="walletErrorBox" class="wallet-error" style="display:none"></div></div><div class="snapshot-actions"><button class="btn primary" id="saveSnapshotBtn">Snapshot vor Claim speichern</button><button class="btn" id="deleteSnapshotBtn">Snapshot löschen</button></div></div>
+  <div class="claim-table-title">Aktuelle freie Bestände</div><div class="claimtablewrap"><table class="claimtable"><thead><tr><th>Token</th><th>Mint</th><th>Gesamt</th><th>Meteora 1</th><th>Meteora 2</th><th>Raydium</th><th>Preis</th><th>Wert</th></tr></thead><tbody id="walletAssetBody"><tr><td colspan="8" class="na" style="text-align:center">Bestände noch nicht geladen.</td></tr></tbody></table></div>
+  <div class="claim-table-title">Veränderung seit Snapshot</div><div class="claimtablewrap"><table class="claimtable"><thead><tr><th>Token</th><th>Mint</th><th>Vorher</th><th>Aktuell</th><th>Veränderung</th><th>USD-Änderung</th></tr></thead><tbody id="claimDeltaBody"><tr><td colspan="6" class="na" style="text-align:center">Erst einen Snapshot vor dem Claim speichern.</td></tr></tbody></table></div>
+  <div class="claim-note"><b>So funktioniert es:</b> Vor dem Claim zuerst die Bestände laden und dann „Snapshot vor Claim speichern“ drücken. Nach dem Claim erneut „Bestände aktualisieren“. Das Dashboard vergleicht die aggregierten Bestände aller drei Owner-Wallets. Transfers nur zwischen diesen drei Wallets verändern die Gesamtsumme deshalb nicht. <b>Wichtig:</b> Andere externe Transfers, Käufe, Verkäufe oder Swaps zwischen den beiden Snapshots erscheinen ebenfalls als Veränderung und sind nicht automatisch Claim-Einnahmen. LP-gebundenes Kapital wird hier bewusst nicht gezählt; angezeigt werden die von BirdEye erkannten freien Wallet-Bestände.</div>
+</section>
+<section class="section">
+  <div class="section-head">
+    <div><div class="section-title">Effizienz-Ranking</div><div class="section-note">Relativer ASTY-Score aus 24h-, 7d- und 30d-Kapital-Effizienz. Langfristige Performance zählt stärker.</div></div>
+  </div>
+  <div class="rankgrid">
+    <div class="rankbox"><div class="rank-title">Effizienteste Pools</div><div id="topRank"></div></div>
+    <div class="rankbox"><div class="rank-title">Niedrigste Kapital-Effizienz</div><div id="lowRank"></div></div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="section-head">
+    <div><div class="section-title">Alle ASTY-Pools</div><div class="section-note">Zeile anklicken für Detailansicht. </div></div>
+  </div>
+  <div class="tools">
+    <input class="control search" id="searchInput" placeholder="Pool oder Adresse suchen…">
+    <select class="control" id="dexFilter"><option value="all">Alle DEX</option><option>Meteora</option><option>Raydium</option></select>
+    <select class="control" id="effFilter"><option value="all">Alle Effizienzstufen</option><option value="high">Hoch / Sehr hoch</option><option value="mid">Mittel</option><option value="low">Niedrig / Sehr niedrig</option></select>
+    <select class="control" id="sortSelect">
+      <option value="score">Effizienz-Score</option>
+      <option value="fees24">Einnahmen 24h</option>
+      <option value="fees7">Einnahmen 7d</option>
+      <option value="fees30">Einnahmen 30d</option>
+      <option value="feeTvl24">Einnahmen / TVL 24h</option>
+      <option value="feeTvl7">Einnahmen / TVL 7d</option>
+      <option value="feeTvl30">Einnahmen / TVL 30d</option>
+      <option value="volume24">Volumen 24h</option>
+      <option value="volume7">Volumen 7d</option>
+      <option value="volume30">Volumen 30d</option>
+      <option value="tvl">Liquidität</option>
+      <option value="name">Poolname</option>
+    </select>
+  </div>
+  <div class="tablewrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Pool</th><th>DEX</th><th>Gebühr</th><th>Liquidität</th>
+          <th>Volumen 1h</th><th>Volumen 24h</th><th>Volumen 7d</th><th>Volumen 30d</th>
+          <th>Einnahmen 1h</th><th>Einnahmen 24h</th><th>Einnahmen 7d</th><th>Einnahmen 30d</th>
+          <th>Einn./TVL 24h</th><th>Einn./TVL 7d</th><th>Einn./TVL 30d</th>
+          <th>Trend</th><th>Effizienz</th>
+        </tr>
+      </thead>
+      <tbody id="poolBody"></tbody>
+    </table>
+    <div id="emptyState" class="empty" style="display:none">Keine Pools entsprechen dem Filter.</div>
+  </div>
+</section>
+
+</div>
+
+<div class="modal-backdrop" id="modalBackdrop">
+  <div class="modal">
+    <div class="modal-head">
+      <div><div class="modal-title" id="modalTitle"></div><div class="sub" id="modalSub"></div></div>
+      <button class="close" id="modalClose">✕</button>
+    </div>
+    <div class="modal-body" id="modalBody"></div>
+  </div>
+</div>
+<div class="toast" id="toast">Kopiert</div>
+
+<script>
+const POOLS = [{"address":"3UvhqPrMyf13qgRodARDi5oGJGoxHYb2ykZdCaa1TV8i","name":"ASTY/WIF","configuredFee":1,"dex":"Meteora"},{"address":"HeuivHLqCEmsgKhYhX1M6MGthEbtHrGmZdXQSCBVkstP","name":"ASTY/ALCH","configuredFee":1,"dex":"Meteora"},{"address":"CSD1NpGwhnohByefBp73Jyk6u6ZCkwwDFDVqvmkDrfxE","name":"ASTY/ARBX","configuredFee":1,"dex":"Meteora"},{"address":"DxMFG4kn8pxuf7AoKD1ffXjUhPpj4a8WAdgw87gyM2mj","name":"ASTY/ARBX","configuredFee":0.3,"dex":"Meteora"},{"address":"CoD6KLgnW2wKe2UtnNjSQk4RSS6fMU4P2vwKqsUxK9Bf","name":"ASTY/Bonk","configuredFee":1,"dex":"Meteora"},{"address":"7T6HixJyUfzSR88dhWC9tAjasXcdFyDrKmDtuzrXgt9j","name":"ASTY/ETH","configuredFee":1,"dex":"Meteora"},{"address":"B6fq1uNpMkyGANAQo5D9GJfMCkcaNewc6q8sWZAfWZ4M","name":"ASTY/Fartcoin","configuredFee":1,"dex":"Meteora"},{"address":"8aXv2DDRG3k5N3ADTw37Di4ytHGJ3ZaS2tPp1f2EW5ZD","name":"ASTY/GEOD","configuredFee":1,"dex":"Meteora"},{"address":"CRGcFA8f577F2BEZSmgohd4cuBTVsBpLjwqfVHrG8krE","name":"ASTY/BOME","configuredFee":1,"dex":"Meteora"},{"address":"3UapB8rB3T88Kac7CG3F44SKCa5xSBsKaJndbx8YrxWG","name":"ASTY/RTM","configuredFee":1,"dex":"Meteora"},{"address":"92RKFRJSctMAuw8Tym7cZgd2yjMcHeZ5hDUMdnZd54zV","name":"ASTY/Grandma","configuredFee":1,"dex":"Meteora"},{"address":"Gec7ENkk9irtsmmwpwLHk1i4VntB4vFGRAe1ET3LeT3J","name":"ASTY/JTO","configuredFee":1,"dex":"Meteora"},{"address":"iZXTZMMS51US5erGnviWfc8CNGx5QDDzp6DERH25EtW","name":"ASTY/JUP","configuredFee":1,"dex":"Meteora"},{"address":"29eKi5ipMR9fLgkYpM91Xrab2LVBnUU75SYG8kCt1nis","name":"ASTY/MET","configuredFee":1,"dex":"Meteora"},{"address":"CSiAzSiCMNGjLwYKRdhDUjNwz4obf3Q5ZnMQECnmxshV","name":"ASTY/PENGU","configuredFee":1,"dex":"Meteora"},{"address":"2uNbRDLDeMizdJNEqKaapzAGJWVwa3uuJ3w4trVud4ZW","name":"ASTY/pippin","configuredFee":1,"dex":"Meteora"},{"address":"GyVyv2H2SB4fYaC7C6raWNSQqNhShdzNuSqQwG9uUUcE","name":"ASTY/POPCAT","configuredFee":1,"dex":"Meteora"},{"address":"RYztJXyPCmwUmfi7punwCf7q6FbxoJbRtBEodZ7j7GH","name":"ASTY/PsyopAnime","configuredFee":1,"dex":"Meteora"},{"address":"DfJsn7Ui6YBUC25kM5FoqrCYrqfRVCoSxpTeyEzWv4vT","name":"ASTY/RAY","configuredFee":1,"dex":"Meteora"},{"address":"2ufiEWc5wF8gJB1a9YiPkFuLwrFn4Zgyma1kdQRakoAr","name":"ASTY/SOL","configuredFee":0.25,"dex":"Meteora"},{"address":"7tbbdGzFZpjrPmM7jQderyyv1x8Ebz1vhwqNhEW97osb","name":"ASTY/SOL","configuredFee":1,"dex":"Meteora"},{"address":"HAieGroddWr3NZpSZYqqm39w2aTUuknWNXxfF6vWNpaR","name":"ASTY/SOL","configuredFee":0.3,"dex":"Meteora"},{"address":"BBVxTUtaagQgG5AgmNSYS9Pqwidc7yAbRF6avt48iF2u","name":"ASTY/TAX","configuredFee":1,"dex":"Meteora"},{"address":"CFcyQpye4K4pyhVPoSAgj3BAqNoWpZCvHpNncXssy7qH","name":"ASTY/TAX","configuredFee":1,"dex":"Meteora"},{"address":"tDqqTi8tJds88AkxFvhjZTQK5iDtV5ZG9ZkNYxh23MG","name":"ASTY/UNI","configuredFee":1,"dex":"Meteora"},{"address":"3HhGsPNMtSg1dNV9SVSfzGCQLx3Zp5giAvYJdQuuNqU9","name":"ASTY/USDC","configuredFee":0.3,"dex":"Meteora"},{"address":"5zCsWjFoEQ7jGNaHNwBRvZq7RMqVh6vQhmiYv4NWkDZK","name":"ASTY/USDC","configuredFee":1,"dex":"Meteora"},{"address":"BqdoyTYoXpnAzRafoBQPrY4ubVSzYE42rxJzNJwoxmZP","name":"ASTY/USDC","configuredFee":0.25,"dex":"Meteora"},{"address":"BWFDr72tjXJsRdUyAfqghv6sGXgQr2zJ78KdeV3c74q1","name":"ASTY/USDC","configuredFee":2,"dex":"Meteora"},{"address":"2Hjjn2aoVdUeGraV4vRak94GGAAW5w9syfVBeXU4Ad5J","name":"ASTY/WBTC","configuredFee":1,"dex":"Meteora"},{"address":"7Fr58kHKW85XiFgZ8WibumE7P5CLZFo4A8qsQxKNEWaE","name":"ASTY/WhiteWhale","configuredFee":1,"dex":"Meteora"},{"address":"4TgvcTKzq9zZR5znyak2y3tvaXg4q6hvKWEZgxesQqkx","name":"ASTY/WLFI","configuredFee":1,"dex":"Meteora"},{"address":"5wpSZwUmdXy5kB96n7U24iFzvbSNEvFd4BvERhhqYjQY","name":"ASTY/WOJAK","configuredFee":1,"dex":"Meteora"},{"address":"2aWCx2qrYmjen1N8UW3eLBzNu7fCPqxjL9NKXqHGXPHc","name":"ASTY/ZBCN","configuredFee":1,"dex":"Meteora"},{"address":"2WRrdtnKKr2eq67o4ZK2VQv7dXu4Pm8iz6TMN8UXvhbV","name":"ASTY/SOL","configuredFee":2,"dex":"Meteora"},{"address":"4iHVvcWHNYFDPFySosAx1qGZoFsDN7gXHxKqUFnGq6oJ","name":"ASTY/BAT","configuredFee":1,"dex":"Meteora"},{"address":"4kWT67c13svR9EfxM4TGn8inNqFsXeuAWQhn8KBVajBs","name":"ASTY/ACC","configuredFee":1,"dex":"Meteora"},{"address":"5fEodJwZNUTwXbiTRKU2KPCc4Xr15fPKVmxbAph7yX7v","name":"ASTY/BTAX","configuredFee":1,"dex":"Meteora"},{"address":"61HTuoKeWhEfscoBcd5zSNvmAyGpxdaUNMriLNnyyREz","name":"ASTY/USDC","configuredFee":6,"dex":"Meteora"},{"address":"8fBYS2Kq9f4Lm1SYdt4sdHRL27Ni8UcRMPtFNLdEcnAH","name":"ASTY/Cake","configuredFee":1,"dex":"Meteora"},{"address":"DdK87cRD7uzoUWc9JZNRNxPoLHXeAcGkfU2b49YTZrm3","name":"ASTY/AVA","configuredFee":1,"dex":"Meteora"},{"address":"DwZZHyqnzWEqNP4VuczHHwfJsni6xqo57TBm7SoeJ62u","name":"ASTY/RENDER","configuredFee":1,"dex":"Meteora"},{"address":"HvmNZyopYSwHRUXCUti4D6YANpfWscVLSQVv9nw2XYhx","name":"ASTY/TURBO","configuredFee":1,"dex":"Meteora"},{"address":"m1e9swvUoggDm2zLXzrzKRrbVwmGEP8aQy7BQigFZgK","name":"ASTY/SOL","configuredFee":0.25,"dex":"Raydium"},{"address":"3PVPMEseLJxE6yyB5eBJ3qzRCzCGN6L9qa85stcZH4FM","name":"ASTY/testicle","configuredFee":1,"dex":"Meteora"},{"address":"BM9W33kccA1GCdbkuGoNDvJLTQW5xKbKwXht8sCXayc3","name":"ASTY/Buttcoin","configuredFee":1,"dex":"Meteora"},{"address":"AiazXNe6ShtCbQHZbmpnkuuswVHFKh5rLZKeudzWU3aq","name":"ASTY/BP","configuredFee":1,"dex":"Meteora"},{"address":"DitqC25rriaMeZyiQPeXLNgfxqRTZL2qxFHp3MHrxM6t","name":"ASTY/Punch","configuredFee":1,"dex":"Meteora"},{"address":"mwsmVXehTt2aFonhJDyZWbwgpxDVM9MMfo7GUYrYL7K","name":"ASTY/Restart","configuredFee":1,"dex":"Meteora"},{"address":"39dM3NfQuPiGwC3M93BUsXKrRdXTAZWPX6VxianCSevn","name":"ASTY/GREM","configuredFee":1,"dex":"Meteora"},{"address":"Fmna4bQBthaFT51VRtKR6QfgHisjxzcrzCWmPCP9dMNy","name":"ASTY/INCOME","configuredFee":1,"dex":"Meteora"},{"address":"AwmLBQ3keEicdD93gTr22avcJqsXwDTGMaLt25Jvyexo","name":"ASTY/ORCA","configuredFee":1,"dex":"Meteora"},{"address":"4UPuDZPPkrC5YHdpFnfv4RX7dfHYnjz8BYZaTCewSn5v","name":"ASTY/MOODENG","configuredFee":1,"dex":"Meteora"},{"address":"9dvPJ67AEzZZD9ThHAEJzkzVwxiVQrvC2Virv8KyGgZb","name":"ASTY/SEARCH","configuredFee":1,"dex":"Meteora"},{"address":"Dz8AuKtEJLrVeuAvhBg4gbTkBeNqC89wfLt3fJKZKk8v","name":"ASTY/USD","configuredFee":4,"dex":"Meteora"},{"address":"28yNWBwCvNLaC8h2Lf8AFcZqzfRpKMQMynwjjMibRwRU","name":"ASTY/HYPE","configuredFee":1,"dex":"Meteora"},{"address":"7wCaiBEGFHPhB5iDTCERsNXbzsc7bZyamqQsHNxuhdYU","name":"ASTY/SATO","configuredFee":1,"dex":"Meteora"},{"address":"Ax38rDrpRMturM59zKBEGsNn2HjE96rC9Jz3WbAgXtYw","name":"ASTY/SIMPLR","configuredFee":1,"dex":"Meteora"},{"address":"444uxc7K8jDZhtRUiuDAM822Pe93RYkHytzWuLKNyxVs","name":"ASTY/TAO","configuredFee":1,"dex":"Meteora"},{"address":"EDrT8LWDRuYE7v75Dkc9gUjLk7MvDYdezvDcnoHGqwuq","name":"ASTY/TROLL","configuredFee":1,"dex":"Meteora"},{"address":"ArKpj5vcNtHJTLhUKeADCmvuBpn1ZZoGNHZZYQ1QXq5n","name":"ASTY/CUPSEY","configuredFee":1,"dex":"Meteora"},{"address":"DGuvY79xbLuJRb3CzwQL59z5zoit7KLnFwyL2t6EQCcj","name":"ASTY/SERIOUS","configuredFee":1,"dex":"Meteora"},{"address":"5rwRQ4KprvvM1Z7h3QQ5WtUPUG5NMYEw1JtehSAxWeh3","name":"ASTY/Chiikawa","configuredFee":1,"dex":"Meteora"},{"address":"9zrdaC8tHges3JLTfsRVuibQ2xhXivZx3keymkZV2PAa","name":"ASTY/three","configuredFee":1,"dex":"Meteora"}];
+const METEORA_BASE = "https://damm-v2.datapi.meteora.ag";
+const RAYDIUM_BASE = "https://api-v3.raydium.io";
+const GECKO_BASE = "https://api.geckoterminal.com/api/v2";
+const GECKO_API_VERSION = "20230203";
+let sourceCompareState = {
+  loading:false,
+  loadedAt:null,
+  error:null,
+  gecko:new Map()
+};
+const EXCLUDED_POOL_IDS = new Set(["7tbbdGzFZpjrPmM7jQderyyv1x8Ebz1vhwqNhEW97osb", "HAieGroddWr3NZpSZYqqm39w2aTUuknWNXxfF6vWNpaR", "2WRrdtnKKr2eq67o4ZK2VQv7dXu4Pm8iz6TMN8UXvhbV", "3HhGsPNMtSg1dNV9SVSfzGCQLx3Zp5giAvYJdQuuNqU9", "BWFDr72tjXJsRdUyAfqghv6sGXgQr2zJ78KdeV3c74q1", "61HTuoKeWhEfscoBcd5zSNvmAyGpxdaUNMriLNnyyREz"]);
+const CACHE_KEY = "asty-team-dashboard-v2-cache";
+const HISTORY_CACHE_KEY = "asty-team-dashboard-meteora-history-v1";
+const HISTORY_CACHE_TTL = 30 * 60 * 1000;
+const OWNER_WALLETS = [
+  {id:"meteora1",name:"Meteora Wallet 1",dex:"Meteora",address:"8KgDtknVhs88sMjRckCGzVDhaFBre3V3FAvhwxfANmfq"},
+  {id:"meteora2",name:"Meteora Wallet 2",dex:"Meteora",address:"4aGjJavF5fq15szkFTdDGQAz9mUUSZ1y1c74isQm2zYV"},
+  {id:"raydium",name:"Raydium Wallet",dex:"Raydium",address:"9Hv3HPGSHS1vq1qjfumoER4TEhu2sgWUmL3S4EaUWrk6"}
+];
+const ASTY_MINT="ASTYqeaoK83Zs1pTFEXZUB6BM8cG8YLTsN852NUkt7ZR";
+const USDC_MINT="EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v";
+const SOL_MINT="So11111111111111111111111111111111111111112";
+const BIRDEYE_API_BASE="https://public-api.birdeye.so";
+const BIRDEYE_WALLET_API_KEY="d920d9664acf463c87f6b6b17893b70a";
+const BIRDEYE_MIN_REQUEST_GAP_MS=1350;
+const BIRDEYE_MAX_429_RETRIES=4;
+let birdEyeLastRequestAt=0;
+
+const CLAIM_SNAPSHOT_KEY="asty-team-dashboard-claiming-day-snapshot-v1";
+let walletState={loading:false,loadedAt:null,wallets:{},aggregate:{},error:null};
+let claimSnapshot=null;
+let rows = POOLS.map(p => ({...p, loaded:false, error:null}));
+let isLoading = false;
+
+const $ = s => document.querySelector(s);
+const fmtUSD = n => Number.isFinite(+n) ? new Intl.NumberFormat("de-DE",{style:"currency",currency:"USD",maximumFractionDigits:+n<10?2:0}).format(+n) : "–";
+const fmtNum = (n,d=2) => Number.isFinite(+n) ? new Intl.NumberFormat("de-DE",{maximumFractionDigits:d}).format(+n) : "–";
+const fmtPct = (n,d=2) => Number.isFinite(+n) ? `${fmtNum(+n,d)} %` : "–";
+const poolFeeValue = r => Number.isFinite(r.apiFee) ? r.apiFee : r.configuredFee;
+const shortAddr = a => a ? `${a.slice(0,5)}…${a.slice(-5)}` : "–";
+const safe = (o,path,fb=null) => path.split(".").reduce((x,k)=>x!=null?x[k]:undefined,o) ?? fb;
+const num = v => (v===null||v===undefined||v==="") ? null : (Number.isFinite(+v)?+v:null);
+
+function normalizeRayFeePercent(d){
+  const trade = num(safe(d,"config.tradeFeeRate"));
+  if (trade !== null) return trade / 10000;
+  const fr = num(d.feeRate);
+  if (fr === null) return null;
+  return fr <= 0.05 ? fr * 100 : fr;
+}
+function calcAnnualAprFromDailyPct(p){ return Number.isFinite(+p) ? +p * 365 : null; }
+function percentile(values, value){
+  const arr = values.filter(Number.isFinite).sort((a,b)=>a-b);
+  if (!arr.length || !Number.isFinite(value)) return null;
+  if (arr.length===1) return 100;
+  let below = 0, equal = 0;
+  for(const v of arr){ if(v<value) below++; else if(v===value) equal++; }
+  return ((below + 0.5*equal) / arr.length) * 100;
+}
+function deriveMetrics(){
+  const nowSec = Date.now()/1000;
+  rows.forEach(r=>{
+    r.excluded = EXCLUDED_POOL_IDS.has(r.address);
+    r.turnover24 = r.tvl>0 && Number.isFinite(r.volume24) ? r.volume24/r.tvl : null;
+    r.turnover7 = r.tvl>0 && Number.isFinite(r.volume7) ? r.volume7/r.tvl : null;
+    r.turnover30 = r.tvl>0 && Number.isFinite(r.volume30) ? r.volume30/r.tvl : null;
+
+    r.feeTvl24 = r.tvl>0 && Number.isFinite(r.fees24) ? (r.fees24/r.tvl)*100 : r.feeTvl24Api;
+    r.feeTvl7 = r.tvl>0 && Number.isFinite(r.fees7) ? (r.fees7/r.tvl)*100 : null;
+    r.feeTvl30 = r.tvl>0 && Number.isFinite(r.fees30) ? (r.fees30/r.tvl)*100 : null;
+
+    const ageDays = Number.isFinite(r.createdAt) ? Math.max(1,(nowSec-r.createdAt)/86400) : null;
+    r.coverage7 = Number.isFinite(r.historyBuckets7) ? Math.max(1,r.historyBuckets7) : (ageDays ? Math.min(7,ageDays) : 7);
+    r.coverage30 = Number.isFinite(r.historyBuckets30) ? Math.max(1,r.historyBuckets30) : (ageDays ? Math.min(30,ageDays) : 30);
+
+    r.effDaily24 = Number.isFinite(r.feeTvl24) ? r.feeTvl24 : null;
+    r.effDaily7 = Number.isFinite(r.feeTvl7) ? r.feeTvl7 / r.coverage7 : null;
+    r.effDaily30 = Number.isFinite(r.feeTvl30) ? r.feeTvl30 / r.coverage30 : null;
+
+    r.apr7 = Number.isFinite(r.feeTvl7) ? r.feeTvl7 * (365/r.coverage7) : r.apr7;
+    r.apr30 = Number.isFinite(r.feeTvl30) ? r.feeTvl30 * (365/r.coverage30) : r.apr30;
+
+    const d24 = Number.isFinite(r.fees24) ? r.fees24 : null;
+    const d7 = Number.isFinite(r.fees7) && r.coverage7>0 ? r.fees7/r.coverage7 : null;
+    const d30 = Number.isFinite(r.fees30) && r.coverage30>0 ? r.fees30/r.coverage30 : null;
+
+    if(d24!==null && d7!==null && d30!==null && d30>0){
+      const r24_30=d24/d30, r7_30=d7/d30, r24_7=d7>0?d24/d7:1;
+      if(r24_30>=1.45 && r7_30>=1.10 && r24_7>=1.15) r.trend="STARK STEIGEND";
+      else if(r24_30>=1.15 || r7_30>=1.10) r.trend="STEIGEND";
+      else if(r24_30<=0.55 && r7_30<=0.85) r.trend="STARK RÜCKLÄUFIG";
+      else if(r24_30<=0.80 || r7_30<=0.88) r.trend="RÜCKLÄUFIG";
+      else r.trend="STABIL";
+    } else {
+      r.pace1h = Number.isFinite(r.volume1) && r.volume24>0 ? (r.volume1*24/r.volume24) : null;
+      r.trend = r.pace1h===null ? "ZU WENIG HISTORIE" :
+        r.pace1h>=1.6?"STARK STEIGEND":
+        r.pace1h>=1.15?"STEIGEND":
+        r.pace1h>=0.75?"STABIL":
+        r.pace1h>=0.5?"RÜCKLÄUFIG":"STARK RÜCKLÄUFIG";
+    }
+  });
+
+  const loaded = rows.filter(r=>r.loaded && !r.excluded);
+  const e24 = loaded.map(r=>r.effDaily24).filter(Number.isFinite);
+  const e7 = loaded.map(r=>r.effDaily7).filter(Number.isFinite);
+  const e30 = loaded.map(r=>r.effDaily30).filter(Number.isFinite);
+
+  loaded.forEach(r=>{
+    if(r.excluded){ r.score=null; r.level="AUSGEKLAMMERT"; return; }
+    const parts=[];
+    const p24=percentile(e24,r.effDaily24); if(p24!==null) parts.push([p24,0.20]);
+    const p7=percentile(e7,r.effDaily7); if(p7!==null) parts.push([p7,0.35]);
+    const p30=percentile(e30,r.effDaily30); if(p30!==null) parts.push([p30,0.45]);
+    const weight=parts.reduce((s,x)=>s+x[1],0);
+    r.score=weight ? Math.round(parts.reduce((s,x)=>s+x[0]*x[1],0)/weight) : null;
+    r.level = r.score>=80?"SEHR HOCH":r.score>=65?"HOCH":r.score>=45?"MITTEL":r.score>=25?"NIEDRIG":"SEHR NIEDRIG";
+  });
+}
+
+function adaptMeteora(base, d){
+  return {
+    ...base, loaded:true, error:null,
+    apiName:d.name || base.name,
+    poolType:"DAMM v2",
+    apiFee:num(safe(d,"pool_config.base_fee_pct")),
+    dynamicFee:!!safe(d,"pool_config.dynamic_fee_initialized",false),
+    protocolFeePct:num(safe(d,"pool_config.protocol_fee_pct")),
+    partnerFeePct:num(safe(d,"pool_config.partner_fee_pct")),
+    referralFeePct:num(safe(d,"pool_config.referral_fee_pct")),
+    tvl:num(d.tvl),
+    volume1:num(safe(d,"volume.1h")),
+    volume24:num(safe(d,"volume.24h")),
+    fees1:num(safe(d,"fees.1h")),
+    fees24:num(safe(d,"fees.24h")),
+    feeTvl24Api:num(safe(d,"fee_tvl_ratio.24h")),
+    apr24: num(safe(d,"apr.24h")) ?? calcAnnualAprFromDailyPct(num(safe(d,"fee_tvl_ratio.24h"))),
+    currentPrice:num(d.current_price),
+    tokenX:safe(d,"token_x.symbol"),
+    tokenY:safe(d,"token_y.symbol"),
+    tokenXMint:safe(d,"token_x.address"),
+    tokenYMint:safe(d,"token_y.address"),
+    tokenXDecimals:num(safe(d,"token_x.decimals")),
+    tokenYDecimals:num(safe(d,"token_y.decimals")),
+    tokenXPrice:num(safe(d,"token_x.price")),
+    tokenYPrice:num(safe(d,"token_y.price")),
+    createdAt:num(d.created_at),
+    raw:d
+  };
+}
+function adaptRaydium(base,d){
+  const day=safe(d,"day",{})||{}, week=safe(d,"week",{})||{}, month=safe(d,"month",{})||{};
+  return {
+    ...base, loaded:true, error:null,
+    apiName:`${safe(d,"mintA.symbol","?")}/${safe(d,"mintB.symbol","?")}`,
+    poolType:d.type || "Raydium",
+    apiFee:normalizeRayFeePercent(d),
+    dynamicFee:!!d.hasDynamicFee,
+    tvl:num(d.tvl),
+    volume1:null,
+    volume24:num(day.volume),
+    fees1:null,
+    fees24:num(day.volumeFee),
+    feeTvl24Api:null,
+    apr24:num(day.feeApr) ?? num(day.apr),
+    volume7:num(week.volume), fees7:num(week.volumeFee), apr7:num(week.feeApr) ?? num(week.apr), historyBuckets7:7,
+    volume30:num(month.volume), fees30:num(month.volumeFee), apr30:num(month.feeApr) ?? num(month.apr), historyBuckets30:30, historyLoaded:true,
+    currentPrice:num(d.price),
+    tokenX:safe(d,"mintA.symbol"),
+    tokenY:safe(d,"mintB.symbol"),
+    tokenXMint:safe(d,"mintA.address"),
+    tokenYMint:safe(d,"mintB.address"),
+    tokenXDecimals:num(safe(d,"mintA.decimals")),
+    tokenYDecimals:num(safe(d,"mintB.decimals")),
+    tokenXPrice:num(safe(d,"mintA.price")),
+    tokenYPrice:num(safe(d,"mintB.price")),
+    createdAt:num(d.openTime),
+    raw:d
+  };
+}
+function markError(base,msg){ return {...base,loaded:false,error:msg}; }
+
+async function fetchJson(url, timeout=18000, retries=2){
+  let lastErr=null;
+  for(let attempt=0; attempt<=retries; attempt++){
+    const ctrl=new AbortController();
+    const t=setTimeout(()=>ctrl.abort(),timeout);
+    try{
+      const r=await fetch(url,{signal:ctrl.signal,cache:"no-store"});
+      if(r.status===429){
+        const retryAfter=Math.max(1,Number(r.headers.get("Retry-After"))||1);
+        if(attempt<retries){ await sleep(retryAfter*1000); continue; }
+      }
+      if(!r.ok) throw new Error(`HTTP ${r.status}`);
+      return await r.json();
+    }catch(e){
+      lastErr=e;
+      if(attempt<retries) await sleep(500*(attempt+1));
+    }finally{ clearTimeout(t); }
+  }
+  throw lastErr || new Error("API-Fehler");
+}
+function sleep(ms){return new Promise(r=>setTimeout(r,ms));}
+
+
+
+async function fetchGeckoMulti(addresses){
+  const url=`${GECKO_BASE}/networks/solana/pools/multi/${addresses.join(",")}`;
+  const ctrl=new AbortController();
+  const timer=setTimeout(()=>ctrl.abort(),22000);
+  try{
+    const res=await fetch(url,{
+      method:"GET",
+      headers:{
+        "Accept":`application/json;version=${GECKO_API_VERSION}`
+      },
+      cache:"no-store",
+      signal:ctrl.signal
+    });
+    if(res.status===429) throw new Error("GeckoTerminal Rate-Limit erreicht");
+    if(!res.ok) throw new Error(`GeckoTerminal HTTP ${res.status}`);
+    return await res.json();
+  }finally{
+    clearTimeout(timer);
+  }
+}
+function geckoAddress(item){
+  const attr=item?.attributes||{};
+  if(attr.address) return String(attr.address);
+  const id=String(item?.id||"");
+  if(id.startsWith("solana_")) return id.slice(7);
+  return id.includes("_")?id.split("_").slice(1).join("_"):id;
+}
+function normalizeGeckoPool(item){
+  const a=item?.attributes||{};
+  return {
+    address:geckoAddress(item),
+    tvl:num(a.reserve_in_usd),
+    volume24:num(a?.volume_usd?.h24),
+    name:a.name||null,
+    raw:item
+  };
+}
+async function loadGeckoComparison(){
+  if(sourceCompareState.loading) return;
+  sourceCompareState.loading=true;
+  sourceCompareState.error=null;
+  renderSourceCompare();
+  $("#compareRefreshBtn").disabled=true;
+
+  try{
+    const map=new Map();
+    const list=POOLS.map(p=>p.address);
+    const chunkSize=25;
+
+    for(let i=0;i<list.length;i+=chunkSize){
+      const chunk=list.slice(i,i+chunkSize);
+      let j=null;
+      let lastError=null;
+
+      for(let attempt=0;attempt<3;attempt++){
+        try{
+          j=await fetchGeckoMulti(chunk);
+          break;
+        }catch(e){
+          lastError=e;
+          if(attempt<2) await sleep(1800*(attempt+1));
+        }
+      }
+      if(!j) throw lastError||new Error("GeckoTerminal konnte nicht geladen werden");
+
+      const data=Array.isArray(j?.data)?j.data:[];
+      for(const item of data){
+        const g=normalizeGeckoPool(item);
+        if(g.address) map.set(g.address,g);
+      }
+
+      // Public API: bewusst wenige Multi-Pool-Requests und Abstand zwischen Chunks.
+      if(i+chunkSize<list.length) await sleep(1300);
+    }
+
+    sourceCompareState.gecko=map;
+    sourceCompareState.loadedAt=Date.now();
+  }catch(e){
+    sourceCompareState.error=e?.message||"GeckoTerminal-Vergleich fehlgeschlagen";
+  }finally{
+    sourceCompareState.loading=false;
+    $("#compareRefreshBtn").disabled=false;
+    renderSourceCompare();
+  }
+}
+function sourceCompareRows(){
+  const out=rows.map(r=>{
+    const g=sourceCompareState.gecko.get(r.address);
+    const nativeTvl=r.loaded&&Number.isFinite(r.tvl)?r.tvl:null;
+    const nativeVol=r.loaded&&Number.isFinite(r.volume24)?r.volume24:null;
+    const geckoTvl=Number.isFinite(g?.tvl)?g.tvl:null;
+    const geckoVol=Number.isFinite(g?.volume24)?g.volume24:null;
+    return {
+      address:r.address,name:r.name,dex:r.dex,fee:poolFeeValue(r),
+      nativeTvl,geckoTvl,
+      nativeVol,geckoVol,
+      tvlDelta:Number.isFinite(nativeTvl)&&Number.isFinite(geckoTvl)?geckoTvl-nativeTvl:null,
+      volDelta:Number.isFinite(nativeVol)&&Number.isFinite(geckoVol)?geckoVol-nativeVol:null,
+      matched:!!g
+    };
+  });
+
+  const filter=$("#compareFilter")?.value||"all";
+  let filtered=out.filter(x=>{
+    if(filter==="different"){
+      return (Number.isFinite(x.tvlDelta)&&Math.abs(x.tvlDelta)>=0.01) ||
+             (Number.isFinite(x.volDelta)&&Math.abs(x.volDelta)>=0.01);
+    }
+    if(filter==="sol") return x.name==="ASTY/SOL";
+    if(filter==="usdc") return x.name==="ASTY/USDC";
+    return true;
+  });
+
+  const sort=$("#compareSort")?.value||"volDeltaAbs";
+  filtered.sort((a,b)=>{
+    if(sort==="name") return a.name.localeCompare(b.name,"de") || b.fee-a.fee;
+    if(sort==="tvlDeltaAbs") return Math.abs(b.tvlDelta??-Infinity)-Math.abs(a.tvlDelta??-Infinity);
+    if(sort==="geckoVol") return (b.geckoVol??-Infinity)-(a.geckoVol??-Infinity);
+    if(sort==="nativeVol") return (b.nativeVol??-Infinity)-(a.nativeVol??-Infinity);
+    return Math.abs(b.volDelta??-Infinity)-Math.abs(a.volDelta??-Infinity);
+  });
+  return filtered;
+}
+function signedUsd(v){
+  if(!Number.isFinite(v)) return "–";
+  return `${v>0?"+":""}${fmtUSD(v)}`;
+}
+function deltaClass(v){
+  if(!Number.isFinite(v)||Math.abs(v)<0.005) return "na";
+  return v>0?"compare-pos":"compare-neg";
+}
+function renderSourceCompare(){
+  const status=$("#compareStatus");
+  if(!status) return;
+
+  if(sourceCompareState.loading){
+    status.className="compare-status loading";
+    status.textContent="GeckoTerminal wird geladen…";
+  }else if(sourceCompareState.error){
+    status.className="compare-status warn";
+    status.textContent=sourceCompareState.error;
+  }else if(sourceCompareState.loadedAt){
+    status.className="compare-status live";
+    status.textContent=`Geladen ${new Date(sourceCompareState.loadedAt).toLocaleTimeString("de-DE",{hour:"2-digit",minute:"2-digit"})}`;
+  }else{
+    status.className="compare-status";
+    status.textContent="Noch nicht geladen";
+  }
+
+  const comparable=rows.map(r=>({r,g:sourceCompareState.gecko.get(r.address)}))
+    .filter(x=>x.r.loaded&&x.g);
+
+  const nativeTvl=comparable.reduce((s,x)=>s+(Number.isFinite(x.r.tvl)?x.r.tvl:0),0);
+  const geckoTvl=comparable.reduce((s,x)=>s+(Number.isFinite(x.g.tvl)?x.g.tvl:0),0);
+  const nativeVol=comparable.reduce((s,x)=>s+(Number.isFinite(x.r.volume24)?x.r.volume24:0),0);
+  const geckoVol=comparable.reduce((s,x)=>s+(Number.isFinite(x.g.volume24)?x.g.volume24:0),0);
+
+  $("#compareTvl").textContent=comparable.length?`${fmtUSD(nativeTvl)} ↔ ${fmtUSD(geckoTvl)}`:"–";
+  $("#compareTvlNote").textContent=comparable.length?`Native → Gecko · Δ ${signedUsd(geckoTvl-nativeTvl)}`:"–";
+  $("#compareVol").textContent=comparable.length?`${fmtUSD(nativeVol)} ↔ ${fmtUSD(geckoVol)}`:"–";
+  $("#compareVolNote").textContent=comparable.length?`Native → Gecko · Δ ${signedUsd(geckoVol-nativeVol)}`:"–";
+  $("#compareLoaded").textContent=`${comparable.length} / 64`;
+  $("#compareLoadedNote").textContent=sourceCompareState.error?sourceCompareState.error:`${sourceCompareState.gecko.size} Gecko-Pools erkannt`;
+
+  const body=$("#compareBody");
+  if(sourceCompareState.loading && !sourceCompareState.gecko.size){
+    body.innerHTML=`<tr><td colspan="8" class="na" style="text-align:center">GeckoTerminal-Daten werden geladen…</td></tr>`;
+    return;
+  }
+
+  const data=sourceCompareRows();
+  body.innerHTML=data.length?data.map(x=>`
+    <tr onclick="openDetail('${x.address}')">
+      <td><div class="tokenname">${x.name}</div><div class="mint">Fee ${fmtPct(x.fee)}</div></td>
+      <td><span class="dex ${x.dex==="Raydium"?"ray":""}">${x.dex}</span></td>
+      <td>${fmtUSD(x.nativeTvl)}</td>
+      <td>${fmtUSD(x.geckoTvl)}</td>
+      <td class="${deltaClass(x.tvlDelta)} ${Number.isFinite(x.tvlDelta)&&Math.abs(x.tvlDelta)>100?"compare-big":""}">${signedUsd(x.tvlDelta)}</td>
+      <td>${fmtUSD(x.nativeVol)}</td>
+      <td>${fmtUSD(x.geckoVol)}</td>
+      <td class="${deltaClass(x.volDelta)} ${Number.isFinite(x.volDelta)&&Math.abs(x.volDelta)>10?"compare-big":""}">${signedUsd(x.volDelta)}</td>
+    </tr>
+  `).join(""):`<tr><td colspan="8" class="na" style="text-align:center">Keine Vergleichsdaten für diesen Filter.</td></tr>`;
+}
+
+function getHistoryCache(){
+  try{ return JSON.parse(localStorage.getItem(HISTORY_CACHE_KEY)||"{}") || {}; }catch(e){ return {}; }
+}
+function saveHistoryCache(cache){
+  try{ localStorage.setItem(HISTORY_CACHE_KEY,JSON.stringify(cache)); }catch(e){}
+}
+function sumHistory(points,key){
+  return points.reduce((s,x)=>s+(num(x?.[key])||0),0);
+}
+function applyMeteoraHistory(row,j){
+  const points=(Array.isArray(j?.data)?j.data:[])
+    .filter(x=>Number.isFinite(num(x?.timestamp)))
+    .sort((a,b)=>num(a.timestamp)-num(b.timestamp));
+  const last30=points.slice(-30);
+  const last7=last30.slice(-7);
+  return {
+    ...row,
+    volume7:sumHistory(last7,"volume"),
+    fees7:sumHistory(last7,"fees"),
+    protocolFees7:sumHistory(last7,"protocol_fees"),
+    volume30:sumHistory(last30,"volume"),
+    fees30:sumHistory(last30,"fees"),
+    protocolFees30:sumHistory(last30,"protocol_fees"),
+    historyBuckets7:last7.length,
+    historyBuckets30:last30.length,
+    historyLoaded:last30.length>0,
+    historyError:last30.length ? null : "Keine History-Buckets"
+  };
+}
+async function loadMeteoraHistory(baseRows, progressCb, force=false){
+  const cache=getHistoryCache();
+  const now=Date.now();
+  const end=Math.floor(now/1000);
+  const start=end-(31*86400);
+  const output=new Map();
+  const needs=[];
+
+  for(const r of baseRows){
+    const c=cache[r.address];
+    if(!force && c?.ts && (now-c.ts)<HISTORY_CACHE_TTL && c?.data){
+      output.set(r.address,applyMeteoraHistory(r,c.data));
+    } else {
+      needs.push(r);
+    }
+  }
+
+  let done=baseRows.length-needs.length;
+  progressCb(35+Math.round((done/Math.max(1,baseRows.length))*58));
+
+  for(let i=0;i<needs.length;i+=8){
+    const batch=needs.slice(i,i+8);
+    const res=await Promise.all(batch.map(async r=>{
+      const url=`${METEORA_BASE}/pools/${r.address}/volume/history?timeframe=24h&start_time=${start}&end_time=${end}`;
+      try{
+        const j=await fetchJson(url,22000,2);
+        cache[r.address]={ts:Date.now(),data:j};
+        return [r.address,applyMeteoraHistory(r,j)];
+      }catch(e){
+        return [r.address,{...r,historyLoaded:false,historyError:e?.message||"History nicht geladen"}];
+      }
+    }));
+    res.forEach(([a,r])=>output.set(a,r));
+    done+=batch.length;
+    progressCb(35+Math.round((done/Math.max(1,baseRows.length))*58));
+    saveHistoryCache(cache);
+    if(i+8<needs.length) await sleep(1100);
+  }
+  return baseRows.map(r=>output.get(r.address)||r);
+}
+
+async function loadMeteora(progressCb){
+  const list=POOLS.filter(p=>p.dex==="Meteora");
+  const found=new Map();
+  // Bevorzugt: wenige Bulk-Requests mit OR-Filter, um die 10-RPS-Grenze nicht zu belasten.
+  const chunks=[]; for(let i=0;i<list.length;i+=20) chunks.push(list.slice(i,i+20));
+  for(let i=0;i<chunks.length;i++){
+    const c=chunks[i];
+    const filter=`pool_address=[${c.map(x=>x.address).join("|")}]`;
+    try{
+      const url=`${METEORA_BASE}/pools?page=1&page_size=1000&filter_by=${encodeURIComponent(filter)}`;
+      const j=await fetchJson(url);
+      const arr=Array.isArray(j)?j:(Array.isArray(j.data)?j.data:[]);
+      arr.forEach(x=>{ if(x?.address) found.set(x.address,x); });
+    }catch(e){}
+    progressCb(Math.round(((i+1)/chunks.length)*22));
+    await sleep(120);
+  }
+  // Fallback: nur fehlende Pools einzeln, gedrosselt.
+  const missing=list.filter(p=>!found.has(p.address));
+  for(let i=0;i<missing.length;i+=8){
+    const batch=missing.slice(i,i+8);
+    const res=await Promise.all(batch.map(async p=>{
+      try{ return [p.address, await fetchJson(`${METEORA_BASE}/pools/${p.address}`)]; }
+      catch(e){ return [p.address, null, e?.message||"Fehler"]; }
+    }));
+    res.forEach(([a,d])=>{ if(d) found.set(a,d); });
+    progressCb(22+Math.round(((i+batch.length)/Math.max(1,missing.length))*13));
+    if(i+8<missing.length) await sleep(1050);
+  }
+  return list.map(p=>found.has(p.address)?adaptMeteora(p,found.get(p.address)):markError(p,"Meteora-Daten nicht geladen"));
+}
+async function loadRaydium(progressCb){
+  const p=POOLS.find(x=>x.dex==="Raydium");
+  try{
+    const j=await fetchJson(`${RAYDIUM_BASE}/pools/info/ids?ids=${encodeURIComponent(p.address)}`);
+    const arr=Array.isArray(j?.data)?j.data:[];
+    const d=arr.find(x=>x.id===p.address)||arr[0];
+    if(!d) throw new Error(j?.msg||"Pool nicht gefunden");
+    progressCb(97);
+    return adaptRaydium(p,d);
+  }catch(e){
+    progressCb(97);
+    return markError(p,e?.message||"Raydium-Daten nicht geladen");
+  }
+}
+
+function saveCache(){
+  try{ localStorage.setItem(CACHE_KEY,JSON.stringify({ts:Date.now(),rows})); }catch(e){}
+}
+function loadCache(){
+  try{
+    const c=JSON.parse(localStorage.getItem(CACHE_KEY)||"null");
+    if(c?.rows?.length===64){
+      rows=c.rows; deriveMetrics(); render();
+      $("#updatedText").textContent=`Zwischenspeicher: ${new Date(c.ts).toLocaleString("de-DE")}`;
+      $("#statusText").textContent="Letzten gespeicherten Datenstand geladen";
+      $("#statusDot").className="dot warn";
+      return true;
+    }
+  }catch(e){}
+  return false;
+}
+
+async function refresh(forceHistory=false){
+  if(isLoading)return;
+  isLoading=true; $("#refreshBtn").disabled=true;
+  $("#statusDot").className="dot loading"; $("#statusText").textContent="Pooldaten werden geladen…";
+  $("#progressBar").style.width="2%";
+  const progressCb=p=>$("#progressBar").style.width=`${Math.min(99,p)}%`;
+  try{
+    const [mBase,ray]=await Promise.all([loadMeteora(progressCb),loadRaydium(progressCb)]);
+    $("#statusText").textContent="7d- und 30d-Historie von Meteora wird geladen…";
+    const m=await loadMeteoraHistory(mBase,progressCb,forceHistory);
+    const map=new Map([...m,ray].map(x=>[x.address,x]));
+    rows=POOLS.map(p=>map.get(p.address)||markError(p,"Keine Daten"));
+    deriveMetrics(); saveCache(); render();
+
+    const ok=rows.filter(r=>r.loaded).length;
+    const hist=rows.filter(r=>r.dex==="Meteora"&&r.loaded&&r.historyLoaded).length;
+    const err=64-ok;
+    $("#statusDot").className=(err||hist<63)?"dot warn":"dot live";
+    $("#statusText").textContent=
+      err ? `${ok} Pools geladen · ${err} ohne aktuelle Daten · History ${hist}/63` :
+      hist<63 ? `Alle Pooldaten geladen · Meteora-History ${hist}/63` :
+      `Alle 64 Pools inkl. 7d/30d-Historie erfolgreich geladen`;
+    $("#updatedText").textContent=`Aktualisiert: ${new Date().toLocaleString("de-DE")}`;
+    $("#progressBar").style.width="100%";
+    setTimeout(()=>$("#progressBar").style.width="0%",800);
+  }catch(e){
+    $("#statusDot").className="dot warn"; $("#statusText").textContent="Aktualisierung fehlgeschlagen · gespeicherte Daten bleiben erhalten";
+  }finally{
+    isLoading=false; $("#refreshBtn").disabled=false;
+  }
+}
+
+
+function birdEyeNumber(...values){
+  for(const v of values){
+    if(v===null||v===undefined||v==="") continue;
+    const n=Number(v);
+    if(Number.isFinite(n)) return n;
+  }
+  return null;
+}
+function birdEyePortfolioData(payload){
+  const data=payload?.data??payload??{};
+  const items=
+    Array.isArray(data?.items)?data.items:
+    Array.isArray(data?.tokens)?data.tokens:
+    Array.isArray(data?.assets)?data.assets:
+    Array.isArray(data)?data:[];
+  return {
+    data,
+    items,
+    totalValue:birdEyeNumber(data?.total_value,data?.totalValue,data?.value),
+    totalRows:birdEyeNumber(data?.pagination?.total,data?.total,data?.total_items)
+  };
+}
+function normalizeBirdEyeAsset(item){
+  const symbol=String(item?.symbol??item?.token_symbol??item?.tokenSymbol??item?.token?.symbol??"").trim();
+  const name=String(item?.name??item?.token_name??item?.tokenName??item?.token?.name??"").trim();
+  const address=String(
+    item?.address??item?.token_address??item?.tokenAddress??
+    item?.mint??item?.token?.address??item?.token?.mint??""
+  ).trim();
+
+  let amount=birdEyeNumber(item?.amount,item?.ui_amount,item?.uiAmount,item?.balance_ui,item?.balanceUi);
+  const decimals=birdEyeNumber(item?.decimals,item?.token?.decimals);
+  if(amount===null){
+    const raw=birdEyeNumber(item?.balance);
+    if(raw!==null && Number.isFinite(decimals)) amount=raw/Math.pow(10,decimals);
+  }
+
+  const price=birdEyeNumber(item?.price,item?.price_usd,item?.priceUsd,item?.token?.price);
+  let value=birdEyeNumber(item?.value,item?.value_usd,item?.valueUsd,item?.amountUsd);
+  if(value===null && amount!==null && price!==null) value=amount*price;
+
+  const isSol=symbol.toUpperCase()==="SOL" || address===SOL_MINT;
+  const mint=isSol?"SOL":address;
+  if(!mint || amount===null) return null;
+
+  return {
+    mint,
+    address:isSol?SOL_MINT:address,
+    symbol:isSol?"SOL":(symbol||null),
+    name:isSol?"Solana":(name||null),
+    amount,decimals,price,value
+  };
+}
+async function birdEyeWaitForSlot(){
+  const elapsed=Date.now()-birdEyeLastRequestAt;
+  const wait=Math.max(0,BIRDEYE_MIN_REQUEST_GAP_MS-elapsed);
+  if(wait>0) await sleep(wait);
+  birdEyeLastRequestAt=Date.now();
+}
+async function birdEyeFetch(path,timeoutMs=18000){
+  let lastError=null;
+
+  for(let attempt=0;attempt<=BIRDEYE_MAX_429_RETRIES;attempt++){
+    await birdEyeWaitForSlot();
+
+    const ctrl=new AbortController();
+    const timer=setTimeout(()=>ctrl.abort(),timeoutMs);
+
+    try{
+      const res=await fetch(`${BIRDEYE_API_BASE}${path}`,{
+        method:"GET",
+        headers:{
+          Accept:"application/json",
+          "X-API-KEY":BIRDEYE_WALLET_API_KEY,
+          "x-chain":"solana"
+        },
+        cache:"no-store",
+        signal:ctrl.signal
+      });
+
+      const payload=await res.json().catch(()=>null);
+
+      if(res.status===429){
+        const retryHeader=Number(res.headers.get("retry-after"));
+        const retryMs=Number.isFinite(retryHeader)&&retryHeader>0
+          ? retryHeader*1000
+          : Math.min(6000,1600*Math.pow(1.55,attempt));
+
+        lastError=new Error("Birdeye Rate-Limit erreicht");
+        if(attempt<BIRDEYE_MAX_429_RETRIES){
+          await sleep(retryMs);
+          continue;
+        }
+      }
+
+      if(!res.ok){
+        const message=
+          payload?.message??payload?.error??
+          (res.status===401?"BirdEye API-Key nicht autorisiert":
+           res.status===403?"BirdEye Zugriff abgelehnt":
+           res.status===429?"BirdEye Rate-Limit erreicht":
+           `BirdEye HTTP ${res.status}`);
+        const error=new Error(String(message));
+        error.status=res.status;
+        throw error;
+      }
+
+      if(payload?.success===false){
+        const msg=String(payload?.message||"BirdEye meldet einen Fehler");
+        // Some BirdEye responses return a rate-limit message with HTTP 200.
+        if(/too many requests|rate.?limit/i.test(msg) && attempt<BIRDEYE_MAX_429_RETRIES){
+          lastError=new Error(msg);
+          await sleep(Math.min(6000,1600*Math.pow(1.55,attempt)));
+          continue;
+        }
+        throw new Error(msg);
+      }
+
+      return payload;
+    }catch(e){
+      lastError=e;
+
+      // Only automatically retry actual throttling. Other errors should remain visible.
+      if(/too many requests|rate.?limit|429/i.test(String(e?.message||"")) && attempt<BIRDEYE_MAX_429_RETRIES){
+        await sleep(Math.min(6000,1600*Math.pow(1.55,attempt)));
+        continue;
+      }
+      throw e;
+    }finally{
+      clearTimeout(timer);
+    }
+  }
+
+  throw lastError||new Error("BirdEye-Abfrage fehlgeschlagen");
+}
+async function loadOneWallet(w){
+  const assets={};
+  let offset=0;
+  const limit=100;
+  let totalUsd=null;
+  let expectedTotal=null;
+
+  // Normalerweise reicht eine Seite. Pagination bleibt für Wallets mit >100 Assets aktiv.
+  for(let page=0;page<10;page++){
+    const qs=new URLSearchParams({
+      wallet:w.address,
+      limit:String(limit),
+      offset:String(offset),
+      sort_by:"value",
+      sort_type:"desc",
+      flags:"include_low_liquidity"
+    });
+
+    const payload=await birdEyeFetch(`/wallet/v2/current-net-worth?${qs.toString()}`);
+    const parsed=birdEyePortfolioData(payload);
+
+    if(totalUsd===null && parsed.totalValue!==null) totalUsd=parsed.totalValue;
+    if(expectedTotal===null && parsed.totalRows!==null) expectedTotal=parsed.totalRows;
+
+    for(const raw of parsed.items){
+      const a=normalizeBirdEyeAsset(raw);
+      if(!a || !Number.isFinite(a.amount)) continue;
+
+      if(!assets[a.mint]){
+        assets[a.mint]={...a,amount:0,value:0};
+      }
+      const dst=assets[a.mint];
+      dst.amount+=a.amount;
+      if(Number.isFinite(a.value)) dst.value=(Number(dst.value)||0)+a.value;
+      if(Number.isFinite(a.price)&&a.price>0) dst.price=a.price;
+      if(a.symbol) dst.symbol=a.symbol;
+      if(a.name) dst.name=a.name;
+      if(Number.isFinite(a.decimals)) dst.decimals=a.decimals;
+    }
+
+    if(parsed.items.length<limit) break;
+    offset+=limit;
+    if(expectedTotal!==null && offset>=expectedTotal) break;
+
+    // Unter BirdEyes Wallet-Rate-Limit bleiben.
+    await sleep(250);
+  }
+
+  if(totalUsd===null){
+    totalUsd=Object.values(assets).reduce((sum,a)=>{
+      if(Number.isFinite(a.value)) return sum+a.value;
+      if(Number.isFinite(a.amount)&&Number.isFinite(a.price)) return sum+a.amount*a.price;
+      return sum;
+    },0);
+  }
+
+  return {...w,assets,totalUsd,source:"BirdEye",error:null};
+}
+function buildTokenRegistry(){
+  const reg=new Map();
+  reg.set("SOL",{symbol:"SOL",name:"Solana",price:null,decimals:9,known:true});
+  reg.set(ASTY_MINT,{symbol:"ASTY",name:"ArbStrategy",price:null,decimals:9,known:true});
+  reg.set(USDC_MINT,{symbol:"USDC",name:"USD Coin",price:1,decimals:6,known:true});
+
+  // Bekannte Pair-Token aus den ASTY-Pooldaten als Fallback hinterlegen.
+  for(const r of rows){
+    for(const side of ["X","Y"]){
+      let mint=r[`token${side}Mint`];
+      const poolSymbol=String(r[`token${side}`]||"").trim();
+      const price=r[`token${side}Price`];
+      const decimals=r[`token${side}Decimals`];
+      if(!mint) continue;
+      if(mint===SOL_MINT || ["SOL","WSOL"].includes(poolSymbol.toUpperCase())) mint="SOL";
+      const old=reg.get(mint)||{};
+      reg.set(mint,{
+        ...old,
+        poolSymbol:poolSymbol||old.poolSymbol||null,
+        symbol:old.symbol||poolSymbol||null,
+        price:Number.isFinite(price)&&price>0?price:(old.price??null),
+        decimals:Number.isFinite(decimals)?decimals:(old.decimals??null),
+        known:true
+      });
+    }
+  }
+
+  // Sichtbarer Name: BirdEye-Symbol -> BirdEye-Tokenname -> ASTY-Pool-Symbol -> Unbekannt.
+  for(const w of Object.values(walletState.wallets||{})){
+    for(const [mint,a] of Object.entries(w.assets||{})){
+      const old=reg.get(mint)||{};
+      const birdSymbol=String(a.symbol||"").trim()||null;
+      const birdName=String(a.name||"").trim()||null;
+      const poolSymbol=old.poolSymbol||null;
+      reg.set(mint,{
+        ...old,
+        birdSymbol,birdName,
+        symbol:birdSymbol||birdName||poolSymbol||old.symbol||"Unbekannt",
+        name:birdName||old.name||null,
+        price:Number.isFinite(a.price)&&a.price>0?a.price:(old.price??null),
+        decimals:Number.isFinite(a.decimals)?a.decimals:(old.decimals??null),
+        known:!!(birdSymbol||birdName||poolSymbol||old.known)
+      });
+    }
+  }
+  return reg;
+}
+function aggregateWallets(wallets){
+  const agg={};
+  for(const w of Object.values(wallets||{})){
+    for(const [mint,a] of Object.entries(w.assets||{})){
+      if(!agg[mint]){
+        agg[mint]={
+          mint,
+          amount:0,
+          value:0,
+          price:Number.isFinite(a.price)?a.price:null,
+          symbol:a.symbol||null,
+          name:a.name||null,
+          decimals:a.decimals??null
+        };
+      }
+      const x=agg[mint];
+      x.amount+=Number(a.amount)||0;
+      if(Number.isFinite(a.value)) x.value+=a.value;
+      if(Number.isFinite(a.price)&&a.price>0) x.price=a.price;
+      if(a.symbol) x.symbol=a.symbol;
+      if(a.name) x.name=a.name;
+    }
+  }
+  return agg;
+}
+function walletKnownUsd(wallet,reg){
+  if(Number.isFinite(wallet?.totalUsd)) return wallet.totalUsd;
+  let total=0;
+  for(const [mint,a] of Object.entries(wallet?.assets||{})){
+    if(Number.isFinite(a.value)){total+=a.value;continue;}
+    const p=Number.isFinite(a.price)?a.price:reg.get(mint)?.price;
+    if(Number.isFinite(p)&&p>0) total+=(Number(a.amount)||0)*p;
+  }
+  return total;
+}
+function assetInfo(mint,reg){
+  return reg.get(mint)||{symbol:mint==="SOL"?"SOL":"Unbekannt",name:null,price:null,known:mint==="SOL"};
+}
+function amountText(amount,symbol){const n=Number(amount)||0,d=Math.abs(n)>=100000?0:Math.abs(n)>=1000?2:Math.abs(n)>=1?4:8;return `${fmtNum(n,d)} ${symbol}`;}
+function renderSnapshotMeta(){$("#snapshotMeta").textContent=claimSnapshot?`Gespeichert: ${new Date(claimSnapshot.ts).toLocaleString("de-DE")} · ${Object.keys(claimSnapshot.aggregate||{}).length} Assets`:"Noch kein Snapshot gespeichert.";}
+function renderWalletState(){
+  const reg=buildTokenRegistry();
+  const agg=walletState.aggregate||{};
+  const asty=agg[ASTY_MINT]?.amount||0;
+  const sol=agg.SOL?.amount||0;
+  const usdc=agg[USDC_MINT]?.amount||0;
+  const astyP=agg[ASTY_MINT]?.price??reg.get(ASTY_MINT)?.price;
+  const solP=agg.SOL?.price??reg.get("SOL")?.price;
+
+  $("#claimAsty").textContent=amountText(asty,"ASTY");
+  $("#claimSol").textContent=amountText(sol,"SOL");
+  $("#claimUsdc").textContent=fmtUSD(usdc);
+  $("#claimAstyUsd").textContent=`USD-Wert: ${Number.isFinite(astyP)?fmtUSD(asty*astyP):"–"}`;
+  $("#claimSolUsd").textContent=`USD-Wert: ${Number.isFinite(solP)?fmtUSD(sol*solP):"–"}`;
+
+  let known=0;
+  for(const [mint,a] of Object.entries(agg)){
+    if(Number.isFinite(a.value)){known+=a.value;continue;}
+    const p=Number.isFinite(a.price)?a.price:reg.get(mint)?.price;
+    if(Number.isFinite(p)&&p>0) known+=(Number(a.amount)||0)*p;
+  }
+  $("#claimKnownUsd").textContent=walletState.loadedAt?fmtUSD(known):"–";
+
+  const st=$("#walletLoadStatus");
+  if(walletState.loading){
+    st.className="claim-status loading";
+    st.textContent="BirdEye lädt Wallets nacheinander…";
+  }else if(walletState.error&&walletState.loadedAt){
+    st.className="claim-status warn";
+    st.textContent="Teilweise geladen";
+  }else if(walletState.error){
+    st.className="claim-status warn";
+    st.textContent="Fehler beim Laden";
+  }else if(walletState.loadedAt){
+    st.className="claim-status live";
+    st.textContent=`Geladen ${new Date(walletState.loadedAt).toLocaleTimeString("de-DE",{hour:"2-digit",minute:"2-digit"})}`;
+  }else{
+    st.className="claim-status";
+    st.textContent="Noch nicht geladen";
+  }
+
+  $("#walletCards").innerHTML=OWNER_WALLETS.map(w=>{
+    const x=walletState.wallets[w.id];
+    const assets=x?.assets||{};
+    const a=assets[ASTY_MINT]?.amount||0;
+    const s=assets.SOL?.amount||0;
+    const u=assets[USDC_MINT]?.amount||0;
+    const total=x?walletKnownUsd(x,reg):null;
+    const err=x?.error?`<div class="claim-warn" style="font-size:10px;margin-top:8px">${x.error}</div>`:"";
+
+    return `<div class="wallet-card">
+      <div class="wallet-card-head">
+        <div><div class="wallet-name">${w.name}</div><div class="wallet-address">${shortAddr(w.address)}</div></div>
+        <span class="dex ${w.dex==="Raydium"?"ray":""}">${w.dex}</span>
+      </div>
+      <div class="wallet-main">
+        <div class="wallet-stat"><div class="l">ASTY</div><div class="v">${x&&!x.error?fmtNum(a,2):"–"}</div></div>
+        <div class="wallet-stat"><div class="l">SOL</div><div class="v">${x&&!x.error?fmtNum(s,5):"–"}</div></div>
+        <div class="wallet-stat"><div class="l">USDC</div><div class="v">${x&&!x.error?fmtNum(u,2):"–"}</div></div>
+      </div>
+      <div class="wallet-total">Wallet-Wert: ${Number.isFinite(total)&&!x?.error?fmtUSD(total):"–"}</div>
+      ${err}
+    </div>`;
+  }).join("");
+
+  const mints=Object.keys(agg)
+    .filter(m=>(agg[m]?.amount||0)>0)
+    .sort((a,b)=>{
+      const ai=assetInfo(a,reg), bi=assetInfo(b,reg);
+      const aUnknown=!ai.known, bUnknown=!bi.known;
+      if(aUnknown!==bUnknown) return aUnknown?1:-1;
+      const av=Number.isFinite(agg[a]?.value)?agg[a].value:((agg[a]?.amount||0)*(agg[a]?.price||0));
+      const bv=Number.isFinite(agg[b]?.value)?agg[b].value:((agg[b]?.amount||0)*(agg[b]?.price||0));
+      if(bv!==av) return bv-av;
+      return String(ai.symbol||"").localeCompare(String(bi.symbol||""),"de");
+    });
+
+  $("#walletAssetBody").innerHTML=mints.length?mints.map(mint=>{
+    const item=agg[mint]||{};
+    const inf=assetInfo(mint,reg);
+    const amount=item.amount||0;
+    const price=Number.isFinite(item.price)?item.price:inf.price;
+    const value=Number.isFinite(item.value)?item.value:(Number.isFinite(price)?amount*price:null);
+    const per=id=>walletState.wallets[id]?.assets?.[mint]?.amount||0;
+    const symbol=inf.symbol||"Unbekannt";
+    const unknown=!inf.known;
+    const subtitle=unknown?`<div class="mint">unbekanntes Asset</div>`:"";
+
+    return `<tr>
+      <td><div class="tokenname">${symbol}</div>${subtitle}</td>
+      <td><div class="mint">${mint==="SOL"?"native SOL":shortAddr(mint)}</div></td>
+      <td>${fmtNum(amount,8)}</td>
+      <td>${fmtNum(per("meteora1"),8)}</td>
+      <td>${fmtNum(per("meteora2"),8)}</td>
+      <td>${fmtNum(per("raydium"),8)}</td>
+      <td>${Number.isFinite(price)?fmtUSD(price):"–"}</td>
+      <td>${Number.isFinite(value)?fmtUSD(value):"–"}</td>
+    </tr>`;
+  }).join(""):`<tr><td colspan="8" class="na" style="text-align:center">${walletState.loading?"BirdEye lädt Bestände…":"Keine freien Bestände gefunden."}</td></tr>`;
+
+  renderClaimDelta();
+}
+function renderClaimDelta(){const tb=$("#claimDeltaBody");if(!claimSnapshot){tb.innerHTML=`<tr><td colspan="6" class="na" style="text-align:center">Erst einen Snapshot vor dem Claim speichern.</td></tr>`;return;}if(!walletState.loadedAt){tb.innerHTML=`<tr><td colspan="6" class="na" style="text-align:center">Aktuelle Bestände laden, um den Snapshot zu vergleichen.</td></tr>`;return;}const reg=buildTokenRegistry(),before=claimSnapshot.aggregate||{},after=walletState.aggregate||{},mints=[...new Set([...Object.keys(before),...Object.keys(after)])],changed=mints.map(mint=>{const b=Number(before[mint]?.amount)||0,a=Number(after[mint]?.amount)||0,d=a-b,inf=assetInfo(mint,reg),usd=Number.isFinite(inf.price)?d*inf.price:null;return {mint,b,a,d,usd,inf};}).filter(x=>Math.abs(x.d)>1e-12).sort((x,y)=>(y.usd??0)-(x.usd??0));tb.innerHTML=changed.length?changed.map(x=>{const cls=x.d>0?"delta-pos":x.d<0?"delta-neg":"delta-zero",sign=x.d>0?"+":"";return `<tr><td><div class="tokenname">${x.inf.symbol||"Unbekannt"}</div>${!x.inf.known?'<div class="mint">unbekanntes Asset</div>':""}</td><td><div class="mint">${x.mint==="SOL"?"native SOL":shortAddr(x.mint)}</div></td><td>${fmtNum(x.b,8)}</td><td>${fmtNum(x.a,8)}</td><td class="${cls}">${sign}${fmtNum(x.d,8)}</td><td class="${cls}">${Number.isFinite(x.usd)?`${x.usd>0?"+":""}${fmtUSD(x.usd)}`:"–"}</td></tr>`;}).join(""):`<tr><td colspan="6" class="na" style="text-align:center">Keine Bestandsveränderung seit dem Snapshot erkannt.</td></tr>`;}
+async function refreshWalletBalances(){
+  if(walletState.loading) return;
+  walletState.loading=true;
+  walletState.error=null;
+  renderWalletState();
+  $("#walletRefreshBtn").disabled=true;
+
+  const errorBox=$("#walletErrorBox");
+  if(errorBox){
+    errorBox.style.display="none";
+    errorBox.innerHTML="";
+    errorBox.style.borderColor="";
+    errorBox.style.background="";
+    errorBox.style.color="";
+  }
+
+  try{
+    const successes=[];
+    const failures=[];
+
+    // Drei Wallets bewusst nacheinander laden. birdEyeFetch erzwingt zusätzlich global mindestens 1,35 s Abstand pro API-Aufruf.
+    for(let i=0;i<OWNER_WALLETS.length;i++){
+      const w=OWNER_WALLETS[i];
+      try{
+        successes.push(await loadOneWallet(w));
+      }catch(e){
+        failures.push({wallet:w,error:e?.message||"Unbekannter BirdEye-Fehler"});
+      }
+      if(i<OWNER_WALLETS.length-1) await sleep(100);
+    }
+
+    if(!successes.length){
+      throw new Error(failures.map(x=>`${x.wallet.name}: ${x.error}`).join(" | "));
+    }
+
+    walletState.wallets=Object.fromEntries(successes.map(w=>[w.id,w]));
+    for(const f of failures){
+      walletState.wallets[f.wallet.id]={...f.wallet,assets:{},totalUsd:null,error:f.error};
+    }
+
+    walletState.aggregate=aggregateWallets(walletState.wallets);
+    walletState.loadedAt=Date.now();
+
+    if(failures.length){
+      walletState.error=`${failures.length} Wallet(s) konnten nicht geladen werden`;
+      if(errorBox){
+        errorBox.style.display="block";
+        errorBox.innerHTML=`BirdEye hat ${successes.length} von ${OWNER_WALLETS.length} Wallets geladen.<br>${failures.map(f=>`<b>${f.wallet.name}:</b> ${f.error}`).join("<br>")}`;
+      }
+    }else if(errorBox){
+      errorBox.style.display="block";
+      errorBox.style.borderColor="rgba(74,222,128,.20)";
+      errorBox.style.background="rgba(74,222,128,.04)";
+      errorBox.style.color="#86efac";
+      errorBox.innerHTML="Alle drei Owner-Wallets erfolgreich über BirdEye geladen.";
+    }
+  }catch(e){
+    walletState.error=e?.message||"BirdEye-Walletdaten konnten nicht geladen werden";
+    if(errorBox){
+      errorBox.style.display="block";
+      errorBox.innerHTML=`<b>BirdEye-Abfrage fehlgeschlagen.</b><br>${walletState.error}`;
+    }
+    showToast("Wallet-Bestände konnten nicht geladen werden");
+  }finally{
+    walletState.loading=false;
+    $("#walletRefreshBtn").disabled=false;
+    renderWalletState();
+  }
+}
+function saveClaimSnapshot(){if(!walletState.loadedAt||!Object.keys(walletState.aggregate||{}).length){showToast("Bitte zuerst die aktuellen Bestände laden");return;}claimSnapshot={ts:Date.now(),aggregate:JSON.parse(JSON.stringify(walletState.aggregate)),wallets:JSON.parse(JSON.stringify(walletState.wallets))};try{localStorage.setItem(CLAIM_SNAPSHOT_KEY,JSON.stringify(claimSnapshot));}catch(e){}renderSnapshotMeta();renderClaimDelta();showToast("Snapshot vor Claim gespeichert");}
+function deleteClaimSnapshot(){claimSnapshot=null;try{localStorage.removeItem(CLAIM_SNAPSHOT_KEY);}catch(e){}renderSnapshotMeta();renderClaimDelta();showToast("Snapshot gelöscht");}
+function loadClaimSnapshot(){try{const s=JSON.parse(localStorage.getItem(CLAIM_SNAPSHOT_KEY)||"null");if(s?.ts&&s?.aggregate)claimSnapshot=s;}catch(e){}renderSnapshotMeta();}
+
+function levelClass(level){ return ["SEHR HOCH","HOCH"].includes(level)?"b-high":level==="MITTEL"?"b-mid":"b-low"; }
+function effGroup(level){ return ["SEHR HOCH","HOCH"].includes(level)?"high":level==="MITTEL"?"mid":"low"; }
+function trendClass(t){ return t.includes("STEIGEND")?"trend-up":t==="STABIL"?"trend-flat":t.includes("RÜCKLÄUFIG")?"trend-down":"na"; }
+function feeDisplay(r){
+  const v=Number.isFinite(r.apiFee)?r.apiFee:r.configuredFee;
+  const mismatch=Number.isFinite(r.apiFee) && Math.abs(r.apiFee-r.configuredFee)>0.015;
+  return `<span class="${mismatch?"fee-mismatch":""}" title="${mismatch?`API ${fmtPct(r.apiFee)} · Liste ${fmtPct(r.configuredFee)}`:`Konfiguriert ${fmtPct(r.configuredFee)}`}">${fmtPct(v,2)}${mismatch?" ⚠":""}</span>`;
+}
+function filteredRows(){
+  const q=$("#searchInput").value.trim().toLowerCase();
+  const dex=$("#dexFilter").value, ef=$("#effFilter").value, sort=$("#sortSelect").value;
+  let arr=rows.filter(r=>{
+    if(q && !(`${r.name} ${r.address}`.toLowerCase().includes(q)))return false;
+    if(dex!=="all"&&r.dex!==dex)return false;
+    if(ef!=="all" && (!r.loaded || effGroup(r.level)!==ef))return false;
+    return true;
+  });
+  const key={score:"score",fees24:"fees24",fees7:"fees7",fees30:"fees30",feeTvl24:"feeTvl24",feeTvl7:"feeTvl7",feeTvl30:"feeTvl30",volume24:"volume24",volume7:"volume7",volume30:"volume30",tvl:"tvl"}[sort];
+  if(sort==="name") arr.sort((a,b)=>a.name.localeCompare(b.name,"de"));
+  else if(sort==="score") arr.sort((a,b)=>((b.excluded ? -1 : (Number.isFinite(b[key])?b[key]:-Infinity)))-((a.excluded ? -1 : (Number.isFinite(a[key])?a[key]:-Infinity))));
+  else arr.sort((a,b)=>(Number.isFinite(b[key])?b[key]:-Infinity)-(Number.isFinite(a[key])?a[key]:-Infinity));
+  return arr;
+}
+function renderKPIs(){
+  // Reine Netzwerk-/System-KPIs: alle geladenen Pools einbeziehen.
+  const all=rows.filter(r=>r.loaded);
+
+  // Bewertungsbasis: ausgeklammerte Pools bleiben aus Effizienz/Score/Benchmark draußen.
+  const active=rows.filter(r=>r.loaded && !r.excluded);
+
+  const tvl=all.reduce((s,r)=>s+(r.tvl||0),0);
+  const vol=all.reduce((s,r)=>s+(r.volume24||0),0);
+  const fees=all.reduce((s,r)=>s+(r.fees24||0),0);
+  const fees7=all.reduce((s,r)=>s+(r.fees7||0),0);
+  const fees30=all.reduce((s,r)=>s+(r.fees30||0),0);
+
+  const activeTvl=active.reduce((s,r)=>s+(r.tvl||0),0);
+  const activeFees30=active.reduce((s,r)=>s+(r.fees30||0),0);
+  const eff30=activeTvl>0 ? (activeFees30/activeTvl*100) : null;
+
+  $("#kpiTvl").textContent=fmtUSD(tvl);
+  $("#kpiVol").textContent=fmtUSD(vol);
+  $("#kpiFees").textContent=fmtUSD(fees);
+  $("#kpiFees7").textContent=fmtUSD(fees7);
+  $("#kpiFees30").textContent=fmtUSD(fees30);
+  $("#kpiEff").textContent=fmtPct(eff30);
+
+  $("#kpiLoaded").textContent=`${all.length} / 64`;
+  $("#kpiDex").textContent=`${all.filter(r=>r.dex==="Meteora").length} Meteora · ${all.filter(r=>r.dex==="Raydium").length} Raydium geladen · 6 Pools nur aus Bewertung ausgeklammert`;
+}
+function renderRank(){
+  const a=rows.filter(r=>r.loaded && !r.excluded && Number.isFinite(r.score)).sort((x,y)=>y.score-x.score);
+  function block(list){
+    if(!list.length)return `<div class="empty">Noch keine Live-Daten</div>`;
+    return list.map((r,i)=>`<div class="rankrow" onclick="openDetail('${r.address}')"><div class="ranknum">${i+1}</div><div><div class="rankname">${r.name}</div><div class="rankmeta">${r.dex} · Fee ${fmtPct(poolFeeValue(r))} · ${fmtPct(r.feeTvl30)} Einn./TVL 30d</div></div><div class="score">${r.score}</div></div>`).join("");
+  }
+  $("#topRank").innerHTML=block(a.slice(0,5));
+  const low=[...a].sort((x,y)=>x.score-y.score).slice(0,5);
+  $("#lowRank").innerHTML=block(low);
+}
+function renderTable(){
+  const arr=filteredRows(), tb=$("#poolBody"); tb.innerHTML="";
+  $("#emptyState").style.display=arr.length?"none":"block";
+  tb.innerHTML=arr.map(r=>{
+    if(!r.loaded) return `<tr onclick="openDetail('${r.address}')"><td><div class="pair">${r.name}</div><div class="addr">${shortAddr(r.address)}</div></td><td><span class="dex ${r.dex==="Raydium"?"ray":""}">${r.dex}</span></td><td>${fmtPct(r.configuredFee)}</td><td colspan="13" class="na" style="text-align:center">Daten nicht geladen</td><td><span class="badge b-low">FEHLER</span></td></tr>`;
+    const effBadge = r.excluded
+      ? `<span class="badge b-excluded">AUSGEKLAMMERT</span>`
+      : `<span class="badge ${levelClass(r.level)}">${r.level} · ${r.score}</span>`;
+    return `<tr onclick="openDetail('${r.address}')">
+      <td><div class="pair">${r.name}</div><div class="addr">${shortAddr(r.address)}${r.excluded ? " · aus Berechnung" : ""}</div></td>
+      <td><span class="dex ${r.dex==="Raydium"?"ray":""}">${r.dex}</span></td>
+      <td>${feeDisplay(r)}</td><td>${fmtUSD(r.tvl)}</td>
+      <td>${fmtUSD(r.volume1)}</td><td>${fmtUSD(r.volume24)}</td><td>${fmtUSD(r.volume7)}</td><td>${fmtUSD(r.volume30)}</td>
+      <td>${fmtUSD(r.fees1)}</td><td>${fmtUSD(r.fees24)}</td><td>${fmtUSD(r.fees7)}</td><td>${fmtUSD(r.fees30)}</td>
+      <td>${fmtPct(r.feeTvl24)}</td><td>${fmtPct(r.feeTvl7)}</td><td>${fmtPct(r.feeTvl30)}</td>
+      <td class="${trendClass(r.trend)}">${r.trend}</td>
+      <td>${effBadge}</td>
+    </tr>`;
+  }).join("");
+}
+function render(){ renderKPIs(); renderRank(); renderTable(); renderSourceCompare(); }
+
+function detailCard(l,v){ return `<div class="detail"><div class="l">${l}</div><div class="v">${v}</div></div>`; }
+window.openDetail=function(address){
+  const r=rows.find(x=>x.address===address); if(!r)return;
+  $("#modalTitle").textContent=r.name; $("#modalSub").textContent=`${r.dex}${r.poolType?` · ${r.poolType}`:""}${r.excluded ? " · aus der ASTY-Score-Berechnung ausgeschlossen" : ""}`;
+  let html=`<div class="detail-grid">`;
+  if(r.loaded){
+    html+=detailCard("Pool-Gebühr",feeDisplay(r))+detailCard("Liquidität",fmtUSD(r.tvl))+detailCard("Effizienz-Score",r.score!==null?`${r.score} / 100`:"–")+detailCard("Trend",r.trend||"–");
+    html+=detailCard("Volumen 1h",fmtUSD(r.volume1))+detailCard("Volumen 24h",fmtUSD(r.volume24))+detailCard("Volumen 7d",fmtUSD(r.volume7))+detailCard("Volumen 30d",fmtUSD(r.volume30));
+    html+=detailCard("Einnahmen 1h",fmtUSD(r.fees1))+detailCard("Einnahmen 24h",fmtUSD(r.fees24))+detailCard("Einnahmen 7d",fmtUSD(r.fees7))+detailCard("Einnahmen 30d",fmtUSD(r.fees30));
+    html+=detailCard("Einn. / TVL 24h",fmtPct(r.feeTvl24))+detailCard("Einn. / TVL 7d",fmtPct(r.feeTvl7))+detailCard("Einn. / TVL 30d",fmtPct(r.feeTvl30))+detailCard("APR 30d",fmtPct(r.apr30,1));
+    html+=detailCard("Volumen / TVL 24h",Number.isFinite(r.turnover24)?fmtNum(r.turnover24,2)+"x":"–")+detailCard("Volumen / TVL 7d",Number.isFinite(r.turnover7)?fmtNum(r.turnover7,2)+"x":"–")+detailCard("Volumen / TVL 30d",Number.isFinite(r.turnover30)?fmtNum(r.turnover30,2)+"x":"–")+detailCard("History-Abdeckung",Number.isFinite(r.coverage30)?`${fmtNum(r.coverage30,0)} Tage`:"–");
+    if(r.dex==="Meteora"){
+      html+=detailCard("Dynamic Fee",r.dynamicFee?"AKTIV":"AUS")+detailCard("Protocol Fee",fmtPct(r.protocolFeePct))+detailCard("Partner Fee",fmtPct(r.partnerFeePct))+detailCard("Referral Fee",fmtPct(r.referralFeePct));
+    }
+  } else {
+    html+=`<div class="detail full"><div class="l">Status</div><div class="v">Daten nicht geladen</div><div class="kpi-note">${r.error||"Unbekannter Fehler"}</div></div>`;
+  }
+  html+=`<div class="detail full"><div class="l">Pool-Adresse</div><div class="address-row"><div class="address-box">${r.address}</div><button class="copy" onclick="copyText('${r.address}')">Kopieren</button></div></div>`;
+  html+=`</div><div class="explain"><b>Score-Mechanik:</b> 20 % 24h-, 35 % 7d- und 45 % 30d-Kapital-Effizienz. Bewertet wird jeweils die durchschnittliche tägliche Einnahmen/TVL-Effizienz relativ zu den anderen aktiven, nicht ausgeklammerten ASTY-Pools. Dadurch zählt nachhaltige Performance stärker als ein einzelner guter Tag. Fehlende Zeitfenster werden nicht mit 0 gewertet, sondern die verfügbaren Gewichte werden neu normiert. Pools mit strategisch abgezogener Liquidität werden nicht in Score, Benchmark oder Ranking einbezogen.<br><br><b>7d / 30d bei Meteora:</b> Die Werte werden aus 24h-Buckets der Historical-Volume-API aggregiert. Für Einnahmen/TVL wird die aktuelle Pool-Liquidität als Nenner verwendet; es handelt sich nicht um eine historische Durchschnitts-TVL.<br><br><b>Wichtig:</b> „Einnahmen“ sind API-Poolgebühren. Die tatsächlich von ASTY beanspruchbaren LP-Einnahmen werden erst nach Anbindung der öffentlichen Owner-Wallets ergänzt.</div>`;
+  $("#modalBody").innerHTML=html; $("#modalBackdrop").classList.add("show");
+}
+window.copyText=async function(t){
+  try{await navigator.clipboard.writeText(t); showToast("Adresse kopiert");}
+  catch(e){const x=document.createElement("textarea");x.value=t;document.body.appendChild(x);x.select();document.execCommand("copy");x.remove();showToast("Adresse kopiert");}
+}
+function showToast(t){const el=$("#toast");el.textContent=t;el.classList.add("show");setTimeout(()=>el.classList.remove("show"),1400)}
+function exportCSV(){
+  const hdr=["Pool","DEX","Adresse","Ausgeklammert","Gebühr API %","Gebühr Liste %","TVL USD","Volumen 1h USD","Volumen 24h USD","Volumen 7d USD","Volumen 30d USD","Einnahmen 1h USD","Einnahmen 24h USD","Einnahmen 7d USD","Einnahmen 30d USD","Einnahmen/TVL 24h %","Einnahmen/TVL 7d %","Einnahmen/TVL 30d %","APR 24h %","APR 7d %","APR 30d %","Trend","Effizienz Score","Effizienz","History Tage"];
+  const data=rows.map(r=>[r.name,r.dex,r.address,r.excluded?"ja":"nein",r.apiFee??"",r.configuredFee,r.tvl??"",r.volume1??"",r.volume24??"",r.volume7??"",r.volume30??"",r.fees1??"",r.fees24??"",r.fees7??"",r.fees30??"",r.feeTvl24??"",r.feeTvl7??"",r.feeTvl30??"",r.apr24??"",r.apr7??"",r.apr30??"",r.trend??"",r.score??"",r.level??"",r.coverage30??""]);
+  const esc=v=>`"${String(v).replaceAll('"','""')}"`;
+  const csv=[hdr,...data].map(row=>row.map(esc).join(";")).join("\n");
+  const blob=new Blob(["\ufeff"+csv],{type:"text/csv;charset=utf-8"});
+  const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=`ASTY-Team-Dashboard-${new Date().toISOString().slice(0,10)}.csv`;a.click();URL.revokeObjectURL(a.href);
+}
+$("#refreshBtn").addEventListener("click",async()=>{
+  await refresh(true);
+  await loadGeckoComparison();
+});
+$("#compareRefreshBtn").addEventListener("click",loadGeckoComparison);
+$("#walletRefreshBtn").addEventListener("click",refreshWalletBalances);
+$("#saveSnapshotBtn").addEventListener("click",saveClaimSnapshot);
+$("#deleteSnapshotBtn").addEventListener("click",deleteClaimSnapshot);
+$("#exportBtn").addEventListener("click",exportCSV);
+["searchInput","dexFilter","effFilter","sortSelect"].forEach(id=>$("#"+id).addEventListener(id==="searchInput"?"input":"change",renderTable));
+["compareSort","compareFilter"].forEach(id=>$("#"+id).addEventListener("change",renderSourceCompare));
+$("#modalClose").addEventListener("click",()=>$("#modalBackdrop").classList.remove("show"));
+$("#modalBackdrop").addEventListener("click",e=>{if(e.target===$("#modalBackdrop"))$("#modalBackdrop").classList.remove("show")});
+document.addEventListener("keydown",e=>{if(e.key==="Escape")$("#modalBackdrop").classList.remove("show")});
+
+loadClaimSnapshot();
+loadCache();
+render();
+renderWalletState();
+refresh(false).then(async()=>{
+  await loadGeckoComparison();
+  setTimeout(refreshWalletBalances,400);
+});
+</script>
+</body>
+</html>
