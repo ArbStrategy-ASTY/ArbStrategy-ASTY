@@ -81,7 +81,7 @@ sowie die Meteora-USDC-Pools mit <b>0,30 %</b>, <b>2 %</b> und <b>6 %</b>.
 <div class="owner-card"><div class="owner-head"><span class="dex ray">Raydium</span><span class="owner-status" id="raydiumOwnerStatus">Wartet</span></div><div class="owner-value" id="raydiumClaimable">–</div><div class="owner-label">aktueller CPMM-LP-Positionswert</div><div class="owner-wallet" id="raydiumOwnerMeta">1 Owner-Wallet</div></div>
 <div class="owner-card owner-total"><div class="owner-head"><span>Owner-Positionen</span><span class="owner-status" id="ownerUpdated">–</span></div><div class="owner-value" id="ownerClaimableTotal">–</div><div class="owner-label">erkannte Positionen in ASTY-Pools · nur bei vollständiger Owner-Auswertung</div><div class="owner-wallet">Meteora + Raydium</div></div>
 </div>
-<div class="owner-note"><b>Meteora:</b> Alle 63 Meteora-Pools sind DAMM v2. Die HTML liest die Token-2022-Konten der beiden Owner-Wallets direkt, erkennt daraus die DAMM-v2-Position-NFTs und berechnet ausschließlich die claimbare ASTY-Seite der LP-Fee. <b>Raydium:</b> Beim ASTY/SOL-CPMM wird nach frei in der Owner-Wallet liegenden LP-Tokens gesucht. Gestakte oder anderweitig verwahrte LP-Tokens erscheinen dort nicht als freier Wallet-Bestand.</div>
+<div class="owner-note"><b>Meteora:</b> Alle 63 Meteora-Pools sind DAMM v2. Die beiden Owner-Wallets werden nacheinander ausgewertet. Position- und Pool-States werden nur in kleinen 5er-Paketen geladen, mit kurzer Pause dazwischen; bereits geladene Pool-States werden wiederverwendet. Gezählt wird ausschließlich die claimbare ASTY-Seite der LP-Fee. <b>Raydium:</b> Beim ASTY/SOL-CPMM wird nach frei in der Owner-Wallet liegenden LP-Tokens gesucht.</div>
 </section>
 
 <section class="section"><div class="section-head"><div><div class="section-title">Effizienz-Ranking</div><div class="section-note">Relativer ASTY-Score aus 24h-, 7d- und 30d-Kapital-Effizienz. Langfristige Performance zählt stärker.</div></div></div><div class="rankgrid"><div class="rankbox"><div class="rank-title">Effizienteste Pools</div><div id="topRank"></div></div><div class="rankbox"><div class="rank-title">Niedrigste Kapital-Effizienz</div><div id="lowRank"></div></div></div></section>
@@ -105,11 +105,13 @@ const TOKEN_2022_PROGRAM_ID_STR="TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb";
 const METEORA_BASE="https://damm-v2.datapi.meteora.ag";
 const RAYDIUM_BASE="https://api-v3.raydium.io";
 const EXCLUDED_POOL_IDS=new Set(["7tbbdGzFZpjrPmM7jQderyyv1x8Ebz1vhwqNhEW97osb","HAieGroddWr3NZpSZYqqm39w2aTUuknWNXxfF6vWNpaR","2WRrdtnKKr2eq67o4ZK2VQv7dXu4Pm8iz6TMN8UXvhbV","3HhGsPNMtSg1dNV9SVSfzGCQLx3Zp5giAvYJdQuuNqU9","BWFDr72tjXJsRdUyAfqghv6sGXgQr2zJ78KdeV3c74q1","61HTuoKeWhEfscoBcd5zSNvmAyGpxdaUNMriLNnyyREz"]);
-const CACHE_KEY="asty-team-dashboard-single-html-v2";
+const CACHE_KEY="asty-team-dashboard-single-html-v3";
 const HISTORY_CACHE_KEY="asty-team-dashboard-meteora-history-v1";
 const HISTORY_CACHE_TTL=30*60*1000;
 const OWNER_WALLETS={raydium:"9Hv3HPGSHS1vq1qjfumoER4TEhu2sgWUmL3S4EaUWrk6",meteora:["8KgDtknVhs88sMjRckCGzVDhaFBre3V3FAvhwxfANmfq","4aGjJavF5fq15szkFTdDGQAz9mUUSZ1y1c74isQm2zYV"]};
 const SOLANA_RPC_ENDPOINTS=["https://solana-rpc.publicnode.com","https://rpc.ankr.com/solana","https://solana.drpc.org/","https://api.mainnet-beta.solana.com"];
+const METEORA_OWNER_BATCH_SIZE=5;
+const METEORA_OWNER_BATCH_DELAY=250;
 let activeSolanaRpc=null;
 let ownerState={loading:false,meteoraStatus:"wartet",raydiumStatus:"wartet",meteoraClaimableUsd:null,raydiumPositionUsd:null,meteoraPositions:0,raydiumPositions:0,updatedAt:null,meteoraError:null,raydiumError:null};
 let rows=POOLS.map(p=>({...p,loaded:false,error:null}));
@@ -281,15 +283,23 @@ function pkString(v){if(!v)return null;if(typeof v==="string")return v;try{retur
 function bnToDecimal(raw,decimals=0){if(raw===null||raw===undefined)return 0;let s;try{s=raw.toString()}catch(e){s=String(raw)}if(!/^-?\d+$/.test(s)){const n=Number(s);return Number.isFinite(n)?n:0}const neg=s.startsWith("-");if(neg)s=s.slice(1);const d=Math.max(0,Number(decimals)||0);if(!d)return Number((neg?"-":"")+s)||0;s=s.padStart(d+1,"0");const n=Number(`${neg?"-":""}${s.slice(0,-d)||"0"}.${s.slice(-d)}`);return Number.isFinite(n)?n:0}
 function getRowTokenInfo(row,mint){if(!row)return null;if(row.tokenXMint===mint)return{symbol:row.tokenX||"Token X",decimals:row.tokenXDecimals||0,price:row.tokenXPrice||0};if(row.tokenYMint===mint)return{symbol:row.tokenY||"Token Y",decimals:row.tokenYDecimals||0,price:row.tokenYPrice||0};return null}
 
-async function scanMeteoraWalletPositions(cpAmm,connection,web3,wallet,knownPools){
+async function scanMeteoraWalletPositions(
+ cpAmm,
+ connection,
+ web3,
+ wallet,
+ knownPools,
+ poolStateCache,
+ ownerIndex,
+ ownerTotal
+){
  const {PublicKey}=web3;
  const walletPk=new PublicKey(wallet);
  const token2022Program=new PublicKey(TOKEN_2022_PROGRAM_ID_STR);
 
- // We deliberately use the parsed standard RPC method here instead of
- // CpAmm.getPositionsByUser(). Meteora's helper also starts by reading
- // Token-2022 accounts owned by the wallet. This version exposes each
- // stage so a browser/RPC error can be diagnosed correctly.
+ ownerState.meteoraStatus=`Owner ${ownerIndex}/${ownerTotal} · Token-2022-Konten`;
+ setOwnerUi();
+
  let tokenAccounts;
  try{
   tokenAccounts=await connection.getParsedTokenAccountsByOwner(
@@ -310,9 +320,6 @@ async function scanMeteoraWalletPositions(cpAmm,connection,web3,wallet,knownPool
   const decimals=Number(info?.tokenAmount?.decimals);
   const mint=info?.mint;
 
-  // DAMM-v2 position ownership is represented by Token-2022 position
-  // NFTs with a balance of exactly one. Decimals=0 removes ordinary
-  // fungible Token-2022 balances from the candidate set.
   if(mint && amount==="1" && decimals===0){
    nftMints.push(new PublicKey(mint));
    nftAccounts.push(entry.pubkey);
@@ -320,6 +327,8 @@ async function scanMeteoraWalletPositions(cpAmm,connection,web3,wallet,knownPool
  }
 
  if(!nftMints.length){
+  ownerState.meteoraStatus=`Owner ${ownerIndex}/${ownerTotal} · keine Position-NFTs`;
+  setOwnerUi();
   return [];
  }
 
@@ -328,55 +337,107 @@ async function scanMeteoraWalletPositions(cpAmm,connection,web3,wallet,knownPool
  );
 
  const positionAddresses=nftMints.map(mint=>derivePositionAddress(mint));
-
- // Anchor's fetchMultiple returns null for candidate NFTs that are not
- // DAMM-v2 positions. We intentionally access the public _program client
- // so unrelated Token-2022 NFTs do not make the entire batch fail.
- let states;
- try{
-  states=await cpAmm._program.account.position.fetchMultiple(positionAddresses);
- }catch(e){
-  throw new Error(`Position-State Batch: ${e?.message||e}`);
- }
-
  const positions=[];
 
- states.forEach((state,index)=>{
-  if(!state)return;
-  const poolAddr=pkString(state.pool);
-  if(!poolAddr||!knownPools.has(poolAddr))return;
+ // Small batches instead of one large getMultipleAccounts request.
+ for(let start=0;start<positionAddresses.length;start+=METEORA_OWNER_BATCH_SIZE){
+  const addressBatch=positionAddresses.slice(
+   start,
+   start+METEORA_OWNER_BATCH_SIZE
+  );
 
-  positions.push({
-   positionNftAccount:nftAccounts[index],
-   position:positionAddresses[index],
-   positionState:state,
-   pool:new PublicKey(poolAddr)
+  ownerState.meteoraStatus=
+   `Owner ${ownerIndex}/${ownerTotal} · Positionen `+
+   `${Math.min(start+addressBatch.length,positionAddresses.length)}/${positionAddresses.length}`;
+  setOwnerUi();
+
+  let states;
+  try{
+   states=await cpAmm._program.account.position.fetchMultiple(addressBatch);
+  }catch(e){
+   throw new Error(
+    `Position-State Batch ${start+1}-`+
+    `${Math.min(start+addressBatch.length,positionAddresses.length)}: `+
+    `${e?.message||e}`
+   );
+  }
+
+  states.forEach((state,index)=>{
+   if(!state)return;
+
+   const poolAddr=pkString(state.pool);
+   if(!poolAddr||!knownPools.has(poolAddr))return;
+
+   const absoluteIndex=start+index;
+
+   positions.push({
+    positionNftAccount:nftAccounts[absoluteIndex],
+    position:positionAddresses[absoluteIndex],
+    positionState:state,
+    pool:new PublicKey(poolAddr)
+   });
   });
- });
+
+  if(start+METEORA_OWNER_BATCH_SIZE<positionAddresses.length){
+   await sleep(METEORA_OWNER_BATCH_DELAY);
+  }
+ }
 
  if(!positions.length){
+  ownerState.meteoraStatus=`Owner ${ownerIndex}/${ownerTotal} · keine ASTY-Position`;
+  setOwnerUi();
   return [];
  }
 
- const uniquePoolStrings=[...new Set(positions.map(p=>p.pool.toBase58()))];
- const uniquePoolKeys=uniquePoolStrings.map(x=>new PublicKey(x));
+ // Only fetch pool states that were not already loaded by the first owner
+ // or by another position in this wallet.
+ const missingPoolAddresses=[
+  ...new Set(
+   positions
+    .map(position=>position.pool.toBase58())
+    .filter(address=>!poolStateCache.has(address))
+  )
+ ];
 
- let poolStates;
- try{
-  poolStates=await cpAmm._program.account.pool.fetchMultiple(uniquePoolKeys);
- }catch(e){
-  throw new Error(`Pool-State Batch: ${e?.message||e}`);
+ for(let start=0;start<missingPoolAddresses.length;start+=METEORA_OWNER_BATCH_SIZE){
+  const poolBatchStrings=missingPoolAddresses.slice(
+   start,
+   start+METEORA_OWNER_BATCH_SIZE
+  );
+
+  ownerState.meteoraStatus=
+   `Owner ${ownerIndex}/${ownerTotal} · Pool-States `+
+   `${Math.min(start+poolBatchStrings.length,missingPoolAddresses.length)}/${missingPoolAddresses.length}`;
+  setOwnerUi();
+
+  const poolBatchKeys=poolBatchStrings.map(address=>new PublicKey(address));
+
+  let poolStates;
+  try{
+   poolStates=await cpAmm._program.account.pool.fetchMultiple(poolBatchKeys);
+  }catch(e){
+   throw new Error(
+    `Pool-State Batch ${start+1}-`+
+    `${Math.min(start+poolBatchStrings.length,missingPoolAddresses.length)}: `+
+    `${e?.message||e}`
+   );
+  }
+
+  poolBatchStrings.forEach((address,index)=>{
+   if(poolStates[index]){
+    poolStateCache.set(address,poolStates[index]);
+   }
+  });
+
+  if(start+METEORA_OWNER_BATCH_SIZE<missingPoolAddresses.length){
+   await sleep(METEORA_OWNER_BATCH_DELAY);
+  }
  }
-
- const poolMap=new Map();
- uniquePoolStrings.forEach((address,index)=>{
-  if(poolStates[index])poolMap.set(address,poolStates[index]);
- });
 
  return positions
   .map(position=>({
    ...position,
-   poolState:poolMap.get(position.pool.toBase58())||null
+   poolState:poolStateCache.get(position.pool.toBase58())||null
   }))
   .filter(position=>position.poolState);
 }
@@ -416,33 +477,50 @@ async function loadMeteoraOwnerFees(){
   const {result,endpoint}=await withRpcFailover(web3,async connection=>{
    const cpAmm=new CpAmm(connection);
    const accum=new Map();
+   const poolStateCache=new Map();
+   const owners=OWNER_WALLETS.meteora;
 
-   for(const wallet of OWNER_WALLETS.meteora){
+   // Deliberately sequential: finish owner 1 before owner 2.
+   for(let ownerIndex=0;ownerIndex<owners.length;ownerIndex++){
+    const wallet=owners[ownerIndex];
+
     const positions=await scanMeteoraWalletPositions(
      cpAmm,
      connection,
      web3,
      wallet,
-     knownPools
+     knownPools,
+     poolStateCache,
+     ownerIndex+1,
+     owners.length
     );
 
-    for(const item of positions){
+    for(let positionIndex=0;positionIndex<positions.length;positionIndex++){
+     const item=positions[positionIndex];
      const poolAddr=item.pool.toBase58();
      const row=meteoraRows.find(r=>r.address===poolAddr);
+
      if(!row)continue;
 
-     const poolState=item.poolState;
-     const positionState=item.positionState;
+     ownerState.meteoraStatus=
+      `Owner ${ownerIndex+1}/${owners.length} · Fees `+
+      `${positionIndex+1}/${positions.length}`;
+     setOwnerUi();
 
      let pending;
      try{
-      pending=getUnClaimLpFee(poolState,positionState);
+      pending=getUnClaimLpFee(
+       item.poolState,
+       item.positionState
+      );
      }catch(e){
-      throw new Error(`Fee-Berechnung ${row.name}: ${e?.message||e}`);
+      throw new Error(
+       `Fee-Berechnung ${row.name}: ${e?.message||e}`
+      );
      }
 
-     const tokenAMint=pkString(poolState.tokenAMint);
-     const tokenBMint=pkString(poolState.tokenBMint);
+     const tokenAMint=pkString(item.poolState.tokenAMint);
+     const tokenBMint=pkString(item.poolState.tokenBMint);
      const astyIsA=tokenAMint===ASTY_MINT;
      const astyIsB=tokenBMint===ASTY_MINT;
 
@@ -455,8 +533,12 @@ async function loadMeteoraOwnerFees(){
      const astyAmount=bnToDecimal(astyRaw,9);
 
      let astyPrice=0;
-     if(row.tokenXMint===ASTY_MINT)astyPrice=Number(row.tokenXPrice)||0;
-     if(row.tokenYMint===ASTY_MINT)astyPrice=Number(row.tokenYPrice)||0;
+     if(row.tokenXMint===ASTY_MINT){
+      astyPrice=Number(row.tokenXPrice)||0;
+     }
+     if(row.tokenYMint===ASTY_MINT){
+      astyPrice=Number(row.tokenYPrice)||0;
+     }
 
      if(!accum.has(poolAddr)){
       accum.set(poolAddr,{
@@ -467,11 +549,21 @@ async function loadMeteoraOwnerFees(){
       });
      }
 
-     const a=accum.get(poolAddr);
-     a.positions++;
-     a.astyAmount+=astyAmount;
-     if(!a.astyPrice&&astyPrice)a.astyPrice=astyPrice;
-     a.wallets.add(wallet);
+     const aggregate=accum.get(poolAddr);
+     aggregate.positions++;
+     aggregate.astyAmount+=astyAmount;
+     if(!aggregate.astyPrice&&astyPrice){
+      aggregate.astyPrice=astyPrice;
+     }
+     aggregate.wallets.add(wallet);
+    }
+
+    // Small pause before moving to the next owner.
+    if(ownerIndex+1<owners.length){
+     ownerState.meteoraStatus=
+      `Owner ${ownerIndex+1}/${owners.length} abgeschlossen`;
+     setOwnerUi();
+     await sleep(500);
     }
    }
 
@@ -482,19 +574,20 @@ async function loadMeteoraOwnerFees(){
   let totalAsty=0;
 
   for(const r of meteoraRows){
-   const a=result.accum.get(r.address);
+   const aggregate=result.accum.get(r.address);
 
    r.claimableLoading=false;
-   r.ownerPositionCount=a?.positions||0;
-   r.claimableAsty=a?.astyAmount||0;
+   r.ownerPositionCount=aggregate?.positions||0;
+   r.claimableAsty=aggregate?.astyAmount||0;
    r.claimableTokens=r.claimableAsty>0
     ? [{
        symbol:"ASTY",
        amount:r.claimableAsty,
-       price:a?.astyPrice||0
+       price:aggregate?.astyPrice||0
       }]
     : [];
-   r.claimableUsd=r.claimableAsty*(a?.astyPrice||0);
+   r.claimableUsd=
+    r.claimableAsty*(aggregate?.astyPrice||0);
    r.claimableError=null;
 
    totalPositions+=r.ownerPositionCount;
