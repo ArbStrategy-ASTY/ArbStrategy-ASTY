@@ -75,13 +75,13 @@ sowie die Meteora-USDC-Pools mit <b>0,30 %</b>, <b>2 %</b> und <b>6 %</b>.
 </section>
 
 <section class="section owner-section">
-<div class="section-head"><div><div class="section-title">Owner-Positionen & beanspruchbare Einnahmen</div><div class="section-note">Öffentliche Wallet-Auswertung ohne Signatur oder Wallet-Verbindung.</div></div><button class="btn" id="ownerRefreshBtn">Owner-Daten aktualisieren</button></div>
+<div class="section-head"><div><div class="section-title">Owner-Positionen & beanspruchbare Einnahmen</div><div class="section-note">Direkte Browser-Auswertung aus dieser HTML · keine Wallet-Verbindung.</div></div><button class="btn" id="ownerRefreshBtn">Owner-Daten aktualisieren</button></div>
 <div class="owner-grid">
 <div class="owner-card"><div class="owner-head"><span class="dex">Meteora</span><span class="owner-status" id="meteoraOwnerStatus">Wartet</span></div><div class="owner-value" id="meteoraClaimable">–</div><div class="owner-label">beanspruchbare DAMM-v2-LP-Einnahmen</div><div class="owner-wallet" id="meteoraOwnerMeta">2 Owner-Wallets</div></div>
 <div class="owner-card"><div class="owner-head"><span class="dex ray">Raydium</span><span class="owner-status" id="raydiumOwnerStatus">Wartet</span></div><div class="owner-value" id="raydiumClaimable">–</div><div class="owner-label">aktueller CPMM-LP-Positionswert</div><div class="owner-wallet" id="raydiumOwnerMeta">1 Owner-Wallet</div></div>
 <div class="owner-card owner-total"><div class="owner-head"><span>Owner-Positionen</span><span class="owner-status" id="ownerUpdated">–</span></div><div class="owner-value" id="ownerClaimableTotal">–</div><div class="owner-label">erkannte Positionen in ASTY-Pools</div><div class="owner-wallet">Meteora + Raydium</div></div>
 </div>
-<div class="owner-note"><b>Meteora:</b> Die beiden Owner-Wallets werden über die ASTY-Mint-Adresse direkt auf DAMM-v2-Positionen geprüft. <b>Raydium:</b> Beim ASTY/SOL-CPMM wird der LP-Mint direkt in der Owner-Wallet gesucht. Raydium-CPMM-Gebühren sind im LP-Wert enthalten und werden nicht als separater Claim-Betrag addiert.</div>
+<div class="owner-note"><b>Meteora:</b> Alle 63 Meteora-Pools sind DAMM v2. Die beiden Owner-Wallets werden direkt aus dieser HTML über die ASTY-Mint-Adresse auf DAMM-v2-Positionen geprüft; gezählt wird nur die claimbare ASTY-Seite der LP-Fee. <b>Raydium:</b> Beim ASTY/SOL-CPMM wird der LP-Mint direkt in der Owner-Wallet gesucht. Die Browser-Abfrage probiert mehrere öffentliche Solana-RPCs automatisch durch.</div>
 </section>
 
 <section class="section"><div class="section-head"><div><div class="section-title">Effizienz-Ranking</div><div class="section-note">Relativer ASTY-Score aus 24h-, 7d- und 30d-Kapital-Effizienz. Langfristige Performance zählt stärker.</div></div></div><div class="rankgrid"><div class="rankbox"><div class="rank-title">Effizienteste Pools</div><div id="topRank"></div></div><div class="rankbox"><div class="rank-title">Niedrigste Kapital-Effizienz</div><div id="lowRank"></div></div></div></section>
@@ -92,7 +92,7 @@ sowie die Meteora-USDC-Pools mit <b>0,30 %</b>, <b>2 %</b> und <b>6 %</b>.
 <div class="tablewrap"><table><thead><tr><th>Pool</th><th>DEX</th><th>Gebühr</th><th>Liquidität</th><th>Volumen 1h</th><th>Volumen 24h</th><th>Volumen 7d</th><th>Volumen 30d</th><th>Einnahmen 1h</th><th>Einnahmen 24h</th><th>Einnahmen 7d</th><th>Einnahmen 30d</th><th>Einn./TVL 24h</th><th>Einn./TVL 7d</th><th>Einn./TVL 30d</th><th>Beanspruchbar</th><th>Trend</th><th>Effizienz</th></tr></thead><tbody id="poolBody"></tbody></table><div id="emptyState" class="empty" style="display:none">Keine Pools entsprechen dem Filter.</div></div>
 </section>
 
-<div class="footer">ASTY Team Dashboard · Interne Analyse. Meteora-Daten werden aus der öffentlichen DAMM-v2 Data API geladen; 7d/30d werden aus der Historical-Volume-API mit 24h-Buckets aggregiert. Raydium-Daten kommen aus API v3. Der Effizienz-Score ist ein relativer Vergleich der aktuell geladenen ASTY-Pools und keine Renditeprognose. Drei frühere Meteora-SOL-Pools sowie die USDC-Pools mit 0,30 %, 2 % und 6 % sind bewusst aus der Berechnung ausgeschlossen. „Beanspruchbare Einnahmen“ beziehen sich auf separat claimbare Meteora-LP-Einnahmen; beim Raydium-CPMM wird stattdessen der aktuelle LP-Positionswert ermittelt.</div>
+<div class="footer">ASTY Team Dashboard · Interne Analyse. Meteora-Daten werden aus der öffentlichen DAMM-v2 Data API geladen; 7d/30d werden aus der Historical-Volume-API mit 24h-Buckets aggregiert. Raydium-Daten kommen aus API v3. Der Effizienz-Score ist ein relativer Vergleich der aktuell geladenen ASTY-Pools und keine Renditeprognose. Drei frühere Meteora-SOL-Pools sowie die USDC-Pools mit 0,30 %, 2 % und 6 % sind bewusst aus der Berechnung ausgeschlossen. „Beanspruchbare Einnahmen“ beziehen sich bei Meteora ausschließlich auf separat claimbare ASTY-LP-Einnahmen; beim Raydium-CPMM wird stattdessen der aktuelle LP-Positionswert ermittelt. Die komplette Auswertung befindet sich in dieser einen HTML-Datei.</div>
 </div>
 
 <div class="modal-backdrop" id="modalBackdrop"><div class="modal"><div class="modal-head"><div><div class="modal-title" id="modalTitle"></div><div class="sub" id="modalSub"></div></div><button class="close" id="modalClose">✕</button></div><div class="modal-body" id="modalBody"></div></div></div>
@@ -104,11 +104,11 @@ const ASTY_MINT="ASTYqeaoK83Zs1pTFEXZUB6BM8cG8YLTsN852NUkt7ZR";
 const METEORA_BASE="https://damm-v2.datapi.meteora.ag";
 const RAYDIUM_BASE="https://api-v3.raydium.io";
 const EXCLUDED_POOL_IDS=new Set(["7tbbdGzFZpjrPmM7jQderyyv1x8Ebz1vhwqNhEW97osb","HAieGroddWr3NZpSZYqqm39w2aTUuknWNXxfF6vWNpaR","2WRrdtnKKr2eq67o4ZK2VQv7dXu4Pm8iz6TMN8UXvhbV","3HhGsPNMtSg1dNV9SVSfzGCQLx3Zp5giAvYJdQuuNqU9","BWFDr72tjXJsRdUyAfqghv6sGXgQr2zJ78KdeV3c74q1","61HTuoKeWhEfscoBcd5zSNvmAyGpxdaUNMriLNnyyREz"]);
-const CACHE_KEY="asty-team-dashboard-v3-cache";
+const CACHE_KEY="asty-team-dashboard-single-html-v1";
 const HISTORY_CACHE_KEY="asty-team-dashboard-meteora-history-v1";
 const HISTORY_CACHE_TTL=30*60*1000;
 const OWNER_WALLETS={raydium:"9Hv3HPGSHS1vq1qjfumoER4TEhu2sgWUmL3S4EaUWrk6",meteora:["8KgDtknVhs88sMjRckCGzVDhaFBre3V3FAvhwxfANmfq","4aGjJavF5fq15szkFTdDGQAz9mUUSZ1y1c74isQm2zYV"]};
-const SOLANA_RPC_ENDPOINTS=["https://solana-rpc.publicnode.com","https://api.mainnet-beta.solana.com"];
+const SOLANA_RPC_ENDPOINTS=["https://rpc.ankr.com/solana","https://solana.drpc.org/","https://solana-rpc.publicnode.com","https://api.mainnet-beta.solana.com"];
 let activeSolanaRpc=null;
 let ownerState={loading:false,meteoraStatus:"wartet",raydiumStatus:"wartet",meteoraClaimableUsd:null,raydiumPositionUsd:null,meteoraPositions:0,raydiumPositions:0,updatedAt:null,meteoraError:null,raydiumError:null};
 let rows=POOLS.map(p=>({...p,loaded:false,error:null}));
@@ -227,19 +227,49 @@ async function loadRaydium(progressCb){
 function saveCache(){try{localStorage.setItem(CACHE_KEY,JSON.stringify({ts:Date.now(),rows}))}catch(e){}}
 function loadCache(){try{const c=JSON.parse(localStorage.getItem(CACHE_KEY)||"null");if(c?.rows?.length===64){rows=c.rows;deriveMetrics();render();$("#updatedText").textContent=`Zwischenspeicher: ${new Date(c.ts).toLocaleString("de-DE")}`;$("#statusText").textContent="Letzten gespeicherten Datenstand geladen";$("#statusDot").className="dot warn";return true}}catch(e){}return false}
 
-function rpcShort(endpoint){return endpoint?.includes("publicnode")?"PublicNode":endpoint?.includes("mainnet-beta")?"Solana Mainnet RPC":"RPC"}
+function rpcShort(endpoint){return endpoint?.includes("ankr.com")?"Ankr":endpoint?.includes("drpc.org")?"dRPC":endpoint?.includes("publicnode")?"PublicNode":endpoint?.includes("mainnet-beta")?"Solana Mainnet RPC":"RPC"}
+async function probeRpc(endpoint){
+ const ctrl=new AbortController();
+ const timer=setTimeout(()=>ctrl.abort(),8000);
+ try{
+  const response=await fetch(endpoint,{
+   method:"POST",
+   mode:"cors",
+   cache:"no-store",
+   headers:{"Content-Type":"application/json"},
+   body:JSON.stringify({
+    jsonrpc:"2.0",
+    id:1,
+    method:"getLatestBlockhash",
+    params:[{commitment:"confirmed"}]
+   }),
+   signal:ctrl.signal
+  });
+  if(!response.ok)throw new Error(`HTTP ${response.status}`);
+  const json=await response.json();
+  if(json?.error)throw new Error(json.error.message||`RPC Fehler ${json.error.code}`);
+  if(!json?.result?.value?.blockhash)throw new Error("keine Blockhash-Antwort");
+  return true;
+ }finally{
+  clearTimeout(timer);
+ }
+}
+
 async function withRpcFailover(web3,task){
- const endpoints=activeSolanaRpc?[activeSolanaRpc,...SOLANA_RPC_ENDPOINTS.filter(x=>x!==activeSolanaRpc)]:SOLANA_RPC_ENDPOINTS;
+ const endpoints=activeSolanaRpc
+  ? [activeSolanaRpc,...SOLANA_RPC_ENDPOINTS.filter(x=>x!==activeSolanaRpc)]
+  : SOLANA_RPC_ENDPOINTS;
  const errors=[];
  for(const endpoint of endpoints){
-  const connection=new web3.Connection(endpoint,"confirmed");
   try{
-   await Promise.race([connection.getLatestBlockhash("confirmed"),new Promise((_,reject)=>setTimeout(()=>reject(new Error("RPC-Test Timeout")),8000))]);
+   await probeRpc(endpoint);
+   const connection=new web3.Connection(endpoint,"confirmed");
    const result=await task(connection,endpoint);
    activeSolanaRpc=endpoint;
    return{result,endpoint};
   }catch(e){
-   errors.push(`${rpcShort(endpoint)}: ${e?.message||e}`);
+   const message=e?.message||String(e);
+   errors.push(`${rpcShort(endpoint)}: ${message}`);
    console.warn("Owner RPC fehlgeschlagen",endpoint,e);
    if(activeSolanaRpc===endpoint)activeSolanaRpc=null;
   }
@@ -251,56 +281,153 @@ function bnToDecimal(raw,decimals=0){if(raw===null||raw===undefined)return 0;let
 function getRowTokenInfo(row,mint){if(!row)return null;if(row.tokenXMint===mint)return{symbol:row.tokenX||"Token X",decimals:row.tokenXDecimals||0,price:row.tokenXPrice||0};if(row.tokenYMint===mint)return{symbol:row.tokenY||"Token Y",decimals:row.tokenYDecimals||0,price:row.tokenYPrice||0};return null}
 
 async function loadMeteoraOwnerFees(){
- ownerState.meteoraStatus="lädt…";ownerState.meteoraError=null;
+ ownerState.meteoraStatus="lädt…";
+ ownerState.meteoraError=null;
+
  const meteoraRows=rows.filter(r=>r.dex==="Meteora");
- meteoraRows.forEach(r=>{r.claimableLoading=true;r.claimableError=null;r.claimableUsd=null;r.claimableTokens=[];r.ownerPositionCount=0});
- setOwnerUi();renderTable();
+ meteoraRows.forEach(r=>{
+  r.claimableLoading=true;
+  r.claimableError=null;
+  r.claimableUsd=null;
+  r.claimableTokens=[];
+  r.claimableAsty=0;
+  r.ownerPositionCount=0;
+ });
+
+ setOwnerUi();
+ renderTable();
+
  try{
   const [sdk,web3]=await Promise.all([
    import("https://esm.sh/@meteora-ag/cp-amm-sdk@1.4.5?bundle&target=es2022"),
    import("https://esm.sh/@solana/web3.js@1.98.4?bundle&target=es2022")
   ]);
-  const {CpAmm,getUnClaimLpFee}=sdk,{PublicKey}=web3;
-  if(!CpAmm||!getUnClaimLpFee)throw new Error("Meteora SDK-Funktionen nicht verfügbar");
+
+  const {CpAmm,getUnClaimLpFee}=sdk;
+  const {PublicKey}=web3;
+
+  if(!CpAmm||!getUnClaimLpFee){
+   throw new Error("Meteora SDK-Funktionen nicht verfügbar");
+  }
+
   const knownPools=new Set(meteoraRows.map(r=>r.address));
+  const astyMintPk=new PublicKey(ASTY_MINT);
+
   const {result,endpoint}=await withRpcFailover(web3,async connection=>{
-   const cpAmm=new CpAmm(connection),accum=new Map();let walletCount=0;
-   const astyMintPk=new PublicKey(ASTY_MINT);
+   const cpAmm=new CpAmm(connection);
+   const accum=new Map();
+
    for(const wallet of OWNER_WALLETS.meteora){
-    const positions=await cpAmm.getPositionsByUserAndTokenMint(new PublicKey(wallet),astyMintPk);
-    walletCount++;
+    // SDK 1.4.5 resolves the wallet's Token-2022 position NFTs, fetches
+    // the PositionStates and then returns only pools containing ASTY.
+    const positions=await cpAmm.getPositionsByUserAndTokenMint(
+     new PublicKey(wallet),
+     astyMintPk
+    );
+
     for(const item of positions||[]){
      const poolAddr=pkString(item?.pool)||pkString(item?.positionState?.pool);
      if(!poolAddr||!knownPools.has(poolAddr))continue;
-     const row=meteoraRows.find(r=>r.address===poolAddr);if(!row)continue;
-     const poolState=item.poolState || await cpAmm.fetchPoolState(new PublicKey(poolAddr));
-     const positionState=item.positionState;
-     if(!positionState)continue;
-     const fee=getUnClaimLpFee(poolState,positionState);
-     const mintA=pkString(poolState?.tokenAMint),mintB=pkString(poolState?.tokenBMint);
-     const infoA=getRowTokenInfo(row,mintA)||{symbol:row.tokenX||"Token A",decimals:row.tokenXDecimals||0,price:row.tokenXPrice||0};
-     const infoB=getRowTokenInfo(row,mintB)||{symbol:row.tokenY||"Token B",decimals:row.tokenYDecimals||0,price:row.tokenYPrice||0};
-     const amtA=bnToDecimal(fee?.feeTokenA??0,infoA.decimals),amtB=bnToDecimal(fee?.feeTokenB??0,infoB.decimals);
-     if(!accum.has(poolAddr))accum.set(poolAddr,{positions:0,tokens:new Map(),wallets:new Set()});
-     const a=accum.get(poolAddr);a.positions++;a.wallets.add(wallet);
-     for(const t of [{mint:mintA,symbol:infoA.symbol,amount:amtA,price:infoA.price},{mint:mintB,symbol:infoB.symbol,amount:amtB,price:infoB.price}]){
-      if(!t.mint)continue;if(!a.tokens.has(t.mint))a.tokens.set(t.mint,{symbol:t.symbol,amount:0,price:t.price||0});const x=a.tokens.get(t.mint);x.amount+=t.amount;if(!x.price&&t.price)x.price=t.price;
+
+     const row=meteoraRows.find(r=>r.address===poolAddr);
+     const poolState=item?.poolState;
+     const positionState=item?.positionState;
+     if(!row||!poolState||!positionState)continue;
+
+     const pending=getUnClaimLpFee(poolState,positionState);
+
+     const tokenAMint=pkString(poolState.tokenAMint);
+     const tokenBMint=pkString(poolState.tokenBMint);
+
+     const astyIsA=tokenAMint===ASTY_MINT;
+     const astyIsB=tokenBMint===ASTY_MINT;
+
+     if(!astyIsA&&!astyIsB)continue;
+
+     const astyDecimals=
+      astyIsA
+       ? (row.tokenXMint===ASTY_MINT?row.tokenXDecimals:row.tokenYDecimals)
+       : (row.tokenYMint===ASTY_MINT?row.tokenYDecimals:row.tokenXDecimals);
+
+     const astyPrice=
+      astyIsA
+       ? (row.tokenXMint===ASTY_MINT?row.tokenXPrice:row.tokenYPrice)
+       : (row.tokenYMint===ASTY_MINT?row.tokenYPrice:row.tokenXPrice);
+
+     const rawA=pending?.feeTokenA??0;
+     const rawB=pending?.feeTokenB??0;
+
+     const astyRaw=astyIsA?rawA:rawB;
+     const astyAmount=bnToDecimal(astyRaw,astyDecimals||9);
+
+     if(!accum.has(poolAddr)){
+      accum.set(poolAddr,{
+       positions:0,
+       astyAmount:0,
+       astyPrice:Number(astyPrice)||0,
+       wallets:new Set()
+      });
      }
+
+     const a=accum.get(poolAddr);
+     a.positions++;
+     a.astyAmount+=astyAmount;
+     if(!a.astyPrice&&Number(astyPrice)>0)a.astyPrice=Number(astyPrice);
+     a.wallets.add(wallet);
     }
    }
-   return{accum,walletCount};
+
+   return{accum};
   });
+
   let totalPositions=0;
+  let totalAsty=0;
+
   for(const r of meteoraRows){
-   const a=result.accum.get(r.address);r.claimableLoading=false;r.ownerPositionCount=a?.positions||0;r.claimableTokens=a?[...a.tokens.values()]:[];r.claimableUsd=r.claimableTokens.reduce((s,t)=>s+t.amount*(t.price||0),0);r.claimableError=null;totalPositions+=r.ownerPositionCount;
+   const a=result.accum.get(r.address);
+
+   r.claimableLoading=false;
+   r.ownerPositionCount=a?.positions||0;
+   r.claimableAsty=a?.astyAmount||0;
+
+   // Only ASTY is intentionally included in the Owner fee KPI.
+   r.claimableTokens=r.claimableAsty>0
+    ? [{symbol:"ASTY",amount:r.claimableAsty,price:a?.astyPrice||0}]
+    : [];
+
+   r.claimableUsd=r.claimableAsty*(a?.astyPrice||0);
+   r.claimableError=null;
+
+   totalPositions+=r.ownerPositionCount;
+   totalAsty+=r.claimableAsty;
   }
+
   ownerState.meteoraPositions=totalPositions;
-  ownerState.meteoraStatus=totalPositions?`${totalPositions} Position${totalPositions===1?"":"en"} geladen`:"keine ASTY-Position gefunden";
-  ownerState.meteoraError=null;ownerState.meteoraRpc=endpoint;
+  ownerState.meteoraClaimableAsty=totalAsty;
+  ownerState.meteoraStatus=totalPositions
+   ? `${totalPositions} Position${totalPositions===1?"":"en"} geladen`
+   : "keine ASTY-Position gefunden";
+  ownerState.meteoraError=null;
+  ownerState.meteoraRpc=endpoint;
+
  }catch(e){
   const msg=e?.message||"Meteora Owner-Daten konnten nicht geladen werden";
-  meteoraRows.forEach(r=>{r.claimableLoading=false;r.claimableError=msg;r.claimableUsd=null;r.claimableTokens=[];r.ownerPositionCount=null});
-  ownerState.meteoraPositions=0;ownerState.meteoraStatus="nicht verfügbar";ownerState.meteoraError=msg;console.error("Meteora Owner-Auswertung",e);
+
+  meteoraRows.forEach(r=>{
+   r.claimableLoading=false;
+   r.claimableError=msg;
+   r.claimableUsd=null;
+   r.claimableTokens=[];
+   r.claimableAsty=null;
+   r.ownerPositionCount=null;
+  });
+
+  ownerState.meteoraPositions=0;
+  ownerState.meteoraClaimableAsty=null;
+  ownerState.meteoraStatus="nicht verfügbar";
+  ownerState.meteoraError=msg;
+
+  console.error("Meteora Owner-Auswertung",e);
  }
 }
 
@@ -357,6 +484,16 @@ function renderClaimableCell(r){
  return`<span class="na">–</span>`;
 }
 
+function compactOwnerError(message){
+ const s=String(message||"");
+ if(!s)return "nicht verfügbar";
+ if(/403|Access forbidden/i.test(s))return "RPC-Zugriff durch Website blockiert";
+ if(/Load failed|Failed to fetch|NetworkError/i.test(s))return "Browser konnte RPC nicht erreichen";
+ if(/429|rate limit/i.test(s))return "RPC-Limit erreicht";
+ if(/timeout/i.test(s))return "RPC-Zeitüberschreitung";
+ return s.length>110?s.slice(0,107)+"…":s;
+}
+
 function setOwnerUi(){
  const mRows=rows.filter(r=>r.dex==="Meteora"&&Number.isFinite(r.claimableUsd)),mClaim=mRows.reduce((s,r)=>s+r.claimableUsd,0),mPos=rows.filter(r=>r.dex==="Meteora").reduce((s,r)=>s+(Number.isFinite(r.ownerPositionCount)?r.ownerPositionCount:0),0);
  const ray=rows.find(r=>r.dex==="Raydium"),rayUsd=Number.isFinite(ray?.ownerPositionUsd)?ray.ownerPositionUsd:null,rayPos=Number.isFinite(ray?.ownerPositionCount)?ray.ownerPositionCount:0,totalPos=mPos+rayPos;
@@ -367,8 +504,20 @@ function setOwnerUi(){
  if($("#kpiClaimable"))$("#kpiClaimable").textContent=mRows.length?fmtUSD(mClaim):"–";
  if($("#meteoraOwnerStatus"))$("#meteoraOwnerStatus").textContent=ownerState.meteoraStatus;
  if($("#raydiumOwnerStatus"))$("#raydiumOwnerStatus").textContent=ownerState.raydiumStatus;
- if($("#meteoraOwnerMeta"))$("#meteoraOwnerMeta").textContent=ownerState.meteoraError?`2 Owner-Wallets · ${ownerState.meteoraError}`:`${mPos} Position${mPos===1?"":"en"} · 2 Owner-Wallets${ownerState.meteoraRpc?` · ${rpcShort(ownerState.meteoraRpc)}`:""}`;
- if($("#raydiumOwnerMeta"))$("#raydiumOwnerMeta").textContent=ownerState.raydiumError?`1 Owner-Wallet · ${ownerState.raydiumError}`:`${rayPos} Position${rayPos===1?"":"en"} · 1 Owner-Wallet${Number.isFinite(ray?.ownerPoolSharePct)?` · ${fmtPct(ray.ownerPoolSharePct,4)} Anteil`:""}${ownerState.raydiumRpc?` · ${rpcShort(ownerState.raydiumRpc)}`:""}`;
+ if($("#meteoraOwnerMeta")){
+ const el=$("#meteoraOwnerMeta");
+ el.textContent=ownerState.meteoraError
+  ? `2 Owner-Wallets · ${compactOwnerError(ownerState.meteoraError)}`
+  : `${mPos} Position${mPos===1?"":"en"} · ${Number.isFinite(ownerState.meteoraClaimableAsty)?fmtNum(ownerState.meteoraClaimableAsty,6)+" ASTY claimbar · ":""}2 Owner-Wallets${ownerState.meteoraRpc?` · ${rpcShort(ownerState.meteoraRpc)}`:""}`;
+ el.title=ownerState.meteoraError||"";
+}
+ if($("#raydiumOwnerMeta")){
+ const el=$("#raydiumOwnerMeta");
+ el.textContent=ownerState.raydiumError
+  ? `1 Owner-Wallet · ${compactOwnerError(ownerState.raydiumError)}`
+  : `${rayPos} Position${rayPos===1?"":"en"} · 1 Owner-Wallet${Number.isFinite(ray?.ownerPoolSharePct)?` · ${fmtPct(ray.ownerPoolSharePct,4)} Anteil`:""}${ownerState.raydiumRpc?` · ${rpcShort(ownerState.raydiumRpc)}`:""}`;
+ el.title=ownerState.raydiumError||"";
+}
  if($("#ownerUpdated"))$("#ownerUpdated").textContent=ownerState.updatedAt?new Date(ownerState.updatedAt).toLocaleTimeString("de-DE",{hour:"2-digit",minute:"2-digit"}):"–";
  if($("#kpiClaimableNote"))$("#kpiClaimableNote").textContent=ownerState.loading?"Owner-Daten werden geladen…":ownerState.updatedAt?"Meteora claimbar · Raydium CPMM im LP-Wert":"Noch nicht geladen";
 }
@@ -417,7 +566,7 @@ window.openDetail=function(address){
  if(r.claimableTokens?.length){const lines=r.claimableTokens.map(t=>`${fmtNum(t.amount,8)} ${t.symbol}${t.price?` · ${fmtUSD(t.amount*t.price)}`:""}`).join("<br>");html+=`<div class="detail full"><div class="l">Beanspruchbare Token</div><div class="v" style="font-size:14px;line-height:1.6">${lines}</div></div>`}
  if(r.claimableError)html+=`<div class="detail full"><div class="l">Owner-Daten</div><div class="kpi-note">${r.claimableError}</div></div>`;
  html+=`<div class="detail full"><div class="l">Pool-Adresse</div><div class="address-row"><div class="address-box">${r.address}</div><button class="copy" onclick="copyText('${r.address}')">Kopieren</button></div></div></div>`;
- html+=`<div class="explain"><b>Score-Mechanik:</b> 20 % 24h-, 35 % 7d- und 45 % 30d-Kapital-Effizienz. Bewertet wird die durchschnittliche tägliche Einnahmen/TVL-Effizienz relativ zu den anderen aktiven, nicht ausgeklammerten ASTY-Pools.<br><br><b>Owner-Daten:</b> Meteora-Positionen werden über die ASTY-Mint-Adresse direkt aus den beiden öffentlichen Owner-Wallets gelesen. Beim Raydium-CPMM wird der LP-Tokenbestand der Owner-Wallet ermittelt; die Trading-Gebühren sind dort im LP-Wert enthalten.</div>`;
+ html+=`<div class="explain"><b>Score-Mechanik:</b> 20 % 24h-, 35 % 7d- und 45 % 30d-Kapital-Effizienz. Bewertet wird die durchschnittliche tägliche Einnahmen/TVL-Effizienz relativ zu den anderen aktiven, nicht ausgeklammerten ASTY-Pools.<br><br><b>Owner-Daten:</b> Meteora-Positionen werden über die ASTY-Mint-Adresse direkt aus den beiden öffentlichen Owner-Wallets gelesen. Bei Meteora wird ausschließlich die claimbare ASTY-Seite der LP-Fee ausgewiesen. Beim Raydium-CPMM wird der LP-Tokenbestand der Owner-Wallet ermittelt; die Trading-Gebühren sind dort im LP-Wert enthalten.</div>`;
  $("#modalBody").innerHTML=html;$("#modalBackdrop").classList.add("show");
 }
 window.copyText=async function(t){try{await navigator.clipboard.writeText(t);showToast("Adresse kopiert")}catch(e){const x=document.createElement("textarea");x.value=t;document.body.appendChild(x);x.select();document.execCommand("copy");x.remove();showToast("Adresse kopiert")}}
