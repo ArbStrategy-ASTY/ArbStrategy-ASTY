@@ -48,7 +48,7 @@ main{padding:36px 0 55px}.hero{display:grid;grid-template-columns:1.35fr .65fr;g
   <section class="controls">
     <div class="control"><label>Start asset</label><select id="startAsset"><option value="BOTH">SOL + USDC</option><option value="SOL">SOL only</option><option value="USDC">USDC only</option></select></div>
     <div class="control"><label>Maximum capital per mission (USD)</label><input id="maxCapital" type="number" min="5" max="5000" step="5" value="250"></div>
-    <div class="control"><label>Minimum safe edge</label><select id="minEdge"><option value="0.00">0.00%</option><option value="0.50">0.50%</option><option value="0.75" selected>0.75%</option><option value="1.00">1.00%</option><option value="1.50">1.50%</option><option value="2.00">2.00%</option></select></div>
+    <div class="control"><label>Minimum safe edge</label><select id="minEdge"><option value="0.50">0.50%</option><option value="0.75" selected>0.75%</option><option value="1.00">1.00%</option><option value="1.50">1.50%</option><option value="2.00">2.00%</option></select></div>
     <button class="btn primary scan-btn" id="scanButton">SCAN NOW</button>
   </section>
 
@@ -277,8 +277,7 @@ function evaluatePair(buy,sell,maxCapital,minEdge){
 function buildCandidates(pools){
   const startChoice=$("startAsset").value;
   const maxCapital=Math.max(5,Math.min(5000,safeNum($("maxCapital").value)||250));
-  const minEdgeRaw=safeNum($("minEdge").value);
-  const minEdge=minEdgeRaw===null?.75:minEdgeRaw;
+  const minEdge=safeNum($("minEdge").value)||.75;
   const startPools=pools.filter(p=>{
     if(startChoice==="SOL") return p.counterMint===SOL_MINT;
     if(startChoice==="USDC") return p.counterMint===USDC_MINT;
@@ -353,7 +352,7 @@ function render(rows,pools){
   const lab=rows.slice().sort((a,b)=>b.gross-a.gross).slice(0,25);
   $("labBody").innerHTML=lab.length?lab.map(r=>{
     const b=r.best;
-    return `<tr><td>${esc(r.buy.name)} <span class="muted">· ${esc(r.buy.dex)}</span></td><td>${fmtFeePct(r.buy.feePct)}${r.buy.dynamicFee?' <span class="muted">modeled</span>':''}</td><td>${esc(r.sell.name)} <span class="muted">· ${esc(r.sell.dex)}</span></td><td>${fmtFeePct(r.sell.feePct)}${r.sell.dynamicFee?' <span class="muted">modeled</span>':''}</td><td class="pos">${fmtPct(r.gross)}</td><td class="${b&&b.safeReturnPct>0?'pos':'neg'}">${b?fmtPct(b.safeReturnPct):'—'}</td><td>${b?fmtUsd(b.startUsd):'—'}</td><td class="${b&&b.safeProfit>0?'pos':'neg'}">${b?fmtUsd(b.safeProfit):'—'}</td><td>${r.live?'<span class="pos">LIVE</span>':'<span class="muted">NO MISSION</span>'}</td></tr>`;
+    return `<tr><td>${esc(r.buy.name)}</td><td>${fmtFeePct(r.buy.feePct)}${r.buy.dynamicFee?' <span class="muted">modeled</span>':''}</td><td>${esc(r.sell.name)}</td><td>${fmtFeePct(r.sell.feePct)}${r.sell.dynamicFee?' <span class="muted">modeled</span>':''}</td><td class="pos">${fmtPct(r.gross)}</td><td class="${b&&b.safeReturnPct>0?'pos':'neg'}">${b?fmtPct(b.safeReturnPct):'—'}</td><td>${b?fmtUsd(b.startUsd):'—'}</td><td class="${b&&b.safeProfit>0?'pos':'neg'}">${b?fmtUsd(b.safeProfit):'—'}</td><td>${r.live?'<span class="pos">LIVE</span>':'<span class="muted">NO MISSION</span>'}</td></tr>`;
   }).join(""):`<tr><td colspan="9" class="muted">No candidate spreads found.</td></tr>`;
 }
 
