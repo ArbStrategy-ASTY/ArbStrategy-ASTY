@@ -167,7 +167,7 @@ function normalizeMeteoraPool(r){
   if(!(baseFee>=0)) baseFee=avgFee;
   if(!(baseFee>=0)) baseFee=1;
   // Dynamic-fee pools may have traded above their base fee. Use the higher recent average as a conservative screen.
-  const modelliertFee=(avgFee>baseFee && avgFee<10) ? avgFee : baseFee;
+  const modeledFee=(avgFee>baseFee && avgFee<10) ? avgFee : baseFee;
   return {
     address:r.address, dex:"Meteora DAMM v2", dexKey:"meteora", name:r.name||`ASTY / ${counter.symbol||"TOKEN"}`,
     astyPrice, astyGlobal, counterMint:counter.address, counterSymbol:normalizeSymbol(counter.symbol,counter.address), counterPrice,
@@ -363,7 +363,7 @@ function missionCard(r,i){
     <details><summary>MISSION ANSEHEN</summary><div class="detail-body">
       <div class="steps">
         <div class="step"><div class="step-no">1</div><div><div class="step-title">ASTY KAUFEN · ${esc(buy.name)} · ${esc(feeLabel(buy))}</div><div class="step-copy">${esc(buy.dex)} · Nutze etwa ${fmtToken(startAmt,buy.counterSymbol)}. ASTY-Preis im Pool: ${fmtUsd(buy.astyPrice)}. Verwendete Pool-Gebühr: ${fmtFeePct(buy.feePct)}. Erwartet nach der ASTY-Token-Gebühr von 1 %: ${fmtToken(s.astyReceived,"ASTY")}.</div></div><a class="step-link" href="${buyInputUrl}" target="_blank" rel="noopener">KAUF-POOL ÖFFNEN ↗</a></div>
-        <div class="step"><div class="step-no">2</div><div><div class="step-title">ASTY VERKAUFEN · ${esc(sell.name)} · ${esc(feeLabel(sell))}</div><div class="step-copy">${esc(sell.dex)} · ASTY is modelliert at ${fmtUsd(sell.astyPrice)}. Pool fee used in the model: ${fmtFeePct(sell.feePct)}. Expected output: ${fmtToken(s.counterAmount,sell.counterSymbol)}.</div></div><a class="step-link" href="${sellInputUrl}" target="_blank" rel="noopener">VERKAUF-POOL ÖFFNEN ↗</a></div>
+        <div class="step"><div class="step-no">2</div><div><div class="step-title">ASTY VERKAUFEN · ${esc(sell.name)} · ${esc(feeLabel(sell))}</div><div class="step-copy">${esc(sell.dex)} · ASTY wird in diesem Pool mit ${fmtUsd(sell.astyPrice)} bewertet. Verwendete Pool-Gebühr: ${fmtFeePct(sell.feePct)}. Erwartete Ausgabe: ${fmtToken(s.counterAmount,sell.counterSymbol)}.</div></div><a class="step-link" href="${sellInputUrl}" target="_blank" rel="noopener">VERKAUF-POOL ÖFFNEN ↗</a></div>
         ${step3}
       </div>
       <div class="breakdown">
@@ -405,7 +405,7 @@ async function scan(){
     const pools=await loadPools();
     if(!pools.length) throw new Error("Die Datenquellen haben keine nutzbaren ASTY-Pools geliefert.");
     lastPools=pools; const rows=buildCandidates(pools); render(rows,pools);
-    lastUpdated=Date.now(); status("live","Scanner live",`${pools.length} nutzbare ASTY-Pools · aktualisiert ${new Date(lastUpdated).toLocaleTimeString()}`);
+    lastUpdated=Date.now(); status("live","Scanner live",`${pools.length} nutzbare ASTY-Pools · aktualisiert ${new Date(lastUpdated).toLocaleTimeString("de-DE")}`);
     $("ageBadge").textContent="GERADE AKTUALISIERT";
   }catch(e){
     console.error(e); status("err","Scan fehlgeschlagen",e.message||"Live-Pooldaten konnten nicht geladen werden.");
