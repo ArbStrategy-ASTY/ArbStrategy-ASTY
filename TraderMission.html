@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="de">
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -37,35 +37,35 @@ main{padding:36px 0 55px}.hero{display:grid;grid-template-columns:1.35fr .65fr;g
 <div class="orb a"></div><div class="orb b"></div>
 <header class="topbar"><div class="wrap nav">
   <div class="brand"><img src="assets/logo.png" alt="ASTY logo" onerror="this.style.display='none'"><div><div class="brand-title">$ASTY</div><div class="brand-sub">ArbStrategy</div></div></div>
-  <div class="nav-actions"><a class="btn" href="https://ArbStrategy.net" target="_blank" rel="noopener">ArbStrategy</a><a class="btn" href="https://t.me/ArbStrategyASTY" target="_blank" rel="noopener">Telegram</a><button class="btn primary" id="refreshTop">Refresh Missions</button></div>
+  <div class="nav-actions"><a class="btn" href="https://ArbStrategy.net" target="_blank" rel="noopener">ArbStrategy</a><a class="btn" href="https://t.me/ArbStrategyASTY" target="_blank" rel="noopener">Telegram</a><button class="btn primary" id="refreshTop">Missionen aktualisieren</button></div>
 </div></header>
 <main class="wrap">
   <section class="hero">
-    <div><div class="eyebrow">Live arbitrage scanner</div><h1>ASTY Trader <span>Mission</span></h1><p>Find live price inefficiencies across the ASTY liquidity network. The scanner estimates a sensible trade size, pool impact and a conservative net edge before showing a mission.</p><div class="tagline"><span>Find the edge.</span> Execute the mission.</div></div>
+    <div><div class="eyebrow">Live-Arbitrage-Scanner</div><h1>ASTY Trader <span>Mission</span></h1><p>Findet live Preisunterschiede im ASTY-Liquiditätsnetzwerk. Der Scanner schätzt eine sinnvolle Einsatzgröße, den Price Impact und einen konservativen Netto-Vorteil, bevor eine Mission angezeigt wird.</p><div class="tagline"><span>Finde den Vorteil.</span> Führe die Mission aus.</div></div>
     <div class="status-box"><div class="status-row"><span class="dot" id="statusDot"></span><strong id="statusText">Waiting for scan…</strong></div><div class="status-meta" id="statusMeta">No wallet connection. No transaction execution. Read-only market scanner.</div></div>
   </section>
 
   <section class="controls">
-    <div class="control"><label>Start asset</label><select id="startAsset"><option value="BOTH">SOL + USDC</option><option value="SOL">SOL only</option><option value="USDC">USDC only</option></select></div>
-    <div class="control"><label>Maximum capital per mission (USD)</label><input id="maxCapital" type="number" min="5" max="5000" step="5" value="250"></div>
-    <div class="control"><label>Minimum safe edge</label><select id="minEdge"><option value="0.50">0.50%</option><option value="0.75" selected>0.75%</option><option value="1.00">1.00%</option><option value="1.50">1.50%</option><option value="2.00">2.00%</option></select></div>
-    <button class="btn primary scan-btn" id="scanButton">SCAN NOW</button>
+    <div class="control"><label>Start-Asset</label><select id="startAsset"><option value="BOTH">SOL + USDC</option><option value="SOL">Nur SOL</option><option value="USDC">Nur USDC</option></select></div>
+    <div class="control"><label>Maximales Kapital pro Mission (USD)</label><input id="maxCapital" type="number" min="5" max="5000" step="5" value="250"></div>
+    <div class="control"><label>Mind. sicherer Netto-Vorteil</label><select id="minEdge"><option value="0.00">0.00%</option><option value="0.50">0.50%</option><option value="0.75" selected>0.75%</option><option value="1.00">1.00%</option><option value="1.50">1.50%</option><option value="2.00">2.00%</option></select></div>
+    <button class="btn primary scan-btn" id="scanButton">JETZT SCANNEN</button>
   </section>
 
   <section class="stats">
-    <div class="stat"><div class="stat-label">Pools scanned</div><div class="stat-value cyan" id="poolCount">—</div><div class="stat-sub" id="poolSub">Meteora DAMM v2 + Raydium</div></div>
-    <div class="stat"><div class="stat-label">Live missions</div><div class="stat-value green" id="missionCount">—</div><div class="stat-sub">After safety buffer</div></div>
-    <div class="stat"><div class="stat-label">Best safe edge</div><div class="stat-value" id="bestEdge">—</div><div class="stat-sub">At recommended trade size</div></div>
-    <div class="stat"><div class="stat-label">Best est. profit</div><div class="stat-value" id="bestProfit">—</div><div class="stat-sub">Within selected capital cap</div></div>
+    <div class="stat"><div class="stat-label">Pools gescannt</div><div class="stat-value cyan" id="poolCount">—</div><div class="stat-sub" id="poolSub">Meteora DAMM v2 + Raydium</div></div>
+    <div class="stat"><div class="stat-label">Live-Missionen</div><div class="stat-value green" id="missionCount">—</div><div class="stat-sub">Nach Sicherheitspuffer</div></div>
+    <div class="stat"><div class="stat-label">Bester sicherer Netto-Vorteil</div><div class="stat-value" id="bestEdge">—</div><div class="stat-sub">Bei optimaler Einsatzgröße</div></div>
+    <div class="stat"><div class="stat-label">Bester geschätzter Gewinn</div><div class="stat-value" id="bestProfit">—</div><div class="stat-sub">Innerhalb des gewählten Kapitallimits</div></div>
   </section>
 
-  <div class="section-head"><div><div class="section-title">Live Arb Missions</div><div class="section-sub">Sorted by estimated absolute profit. A mission appears only if the conservative model remains positive.</div></div><div class="live-badge" id="ageBadge">LIVE DATA</div></div>
-  <section class="missions" id="missions"><div class="empty"><strong>Scanning ASTY pools…</strong><small>Live missions will appear here.</small></div></section>
+  <div class="section-head"><div><div class="section-title">Live-Arbitrage-Missionen</div><div class="section-sub">Sortiert nach geschätztem absolutem Gewinn. Eine Mission erscheint nur, wenn das konservative Modell nach allen Kosten positiv bleibt.</div></div><div class="live-badge" id="ageBadge">LIVE-DATEN</div></div>
+  <section class="missions" id="missions"><div class="empty"><strong>ASTY-Pools werden gescannt…</strong><small>Live-Missionen will appear here.</small></div></section>
 
-  <details class="lab" id="lab"><summary>Scanner Lab · Top raw spreads</summary><div class="table-wrap"><table><thead><tr><th>Buy pool</th><th>Buy fee</th><th>Sell pool</th><th>Sell fee</th><th>Gross spread</th><th>Best safe edge</th><th>Recommended</th><th>Est. profit</th><th>Status</th></tr></thead><tbody id="labBody"><tr><td colspan="9" class="muted">No scan yet.</td></tr></tbody></table></div></details>
+  <details class="lab" id="lab"><summary>Scanner-Labor · Größte Brutto-Spreads</summary><div class="table-wrap"><table><thead><tr><th>Kauf-Pool</th><th>Kauf-Gebühr</th><th>Verkauf-Pool</th><th>Verkauf-Gebühr</th><th>Brutto-Spread</th><th>Break-even-Spread</th><th>Bester sicherer Netto-Vorteil</th><th>Empfohlener Einsatz</th><th>Geschätzter Gewinn</th><th>Prüfung</th></tr></thead><tbody id="labBody"><tr><td colspan="10" class="muted">Noch kein Scan.</td></tr></tbody></table></div></details>
 
-  <div class="notice"><strong>Important:</strong> Pool fees are handled per pool and shown separately from the fixed ASTY 1% token fee. Static pool fees such as the 0.25% Raydium ASTY/SOL pool are used directly. DAMM v2 pools with dynamic fees are marked as modeled. This remains a screening model, not a guaranteed execution quote. Pool impact is estimated conservatively from live pool liquidity; the additional safety buffer is intended to cover timing/slippage uncertainty. Always verify the live output shown by Meteora/Raydium and Jupiter before confirming a trade.</div>
-  <div class="footer">ASTY Trader Mission · ArbStrategy on Solana<br>Read-only scanner. No custody. No automated trading.</div>
+  <div class="notice"><strong>Wichtig:</strong> Pool-Gebühren werden für jeden Pool einzeln berücksichtigt und getrennt von der festen ASTY-Token-Gebühr von 1 % angezeigt. Statische Gebühren wie beim Raydium ASTY/SOL-Pool mit 0,25 % werden direkt verwendet. DAMM-v2-Pools mit dynamischen Gebühren werden als modelliert markiert. Dies ist weiterhin ein Screening-Modell und keine garantierte Ausführungsquote. Der Price Impact wird konservativ aus der aktuellen Pool-Liquidität geschätzt; der zusätzliche Sicherheitspuffer soll zeitliche Kursänderungen und Slippage abfedern. Vor einem Trade immer die aktuelle Ausgabe bei Meteora/Raydium und Jupiter prüfen.</div>
+  <div class="footer">ASTY Trader Mission · ArbStrategy on Solana<br>Nur-Lese-Scanner. Keine Verwahrung. Kein automatisierter Handel.</div>
 </main>
 
 <script>
@@ -76,7 +76,7 @@ const RAYDIUM_POOL = "m1e9swvUoggDm2zLXzrzKRrbVwmGEP8aQy7BQigFZgK";
 const RAYDIUM_FEE_PCT = 0.25;
 const ASTY_TRANSFER_FEE = 0.01;
 const RETURN_LEG_COST = 0.006;      // conservative DEX/routing allowance for counter-token -> start asset
-const SAFETY_BUFFER = 0.005;        // timing/slippage reserve after modeled costs
+const SAFETY_BUFFER = 0.005;        // timing/slippage reserve after modelliert costs
 const NETWORK_COST_USD = 0.03;      // small flat allowance for the full route
 const MAX_POOL_SHARE = 0.08;        // never recommend more than 8% of either ASTY pool TVL
 const REFRESH_MS = 30000;
@@ -86,20 +86,20 @@ let refreshTimer = null;
 
 const $ = id => document.getElementById(id);
 const safeNum = v => { const n = Number(v); return Number.isFinite(n) ? n : null; };
-const fmtUsd = n => !Number.isFinite(n) ? "—" : n >= 1000 ? "$" + n.toLocaleString(undefined,{maximumFractionDigits:0}) : "$" + n.toFixed(n < 10 ? 2 : 2);
-const fmtPct = n => !Number.isFinite(n) ? "—" : (n >= 0 ? "+" : "") + n.toFixed(2) + "%";
-const fmtFeePct = n => !Number.isFinite(n) ? "—" : n.toFixed(2) + "%";
-const fmtToken = (n,s) => !Number.isFinite(n) ? "—" : `${n.toLocaleString(undefined,{maximumFractionDigits:n<10?4:n<1000?2:0})} ${s}`;
+const fmtUsd = n => !Number.isFinite(n) ? "—" : "$" + n.toLocaleString("de-DE",{minimumFractionDigits:n>=1000?0:2,maximumFractionDigits:n>=1000?0:2});
+const fmtPct = n => !Number.isFinite(n) ? "—" : (n >= 0 ? "+" : "") + n.toLocaleString("de-DE",{minimumFractionDigits:2,maximumFractionDigits:2}) + "%";
+const fmtFeePct = n => !Number.isFinite(n) ? "—" : n.toLocaleString("de-DE",{minimumFractionDigits:2,maximumFractionDigits:2}) + "%";
+const fmtToken = (n,s) => !Number.isFinite(n) ? "—" : `${n.toLocaleString("de-DE",{maximumFractionDigits:n<10?4:n<1000?2:0})} ${s}`;
 const short = s => !s ? "—" : s.slice(0,4) + "…" + s.slice(-4);
 function feeLabel(pool){
   const shown = fmtFeePct(pool?.feePct);
   if(pool?.dynamicFee){
     const base = fmtFeePct(pool?.baseFeePct);
     return Math.abs((pool?.feePct ?? 0) - (pool?.baseFeePct ?? 0)) > 0.001
-      ? `${shown} modeled pool fee · base ${base}`
-      : `${shown} pool fee · dynamic enabled`;
+      ? `${shown} modellierte Pool-Gebühr · Basis ${base}`
+      : `${shown} Pool-Gebühr · dynamisch`;
   }
-  return `${shown} pool fee`;
+  return `${shown} Pool-Gebühr`;
 }
 const esc = s => String(s ?? "").replace(/[&<>'"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","'":"&#39;",'"':"&quot;"}[c]));
 
@@ -167,7 +167,7 @@ function normalizeMeteoraPool(r){
   if(!(baseFee>=0)) baseFee=avgFee;
   if(!(baseFee>=0)) baseFee=1;
   // Dynamic-fee pools may have traded above their base fee. Use the higher recent average as a conservative screen.
-  const modeledFee=(avgFee>baseFee && avgFee<10) ? avgFee : baseFee;
+  const modelliertFee=(avgFee>baseFee && avgFee<10) ? avgFee : baseFee;
   return {
     address:r.address, dex:"Meteora DAMM v2", dexKey:"meteora", name:r.name||`ASTY / ${counter.symbol||"TOKEN"}`,
     astyPrice, astyGlobal, counterMint:counter.address, counterSymbol:normalizeSymbol(counter.symbol,counter.address), counterPrice,
@@ -248,6 +248,39 @@ function simulateRoute(buy,sell,startUsd){
   };
 }
 
+
+function simulateWithoutPoolImpact(buy,sell,startUsd,grossPct){
+  const sellPrice=buy.astyPrice*(1+grossPct/100);
+  const buyAfterPoolFee=startUsd*(1-Math.max(0,buy.feePct||0)/100);
+  const astyBeforeTransfer=buyAfterPoolFee/buy.astyPrice;
+  const astyAfterBuyFee=astyBeforeTransfer*(1-ASTY_TRANSFER_FEE);
+  const astyEnteringSell=astyAfterBuyFee*(1-ASTY_TRANSFER_FEE);
+  let outUsd=astyEnteringSell*sellPrice*(1-Math.max(0,sell.feePct||0)/100);
+  if(sell.counterMint!==buy.counterMint) outUsd*=1-RETURN_LEG_COST;
+  const modelFinal=Math.max(0,outUsd-NETWORK_COST_USD);
+  return Math.max(0,modelFinal*(1-SAFETY_BUFFER));
+}
+
+function breakEvenGrossPct(buy,sell,startUsd){
+  if(!(startUsd>0)) return null;
+  let lo=-50, hi=200;
+  for(let i=0;i<70;i++){
+    const mid=(lo+hi)/2;
+    const finalUsd=simulateWithoutPoolImpact(buy,sell,startUsd,mid);
+    if(finalUsd>=startUsd) hi=mid; else lo=mid;
+  }
+  return hi;
+}
+
+function rejectionReason(r,minEdge){
+  if(r.live) return "LIVE";
+  if(!r.best) return "POOL ZU KLEIN";
+  if(Number.isFinite(r.breakEvenGrossPct) && r.gross < r.breakEvenGrossPct) return "SPREAD ZU KLEIN";
+  if(r.best.safeProfit<=0) return "PRICE IMPACT ZU HOCH";
+  if(r.best.safeReturnPct<minEdge) return "UNTER MINDESTVORTEIL";
+  return "KEINE MISSION";
+}
+
 function capitalGrid(cap){
   const min=Math.min(5,cap); if(!(cap>0)) return [];
   const n=55, vals=[];
@@ -263,21 +296,29 @@ function evaluatePair(buy,sell,maxCapital,minEdge){
   const gross=(sell.astyPrice/buy.astyPrice-1)*100;
   if(!(gross>0)) return null;
   const cap=Math.min(maxCapital,buy.tvl*MAX_POOL_SHARE,sell.tvl*MAX_POOL_SHARE);
-  if(cap<1) return {buy,sell,gross,best:null,maxSafe:null,reason:"Pool depth too small"};
+  if(cap<1){
+    const r={buy,sell,gross,best:null,maxSafe:null,live:false,cap,breakEvenGrossPct:null,minEdge};
+    r.reason=rejectionReason(r,minEdge);
+    return r;
+  }
   let best=null,maxSafe=null;
   for(const c of capitalGrid(cap)){
     const sim=simulateRoute(buy,sell,c);
     if(!best||sim.safeProfit>best.safeProfit) best=sim;
     if(sim.safeProfit>0&&sim.safeReturnPct>=minEdge) maxSafe=sim;
   }
-  const live=best&&best.safeProfit>0&&best.safeReturnPct>=minEdge;
-  return {buy,sell,gross,best,maxSafe,live,cap,reason:live?"LIVE":"Costs / impact consume the spread"};
+  const live=!!(best&&best.safeProfit>0&&best.safeReturnPct>=minEdge);
+  const be=best?breakEvenGrossPct(buy,sell,best.startUsd):null;
+  const r={buy,sell,gross,best,maxSafe,live,cap,breakEvenGrossPct:be,minEdge};
+  r.reason=rejectionReason(r,minEdge);
+  return r;
 }
 
 function buildCandidates(pools){
   const startChoice=$("startAsset").value;
   const maxCapital=Math.max(5,Math.min(5000,safeNum($("maxCapital").value)||250));
-  const minEdge=safeNum($("minEdge").value)||.75;
+  const minEdgeRaw=safeNum($("minEdge").value);
+  const minEdge=minEdgeRaw===null?.75:minEdgeRaw;
   const startPools=pools.filter(p=>{
     if(startChoice==="SOL") return p.counterMint===SOL_MINT;
     if(startChoice==="USDC") return p.counterMint===USDC_MINT;
@@ -308,32 +349,32 @@ function missionCard(r,i){
   const s=r.best, buy=r.buy, sell=r.sell;
   const startAmt=s.startUsd/buy.counterPrice;
   const finalStart=s.safeFinal/buy.counterPrice;
-  const difficulty=s.safeReturnPct>=2&&Math.max(s.buyImpactPct,s.sellImpactPct)<1?"●○○ EASY":s.safeReturnPct>=1.2?"●●○ MEDIUM":"●●● FAST";
-  const step3=s.needsReturn?`<div class="step"><div class="step-no">3</div><div><div class="step-title">RETURN TO ${esc(buy.counterSymbol)}</div><div class="step-copy">Swap about ${fmtToken(s.counterAmount,sell.counterSymbol)} back to ${esc(buy.counterSymbol)}. Estimated safe end: ${fmtToken(finalStart,buy.counterSymbol)}.</div></div><a class="step-link" href="https://jup.ag/swap" target="_blank" rel="noopener">OPEN JUPITER ↗</a></div>`:"";
+  const difficulty=s.safeReturnPct>=2&&Math.max(s.buyImpactPct,s.sellImpactPct)<1?"●○○ LEICHT":s.safeReturnPct>=1.2?"●●○ MITTEL":"●●● HOCH";
+  const step3=s.needsReturn?`<div class="step"><div class="step-no">3</div><div><div class="step-title">ZURÜCK IN ${esc(buy.counterSymbol)}</div><div class="step-copy">Tausche etwa ${fmtToken(s.counterAmount,sell.counterSymbol)} zurück in ${esc(buy.counterSymbol)}. Geschätzter sicherer Endwert: ${fmtToken(finalStart,buy.counterSymbol)}.</div></div><a class="step-link" href="https://jup.ag/swap" target="_blank" rel="noopener">JUPITER ÖFFNEN ↗</a></div>`:"";
   const sellInputUrl=openPoolUrl(sell,ASTY_MINT,sell.counterMint);
   const buyInputUrl=openPoolUrl(buy,buy.counterMint,ASTY_MINT);
   return `<article class="mission">
-    <div class="mission-top"><div class="mission-kicker"><div class="mission-id">ARB MISSION #${String(i+1).padStart(3,"0")} · LIVE</div><div class="difficulty">${difficulty}</div></div><div class="route">${routeHtml(r)}</div></div>
+    <div class="mission-top"><div class="mission-kicker"><div class="mission-id">ARB-MISSION #${String(i+1).padStart(3,"0")} · LIVE</div><div class="difficulty">${difficulty}</div></div><div class="route">${routeHtml(r)}</div></div>
     <div class="mission-main">
-      <div class="metric"><div class="metric-label">Recommended</div><div class="metric-value cyan">${fmtUsd(s.startUsd)}</div><div class="metric-sub">modeled sweet spot</div></div>
-      <div class="metric"><div class="metric-label">Safe net edge</div><div class="metric-value good">${fmtPct(s.safeReturnPct)}</div><div class="metric-sub">after safety reserve</div></div>
-      <div class="metric"><div class="metric-label">Est. profit</div><div class="metric-value good">+${fmtUsd(Math.max(0,s.safeProfit)).replace('$','$')}</div><div class="metric-sub">not guaranteed</div></div>
+      <div class="metric"><div class="metric-label">Empfohlener Einsatz</div><div class="metric-value cyan">${fmtUsd(s.startUsd)}</div><div class="metric-sub">modellierter Sweet Spot</div></div>
+      <div class="metric"><div class="metric-label">Sicherer Netto-Vorteil</div><div class="metric-value good">${fmtPct(s.safeReturnPct)}</div><div class="metric-sub">nach Sicherheitspuffer</div></div>
+      <div class="metric"><div class="metric-label">Geschätzter Gewinn</div><div class="metric-value good">+${fmtUsd(Math.max(0,s.safeProfit)).replace('$','$')}</div><div class="metric-sub">nicht garantiert</div></div>
     </div>
-    <details><summary>VIEW MISSION</summary><div class="detail-body">
+    <details><summary>MISSION ANSEHEN</summary><div class="detail-body">
       <div class="steps">
-        <div class="step"><div class="step-no">1</div><div><div class="step-title">BUY ASTY · ${esc(buy.name)} · ${esc(feeLabel(buy))}</div><div class="step-copy">${esc(buy.dex)} · Use about ${fmtToken(startAmt,buy.counterSymbol)}. Pool ASTY price: ${fmtUsd(buy.astyPrice)}. Pool fee used in the model: ${fmtFeePct(buy.feePct)}. Expected after the ASTY 1% transfer fee: ${fmtToken(s.astyReceived,"ASTY")}.</div></div><a class="step-link" href="${buyInputUrl}" target="_blank" rel="noopener">OPEN BUY POOL ↗</a></div>
-        <div class="step"><div class="step-no">2</div><div><div class="step-title">SELL ASTY · ${esc(sell.name)} · ${esc(feeLabel(sell))}</div><div class="step-copy">${esc(sell.dex)} · ASTY is modeled at ${fmtUsd(sell.astyPrice)}. Pool fee used in the model: ${fmtFeePct(sell.feePct)}. Expected output: ${fmtToken(s.counterAmount,sell.counterSymbol)}.</div></div><a class="step-link" href="${sellInputUrl}" target="_blank" rel="noopener">OPEN SELL POOL ↗</a></div>
+        <div class="step"><div class="step-no">1</div><div><div class="step-title">ASTY KAUFEN · ${esc(buy.name)} · ${esc(feeLabel(buy))}</div><div class="step-copy">${esc(buy.dex)} · Nutze etwa ${fmtToken(startAmt,buy.counterSymbol)}. ASTY-Preis im Pool: ${fmtUsd(buy.astyPrice)}. Verwendete Pool-Gebühr: ${fmtFeePct(buy.feePct)}. Erwartet nach der ASTY-Token-Gebühr von 1 %: ${fmtToken(s.astyReceived,"ASTY")}.</div></div><a class="step-link" href="${buyInputUrl}" target="_blank" rel="noopener">KAUF-POOL ÖFFNEN ↗</a></div>
+        <div class="step"><div class="step-no">2</div><div><div class="step-title">ASTY VERKAUFEN · ${esc(sell.name)} · ${esc(feeLabel(sell))}</div><div class="step-copy">${esc(sell.dex)} · ASTY is modelliert at ${fmtUsd(sell.astyPrice)}. Pool fee used in the model: ${fmtFeePct(sell.feePct)}. Expected output: ${fmtToken(s.counterAmount,sell.counterSymbol)}.</div></div><a class="step-link" href="${sellInputUrl}" target="_blank" rel="noopener">VERKAUF-POOL ÖFFNEN ↗</a></div>
         ${step3}
       </div>
       <div class="breakdown">
-        <div class="br"><span>Gross ASTY price edge</span><strong>${fmtPct(r.gross)}</strong></div>
-        <div class="br"><span>${esc(buy.name)} pool fee · ${fmtFeePct(buy.feePct)}${buy.dynamicFee ? " modeled" : ""}</span><strong>−${fmtUsd(s.buyPoolFeeUsd)}</strong></div>
-        <div class="br"><span>${esc(sell.name)} pool fee · ${fmtFeePct(sell.feePct)}${sell.dynamicFee ? " modeled" : ""}</span><strong>−${fmtUsd(s.sellPoolFeeUsd)}</strong></div>
-        <div class="br"><span>ASTY token fee · 1.00% on buy + 1.00% on sell</span><strong>−${fmtUsd(s.astyFeeUsd)}</strong></div>
-        <div class="br"><span>Modeled pool impact</span><strong>${s.buyImpactPct.toFixed(2)}% buy · ${s.sellImpactPct.toFixed(2)}% sell</strong></div>
-        <div class="br"><span>${s.needsReturn?"Return-leg allowance":"Return leg"}</span><strong>${s.needsReturn?"−"+fmtUsd(s.returnCostUsd):"Not required"}</strong></div>
-        <div class="br"><span>Execution / slippage safety buffer</span><strong>−${fmtUsd(s.safetyUsd)}</strong></div>
-        <div class="br total"><span>Estimated safe result</span><strong>${fmtUsd(s.safeFinal)} · +${fmtUsd(Math.max(0,s.safeProfit)).replace('$','$')}</strong></div>
+        <div class="br"><span>Brutto-Preisvorteil ASTY</span><strong>${fmtPct(r.gross)}</strong></div>
+        <div class="br"><span>${esc(buy.name)} Pool-Gebühr · ${fmtFeePct(buy.feePct)}${buy.dynamicFee ? " modelliert" : ""}</span><strong>−${fmtUsd(s.buyPoolFeeUsd)}</strong></div>
+        <div class="br"><span>${esc(sell.name)} Pool-Gebühr · ${fmtFeePct(sell.feePct)}${sell.dynamicFee ? " modelliert" : ""}</span><strong>−${fmtUsd(s.sellPoolFeeUsd)}</strong></div>
+        <div class="br"><span>ASTY-Token-Gebühr · 1,00 % beim Kauf + 1,00 % beim Verkauf</span><strong>−${fmtUsd(s.astyFeeUsd)}</strong></div>
+        <div class="br"><span>Modellierter Price Impact</span><strong>${s.buyImpactPct.toLocaleString("de-DE",{minimumFractionDigits:2,maximumFractionDigits:2})}% Kauf · ${s.sellImpactPct.toLocaleString("de-DE",{minimumFractionDigits:2,maximumFractionDigits:2})}% Verkauf</strong></div>
+        <div class="br"><span>${s.needsReturn?"Reserve für Rücktausch":"Rücktausch"}</span><strong>${s.needsReturn?"−"+fmtUsd(s.returnCostUsd):"Nicht erforderlich"}</strong></div>
+        <div class="br"><span>Ausführungs-/Slippage-Sicherheitspuffer</span><strong>−${fmtUsd(s.safetyUsd)}</strong></div>
+        <div class="br total"><span>Geschätztes sicheres Ergebnis</span><strong>${fmtUsd(s.safeFinal)} · +${fmtUsd(Math.max(0,s.safeProfit)).replace('$','$')}</strong></div>
       </div>
     </div></details>
   </article>`;
@@ -347,34 +388,35 @@ function render(rows,pools){
   $("missionCount").textContent=live.length;
   $("bestEdge").textContent=live.length?fmtPct(Math.max(...live.map(r=>r.best.safeReturnPct))):"—";
   $("bestProfit").textContent=live.length?"+"+fmtUsd(live[0].best.safeProfit):"—";
-  $("missions").innerHTML=live.length?live.map(missionCard).join(""):`<div class="empty" style="grid-column:1/-1"><strong>No live mission survives the safety model right now.</strong><small>The scanner is working. Open “Scanner Lab” below to see the largest raw spreads and why they were rejected.</small></div>`;
+  $("missions").innerHTML=live.length?live.map(missionCard).join(""):`<div class="empty" style="grid-column:1/-1"><strong>Aktuell erfüllt keine Mission das Sicherheitsmodell.</strong><small>Der Scanner arbeitet korrekt. Öffne unten das „Scanner-Labor“, um die größten Brutto-Spreads, den Break-even-Spread und den jeweiligen Ablehnungsgrund zu sehen.</small></div>`;
 
   const lab=rows.slice().sort((a,b)=>b.gross-a.gross).slice(0,25);
   $("labBody").innerHTML=lab.length?lab.map(r=>{
     const b=r.best;
-    return `<tr><td>${esc(r.buy.name)}</td><td>${fmtFeePct(r.buy.feePct)}${r.buy.dynamicFee?' <span class="muted">modeled</span>':''}</td><td>${esc(r.sell.name)}</td><td>${fmtFeePct(r.sell.feePct)}${r.sell.dynamicFee?' <span class="muted">modeled</span>':''}</td><td class="pos">${fmtPct(r.gross)}</td><td class="${b&&b.safeReturnPct>0?'pos':'neg'}">${b?fmtPct(b.safeReturnPct):'—'}</td><td>${b?fmtUsd(b.startUsd):'—'}</td><td class="${b&&b.safeProfit>0?'pos':'neg'}">${b?fmtUsd(b.safeProfit):'—'}</td><td>${r.live?'<span class="pos">LIVE</span>':'<span class="muted">NO MISSION</span>'}</td></tr>`;
-  }).join(""):`<tr><td colspan="9" class="muted">No candidate spreads found.</td></tr>`;
+    const reasonClass=r.live?"pos":(r.reason==="UNTER MINDESTVORTEIL"?"muted":"neg");
+    return `<tr><td>${esc(r.buy.name)} <span class="muted">· ${esc(r.buy.dex)}</span></td><td>${fmtFeePct(r.buy.feePct)}${r.buy.dynamicFee?' <span class="muted">modelliert</span>':''}</td><td>${esc(r.sell.name)} <span class="muted">· ${esc(r.sell.dex)}</span></td><td>${fmtFeePct(r.sell.feePct)}${r.sell.dynamicFee?' <span class="muted">modelliert</span>':''}</td><td class="pos">${fmtPct(r.gross)}</td><td>${Number.isFinite(r.breakEvenGrossPct)?fmtPct(r.breakEvenGrossPct):'—'}</td><td class="${b&&b.safeReturnPct>0?'pos':'neg'}">${b?fmtPct(b.safeReturnPct):'—'}</td><td>${r.live&&b?fmtUsd(b.startUsd):'—'}</td><td class="${r.live&&b&&b.safeProfit>0?'pos':'muted'}">${r.live&&b?fmtUsd(b.safeProfit):'—'}</td><td class="${reasonClass}">${esc(r.reason)}</td></tr>`;
+  }).join(""):`<tr><td colspan="10" class="muted">Keine möglichen Preisunterschiede gefunden.</td></tr>`;
 }
 
 async function scan(){
   const buttons=[$("scanButton"),$("refreshTop")]; buttons.forEach(b=>b.disabled=true);
-  status("wait","Scanning live pools…","Loading ASTY DAMM v2 state and the Raydium ASTY/SOL market.");
+  status("wait","Live-Pools werden gescannt…","ASTY DAMM-v2-Pools und der Raydium ASTY/SOL-Markt werden geladen.");
   try{
     const pools=await loadPools();
-    if(!pools.length) throw new Error("No live ASTY pools returned by the data sources.");
+    if(!pools.length) throw new Error("Die Datenquellen haben keine nutzbaren ASTY-Pools geliefert.");
     lastPools=pools; const rows=buildCandidates(pools); render(rows,pools);
-    lastUpdated=Date.now(); status("live","Scanner live",`${pools.length} usable ASTY pools · refreshed ${new Date(lastUpdated).toLocaleTimeString()}`);
-    $("ageBadge").textContent="UPDATED NOW";
+    lastUpdated=Date.now(); status("live","Scanner live",`${pools.length} nutzbare ASTY-Pools · aktualisiert ${new Date(lastUpdated).toLocaleTimeString()}`);
+    $("ageBadge").textContent="GERADE AKTUALISIERT";
   }catch(e){
-    console.error(e); status("err","Scan failed",e.message||"Live pool data could not be loaded.");
-    $("missions").innerHTML=`<div class="empty" style="grid-column:1/-1"><strong>Live scan unavailable.</strong><small>${esc(e.message||"API error")}. No stale mission is shown for safety.</small></div>`;
+    console.error(e); status("err","Scan fehlgeschlagen",e.message||"Live-Pooldaten konnten nicht geladen werden.");
+    $("missions").innerHTML=`<div class="empty" style="grid-column:1/-1"><strong>Live-Scan nicht verfügbar.</strong><small>${esc(e.message||"API-Fehler")}. Aus Sicherheitsgründen werden keine veralteten Missionen angezeigt.</small></div>`;
   }finally{buttons.forEach(b=>b.disabled=false)}
 }
 
 function rerenderLocal(){ if(!lastPools.length) return scan(); render(buildCandidates(lastPools),lastPools); }
 $("scanButton").addEventListener("click",scan); $("refreshTop").addEventListener("click",scan);
 $("startAsset").addEventListener("change",rerenderLocal); $("maxCapital").addEventListener("change",rerenderLocal); $("minEdge").addEventListener("change",rerenderLocal);
-setInterval(()=>{if(lastUpdated){const s=Math.floor((Date.now()-lastUpdated)/1000);$("ageBadge").textContent=s<5?"UPDATED NOW":`UPDATED ${s}s AGO`; }},1000);
+setInterval(()=>{if(lastUpdated){const s=Math.floor((Date.now()-lastUpdated)/1000);$("ageBadge").textContent=s<5?"GERADE AKTUALISIERT":`UPDATED ${s}s AGO`; }},1000);
 refreshTimer=setInterval(scan,REFRESH_MS);
 scan();
 </script>
