@@ -1130,19 +1130,28 @@ async function drawPairVisual(pair,index){
   ctx.stroke();
 
   // fixed top purple pill
+  const bubbleX = 82;
+  const bubbleY = 79;
+  const bubbleW = 360;
+  const bubbleH = 68;
+
   ctx.fillStyle="rgba(151,96,255,.12)";
-  roundedRect(ctx,82,79,260,60,999);
+  roundedRect(ctx,bubbleX,bubbleY,bubbleW,bubbleH,999);
   ctx.fill();
 
   ctx.strokeStyle="rgba(151,96,255,.26)";
   ctx.lineWidth=1.5;
-  roundedRect(ctx,82,79,260,60,999);
+  roundedRect(ctx,bubbleX,bubbleY,bubbleW,bubbleH,999);
   ctx.stroke();
 
-  ctx.fillStyle="#d1bcff";
-  ctx.font="900 26px Inter, sans-serif";
-  ctx.textAlign="left";
-  ctx.fillText("ArbStrategy",108,118);
+  // centered label
+  ctx.save();
+  ctx.fillStyle="#dbc9ff";
+  ctx.font="900 30px Inter, sans-serif";
+  ctx.textAlign="center";
+  ctx.textBaseline="middle";
+  ctx.fillText("ArbStrategy", bubbleX + bubbleW / 2, bubbleY + bubbleH / 2 + 1);
+  ctx.restore();
 
   drawTopLogo(ctx,assets.logo);
   drawBigTitle(ctx,pair.visual.title);
