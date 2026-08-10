@@ -347,16 +347,6 @@ canvas{
     </button>
   </header>
 
-  <div class="top-strip">
-    <div class="strip-left">
-      <strong>3 matched content pairs.</strong> Image first, then the matching X post.
-    </div>
-    <div class="strip-right">
-      <span class="live-dot"></span>
-      Evergreen Content Engine
-    </div>
-  </div>
-
   <main class="pairs" id="pairs"></main>
 </div>
 
@@ -797,19 +787,29 @@ function regenerateOne(index){
 function loadImageCandidates(paths){
   return new Promise(resolve=>{
     let index=0;
+
     const tryNext=()=>{
       if(index>=paths.length){
         resolve(null);
         return;
       }
-      const img=new Image();
+
+      const src = new URL(paths[index], document.baseURI).href;
+      const img = new Image();
+
+      // Important for exportable canvas images when the page is served
+      // through GitHub Pages / HTML preview environments.
+      img.crossOrigin = "anonymous";
+
       img.onload=()=>resolve(img);
       img.onerror=()=>{
         index++;
         tryNext();
       };
-      img.src=paths[index];
+
+      img.src = src;
     };
+
     tryNext();
   });
 }
@@ -865,7 +865,7 @@ function createPairElement(pair,index){
 
       <div class="visual-actions">
         <button type="button" class="action-btn primary copy-image-btn">COPY IMAGE</button>
-        <button type="button" class="action-btn download-image-btn">DOWNLOAD PNG</button>
+        <button type="button" class="action-btn download-image-btn">SAVE PNG</button>
       </div>
     </div>
 
@@ -1178,55 +1178,163 @@ function canvasToBlob(canvas){
       canvas.toBlob(blob=>{
         if(blob) resolve(blob);
         else reject(new Error("Blob generation failed"));
-      },"image/png");
+      },"image/png",1);
     }catch(err){
       reject(err);
     }
   });
 }
 
-async function copyCanvas(canvas, index){
+function makeFileFromBlob(blob,index){
   try{
-    const blob = await canvasToBlob(canvas);
-    if(!navigator.clipboard || typeof ClipboardItem === "undefined"){
-      await downloadBlob(blob, `ASTY-Team-Content-${index+1}.png`);
-      showToast("Clipboard unavailable, PNG downloaded");
-      return;
-    }
-    await navigator.clipboard.write([new ClipboardItem({"image/png": blob})]);
-    showToast("Image copied");
+    return new File(
+      [blob],
+      `ASTY-Team-Content-${index+1}.png`,
+      {type:"image/png"}
+    );
   }catch(err){
-    console.error(err);
-    try{
-      const blob = await canvasToBlob(canvas);
-      await downloadBlob(blob, `ASTY-Team-Content-${index+1}.png`);
-      showToast("Copy failed, PNG downloaded");
-    }catch(err2){
-      console.error(err2);
-      showToast("Image export failed");
-    }
+    return null;
   }
 }
 
-async function downloadBlob(blob, filename){
+async function shareImageBlob(blob,index){
+  const file = makeFileFromBlob(blob,index);
+
+  if(
+    file &&
+    navigator.share &&
+    navigator.canShare &&
+    navigator.canShare({files:[file]})
+  ){
+    await navigator.share({
+      files:[file],
+      title:"ASTY Team Content"
+    });
+    return true;
+  }
+
+  return false;
+}
+
+async function openImageFallback(blob){
   const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = filename;
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-  setTimeout(()=>URL.revokeObjectURL(url), 1000);
+
+  // On iPhone this opens the final PNG itself. The user can then
+  // long-press it and choose "Save to Photos" / "Copy".
+  const win = window.open(url,"_blank");
+
+  if(!win){
+    const img = document.createElement("img");
+    img.src = url;
+    img.alt = "ASTY Content Image";
+    img.style.position = "fixed";
+    img.style.inset = "0";
+    img.style.width = "100%";
+    img.style.height = "100%";
+    img.style.objectFit = "contain";
+    img.style.background = "#05070f";
+    img.style.zIndex = "9999";
+    img.style.padding = "12px";
+    img.style.cursor = "zoom-out";
+    img.title = "Tap to close";
+    img.addEventListener("click",()=>{
+      img.remove();
+      setTimeout(()=>URL.revokeObjectURL(url),500);
+    });
+    document.body.appendChild(img);
+  }else{
+    setTimeout(()=>URL.revokeObjectURL(url),60000);
+  }
+
+  return true;
+}
+
+async function copyCanvas(canvas,index){
+  try{
+    const blob = await canvasToBlob(canvas);
+
+    // Best case: real image clipboard.
+    if(
+      navigator.clipboard &&
+      navigator.clipboard.write &&
+      typeof ClipboardItem !== "undefined"
+    ){
+      try{
+        await navigator.clipboard.write([
+          new ClipboardItem({"image/png":blob})
+        ]);
+        showToast("Image copied");
+        return;
+      }catch(copyErr){
+        console.warn("Direct image clipboard unavailable:",copyErr);
+      }
+    }
+
+    // iPhone/iPad Safari fallback: native share sheet.
+    try{
+      const shared = await shareImageBlob(blob,index);
+      if(shared){
+        showToast("Image opened in share menu");
+        return;
+      }
+    }catch(shareErr){
+      if(shareErr && shareErr.name === "AbortError") return;
+      console.warn("Share fallback unavailable:",shareErr);
+    }
+
+    // Last fallback: show the actual PNG so it can be long-pressed.
+    await openImageFallback(blob);
+    showToast("Image opened - long press to copy/save");
+
+  }catch(err){
+    console.error("Image export failed:",err);
+    showToast("Image export blocked by loaded assets");
+  }
 }
 
 async function downloadCanvas(canvas,index){
   try{
     const blob = await canvasToBlob(canvas);
-    await downloadBlob(blob, `ASTY-Team-Content-${index+1}.png`);
-    showToast("PNG downloaded");
+
+    // On iOS the native share sheet is the most reliable way to save
+    // an image to Photos or Files.
+    try{
+      const shared = await shareImageBlob(blob,index);
+      if(shared){
+        showToast("Choose Save Image or Save to Files");
+        return;
+      }
+    }catch(shareErr){
+      if(shareErr && shareErr.name === "AbortError") return;
+      console.warn("Native share unavailable:",shareErr);
+    }
+
+    // Desktop / Android fallback.
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `ASTY-Team-Content-${index+1}.png`;
+    a.style.display = "none";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+
+    setTimeout(()=>URL.revokeObjectURL(url),3000);
+    showToast("PNG download started");
+
   }catch(err){
-    console.error(err);
-    showToast("PNG export failed");
+    console.error("PNG save failed:",err);
+
+    // If a browser refuses the download attribute, try the visible
+    // final-image fallback.
+    try{
+      const blob = await canvasToBlob(canvas);
+      await openImageFallback(blob);
+      showToast("Image opened - long press to save");
+    }catch(err2){
+      console.error(err2);
+      showToast("Image export blocked by loaded assets");
+    }
   }
 }
 
