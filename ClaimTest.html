@@ -1,0 +1,828 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>ASTY Claim Hunter Test</title>
+
+<style>
+    * {
+        box-sizing: border-box;
+    }
+
+    body {
+        margin: 0;
+        min-height: 100vh;
+        background:
+            radial-gradient(circle at top, #1d1634 0%, #090a10 42%, #050609 100%);
+        color: #ffffff;
+        font-family: Arial, Helvetica, sans-serif;
+        padding: 40px 20px;
+    }
+
+    .wrap {
+        width: 100%;
+        max-width: 900px;
+        margin: 0 auto;
+    }
+
+    .eyebrow {
+        color: #b998ff;
+        font-size: 13px;
+        letter-spacing: 2px;
+        font-weight: 700;
+        margin-bottom: 10px;
+    }
+
+    h1 {
+        margin: 0 0 8px;
+        font-size: clamp(30px, 5vw, 48px);
+    }
+
+    .sub {
+        color: #9fa4b3;
+        line-height: 1.6;
+        margin-bottom: 30px;
+    }
+
+    .card {
+        background: rgba(17, 18, 27, 0.88);
+        border: 1px solid #292b3a;
+        border-radius: 18px;
+        padding: 22px;
+        margin-bottom: 18px;
+    }
+
+    label {
+        display: block;
+        color: #b7bac5;
+        font-size: 13px;
+        margin-bottom: 8px;
+    }
+
+    input {
+        width: 100%;
+        padding: 15px 16px;
+        border-radius: 12px;
+        border: 1px solid #33364a;
+        background: #0b0c12;
+        color: #fff;
+        outline: none;
+        font-size: 15px;
+        margin-bottom: 14px;
+    }
+
+    input:focus {
+        border-color: #a77cff;
+    }
+
+    button {
+        width: 100%;
+        padding: 15px;
+        border: 0;
+        border-radius: 12px;
+        background: linear-gradient(90deg, #8b5cf6, #b07cff);
+        color: white;
+        font-weight: 800;
+        font-size: 15px;
+        cursor: pointer;
+    }
+
+    button:disabled {
+        opacity: .55;
+        cursor: wait;
+    }
+
+    .test {
+        padding: 15px 0;
+        border-bottom: 1px solid #262834;
+    }
+
+    .test:last-child {
+        border-bottom: none;
+    }
+
+    .test-head {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-weight: 700;
+    }
+
+    .dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: #555;
+        flex: 0 0 auto;
+    }
+
+    .dot.wait {
+        background: #777;
+    }
+
+    .dot.running {
+        background: #eab308;
+        box-shadow: 0 0 12px #eab308;
+    }
+
+    .dot.ok {
+        background: #22c55e;
+        box-shadow: 0 0 12px #22c55e;
+    }
+
+    .dot.fail {
+        background: #ef4444;
+        box-shadow: 0 0 12px #ef4444;
+    }
+
+    .detail {
+        color: #969bab;
+        font-size: 13px;
+        margin: 7px 0 0 20px;
+        line-height: 1.5;
+        overflow-wrap: anywhere;
+    }
+
+    .summary {
+        display: none;
+        margin-top: 18px;
+        padding: 16px;
+        border-radius: 12px;
+        background: #0c0d14;
+        border: 1px solid #303344;
+    }
+
+    .big {
+        font-size: 28px;
+        font-weight: 800;
+        margin-top: 4px;
+    }
+
+    pre {
+        margin: 0;
+        white-space: pre-wrap;
+        word-break: break-word;
+        font-size: 12px;
+        line-height: 1.5;
+        color: #b7bdca;
+        max-height: 500px;
+        overflow: auto;
+    }
+
+    .small {
+        color: #747988;
+        font-size: 12px;
+        margin-top: 12px;
+    }
+</style>
+</head>
+
+<body>
+
+<div class="wrap">
+
+    <div class="eyebrow">ASTY LAB</div>
+
+    <h1>Claim Hunter Test</h1>
+
+    <div class="sub">
+        Reiner Lesetest. Keine Wallet-Verbindung, keine Signatur
+        und keine Transaktion.
+    </div>
+
+    <div class="card">
+
+        <label>Meteora DAMM v2 Owner Wallet</label>
+
+        <input
+            id="wallet"
+            type="text"
+            placeholder="Solana Wallet-Adresse einfügen"
+            autocomplete="off"
+        >
+
+        <button id="startButton">
+            TEST STARTEN
+        </button>
+
+        <div class="small">
+            Am besten eine Wallet verwenden, von der du sicher weißt,
+            dass sie Meteora DAMM v2 LP-Positionen besitzt.
+        </div>
+
+    </div>
+
+
+    <div class="card">
+
+        <div class="test">
+            <div class="test-head">
+                <div id="dotApi" class="dot wait"></div>
+                1. Meteora Data API
+            </div>
+            <div id="apiDetail" class="detail">
+                Wartet auf Test...
+            </div>
+        </div>
+
+
+        <div class="test">
+            <div class="test-head">
+                <div id="dotRpc" class="dot wait"></div>
+                2. Solana RPC
+            </div>
+            <div id="rpcDetail" class="detail">
+                Wartet auf Test...
+            </div>
+        </div>
+
+
+        <div class="test">
+            <div class="test-head">
+                <div id="dotSdk" class="dot wait"></div>
+                3. Meteora DAMM v2 SDK
+            </div>
+            <div id="sdkDetail" class="detail">
+                Wartet auf Test...
+            </div>
+        </div>
+
+
+        <div class="test">
+            <div class="test-head">
+                <div id="dotFees" class="dot wait"></div>
+                4. Claimable Fee Read
+            </div>
+            <div id="feesDetail" class="detail">
+                Wartet auf Test...
+            </div>
+        </div>
+
+    </div>
+
+
+    <div id="summary" class="card summary">
+
+        <div class="eyebrow">RESULT</div>
+
+        <div id="positionCount" class="big">
+            0 Positions
+        </div>
+
+        <div id="summaryText" class="sub" style="margin-bottom:0;">
+        </div>
+
+    </div>
+
+
+    <div id="rawCard" class="card" style="display:none;">
+
+        <div class="eyebrow">RAW CLAIMABLE DATA</div>
+
+        <pre id="rawOutput"></pre>
+
+    </div>
+
+</div>
+
+
+<script type="module">
+
+const RPC_URL = "https://api.mainnet-beta.solana.com";
+
+const $ = id => document.getElementById(id);
+
+const startButton = $("startButton");
+
+
+function setStatus(name, state, text) {
+
+    const dot = $("dot" + name);
+    const detail = $(name.toLowerCase() + "Detail");
+
+    dot.className = "dot " + state;
+    detail.textContent = text;
+}
+
+
+function safeStringify(value) {
+
+    return JSON.stringify(
+        value,
+        (key, val) => {
+
+            if (typeof val === "bigint") {
+                return val.toString();
+            }
+
+            if (
+                val &&
+                val.constructor &&
+                val.constructor.name === "BN" &&
+                typeof val.toString === "function"
+            ) {
+                return val.toString();
+            }
+
+            if (
+                val &&
+                typeof val.toBase58 === "function"
+            ) {
+                return val.toBase58();
+            }
+
+            return val;
+        },
+        2
+    );
+}
+
+
+async function testMeteoraApi() {
+
+    setStatus(
+        "Api",
+        "running",
+        "Verbinde mit Meteora..."
+    );
+
+    const url =
+        "https://damm-v2.datapi.meteora.ag/pools?page=1&page_size=1";
+
+    const response = await fetch(url);
+
+    if (!response.ok) {
+        throw new Error(
+            "HTTP " + response.status
+        );
+    }
+
+    const json = await response.json();
+
+    setStatus(
+        "Api",
+        "ok",
+        "Direkter Browser-Zugriff auf die Meteora Data API funktioniert."
+    );
+
+    return json;
+}
+
+
+async function testRpc(wallet) {
+
+    setStatus(
+        "Rpc",
+        "running",
+        "Teste direkten Solana-RPC-Zugriff..."
+    );
+
+    const response = await fetch(
+        RPC_URL,
+        {
+            method: "POST",
+
+            headers: {
+                "Content-Type": "application/json"
+            },
+
+            body: JSON.stringify({
+                jsonrpc: "2.0",
+                id: 1,
+                method: "getBalance",
+                params: [wallet]
+            })
+        }
+    );
+
+    if (!response.ok) {
+        throw new Error(
+            "RPC HTTP " + response.status
+        );
+    }
+
+    const json = await response.json();
+
+    if (json.error) {
+        throw new Error(
+            json.error.message || "RPC Error"
+        );
+    }
+
+    setStatus(
+        "Rpc",
+        "ok",
+        "Solana Mainnet RPC ist direkt aus dem Browser erreichbar."
+    );
+
+    return json;
+}
+
+
+async function testMeteoraSdk(wallet) {
+
+    setStatus(
+        "Sdk",
+        "running",
+        "Lade Meteora SDK im Browser..."
+    );
+
+    /*
+        Browser-Versionen der Libraries laden.
+        Kein Server erforderlich.
+    */
+
+    const bufferModule =
+        await import(
+            "https://esm.sh/buffer@6.0.3"
+        );
+
+    window.Buffer = bufferModule.Buffer;
+
+
+    const solana =
+        await import(
+            "https://esm.sh/@solana/web3.js@1.98.4?bundle"
+        );
+
+
+    const meteora =
+        await import(
+            "https://esm.sh/@meteora-ag/cp-amm-sdk@1.4.5?bundle&deps=@solana/web3.js@1.98.4"
+        );
+
+
+    const {
+        Connection,
+        PublicKey
+    } = solana;
+
+
+    const {
+        CpAmm,
+        getUnClaimLpFee
+    } = meteora;
+
+
+    const connection =
+        new Connection(
+            RPC_URL,
+            "confirmed"
+        );
+
+
+    const cpAmm =
+        new CpAmm(connection);
+
+
+    const owner =
+        new PublicKey(wallet);
+
+
+    setStatus(
+        "Sdk",
+        "running",
+        "Suche DAMM v2 Positionen der Wallet..."
+    );
+
+
+    const positions =
+        await cpAmm.getPositionsByUser(owner);
+
+
+    setStatus(
+        "Sdk",
+        "ok",
+        positions.length +
+        " Meteora DAMM v2 Position(en) gefunden."
+    );
+
+
+    return {
+        positions,
+        cpAmm,
+        getUnClaimLpFee
+    };
+}
+
+
+async function readClaimableFees(
+    sdkResult
+) {
+
+    const {
+        positions,
+        cpAmm,
+        getUnClaimLpFee
+    } = sdkResult;
+
+
+    setStatus(
+        "Fees",
+        "running",
+        "Lese aktuelle Fee-Daten..."
+    );
+
+
+    const output = [];
+
+    /*
+        Für diesen ersten Test begrenzen wir uns bewusst
+        auf maximal 5 Positionen.
+
+        Damit testen wir nur, ob die komplette Kette
+        technisch funktioniert.
+    */
+
+    const sample =
+        positions.slice(0, 5);
+
+
+    for (
+        let i = 0;
+        i < sample.length;
+        i++
+    ) {
+
+        const entry = sample[i];
+
+        const positionAddress =
+            entry.position;
+
+
+        const positionState =
+            await cpAmm.fetchPositionState(
+                positionAddress
+            );
+
+
+        const poolAddress =
+            positionState.pool;
+
+
+        const poolState =
+            await cpAmm.fetchPoolState(
+                poolAddress
+            );
+
+
+        const claimable =
+            getUnClaimLpFee(
+                poolState,
+                positionState
+            );
+
+
+        output.push({
+
+            position:
+                positionAddress.toBase58(),
+
+            pool:
+                poolAddress.toBase58(),
+
+            claimable:
+                claimable
+
+        });
+
+    }
+
+
+    setStatus(
+        "Fees",
+        "ok",
+        "Claimable LP-Fee-Daten konnten für " +
+        output.length +
+        " Position(en) berechnet werden."
+    );
+
+
+    return output;
+}
+
+
+async function run() {
+
+    const wallet =
+        $("wallet").value.trim();
+
+
+    if (!wallet) {
+        alert(
+            "Bitte zuerst eine Solana Wallet-Adresse einfügen."
+        );
+        return;
+    }
+
+
+    startButton.disabled = true;
+    startButton.textContent = "TEST LÄUFT...";
+
+
+    $("summary").style.display = "none";
+    $("rawCard").style.display = "none";
+
+
+    ["Api", "Rpc", "Sdk", "Fees"].forEach(
+        x => {
+
+            const dot =
+                $("dot" + x);
+
+            dot.className =
+                "dot wait";
+
+        }
+    );
+
+
+    try {
+
+        /*
+            TEST 1
+        */
+
+        try {
+
+            await testMeteoraApi();
+
+        } catch (e) {
+
+            setStatus(
+                "Api",
+                "fail",
+                e.message
+            );
+
+            throw new Error(
+                "Meteora Data API Test fehlgeschlagen."
+            );
+
+        }
+
+
+        /*
+            TEST 2
+        */
+
+        try {
+
+            await testRpc(wallet);
+
+        } catch (e) {
+
+            setStatus(
+                "Rpc",
+                "fail",
+                e.message
+            );
+
+            throw new Error(
+                "Solana RPC Test fehlgeschlagen."
+            );
+
+        }
+
+
+        /*
+            TEST 3
+        */
+
+        let sdk;
+
+        try {
+
+            sdk =
+                await testMeteoraSdk(
+                    wallet
+                );
+
+        } catch (e) {
+
+            console.error(e);
+
+            setStatus(
+                "Sdk",
+                "fail",
+                e.message
+            );
+
+            throw new Error(
+                "Meteora SDK Test fehlgeschlagen."
+            );
+
+        }
+
+
+        /*
+            TEST 4
+        */
+
+        let fees = [];
+
+        if (sdk.positions.length > 0) {
+
+            try {
+
+                fees =
+                    await readClaimableFees(
+                        sdk
+                    );
+
+            } catch (e) {
+
+                console.error(e);
+
+                setStatus(
+                    "Fees",
+                    "fail",
+                    e.message
+                );
+
+                throw new Error(
+                    "Claimable Fee Test fehlgeschlagen."
+                );
+
+            }
+
+        } else {
+
+            setStatus(
+                "Fees",
+                "ok",
+                "Keine DAMM v2 Position vorhanden. Fee-Berechnung daher übersprungen."
+            );
+
+        }
+
+
+        /*
+            RESULT
+        */
+
+        $("summary").style.display =
+            "block";
+
+
+        $("positionCount").textContent =
+            sdk.positions.length +
+            " DAMM v2 Positions";
+
+
+        $("summaryText").textContent =
+            "Die Abfrage läuft vollständig clientseitig aus der Website heraus.";
+
+
+        if (fees.length) {
+
+            $("rawCard").style.display =
+                "block";
+
+            $("rawOutput").textContent =
+                safeStringify(fees);
+
+        }
+
+    }
+
+    catch (error) {
+
+        console.error(error);
+
+        $("summary").style.display =
+            "block";
+
+        $("positionCount").textContent =
+            "TEST FEHLGESCHLAGEN";
+
+        $("summaryText").textContent =
+            error.message +
+            " Details stehen bei dem roten Prüfschritt und in der Browser-Konsole.";
+
+    }
+
+    finally {
+
+        startButton.disabled =
+            false;
+
+        startButton.textContent =
+            "TEST ERNEUT STARTEN";
+
+    }
+
+}
+
+
+startButton.addEventListener(
+    "click",
+    run
+);
+
+</script>
+
+</body>
+</html>
