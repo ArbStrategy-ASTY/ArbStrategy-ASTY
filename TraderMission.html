@@ -4,7 +4,7 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <meta name="color-scheme" content="dark" />
-<title>ASTY Trader Mission</title>
+<title>ASTY Trader Mission · V7</title>
 <style>
 :root{
   --bg:#060812;--bg2:#0b1020;--card:rgba(255,255,255,.045);--card2:rgba(12,16,31,.92);
@@ -42,7 +42,7 @@ main{padding:36px 0 55px}.hero{display:grid;grid-template-columns:1.35fr .65fr;g
 <main class="wrap">
   <section class="hero">
     <div><div class="eyebrow">Live-Arbitrage-Scanner</div><h1>ASTY Trader <span>Mission</span></h1><p>Findet live Preisunterschiede im ASTY-Liquiditätsnetzwerk. Eine Mission endet nach dem zweiten Swap: Gegen-Token → ASTY → Gegen-Token. Es gibt keinen erzwungenen Rücktausch zu SOL.</p><div class="tagline"><span>Finde den Vorteil.</span> Führe die Mission aus.</div></div>
-    <div class="status-box"><div class="status-row"><span class="dot" id="statusDot"></span><strong id="statusText">Warte auf Scan…</strong></div><div class="status-meta" id="statusMeta">Meteora ist die Live-Quelle. GeckoTerminal dient als kostenlose Gegenprüfung und wird gecacht.</div></div>
+    <div class="status-box"><div class="status-row"><span class="dot" id="statusDot"></span><strong id="statusText">Warte auf Scan…</strong></div><div class="status-meta" id="statusMeta">Meteora ist die Live-Quelle. GeckoTerminal prüft gezielt USDC-, SOL- und große Pools; die Ergebnisse werden 5 Minuten gecacht.</div></div>
   </section>
 
   <section class="controls">
@@ -73,7 +73,7 @@ main{padding:36px 0 55px}.hero{display:grid;grid-template-columns:1.35fr .65fr;g
     <th>Pool</th><th>DEX</th><th>Fee</th><th>Meteora TVL</th><th>GT Liquidität</th><th>Preis-Abw.</th><th>Liq.-Abw.</th><th>Impact-Modell</th><th>Status</th>
   </tr></thead><tbody id="dataBody"><tr><td colspan="9" class="muted">Noch kein Scan.</td></tr></tbody></table></div></details>
 
-  <div class="notice"><strong>Wichtig:</strong> Die ASTY-Token-2022-Gebühr von 1 % wird beim ASTY-Eingang nach dem Kauf und erneut beim ASTY-Transfer in den Verkaufspool berücksichtigt. Dazu kommen die jeweilige Pool-Gebühr und der Price Impact. Der Rücktausch des End-Tokens zu SOL wurde vollständig entfernt. Für DAMM-v2-Pools mit konzentrierter Liquidität ist der Price Impact ohne On-Chain-SDK-Quote weiterhin eine Reserve-basierte Schätzung; deshalb zeigt die Anwendung zusätzlich einen reinen ARB-Edge nach festen Handelsgebühren. GeckoTerminal wird nur zur Gegenprüfung von Pooldaten verwendet.</div>
+  <div class="notice"><strong>Wichtig:</strong> Die ASTY-Token-2022-Gebühr von 1 % wird beim ASTY-Eingang nach dem Kauf und erneut beim ASTY-Transfer in den Verkaufspool berücksichtigt. Dazu kommen die jeweilige Pool-Gebühr und der Price Impact. Der Rücktausch des End-Tokens zu SOL wurde vollständig entfernt. Für DAMM-v2-Pools mit konzentrierter Liquidität ist der Price Impact ohne On-Chain-SDK-Quote weiterhin eine Reserve-basierte Schätzung; deshalb zeigt die Anwendung zusätzlich einen reinen ARB-Edge nach festen Handelsgebühren. Für die echte USDC-Mint wird der Gegenwert fest mit $1 angesetzt. GeckoTerminal wird nur zur Gegenprüfung von Pooldaten verwendet; extreme Preis-Ausreißer werden nicht direkt als LIVE-Mission freigegeben.</div>
   <div class="footer">ASTY Trader Mission · ArbStrategy on Solana<br>Nur-Lese-Scanner. Keine Verwahrung. Kein automatisierter Handel.</div>
 </main>
 
@@ -83,6 +83,8 @@ const SOL_MINT = "So11111111111111111111111111111111111111112";
 const USDC_MINT = "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v";
 const RAYDIUM_POOL = "m1e9swvUoggDm2zLXzrzKRrbVwmGEP8aQy7BQigFZgK";
 const RAYDIUM_FEE_FALLBACK = 0.25;
+const TRUSTED_USDC_025_POOL = "BqdoyTYoXpnAzRafoBQPrY4ubVSzYE42rxJzNJwoxmZP";
+const TRUSTED_USDC_1_POOL = "5zCsWjFoEQ7jGNaHNwBRvZq7RMqVh6vQhmiYv4NWkDZK";
 
 const ASTY_TRANSFER_FEE = 0.01;
 const NETWORK_RESERVE_USD = 0.01;
@@ -90,14 +92,17 @@ const MAX_DEPTH_SHARE = 0.25;
 const MIN_TEST_USD = 0.10;
 const REFRESH_MS = 15000;
 const GT_CACHE_MS = 5 * 60 * 1000;
-const GT_CHUNK_SIZE = 20;
 
 let lastUpdated = 0;
 let lastPools = [];
 let lastMeta = null;
 
 const $ = id => document.getElementById(id);
-const safeNum = v => { const n = Number(v); return Number.isFinite(n) ? n : null; };
+const safeNum = v => {
+  if(v === null || v === undefined || v === "") return null;
+  const n = Number(v);
+  return Number.isFinite(n) ? n : null;
+};
 const clamp = (n,a,b) => Math.min(b,Math.max(a,n));
 const fmtUsd = n => !Number.isFinite(n) ? "—" : "$" + n.toLocaleString("de-DE",{minimumFractionDigits:n>=1000?0:2,maximumFractionDigits:n>=1000?0:4});
 const fmtPct = n => !Number.isFinite(n) ? "—" : (n >= 0 ? "+" : "") + n.toLocaleString("de-DE",{minimumFractionDigits:2,maximumFractionDigits:2}) + "%";
@@ -206,7 +211,7 @@ function normalizeMeteoraPool(r){
   const astyIsX=x.address===ASTY_MINT, astyIsY=y.address===ASTY_MINT;
   if(!astyIsX&&!astyIsY) return null;
   const asty=astyIsX?x:y, counter=astyIsX?y:x;
-  let counterPrice=safeNum(counter.price);
+  let counterPrice=counter.address===USDC_MINT ? 1 : safeNum(counter.price);
   const astyGlobal=safeNum(asty.price);
   let astyPrice=inferAstyPoolPrice(r,astyIsX,counterPrice,astyGlobal);
 
@@ -243,8 +248,8 @@ function normalizeMeteoraPool(r){
 }
 
 /* -------------------------
-   GECKOTERMINAL: exakte Pool-Adressen als Cross-Check
-   4 Calls für ~65 Pools bei Chunk 20, danach 5-Minuten-Cache.
+   GECKOTERMINAL: gezielter Cross-Check
+   Keyless: nur konkrete Pool-Endpunkte, max. 9 Prioritäts-Pools pro Cache-Zyklus.
 -------------------------- */
 function mintFromRel(rel){
   const id=rel?.data?.id||"";
@@ -260,7 +265,7 @@ function normalizeGtPool(d){
   const address=a.address || String(d.id||"").replace(/^solana_/,"");
   const astyPrice=safeNum(astyBase?a.base_token_price_usd:a.quote_token_price_usd);
   const counterMint=astyBase?qm:bm;
-  const counterPrice=safeNum(astyBase?a.quote_token_price_usd:a.base_token_price_usd);
+  const counterPrice=counterMint===USDC_MINT ? 1 : safeNum(astyBase?a.quote_token_price_usd:a.base_token_price_usd);
   const astyReserve=safeNum(astyBase?a.base_token_balance:a.quote_token_balance)||0;
   const counterReserve=safeNum(astyBase?a.quote_token_balance:a.base_token_balance)||0;
   return {
@@ -274,56 +279,68 @@ function normalizeGtPool(d){
   };
 }
 
-function gtCacheRead(addresses){
+function gtCacheRead(){
   try{
-    const raw=localStorage.getItem("asty_trader_mission_gt_v6");
-    if(!raw) return null;
+    const raw=localStorage.getItem("asty_trader_mission_gt_v7");
+    if(!raw) return {rows:[],fresh:false,ts:0};
     const x=JSON.parse(raw);
-    if(!x?.ts || Date.now()-x.ts>GT_CACHE_MS) return null;
-    const wanted=new Set(addresses);
-    const rows=(x.rows||[]).filter(r=>wanted.has(r.address));
-    if(!rows.length) return null;
-    return {rows,ts:x.ts,cached:true};
-  }catch{return null;}
+    return {
+      rows:Array.isArray(x.rows)?x.rows:[],
+      fresh:!!x.ts && Date.now()-x.ts<=GT_CACHE_MS,
+      ts:x.ts||0
+    };
+  }catch{return {rows:[],fresh:false,ts:0};}
 }
 function gtCacheWrite(rows){
-  try{localStorage.setItem("asty_trader_mission_gt_v6",JSON.stringify({ts:Date.now(),rows}));}catch{}
+  try{localStorage.setItem("asty_trader_mission_gt_v7",JSON.stringify({ts:Date.now(),rows}));}catch{}
 }
-function chunks(arr,n){const out=[];for(let i=0;i<arr.length;i+=n)out.push(arr.slice(i,i+n));return out;}
-
 async function fetchGeckoSpecific(address){
   const url=`https://api.geckoterminal.com/api/v2/networks/solana/pools/${address}?include=base_token,quote_token,dex&include_composition=true`;
   const j=await fetchJson(url);
   return normalizeGtPool(j?.data);
 }
-async function fetchGeckoCrosscheck(addresses){
-  const unique=[...new Set(addresses.filter(Boolean))];
-  const cached=gtCacheRead(unique);
-  if(cached) return {map:new Map(cached.rows.map(r=>[r.address,r])),matched:cached.rows.length,cached:true,ageMs:Date.now()-cached.ts};
+function geckoPriorityAddresses(meteora){
+  const byTvl=[...meteora].sort((a,b)=>(b.tvl||0)-(a.tvl||0));
+  const usdc=byTvl.filter(p=>p.counterMint===USDC_MINT).map(p=>p.address);
+  const sol=byTvl.filter(p=>p.counterMint===SOL_MINT).map(p=>p.address);
+  const preferred=[
+    TRUSTED_USDC_025_POOL,
+    TRUSTED_USDC_1_POOL,
+    ...usdc,
+    RAYDIUM_POOL,
+    ...sol,
+    ...byTvl.map(p=>p.address)
+  ];
+  return [...new Set(preferred.filter(Boolean))].slice(0,9);
+}
+async function fetchGeckoCrosscheck(meteora){
+  const cache=gtCacheRead();
+  const cacheMap=new Map(cache.rows.map(r=>[r.address,r]));
 
-  const rows=[];
-  try{
-    const cs=chunks(unique,GT_CHUNK_SIZE);
-    for(let i=0;i<cs.length;i++){
-      const joined=cs[i].map(encodeURIComponent).join(",");
-      const url=`https://api.geckoterminal.com/api/v2/networks/solana/pools/multi/${joined}?include=base_token,quote_token,dex&include_composition=true`;
-      const j=await fetchJson(url);
-      for(const d of (j?.data||[])){
-        const n=normalizeGtPool(d); if(n) rows.push(n);
-      }
-      if(i<cs.length-1) await sleep(350);
-    }
-  }catch(err){
-    console.warn("GT multi cross-check failed",err);
-    // Keep the known Raydium pool alive even if multi is unavailable.
-    try{
-      const ray=await fetchGeckoSpecific(RAYDIUM_POOL);
-      if(ray) rows.push(ray);
-    }catch(e){console.warn("GT Raydium fallback failed",e);}
+  // If the cache is fresh, do not spend any additional keyless calls.
+  if(cache.fresh){
+    return {map:cacheMap,matched:cacheMap.size,cached:true,ageMs:Date.now()-cache.ts,checkedNow:0};
   }
-  const dedup=[...new Map(rows.map(r=>[r.address,r])).values()];
-  if(dedup.length) gtCacheWrite(dedup);
-  return {map:new Map(dedup.map(r=>[r.address,r])),matched:dedup.length,cached:false,ageMs:0};
+
+  const priority=geckoPriorityAddresses(meteora);
+  const rows=[...cache.rows];
+  const rowMap=new Map(rows.map(r=>[r.address,r]));
+  let checkedNow=0;
+
+  for(const address of priority){
+    try{
+      const gt=await fetchGeckoSpecific(address);
+      if(gt){ rowMap.set(address,gt); checkedNow++; }
+    }catch(e){
+      console.warn("GT Cross-Check fehlgeschlagen",address,e);
+    }
+    // Mild spacing avoids a hard burst while staying below the keyless minute budget.
+    await sleep(250);
+  }
+
+  const merged=[...rowMap.values()];
+  if(merged.length) gtCacheWrite(merged);
+  return {map:new Map(merged.map(r=>[r.address,r])),matched:merged.length,cached:false,ageMs:0,checkedNow};
 }
 
 /* -------------------------
@@ -333,32 +350,69 @@ function relDiffPct(a,b){
   if(!(a>0)||!(b>0)) return null;
   return Math.abs(a-b)/((a+b)/2)*100;
 }
-function enrichMeteoraWithGt(pool,gt){
-  if(!gt){
-    pool.dataQuality="NUR METEORA";
-    pool.priceDiffPct=null; pool.liqDiffPct=null;
-    return pool;
+function median(values){
+  const a=values.filter(v=>Number.isFinite(v)&&v>0).sort((x,y)=>x-y);
+  if(!a.length) return null;
+  const m=Math.floor(a.length/2);
+  return a.length%2?a[m]:(a[m-1]+a[m])/2;
+}
+function referenceAstyPrice(meteora,gtMap){
+  const trusted=gtMap.get(TRUSTED_USDC_025_POOL)?.astyPrice;
+  if(trusted>0) return trusted;
+
+  const gtPrices=[...gtMap.values()]
+    .filter(g=>g.astyPrice>0 && (g.tvl||0)>=100)
+    .map(g=>g.astyPrice);
+  const gtMedian=median(gtPrices);
+  if(gtMedian>0) return gtMedian;
+
+  const globals=meteora.map(p=>p.astyGlobal).filter(v=>v>0);
+  return median(globals);
+}
+function resolveMeteoraPool(pool,gt,refPrice){
+  const oldPrice=pool.astyPrice;
+  pool.meteoraAstyPrice=oldPrice;
+
+  if(pool.counterMint===USDC_MINT) pool.counterPrice=1;
+  else if(gt?.counterPrice>0) pool.counterPrice=gt.counterPrice;
+
+  if(gt?.astyPrice>0){
+    // GeckoTerminal gives the direct pool-specific USD price; prefer it for checked pools.
+    pool.astyPrice=gt.astyPrice;
+  }else{
+    // For unchecked pools, determine current_price orientation against the network reference.
+    pool.astyPrice=inferAstyPoolPrice(pool.raw,pool.astyIsX,pool.counterPrice,refPrice||pool.astyGlobal);
   }
-  if(!(pool.counterPrice>0) && gt.counterPrice>0) pool.counterPrice=gt.counterPrice;
-  if(!(pool.astyPrice>0) && gt.astyPrice>0) pool.astyPrice=gt.astyPrice;
-  if(!(pool.astyReserve>0) && gt.astyReserve>0) pool.astyReserve=gt.astyReserve;
-  if(!(pool.counterReserve>0) && gt.counterReserve>0) pool.counterReserve=gt.counterReserve;
 
-  pool.gtAstyPrice=gt.astyPrice;
-  pool.gtTvl=gt.tvl;
-  pool.gtFeePct=gt.feePct;
-  pool.priceDiffPct=relDiffPct(pool.astyPrice,gt.astyPrice);
-  pool.liqDiffPct=relDiffPct(pool.tvl,gt.tvl);
+  if(gt?.astyReserve>0) pool.astyReserve=gt.astyReserve;
+  if(gt?.counterReserve>0) pool.counterReserve=gt.counterReserve;
 
-  const p=pool.priceDiffPct, l=pool.liqDiffPct;
-  if((p===null||p<=3) && (l===null||l<=35)) pool.dataQuality="BESTÄTIGT";
-  else if((p===null||p<=7) && (l===null||l<=75)) pool.dataQuality="ABWEICHUNG";
-  else pool.dataQuality="MISMATCH";
+  pool.gtAstyPrice=gt?.astyPrice??null;
+  pool.gtTvl=gt?.tvl??null;
+  pool.gtFeePct=gt?.feePct??null;
+  pool.priceDiffPct=gt?.astyPrice>0 && oldPrice>0 ? relDiffPct(oldPrice,gt.astyPrice) : null;
+  pool.liqDiffPct=gt?.tvl>0 ? relDiffPct(pool.tvl,gt.tvl) : null;
+  pool.networkDiffPct=refPrice>0 && pool.astyPrice>0 ? relDiffPct(pool.astyPrice,refPrice) : null;
+
+  if(gt){
+    const p=pool.priceDiffPct, l=pool.liqDiffPct;
+    if((p===null||p<=3) && (l===null||l<=35)) pool.dataQuality="BESTÄTIGT";
+    else if((p===null||p<=7) && (l===null||l<=75)) pool.dataQuality="ABWEICHUNG";
+    else pool.dataQuality="MISMATCH";
+  }else{
+    pool.dataQuality="NUR METEORA";
+  }
+
+  // A >3x deviation from the network reference is never promoted directly as a manual LIVE mission.
+  // It remains visible in the lab for investigation.
+  if(Number.isFinite(pool.networkDiffPct) && pool.networkDiffPct>100){
+    pool.dataQuality="PREIS-AUSREISSER";
+  }
   return pool;
 }
-
-function normalizeRaydiumFromGt(gt){
+function normalizeRaydiumFromGt(gt,refPrice){
   if(!gt) return null;
+  const fee=(gt.feePct>0)?gt.feePct:RAYDIUM_FEE_FALLBACK;
   return {
     address:RAYDIUM_POOL,
     dex:"Raydium", dexKey:"raydium", name:"ASTY / SOL",
@@ -369,8 +423,8 @@ function normalizeRaydiumFromGt(gt){
     astyReserve:gt.astyReserve,
     counterReserve:gt.counterReserve,
     tvl:gt.tvl,
-    feePct:gt.feePct>=0?gt.feePct:RAYDIUM_FEE_FALLBACK,
-    baseFeePct:gt.feePct>=0?gt.feePct:RAYDIUM_FEE_FALLBACK,
+    feePct:fee,
+    baseFeePct:fee,
     dynamicFee:false,
     concentratedLiquidity:false,
     collectFeeMode:null,
@@ -380,6 +434,7 @@ function normalizeRaydiumFromGt(gt){
     gtTvl:gt.tvl,
     priceDiffPct:0,
     liqDiffPct:0,
+    networkDiffPct:refPrice>0?relDiffPct(gt.astyPrice,refPrice):0,
     dataQuality:"GECKOTERMINAL",
     url:`https://raydium.io/swap/?inputMint=${SOL_MINT}&outputMint=${ASTY_MINT}`
   };
@@ -388,14 +443,14 @@ function normalizeRaydiumFromGt(gt){
 async function loadPools(){
   const m=await fetchMeteoraRaw();
   let meteora=m.rows.map(normalizeMeteoraPool).filter(Boolean);
-  const addresses=[...meteora.map(p=>p.address),RAYDIUM_POOL];
 
-  let gt={map:new Map(),matched:0,cached:false,ageMs:0};
+  let gt={map:new Map(),matched:0,cached:false,ageMs:0,checkedNow:0};
   let gtError=null;
-  try{gt=await fetchGeckoCrosscheck(addresses);}catch(e){gtError=e;}
+  try{gt=await fetchGeckoCrosscheck(meteora);}catch(e){gtError=e;}
 
-  meteora=meteora.map(p=>enrichMeteoraWithGt(p,gt.map.get(p.address)));
-  const ray=normalizeRaydiumFromGt(gt.map.get(RAYDIUM_POOL));
+  const refPrice=referenceAstyPrice(meteora,gt.map);
+  meteora=meteora.map(p=>resolveMeteoraPool(p,gt.map.get(p.address),refPrice));
+  const ray=normalizeRaydiumFromGt(gt.map.get(RAYDIUM_POOL),refPrice);
   const combined=ray?[...meteora,ray]:meteora;
 
   const usable=combined.filter(p=>
@@ -413,7 +468,9 @@ async function loadPools(){
       raydiumLoaded:ray?1:0,
       gtMatched:gt.matched,
       gtCached:gt.cached,
+      gtCheckedNow:gt.checkedNow||0,
       gtAgeMs:gt.ageMs,
+      referenceAstyPrice:refPrice,
       excluded:combined.length-usable.length,
       warning:m.meta.warning||null,
       gtError:gtError?.message||null
@@ -546,7 +603,8 @@ function capitalGrid(cap){
   return [...new Set(vals)].filter(v=>v>=MIN_TEST_USD&&v<=cap+1e-9).sort((a,b)=>a-b);
 }
 function routeDataQuality(buy,sell){
-  const bad=["MISMATCH"];
+  const bad=["MISMATCH","PREIS-AUSREISSER"];
+  if(buy.dataQuality==="PREIS-AUSREISSER"||sell.dataQuality==="PREIS-AUSREISSER") return "PREIS-AUSREISSER";
   if(bad.includes(buy.dataQuality)||bad.includes(sell.dataQuality)) return "MISMATCH";
   if(buy.dataQuality==="BESTÄTIGT"&&sell.dataQuality==="BESTÄTIGT") return "BESTÄTIGT";
   if(buy.dataQuality==="GECKOTERMINAL"&&["BESTÄTIGT","GECKOTERMINAL"].includes(sell.dataQuality)) return "BESTÄTIGT";
@@ -560,8 +618,9 @@ function impactModel(pool){
 }
 function rejectionReason(r,minEdge){
   if(r.live) return "LIVE";
-  if(!r.best) return "POOL ZU KLEIN";
+  if(r.dataQuality==="PREIS-AUSREISSER") return "PREIS-AUSREISSER";
   if(r.dataQuality==="MISMATCH") return "DATEN-MISMATCH";
+  if(!r.best) return "POOL ZU KLEIN";
   if(!(r.feeEdgePct>0)) return "SPREAD ZU KLEIN";
   if(r.best.safeValueAdvantage<=0) return "IMPACT / PUFFER ZU HOCH";
   if(r.best.safeReturnPct<minEdge) return "UNTER MINDESTVORTEIL";
@@ -653,7 +712,7 @@ function openPoolUrl(pool,inputMint,outputMint){
 }
 function qualityClass(q){
   if(q==="BESTÄTIGT"||q==="GECKOTERMINAL") return "pos";
-  if(q==="MISMATCH") return "neg";
+  if(q==="MISMATCH"||q==="PREIS-AUSREISSER") return "neg";
   return "amber";
 }
 function difficulty(s){
@@ -663,13 +722,15 @@ function difficulty(s){
   return "●●● SCHNELL";
 }
 
-function missionCard(r,i){
+function missionCard(r,i,openKeys=new Set()){
   const s=r.best,buy=r.buy,sell=r.sell;
   const buyUrl=openPoolUrl(buy,buy.counterMint,ASTY_MINT);
   const sellUrl=openPoolUrl(sell,ASTY_MINT,sell.counterMint);
   const valuePrefix=s.safeValueAdvantage>=0?"+":"";
+  const missionKey=`${buy.address}|${sell.address}`;
+  const isOpen=openKeys.has(missionKey);
 
-  return `<article class="mission">
+  return `<article class="mission" data-mission-key="${esc(missionKey)}">
     <div class="mission-top">
       <div class="mission-kicker"><div class="mission-id">ARB-MISSION #${String(i+1).padStart(3,"0")} · LIVE</div><div class="difficulty">${difficulty(s)}</div></div>
       <div class="route">${routeHtml(r)}</div>
@@ -679,7 +740,7 @@ function missionCard(r,i){
       <div class="metric"><div class="metric-label">ARB-Edge</div><div class="metric-value ${r.feeEdgePct>0?'good':''}">${fmtPct(r.feeEdgePct)}</div><div class="metric-sub">nach Pool- + ASTY-Gebühren, vor Impact</div></div>
       <div class="metric"><div class="metric-label">Sicherer Wertvorteil</div><div class="metric-value good">${valuePrefix}${fmtUsd(s.safeValueAdvantage).replace("-$","$-")}</div><div class="metric-sub">${fmtPct(s.safeReturnPct)} · Endwert ${fmtUsd(s.safeEndUsd)}</div></div>
     </div>
-    <details><summary>MISSION ANSEHEN</summary><div class="detail-body">
+    <details ${isOpen?"open":""}><summary>MISSION ANSEHEN</summary><div class="detail-body">
       <div class="steps">
         <div class="step">
           <div class="step-no">1</div>
@@ -725,23 +786,29 @@ function renderDataLab(pools){
       <td>${p.gtTvl?fmtUsd(p.gtTvl):p.dexKey==="raydium"?fmtUsd(p.tvl):"—"}</td>
       <td>${pc}</td><td>${lc}</td>
       <td>${esc(impactModel(p))}</td>
-      <td class="${qualityClass(p.dataQuality)}">${esc(p.dataQuality)}</td>
+      <td class="${qualityClass(p.dataQuality)}">${esc(p.dataQuality)}${Number.isFinite(p.networkDiffPct)?`<br><span class="muted">Netz ${p.networkDiffPct.toLocaleString("de-DE",{maximumFractionDigits:1})}%</span>`:""}</td>
     </tr>`;
   }).join(""):`<tr><td colspan="9" class="muted">Keine Pooldaten.</td></tr>`;
 }
 
 function render(rows,pools,meta){
+  const openKeys=new Set(
+    [...document.querySelectorAll('#missions .mission details[open]')]
+      .map(d=>d.closest('.mission')?.dataset?.missionKey)
+      .filter(Boolean)
+  );
   const live=rows.filter(r=>r.live).sort((a,b)=>b.best.safeValueAdvantage-a.best.safeValueAdvantage).slice(0,12);
   const candidates=rows.filter(r=>r.candidate);
 
   $("poolCount").textContent=pools.length;
   const gtText=meta.gtMatched?`${meta.gtMatched} GT-Matches${meta.gtCached?" · Cache":""}`:"GT nicht verfügbar";
-  $("poolSub").textContent=`Meteora ${meta.meteoraUsable}/${meta.meteoraExpected} · Raydium ${meta.raydiumLoaded} · ${gtText}`;
+  const refText=meta.referenceAstyPrice>0?` · ASTY-Ref ${fmtUsd(meta.referenceAstyPrice)}`:"";
+  $("poolSub").textContent=`Meteora ${meta.meteoraUsable}/${meta.meteoraExpected} · Raydium ${meta.raydiumLoaded} · ${gtText}${refText}`;
   $("candidateCount").textContent=candidates.length;
   $("missionCount").textContent=live.length;
   $("bestEdge").textContent=live.length?fmtPct(Math.max(...live.map(r=>r.best.safeReturnPct))):"—";
 
-  $("missions").innerHTML=live.length?live.map(missionCard).join(""):`<div class="empty" style="grid-column:1/-1">
+  $("missions").innerHTML=live.length?live.map((r,i)=>missionCard(r,i,openKeys)).join(""):`<div class="empty" style="grid-column:1/-1">
     <strong>Aktuell keine sichere Live-Mission.</strong>
     <small>Das bedeutet nicht automatisch „keine Arbitrage“. Im Scanner-Labor siehst du zusätzlich ARB-Kandidaten, die nach festen Gebühren positiv sind, aber durch geschätzten Price Impact, Sicherheitspuffer oder Datenunsicherheit noch keine manuelle Mission werden.</small>
   </div>`;
@@ -756,9 +823,9 @@ function render(rows,pools,meta){
     const reasonClass=r.live?"pos":r.candidate?"amber":"neg";
     const value=b?b.safeValueAdvantage:null;
     return `<tr>
-      <td>${esc(r.buy.name)} <span class="muted">· ${esc(r.buy.dex)}</span></td>
+      <td>${esc(r.buy.name)} <span class="muted">· ${esc(r.buy.dex)} · ${short(r.buy.address)}</span></td>
       <td>${fmtFeePct(r.buy.feePct)}${r.buy.dynamicFee?' <span class="muted">modelliert</span>':''}</td>
-      <td>${esc(r.sell.name)} <span class="muted">· ${esc(r.sell.dex)}</span></td>
+      <td>${esc(r.sell.name)} <span class="muted">· ${esc(r.sell.dex)} · ${short(r.sell.address)}</span></td>
       <td>${fmtFeePct(r.sell.feePct)}${r.sell.dynamicFee?' <span class="muted">modelliert</span>':''}</td>
       <td class="pos">${fmtPct(r.gross)}</td>
       <td class="${r.feeEdgePct>0?'pos':'neg'}">${fmtPct(r.feeEdgePct)}</td>
@@ -777,7 +844,7 @@ function render(rows,pools,meta){
 async function scan(){
   const buttons=[$("scanButton"),$("refreshTop")];
   buttons.forEach(b=>b.disabled=true);
-  status("wait","Live-Pools werden gescannt…","Meteora wird vollständig paginiert; GeckoTerminal prüft dieselben Pool-Adressen gegen.");
+  status("wait","Live-Pools werden gescannt…","Meteora wird vollständig paginiert; GeckoTerminal prüft priorisiert USDC-, SOL- und große Pools gegen.");
   try{
     const result=await loadPools();
     const pools=result.pools, meta=result.meta;
@@ -790,7 +857,7 @@ async function scan(){
 
     lastUpdated=Date.now();
     const gtInfo=meta.gtMatched
-      ? `GT ${meta.gtMatched} geprüft${meta.gtCached?" (Cache)":""}`
+      ? `GT ${meta.gtMatched} im Cache · ${meta.gtCheckedNow||0} jetzt geprüft`
       : "GT-Gegenprüfung nicht verfügbar";
     status("live","Scanner live",
       `Meteora ${meta.meteoraLoaded}/${meta.meteoraExpected} geladen · nutzbar ${meta.meteoraUsable} · Raydium ${meta.raydiumLoaded} · ${gtInfo}`
