@@ -12,16 +12,12 @@
   --panel:#0f1322;
   --panel2:#121729;
   --line:rgba(255,255,255,.09);
-  --line2:rgba(153,107,255,.26);
   --text:#f5f7ff;
   --muted:#aeb6d5;
   --soft:#7f89ad;
   --purple:#9864ff;
-  --purple2:#bd91ff;
   --cyan:#63dfff;
-  --green:#62efae;
   --shadow:0 22px 70px rgba(0,0,0,.38);
-  --radius:24px;
 }
 
 *{box-sizing:border-box}
@@ -35,10 +31,7 @@ body{
     radial-gradient(circle at 96% 8%, rgba(69,210,255,.07), transparent 24%),
     linear-gradient(180deg,#060810 0%,#090b14 48%,#060810 100%);
 }
-
-button{
-  font:inherit;
-}
+button{font:inherit}
 
 .wrap{
   width:min(1450px,calc(100% - 30px));
@@ -46,7 +39,6 @@ button{
   padding:22px 0 42px;
 }
 
-/* HEADER */
 .header{
   min-height:76px;
   display:flex;
@@ -63,14 +55,12 @@ button{
   align-items:center;
   gap:15px;
 }
-
 .site-logo{
   width:60px;
   height:60px;
   object-fit:contain;
   display:block;
 }
-
 .brand-text h1{
   margin:0;
   font-size:clamp(26px,4vw,39px);
@@ -82,7 +72,6 @@ button{
   background-clip:text;
   color:transparent;
 }
-
 .brand-text .mini{
   margin-top:7px;
   color:var(--soft);
@@ -108,13 +97,11 @@ button{
     inset 0 1px 0 rgba(255,255,255,.14);
   transition:.18s ease;
 }
-
 .generate-main:hover{
   transform:translateY(-1px);
   filter:saturate(1.08) brightness(1.03);
 }
 
-/* INTRO STRIP */
 .top-strip{
   display:flex;
   justify-content:space-between;
@@ -123,16 +110,11 @@ button{
   flex-wrap:wrap;
   margin-bottom:16px;
 }
-
 .strip-left{
   color:var(--muted);
   font-size:14px;
 }
-
-.strip-left strong{
-  color:#fff;
-}
-
+.strip-left strong{color:#fff}
 .strip-right{
   display:flex;
   align-items:center;
@@ -143,7 +125,6 @@ button{
   text-transform:uppercase;
   font-weight:800;
 }
-
 .live-dot{
   width:9px;
   height:9px;
@@ -152,7 +133,6 @@ button{
   box-shadow:0 0 16px rgba(152,100,255,.75);
 }
 
-/* PAIRS */
 .pairs{
   display:grid;
   gap:18px;
@@ -161,7 +141,7 @@ button{
 .pair{
   position:relative;
   display:grid;
-  grid-template-columns:minmax(0,1fr) minmax(420px,.92fr);
+  grid-template-columns:minmax(420px,.92fr) minmax(0,1fr);
   gap:18px;
   padding:18px;
   border-radius:28px;
@@ -172,7 +152,6 @@ button{
   box-shadow:var(--shadow);
   overflow:hidden;
 }
-
 .pair::before{
   content:"";
   position:absolute;
@@ -185,9 +164,26 @@ button{
   pointer-events:none;
 }
 
-.text-side,
-.visual-side{
-  min-width:0;
+.visual-side, .text-side{min-width:0}
+
+.visual-box{
+  border-radius:22px;
+  overflow:hidden;
+  border:1px solid rgba(255,255,255,.08);
+  background:#070912;
+  box-shadow:0 18px 45px rgba(0,0,0,.24);
+}
+canvas{
+  display:block;
+  width:100%;
+  height:auto;
+  aspect-ratio:1/1;
+}
+.visual-actions{
+  display:flex;
+  gap:9px;
+  flex-wrap:wrap;
+  margin-top:11px;
 }
 
 .text-panel{
@@ -202,7 +198,6 @@ button{
   display:flex;
   flex-direction:column;
 }
-
 .panel-head{
   display:flex;
   align-items:center;
@@ -211,7 +206,6 @@ button{
   flex-wrap:wrap;
   margin-bottom:18px;
 }
-
 .topic-badge{
   display:inline-flex;
   align-items:center;
@@ -225,13 +219,11 @@ button{
   letter-spacing:.12em;
   text-transform:uppercase;
 }
-
 .char-count{
   color:var(--soft);
   font-size:12px;
   font-weight:700;
 }
-
 .post-text{
   flex:1;
   white-space:pre-wrap;
@@ -242,7 +234,6 @@ button{
   line-height:1.7;
   overflow-wrap:anywhere;
 }
-
 .actions{
   display:flex;
   gap:9px;
@@ -251,7 +242,6 @@ button{
   margin-top:18px;
   border-top:1px solid rgba(255,255,255,.065);
 }
-
 .action-btn{
   appearance:none;
   border:1px solid rgba(255,255,255,.10);
@@ -265,41 +255,15 @@ button{
   letter-spacing:.04em;
   transition:.16s ease;
 }
-
 .action-btn:hover{
   border-color:rgba(152,100,255,.38);
   background:rgba(152,100,255,.07);
 }
-
 .action-btn.primary{
   border-color:rgba(152,100,255,.28);
   background:linear-gradient(135deg,rgba(152,100,255,.18),rgba(76,204,255,.08));
 }
 
-/* VISUAL */
-.visual-box{
-  border-radius:22px;
-  overflow:hidden;
-  border:1px solid rgba(255,255,255,.08);
-  background:#070912;
-  box-shadow:0 18px 45px rgba(0,0,0,.24);
-}
-
-canvas{
-  display:block;
-  width:100%;
-  height:auto;
-  aspect-ratio:1/1;
-}
-
-.visual-actions{
-  display:flex;
-  gap:9px;
-  flex-wrap:wrap;
-  margin-top:11px;
-}
-
-/* TOAST */
 .toast{
   position:fixed;
   right:18px;
@@ -318,7 +282,6 @@ canvas{
   pointer-events:none;
   transition:.18s ease;
 }
-
 .toast.show{
   opacity:1;
   transform:translateY(0);
@@ -328,11 +291,7 @@ canvas{
   .pair{
     grid-template-columns:1fr;
   }
-
-  .text-panel{
-    min-height:auto;
-  }
-
+  .text-panel{min-height:auto}
   .visual-side{
     max-width:680px;
     width:100%;
@@ -345,31 +304,25 @@ canvas{
     width:min(100% - 20px,1450px);
     padding-top:14px;
   }
-
   .header{
     align-items:flex-start;
     flex-direction:column;
   }
-
   .generate-main{
     width:100%;
   }
-
   .site-logo{
     width:52px;
     height:52px;
   }
-
   .pair{
     padding:12px;
     border-radius:22px;
   }
-
   .text-panel{
     padding:17px;
     border-radius:18px;
   }
-
   .post-text{
     font-size:14px;
   }
@@ -382,26 +335,21 @@ canvas{
 
   <header class="header">
     <div class="brand">
-      <img
-        id="siteLogo"
-        class="site-logo"
-        src="assets/logo.png"
-        alt="ASTY Logo"
-      />
+      <img id="siteLogo" class="site-logo" src="assets/logo.png" alt="ASTY Logo" />
       <div class="brand-text">
         <h1>ASTY Team Content Lab</h1>
         <div class="mini">Team Tool</div>
       </div>
     </div>
 
-    <button class="generate-main" id="generateAllBtn">
+    <button type="button" class="generate-main" id="generateAllBtn">
       GENERATE 3 NEW POSTS
     </button>
   </header>
 
   <div class="top-strip">
     <div class="strip-left">
-      <strong>3 matched content pairs.</strong> Each X post is generated together with its own visual.
+      <strong>3 matched content pairs.</strong> Image first, then the matching X post.
     </div>
     <div class="strip-right">
       <span class="live-dot"></span>
@@ -415,18 +363,10 @@ canvas{
 <div class="toast" id="toast">Copied</div>
 
 <script>
-/* =========================================================
-   ASTY TEAM CONTENT LAB
-   ---------------------------------------------------------
-   Asset paths:
-   Logo: assets/logo.png
-   Wolf: tries assets/Wolf.png and assets/wolf.png
-   ========================================================= */
-
 const SYSTEM_URL = "https://ArbStrategy.net";
 const TELEGRAM_URL = "https://t.me/ArbStrategyASTY";
 
-const HISTORY_KEY = "asty_team_content_lab_history_v3";
+const HISTORY_KEY = "asty_team_content_lab_history_v4";
 const MAX_HISTORY = 120;
 
 let generationHistory = JSON.parse(localStorage.getItem(HISTORY_KEY) || "[]");
@@ -482,18 +422,17 @@ const THEMES = {
       "Your balance can stay unchanged while the structure around ASTY continues to evolve.",
       "ASTY connects holding to a system that can strengthen through transaction activity.",
       "The holder advantage comes from staying positioned inside the mechanism."
-    ],
-    visualTag: "HOLDER ADVANTAGE"
+    ]
   },
 
   burn: {
     label: "Burn",
     hooks: [
       "One of the simplest holder advantages in $ASTY is the permanent burn.",
-      "The ASTY burn changes the supply side of the holder equation.",
-      "What happens when ASTY activity increases? Part of the answer is permanent burn.",
+      "The $ASTY burn changes the supply side of the holder equation.",
+      "What happens when $ASTY activity increases? Part of the answer is permanent burn.",
       "$ASTY turns part of every transaction fee into permanent supply reduction.",
-      "The burn is one of the clearest ways to explain the ASTY holder case."
+      "The burn is one of the clearest ways to explain the $ASTY holder case."
     ],
     bodies: [
       [
@@ -534,18 +473,17 @@ const THEMES = {
       "A holder can keep the same ASTY amount while the circulating supply is reduced.",
       "More transaction activity can create more permanent supply reduction.",
       "The burn is part of the normal ASTY mechanism, not a one-time event."
-    ],
-    visualTag: "PERMANENT BURN"
+    ]
   },
 
   effect: {
     label: "ASTY Effect",
     hooks: [
-      "The ASTY Effect explains why activity matters to every $ASTY holder.",
-      "The easiest way to understand $ASTY is to understand the ASTY Effect.",
-      "The ASTY Effect turns ordinary token activity into fuel for the system.",
+      "The $ASTY Effect explains why activity matters to every $ASTY holder.",
+      "The easiest way to understand $ASTY is to understand the $ASTY Effect.",
+      "The $ASTY Effect turns ordinary token activity into fuel for the system.",
       "$ASTY is built around a loop where activity has a job.",
-      "The ASTY Effect connects every transaction to the wider system."
+      "The $ASTY Effect connects every transaction to the wider system."
     ],
     bodies: [
       [
@@ -587,18 +525,17 @@ const THEMES = {
       "The ASTY Effect connects normal token usage to the wider system.",
       "Three functions. One transaction structure. One continuous system.",
       "Every ASTY transaction contributes to the mechanism behind the token."
-    ],
-    visualTag: "THE ASTY EFFECT"
+    ]
   },
 
   growth: {
     label: "Growth Wallet",
     hooks: [
       "Holding $ASTY also means staying exposed to a system that can reinvest into its own growth.",
-      "The Growth Wallet is a key part of the ASTY holder story.",
+      "The Growth Wallet is a key part of the $ASTY holder story.",
       "$ASTY does not send every fee contribution in one direction.",
-      "Part of every ASTY transaction is reserved for future system growth.",
-      "The ASTY model is designed to recycle part of its activity back into the system."
+      "Part of every $ASTY transaction is reserved for future system growth.",
+      "The $ASTY model is designed to recycle part of its activity back into the system."
     ],
     bodies: [
       [
@@ -639,18 +576,17 @@ const THEMES = {
       "Transaction activity can help fund future liquidity reinvestments.",
       "ASTY can recycle part of its own activity back into system growth.",
       "The Growth Wallet connects current usage with future liquidity capacity."
-    ],
-    visualTag: "GROWTH WALLET"
+    ]
   },
 
   treasury: {
     label: "Treasury",
     hooks: [
-      "The ASTY holder story is not only about burn. It is also about building reserves.",
+      "The $ASTY holder story is not only about burn. It is also about building reserves.",
       "$ASTY converts part of its activity into assets outside ASTY itself.",
-      "The Treasury adds another layer to the ASTY holder case.",
-      "A strong system needs more than a token balance. ASTY also builds external reserves.",
-      "Part of every ASTY transaction helps build strategic flexibility."
+      "The Treasury adds another layer to the $ASTY holder case.",
+      "A strong system needs more than a token balance. $ASTY also builds external reserves.",
+      "Part of every $ASTY transaction helps build strategic flexibility."
     ],
     bodies: [
       [
@@ -691,8 +627,7 @@ const THEMES = {
       "The Treasury gives the ASTY system strategic flexibility beyond the token itself.",
       "Transaction activity can build external reserves alongside the ASTY ecosystem.",
       "The holder stays exposed to a system that builds both internal and external strength."
-    ],
-    visualTag: "TREASURY RESERVE"
+    ]
   },
 
   simple: {
@@ -701,7 +636,7 @@ const THEMES = {
       "The easiest way to explain $ASTY is this.",
       "$ASTY does not need a complicated explanation.",
       "If someone asks what makes $ASTY different, start here.",
-      "The basic ASTY holder idea fits into a few simple lines.",
+      "The basic $ASTY holder idea fits into a few simple lines.",
       "Strip away the noise and the $ASTY model becomes very simple."
     ],
     bodies: [
@@ -743,8 +678,7 @@ const THEMES = {
       "ASTY turns ordinary transaction activity into three clear system functions.",
       "The holder case starts with a simple mechanism that is easy to understand.",
       "ASTY gives transaction activity a clear purpose inside the system."
-    ],
-    visualTag: "ASTY EXPLAINED"
+    ]
   }
 };
 
@@ -777,11 +711,16 @@ function saveHistory(){
   localStorage.setItem(HISTORY_KEY,JSON.stringify(generationHistory));
 }
 
+function normalizeHook(hook){
+  if(hook.includes("$ASTY")) return hook;
+  return hook.replace(/\bASTY\b/, "$ASTY");
+}
+
 function buildPost(themeKey){
   const theme=THEMES[themeKey];
 
   for(let attempt=0;attempt<60;attempt++){
-    const hook=randomItem(theme.hooks);
+    const hook=normalizeHook(randomItem(theme.hooks));
     const body=randomItem(theme.bodies);
     const close=randomItem(theme.closes);
 
@@ -807,7 +746,7 @@ Telegram: ${TELEGRAM_URL}
   }
 
   const text =
-`🟣 ${randomItem(theme.hooks)}
+`🟣 ${normalizeHook(randomItem(theme.hooks))}
 
 ${randomItem(theme.bodies).join("\n\n")}
 
@@ -824,10 +763,8 @@ Telegram: ${TELEGRAM_URL}
 function buildVisual(themeKey){
   const theme=THEMES[themeKey];
   const idx=Math.floor(Math.random()*theme.visualTitles.length);
-
   return {
     themeKey,
-    tag:theme.visualTag,
     title:theme.visualTitles[idx],
     sub:theme.visualSubs[idx]
   };
@@ -848,8 +785,6 @@ function generateThree(){
 
 function regenerateOne(index){
   const currentTheme=currentPairs[index].post.themeKey;
-
-  // 70% same topic for a direct variation, 30% fresh topic.
   const themeKey=Math.random()<.70
     ? currentTheme
     : randomItem(THEME_KEYS.filter(k=>k!==currentTheme));
@@ -859,20 +794,14 @@ function regenerateOne(index){
   showToast("New text + visual generated");
 }
 
-/* =========================
-   ASSETS
-   ========================= */
-
 function loadImageCandidates(paths){
   return new Promise(resolve=>{
     let index=0;
-
     const tryNext=()=>{
       if(index>=paths.length){
         resolve(null);
         return;
       }
-
       const img=new Image();
       img.onload=()=>resolve(img);
       img.onerror=()=>{
@@ -881,26 +810,19 @@ function loadImageCandidates(paths){
       };
       img.src=paths[index];
     };
-
     tryNext();
   });
 }
 
 async function getAssets(){
   if(assetCache) return assetCache;
-
-  const [logo,wolf]=await Promise.all([
+  const [logo,wolf] = await Promise.all([
     loadImageCandidates(["assets/logo.png"]),
     loadImageCandidates(["assets/Wolf.png","assets/wolf.png"])
   ]);
-
-  assetCache={logo,wolf};
+  assetCache = {logo,wolf};
   return assetCache;
 }
-
-/* =========================
-   RENDER DOM
-   ========================= */
 
 function escapeHtml(str){
   return str
@@ -912,7 +834,6 @@ function escapeHtml(str){
 function renderPairs(){
   const container=document.getElementById("pairs");
   container.innerHTML="";
-
   currentPairs.forEach((pair,index)=>{
     const row=createPairElement(pair,index);
     container.appendChild(row);
@@ -926,7 +847,6 @@ function renderPairAt(index){
     renderPairs();
     return;
   }
-
   const row=createPairElement(currentPairs[index],index);
   old.replaceWith(row);
   drawPairVisual(currentPairs[index],index);
@@ -938,6 +858,17 @@ function createPairElement(pair,index){
   row.dataset.index=index;
 
   row.innerHTML=`
+    <div class="visual-side">
+      <div class="visual-box">
+        <canvas id="canvas-${index}" width="1080" height="1080"></canvas>
+      </div>
+
+      <div class="visual-actions">
+        <button type="button" class="action-btn primary copy-image-btn">COPY IMAGE</button>
+        <button type="button" class="action-btn download-image-btn">DOWNLOAD PNG</button>
+      </div>
+    </div>
+
     <div class="text-side">
       <div class="text-panel">
         <div class="panel-head">
@@ -948,30 +879,14 @@ function createPairElement(pair,index){
         <pre class="post-text">${escapeHtml(pair.post.text)}</pre>
 
         <div class="actions">
-          <button class="action-btn primary copy-text-btn">COPY TEXT</button>
-          <button class="action-btn new-pair-btn">NEW TEXT + VISUAL</button>
+          <button type="button" class="action-btn primary copy-text-btn">COPY TEXT</button>
+          <button type="button" class="action-btn new-pair-btn">NEW TEXT + VISUAL</button>
         </div>
       </div>
     </div>
-
-    <div class="visual-side">
-      <div class="visual-box">
-        <canvas id="canvas-${index}" width="1080" height="1080"></canvas>
-      </div>
-
-      <div class="visual-actions">
-        <button class="action-btn primary copy-image-btn">COPY IMAGE</button>
-        <button class="action-btn download-image-btn">DOWNLOAD PNG</button>
-      </div>
-    </div>
   `;
-
   return row;
 }
-
-/* =========================
-   CANVAS DESIGN
-   ========================= */
 
 function roundedRect(ctx,x,y,w,h,r){
   const rr=Math.min(r,w/2,h/2);
@@ -984,36 +899,13 @@ function roundedRect(ctx,x,y,w,h,r){
   ctx.closePath();
 }
 
-function drawCoverImage(ctx,img,x,y,w,h,alpha=1){
-  if(!img) return;
-
-  const ir=img.width/img.height;
-  const tr=w/h;
-  let sx=0,sy=0,sw=img.width,sh=img.height;
-
-  if(ir>tr){
-    sw=img.height*tr;
-    sx=(img.width-sw)/2;
-  }else{
-    sh=img.width/tr;
-    sy=(img.height-sh)/2;
-  }
-
-  ctx.save();
-  ctx.globalAlpha=alpha;
-  ctx.drawImage(img,sx,sy,sw,sh,x,y,w,h);
-  ctx.restore();
-}
-
 function fitImageContain(ctx,img,x,y,w,h,alpha=1){
   if(!img) return;
-
   const scale=Math.min(w/img.width,h/img.height);
   const dw=img.width*scale;
   const dh=img.height*scale;
   const dx=x+(w-dw)/2;
   const dy=y+(h-dh)/2;
-
   ctx.save();
   ctx.globalAlpha=alpha;
   ctx.drawImage(img,dx,dy,dw,dh);
@@ -1028,26 +920,20 @@ function makeLinear(ctx,x1,y1,x2,y2,stops){
 
 function drawGrid(ctx,w,h){
   ctx.save();
-
-  // soft vertical / horizontal dashboard grid
   ctx.strokeStyle="rgba(255,255,255,.032)";
   ctx.lineWidth=1;
-
   for(let x=80;x<w;x+=80){
     ctx.beginPath();
     ctx.moveTo(x,0);
     ctx.lineTo(x,h);
     ctx.stroke();
   }
-
   for(let y=80;y<h;y+=80){
     ctx.beginPath();
     ctx.moveTo(0,y);
     ctx.lineTo(w,y);
     ctx.stroke();
   }
-
-  // stronger guide lines
   ctx.strokeStyle="rgba(142,98,255,.055)";
   for(let x=160;x<w;x+=320){
     ctx.beginPath();
@@ -1055,15 +941,12 @@ function drawGrid(ctx,w,h){
     ctx.lineTo(x,h);
     ctx.stroke();
   }
-
   ctx.restore();
 }
 
 function drawAccentLines(ctx,w,h){
   ctx.save();
-
   ctx.lineCap="round";
-
   let grad=makeLinear(ctx,90,160,760,650,[
     [0,"rgba(150,94,255,.00)"],
     [.25,"rgba(150,94,255,.17)"],
@@ -1087,26 +970,19 @@ function drawAccentLines(ctx,w,h){
   ctx.bezierCurveTo(820,305,910,350,1040,300);
   ctx.stroke();
 
-  // minimal nodes
-  const nodes=[
-    [195,365],[390,381],[606,312],[821,284],[936,257]
-  ];
-
+  const nodes=[[195,365],[390,381],[606,312],[821,284],[936,257]];
   nodes.forEach(([x,y],i)=>{
-    ctx.fillStyle=i%2===0
-      ?"rgba(167,116,255,.58)"
-      :"rgba(91,221,255,.48)";
+    ctx.fillStyle=i%2===0 ? "rgba(167,116,255,.58)" : "rgba(91,221,255,.48)";
     ctx.beginPath();
     ctx.arc(x,y,4,0,Math.PI*2);
     ctx.fill();
   });
-
   ctx.restore();
 }
 
 function drawTopLogo(ctx,logo){
   if(logo){
-    fitImageContain(ctx,logo,872,70,135,105,1);
+    fitImageContain(ctx,logo,860,64,150,110,1);
   }else{
     ctx.save();
     ctx.textAlign="right";
@@ -1118,14 +994,12 @@ function drawTopLogo(ctx,logo){
 }
 
 function drawWolfArea(ctx,wolf){
-  // bottom panel
   ctx.save();
   const panelGrad=makeLinear(ctx,64,742,1016,1030,[
     [0,"rgba(151,91,255,.085)"],
     [.50,"rgba(255,255,255,.025)"],
     [1,"rgba(83,218,255,.055)"]
   ]);
-
   ctx.fillStyle=panelGrad;
   roundedRect(ctx,64,742,952,274,30);
   ctx.fill();
@@ -1135,17 +1009,12 @@ function drawWolfArea(ctx,wolf){
   roundedRect(ctx,64,742,952,274,30);
   ctx.stroke();
 
-  // wolf sits in lower left, faded into the panel
   if(wolf){
     ctx.save();
-
-    // clip wolf to lower panel
     roundedRect(ctx,64,742,952,274,30);
     ctx.clip();
-
     fitImageContain(ctx,wolf,72,746,340,300,.92);
 
-    // fade over right side of wolf so text stays readable
     const fade=makeLinear(ctx,260,742,510,742,[
       [0,"rgba(10,12,22,0)"],
       [.45,"rgba(10,12,22,.50)"],
@@ -1153,7 +1022,6 @@ function drawWolfArea(ctx,wolf){
     ]);
     ctx.fillStyle=fade;
     ctx.fillRect(245,742,320,274);
-
     ctx.restore();
   }else{
     ctx.save();
@@ -1171,7 +1039,6 @@ function wrapText(ctx,text,maxWidth){
   const words=text.split(/\s+/);
   const lines=[];
   let current="";
-
   for(const word of words){
     const test=current ? current+" "+word : word;
     if(ctx.measureText(test).width<=maxWidth){
@@ -1181,7 +1048,6 @@ function wrapText(ctx,text,maxWidth){
       current=word;
     }
   }
-
   if(current) lines.push(current);
   return lines;
 }
@@ -1189,29 +1055,23 @@ function wrapText(ctx,text,maxWidth){
 function drawBigTitle(ctx,lines){
   const startY=300;
   const lineHeight=82;
-
   ctx.save();
   ctx.textAlign="left";
   ctx.font="900 70px Inter, sans-serif";
-
   lines.forEach((line,i)=>{
     const g=makeLinear(ctx,80,startY,820,startY,[
       [0,"#ffffff"],
       [.52,"#c19aff"],
       [1,"#78e5ff"]
     ]);
-
     ctx.fillStyle=g;
     ctx.fillText(line,82,startY+(i*lineHeight));
   });
-
   ctx.restore();
 }
 
 function drawBottomText(ctx,visual){
   ctx.save();
-
-  // Text deliberately larger for mobile readability
   ctx.textAlign="left";
   ctx.font="800 34px Inter, sans-serif";
   ctx.fillStyle="#f4f6ff";
@@ -1226,18 +1086,15 @@ function drawBottomText(ctx,visual){
     ctx.fillText(line,startX,startY+i*lineHeight);
   });
 
-  // small fixed system signature, still large enough to read on mobile
   ctx.font="800 24px Inter, sans-serif";
   ctx.fillStyle="#9fa9cf";
   ctx.fillText("ArbStrategy.net",430,982);
-
   ctx.restore();
 }
 
 async function drawPairVisual(pair,index){
   const canvas=document.getElementById(`canvas-${index}`);
   if(!canvas) return;
-
   const ctx=canvas.getContext("2d");
   const w=canvas.width;
   const h=canvas.height;
@@ -1245,7 +1102,6 @@ async function drawPairVisual(pair,index){
 
   ctx.clearRect(0,0,w,h);
 
-  // Base background
   const bg=makeLinear(ctx,0,0,w,h,[
     [0,"#090b14"],
     [.48,"#0d1120"],
@@ -1257,7 +1113,6 @@ async function drawPairVisual(pair,index){
   drawGrid(ctx,w,h);
   drawAccentLines(ctx,w,h);
 
-  // subtle top-right glow behind logo
   const glow=ctx.createRadialGradient(940,110,0,940,110,240);
   glow.addColorStop(0,"rgba(91,215,255,.12)");
   glow.addColorStop(.42,"rgba(150,94,255,.07)");
@@ -1265,7 +1120,6 @@ async function drawPairVisual(pair,index){
   ctx.fillStyle=glow;
   ctx.fillRect(690,0,390,330);
 
-  // Main frame
   ctx.fillStyle="rgba(255,255,255,.014)";
   roundedRect(ctx,44,44,992,992,38);
   ctx.fill();
@@ -1275,25 +1129,24 @@ async function drawPairVisual(pair,index){
   roundedRect(ctx,44,44,992,992,38);
   ctx.stroke();
 
-  // Tag
-  ctx.fillStyle="rgba(151,96,255,.10)";
-  roundedRect(ctx,82,79,320,54,999);
+  // fixed top purple pill
+  ctx.fillStyle="rgba(151,96,255,.12)";
+  roundedRect(ctx,82,79,260,60,999);
   ctx.fill();
 
-  ctx.strokeStyle="rgba(151,96,255,.24)";
+  ctx.strokeStyle="rgba(151,96,255,.26)";
   ctx.lineWidth=1.5;
-  roundedRect(ctx,82,79,320,54,999);
+  roundedRect(ctx,82,79,260,60,999);
   ctx.stroke();
 
-  ctx.fillStyle="#cab4ff";
-  ctx.font="900 22px Inter, sans-serif";
+  ctx.fillStyle="#d1bcff";
+  ctx.font="900 26px Inter, sans-serif";
   ctx.textAlign="left";
-  ctx.fillText(pair.visual.tag,105,114);
+  ctx.fillText("ArbStrategy",108,118);
 
   drawTopLogo(ctx,assets.logo);
   drawBigTitle(ctx,pair.visual.title);
 
-  // divider
   ctx.strokeStyle="rgba(255,255,255,.075)";
   ctx.lineWidth=1.5;
   ctx.beginPath();
@@ -1301,19 +1154,13 @@ async function drawPairVisual(pair,index){
   ctx.lineTo(998,652);
   ctx.stroke();
 
-  // small mechanism label
   ctx.fillStyle="#7f89ad";
   ctx.font="800 21px Inter, sans-serif";
-  ctx.letterSpacing="2px";
   ctx.fillText("ASTY SYSTEM MECHANICS",82,704);
 
   drawWolfArea(ctx,assets.wolf);
   drawBottomText(ctx,pair.visual);
 }
-
-/* =========================
-   COPY / DOWNLOAD
-   ========================= */
 
 async function copyText(text){
   try{
@@ -1325,36 +1172,62 @@ async function copyText(text){
   }
 }
 
-async function copyCanvas(canvas){
-  if(!navigator.clipboard || typeof ClipboardItem==="undefined"){
-    showToast("Image copy not supported");
-    return;
-  }
-
-  canvas.toBlob(async blob=>{
-    if(!blob){
-      showToast("Could not create image");
-      return;
-    }
-
+function canvasToBlob(canvas){
+  return new Promise((resolve,reject)=>{
     try{
-      await navigator.clipboard.write([
-        new ClipboardItem({"image/png":blob})
-      ]);
-      showToast("Image copied");
+      canvas.toBlob(blob=>{
+        if(blob) resolve(blob);
+        else reject(new Error("Blob generation failed"));
+      },"image/png");
     }catch(err){
-      console.error(err);
-      showToast("Image copy blocked - use Download PNG");
+      reject(err);
     }
-  },"image/png");
+  });
 }
 
-function downloadCanvas(canvas,index){
-  const a=document.createElement("a");
-  a.href=canvas.toDataURL("image/png");
-  a.download=`ASTY-Team-Content-${index+1}.png`;
+async function copyCanvas(canvas, index){
+  try{
+    const blob = await canvasToBlob(canvas);
+    if(!navigator.clipboard || typeof ClipboardItem === "undefined"){
+      await downloadBlob(blob, `ASTY-Team-Content-${index+1}.png`);
+      showToast("Clipboard unavailable, PNG downloaded");
+      return;
+    }
+    await navigator.clipboard.write([new ClipboardItem({"image/png": blob})]);
+    showToast("Image copied");
+  }catch(err){
+    console.error(err);
+    try{
+      const blob = await canvasToBlob(canvas);
+      await downloadBlob(blob, `ASTY-Team-Content-${index+1}.png`);
+      showToast("Copy failed, PNG downloaded");
+    }catch(err2){
+      console.error(err2);
+      showToast("Image export failed");
+    }
+  }
+}
+
+async function downloadBlob(blob, filename){
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
   a.click();
-  showToast("PNG downloaded");
+  a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url), 1000);
+}
+
+async function downloadCanvas(canvas,index){
+  try{
+    const blob = await canvasToBlob(canvas);
+    await downloadBlob(blob, `ASTY-Team-Content-${index+1}.png`);
+    showToast("PNG downloaded");
+  }catch(err){
+    console.error(err);
+    showToast("PNG export failed");
+  }
 }
 
 let toastTimer=null;
@@ -1362,14 +1235,9 @@ function showToast(message){
   const toast=document.getElementById("toast");
   toast.textContent=message;
   toast.classList.add("show");
-
   clearTimeout(toastTimer);
-  toastTimer=setTimeout(()=>toast.classList.remove("show"),1600);
+  toastTimer=setTimeout(()=>toast.classList.remove("show"),1700);
 }
-
-/* =========================
-   EVENTS
-   ========================= */
 
 document.getElementById("generateAllBtn").addEventListener("click",()=>{
   generateThree();
@@ -1379,7 +1247,6 @@ document.getElementById("generateAllBtn").addEventListener("click",()=>{
 document.getElementById("pairs").addEventListener("click",e=>{
   const row=e.target.closest(".pair");
   if(!row) return;
-
   const index=Number(row.dataset.index);
 
   if(e.target.closest(".copy-text-btn")){
@@ -1394,7 +1261,7 @@ document.getElementById("pairs").addEventListener("click",e=>{
 
   if(e.target.closest(".copy-image-btn")){
     const canvas=document.getElementById(`canvas-${index}`);
-    copyCanvas(canvas);
+    copyCanvas(canvas,index);
     return;
   }
 
@@ -1404,12 +1271,10 @@ document.getElementById("pairs").addEventListener("click",e=>{
   }
 });
 
-/* Site logo fallback is intentionally minimal. */
 document.getElementById("siteLogo").addEventListener("error",e=>{
   e.currentTarget.style.display="none";
 });
 
-/* Initial content */
 generateThree();
 </script>
 </body>
