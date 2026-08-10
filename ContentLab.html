@@ -1,1783 +1,1416 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>ASTY Content Lab</title>
-  <style>
-    :root{
-      --bg:#080914;
-      --bg2:#0d1020;
-      --card:#111527;
-      --card2:#171c31;
-      --line:rgba(255,255,255,0.08);
-      --text:#eef2ff;
-      --muted:#aeb6d9;
-      --soft:#7c86b5;
-      --purple:#8d4dff;
-      --purple2:#b079ff;
-      --cyan:#49d5ff;
-      --cyan2:#85ecff;
-      --green:#63ffb6;
-      --red:#ff7f99;
-      --shadow:0 20px 60px rgba(0,0,0,0.45);
-      --radius:24px;
-      --radius-sm:16px;
-      --glow-purple:0 0 0 1px rgba(141,77,255,0.18), 0 0 40px rgba(141,77,255,0.15);
-      --glow-cyan:0 0 0 1px rgba(73,213,255,0.18), 0 0 40px rgba(73,213,255,0.12);
-    }
-
-    *{box-sizing:border-box}
-    html,body{margin:0;padding:0}
-    body{
-      min-height:100vh;
-      color:var(--text);
-      font-family:Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      background:
-        radial-gradient(circle at 12% 12%, rgba(141,77,255,0.18), transparent 26%),
-        radial-gradient(circle at 88% 14%, rgba(73,213,255,0.12), transparent 24%),
-        radial-gradient(circle at 50% 100%, rgba(141,77,255,0.10), transparent 38%),
-        linear-gradient(180deg, #070810 0%, #0a0b16 45%, #070810 100%);
-    }
-
-    .wrap{
-      width:min(1440px, calc(100% - 32px));
-      margin:0 auto;
-      padding:24px 0 44px;
-    }
-
-    .topbar{
-      display:flex;
-      gap:16px;
-      align-items:center;
-      justify-content:space-between;
-      margin-bottom:18px;
-      flex-wrap:wrap;
-      padding:10px 0 4px;
-    }
-
-    .brand{
-      display:flex;
-      gap:16px;
-      align-items:center;
-    }
-
-    .logo{
-      width:56px;
-      height:56px;
-      border-radius:18px;
-      display:grid;
-      place-items:center;
-      background:
-        radial-gradient(circle at 30% 30%, rgba(255,255,255,0.15), transparent 30%),
-        linear-gradient(135deg, rgba(141,77,255,0.25), rgba(73,213,255,0.12));
-      border:1px solid rgba(255,255,255,0.10);
-      box-shadow:var(--shadow), var(--glow-purple);
-      position:relative;
-      overflow:hidden;
-    }
-
-    .logo::before{
-      content:"";
-      position:absolute;
-      inset:-35%;
-      background:conic-gradient(from 180deg, rgba(141,77,255,0.40), rgba(73,213,255,0.25), rgba(141,77,255,0.15), transparent);
-      filter:blur(18px);
-    }
-
-    .logo span{
-      position:relative;
-      z-index:2;
-      font-weight:900;
-      letter-spacing:0.08em;
-      font-size:14px;
-      color:#fff;
-    }
-
-    .titles h1{
-      margin:0 0 6px;
-      font-size:clamp(28px, 4vw, 44px);
-      line-height:1.04;
-      letter-spacing:-0.03em;
-      background:linear-gradient(90deg, #f7f4ff 0%, #b48cff 40%, #6fe3ff 100%);
-      -webkit-background-clip:text;
-      background-clip:text;
-      color:transparent;
-    }
-
-    .titles p{
-      margin:0;
-      color:var(--muted);
-      font-size:14px;
-      line-height:1.5;
-      max-width:820px;
-    }
-
-    .header-links{
-      display:flex;
-      gap:10px;
-      flex-wrap:wrap;
-    }
-
-    .ghost-btn,
-    .solid-btn,
-    .chip,
-    .mini-btn,
-    .toggle-pill{
-      appearance:none;
-      border:none;
-      outline:none;
-      cursor:pointer;
-      color:var(--text);
-      font:inherit;
-      transition:0.18s ease;
-      text-decoration:none;
-    }
-
-    .ghost-btn{
-      padding:12px 16px;
-      border-radius:14px;
-      background:rgba(255,255,255,0.03);
-      border:1px solid rgba(255,255,255,0.10);
-      box-shadow:var(--glow-purple);
-    }
-
-    .ghost-btn:hover{
-      transform:translateY(-1px);
-      border-color:rgba(141,77,255,0.45);
-      background:rgba(255,255,255,0.05);
-    }
-
-    .hero-card{
-      position:relative;
-      overflow:hidden;
-      padding:26px;
-      border-radius:30px;
-      background:
-        linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01)),
-        linear-gradient(135deg, rgba(141,77,255,0.10), rgba(73,213,255,0.05));
-      border:1px solid rgba(255,255,255,0.10);
-      box-shadow:var(--shadow);
-      margin-bottom:18px;
-    }
-
-    .hero-card::before{
-      content:"";
-      position:absolute;
-      right:-140px;
-      top:-120px;
-      width:360px;
-      height:360px;
-      border-radius:50%;
-      background:radial-gradient(circle, rgba(141,77,255,0.24), transparent 60%);
-      filter:blur(10px);
-    }
-
-    .hero-grid{
-      display:grid;
-      grid-template-columns:1.2fr 0.8fr;
-      gap:20px;
-      align-items:stretch;
-    }
-
-    .hero-main h2{
-      margin:0 0 10px;
-      font-size:clamp(24px, 3vw, 36px);
-      line-height:1.08;
-      letter-spacing:-0.03em;
-    }
-
-    .hero-main p{
-      margin:0 0 18px;
-      color:var(--muted);
-      line-height:1.65;
-      font-size:15px;
-      max-width:820px;
-    }
-
-    .hero-badges{
-      display:flex;
-      gap:10px;
-      flex-wrap:wrap;
-    }
-
-    .badge{
-      padding:10px 14px;
-      border-radius:999px;
-      border:1px solid rgba(255,255,255,0.10);
-      background:rgba(255,255,255,0.04);
-      color:var(--text);
-      font-size:13px;
-      letter-spacing:0.01em;
-    }
-
-    .hero-side{
-      display:grid;
-      gap:12px;
-      align-content:start;
-    }
-
-    .info-mini{
-      padding:16px 18px;
-      border-radius:20px;
-      background:rgba(255,255,255,0.04);
-      border:1px solid rgba(255,255,255,0.08);
-    }
-
-    .info-mini .label{
-      font-size:12px;
-      letter-spacing:0.10em;
-      text-transform:uppercase;
-      color:var(--soft);
-      margin-bottom:8px;
-    }
-
-    .info-mini .value{
-      font-size:16px;
-      font-weight:700;
-      line-height:1.4;
-    }
-
-    .section{
-      margin-top:20px;
-    }
-
-    .section-head{
-      display:flex;
-      gap:12px;
-      align-items:center;
-      justify-content:space-between;
-      margin-bottom:14px;
-      flex-wrap:wrap;
-    }
-
-    .section-title{
-      display:flex;
-      align-items:center;
-      gap:12px;
-      font-size:24px;
-      font-weight:800;
-      letter-spacing:-0.02em;
-    }
-
-    .section-title .dot{
-      width:12px;
-      height:12px;
-      border-radius:50%;
-      background:linear-gradient(135deg, var(--purple), var(--cyan));
-      box-shadow:0 0 20px rgba(141,77,255,0.8);
-    }
-
-    .controls{
-      display:grid;
-      grid-template-columns:1fr;
-      gap:14px;
-      padding:18px;
-      border-radius:24px;
-      background:rgba(255,255,255,0.03);
-      border:1px solid rgba(255,255,255,0.08);
-      box-shadow:var(--shadow);
-      margin-bottom:16px;
-    }
-
-    .control-row{
-      display:flex;
-      gap:12px;
-      align-items:flex-start;
-      justify-content:space-between;
-      flex-wrap:wrap;
-    }
-
-    .control-block{
-      display:grid;
-      gap:10px;
-    }
-
-    .control-label{
-      font-size:12px;
-      letter-spacing:0.12em;
-      text-transform:uppercase;
-      color:var(--soft);
-      font-weight:700;
-    }
-
-    .chip-group, .toggle-group, .action-group{
-      display:flex;
-      gap:10px;
-      flex-wrap:wrap;
-    }
-
-    .chip{
-      padding:11px 15px;
-      border-radius:999px;
-      background:rgba(255,255,255,0.04);
-      border:1px solid rgba(255,255,255,0.10);
-      color:var(--muted);
-      font-size:14px;
-      font-weight:700;
-    }
-
-    .chip:hover{
-      border-color:rgba(141,77,255,0.35);
-      color:var(--text);
-    }
-
-    .chip.active{
-      color:#fff;
-      border-color:rgba(141,77,255,0.40);
-      background:linear-gradient(135deg, rgba(141,77,255,0.22), rgba(73,213,255,0.10));
-      box-shadow:var(--glow-purple);
-    }
-
-    .toggle-pill{
-      display:flex;
-      align-items:center;
-      gap:10px;
-      padding:11px 14px;
-      border-radius:999px;
-      background:rgba(255,255,255,0.04);
-      border:1px solid rgba(255,255,255,0.10);
-      color:var(--muted);
-      font-size:14px;
-      font-weight:700;
-    }
-
-    .toggle-pill input{
-      accent-color:var(--purple);
-      width:16px;
-      height:16px;
-      margin:0;
-    }
-
-    .solid-btn{
-      padding:13px 18px;
-      border-radius:14px;
-      font-weight:800;
-      letter-spacing:0.02em;
-      background:linear-gradient(135deg, var(--purple), #6a5cff 48%, var(--cyan));
-      color:#fff;
-      box-shadow:0 16px 40px rgba(141,77,255,0.25);
-    }
-
-    .solid-btn:hover{
-      transform:translateY(-1px);
-      filter:saturate(1.06);
-    }
-
-    .mini-btn{
-      padding:10px 12px;
-      border-radius:12px;
-      background:rgba(255,255,255,0.04);
-      border:1px solid rgba(255,255,255,0.10);
-      color:var(--text);
-      font-size:13px;
-      font-weight:700;
-    }
-
-    .mini-btn:hover{
-      border-color:rgba(73,213,255,0.35);
-    }
-
-    .split{
-      display:grid;
-      grid-template-columns:1.08fr 0.92fr;
-      gap:18px;
-      align-items:start;
-    }
-
-    .panel{
-      padding:18px;
-      border-radius:26px;
-      background:
-        linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.02)),
-        rgba(10,12,24,0.68);
-      border:1px solid rgba(255,255,255,0.08);
-      box-shadow:var(--shadow);
-    }
-
-    .panel-top{
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:12px;
-      flex-wrap:wrap;
-      margin-bottom:14px;
-    }
-
-    .panel-title{
-      font-size:20px;
-      font-weight:800;
-      letter-spacing:-0.02em;
-    }
-
-    .panel-sub{
-      color:var(--muted);
-      font-size:13px;
-      margin-top:4px;
-    }
-
-    .posts-grid{
-      display:grid;
-      gap:14px;
-    }
-
-    .post-card{
-      padding:18px;
-      border-radius:20px;
-      background:linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.025));
-      border:1px solid rgba(255,255,255,0.08);
-      position:relative;
-      overflow:hidden;
-    }
-
-    .post-card::before{
-      content:"";
-      position:absolute;
-      inset:auto auto -50px -40px;
-      width:160px;
-      height:160px;
-      border-radius:50%;
-      background:radial-gradient(circle, rgba(141,77,255,0.16), transparent 70%);
-      pointer-events:none;
-      filter:blur(6px);
-    }
-
-    .post-meta{
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:10px;
-      flex-wrap:wrap;
-      margin-bottom:10px;
-    }
-
-    .meta-left{
-      display:flex;
-      gap:8px;
-      align-items:center;
-      flex-wrap:wrap;
-    }
-
-    .meta-chip{
-      padding:7px 10px;
-      border-radius:999px;
-      font-size:11px;
-      font-weight:800;
-      letter-spacing:0.08em;
-      text-transform:uppercase;
-      background:rgba(255,255,255,0.05);
-      border:1px solid rgba(255,255,255,0.08);
-      color:var(--muted);
-    }
-
-    .char-ok{
-      color:#bfffd8;
-      border-color:rgba(99,255,182,0.20);
-      background:rgba(99,255,182,0.08);
-    }
-
-    .char-high{
-      color:#ffd1db;
-      border-color:rgba(255,127,153,0.22);
-      background:rgba(255,127,153,0.08);
-    }
-
-    .post-text{
-      white-space:pre-wrap;
-      line-height:1.65;
-      color:#f5f7ff;
-      font-size:14px;
-      margin:0 0 14px;
-      position:relative;
-      z-index:2;
-    }
-
-    .post-actions{
-      display:flex;
-      gap:10px;
-      flex-wrap:wrap;
-    }
-
-    .used-state{
-      color:#8cefc5;
-    }
-
-    .empty-note{
-      color:var(--muted);
-      font-size:14px;
-      padding:16px;
-      border:1px dashed rgba(255,255,255,0.10);
-      border-radius:18px;
-      text-align:center;
-    }
-
-    .visual-grid{
-      display:grid;
-      grid-template-columns:1fr;
-      gap:14px;
-    }
-
-    .visual-card{
-      padding:14px;
-      border-radius:20px;
-      background:linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.025));
-      border:1px solid rgba(255,255,255,0.08);
-    }
-
-    .visual-meta{
-      display:flex;
-      justify-content:space-between;
-      align-items:center;
-      gap:8px;
-      flex-wrap:wrap;
-      margin-bottom:10px;
-    }
-
-    .visual-preview{
-      width:100%;
-      aspect-ratio:1 / 1;
-      border-radius:20px;
-      overflow:hidden;
-      border:1px solid rgba(255,255,255,0.08);
-      background:#070912;
-      margin-bottom:12px;
-    }
-
-    canvas{
-      display:block;
-      width:100%;
-      height:auto;
-      background:#060810;
-    }
-
-    .visual-caption{
-      color:var(--muted);
-      font-size:13px;
-      line-height:1.55;
-      margin-bottom:12px;
-      min-height:40px;
-    }
-
-    .foot-row{
-      display:flex;
-      justify-content:space-between;
-      gap:12px;
-      flex-wrap:wrap;
-      margin-top:18px;
-      padding-top:18px;
-      border-top:1px solid rgba(255,255,255,0.08);
-      color:var(--soft);
-      font-size:12px;
-    }
-
-    .status{
-      display:flex;
-      align-items:center;
-      gap:8px;
-    }
-
-    .status-dot{
-      width:10px;
-      height:10px;
-      border-radius:50%;
-      background:linear-gradient(135deg, var(--purple), var(--cyan));
-      box-shadow:0 0 16px rgba(141,77,255,0.7);
-    }
-
-    @media (max-width: 1180px){
-      .hero-grid,
-      .split{
-        grid-template-columns:1fr;
-      }
-    }
-
-    @media (max-width: 720px){
-      .wrap{
-        width:min(100% - 22px, 1440px);
-      }
-      .topbar{
-        align-items:flex-start;
-      }
-      .header-links{
-        width:100%;
-      }
-      .hero-card{
-        padding:20px;
-      }
-      .panel, .controls{
-        padding:16px;
-      }
-      .titles h1{
-        font-size:30px;
-      }
-    }
-  </style>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>ASTY Team Content Lab</title>
+
+<style>
+:root{
+  --bg:#070912;
+  --bg2:#0b0e19;
+  --panel:#0f1322;
+  --panel2:#121729;
+  --line:rgba(255,255,255,.09);
+  --line2:rgba(153,107,255,.26);
+  --text:#f5f7ff;
+  --muted:#aeb6d5;
+  --soft:#7f89ad;
+  --purple:#9864ff;
+  --purple2:#bd91ff;
+  --cyan:#63dfff;
+  --green:#62efae;
+  --shadow:0 22px 70px rgba(0,0,0,.38);
+  --radius:24px;
+}
+
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  min-height:100vh;
+  color:var(--text);
+  font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  background:
+    radial-gradient(circle at 12% 0%, rgba(127,74,255,.10), transparent 26%),
+    radial-gradient(circle at 96% 8%, rgba(69,210,255,.07), transparent 24%),
+    linear-gradient(180deg,#060810 0%,#090b14 48%,#060810 100%);
+}
+
+button{
+  font:inherit;
+}
+
+.wrap{
+  width:min(1450px,calc(100% - 30px));
+  margin:0 auto;
+  padding:22px 0 42px;
+}
+
+/* HEADER */
+.header{
+  min-height:76px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:18px;
+  padding:2px 2px 18px;
+  border-bottom:1px solid rgba(255,255,255,.06);
+  margin-bottom:22px;
+}
+
+.brand{
+  display:flex;
+  align-items:center;
+  gap:15px;
+}
+
+.site-logo{
+  width:60px;
+  height:60px;
+  object-fit:contain;
+  display:block;
+}
+
+.brand-text h1{
+  margin:0;
+  font-size:clamp(26px,4vw,39px);
+  line-height:1;
+  letter-spacing:-.035em;
+  font-weight:900;
+  background:linear-gradient(90deg,#ffffff 0%,#c9a8ff 48%,#74e4ff 100%);
+  -webkit-background-clip:text;
+  background-clip:text;
+  color:transparent;
+}
+
+.brand-text .mini{
+  margin-top:7px;
+  color:var(--soft);
+  font-size:12px;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+  font-weight:800;
+}
+
+.generate-main{
+  appearance:none;
+  border:1px solid rgba(156,99,255,.34);
+  cursor:pointer;
+  color:#fff;
+  font-weight:900;
+  letter-spacing:.04em;
+  padding:14px 20px;
+  border-radius:14px;
+  background:
+    linear-gradient(135deg,rgba(150,93,255,.94),rgba(104,85,255,.96) 48%,rgba(69,207,255,.92));
+  box-shadow:
+    0 12px 34px rgba(127,74,255,.22),
+    inset 0 1px 0 rgba(255,255,255,.14);
+  transition:.18s ease;
+}
+
+.generate-main:hover{
+  transform:translateY(-1px);
+  filter:saturate(1.08) brightness(1.03);
+}
+
+/* INTRO STRIP */
+.top-strip{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:16px;
+  flex-wrap:wrap;
+  margin-bottom:16px;
+}
+
+.strip-left{
+  color:var(--muted);
+  font-size:14px;
+}
+
+.strip-left strong{
+  color:#fff;
+}
+
+.strip-right{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  color:var(--soft);
+  font-size:12px;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+  font-weight:800;
+}
+
+.live-dot{
+  width:9px;
+  height:9px;
+  border-radius:50%;
+  background:linear-gradient(135deg,var(--purple),var(--cyan));
+  box-shadow:0 0 16px rgba(152,100,255,.75);
+}
+
+/* PAIRS */
+.pairs{
+  display:grid;
+  gap:18px;
+}
+
+.pair{
+  position:relative;
+  display:grid;
+  grid-template-columns:minmax(0,1fr) minmax(420px,.92fr);
+  gap:18px;
+  padding:18px;
+  border-radius:28px;
+  background:
+    linear-gradient(180deg,rgba(255,255,255,.026),rgba(255,255,255,.014)),
+    rgba(10,12,22,.86);
+  border:1px solid var(--line);
+  box-shadow:var(--shadow);
+  overflow:hidden;
+}
+
+.pair::before{
+  content:"";
+  position:absolute;
+  left:-120px;
+  top:-140px;
+  width:280px;
+  height:280px;
+  border-radius:50%;
+  background:radial-gradient(circle,rgba(140,81,255,.10),transparent 70%);
+  pointer-events:none;
+}
+
+.text-side,
+.visual-side{
+  min-width:0;
+}
+
+.text-panel{
+  height:100%;
+  min-height:530px;
+  padding:22px;
+  border-radius:22px;
+  border:1px solid rgba(255,255,255,.075);
+  background:
+    linear-gradient(180deg,rgba(255,255,255,.025),rgba(255,255,255,.012)),
+    #0c101c;
+  display:flex;
+  flex-direction:column;
+}
+
+.panel-head{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  flex-wrap:wrap;
+  margin-bottom:18px;
+}
+
+.topic-badge{
+  display:inline-flex;
+  align-items:center;
+  padding:8px 11px;
+  border-radius:999px;
+  border:1px solid rgba(152,100,255,.26);
+  background:rgba(152,100,255,.08);
+  color:#cab3ff;
+  font-size:11px;
+  font-weight:900;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+}
+
+.char-count{
+  color:var(--soft);
+  font-size:12px;
+  font-weight:700;
+}
+
+.post-text{
+  flex:1;
+  white-space:pre-wrap;
+  font-family:inherit;
+  margin:0;
+  color:#f6f7ff;
+  font-size:15px;
+  line-height:1.7;
+  overflow-wrap:anywhere;
+}
+
+.actions{
+  display:flex;
+  gap:9px;
+  flex-wrap:wrap;
+  padding-top:18px;
+  margin-top:18px;
+  border-top:1px solid rgba(255,255,255,.065);
+}
+
+.action-btn{
+  appearance:none;
+  border:1px solid rgba(255,255,255,.10);
+  background:rgba(255,255,255,.035);
+  color:#eef1ff;
+  border-radius:12px;
+  padding:10px 13px;
+  cursor:pointer;
+  font-size:12px;
+  font-weight:900;
+  letter-spacing:.04em;
+  transition:.16s ease;
+}
+
+.action-btn:hover{
+  border-color:rgba(152,100,255,.38);
+  background:rgba(152,100,255,.07);
+}
+
+.action-btn.primary{
+  border-color:rgba(152,100,255,.28);
+  background:linear-gradient(135deg,rgba(152,100,255,.18),rgba(76,204,255,.08));
+}
+
+/* VISUAL */
+.visual-box{
+  border-radius:22px;
+  overflow:hidden;
+  border:1px solid rgba(255,255,255,.08);
+  background:#070912;
+  box-shadow:0 18px 45px rgba(0,0,0,.24);
+}
+
+canvas{
+  display:block;
+  width:100%;
+  height:auto;
+  aspect-ratio:1/1;
+}
+
+.visual-actions{
+  display:flex;
+  gap:9px;
+  flex-wrap:wrap;
+  margin-top:11px;
+}
+
+/* TOAST */
+.toast{
+  position:fixed;
+  right:18px;
+  bottom:18px;
+  z-index:99;
+  padding:12px 15px;
+  border-radius:14px;
+  border:1px solid rgba(255,255,255,.11);
+  background:rgba(15,18,31,.94);
+  box-shadow:0 18px 50px rgba(0,0,0,.38);
+  color:#fff;
+  font-size:13px;
+  font-weight:800;
+  opacity:0;
+  transform:translateY(10px);
+  pointer-events:none;
+  transition:.18s ease;
+}
+
+.toast.show{
+  opacity:1;
+  transform:translateY(0);
+}
+
+@media(max-width:1050px){
+  .pair{
+    grid-template-columns:1fr;
+  }
+
+  .text-panel{
+    min-height:auto;
+  }
+
+  .visual-side{
+    max-width:680px;
+    width:100%;
+    margin:0 auto;
+  }
+}
+
+@media(max-width:680px){
+  .wrap{
+    width:min(100% - 20px,1450px);
+    padding-top:14px;
+  }
+
+  .header{
+    align-items:flex-start;
+    flex-direction:column;
+  }
+
+  .generate-main{
+    width:100%;
+  }
+
+  .site-logo{
+    width:52px;
+    height:52px;
+  }
+
+  .pair{
+    padding:12px;
+    border-radius:22px;
+  }
+
+  .text-panel{
+    padding:17px;
+    border-radius:18px;
+  }
+
+  .post-text{
+    font-size:14px;
+  }
+}
+</style>
 </head>
+
 <body>
-  <div class="wrap">
+<div class="wrap">
 
-    <div class="topbar">
-      <div class="brand">
-        <div class="logo"><span>ASTY</span></div>
-        <div class="titles">
-          <h1>ASTY Content Lab</h1>
-          <p>
-            Simple X content for the team. Explain the holder advantage of ASTY without live dashboard data.
-            Generate multiple text variations and copy-ready visuals in the current ASTY style.
-          </p>
-        </div>
-      </div>
-
-      <div class="header-links">
-        <a class="ghost-btn" href="https://htmlpreview.github.io/?https://github.com/ArbStrategy-ASTY/ArbStrategy-ASTY/blob/main/Dashboard.html" target="_blank" rel="noopener">Live Dashboard</a>
-        <a class="ghost-btn" href="https://arbstrategy-asty.github.io/ArbStrategy-ASTY/" target="_blank" rel="noopener">System Overview</a>
-        <a class="ghost-btn" href="https://t.me/ArbStrategyASTY" target="_blank" rel="noopener">Telegram</a>
-        <a class="ghost-btn" href="https://x.com/ArbStrategyASTY" target="_blank" rel="noopener">X</a>
+  <header class="header">
+    <div class="brand">
+      <img
+        id="siteLogo"
+        class="site-logo"
+        src="assets/logo.png"
+        alt="ASTY Logo"
+      />
+      <div class="brand-text">
+        <h1>ASTY Team Content Lab</h1>
+        <div class="mini">Team Tool</div>
       </div>
     </div>
 
-    <div class="hero-card">
-      <div class="hero-grid">
-        <div class="hero-main">
-          <h2>Explain the system. Spread the idea.</h2>
-          <p>
-            This tool focuses only on timeless ASTY messaging for holders.
-            No pool stats. No TVL posts. No performance snapshots.
-            Just simple content that explains why ASTY is structurally interesting:
-            transaction activity feeds burn, growth and treasury.
-          </p>
-          <div class="hero-badges">
-            <div class="badge">1% Transaction Logic</div>
-            <div class="badge">40% Burn</div>
-            <div class="badge">40% Growth Wallet</div>
-            <div class="badge">20% Treasury</div>
-            <div class="badge">Evergreen Content</div>
-            <div class="badge">Copy-Ready Visuals</div>
-          </div>
-        </div>
+    <button class="generate-main" id="generateAllBtn">
+      GENERATE 3 NEW POSTS
+    </button>
+  </header>
 
-        <div class="hero-side">
-          <div class="info-mini">
-            <div class="label">Primary goal</div>
-            <div class="value">Generate many different ASTY explanation posts without repeating the same wording.</div>
-          </div>
-          <div class="info-mini">
-            <div class="label">Content logic</div>
-            <div class="value">Holder benefit, deflation, treasury strength, simple education and the ASTY Effect.</div>
-          </div>
-          <div class="info-mini">
-            <div class="label">Output</div>
-            <div class="value">5 text posts at once plus several square visuals that can be copied directly.</div>
-          </div>
-        </div>
-      </div>
+  <div class="top-strip">
+    <div class="strip-left">
+      <strong>3 matched content pairs.</strong> Each X post is generated together with its own visual.
     </div>
-
-    <div class="section">
-      <div class="section-head">
-        <div class="section-title"><span class="dot"></span> Content Controls</div>
-      </div>
-
-      <div class="controls">
-        <div class="control-row">
-          <div class="control-block">
-            <div class="control-label">Topic</div>
-            <div class="chip-group" id="topicChips">
-              <button class="chip active" data-topic="all">All</button>
-              <button class="chip" data-topic="holder">Holder</button>
-              <button class="chip" data-topic="burn">Burn</button>
-              <button class="chip" data-topic="effect">ASTY Effect</button>
-              <button class="chip" data-topic="treasury">Treasury</button>
-              <button class="chip" data-topic="simple">Simple</button>
-              <button class="chip" data-topic="education">Education</button>
-            </div>
-          </div>
-
-          <div class="control-block">
-            <div class="control-label">Length</div>
-            <div class="chip-group" id="lengthChips">
-              <button class="chip" data-length="short">Short</button>
-              <button class="chip active" data-length="standard">Standard</button>
-              <button class="chip" data-length="long">Long</button>
-            </div>
-          </div>
-        </div>
-
-        <div class="control-row">
-          <div class="control-block">
-            <div class="control-label">Options</div>
-            <div class="toggle-group">
-              <label class="toggle-pill">
-                <input type="checkbox" id="includeLinks" />
-                Include links
-              </label>
-              <label class="toggle-pill">
-                <input type="checkbox" id="includeHashtags" checked />
-                Include hashtags
-              </label>
-              <label class="toggle-pill">
-                <input type="checkbox" id="avoidRepeats" checked />
-                Avoid repeats
-              </label>
-            </div>
-          </div>
-
-          <div class="control-block">
-            <div class="control-label">Actions</div>
-            <div class="action-group">
-              <button class="solid-btn" id="generatePostsBtn">GENERATE 5 POSTS</button>
-              <button class="ghost-btn" id="generateVisualsBtn">GENERATE 4 VISUALS</button>
-              <button class="ghost-btn" id="resetHistoryBtn">RESET USED HISTORY</button>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <div class="split">
-      <div class="panel">
-        <div class="panel-top">
-          <div>
-            <div class="panel-title">Generated X Posts</div>
-            <div class="panel-sub">Five different posts at once. Copy, refresh individually, or mark as used.</div>
-          </div>
-          <div class="status">
-            <span class="status-dot"></span>
-            <span id="postStatusText">Ready</span>
-          </div>
-        </div>
-        <div class="posts-grid" id="postsGrid">
-          <div class="empty-note">No posts yet. Click “GENERATE 5 POSTS”.</div>
-        </div>
-      </div>
-
-      <div class="panel">
-        <div class="panel-top">
-          <div>
-            <div class="panel-title">Copy-Ready Visuals</div>
-            <div class="panel-sub">Square ASTY visuals with simple messages for X posts.</div>
-          </div>
-          <div class="status">
-            <span class="status-dot"></span>
-            <span id="visualStatusText">Ready</span>
-          </div>
-        </div>
-        <div class="visual-grid" id="visualGrid">
-          <div class="empty-note">No visuals yet. Click “GENERATE 4 VISUALS”.</div>
-        </div>
-      </div>
-    </div>
-
-    <div class="foot-row">
-      <div>ASTY Content Lab · Evergreen content engine for team posting</div>
-      <div>Style direction: dark ASTY dashboard look with purple / cyan glow</div>
+    <div class="strip-right">
+      <span class="live-dot"></span>
+      Evergreen Content Engine
     </div>
   </div>
 
-  <script>
-    const state = {
-      topic: "all",
-      length: "standard",
-      includeLinks: false,
-      includeHashtags: true,
-      avoidRepeats: true
-    };
+  <main class="pairs" id="pairs"></main>
+</div>
 
-    const USED_POSTS_KEY = "asty_content_lab_used_posts_v1";
-    const USED_VISUALS_KEY = "asty_content_lab_used_visuals_v1";
+<div class="toast" id="toast">Copied</div>
 
-    const usedPosts = new Set(JSON.parse(localStorage.getItem(USED_POSTS_KEY) || "[]"));
-    const usedVisuals = new Set(JSON.parse(localStorage.getItem(USED_VISUALS_KEY) || "[]"));
+<script>
+/* =========================================================
+   ASTY TEAM CONTENT LAB
+   ---------------------------------------------------------
+   Asset paths:
+   Logo: assets/logo.png
+   Wolf: tries assets/Wolf.png and assets/wolf.png
+   ========================================================= */
 
-    const topicOrder = ["holder", "burn", "effect", "treasury", "simple", "education"];
+const SYSTEM_URL = "https://ArbStrategy.net";
+const TELEGRAM_URL = "https://t.me/ArbStrategyASTY";
 
-    const LINK_BLOCKS = [
-      "System Overview: https://arbstrategy-asty.github.io/ArbStrategy-ASTY/",
-      "Community: https://t.me/ArbStrategyASTY",
-      "More: https://ArbStrategy.net"
-    ];
+const HISTORY_KEY = "asty_team_content_lab_history_v3";
+const MAX_HISTORY = 120;
 
-    const HASHTAG_SETS = [
-      "#ASTY #Solana #DeFi",
-      "#ASTY #ArbiTrage #Solana",
-      "#ASTY #DeFi #Cashflow",
-      "#ASTY #Solana #Crypto",
-      "#ASTY #ArbiTrage #DeFi"
-    ];
+let generationHistory = JSON.parse(localStorage.getItem(HISTORY_KEY) || "[]");
+let currentPairs = [];
+let assetCache = null;
 
-    const SIGNATURES = [
-      "ASTY is not a coin. ASTY is a cashflow system.",
-      "The ASTY Effect turns activity into structural support.",
-      "ASTY was built around system mechanics, not empty hype.",
-      "Simple structure. Ongoing activity. Stronger system.",
-      "Holding ASTY means staying exposed to the mechanism."
-    ];
+const THEMES = {
+  holder: {
+    label: "Holder Advantage",
+    hooks: [
+      "Why can holding $ASTY become more interesting as the system keeps working?",
+      "The holder advantage behind $ASTY is easier to understand than it sounds.",
+      "Holding $ASTY means staying positioned inside a system that reacts to activity.",
+      "$ASTY was designed so holders do not need to chase every move for the mechanism to matter.",
+      "The core holder idea behind $ASTY is structural, not complicated."
+    ],
+    bodies: [
+      [
+        "Every ASTY transaction feeds a fixed mechanism.",
+        "Part of the fee is burned, part supports future growth and part builds reserves outside ASTY itself.",
+        "That means your position stays connected to a system that can keep strengthening through use."
+      ],
+      [
+        "A holder can keep the same number of ASTY while the structure around that position continues to change.",
+        "Supply can be reduced, liquidity growth can be funded and treasury reserves can increase through transaction activity.",
+        "The holder remains exposed to all three parts of that mechanism."
+      ],
+      [
+        "ASTY does not require a holder to constantly move funds around to understand the basic advantage.",
+        "The token is connected to burn, reinvestment and treasury mechanics whenever the network is used.",
+        "That is the simple idea: hold the asset while activity keeps feeding the system."
+      ],
+      [
+        "Many tokens depend almost entirely on attention.",
+        "ASTY adds a mechanism behind the attention by turning activity into burn, future growth capacity and external reserves.",
+        "For holders, that creates a clearer structural reason to stay positioned."
+      ]
+    ],
+    closes: [
+      "That is the holder side of the ASTY Effect.",
+      "That is why holding ASTY is about more than simply waiting.",
+      "This is the structural advantage ASTY is built around.",
+      "The holder remains inside the mechanism while the mechanism keeps working."
+    ],
+    visualTitles: [
+      ["HOLD ASTY", "STAY INSIDE", "THE SYSTEM"],
+      ["YOU HOLD", "THE SYSTEM", "KEEPS WORKING"],
+      ["YOUR POSITION", "STAYS CONNECTED", "TO THE MECHANISM"],
+      ["HOLD THE ASSET", "LET ACTIVITY", "FEED THE SYSTEM"]
+    ],
+    visualSubs: [
+      "ASTY holders stay exposed to burn, growth and treasury mechanics as the system is used.",
+      "Your balance can stay unchanged while the structure around ASTY continues to evolve.",
+      "ASTY connects holding to a system that can strengthen through transaction activity.",
+      "The holder advantage comes from staying positioned inside the mechanism."
+    ],
+    visualTag: "HOLDER ADVANTAGE"
+  },
 
-    const POST_BANK = {
-      holder: {
-        hooks: [
-          "Why hold $ASTY?",
-          "What is the holder advantage of $ASTY?",
-          "Holding $ASTY is about structure, not noise.",
-          "$ASTY gives holders exposure to a working system.",
-          "The value idea behind holding $ASTY is simple."
-        ],
-        short: [
-          "You can hold the same amount of ASTY while the circulating supply keeps getting reduced through activity.",
-          "Holding ASTY means your position stays connected to burn, growth and treasury mechanics.",
-          "You do not need to constantly trade ASTY for the system logic to keep operating.",
-          "ASTY was built so that usage around the token can strengthen the structure behind it.",
-          "The holder does not need a complicated routine. The mechanism does the work."
-        ],
-        standard: [
-          "Every ASTY transaction feeds a fixed structure. Part is burned, part supports future growth and part builds external reserves.",
-          "That means the system does not rely on promises alone. It has a built-in way to turn activity into structural support.",
-          "When supply is reduced and the system keeps expanding its foundation, holders remain positioned inside that mechanism.",
-          "ASTY is interesting to hold because the token is linked to a process, not just a narrative.",
-          "The advantage is simple: you hold ASTY while the system keeps processing activity in the background."
-        ],
-        long: [
-          "Many tokens ask holders to just wait and hope. ASTY takes a different route by connecting each on-chain transaction to a fixed internal logic.",
-          "A part of the fee is permanently burned, another part is reserved for future growth and another part is stored as treasury.",
-          "That creates a structural reason why activity can matter for holders even when they are not actively doing anything themselves.",
-          "Your ASTY balance can stay the same while the surrounding system continues to evolve through use."
-        ],
-        closes: [
-          "That is the core holder angle of ASTY.",
-          "That is why holding ASTY is more than just sitting still.",
-          "That is the simple case for the ASTY holder.",
-          "This is where the ASTY idea becomes interesting for holders.",
-          "That is the structural benefit behind the token."
-        ]
-      },
+  burn: {
+    label: "Burn",
+    hooks: [
+      "One of the simplest holder advantages in $ASTY is the permanent burn.",
+      "The ASTY burn changes the supply side of the holder equation.",
+      "What happens when ASTY activity increases? Part of the answer is permanent burn.",
+      "$ASTY turns part of every transaction fee into permanent supply reduction.",
+      "The burn is one of the clearest ways to explain the ASTY holder case."
+    ],
+    bodies: [
+      [
+        "40% of the ASTY transaction fee is permanently burned.",
+        "That means activity can reduce the circulating supply instead of increasing it.",
+        "If a holder keeps the same number of tokens while supply falls, the relative share of what remains can increase."
+      ],
+      [
+        "The burn is not a separate marketing event.",
+        "It is built directly into the transaction structure.",
+        "More usage can therefore create more permanent supply reduction over time."
+      ],
+      [
+        "ASTY is designed to be structurally deflationary.",
+        "A fixed share of the transaction fee is removed from circulation permanently.",
+        "For holders, that makes the supply mechanism easy to understand."
+      ],
+      [
+        "A holder does not need the burn to be manually triggered as a special campaign.",
+        "It is part of the normal ASTY transaction logic.",
+        "Activity itself provides the fuel for permanent supply reduction."
+      ]
+    ],
+    closes: [
+      "Same position. Smaller supply. That is why the burn matters.",
+      "This is the deflationary side of the ASTY Effect.",
+      "Permanent burn is a simple but important part of the holder advantage.",
+      "The supply side of ASTY is designed to move in the holder's direction."
+    ],
+    visualTitles: [
+      ["40% OF THE FEE", "IS PERMANENTLY", "BURNED"],
+      ["SAME ASTY", "SMALLER", "SUPPLY"],
+      ["ACTIVITY IN", "SUPPLY", "OUT"],
+      ["THE BURN", "IS BUILT", "IN"]
+    ],
+    visualSubs: [
+      "40% of the ASTY transaction fee is permanently removed from circulation.",
+      "A holder can keep the same ASTY amount while the circulating supply is reduced.",
+      "More transaction activity can create more permanent supply reduction.",
+      "The burn is part of the normal ASTY mechanism, not a one-time event."
+    ],
+    visualTag: "PERMANENT BURN"
+  },
 
-      burn: {
-        hooks: [
-          "One of the clearest ASTY advantages is the burn.",
-          "The burn is a key reason people look at $ASTY differently.",
-          "What does the ASTY burn actually do?",
-          "$ASTY is built with structural burn in mind.",
-          "The burn is one of the simplest things to understand about ASTY."
-        ],
-        short: [
-          "A part of every ASTY transaction fee is permanently removed from circulation.",
-          "More activity means more ASTY can be burned over time.",
-          "The burn reduces circulating supply instead of inflating it.",
-          "This is one reason ASTY is designed to be structurally deflationary.",
-          "If your ASTY amount stays the same while supply falls, your relative share can grow."
-        ],
-        standard: [
-          "40% of the ASTY transaction fee is permanently burned. That means activity does not only create movement, it can also reduce supply.",
-          "For holders, that matters because the system does not just recycle value internally. It also removes ASTY from circulation.",
-          "The idea is simple: more usage can mean more burn, and more burn can strengthen the scarcity side of the token.",
-          "You are not looking at endless inflation. You are looking at a token with a structural reduction mechanism.",
-          "This gives ASTY a cleaner long-term story than tokens that only expand supply."
-        ],
-        long: [
-          "Burn mechanics are often mentioned loosely in crypto, but ASTY makes the idea easy to understand through a fixed transaction structure.",
-          "With each transaction, 40% of the fee is permanently burned. This is not about random events. It is part of the design.",
-          "As usage grows, the amount removed from circulation can grow with it. For holders, this matters because a shrinking supply changes the structure around the token.",
-          "The result is a simple narrative with real logic behind it: activity can reduce supply."
-        ],
-        closes: [
-          "Burn is not the whole story, but it is an important part of the ASTY holder case.",
-          "That is why the burn matters for ASTY holders.",
-          "This is one of the cleanest parts of the ASTY mechanism.",
-          "Simple, permanent and easy to understand.",
-          "That is the deflationary side of ASTY."
-        ]
-      },
+  effect: {
+    label: "ASTY Effect",
+    hooks: [
+      "The ASTY Effect explains why activity matters to every $ASTY holder.",
+      "The easiest way to understand $ASTY is to understand the ASTY Effect.",
+      "The ASTY Effect turns ordinary token activity into fuel for the system.",
+      "$ASTY is built around a loop where activity has a job.",
+      "The ASTY Effect connects every transaction to the wider system."
+    ],
+    bodies: [
+      [
+        "Activity generates fees.",
+        "Those fees are split between burn, growth and treasury.",
+        "That turns every buy, sell or transfer into another contribution to the structure behind ASTY."
+      ],
+      [
+        "ASTY activity does not simply disappear after a transaction is completed.",
+        "The fee is redirected into three functions that support the wider system.",
+        "That continuous cycle is what we call the ASTY Effect."
+      ],
+      [
+        "Burn reduces supply.",
+        "The Growth Wallet supports future liquidity deployment.",
+        "The Treasury builds strategic reserves in SOL or USDC.",
+        "All three start with activity."
+      ],
+      [
+        "The system links usage to structural outcomes.",
+        "More activity can mean more burn, more growth capacity and more treasury accumulation.",
+        "That is why the ASTY Effect is central to the holder story."
+      ]
+    ],
+    closes: [
+      "Activity feeds the system. The system supports the holder case.",
+      "That continuous cycle is the ASTY Effect.",
+      "The mechanics are simple. The effect is continuous.",
+      "ASTY gives activity a purpose inside the system."
+    ],
+    visualTitles: [
+      ["ACTIVITY", "FEEDS THE", "SYSTEM"],
+      ["THE ASTY EFFECT", "STARTS WITH", "ACTIVITY"],
+      ["BURN", "GROWTH", "TREASURY"],
+      ["EVERY TRANSACTION", "HAS A", "JOB"]
+    ],
+    visualSubs: [
+      "ASTY activity feeds burn, future growth capacity and treasury reserves.",
+      "The ASTY Effect connects normal token usage to the wider system.",
+      "Three functions. One transaction structure. One continuous system.",
+      "Every ASTY transaction contributes to the mechanism behind the token."
+    ],
+    visualTag: "THE ASTY EFFECT"
+  },
 
-      effect: {
-        hooks: [
-          "The ASTY Effect is simple.",
-          "What is the ASTY Effect?",
-          "The ASTY Effect is the engine behind the idea.",
-          "$ASTY is built around a self-reinforcing system dynamic.",
-          "The ASTY Effect explains why activity matters."
-        ],
-        short: [
-          "Activity generates fees.",
-          "Fees are split into burn, growth and treasury.",
-          "That means usage can strengthen the system step by step.",
-          "The stronger the activity, the more fuel the structure receives.",
-          "The ASTY Effect turns movement into system support."
-        ],
-        standard: [
-          "A buy, a sell or a transfer creates a fee. That fee is then split into three clear functions inside the system.",
-          "One part reduces supply, one part supports future growth and one part builds reserves outside the token itself.",
-          "That is why the ASTY Effect matters. It connects everyday activity to a broader system outcome.",
-          "Instead of relying on hype alone, ASTY gives activity a job inside the model.",
-          "Volume strengthens the mechanism. The mechanism strengthens the system."
-        ],
-        long: [
-          "The ASTY Effect describes a self-reinforcing loop. Trading activity generates fees, fees are allocated according to a fixed structure and that structure feeds several strategic functions at once.",
-          "Burn reduces supply, the growth allocation supports future liquidity deployment and the treasury adds resilience through external reserves.",
-          "This makes ASTY more than a token with a slogan. It makes the token part of a process where activity can improve the overall foundation.",
-          "That is why the ASTY Effect is central to understanding the project."
-        ],
-        closes: [
-          "That continuous loop is the ASTY Effect.",
-          "That is the logic behind the ASTY system dynamic.",
-          "That is the idea the project keeps pointing back to.",
-          "Simple cycle. Clear purpose. Ongoing effect.",
-          "That is what gives ASTY its internal logic."
-        ]
-      },
+  growth: {
+    label: "Growth Wallet",
+    hooks: [
+      "Holding $ASTY also means staying exposed to a system that can reinvest into its own growth.",
+      "The Growth Wallet is a key part of the ASTY holder story.",
+      "$ASTY does not send every fee contribution in one direction.",
+      "Part of every ASTY transaction is reserved for future system growth.",
+      "The ASTY model is designed to recycle part of its activity back into the system."
+    ],
+    bodies: [
+      [
+        "40% of the ASTY transaction fee goes to the Growth Wallet.",
+        "That capital is intended for future liquidity reinvestments where the system sees measurable efficiency.",
+        "For holders, that means activity can help fund the infrastructure around ASTY itself."
+      ],
+      [
+        "The Growth Wallet gives ASTY a way to build future liquidity capacity from transaction activity.",
+        "Capital can be redirected toward efficient pools rather than expanded blindly.",
+        "The goal is not growth at any cost, but growth that supports the system."
+      ],
+      [
+        "ASTY does not treat collected fees as dead capital.",
+        "A fixed share is reserved for future liquidity growth.",
+        "That creates a direct connection between activity today and system capacity tomorrow."
+      ],
+      [
+        "The holder benefit is not a direct payout.",
+        "It is exposure to a system that can use its own activity to build future liquidity capacity.",
+        "That is an important distinction in the ASTY model."
+      ]
+    ],
+    closes: [
+      "Activity today can help build the system for tomorrow.",
+      "That is the growth side of the ASTY Effect.",
+      "ASTY recycles part of its activity back into future system capacity.",
+      "Growth is built into the fee structure, not added later."
+    ],
+    visualTitles: [
+      ["ACTIVITY TODAY", "CAN FUND", "GROWTH TOMORROW"],
+      ["40% TO", "THE GROWTH", "WALLET"],
+      ["ASTY RECYCLES", "ACTIVITY INTO", "FUTURE CAPACITY"],
+      ["BUILD THE", "SYSTEM FROM", "WITHIN"]
+    ],
+    visualSubs: [
+      "40% of the ASTY transaction fee is allocated to the Growth Wallet.",
+      "Transaction activity can help fund future liquidity reinvestments.",
+      "ASTY can recycle part of its own activity back into system growth.",
+      "The Growth Wallet connects current usage with future liquidity capacity."
+    ],
+    visualTag: "GROWTH WALLET"
+  },
 
-      treasury: {
-        hooks: [
-          "The treasury side of ASTY is underrated.",
-          "Another ASTY advantage is the treasury logic.",
-          "Why does ASTY convert part of the fee into reserves?",
-          "The treasury is one of the strongest parts of the ASTY design.",
-          "$ASTY does not keep everything trapped inside the token."
-        ],
-        short: [
-          "Part of the fee is converted into SOL or USDC and stored as reserve.",
-          "That gives the system flexibility beyond the ASTY token itself.",
-          "The treasury is meant to add resilience and optionality.",
-          "It can help support future decisions instead of leaving everything purely theoretical.",
-          "This is one reason ASTY tries to build structure, not just attention."
-        ],
-        standard: [
-          "20% of the ASTY transaction fee is swapped into SOL or USDC and held as treasury. That matters because it creates reserves in external assets.",
-          "For holders, this is meaningful because the project is not only talking about growth inside ASTY. It is also building strategic flexibility outside the token.",
-          "A treasury can help support expansion, resilience and selective future actions when needed.",
-          "This gives the ASTY model another layer that many simple tokens do not have.",
-          "Treasury is not hype. Treasury is optionality."
-        ],
-        long: [
-          "A strong token story is not only about supply. It is also about flexibility. ASTY addresses this by converting 20% of the transaction fee into SOL or USDC for treasury reserves.",
-          "That means part of the system value is continuously moved into external assets instead of remaining fully dependent on ASTY price action alone.",
-          "For holders, this adds another strategic dimension: the project can build reserves that support resilience and future decisions.",
-          "It is a simple but important difference between a token with structure and a token with only momentum."
-        ],
-        closes: [
-          "That is why the treasury side of ASTY matters.",
-          "This is one of the stabilizing parts of the model.",
-          "Treasury gives the ASTY structure more depth.",
-          "External reserves make the system more flexible.",
-          "That is a real strategic layer for holders to understand."
-        ]
-      },
+  treasury: {
+    label: "Treasury",
+    hooks: [
+      "The ASTY holder story is not only about burn. It is also about building reserves.",
+      "$ASTY converts part of its activity into assets outside ASTY itself.",
+      "The Treasury adds another layer to the ASTY holder case.",
+      "A strong system needs more than a token balance. ASTY also builds external reserves.",
+      "Part of every ASTY transaction helps build strategic flexibility."
+    ],
+    bodies: [
+      [
+        "20% of the ASTY transaction fee is swapped into SOL or USDC and stored as Treasury reserve.",
+        "That means part of the system value is moved into external assets.",
+        "For holders, this adds another strategic layer beyond the ASTY token itself."
+      ],
+      [
+        "The Treasury is designed to increase flexibility and resilience.",
+        "Instead of keeping every part of the mechanism dependent on ASTY alone, a fixed share is converted into SOL or USDC.",
+        "That gives the system optionality for future decisions."
+      ],
+      [
+        "Activity can build reserves outside ASTY.",
+        "Those reserves can support strategic expansion, liquidity needs and selected future actions.",
+        "The holder stays positioned in a system that is building more than one type of asset."
+      ],
+      [
+        "Treasury accumulation gives ASTY a second layer of strength.",
+        "The token can remain the center of the system while external reserves build alongside it.",
+        "That is why the Treasury matters to the holder story."
+      ]
+    ],
+    closes: [
+      "External reserves give the ASTY system more flexibility.",
+      "That is the Treasury side of the ASTY Effect.",
+      "ASTY activity can build strength both inside and outside the token.",
+      "The Treasury adds strategic depth to the holder case."
+    ],
+    visualTitles: [
+      ["ASTY ACTIVITY", "BUILDS EXTERNAL", "RESERVES"],
+      ["20% BUILDS", "SOL OR USDC", "RESERVES"],
+      ["TREASURY", "MEANS MORE", "FLEXIBILITY"],
+      ["STRENGTH", "OUTSIDE", "THE TOKEN"]
+    ],
+    visualSubs: [
+      "20% of the ASTY transaction fee is converted into SOL or USDC reserves.",
+      "The Treasury gives the ASTY system strategic flexibility beyond the token itself.",
+      "Transaction activity can build external reserves alongside the ASTY ecosystem.",
+      "The holder stays exposed to a system that builds both internal and external strength."
+    ],
+    visualTag: "TREASURY RESERVE"
+  },
 
-      simple: {
-        hooks: [
-          "ASTY can be explained very simply.",
-          "The easiest way to explain $ASTY is this:",
-          "ASTY does not need a complicated pitch.",
-          "If you are new to ASTY, here is the simple version.",
-          "The simple ASTY story is stronger than a complicated one."
-        ],
-        short: [
-          "Every ASTY transaction creates a fee.",
-          "That fee is split into burn, growth and treasury.",
-          "So activity around ASTY can strengthen the system.",
-          "That is the whole idea in a few lines.",
-          "Simple structure is one of ASTY's strengths."
-        ],
-        standard: [
-          "ASTY uses a 1% transaction fee on buys, sells and transfers. That fee is not random. It has fixed jobs inside the system.",
-          "Part is burned, part goes to future growth and part becomes treasury in SOL or USDC.",
-          "Because of that, ASTY is not just a token people hold and forget. It is a token linked to an internal mechanism.",
-          "The result is a cleaner story: activity is turned into structure.",
-          "That is why ASTY is easy to explain once you strip away the noise."
-        ],
-        long: [
-          "A lot of crypto projects become harder to understand the longer they talk. ASTY works best the other way around.",
-          "There is a 1% transaction fee. The fee has three jobs: 40% burn, 40% growth wallet and 20% treasury in SOL or USDC.",
-          "So when ASTY is used, the system receives fuel. Supply can be reduced, future growth can be supported and reserves can be built.",
-          "That is the simple ASTY story, and it is enough to understand the core value idea."
-        ],
-        closes: [
-          "That is ASTY in simple terms.",
-          "That is the cleanest ASTY explanation.",
-          "Simple is powerful when the structure is real.",
-          "That is why ASTY is easy to communicate.",
-          "No complicated story needed."
-        ]
-      },
+  simple: {
+    label: "Simple ASTY",
+    hooks: [
+      "The easiest way to explain $ASTY is this.",
+      "$ASTY does not need a complicated explanation.",
+      "If someone asks what makes $ASTY different, start here.",
+      "The basic ASTY holder idea fits into a few simple lines.",
+      "Strip away the noise and the $ASTY model becomes very simple."
+    ],
+    bodies: [
+      [
+        "Every ASTY transaction creates a 1% fee.",
+        "40% is burned, 40% goes to the Growth Wallet and 20% becomes Treasury reserve in SOL or USDC.",
+        "So activity can reduce supply, support future growth and build reserves at the same time."
+      ],
+      [
+        "ASTY turns normal token usage into three things: burn, growth and treasury.",
+        "That is the system in its simplest form.",
+        "A holder stays positioned while activity keeps feeding those mechanics."
+      ],
+      [
+        "ASTY is not built around an endless list of features.",
+        "It is built around a simple transaction structure with clear jobs for every fee contribution.",
+        "That simplicity is part of the strength of the holder story."
+      ],
+      [
+        "Buy, sell or transfer ASTY and the same fixed mechanism applies.",
+        "Supply reduction, future growth capacity and Treasury reserves all come from the same activity.",
+        "That is the core idea behind ASTY."
+      ]
+    ],
+    closes: [
+      "Simple structure. Clear purpose. That is ASTY.",
+      "That is ASTY in plain English.",
+      "No complicated story needed.",
+      "Understand the mechanism and you understand the holder case."
+    ],
+    visualTitles: [
+      ["1% FEE", "3 CLEAR", "JOBS"],
+      ["BURN", "GROWTH", "TREASURY"],
+      ["SIMPLE SYSTEM", "CLEAR", "PURPOSE"],
+      ["ACTIVITY IN", "STRUCTURE", "OUT"]
+    ],
+    visualSubs: [
+      "One fee structure feeds permanent burn, future growth and Treasury reserves.",
+      "ASTY turns ordinary transaction activity into three clear system functions.",
+      "The holder case starts with a simple mechanism that is easy to understand.",
+      "ASTY gives transaction activity a clear purpose inside the system."
+    ],
+    visualTag: "ASTY EXPLAINED"
+  }
+};
 
-      education: {
-        hooks: [
-          "New to ASTY? Start here.",
-          "If you want to understand ASTY, begin with the basics.",
-          "ASTY makes more sense when you look at the mechanics.",
-          "The ASTY holder story starts with a few simple rules.",
-          "A simple ASTY education thread in one post:"
-        ],
-        short: [
-          "Buys, sells and transfers all contribute to the same system logic.",
-          "That logic is fixed and transparent.",
-          "ASTY is designed to be structurally deflationary.",
-          "The model also builds growth capacity and external reserves.",
-          "Understanding ASTY starts with understanding the fee structure."
-        ],
-        standard: [
-          "The first thing to understand is that ASTY does not rely on a vague concept. It relies on a fixed transaction structure.",
-          "Every on-chain ASTY transaction contributes to burn, growth and treasury according to predetermined percentages.",
-          "That means the token is connected to a repeatable process instead of just market mood.",
-          "For holders, this creates a clearer framework to evaluate than projects that only speak in general promises.",
-          "The mechanics are the message."
-        ],
-        long: [
-          "If you are trying to understand ASTY, forget complex marketing for a moment and focus on the mechanism.",
-          "A fixed 1% transaction fee applies to buys, sells and transfers. That fee is then split between permanent burn, future growth capacity and treasury reserves.",
-          "This means the project can turn on-chain activity into several structural outcomes at once.",
-          "For holders, the advantage is not some automatic payout. The advantage is staying positioned in a system designed to strengthen itself through use.",
-          "That is the educational starting point for ASTY."
-        ],
-        closes: [
-          "Once you understand the structure, ASTY becomes much easier to understand.",
-          "That is the foundation of the ASTY holder story.",
-          "Start with the mechanics and the project gets clearer.",
-          "This is why education matters when explaining ASTY.",
-          "The model is simple once you see the moving parts."
-        ]
-      }
-    };
+const THEME_KEYS = Object.keys(THEMES);
 
-    const VISUAL_BANK = [
-      {
-        id: "v1",
-        topic: "holder",
-        kicker: "HOLDER ADVANTAGE",
-        title: ["HOLD THE SAME", "OWN MORE OF", "WHAT REMAINS"],
-        sub: "A shrinking supply can change the structure around every remaining ASTY.",
-        chips: ["SUPPLY DOWN", "HOLDER FOCUS", "STRUCTURAL"],
-        footer: "ASTY is not a coin. ASTY is a cashflow system."
-      },
-      {
-        id: "v2",
-        topic: "burn",
-        kicker: "BURN LOGIC",
-        title: ["40% OF THE FEE", "IS PERMANENTLY", "BURNED"],
-        sub: "Activity can reduce circulating ASTY over time.",
-        chips: ["DEFLATIONARY", "PERMANENT", "SIMPLE"],
-        footer: "Simple structure. Ongoing activity. Stronger system."
-      },
-      {
-        id: "v3",
-        topic: "effect",
-        kicker: "THE ASTY EFFECT",
-        title: ["ACTIVITY", "FEEDS THE", "SYSTEM"],
-        sub: "Fees are split into burn, growth and treasury.",
-        chips: ["BURN", "GROWTH", "TREASURY"],
-        footer: "The ASTY Effect turns usage into structure."
-      },
-      {
-        id: "v4",
-        topic: "treasury",
-        kicker: "TREASURY",
-        title: ["EXTERNAL", "RESERVES ADD", "FLEXIBILITY"],
-        sub: "Part of the fee is converted into SOL or USDC.",
-        chips: ["SOL", "USDC", "OPTIONALITY"],
-        footer: "Treasury gives the ASTY model another strategic layer."
-      },
-      {
-        id: "v5",
-        topic: "simple",
-        kicker: "SIMPLE EXPLANATION",
-        title: ["1% FEE", "3 CLEAR", "JOBS"],
-        sub: "Burn. Growth. Treasury. That is the core ASTY structure.",
-        chips: ["1%", "40 / 40 / 20", "CLEAR"],
-        footer: "The simple ASTY story is often the strongest one."
-      },
-      {
-        id: "v6",
-        topic: "holder",
-        kicker: "YOU HOLD",
-        title: ["YOU HOLD", "THE SYSTEM", "KEEPS WORKING"],
-        sub: "ASTY was designed so activity keeps feeding the structure.",
-        chips: ["PASSIVE EXPOSURE", "STRUCTURE", "ACTIVITY"],
-        footer: "Holding ASTY means staying exposed to the mechanism."
-      },
-      {
-        id: "v7",
-        topic: "education",
-        kicker: "ASTY BASICS",
-        title: ["NOT JUST", "A TOKEN", "A SYSTEM"],
-        sub: "Understand the transaction logic and the project gets clearer.",
-        chips: ["MECHANICS", "SYSTEM", "LOGIC"],
-        footer: "Start with the mechanics. The rest gets easier."
-      },
-      {
-        id: "v8",
-        topic: "effect",
-        kicker: "SELF-REINFORCING",
-        title: ["VOLUME", "STRENGTHENS", "ASTY"],
-        sub: "Usage can increase burn, growth capacity and treasury strength.",
-        chips: ["LOOP", "FUEL", "SYSTEM"],
-        footer: "This cycle is what the ASTY Effect is about."
-      },
-      {
-        id: "v9",
-        topic: "burn",
-        kicker: "RELATIVE SHARE",
-        title: ["SUPPLY DOWN", "YOUR ASTY", "STAYS YOUR ASTY"],
-        sub: "This is one of the easiest ways to understand the holder angle.",
-        chips: ["SCARCITY", "HOLDER", "CLEAR"],
-        footer: "A clear burn story is part of the ASTY advantage."
-      },
-      {
-        id: "v10",
-        topic: "simple",
-        kicker: "CLEAN MESSAGE",
-        title: ["ACTIVITY IN", "STRUCTURE OUT", "THAT IS ASTY"],
-        sub: "ASTY turns usage into something the system can work with.",
-        chips: ["ACTIVITY", "STRUCTURE", "ASTY"],
-        footer: "No complicated story needed."
-      }
-    ];
+function randomItem(arr){
+  return arr[Math.floor(Math.random()*arr.length)];
+}
 
-    const postsGrid = document.getElementById("postsGrid");
-    const visualGrid = document.getElementById("visualGrid");
-    const postStatusText = document.getElementById("postStatusText");
-    const visualStatusText = document.getElementById("visualStatusText");
+function shuffle(arr){
+  const a=[...arr];
+  for(let i=a.length-1;i>0;i--){
+    const j=Math.floor(Math.random()*(i+1));
+    [a[i],a[j]]=[a[j],a[i]];
+  }
+  return a;
+}
 
-    function saveUsedPosts() {
-      localStorage.setItem(USED_POSTS_KEY, JSON.stringify([...usedPosts]));
+function hashString(str){
+  let h=2166136261;
+  for(let i=0;i<str.length;i++){
+    h^=str.charCodeAt(i);
+    h=Math.imul(h,16777619);
+  }
+  return (h>>>0).toString(16);
+}
+
+function saveHistory(){
+  generationHistory = generationHistory.slice(-MAX_HISTORY);
+  localStorage.setItem(HISTORY_KEY,JSON.stringify(generationHistory));
+}
+
+function buildPost(themeKey){
+  const theme=THEMES[themeKey];
+
+  for(let attempt=0;attempt<60;attempt++){
+    const hook=randomItem(theme.hooks);
+    const body=randomItem(theme.bodies);
+    const close=randomItem(theme.closes);
+
+    const text =
+`🟣 ${hook}
+
+${body.join("\n\n")}
+
+${close}
+
+Understand the System: ${SYSTEM_URL}
+Telegram: ${TELEGRAM_URL}
+
+#ASTY #ArbStrategy #ArbiTrage`;
+
+    const id=hashString(text);
+
+    if(!generationHistory.includes(id)){
+      generationHistory.push(id);
+      saveHistory();
+      return {themeKey,text,id};
     }
+  }
 
-    function saveUsedVisuals() {
-      localStorage.setItem(USED_VISUALS_KEY, JSON.stringify([...usedVisuals]));
-    }
+  const text =
+`🟣 ${randomItem(theme.hooks)}
 
-    function hashString(str) {
-      let hash = 0;
-      for (let i = 0; i < str.length; i++) {
-        hash = ((hash << 5) - hash) + str.charCodeAt(i);
-        hash |= 0;
-      }
-      return String(hash);
-    }
+${randomItem(theme.bodies).join("\n\n")}
 
-    function pick(arr) {
-      return arr[Math.floor(Math.random() * arr.length)];
-    }
+${randomItem(theme.closes)}
 
-    function pickManyUnique(arr, count) {
-      const copy = [...arr];
-      const out = [];
-      while (copy.length && out.length < count) {
-        const idx = Math.floor(Math.random() * copy.length);
-        out.push(copy[idx]);
-        copy.splice(idx, 1);
-      }
-      return out;
-    }
+Understand the System: ${SYSTEM_URL}
+Telegram: ${TELEGRAM_URL}
 
-    function activeTopicKeys() {
-      if (state.topic === "all") return topicOrder;
-      return [state.topic];
-    }
+#ASTY #ArbStrategy #ArbiTrage`;
 
-    function chooseTopic() {
-      const keys = activeTopicKeys();
-      return pick(keys);
-    }
+  return {themeKey,text,id:hashString(text)};
+}
 
-    function getBodyCount(length) {
-      if (length === "short") return 1;
-      if (length === "long") return 3;
-      return 2;
-    }
+function buildVisual(themeKey){
+  const theme=THEMES[themeKey];
+  const idx=Math.floor(Math.random()*theme.visualTitles.length);
 
-    function buildFooter() {
-      const parts = [];
-      if (state.includeLinks) {
-        const linkCount = state.length === "short" ? 1 : 2;
-        parts.push(...pickManyUnique(LINK_BLOCKS, linkCount));
-      }
-      if (state.includeHashtags) {
-        parts.push(pick(HASHTAG_SETS));
-      }
-      return parts.join("\n");
-    }
+  return {
+    themeKey,
+    tag:theme.visualTag,
+    title:theme.visualTitles[idx],
+    sub:theme.visualSubs[idx]
+  };
+}
 
-    function composePost(topicKey, length) {
-      const topic = POST_BANK[topicKey];
-      const lines = [];
-      lines.push(pick(topic.hooks));
-      lines.push("");
+function generatePair(themeKey){
+  return {
+    post:buildPost(themeKey),
+    visual:buildVisual(themeKey)
+  };
+}
 
-      const bodyPool = topic[length];
-      const bodyLines = pickManyUnique(bodyPool, getBodyCount(length));
-      lines.push(...bodyLines);
+function generateThree(){
+  const themes=shuffle(THEME_KEYS).slice(0,3);
+  currentPairs=themes.map(generatePair);
+  renderPairs();
+}
 
-      if (Math.random() < 0.78) {
-        lines.push("");
-        lines.push(pick(topic.closes));
+function regenerateOne(index){
+  const currentTheme=currentPairs[index].post.themeKey;
+
+  // 70% same topic for a direct variation, 30% fresh topic.
+  const themeKey=Math.random()<.70
+    ? currentTheme
+    : randomItem(THEME_KEYS.filter(k=>k!==currentTheme));
+
+  currentPairs[index]=generatePair(themeKey);
+  renderPairAt(index);
+  showToast("New text + visual generated");
+}
+
+/* =========================
+   ASSETS
+   ========================= */
+
+function loadImageCandidates(paths){
+  return new Promise(resolve=>{
+    let index=0;
+
+    const tryNext=()=>{
+      if(index>=paths.length){
+        resolve(null);
+        return;
       }
 
-      if (Math.random() < 0.45) {
-        lines.push("");
-        lines.push(pick(SIGNATURES));
-      }
-
-      const footer = buildFooter();
-      if (footer) {
-        lines.push("");
-        lines.push(footer);
-      }
-
-      const text = lines.join("\n").trim();
-      return {
-        topicKey,
-        length,
-        text,
-        hash: hashString(topicKey + "|" + length + "|" + text)
+      const img=new Image();
+      img.onload=()=>resolve(img);
+      img.onerror=()=>{
+        index++;
+        tryNext();
       };
-    }
+      img.src=paths[index];
+    };
 
-    function generateUniquePost(tempHashes = new Set()) {
-      let attempts = 0;
-      while (attempts < 80) {
-        const topicKey = chooseTopic();
-        const post = composePost(topicKey, state.length);
-        const alreadyUsed = usedPosts.has(post.hash);
-        const alreadyInBatch = tempHashes.has(post.hash);
+    tryNext();
+  });
+}
 
-        if ((!state.avoidRepeats || !alreadyUsed) && !alreadyInBatch) {
-          tempHashes.add(post.hash);
-          return post;
-        }
-        attempts++;
-      }
+async function getAssets(){
+  if(assetCache) return assetCache;
 
-      const fallbackTopic = chooseTopic();
-      const fallback = composePost(fallbackTopic, state.length);
-      tempHashes.add(fallback.hash);
-      return fallback;
-    }
+  const [logo,wolf]=await Promise.all([
+    loadImageCandidates(["assets/logo.png"]),
+    loadImageCandidates(["assets/Wolf.png","assets/wolf.png"])
+  ]);
 
-    function renderPosts(posts) {
-      if (!posts.length) {
-        postsGrid.innerHTML = '<div class="empty-note">No posts yet. Click “GENERATE 5 POSTS”.</div>';
-        return;
-      }
+  assetCache={logo,wolf};
+  return assetCache;
+}
 
-      postsGrid.innerHTML = "";
-      posts.forEach(post => {
-        const chars = post.text.length;
-        const charClass = chars <= 280 ? "char-ok" : "char-high";
-        const charLabel = chars <= 280 ? `${chars} chars` : `${chars} chars · over 280`;
-        const card = document.createElement("div");
-        card.className = "post-card";
-        card.dataset.hash = post.hash;
-        card.dataset.topic = post.topicKey;
+/* =========================
+   RENDER DOM
+   ========================= */
 
-        card.innerHTML = `
-          <div class="post-meta">
-            <div class="meta-left">
-              <span class="meta-chip">${post.topicKey}</span>
-              <span class="meta-chip">${post.length}</span>
-              <span class="meta-chip ${charClass}">${charLabel}</span>
-            </div>
-          </div>
-          <pre class="post-text">${escapeHtml(post.text)}</pre>
-          <div class="post-actions">
-            <button class="mini-btn copy-post-btn">COPY TEXT</button>
-            <button class="mini-btn new-post-btn">NEW VERSION</button>
-            <button class="mini-btn use-post-btn">MARK AS USED</button>
-          </div>
-        `;
+function escapeHtml(str){
+  return str
+    .replaceAll("&","&amp;")
+    .replaceAll("<","&lt;")
+    .replaceAll(">","&gt;");
+}
 
-        postsGrid.appendChild(card);
-      });
-    }
+function renderPairs(){
+  const container=document.getElementById("pairs");
+  container.innerHTML="";
 
-    function escapeHtml(str) {
-      return str
-        .replaceAll("&", "&amp;")
-        .replaceAll("<", "&lt;")
-        .replaceAll(">", "&gt;");
-    }
+  currentPairs.forEach((pair,index)=>{
+    const row=createPairElement(pair,index);
+    container.appendChild(row);
+    drawPairVisual(pair,index);
+  });
+}
 
-    function generatePostsBatch() {
-      const batch = [];
-      const tempHashes = new Set();
-      for (let i = 0; i < 5; i++) {
-        batch.push(generateUniquePost(tempHashes));
-      }
-      renderPosts(batch);
-      postStatusText.textContent = "5 posts generated";
-    }
+function renderPairAt(index){
+  const old=document.querySelector(`.pair[data-index="${index}"]`);
+  if(!old){
+    renderPairs();
+    return;
+  }
 
-    function markPostUsed(hash, btn) {
-      usedPosts.add(hash);
-      saveUsedPosts();
-      if (btn) {
-        btn.textContent = "USED";
-        btn.classList.add("used-state");
-      }
-    }
+  const row=createPairElement(currentPairs[index],index);
+  old.replaceWith(row);
+  drawPairVisual(currentPairs[index],index);
+}
 
-    async function copyText(text) {
-      try {
-        await navigator.clipboard.writeText(text);
-        return true;
-      } catch (err) {
-        console.error(err);
-        alert("Copy failed. Your browser may block clipboard access.");
-        return false;
-      }
-    }
+function createPairElement(pair,index){
+  const row=document.createElement("section");
+  row.className="pair";
+  row.dataset.index=index;
 
-    function replaceSinglePost(card) {
-      const tempHashes = new Set(
-        [...postsGrid.querySelectorAll(".post-card")].map(el => el.dataset.hash).filter(Boolean)
-      );
-      tempHashes.delete(card.dataset.hash);
-      const newPost = generateUniquePost(tempHashes);
-
-      const chars = newPost.text.length;
-      const charClass = chars <= 280 ? "char-ok" : "char-high";
-      const charLabel = chars <= 280 ? `${chars} chars` : `${chars} chars · over 280`;
-
-      card.dataset.hash = newPost.hash;
-      card.dataset.topic = newPost.topicKey;
-      card.innerHTML = `
-        <div class="post-meta">
-          <div class="meta-left">
-            <span class="meta-chip">${newPost.topicKey}</span>
-            <span class="meta-chip">${newPost.length}</span>
-            <span class="meta-chip ${charClass}">${charLabel}</span>
-          </div>
+  row.innerHTML=`
+    <div class="text-side">
+      <div class="text-panel">
+        <div class="panel-head">
+          <span class="topic-badge">${escapeHtml(THEMES[pair.post.themeKey].label)}</span>
+          <span class="char-count">${pair.post.text.length} characters</span>
         </div>
-        <pre class="post-text">${escapeHtml(newPost.text)}</pre>
-        <div class="post-actions">
-          <button class="mini-btn copy-post-btn">COPY TEXT</button>
-          <button class="mini-btn new-post-btn">NEW VERSION</button>
-          <button class="mini-btn use-post-btn">MARK AS USED</button>
+
+        <pre class="post-text">${escapeHtml(pair.post.text)}</pre>
+
+        <div class="actions">
+          <button class="action-btn primary copy-text-btn">COPY TEXT</button>
+          <button class="action-btn new-pair-btn">NEW TEXT + VISUAL</button>
         </div>
-      `;
-      postStatusText.textContent = "Post replaced";
+      </div>
+    </div>
+
+    <div class="visual-side">
+      <div class="visual-box">
+        <canvas id="canvas-${index}" width="1080" height="1080"></canvas>
+      </div>
+
+      <div class="visual-actions">
+        <button class="action-btn primary copy-image-btn">COPY IMAGE</button>
+        <button class="action-btn download-image-btn">DOWNLOAD PNG</button>
+      </div>
+    </div>
+  `;
+
+  return row;
+}
+
+/* =========================
+   CANVAS DESIGN
+   ========================= */
+
+function roundedRect(ctx,x,y,w,h,r){
+  const rr=Math.min(r,w/2,h/2);
+  ctx.beginPath();
+  ctx.moveTo(x+rr,y);
+  ctx.arcTo(x+w,y,x+w,y+h,rr);
+  ctx.arcTo(x+w,y+h,x,y+h,rr);
+  ctx.arcTo(x,y+h,x,y,rr);
+  ctx.arcTo(x,y,x+w,y,rr);
+  ctx.closePath();
+}
+
+function drawCoverImage(ctx,img,x,y,w,h,alpha=1){
+  if(!img) return;
+
+  const ir=img.width/img.height;
+  const tr=w/h;
+  let sx=0,sy=0,sw=img.width,sh=img.height;
+
+  if(ir>tr){
+    sw=img.height*tr;
+    sx=(img.width-sw)/2;
+  }else{
+    sh=img.width/tr;
+    sy=(img.height-sh)/2;
+  }
+
+  ctx.save();
+  ctx.globalAlpha=alpha;
+  ctx.drawImage(img,sx,sy,sw,sh,x,y,w,h);
+  ctx.restore();
+}
+
+function fitImageContain(ctx,img,x,y,w,h,alpha=1){
+  if(!img) return;
+
+  const scale=Math.min(w/img.width,h/img.height);
+  const dw=img.width*scale;
+  const dh=img.height*scale;
+  const dx=x+(w-dw)/2;
+  const dy=y+(h-dh)/2;
+
+  ctx.save();
+  ctx.globalAlpha=alpha;
+  ctx.drawImage(img,dx,dy,dw,dh);
+  ctx.restore();
+}
+
+function makeLinear(ctx,x1,y1,x2,y2,stops){
+  const g=ctx.createLinearGradient(x1,y1,x2,y2);
+  stops.forEach(([p,c])=>g.addColorStop(p,c));
+  return g;
+}
+
+function drawGrid(ctx,w,h){
+  ctx.save();
+
+  // soft vertical / horizontal dashboard grid
+  ctx.strokeStyle="rgba(255,255,255,.032)";
+  ctx.lineWidth=1;
+
+  for(let x=80;x<w;x+=80){
+    ctx.beginPath();
+    ctx.moveTo(x,0);
+    ctx.lineTo(x,h);
+    ctx.stroke();
+  }
+
+  for(let y=80;y<h;y+=80){
+    ctx.beginPath();
+    ctx.moveTo(0,y);
+    ctx.lineTo(w,y);
+    ctx.stroke();
+  }
+
+  // stronger guide lines
+  ctx.strokeStyle="rgba(142,98,255,.055)";
+  for(let x=160;x<w;x+=320){
+    ctx.beginPath();
+    ctx.moveTo(x,0);
+    ctx.lineTo(x,h);
+    ctx.stroke();
+  }
+
+  ctx.restore();
+}
+
+function drawAccentLines(ctx,w,h){
+  ctx.save();
+
+  ctx.lineCap="round";
+
+  let grad=makeLinear(ctx,90,160,760,650,[
+    [0,"rgba(150,94,255,.00)"],
+    [.25,"rgba(150,94,255,.17)"],
+    [.75,"rgba(76,216,255,.10)"],
+    [1,"rgba(76,216,255,.00)"]
+  ]);
+
+  ctx.strokeStyle=grad;
+  ctx.lineWidth=3;
+
+  ctx.beginPath();
+  ctx.moveTo(70,330);
+  ctx.bezierCurveTo(260,250,390,410,610,310);
+  ctx.bezierCurveTo(760,245,850,290,1010,220);
+  ctx.stroke();
+
+  ctx.globalAlpha=.7;
+  ctx.beginPath();
+  ctx.moveTo(130,410);
+  ctx.bezierCurveTo(320,340,470,480,710,360);
+  ctx.bezierCurveTo(820,305,910,350,1040,300);
+  ctx.stroke();
+
+  // minimal nodes
+  const nodes=[
+    [195,365],[390,381],[606,312],[821,284],[936,257]
+  ];
+
+  nodes.forEach(([x,y],i)=>{
+    ctx.fillStyle=i%2===0
+      ?"rgba(167,116,255,.58)"
+      :"rgba(91,221,255,.48)";
+    ctx.beginPath();
+    ctx.arc(x,y,4,0,Math.PI*2);
+    ctx.fill();
+  });
+
+  ctx.restore();
+}
+
+function drawTopLogo(ctx,logo){
+  if(logo){
+    fitImageContain(ctx,logo,872,70,135,105,1);
+  }else{
+    ctx.save();
+    ctx.textAlign="right";
+    ctx.font="900 32px Inter, sans-serif";
+    ctx.fillStyle="#ffffff";
+    ctx.fillText("ASTY",1000,125);
+    ctx.restore();
+  }
+}
+
+function drawWolfArea(ctx,wolf){
+  // bottom panel
+  ctx.save();
+  const panelGrad=makeLinear(ctx,64,742,1016,1030,[
+    [0,"rgba(151,91,255,.085)"],
+    [.50,"rgba(255,255,255,.025)"],
+    [1,"rgba(83,218,255,.055)"]
+  ]);
+
+  ctx.fillStyle=panelGrad;
+  roundedRect(ctx,64,742,952,274,30);
+  ctx.fill();
+
+  ctx.strokeStyle="rgba(255,255,255,.075)";
+  ctx.lineWidth=1.5;
+  roundedRect(ctx,64,742,952,274,30);
+  ctx.stroke();
+
+  // wolf sits in lower left, faded into the panel
+  if(wolf){
+    ctx.save();
+
+    // clip wolf to lower panel
+    roundedRect(ctx,64,742,952,274,30);
+    ctx.clip();
+
+    fitImageContain(ctx,wolf,72,746,340,300,.92);
+
+    // fade over right side of wolf so text stays readable
+    const fade=makeLinear(ctx,260,742,510,742,[
+      [0,"rgba(10,12,22,0)"],
+      [.45,"rgba(10,12,22,.50)"],
+      [1,"rgba(10,12,22,.95)"]
+    ]);
+    ctx.fillStyle=fade;
+    ctx.fillRect(245,742,320,274);
+
+    ctx.restore();
+  }else{
+    ctx.save();
+    ctx.globalAlpha=.16;
+    ctx.fillStyle="#b595ff";
+    ctx.font="900 122px Inter, sans-serif";
+    ctx.fillText("ASTY",92,925);
+    ctx.restore();
+  }
+
+  ctx.restore();
+}
+
+function wrapText(ctx,text,maxWidth){
+  const words=text.split(/\s+/);
+  const lines=[];
+  let current="";
+
+  for(const word of words){
+    const test=current ? current+" "+word : word;
+    if(ctx.measureText(test).width<=maxWidth){
+      current=test;
+    }else{
+      if(current) lines.push(current);
+      current=word;
+    }
+  }
+
+  if(current) lines.push(current);
+  return lines;
+}
+
+function drawBigTitle(ctx,lines){
+  const startY=300;
+  const lineHeight=82;
+
+  ctx.save();
+  ctx.textAlign="left";
+  ctx.font="900 70px Inter, sans-serif";
+
+  lines.forEach((line,i)=>{
+    const g=makeLinear(ctx,80,startY,820,startY,[
+      [0,"#ffffff"],
+      [.52,"#c19aff"],
+      [1,"#78e5ff"]
+    ]);
+
+    ctx.fillStyle=g;
+    ctx.fillText(line,82,startY+(i*lineHeight));
+  });
+
+  ctx.restore();
+}
+
+function drawBottomText(ctx,visual){
+  ctx.save();
+
+  // Text deliberately larger for mobile readability
+  ctx.textAlign="left";
+  ctx.font="800 34px Inter, sans-serif";
+  ctx.fillStyle="#f4f6ff";
+
+  const maxWidth=545;
+  const lines=wrapText(ctx,visual.sub,maxWidth);
+  const lineHeight=45;
+  const startX=430;
+  const startY=820;
+
+  lines.slice(0,4).forEach((line,i)=>{
+    ctx.fillText(line,startX,startY+i*lineHeight);
+  });
+
+  // small fixed system signature, still large enough to read on mobile
+  ctx.font="800 24px Inter, sans-serif";
+  ctx.fillStyle="#9fa9cf";
+  ctx.fillText("ArbStrategy.net",430,982);
+
+  ctx.restore();
+}
+
+async function drawPairVisual(pair,index){
+  const canvas=document.getElementById(`canvas-${index}`);
+  if(!canvas) return;
+
+  const ctx=canvas.getContext("2d");
+  const w=canvas.width;
+  const h=canvas.height;
+  const assets=await getAssets();
+
+  ctx.clearRect(0,0,w,h);
+
+  // Base background
+  const bg=makeLinear(ctx,0,0,w,h,[
+    [0,"#090b14"],
+    [.48,"#0d1120"],
+    [1,"#070911"]
+  ]);
+  ctx.fillStyle=bg;
+  ctx.fillRect(0,0,w,h);
+
+  drawGrid(ctx,w,h);
+  drawAccentLines(ctx,w,h);
+
+  // subtle top-right glow behind logo
+  const glow=ctx.createRadialGradient(940,110,0,940,110,240);
+  glow.addColorStop(0,"rgba(91,215,255,.12)");
+  glow.addColorStop(.42,"rgba(150,94,255,.07)");
+  glow.addColorStop(1,"rgba(0,0,0,0)");
+  ctx.fillStyle=glow;
+  ctx.fillRect(690,0,390,330);
+
+  // Main frame
+  ctx.fillStyle="rgba(255,255,255,.014)";
+  roundedRect(ctx,44,44,992,992,38);
+  ctx.fill();
+
+  ctx.strokeStyle="rgba(255,255,255,.085)";
+  ctx.lineWidth=2;
+  roundedRect(ctx,44,44,992,992,38);
+  ctx.stroke();
+
+  // Tag
+  ctx.fillStyle="rgba(151,96,255,.10)";
+  roundedRect(ctx,82,79,320,54,999);
+  ctx.fill();
+
+  ctx.strokeStyle="rgba(151,96,255,.24)";
+  ctx.lineWidth=1.5;
+  roundedRect(ctx,82,79,320,54,999);
+  ctx.stroke();
+
+  ctx.fillStyle="#cab4ff";
+  ctx.font="900 22px Inter, sans-serif";
+  ctx.textAlign="left";
+  ctx.fillText(pair.visual.tag,105,114);
+
+  drawTopLogo(ctx,assets.logo);
+  drawBigTitle(ctx,pair.visual.title);
+
+  // divider
+  ctx.strokeStyle="rgba(255,255,255,.075)";
+  ctx.lineWidth=1.5;
+  ctx.beginPath();
+  ctx.moveTo(82,652);
+  ctx.lineTo(998,652);
+  ctx.stroke();
+
+  // small mechanism label
+  ctx.fillStyle="#7f89ad";
+  ctx.font="800 21px Inter, sans-serif";
+  ctx.letterSpacing="2px";
+  ctx.fillText("ASTY SYSTEM MECHANICS",82,704);
+
+  drawWolfArea(ctx,assets.wolf);
+  drawBottomText(ctx,pair.visual);
+}
+
+/* =========================
+   COPY / DOWNLOAD
+   ========================= */
+
+async function copyText(text){
+  try{
+    await navigator.clipboard.writeText(text);
+    showToast("Text copied");
+  }catch(err){
+    console.error(err);
+    showToast("Copy blocked by browser");
+  }
+}
+
+async function copyCanvas(canvas){
+  if(!navigator.clipboard || typeof ClipboardItem==="undefined"){
+    showToast("Image copy not supported");
+    return;
+  }
+
+  canvas.toBlob(async blob=>{
+    if(!blob){
+      showToast("Could not create image");
+      return;
     }
 
-    function getVisualCandidates() {
-      if (state.topic === "all") return VISUAL_BANK;
-      const filtered = VISUAL_BANK.filter(v => v.topic === state.topic);
-      return filtered.length ? filtered : VISUAL_BANK;
+    try{
+      await navigator.clipboard.write([
+        new ClipboardItem({"image/png":blob})
+      ]);
+      showToast("Image copied");
+    }catch(err){
+      console.error(err);
+      showToast("Image copy blocked - use Download PNG");
     }
+  },"image/png");
+}
 
-    function generateVisualTemplates(count = 4) {
-      const pool = [...getVisualCandidates()];
-      const out = [];
-      let attempts = 0;
-      while (out.length < count && attempts < 80) {
-        const candidate = pick(pool);
-        const key = candidate.id + "|" + candidate.title.join(" ");
-        const isUsed = usedVisuals.has(key);
-        const isInBatch = out.some(v => v.id === candidate.id);
+function downloadCanvas(canvas,index){
+  const a=document.createElement("a");
+  a.href=canvas.toDataURL("image/png");
+  a.download=`ASTY-Team-Content-${index+1}.png`;
+  a.click();
+  showToast("PNG downloaded");
+}
 
-        if ((!state.avoidRepeats || !isUsed) && !isInBatch) {
-          out.push(candidate);
-        }
-        attempts++;
-      }
+let toastTimer=null;
+function showToast(message){
+  const toast=document.getElementById("toast");
+  toast.textContent=message;
+  toast.classList.add("show");
 
-      while (out.length < count) {
-        out.push(pick(VISUAL_BANK));
-      }
-      return out;
-    }
+  clearTimeout(toastTimer);
+  toastTimer=setTimeout(()=>toast.classList.remove("show"),1600);
+}
 
-    function generateVisualsBatch() {
-      const visuals = generateVisualTemplates(4);
-      renderVisuals(visuals);
-      visualStatusText.textContent = "4 visuals generated";
-    }
+/* =========================
+   EVENTS
+   ========================= */
 
-    function renderVisuals(visuals) {
-      if (!visuals.length) {
-        visualGrid.innerHTML = '<div class="empty-note">No visuals yet. Click “GENERATE 4 VISUALS”.</div>';
-        return;
-      }
+document.getElementById("generateAllBtn").addEventListener("click",()=>{
+  generateThree();
+  showToast("3 new content pairs generated");
+});
 
-      visualGrid.innerHTML = "";
+document.getElementById("pairs").addEventListener("click",e=>{
+  const row=e.target.closest(".pair");
+  if(!row) return;
 
-      visuals.forEach((visual, index) => {
-        const card = document.createElement("div");
-        card.className = "visual-card";
-        card.dataset.id = visual.id;
+  const index=Number(row.dataset.index);
 
-        card.innerHTML = `
-          <div class="visual-meta">
-            <div class="meta-left">
-              <span class="meta-chip">${visual.topic}</span>
-              <span class="meta-chip">1080 x 1080</span>
-            </div>
-          </div>
-          <div class="visual-preview">
-            <canvas id="visualCanvas_${index}" width="1080" height="1080"></canvas>
-          </div>
-          <div class="visual-caption">${escapeHtml(visual.sub)}</div>
-          <div class="post-actions">
-            <button class="mini-btn copy-image-btn">COPY IMAGE</button>
-            <button class="mini-btn copy-caption-btn">COPY CAPTION</button>
-            <button class="mini-btn download-image-btn">DOWNLOAD PNG</button>
-            <button class="mini-btn new-visual-btn">NEW VISUAL</button>
-            <button class="mini-btn use-visual-btn">MARK AS USED</button>
-          </div>
-        `;
+  if(e.target.closest(".copy-text-btn")){
+    copyText(currentPairs[index].post.text);
+    return;
+  }
 
-        visualGrid.appendChild(card);
-        const canvas = card.querySelector("canvas");
-        drawVisual(canvas, visual);
-      });
-    }
+  if(e.target.closest(".new-pair-btn")){
+    regenerateOne(index);
+    return;
+  }
 
-    function drawRoundedRect(ctx, x, y, w, h, r) {
-      ctx.beginPath();
-      ctx.moveTo(x + r, y);
-      ctx.arcTo(x + w, y, x + w, y + h, r);
-      ctx.arcTo(x + w, y + h, x, y + h, r);
-      ctx.arcTo(x, y + h, x, y, r);
-      ctx.arcTo(x, y, x + w, y, r);
-      ctx.closePath();
-    }
+  if(e.target.closest(".copy-image-btn")){
+    const canvas=document.getElementById(`canvas-${index}`);
+    copyCanvas(canvas);
+    return;
+  }
 
-    function drawGlowCircle(ctx, x, y, radius, color) {
-      const gradient = ctx.createRadialGradient(x, y, 0, x, y, radius);
-      gradient.addColorStop(0, color);
-      gradient.addColorStop(1, "rgba(0,0,0,0)");
-      ctx.fillStyle = gradient;
-      ctx.beginPath();
-      ctx.arc(x, y, radius, 0, Math.PI * 2);
-      ctx.fill();
-    }
+  if(e.target.closest(".download-image-btn")){
+    const canvas=document.getElementById(`canvas-${index}`);
+    downloadCanvas(canvas,index);
+  }
+});
 
-    function splitLinesForWidth(ctx, text, maxWidth) {
-      const words = text.split(" ");
-      const lines = [];
-      let line = "";
+/* Site logo fallback is intentionally minimal. */
+document.getElementById("siteLogo").addEventListener("error",e=>{
+  e.currentTarget.style.display="none";
+});
 
-      for (let i = 0; i < words.length; i++) {
-        const test = line ? line + " " + words[i] : words[i];
-        if (ctx.measureText(test).width <= maxWidth) {
-          line = test;
-        } else {
-          if (line) lines.push(line);
-          line = words[i];
-        }
-      }
-      if (line) lines.push(line);
-      return lines;
-    }
-
-    function drawWrapped(ctx, text, x, y, maxWidth, lineHeight, color = "#ffffff", align = "left") {
-      ctx.fillStyle = color;
-      ctx.textAlign = align;
-      const lines = splitLinesForWidth(ctx, text, maxWidth);
-      lines.forEach((line, i) => {
-        ctx.fillText(line, x, y + i * lineHeight);
-      });
-      return lines.length * lineHeight;
-    }
-
-    function drawVisual(canvas, visual) {
-      const ctx = canvas.getContext("2d");
-      const w = canvas.width;
-      const h = canvas.height;
-
-      ctx.clearRect(0, 0, w, h);
-
-      const bg = ctx.createLinearGradient(0, 0, w, h);
-      bg.addColorStop(0, "#070913");
-      bg.addColorStop(0.48, "#0b1020");
-      bg.addColorStop(1, "#05070f");
-      ctx.fillStyle = bg;
-      ctx.fillRect(0, 0, w, h);
-
-      drawGlowCircle(ctx, 240, 190, 260, "rgba(141,77,255,0.22)");
-      drawGlowCircle(ctx, 870, 180, 220, "rgba(73,213,255,0.16)");
-      drawGlowCircle(ctx, 820, 890, 260, "rgba(141,77,255,0.12)");
-
-      ctx.fillStyle = "rgba(255,255,255,0.06)";
-      drawRoundedRect(ctx, 58, 58, w - 116, h - 116, 42);
-      ctx.fill();
-
-      ctx.strokeStyle = "rgba(255,255,255,0.10)";
-      ctx.lineWidth = 2;
-      drawRoundedRect(ctx, 58, 58, w - 116, h - 116, 42);
-      ctx.stroke();
-
-      // Top badge
-      const badgeX = 92;
-      const badgeY = 94;
-      const badgeW = 156;
-      const badgeH = 54;
-
-      const badgeGrad = ctx.createLinearGradient(badgeX, badgeY, badgeX + badgeW, badgeY + badgeH);
-      badgeGrad.addColorStop(0, "rgba(141,77,255,0.38)");
-      badgeGrad.addColorStop(1, "rgba(73,213,255,0.22)");
-      ctx.fillStyle = badgeGrad;
-      drawRoundedRect(ctx, badgeX, badgeY, badgeW, badgeH, 999);
-      ctx.fill();
-
-      ctx.strokeStyle = "rgba(255,255,255,0.12)";
-      ctx.lineWidth = 1.5;
-      drawRoundedRect(ctx, badgeX, badgeY, badgeW, badgeH, 999);
-      ctx.stroke();
-
-      ctx.font = "700 24px Inter, sans-serif";
-      ctx.fillStyle = "#eef2ff";
-      ctx.textAlign = "center";
-      ctx.fillText("ASTY", badgeX + badgeW / 2, badgeY + 35);
-
-      // Kicker
-      ctx.textAlign = "left";
-      ctx.font = "700 20px Inter, sans-serif";
-      ctx.fillStyle = "#9ca7d8";
-      ctx.fillText(visual.kicker, 92, 190);
-
-      // Main title
-      ctx.fillStyle = "#ffffff";
-      ctx.font = "900 78px Inter, sans-serif";
-      let startY = 320;
-      visual.title.forEach((line, idx) => {
-        const grad = ctx.createLinearGradient(90, startY, w - 90, startY);
-        grad.addColorStop(0, "#f8f5ff");
-        grad.addColorStop(0.45, "#b689ff");
-        grad.addColorStop(1, "#76e6ff");
-        ctx.fillStyle = grad;
-        ctx.fillText(line, 92, startY + idx * 92);
-      });
-
-      // Divider line
-      ctx.strokeStyle = "rgba(255,255,255,0.09)";
-      ctx.lineWidth = 2;
-      ctx.beginPath();
-      ctx.moveTo(92, 600);
-      ctx.lineTo(w - 92, 600);
-      ctx.stroke();
-
-      // Subtitle
-      ctx.textAlign = "left";
-      ctx.font = "500 30px Inter, sans-serif";
-      ctx.fillStyle = "#d6dcf8";
-      drawWrapped(ctx, visual.sub, 92, 665, w - 184, 44, "#d6dcf8", "left");
-
-      // Chips
-      let chipY = 800;
-      let chipX = 92;
-      visual.chips.forEach((chip, idx) => {
-        const padX = 24;
-        ctx.font = "700 22px Inter, sans-serif";
-        const tw = ctx.measureText(chip).width;
-        const cw = tw + padX * 2;
-        const ch = 54;
-
-        const cGrad = ctx.createLinearGradient(chipX, chipY, chipX + cw, chipY + ch);
-        cGrad.addColorStop(0, idx % 2 === 0 ? "rgba(141,77,255,0.24)" : "rgba(73,213,255,0.18)");
-        cGrad.addColorStop(1, "rgba(255,255,255,0.05)");
-        ctx.fillStyle = cGrad;
-        drawRoundedRect(ctx, chipX, chipY, cw, ch, 999);
-        ctx.fill();
-
-        ctx.strokeStyle = "rgba(255,255,255,0.10)";
-        ctx.lineWidth = 1.5;
-        drawRoundedRect(ctx, chipX, chipY, cw, ch, 999);
-        ctx.stroke();
-
-        ctx.fillStyle = "#eef2ff";
-        ctx.textAlign = "left";
-        ctx.fillText(chip, chipX + padX, chipY + 35);
-
-        chipX += cw + 12;
-      });
-
-      // Footer note
-      ctx.font = "600 24px Inter, sans-serif";
-      ctx.fillStyle = "#94a0d4";
-      drawWrapped(ctx, visual.footer, 92, 940, w - 184, 34, "#94a0d4", "left");
-
-      // Small corner mark
-      ctx.font = "800 24px Inter, sans-serif";
-      ctx.textAlign = "right";
-      ctx.fillStyle = "rgba(255,255,255,0.20)";
-      ctx.fillText("ArbStrategy.net", w - 92, 1020);
-    }
-
-    async function copyCanvasImage(canvas) {
-      if (!navigator.clipboard || typeof ClipboardItem === "undefined") {
-        alert("Image clipboard is not supported in this browser. Use DOWNLOAD PNG instead.");
-        return false;
-      }
-
-      return new Promise(resolve => {
-        canvas.toBlob(async (blob) => {
-          if (!blob) {
-            alert("Could not create image.");
-            resolve(false);
-            return;
-          }
-          try {
-            await navigator.clipboard.write([
-              new ClipboardItem({ "image/png": blob })
-            ]);
-            resolve(true);
-          } catch (err) {
-            console.error(err);
-            alert("Copy image failed. Use DOWNLOAD PNG instead.");
-            resolve(false);
-          }
-        }, "image/png");
-      });
-    }
-
-    function downloadCanvas(canvas, filename = "asty-visual.png") {
-      const link = document.createElement("a");
-      link.download = filename;
-      link.href = canvas.toDataURL("image/png");
-      link.click();
-    }
-
-    function replaceSingleVisual(card) {
-      const currentId = card.dataset.id;
-      const candidates = getVisualCandidates().filter(v => v.id !== currentId);
-      const chosen = candidates.length ? pick(candidates) : pick(VISUAL_BANK);
-      card.dataset.id = chosen.id;
-
-      card.innerHTML = `
-        <div class="visual-meta">
-          <div class="meta-left">
-            <span class="meta-chip">${chosen.topic}</span>
-            <span class="meta-chip">1080 x 1080</span>
-          </div>
-        </div>
-        <div class="visual-preview">
-          <canvas width="1080" height="1080"></canvas>
-        </div>
-        <div class="visual-caption">${escapeHtml(chosen.sub)}</div>
-        <div class="post-actions">
-          <button class="mini-btn copy-image-btn">COPY IMAGE</button>
-          <button class="mini-btn copy-caption-btn">COPY CAPTION</button>
-          <button class="mini-btn download-image-btn">DOWNLOAD PNG</button>
-          <button class="mini-btn new-visual-btn">NEW VISUAL</button>
-          <button class="mini-btn use-visual-btn">MARK AS USED</button>
-        </div>
-      `;
-
-      const canvas = card.querySelector("canvas");
-      drawVisual(canvas, chosen);
-      visualStatusText.textContent = "Visual replaced";
-    }
-
-    function markVisualUsed(id, btn) {
-      const key = id;
-      usedVisuals.add(key);
-      saveUsedVisuals();
-      if (btn) {
-        btn.textContent = "USED";
-        btn.classList.add("used-state");
-      }
-    }
-
-    function applyActiveChips(groupId, attr, currentValueKey) {
-      document.querySelectorAll(`#${groupId} .chip`).forEach(btn => {
-        const isActive = btn.dataset[attr] === currentValueKey;
-        btn.classList.toggle("active", isActive);
-      });
-    }
-
-    document.getElementById("topicChips").addEventListener("click", e => {
-      const btn = e.target.closest(".chip");
-      if (!btn) return;
-      state.topic = btn.dataset.topic;
-      applyActiveChips("topicChips", "topic", state.topic);
-    });
-
-    document.getElementById("lengthChips").addEventListener("click", e => {
-      const btn = e.target.closest(".chip");
-      if (!btn) return;
-      state.length = btn.dataset.length;
-      applyActiveChips("lengthChips", "length", state.length);
-    });
-
-    document.getElementById("includeLinks").addEventListener("change", e => {
-      state.includeLinks = e.target.checked;
-    });
-
-    document.getElementById("includeHashtags").addEventListener("change", e => {
-      state.includeHashtags = e.target.checked;
-    });
-
-    document.getElementById("avoidRepeats").addEventListener("change", e => {
-      state.avoidRepeats = e.target.checked;
-    });
-
-    document.getElementById("generatePostsBtn").addEventListener("click", generatePostsBatch);
-    document.getElementById("generateVisualsBtn").addEventListener("click", generateVisualsBatch);
-
-    document.getElementById("resetHistoryBtn").addEventListener("click", () => {
-      if (!confirm("Reset all used post and visual history?")) return;
-      usedPosts.clear();
-      usedVisuals.clear();
-      saveUsedPosts();
-      saveUsedVisuals();
-      postStatusText.textContent = "Used history reset";
-      visualStatusText.textContent = "Used history reset";
-    });
-
-    postsGrid.addEventListener("click", async e => {
-      const card = e.target.closest(".post-card");
-      if (!card) return;
-
-      if (e.target.classList.contains("copy-post-btn")) {
-        const text = card.querySelector(".post-text").innerText;
-        const ok = await copyText(text);
-        if (ok) postStatusText.textContent = "Text copied";
-      }
-
-      if (e.target.classList.contains("new-post-btn")) {
-        replaceSinglePost(card);
-      }
-
-      if (e.target.classList.contains("use-post-btn")) {
-        const hash = card.dataset.hash;
-        markPostUsed(hash, e.target);
-        postStatusText.textContent = "Post marked as used";
-      }
-    });
-
-    visualGrid.addEventListener("click", async e => {
-      const card = e.target.closest(".visual-card");
-      if (!card) return;
-
-      if (e.target.classList.contains("copy-image-btn")) {
-        const canvas = card.querySelector("canvas");
-        const ok = await copyCanvasImage(canvas);
-        if (ok) visualStatusText.textContent = "Image copied";
-      }
-
-      if (e.target.classList.contains("copy-caption-btn")) {
-        const caption = card.querySelector(".visual-caption").innerText;
-        const ok = await copyText(caption);
-        if (ok) visualStatusText.textContent = "Caption copied";
-      }
-
-      if (e.target.classList.contains("download-image-btn")) {
-        const canvas = card.querySelector("canvas");
-        downloadCanvas(canvas, `asty-visual-${card.dataset.id}.png`);
-        visualStatusText.textContent = "PNG downloaded";
-      }
-
-      if (e.target.classList.contains("new-visual-btn")) {
-        replaceSingleVisual(card);
-      }
-
-      if (e.target.classList.contains("use-visual-btn")) {
-        markVisualUsed(card.dataset.id, e.target);
-        visualStatusText.textContent = "Visual marked as used";
-      }
-    });
-
-    // Initial generation
-    generatePostsBatch();
-    generateVisualsBatch();
-  </script>
+/* Initial content */
+generateThree();
+</script>
 </body>
 </html>
