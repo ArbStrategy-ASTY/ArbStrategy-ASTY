@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="color-scheme" content="dark" />
+<title>ASTY Trader Mission</title>
+<style>
+:root{
+  --bg:#060812;--bg2:#0b1020;--card:rgba(255,255,255,.045);--card2:rgba(12,16,31,.92);
+  --line:rgba(255,255,255,.09);--pline:rgba(171,139,255,.23);--text:#f8f7ff;--muted:#aaa5bc;
+  --muted2:#77728c;--purple:#8b5cf6;--purple2:#c4b5fd;--cyan:#67e8f9;--green:#36d399;
+  --red:#fb7185;--amber:#fbbf24;--shadow:0 20px 55px rgba(0,0,0,.28);--radius:19px;
+}
+*{box-sizing:border-box} html{scroll-behavior:smooth} body{margin:0;min-height:100vh;color:var(--text);font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:radial-gradient(circle at 14% -8%,rgba(124,58,237,.25),transparent 31%),radial-gradient(circle at 88% 18%,rgba(6,182,212,.1),transparent 25%),linear-gradient(180deg,var(--bg2),var(--bg) 50%,#04060d)}
+a{color:inherit;text-decoration:none}button,input,select{font:inherit}.wrap{width:min(1180px,calc(100% - 30px));margin:auto;position:relative;z-index:2}
+.orb{position:fixed;width:360px;height:360px;border-radius:50%;filter:blur(120px);opacity:.13;pointer-events:none}.orb.a{left:-180px;top:120px;background:#7c3aed}.orb.b{right:-180px;bottom:60px;background:#22d3ee}
+.topbar{position:sticky;top:0;z-index:30;background:rgba(5,8,17,.78);backdrop-filter:blur(18px);border-bottom:1px solid rgba(255,255,255,.065)}
+.nav{min-height:72px;display:flex;align-items:center;justify-content:space-between;gap:16px}.brand{display:flex;align-items:center;gap:11px}.brand img{width:43px;height:43px;object-fit:contain}.brand-title{font-weight:900;font-size:14px}.brand-sub{font-size:10px;color:var(--muted);margin-top:2px}.nav-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:flex-end}
+.btn{border:1px solid rgba(167,139,250,.3);background:transparent;color:#ddd8ed;border-radius:999px;padding:9px 13px;min-height:38px;font-weight:800;font-size:12px;cursor:pointer;transition:.18s}.btn:hover{border-color:rgba(196,181,253,.8);color:#fff;box-shadow:0 0 18px rgba(139,92,246,.28);transform:translateY(-1px)}.btn.primary{background:linear-gradient(135deg,rgba(124,58,237,.28),rgba(103,232,249,.08));color:#fff}.btn:disabled{opacity:.45;cursor:wait;transform:none}
+main{padding:36px 0 55px}.hero{display:grid;grid-template-columns:1.35fr .65fr;gap:20px;align-items:end;margin-bottom:18px}.eyebrow{color:var(--purple2);font-size:11px;font-weight:900;letter-spacing:1.6px;text-transform:uppercase}.hero h1{margin:8px 0 8px;font-size:clamp(34px,5vw,56px);line-height:.98;letter-spacing:-2px}.hero h1 span{color:var(--cyan)}.hero p{margin:0;color:#c7c2d6;font-size:14px;line-height:1.55;max-width:690px}.tagline{margin-top:13px;font-weight:900;color:#eee9ff;font-size:13px}.tagline span{color:var(--purple2)}
+.status-box{justify-self:end;min-width:265px;border:1px solid var(--line);background:var(--card);border-radius:16px;padding:14px 15px;box-shadow:var(--shadow)}.status-row{display:flex;align-items:center;gap:9px;font-size:11px;color:var(--muted)}.dot{width:8px;height:8px;border-radius:50%;background:var(--amber);box-shadow:0 0 14px rgba(251,191,36,.5)}.dot.live{background:var(--green);box-shadow:0 0 14px rgba(54,211,153,.5)}.dot.err{background:var(--red);box-shadow:0 0 14px rgba(251,113,133,.5)}.status-meta{margin-top:8px;color:var(--muted2);font-size:10px;line-height:1.5}
+.controls{display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:10px;padding:14px;border:1px solid var(--line);background:var(--card);border-radius:17px;margin-bottom:14px}.control{min-width:0}.control label{display:block;font-size:9px;text-transform:uppercase;letter-spacing:.8px;color:var(--muted2);font-weight:900;margin:0 0 6px 3px}.control input,.control select{width:100%;height:42px;border:1px solid rgba(167,139,250,.2);background:rgba(0,0,0,.19);color:#fff;border-radius:12px;padding:0 12px;outline:none}.control input:focus,.control select:focus{border-color:rgba(196,181,253,.65);box-shadow:0 0 0 4px rgba(139,92,246,.08)}.scan-btn{align-self:end;height:42px;border-radius:12px;padding:0 18px}
+.stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:11px;margin-bottom:16px}.stat{border:1px solid var(--line);background:var(--card);border-radius:16px;padding:14px 15px}.stat-label{font-size:9px;color:var(--muted2);text-transform:uppercase;letter-spacing:.8px;font-weight:900}.stat-value{font-size:22px;font-weight:900;margin-top:7px;letter-spacing:-.6px}.stat-value.cyan{color:var(--cyan)}.stat-value.green{color:var(--green)}.stat-sub{font-size:9px;color:var(--muted2);margin-top:4px}
+.section-head{display:flex;align-items:end;justify-content:space-between;gap:12px;margin:23px 0 10px}.section-title{font-size:15px;font-weight:900;color:#eee9ff}.section-sub{font-size:10px;color:var(--muted2);margin-top:4px}.live-badge{border:1px solid rgba(54,211,153,.18);background:rgba(54,211,153,.07);color:#a7f3d0;border-radius:999px;padding:6px 9px;font-size:9px;font-weight:900}
+.missions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px}.mission{position:relative;overflow:hidden;border:1px solid var(--line);background:linear-gradient(145deg,rgba(255,255,255,.05),rgba(255,255,255,.025));border-radius:var(--radius);box-shadow:var(--shadow)}.mission::after{content:"";position:absolute;width:150px;height:150px;right:-80px;top:-85px;border-radius:50%;background:rgba(139,92,246,.18);filter:blur(8px);pointer-events:none}.mission-top{padding:16px 17px 13px;border-bottom:1px solid rgba(255,255,255,.06)}.mission-kicker{display:flex;align-items:center;justify-content:space-between;gap:10px}.mission-id{font-size:9px;letter-spacing:1px;text-transform:uppercase;color:var(--purple2);font-weight:900}.difficulty{font-size:9px;font-weight:900;color:#a7f3d0}.route{margin-top:9px;font-size:20px;font-weight:950;letter-spacing:-.6px}.route .arrow{color:var(--purple2);padding:0 3px}.mission-main{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;padding:13px 17px}.metric{border:1px solid rgba(255,255,255,.055);background:rgba(0,0,0,.13);border-radius:12px;padding:10px}.metric-label{font-size:8px;text-transform:uppercase;letter-spacing:.65px;color:var(--muted2);font-weight:900}.metric-value{margin-top:5px;font-size:15px;font-weight:900}.metric-value.good{color:var(--green)}.metric-value.cyan{color:var(--cyan)}.metric-sub{margin-top:3px;font-size:8px;color:var(--muted2)}
+.mission details{border-top:1px solid rgba(255,255,255,.055)}.mission summary{list-style:none;cursor:pointer;padding:12px 17px;font-size:10px;font-weight:850;color:#cfc8e2;display:flex;justify-content:space-between;align-items:center}.mission summary::-webkit-details-marker{display:none}.mission summary:after{content:"+";font-size:17px;color:var(--purple2)}.mission details[open] summary:after{content:"−"}.detail-body{padding:0 17px 16px}.steps{display:grid;gap:8px}.step{display:grid;grid-template-columns:31px 1fr auto;gap:10px;align-items:center;border:1px solid rgba(255,255,255,.055);background:rgba(0,0,0,.12);border-radius:13px;padding:10px}.step-no{width:31px;height:31px;display:grid;place-items:center;border-radius:10px;background:rgba(139,92,246,.12);border:1px solid rgba(167,139,250,.18);font-size:11px;font-weight:950;color:var(--purple2)}.step-title{font-size:10px;font-weight:900}.step-copy{font-size:9px;color:var(--muted2);margin-top:3px;line-height:1.45}.step-link{border:1px solid rgba(167,139,250,.26);border-radius:10px;padding:8px 9px;font-size:9px;font-weight:900;color:#e6e0f7;white-space:nowrap}.step-link:hover{border-color:rgba(196,181,253,.75);box-shadow:0 0 13px rgba(139,92,246,.2)}
+.breakdown{margin-top:10px;border:1px solid rgba(255,255,255,.055);border-radius:13px;overflow:hidden}.br{display:flex;justify-content:space-between;gap:12px;padding:8px 10px;font-size:9px;border-top:1px solid rgba(255,255,255,.045)}.br:first-child{border-top:0}.br span:first-child{color:var(--muted)}.br strong{font-weight:900}.br.total{background:rgba(54,211,153,.055);font-size:10px}.br.total strong{color:var(--green)}
+.empty{border:1px dashed rgba(167,139,250,.22);background:rgba(255,255,255,.025);border-radius:18px;padding:34px;text-align:center;color:var(--muted)}.empty strong{display:block;color:#eee9ff;font-size:16px;margin-bottom:7px}.empty small{color:var(--muted2)}
+.lab{margin-top:15px;border:1px solid var(--line);background:var(--card);border-radius:17px;overflow:hidden}.lab summary{list-style:none;cursor:pointer;padding:14px 15px;font-size:11px;font-weight:900;color:#d8d2e8;display:flex;align-items:center;justify-content:space-between}.lab summary::-webkit-details-marker{display:none}.lab summary:after{content:"+";color:var(--purple2);font-size:18px}.lab[open] summary:after{content:"−"}.table-wrap{overflow:auto;border-top:1px solid rgba(255,255,255,.055)}table{width:100%;min-width:780px;border-collapse:collapse;font-size:10px}th,td{padding:10px 12px;text-align:left;white-space:nowrap;border-top:1px solid rgba(255,255,255,.045)}thead th{position:sticky;top:0;background:#0a0e1c;color:#aaa4bd;text-transform:uppercase;letter-spacing:.6px;font-size:8px}.pos{color:var(--green);font-weight:900}.neg{color:var(--red);font-weight:900}.muted{color:var(--muted2)}
+.notice{margin-top:15px;border:1px solid rgba(251,191,36,.13);background:rgba(251,191,36,.035);border-radius:14px;padding:12px 13px;color:#c9c3d6;font-size:9px;line-height:1.55}.notice strong{color:#f6e7a7}.footer{text-align:center;color:var(--muted2);font-size:9px;line-height:1.6;padding:25px 0 4px}
+@media(max-width:900px){.hero{grid-template-columns:1fr}.status-box{justify-self:start;width:100%}.stats{grid-template-columns:repeat(2,1fr)}.missions{grid-template-columns:1fr}.controls{grid-template-columns:1fr 1fr}.scan-btn{width:100%}}
+@media(max-width:560px){.wrap{width:min(100% - 20px,1180px)}.nav{padding:11px 0;align-items:flex-start;flex-direction:column}.nav-actions{width:100%;justify-content:flex-start}.hero h1{font-size:36px}.controls{grid-template-columns:1fr}.stats{grid-template-columns:1fr 1fr}.stat-value{font-size:18px}.mission-main{grid-template-columns:1fr 1fr}.mission-main .metric:last-child{grid-column:1/-1}.step{grid-template-columns:31px 1fr}.step-link{grid-column:1/-1;text-align:center}.route{font-size:17px}}
+</style>
+</head>
+<body>
+<div class="orb a"></div><div class="orb b"></div>
+<header class="topbar"><div class="wrap nav">
+  <div class="brand"><img src="assets/logo.png" alt="ASTY logo" onerror="this.style.display='none'"><div><div class="brand-title">$ASTY</div><div class="brand-sub">ArbStrategy</div></div></div>
+  <div class="nav-actions"><a class="btn" href="https://ArbStrategy.net" target="_blank" rel="noopener">ArbStrategy</a><a class="btn" href="https://t.me/ArbStrategyASTY" target="_blank" rel="noopener">Telegram</a><button class="btn primary" id="refreshTop">Refresh Missions</button></div>
+</div></header>
+<main class="wrap">
+  <section class="hero">
+    <div><div class="eyebrow">Live arbitrage scanner</div><h1>ASTY Trader <span>Mission</span></h1><p>Find live price inefficiencies across the ASTY liquidity network. The scanner estimates a sensible trade size, pool impact and a conservative net edge before showing a mission.</p><div class="tagline"><span>Find the edge.</span> Execute the mission.</div></div>
+    <div class="status-box"><div class="status-row"><span class="dot" id="statusDot"></span><strong id="statusText">Waiting for scan…</strong></div><div class="status-meta" id="statusMeta">No wallet connection. No transaction execution. Read-only market scanner.</div></div>
+  </section>
+
+  <section class="controls">
+    <div class="control"><label>Start asset</label><select id="startAsset"><option value="BOTH">SOL + USDC</option><option value="SOL">SOL only</option><option value="USDC">USDC only</option></select></div>
+    <div class="control"><label>Maximum capital per mission (USD)</label><input id="maxCapital" type="number" min="5" max="5000" step="5" value="250"></div>
+    <div class="control"><label>Minimum safe edge</label><select id="minEdge"><option value="0.50">0.50%</option><option value="0.75" selected>0.75%</option><option value="1.00">1.00%</option><option value="1.50">1.50%</option><option value="2.00">2.00%</option></select></div>
+    <button class="btn primary scan-btn" id="scanButton">SCAN NOW</button>
+  </section>
+
+  <section class="stats">
+    <div class="stat"><div class="stat-label">Pools scanned</div><div class="stat-value cyan" id="poolCount">—</div><div class="stat-sub" id="poolSub">Meteora DAMM v2 + Raydium</div></div>
+    <div class="stat"><div class="stat-label">Live missions</div><div class="stat-value green" id="missionCount">—</div><div class="stat-sub">After safety buffer</div></div>
+    <div class="stat"><div class="stat-label">Best safe edge</div><div class="stat-value" id="bestEdge">—</div><div class="stat-sub">At recommended trade size</div></div>
+    <div class="stat"><div class="stat-label">Best est. profit</div><div class="stat-value" id="bestProfit">—</div><div class="stat-sub">Within selected capital cap</div></div>
+  </section>
+
+  <div class="section-head"><div><div class="section-title">Live Arb Missions</div><div class="section-sub">Sorted by estimated absolute profit. A mission appears only if the conservative model remains positive.</div></div><div class="live-badge" id="ageBadge">LIVE DATA</div></div>
+  <section class="missions" id="missions"><div class="empty"><strong>Scanning ASTY pools…</strong><small>Live missions will appear here.</small></div></section>
+
+  <details class="lab" id="lab"><summary>Scanner Lab · Top raw spreads</summary><div class="table-wrap"><table><thead><tr><th>Buy pool</th><th>Buy fee</th><th>Sell pool</th><th>Sell fee</th><th>Gross spread</th><th>Best safe edge</th><th>Recommended</th><th>Est. profit</th><th>Status</th></tr></thead><tbody id="labBody"><tr><td colspan="9" class="muted">No scan yet.</td></tr></tbody></table></div></details>
+
+  <div class="notice"><strong>Important:</strong> Pool fees are handled per pool and shown separately from the fixed ASTY 1% token fee. Static pool fees such as the 0.25% Raydium ASTY/SOL pool are used directly. DAMM v2 pools with dynamic fees are marked as modeled. This remains a screening model, not a guaranteed execution quote. Pool impact is estimated conservatively from live pool liquidity; the additional safety buffer is intended to cover timing/slippage uncertainty. Always verify the live output shown by Meteora/Raydium and Jupiter before confirming a trade.</div>
+  <div class="footer">ASTY Trader Mission · ArbStrategy on Solana<br>Read-only scanner. No custody. No automated trading.</div>
+</main>
+
+<script>
+const ASTY_MINT = "ASTYqeaoK83Zs1pTFEXZUB6BM8cG8YLTsN852NUkt7ZR";
+const SOL_MINT = "So11111111111111111111111111111111111111112";
+const USDC_MINT = "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v";
+const RAYDIUM_POOL = "m1e9swvUoggDm2zLXzrzKRrbVwmGEP8aQy7BQigFZgK";
+const RAYDIUM_FEE_PCT = 0.25;
+const ASTY_TRANSFER_FEE = 0.01;
+const RETURN_LEG_COST = 0.006;      // conservative DEX/routing allowance for counter-token -> start asset
+const SAFETY_BUFFER = 0.005;        // timing/slippage reserve after modeled costs
+const NETWORK_COST_USD = 0.03;      // small flat allowance for the full route
+const MAX_POOL_SHARE = 0.08;        // never recommend more than 8% of either ASTY pool TVL
+const REFRESH_MS = 30000;
+let lastUpdated = 0;
+let lastPools = [];
+let refreshTimer = null;
+
+const $ = id => document.getElementById(id);
+const safeNum = v => { const n = Number(v); return Number.isFinite(n) ? n : null; };
+const fmtUsd = n => !Number.isFinite(n) ? "—" : n >= 1000 ? "$" + n.toLocaleString(undefined,{maximumFractionDigits:0}) : "$" + n.toFixed(n < 10 ? 2 : 2);
+const fmtPct = n => !Number.isFinite(n) ? "—" : (n >= 0 ? "+" : "") + n.toFixed(2) + "%";
+const fmtFeePct = n => !Number.isFinite(n) ? "—" : n.toFixed(2) + "%";
+const fmtToken = (n,s) => !Number.isFinite(n) ? "—" : `${n.toLocaleString(undefined,{maximumFractionDigits:n<10?4:n<1000?2:0})} ${s}`;
+const short = s => !s ? "—" : s.slice(0,4) + "…" + s.slice(-4);
+function feeLabel(pool){
+  const shown = fmtFeePct(pool?.feePct);
+  if(pool?.dynamicFee){
+    const base = fmtFeePct(pool?.baseFeePct);
+    return Math.abs((pool?.feePct ?? 0) - (pool?.baseFeePct ?? 0)) > 0.001
+      ? `${shown} modeled pool fee · base ${base}`
+      : `${shown} pool fee · dynamic enabled`;
+  }
+  return `${shown} pool fee`;
+}
+const esc = s => String(s ?? "").replace(/[&<>'"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","'":"&#39;",'"':"&quot;"}[c]));
+
+async function fetchJson(url, timeout=12000){
+  const controller = new AbortController(); const t = setTimeout(()=>controller.abort(),timeout);
+  try{ const r = await fetch(url,{cache:"no-store",headers:{Accept:"application/json"},signal:controller.signal}); if(!r.ok) throw new Error(`HTTP ${r.status}`); return await r.json(); }
+  finally{ clearTimeout(t); }
+}
+
+function status(kind,text,meta){
+  $("statusDot").className = "dot" + (kind==="live"?" live":kind==="err"?" err":"");
+  $("statusText").textContent = text; if(meta) $("statusMeta").textContent = meta;
+}
+
+async function fetchMeteoraPools(){
+  const base = "https://damm-v2.datapi.meteora.ag/pools";
+  const mk = side => { const p = new URLSearchParams({page:"1",page_size:"1000",filter_by:`${side}=${ASTY_MINT}`}); return `${base}?${p}`; };
+  let rows=[];
+  try{
+    const [a,b] = await Promise.all([fetchJson(mk("token_x")),fetchJson(mk("token_y"))]);
+    rows = [...(a.data||[]),...(b.data||[])];
+  }catch(err){
+    // Fallback if the filter syntax changes: query broadly, then exact-filter locally.
+    const p = new URLSearchParams({page:"1",page_size:"1000",query:ASTY_MINT});
+    const q = await fetchJson(`${base}?${p}`);
+    rows = q.data || [];
+  }
+  const map = new Map();
+  for(const r of rows){
+    const x=r?.token_x?.address, y=r?.token_y?.address;
+    if(x!==ASTY_MINT && y!==ASTY_MINT) continue;
+    if(r?.address) map.set(r.address,r);
+  }
+  return [...map.values()].map(normalizeMeteoraPool).filter(Boolean);
+}
+
+function inferAstyPoolPrice(raw, astyIsX, counterPrice, astyGlobal){
+  const cp = safeNum(raw.current_price);
+  if(!(cp>0) || !(counterPrice>0)) return astyGlobal>0 ? astyGlobal : null;
+  const c1 = astyIsX ? cp*counterPrice : counterPrice/cp;
+  const c2 = astyIsX ? counterPrice/cp : cp*counterPrice;
+  if(!(astyGlobal>0)) return (c1>0 && c1<1000) ? c1 : c2;
+  const d1=Math.abs(Math.log(c1/astyGlobal)), d2=Math.abs(Math.log(c2/astyGlobal));
+  return d1<=d2 ? c1 : c2;
+}
+
+function normalizeSymbol(symbol,address){
+  if(address===SOL_MINT) return "SOL";
+  if(address===USDC_MINT) return "USDC";
+  const s=(symbol||"TOKEN").replace(/^\$/,'');
+  return s.toUpperCase()==="WSOL" ? "SOL" : s;
+}
+
+function normalizeMeteoraPool(r){
+  const x=r.token_x||{}, y=r.token_y||{};
+  const astyIsX=x.address===ASTY_MINT, astyIsY=y.address===ASTY_MINT;
+  if(!astyIsX&&!astyIsY) return null;
+  const asty = astyIsX?x:y, counter=astyIsX?y:x;
+  const counterPrice=safeNum(counter.price), astyGlobal=safeNum(asty.price);
+  const astyPrice=inferAstyPoolPrice(r,astyIsX,counterPrice,astyGlobal);
+  const tvl=safeNum(r.tvl)||0;
+  let baseFee=safeNum(r?.pool_config?.base_fee_pct);
+  const vol24=safeNum(r?.volume?.["24h"]), fees24=safeNum(r?.fees?.["24h"]);
+  const avgFee=(vol24>0&&fees24>=0)?(fees24/vol24*100):null;
+  if(!(baseFee>=0)) baseFee=avgFee;
+  if(!(baseFee>=0)) baseFee=1;
+  // Dynamic-fee pools may have traded above their base fee. Use the higher recent average as a conservative screen.
+  const modeledFee=(avgFee>baseFee && avgFee<10) ? avgFee : baseFee;
+  return {
+    address:r.address, dex:"Meteora DAMM v2", dexKey:"meteora", name:r.name||`ASTY / ${counter.symbol||"TOKEN"}`,
+    astyPrice, astyGlobal, counterMint:counter.address, counterSymbol:normalizeSymbol(counter.symbol,counter.address), counterPrice,
+    tvl, feePct:modeledFee, baseFeePct:baseFee, dynamicFee:!!r?.pool_config?.dynamic_fee_initialized,
+    volume24:vol24||0, blacklisted:!!r.is_blacklisted,
+    url:`https://app.meteora.ag/dammv2/${r.address}`
+  };
+}
+
+function mintFromRel(rel){
+  const id=rel?.data?.id||"";
+  if(id.startsWith("solana_")) return id.slice(7);
+  return id.includes("_") ? id.split("_").pop() : id;
+}
+
+async function fetchRaydiumPool(){
+  try{
+    const url=`https://api.geckoterminal.com/api/v2/networks/solana/pools/${RAYDIUM_POOL}?include=base_token,quote_token`;
+    const p=await fetchJson(url); const d=p?.data; if(!d) return null;
+    const a=d.attributes||{}, rel=d.relationships||{};
+    const bm=mintFromRel(rel.base_token), qm=mintFromRel(rel.quote_token);
+    const astyBase=bm===ASTY_MINT, astyQuote=qm===ASTY_MINT;
+    if(!astyBase&&!astyQuote) return null;
+    const astyPrice=safeNum(astyBase?a.base_token_price_usd:a.quote_token_price_usd);
+    const counterMint=astyBase?qm:bm;
+    const counterPrice=safeNum(astyBase?a.quote_token_price_usd:a.base_token_price_usd);
+    return {address:RAYDIUM_POOL,dex:"Raydium",dexKey:"raydium",name:"ASTY / SOL",astyPrice,counterMint,counterSymbol:counterMint===SOL_MINT?"SOL":"TOKEN",counterPrice,tvl:safeNum(a.reserve_in_usd)||0,feePct:RAYDIUM_FEE_PCT,baseFeePct:RAYDIUM_FEE_PCT,dynamicFee:false,volume24:safeNum(a?.volume_usd?.h24)||0,blacklisted:false,url:`https://raydium.io/swap/?inputMint=${SOL_MINT}&outputMint=${ASTY_MINT}`};
+  }catch(e){ console.warn("Raydium pool unavailable",e); return null; }
+}
+
+async function loadPools(){
+  const [meteora,ray]=await Promise.all([fetchMeteoraPools(),fetchRaydiumPool()]);
+  const rows=ray?[...meteora,ray]:meteora;
+  return rows.filter(p=>p.astyPrice>0&&p.tvl>0&&p.counterMint&&p.counterPrice>0&&!p.blacklisted);
+}
+
+function usdPoolSwap(inputUsd,tvl,feePct){
+  const sideReserve=Math.max(tvl/2,0.000001);
+  const feeRate=Math.max(0,feePct||0)/100;
+  const feeUsd=inputUsd*feeRate;
+  const eff=Math.max(0,inputUsd-feeUsd);
+  const outUsd=sideReserve*eff/(sideReserve+eff);
+  const impact=eff>0 ? Math.max(0,1-outUsd/eff) : 0;
+  return {outUsd,feeUsd,impact};
+}
+
+function simulateRoute(buy,sell,startUsd){
+  // Step 1: counter asset -> ASTY in the chosen buy pool.
+  const b=usdPoolSwap(startUsd,buy.tvl,buy.feePct);
+  const astyBeforeTransfer=b.outUsd/buy.astyPrice;
+  const buyTransferAsty=astyBeforeTransfer*ASTY_TRANSFER_FEE;
+  const astyReceived=astyBeforeTransfer-buyTransferAsty;
+  const buyTransferFeeUsd=buyTransferAsty*buy.astyPrice;
+
+  // Step 2: ASTY -> sell-pool counter token. Token-2022 transfer fee is paid when ASTY enters the pool.
+  const sellTransferAsty=astyReceived*ASTY_TRANSFER_FEE;
+  const astyEntering=Math.max(0,astyReceived-sellTransferAsty);
+  const astyInputUsdAtSell=astyEntering*sell.astyPrice;
+  const s=usdPoolSwap(astyInputUsdAtSell,sell.tvl,sell.feePct);
+  const sellTransferFeeUsd=sellTransferAsty*sell.astyPrice;
+  let counterOutUsd=s.outUsd;
+  const counterAmount=counterOutUsd/sell.counterPrice;
+
+  // Step 3: only needed when the sell-pool counter token differs from the starting asset.
+  const needsReturn=sell.counterMint!==buy.counterMint;
+  const returnCostUsd=needsReturn?counterOutUsd*RETURN_LEG_COST:0;
+  const modelFinal=Math.max(0,counterOutUsd-returnCostUsd-NETWORK_COST_USD);
+  const safetyUsd=modelFinal*SAFETY_BUFFER;
+  const safeFinal=Math.max(0,modelFinal-safetyUsd);
+  const modelProfit=modelFinal-startUsd;
+  const safeProfit=safeFinal-startUsd;
+  return {
+    startUsd, astyReceived, counterAmount, counterOutUsd, modelFinal, safeFinal, modelProfit, safeProfit,
+    modelReturnPct:modelProfit/startUsd*100, safeReturnPct:safeProfit/startUsd*100,
+    buyImpactPct:b.impact*100, sellImpactPct:s.impact*100,
+    buyPoolFeeUsd:b.feeUsd, sellPoolFeeUsd:s.feeUsd,
+    astyFeeUsd:buyTransferFeeUsd+sellTransferFeeUsd, returnCostUsd, safetyUsd, needsReturn
+  };
+}
+
+function capitalGrid(cap){
+  const min=Math.min(5,cap); if(!(cap>0)) return [];
+  const n=55, vals=[];
+  for(let i=1;i<=n;i++){
+    let v=min+(cap-min)*(i-1)/(n-1);
+    if(cap<=5) v=cap;
+    vals.push(Math.max(.5,Math.round(v*100)/100));
+  }
+  return [...new Set(vals)];
+}
+
+function evaluatePair(buy,sell,maxCapital,minEdge){
+  const gross=(sell.astyPrice/buy.astyPrice-1)*100;
+  if(!(gross>0)) return null;
+  const cap=Math.min(maxCapital,buy.tvl*MAX_POOL_SHARE,sell.tvl*MAX_POOL_SHARE);
+  if(cap<1) return {buy,sell,gross,best:null,maxSafe:null,reason:"Pool depth too small"};
+  let best=null,maxSafe=null;
+  for(const c of capitalGrid(cap)){
+    const sim=simulateRoute(buy,sell,c);
+    if(!best||sim.safeProfit>best.safeProfit) best=sim;
+    if(sim.safeProfit>0&&sim.safeReturnPct>=minEdge) maxSafe=sim;
+  }
+  const live=best&&best.safeProfit>0&&best.safeReturnPct>=minEdge;
+  return {buy,sell,gross,best,maxSafe,live,cap,reason:live?"LIVE":"Costs / impact consume the spread"};
+}
+
+function buildCandidates(pools){
+  const startChoice=$("startAsset").value;
+  const maxCapital=Math.max(5,Math.min(5000,safeNum($("maxCapital").value)||250));
+  const minEdge=safeNum($("minEdge").value)||.75;
+  const startPools=pools.filter(p=>{
+    if(startChoice==="SOL") return p.counterMint===SOL_MINT;
+    if(startChoice==="USDC") return p.counterMint===USDC_MINT;
+    return p.counterMint===SOL_MINT||p.counterMint===USDC_MINT;
+  });
+  const rows=[];
+  for(const buy of startPools){
+    for(const sell of pools){
+      if(buy.address===sell.address) continue;
+      if(!(sell.astyPrice>buy.astyPrice)) continue;
+      const r=evaluatePair(buy,sell,maxCapital,minEdge); if(r) rows.push(r);
+    }
+  }
+  rows.sort((a,b)=>(b.best?.safeProfit??-Infinity)-(a.best?.safeProfit??-Infinity));
+  return rows;
+}
+
+function routeHtml(r){
+  const start=r.buy.counterSymbol, out=r.sell.counterSymbol;
+  return r.sell.counterMint===r.buy.counterMint ? `${esc(start)} <span class="arrow">→</span> ASTY <span class="arrow">→</span> ${esc(start)}` : `${esc(start)} <span class="arrow">→</span> ASTY <span class="arrow">→</span> ${esc(out)} <span class="arrow">→</span> ${esc(start)}`;
+}
+function openPoolUrl(pool,inputMint,outputMint){
+  if(pool.dexKey==="meteora") return pool.url;
+  return `https://raydium.io/swap/?inputMint=${encodeURIComponent(inputMint)}&outputMint=${encodeURIComponent(outputMint)}`;
+}
+
+function missionCard(r,i){
+  const s=r.best, buy=r.buy, sell=r.sell;
+  const startAmt=s.startUsd/buy.counterPrice;
+  const finalStart=s.safeFinal/buy.counterPrice;
+  const difficulty=s.safeReturnPct>=2&&Math.max(s.buyImpactPct,s.sellImpactPct)<1?"●○○ EASY":s.safeReturnPct>=1.2?"●●○ MEDIUM":"●●● FAST";
+  const step3=s.needsReturn?`<div class="step"><div class="step-no">3</div><div><div class="step-title">RETURN TO ${esc(buy.counterSymbol)}</div><div class="step-copy">Swap about ${fmtToken(s.counterAmount,sell.counterSymbol)} back to ${esc(buy.counterSymbol)}. Estimated safe end: ${fmtToken(finalStart,buy.counterSymbol)}.</div></div><a class="step-link" href="https://jup.ag/swap" target="_blank" rel="noopener">OPEN JUPITER ↗</a></div>`:"";
+  const sellInputUrl=openPoolUrl(sell,ASTY_MINT,sell.counterMint);
+  const buyInputUrl=openPoolUrl(buy,buy.counterMint,ASTY_MINT);
+  return `<article class="mission">
+    <div class="mission-top"><div class="mission-kicker"><div class="mission-id">ARB MISSION #${String(i+1).padStart(3,"0")} · LIVE</div><div class="difficulty">${difficulty}</div></div><div class="route">${routeHtml(r)}</div></div>
+    <div class="mission-main">
+      <div class="metric"><div class="metric-label">Recommended</div><div class="metric-value cyan">${fmtUsd(s.startUsd)}</div><div class="metric-sub">modeled sweet spot</div></div>
+      <div class="metric"><div class="metric-label">Safe net edge</div><div class="metric-value good">${fmtPct(s.safeReturnPct)}</div><div class="metric-sub">after safety reserve</div></div>
+      <div class="metric"><div class="metric-label">Est. profit</div><div class="metric-value good">+${fmtUsd(Math.max(0,s.safeProfit)).replace('$','$')}</div><div class="metric-sub">not guaranteed</div></div>
+    </div>
+    <details><summary>VIEW MISSION</summary><div class="detail-body">
+      <div class="steps">
+        <div class="step"><div class="step-no">1</div><div><div class="step-title">BUY ASTY · ${esc(buy.name)} · ${esc(feeLabel(buy))}</div><div class="step-copy">${esc(buy.dex)} · Use about ${fmtToken(startAmt,buy.counterSymbol)}. Pool ASTY price: ${fmtUsd(buy.astyPrice)}. Pool fee used in the model: ${fmtFeePct(buy.feePct)}. Expected after the ASTY 1% transfer fee: ${fmtToken(s.astyReceived,"ASTY")}.</div></div><a class="step-link" href="${buyInputUrl}" target="_blank" rel="noopener">OPEN BUY POOL ↗</a></div>
+        <div class="step"><div class="step-no">2</div><div><div class="step-title">SELL ASTY · ${esc(sell.name)} · ${esc(feeLabel(sell))}</div><div class="step-copy">${esc(sell.dex)} · ASTY is modeled at ${fmtUsd(sell.astyPrice)}. Pool fee used in the model: ${fmtFeePct(sell.feePct)}. Expected output: ${fmtToken(s.counterAmount,sell.counterSymbol)}.</div></div><a class="step-link" href="${sellInputUrl}" target="_blank" rel="noopener">OPEN SELL POOL ↗</a></div>
+        ${step3}
+      </div>
+      <div class="breakdown">
+        <div class="br"><span>Gross ASTY price edge</span><strong>${fmtPct(r.gross)}</strong></div>
+        <div class="br"><span>${esc(buy.name)} pool fee · ${fmtFeePct(buy.feePct)}${buy.dynamicFee ? " modeled" : ""}</span><strong>−${fmtUsd(s.buyPoolFeeUsd)}</strong></div>
+        <div class="br"><span>${esc(sell.name)} pool fee · ${fmtFeePct(sell.feePct)}${sell.dynamicFee ? " modeled" : ""}</span><strong>−${fmtUsd(s.sellPoolFeeUsd)}</strong></div>
+        <div class="br"><span>ASTY token fee · 1.00% on buy + 1.00% on sell</span><strong>−${fmtUsd(s.astyFeeUsd)}</strong></div>
+        <div class="br"><span>Modeled pool impact</span><strong>${s.buyImpactPct.toFixed(2)}% buy · ${s.sellImpactPct.toFixed(2)}% sell</strong></div>
+        <div class="br"><span>${s.needsReturn?"Return-leg allowance":"Return leg"}</span><strong>${s.needsReturn?"−"+fmtUsd(s.returnCostUsd):"Not required"}</strong></div>
+        <div class="br"><span>Execution / slippage safety buffer</span><strong>−${fmtUsd(s.safetyUsd)}</strong></div>
+        <div class="br total"><span>Estimated safe result</span><strong>${fmtUsd(s.safeFinal)} · +${fmtUsd(Math.max(0,s.safeProfit)).replace('$','$')}</strong></div>
+      </div>
+    </div></details>
+  </article>`;
+}
+
+function render(rows,pools){
+  const live=rows.filter(r=>r.live).slice(0,10);
+  $("poolCount").textContent=pools.length;
+  const mCount=pools.filter(p=>p.dexKey==="meteora").length, rCount=pools.filter(p=>p.dexKey==="raydium").length;
+  $("poolSub").textContent=`${mCount} Meteora · ${rCount} Raydium`;
+  $("missionCount").textContent=live.length;
+  $("bestEdge").textContent=live.length?fmtPct(Math.max(...live.map(r=>r.best.safeReturnPct))):"—";
+  $("bestProfit").textContent=live.length?"+"+fmtUsd(live[0].best.safeProfit):"—";
+  $("missions").innerHTML=live.length?live.map(missionCard).join(""):`<div class="empty" style="grid-column:1/-1"><strong>No live mission survives the safety model right now.</strong><small>The scanner is working. Open “Scanner Lab” below to see the largest raw spreads and why they were rejected.</small></div>`;
+
+  const lab=rows.slice().sort((a,b)=>b.gross-a.gross).slice(0,25);
+  $("labBody").innerHTML=lab.length?lab.map(r=>{
+    const b=r.best;
+    return `<tr><td>${esc(r.buy.name)}</td><td>${fmtFeePct(r.buy.feePct)}${r.buy.dynamicFee?' <span class="muted">modeled</span>':''}</td><td>${esc(r.sell.name)}</td><td>${fmtFeePct(r.sell.feePct)}${r.sell.dynamicFee?' <span class="muted">modeled</span>':''}</td><td class="pos">${fmtPct(r.gross)}</td><td class="${b&&b.safeReturnPct>0?'pos':'neg'}">${b?fmtPct(b.safeReturnPct):'—'}</td><td>${b?fmtUsd(b.startUsd):'—'}</td><td class="${b&&b.safeProfit>0?'pos':'neg'}">${b?fmtUsd(b.safeProfit):'—'}</td><td>${r.live?'<span class="pos">LIVE</span>':'<span class="muted">NO MISSION</span>'}</td></tr>`;
+  }).join(""):`<tr><td colspan="9" class="muted">No candidate spreads found.</td></tr>`;
+}
+
+async function scan(){
+  const buttons=[$("scanButton"),$("refreshTop")]; buttons.forEach(b=>b.disabled=true);
+  status("wait","Scanning live pools…","Loading ASTY DAMM v2 state and the Raydium ASTY/SOL market.");
+  try{
+    const pools=await loadPools();
+    if(!pools.length) throw new Error("No live ASTY pools returned by the data sources.");
+    lastPools=pools; const rows=buildCandidates(pools); render(rows,pools);
+    lastUpdated=Date.now(); status("live","Scanner live",`${pools.length} usable ASTY pools · refreshed ${new Date(lastUpdated).toLocaleTimeString()}`);
+    $("ageBadge").textContent="UPDATED NOW";
+  }catch(e){
+    console.error(e); status("err","Scan failed",e.message||"Live pool data could not be loaded.");
+    $("missions").innerHTML=`<div class="empty" style="grid-column:1/-1"><strong>Live scan unavailable.</strong><small>${esc(e.message||"API error")}. No stale mission is shown for safety.</small></div>`;
+  }finally{buttons.forEach(b=>b.disabled=false)}
+}
+
+function rerenderLocal(){ if(!lastPools.length) return scan(); render(buildCandidates(lastPools),lastPools); }
+$("scanButton").addEventListener("click",scan); $("refreshTop").addEventListener("click",scan);
+$("startAsset").addEventListener("change",rerenderLocal); $("maxCapital").addEventListener("change",rerenderLocal); $("minEdge").addEventListener("change",rerenderLocal);
+setInterval(()=>{if(lastUpdated){const s=Math.floor((Date.now()-lastUpdated)/1000);$("ageBadge").textContent=s<5?"UPDATED NOW":`UPDATED ${s}s AGO`; }},1000);
+refreshTimer=setInterval(scan,REFRESH_MS);
+scan();
+</script>
+</body>
+</html>
