@@ -178,7 +178,7 @@ tbody tr:hover{background:rgba(169,138,255,.045)}
       <div class="mark"><img src="assets/logo.png" alt="ASTY Logo" onerror="this.style.display='none'; this.parentElement.classList.add('fallback'); this.parentElement.textContent='A';"></div>
       <div>
         <h1>ASTY Team Dashboard</h1>
-        <div class="sub">Interne Pool-Analyse · 64 ASTY-Pools · Performance + Claiming Day</div>
+        <div class="sub" id="dashboardSub">Interne Pool-Analyse · Performance + Claiming Day</div>
       </div>
     </div>
     <div class="actions">
@@ -203,11 +203,11 @@ tbody tr:hover{background:rgba(169,138,255,.045)}
 <section class="kpis">
   <div class="kpi"><div class="kpi-label">Gesamte Pool-Liquidität</div><div class="kpi-value" id="kpiTvl">–</div><div class="kpi-note">Alle geladenen ASTY-Pools</div></div>
   <div class="kpi"><div class="kpi-label">Volumen 24h</div><div class="kpi-value" id="kpiVol">–</div><div class="kpi-note">Summe über alle geladenen Pools</div></div>
-  <div class="kpi"><div class="kpi-label">Einnahmen 24h</div><div class="kpi-value" id="kpiFees">–</div><div class="kpi-note">API-Poolgebühren</div></div>
+  <div class="kpi"><div class="kpi-label">System Output 24h</div><div class="kpi-value" id="kpiFees">–</div><div class="kpi-note">Wie Live Dashboard: Volumen × Pool-Fee</div></div>
   <div class="kpi"><div class="kpi-label">Einnahmen 7d</div><div class="kpi-value" id="kpiFees7">–</div><div class="kpi-note">Historisch aggregiert</div></div>
   <div class="kpi"><div class="kpi-label">Einnahmen 30d</div><div class="kpi-value" id="kpiFees30">–</div><div class="kpi-note">Historisch aggregiert</div></div>
-  <div class="kpi"><div class="kpi-label">Ø Einnahmen / TVL 30d</div><div class="kpi-value" id="kpiEff">–</div><div class="kpi-note">Nur 58 aktive Bewertungs-Pools</div></div>
-  <div class="kpi"><div class="kpi-label">Pools geladen</div><div class="kpi-value" id="kpiLoaded">0 / 64</div><div class="kpi-note" id="kpiDex">63 Meteora · 1 Raydium</div></div>
+  <div class="kpi"><div class="kpi-label">Ø Einnahmen / TVL 30d</div><div class="kpi-value" id="kpiEff">–</div><div class="kpi-note" id="kpiEffNote">Aktive Bewertungs-Pools</div></div>
+  <div class="kpi"><div class="kpi-label">Pools geladen</div><div class="kpi-value" id="kpiLoaded">0 / –</div><div class="kpi-note" id="kpiDex">Poolübersicht wird vorbereitet</div></div>
   <div class="kpi disabled"><div class="kpi-label">Beanspruchbare Einnahmen</div><div class="kpi-value">später</div><div class="kpi-note">Owner-Wallets noch nicht angebunden</div></div>
 </section>
 
@@ -297,6 +297,11 @@ let sourceCompareState = {
   gecko:new Map()
 };
 const EXCLUDED_POOL_IDS = new Set(["7tbbdGzFZpjrPmM7jQderyyv1x8Ebz1vhwqNhEW97osb", "HAieGroddWr3NZpSZYqqm39w2aTUuknWNXxfF6vWNpaR", "2WRrdtnKKr2eq67o4ZK2VQv7dXu4Pm8iz6TMN8UXvhbV", "3HhGsPNMtSg1dNV9SVSfzGCQLx3Zp5giAvYJdQuuNqU9", "BWFDr72tjXJsRdUyAfqghv6sGXgQr2zJ78KdeV3c74q1", "61HTuoKeWhEfscoBcd5zSNvmAyGpxdaUNMriLNnyyREz"]);
+const TOTAL_POOL_COUNT = POOLS.length;
+const METEORA_POOL_COUNT = POOLS.filter(p=>p.dex==="Meteora").length;
+const RAYDIUM_POOL_COUNT = POOLS.filter(p=>p.dex==="Raydium").length;
+const ACTIVE_POOL_COUNT = POOLS.filter(p=>!EXCLUDED_POOL_IDS.has(p.address)).length;
+
 const CACHE_KEY = "asty-team-dashboard-v2-cache";
 const HISTORY_CACHE_KEY = "asty-team-dashboard-meteora-history-v1";
 const HISTORY_CACHE_TTL = 30 * 60 * 1000;
@@ -866,7 +871,7 @@ function saveCache(){
 function loadCache(){
   try{
     const c=JSON.parse(localStorage.getItem(CACHE_KEY)||"null");
-    if(c?.rows?.length===64){
+    if(c?.rows?.length===TOTAL_POOL_COUNT){
       rows=c.rows; captureNativeBaselines(); deriveMetrics(); render();
       $("#updatedText").textContent=`Zwischenspeicher: ${new Date(c.ts).toLocaleString("de-DE")}`;
       $("#statusText").textContent="Letzten gespeicherten Datenstand geladen";
@@ -894,12 +899,12 @@ async function refresh(forceHistory=false){
 
     const ok=rows.filter(r=>r.loaded).length;
     const hist=rows.filter(r=>r.dex==="Meteora"&&r.loaded&&r.historyLoaded).length;
-    const err=64-ok;
-    $("#statusDot").className=(err||hist<63)?"dot warn":"dot live";
+    const err=Math.max(0,TOTAL_POOL_COUNT-ok);
+    $("#statusDot").className=(err||hist<METEORA_POOL_COUNT)?"dot warn":"dot live";
     $("#statusText").textContent=
-      err ? `${ok} Pools geladen · ${err} ohne aktuelle Daten · History ${hist}/63` :
-      hist<63 ? `Alle Pooldaten geladen · Meteora-History ${hist}/63` :
-      `Alle 64 Pools inkl. 7d/30d-Historie erfolgreich geladen`;
+      err ? `${ok} Pools geladen · ${err} ohne aktuelle Daten · History ${hist}/${METEORA_POOL_COUNT}` :
+      hist<METEORA_POOL_COUNT ? `Alle ${TOTAL_POOL_COUNT} Pooldaten geladen · Meteora-History ${hist}/${METEORA_POOL_COUNT}` :
+      `Alle ${TOTAL_POOL_COUNT} Pools inkl. 7d/30d-Historie erfolgreich geladen`;
     $("#updatedText").textContent=`Aktualisiert: ${new Date().toLocaleString("de-DE")}`;
     $("#progressBar").style.width="100%";
     setTimeout(()=>$("#progressBar").style.width="0%",800);
@@ -1401,15 +1406,25 @@ function filteredRows(){
   return arr;
 }
 function renderKPIs(){
-  // Reine Netzwerk-/System-KPIs: alle geladenen Pools einbeziehen.
   const all=rows.filter(r=>r.loaded);
-
-  // Bewertungsbasis: ausgeklammerte Pools bleiben aus Effizienz/Score/Benchmark draußen.
   const active=rows.filter(r=>r.loaded && !r.excluded);
 
   const tvl=all.reduce((s,r)=>s+(r.tvl||0),0);
   const vol=all.reduce((s,r)=>s+(r.volume24||0),0);
-  const fees=all.reduce((s,r)=>s+(r.fees24||0),0);
+
+  // Gleiche 24h-Output-Logik wie im ASTY Live Dashboard:
+  // GeckoTerminal 24h volume × configured pool fee.
+  // Die nativen r.fees24 bleiben unverändert für Score/Detail/History.
+  const geckoReady=sourceCompareState?.gecko?.size>0;
+  const systemOutput24=POOLS.reduce((sum,p)=>{
+    const row=rows.find(r=>r.address===p.address);
+    const gecko=sourceCompareState.gecko.get(p.address);
+    const volume=geckoReady && Number.isFinite(gecko?.volume24)
+      ? gecko.volume24
+      : (Number.isFinite(row?.volume24)?row.volume24:0);
+    return sum + volume * (p.configuredFee/100);
+  },0);
+
   const fees7=all.reduce((s,r)=>s+(r.fees7||0),0);
   const fees30=all.reduce((s,r)=>s+(r.fees30||0),0);
 
@@ -1419,14 +1434,17 @@ function renderKPIs(){
 
   $("#kpiTvl").textContent=fmtUSD(tvl);
   $("#kpiVol").textContent=fmtUSD(vol);
-  $("#kpiFees").textContent=fmtUSD(fees);
+  $("#kpiFees").textContent=fmtUSD(systemOutput24);
   $("#kpiFees7").textContent=fmtUSD(fees7);
   $("#kpiFees30").textContent=fmtUSD(fees30);
   $("#kpiEff").textContent=fmtPct(eff30);
 
-  $("#kpiLoaded").textContent=`${all.length} / 64`;
+  $("#kpiLoaded").textContent=`${all.length} / ${TOTAL_POOL_COUNT}`;
+  $("#kpiEffNote").textContent=`Nur ${ACTIVE_POOL_COUNT} aktive Bewertungs-Pools`;
+  $("#dashboardSub").textContent=`Interne Pool-Analyse · ${TOTAL_POOL_COUNT} ASTY-Pools · Performance + Claiming Day`;
+
   const fallbackPools=all.filter(r=>r.tvlGeckoFallback||r.volume24GeckoFallback).length;
-  $("#kpiDex").textContent=`${all.filter(r=>r.dex==="Meteora").length} Meteora · ${all.filter(r=>r.dex==="Raydium").length} Raydium geladen · 6 Pools nur aus Bewertung ausgeklammert${fallbackPools?` · ${fallbackPools} mit Gecko-Fallback`:""}`;
+  $("#kpiDex").textContent=`${METEORA_POOL_COUNT} Meteora · ${RAYDIUM_POOL_COUNT} Raydium geladen · ${EXCLUDED_POOL_IDS.size} Pools nur aus Bewertung ausgeklammert${fallbackPools?` · ${fallbackPools} mit Gecko-Fallback`:""}`;
 }
 function renderRank(){
   const a=rows.filter(r=>r.loaded && !r.excluded && Number.isFinite(r.score)).sort((x,y)=>y.score-x.score);
