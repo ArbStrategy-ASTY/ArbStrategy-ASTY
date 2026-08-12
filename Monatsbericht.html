@@ -1,0 +1,1030 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#0b0714" />
+  <title>ASTY Monatsbericht | Intern</title>
+  <style>
+    :root{
+      --bg:#08060f;
+      --bg2:#0d0918;
+      --card:rgba(20,14,34,.78);
+      --card2:rgba(29,19,48,.78);
+      --line:rgba(180,140,255,.16);
+      --lineStrong:rgba(191,153,255,.34);
+      --text:#f7f2ff;
+      --muted:#a89db9;
+      --purple:#b783ff;
+      --purple2:#7f4cff;
+      --cyan:#65e8ff;
+      --green:#66f2a8;
+      --yellow:#ffd875;
+      --red:#ff7b92;
+      --shadow:0 18px 55px rgba(0,0,0,.35);
+      --radius:22px;
+    }
+
+    *{box-sizing:border-box}
+    html{scroll-behavior:smooth}
+    body{
+      margin:0;
+      min-height:100vh;
+      color:var(--text);
+      font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;
+      background:
+        radial-gradient(circle at 18% 0%, rgba(120,73,255,.18), transparent 30%),
+        radial-gradient(circle at 100% 18%, rgba(101,232,255,.08), transparent 24%),
+        linear-gradient(180deg,var(--bg2),var(--bg) 34%,#06050a);
+    }
+
+    body::before{
+      content:"";
+      position:fixed;
+      inset:0;
+      pointer-events:none;
+      background-image:
+        linear-gradient(rgba(255,255,255,.017) 1px, transparent 1px),
+        linear-gradient(90deg,rgba(255,255,255,.017) 1px, transparent 1px);
+      background-size:46px 46px;
+      mask-image:linear-gradient(to bottom,rgba(0,0,0,.65),transparent 88%);
+    }
+
+    .wrap{
+      width:min(1440px,calc(100% - 32px));
+      margin:0 auto;
+      padding:28px 0 56px;
+      position:relative;
+      z-index:1;
+    }
+
+    .topbar{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:18px;
+      margin-bottom:20px;
+    }
+
+    .brand{
+      display:flex;
+      align-items:center;
+      gap:13px;
+      min-width:0;
+    }
+
+    .logo{
+      width:46px;
+      height:46px;
+      object-fit:contain;
+      filter:drop-shadow(0 0 18px rgba(183,131,255,.25));
+    }
+
+    .brand-copy{min-width:0}
+    .brand-name{
+      font-size:13px;
+      letter-spacing:.16em;
+      text-transform:uppercase;
+      color:var(--purple);
+      font-weight:800;
+    }
+    .brand-sub{
+      margin-top:3px;
+      color:var(--muted);
+      font-size:12px;
+    }
+
+    .controls{
+      display:flex;
+      gap:10px;
+      align-items:center;
+      flex-wrap:wrap;
+      justify-content:flex-end;
+    }
+
+    select, button{
+      border:1px solid var(--lineStrong);
+      background:rgba(16,11,27,.88);
+      color:var(--text);
+      border-radius:13px;
+      min-height:42px;
+      padding:0 13px;
+      font:inherit;
+      outline:none;
+    }
+
+    select:focus, button:focus{border-color:var(--purple)}
+    button{
+      cursor:pointer;
+      transition:.18s ease;
+    }
+    button:hover{
+      border-color:var(--purple);
+      transform:translateY(-1px);
+      box-shadow:0 8px 24px rgba(127,76,255,.13);
+    }
+
+    .hero{
+      position:relative;
+      overflow:hidden;
+      border:1px solid var(--line);
+      background:
+        linear-gradient(135deg,rgba(127,76,255,.16),rgba(101,232,255,.035) 52%,rgba(10,7,17,.55)),
+        var(--card);
+      border-radius:28px;
+      padding:34px;
+      box-shadow:var(--shadow);
+    }
+
+    .hero::after{
+      content:"";
+      width:340px;height:340px;
+      position:absolute;
+      right:-120px;top:-160px;
+      border-radius:50%;
+      background:rgba(183,131,255,.13);
+      filter:blur(4px);
+    }
+
+    .eyebrow{
+      display:inline-flex;
+      align-items:center;
+      gap:9px;
+      color:var(--purple);
+      font-size:12px;
+      font-weight:850;
+      letter-spacing:.14em;
+      text-transform:uppercase;
+    }
+
+    .dot{
+      width:8px;height:8px;border-radius:50%;
+      background:var(--purple);
+      box-shadow:0 0 18px rgba(183,131,255,.9);
+    }
+
+    h1{
+      font-size:clamp(30px,5vw,54px);
+      line-height:1.02;
+      margin:13px 0 10px;
+      letter-spacing:-.045em;
+      max-width:930px;
+    }
+
+    .gradient{
+      background:linear-gradient(90deg,#fff 8%,#d9bdff 55%,#76ecff);
+      -webkit-background-clip:text;
+      background-clip:text;
+      color:transparent;
+    }
+
+    .hero-sub{
+      margin:0;
+      color:var(--muted);
+      font-size:15px;
+      line-height:1.6;
+      max-width:810px;
+    }
+
+    .hero-meta{
+      margin-top:20px;
+      display:flex;
+      gap:8px;
+      flex-wrap:wrap;
+    }
+
+    .pill{
+      padding:8px 11px;
+      border-radius:999px;
+      border:1px solid var(--line);
+      background:rgba(8,6,15,.4);
+      color:#cfc4dc;
+      font-size:12px;
+    }
+
+    .metric-grid{
+      display:grid;
+      grid-template-columns:repeat(4,minmax(0,1fr));
+      gap:14px;
+      margin-top:16px;
+    }
+
+    .metric{
+      border:1px solid var(--line);
+      background:var(--card);
+      border-radius:20px;
+      padding:20px;
+      min-height:135px;
+      box-shadow:0 10px 30px rgba(0,0,0,.18);
+    }
+
+    .metric-label{
+      color:var(--muted);
+      font-size:12px;
+      letter-spacing:.08em;
+      text-transform:uppercase;
+      font-weight:700;
+    }
+
+    .metric-value{
+      margin-top:10px;
+      font-size:clamp(25px,3vw,38px);
+      font-weight:850;
+      letter-spacing:-.04em;
+    }
+
+    .metric-foot{
+      margin-top:8px;
+      color:#c8bdd6;
+      font-size:12px;
+      line-height:1.45;
+    }
+
+    .spotlight{
+      margin-top:16px;
+      display:grid;
+      grid-template-columns:1.2fr .8fr;
+      gap:14px;
+    }
+
+    .focus-card, .compare-card{
+      border:1px solid var(--line);
+      background:var(--card);
+      border-radius:var(--radius);
+      padding:24px;
+      box-shadow:0 10px 32px rgba(0,0,0,.18);
+    }
+
+    .focus-title{
+      font-size:15px;
+      color:#d7c9e8;
+      font-weight:750;
+    }
+
+    .focus-number{
+      margin-top:11px;
+      font-size:clamp(29px,4vw,49px);
+      font-weight:900;
+      letter-spacing:-.045em;
+      line-height:1.05;
+    }
+
+    .focus-number .arr{color:var(--purple)}
+    .focus-copy{
+      margin-top:12px;
+      color:var(--muted);
+      line-height:1.6;
+      font-size:14px;
+    }
+
+    .bar-block{margin-top:20px}
+    .bar-row{
+      display:grid;
+      grid-template-columns:150px 1fr 60px;
+      gap:12px;
+      align-items:center;
+      margin-top:11px;
+      font-size:12px;
+      color:#cabed8;
+    }
+    .bar{
+      height:11px;
+      background:rgba(255,255,255,.055);
+      border-radius:999px;
+      overflow:hidden;
+      border:1px solid rgba(255,255,255,.035);
+    }
+    .fill{
+      height:100%;
+      border-radius:inherit;
+      background:linear-gradient(90deg,var(--purple2),var(--purple),var(--cyan));
+      box-shadow:0 0 22px rgba(183,131,255,.35);
+    }
+
+    .compare{
+      display:grid;
+      gap:12px;
+      margin-top:15px;
+    }
+    .compare-line{
+      border:1px solid var(--line);
+      border-radius:15px;
+      padding:15px;
+      background:rgba(8,6,15,.25);
+    }
+    .compare-head{
+      display:flex;
+      justify-content:space-between;
+      gap:12px;
+      font-weight:800;
+      align-items:center;
+    }
+    .compare-head small{
+      color:var(--muted);
+      font-size:11px;
+      font-weight:650;
+    }
+    .compare-stats{
+      display:flex;
+      justify-content:space-between;
+      gap:16px;
+      margin-top:11px;
+      color:#d7cbdf;
+      font-size:13px;
+    }
+
+    section{margin-top:30px}
+    .section-head{
+      display:flex;
+      justify-content:space-between;
+      align-items:end;
+      gap:16px;
+      margin-bottom:13px;
+    }
+    .section-title{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      font-size:22px;
+      font-weight:850;
+      letter-spacing:-.025em;
+    }
+    .section-sub{
+      color:var(--muted);
+      font-size:12px;
+      max-width:650px;
+      text-align:right;
+    }
+
+    .cards{
+      display:grid;
+      grid-template-columns:repeat(4,minmax(0,1fr));
+      gap:14px;
+    }
+
+    .pool{
+      position:relative;
+      overflow:hidden;
+      border:1px solid var(--line);
+      background:linear-gradient(180deg,rgba(25,17,42,.92),rgba(13,9,22,.88));
+      border-radius:20px;
+      padding:18px;
+      min-height:235px;
+      transition:.2s ease;
+    }
+    .pool:hover{
+      transform:translateY(-2px);
+      border-color:var(--lineStrong);
+    }
+    .pool::before{
+      content:"";
+      position:absolute;
+      left:0;right:0;top:0;height:3px;
+      background:var(--accent,var(--purple));
+      opacity:.9;
+    }
+    .pool.green{--accent:var(--green)}
+    .pool.yellow{--accent:var(--yellow)}
+    .pool.red{--accent:var(--red)}
+    .pool.purple{--accent:var(--purple)}
+
+    .pool-top{
+      display:flex;
+      justify-content:space-between;
+      gap:12px;
+      align-items:flex-start;
+    }
+    .pool-name{
+      font-size:17px;
+      font-weight:850;
+      letter-spacing:-.02em;
+    }
+    .score{
+      min-width:52px;height:52px;
+      border-radius:50%;
+      display:grid;
+      place-items:center;
+      border:1px solid var(--lineStrong);
+      background:rgba(8,6,15,.48);
+      font-size:16px;
+      font-weight:900;
+    }
+    .score small{
+      display:block;
+      font-size:7px;
+      color:var(--muted);
+      font-weight:650;
+      text-transform:uppercase;
+      line-height:1;
+    }
+
+    .pool-status{
+      margin-top:4px;
+      color:var(--muted);
+      font-size:11px;
+      text-transform:uppercase;
+      letter-spacing:.07em;
+    }
+    .pool-stats{
+      margin-top:17px;
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:10px;
+    }
+    .stat{
+      border-top:1px solid rgba(255,255,255,.06);
+      padding-top:9px;
+    }
+    .stat span{
+      display:block;
+      color:var(--muted);
+      font-size:10px;
+      text-transform:uppercase;
+      letter-spacing:.06em;
+    }
+    .stat strong{
+      display:block;
+      margin-top:4px;
+      font-size:14px;
+    }
+    .pool-note{
+      margin-top:15px;
+      color:#c7bbd4;
+      line-height:1.5;
+      font-size:12px;
+    }
+
+    .anchor-grid{
+      display:grid;
+      grid-template-columns:repeat(4,minmax(0,1fr));
+      gap:14px;
+    }
+    .anchor{
+      border:1px solid var(--line);
+      background:rgba(17,12,29,.72);
+      border-radius:18px;
+      padding:18px;
+    }
+    .anchor .a-name{font-weight:850;font-size:15px}
+    .anchor .a-fee{color:var(--purple);font-size:11px;margin-top:4px}
+    .anchor .a-val{
+      display:flex;justify-content:space-between;gap:10px;
+      margin-top:14px;
+      color:#d3c7df;font-size:12px;
+    }
+    .anchor .a-val span:first-child{color:var(--muted)}
+
+    .actions{
+      display:grid;
+      grid-template-columns:repeat(5,minmax(0,1fr));
+      gap:10px;
+    }
+    .action{
+      border:1px solid var(--line);
+      background:rgba(19,13,32,.72);
+      border-radius:16px;
+      padding:16px;
+      font-size:12px;
+      line-height:1.55;
+      color:#d2c6df;
+    }
+    .action b{
+      display:block;
+      color:var(--purple);
+      margin-bottom:6px;
+      font-size:18px;
+    }
+
+    .note{
+      margin-top:26px;
+      border:1px solid rgba(255,216,117,.16);
+      background:rgba(255,216,117,.045);
+      border-radius:18px;
+      padding:18px;
+      color:#d7cdb4;
+      font-size:12px;
+      line-height:1.65;
+    }
+
+    footer{
+      margin-top:28px;
+      padding-top:18px;
+      border-top:1px solid var(--line);
+      color:#81758f;
+      display:flex;
+      justify-content:space-between;
+      gap:16px;
+      font-size:11px;
+    }
+
+    .hidden{display:none !important}
+
+    @media(max-width:1100px){
+      .metric-grid,.cards,.anchor-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+      .actions{grid-template-columns:repeat(2,minmax(0,1fr))}
+    }
+    @media(max-width:760px){
+      .wrap{width:min(100% - 20px,1440px);padding-top:14px}
+      .topbar{align-items:flex-start}
+      .controls{width:100%}
+      .topbar{flex-direction:column}
+      .controls select,.controls button{flex:1}
+      .hero{padding:24px 19px}
+      .metric-grid,.spotlight,.cards,.anchor-grid,.actions{grid-template-columns:1fr}
+      .section-head{align-items:flex-start;flex-direction:column}
+      .section-sub{text-align:left}
+      .bar-row{grid-template-columns:110px 1fr 50px}
+      footer{flex-direction:column}
+    }
+
+    @media print{
+      body{background:#fff;color:#111}
+      body::before,.controls{display:none}
+      .wrap{width:100%;padding:0}
+      .hero,.metric,.focus-card,.compare-card,.pool,.anchor,.action,.note{
+        background:#fff !important;color:#111 !important;box-shadow:none;
+        break-inside:avoid;
+      }
+      .hero-sub,.metric-label,.metric-foot,.focus-copy,.section-sub,.pool-status,.pool-note,.stat span,.note,footer{
+        color:#555 !important;
+      }
+      .gradient{background:none;color:#111}
+      section{margin-top:18px}
+    }
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <div class="topbar">
+      <div class="brand">
+        <img class="logo" src="assets/logo.png" alt="ASTY Logo" onerror="this.style.display='none'">
+        <div class="brand-copy">
+          <div class="brand-name">ArbStrategy · ASTY</div>
+          <div class="brand-sub">Interner Team-Bericht</div>
+        </div>
+      </div>
+
+      <div class="controls">
+        <select id="monthSelect" aria-label="Berichtsmonat">
+          <option value="2026-08">August 2026</option>
+        </select>
+        <button type="button" onclick="window.print()">Bericht drucken</button>
+      </div>
+    </div>
+
+    <section class="hero">
+      <div class="eyebrow"><span class="dot"></span> ASTY Monatsbericht</div>
+      <h1 class="gradient">Performance & Kapitalallokation</h1>
+      <p class="hero-sub">
+        Interner 30-Tage-Snapshot zur Bewertung von Liquidität, Einnahmen, Effizienz Score
+        und kurzfristiger Entwicklung der aktiven ASTY-Pools.
+      </p>
+      <div class="hero-meta">
+        <span class="pill">Stand: 12. August 2026</span>
+        <span class="pill">Rollierende 30 Tage</span>
+        <span class="pill">Ausgeklammerte Pools nicht bewertet</span>
+      </div>
+    </section>
+
+    <div class="metric-grid">
+      <article class="metric">
+        <div class="metric-label">Aktive Liquidität</div>
+        <div class="metric-value">$29.851</div>
+        <div class="metric-foot">Analysierte aktive Pools mit TVL &gt; 0</div>
+      </article>
+      <article class="metric">
+        <div class="metric-label">Einnahmen 30T</div>
+        <div class="metric-value">$67,15</div>
+        <div class="metric-foot">Pool-Einnahmen im rollierenden 30-Tage-Zeitraum</div>
+      </article>
+      <article class="metric">
+        <div class="metric-label">Top-Performer</div>
+        <div class="metric-value">CUPSEY</div>
+        <div class="metric-foot">Score 99 · $7,95 Einnahmen bei nur $187,78 TVL</div>
+      </article>
+      <article class="metric">
+        <div class="metric-label">Score ≥ 80</div>
+        <div class="metric-value">9 Pools</div>
+        <div class="metric-foot">Sehr hohe Effizienz im aktuellen Snapshot</div>
+      </article>
+    </div>
+
+    <div class="spotlight">
+      <article class="focus-card">
+        <div class="focus-title">Kapitaleffizienz im Netzwerk</div>
+        <div class="focus-number">6,9 % <span class="arr">→</span> 43,5 %</div>
+        <div class="focus-copy">
+          Nur 6,9 % der analysierten Liquidität liegen in Pools mit einem Score von mindestens 80.
+          Diese Pools erzeugen gleichzeitig 43,5 % aller 30T-Einnahmen.
+        </div>
+
+        <div class="bar-block">
+          <div class="bar-row">
+            <span>Anteil TVL</span>
+            <div class="bar"><div class="fill" style="width:6.9%"></div></div>
+            <strong>6,9 %</strong>
+          </div>
+          <div class="bar-row">
+            <span>Anteil Einnahmen</span>
+            <div class="bar"><div class="fill" style="width:43.5%"></div></div>
+            <strong>43,5 %</strong>
+          </div>
+        </div>
+      </article>
+
+      <article class="compare-card">
+        <div class="focus-title">Direkter Effizienzvergleich</div>
+        <div class="compare">
+          <div class="compare-line">
+            <div class="compare-head">
+              <span>ASTY / CUPSEY</span><small>Score 99</small>
+            </div>
+            <div class="compare-stats">
+              <span>TVL <b>$187,78</b></span>
+              <span>30T <b>$7,95</b></span>
+            </div>
+          </div>
+          <div class="compare-line">
+            <div class="compare-head">
+              <span>ASTY / WBTC</span><small>Score 11</small>
+            </div>
+            <div class="compare-stats">
+              <span>TVL <b>$1.409,94</b></span>
+              <span>30T <b>$0,88</b></span>
+            </div>
+          </div>
+        </div>
+      </article>
+    </div>
+
+    <section>
+      <div class="section-head">
+        <div class="section-title">🟢 Ausbau prüfen</div>
+        <div class="section-sub">Starke Effizienz und ausreichend positive jüngere Entwicklung. Erhöhungen nur schrittweise testen.</div>
+      </div>
+
+      <div class="cards">
+        <article class="pool green">
+          <div class="pool-top">
+            <div>
+              <div class="pool-name">ASTY / CUPSEY</div>
+              <div class="pool-status">Sehr hoch · steigend</div>
+            </div>
+            <div class="score">99<small>Score</small></div>
+          </div>
+          <div class="pool-stats">
+            <div class="stat"><span>TVL</span><strong>$187,78</strong></div>
+            <div class="stat"><span>Einnahmen 30T</span><strong>$7,95</strong></div>
+            <div class="stat"><span>Volumen 30T</span><strong>$979,16</strong></div>
+            <div class="stat"><span>Einnahmen / TVL 30T</span><strong>4,23 %</strong></div>
+          </div>
+          <div class="pool-note">Aktuell stärkster Pool. Kleine Erhöhung testen und Effizienz nach der Änderung separat messen.</div>
+        </article>
+
+        <article class="pool green">
+          <div class="pool-top">
+            <div>
+              <div class="pool-name">ASTY / GEOD</div>
+              <div class="pool-status">Sehr hoch · stabil</div>
+            </div>
+            <div class="score">81<small>Score</small></div>
+          </div>
+          <div class="pool-stats">
+            <div class="stat"><span>TVL</span><strong>$969,17</strong></div>
+            <div class="stat"><span>Einnahmen 30T</span><strong>$6,81</strong></div>
+            <div class="stat"><span>Einnahmen 24h</span><strong>$0,254</strong></div>
+            <div class="stat"><span>Einnahmen / TVL 30T</span><strong>0,70 %</strong></div>
+          </div>
+          <div class="pool-note">Besonders stark, weil die hohe Effizienz trotz bereits deutlich höherem TVL erhalten bleibt.</div>
+        </article>
+
+        <article class="pool green">
+          <div class="pool-top">
+            <div>
+              <div class="pool-name">ASTY / WOJAK</div>
+              <div class="pool-status">Sehr hoch · steigend</div>
+            </div>
+            <div class="score">93<small>Score</small></div>
+          </div>
+          <div class="pool-stats">
+            <div class="stat"><span>TVL</span><strong>$110,45</strong></div>
+            <div class="stat"><span>Einnahmen 30T</span><strong>$1,82</strong></div>
+            <div class="stat"><span>Einnahmen / TVL 7T</span><strong>0,55 %</strong></div>
+            <div class="stat"><span>Einnahmen / TVL 24h</span><strong>0,067 %</strong></div>
+          </div>
+          <div class="pool-note">Geringe Kapitalbindung bei klar überdurchschnittlicher Effizienz. Moderate Erhöhung möglich.</div>
+        </article>
+
+        <article class="pool green">
+          <div class="pool-top">
+            <div>
+              <div class="pool-name">ASTY / BP</div>
+              <div class="pool-status">Sehr hoch · steigend</div>
+            </div>
+            <div class="score">89<small>Score</small></div>
+          </div>
+          <div class="pool-stats">
+            <div class="stat"><span>TVL</span><strong>$162,34</strong></div>
+            <div class="stat"><span>Einnahmen 30T</span><strong>$2,31</strong></div>
+            <div class="stat"><span>Einnahmen / TVL 7T</span><strong>0,45 %</strong></div>
+            <div class="stat"><span>Einnahmen / TVL 30T</span><strong>1,42 %</strong></div>
+          </div>
+          <div class="pool-note">Jüngere Performance deutlich stärker als der langfristige Durchschnitt. Kleine Erhöhung prüfenswert.</div>
+        </article>
+      </div>
+    </section>
+
+    <section>
+      <div class="section-head">
+        <div class="section-title">🟡 Halten & beobachten</div>
+        <div class="section-sub">Starke historische Werte, kurzfristige Schwäche oder noch nicht ausreichend bestätigte Beschleunigung.</div>
+      </div>
+
+      <div class="cards">
+        <article class="pool yellow">
+          <div class="pool-top">
+            <div><div class="pool-name">ASTY / testicle</div><div class="pool-status">Sehr hoch · rückläufig</div></div>
+            <div class="score">93<small>Score</small></div>
+          </div>
+          <div class="pool-stats">
+            <div class="stat"><span>TVL</span><strong>$118,87</strong></div>
+            <div class="stat"><span>Einnahmen 30T</span><strong>$2,71</strong></div>
+            <div class="stat"><span>Ø Tag 30T</span><strong>$0,090</strong></div>
+            <div class="stat"><span>24h</span><strong>$0,023</strong></div>
+          </div>
+          <div class="pool-note">Langfristig extrem stark, aktuell aber deutlich unter dem üblichen Tagesniveau.</div>
+        </article>
+
+        <article class="pool yellow">
+          <div class="pool-top">
+            <div><div class="pool-name">ASTY / PsyopAnime</div><div class="pool-status">Sehr hoch · Erholung beobachten</div></div>
+            <div class="score">89<small>Score</small></div>
+          </div>
+          <div class="pool-stats">
+            <div class="stat"><span>TVL</span><strong>$153,01</strong></div>
+            <div class="stat"><span>Einnahmen 30T</span><strong>$3,46</strong></div>
+            <div class="stat"><span>Ø Tag 7T</span><strong>$0,037</strong></div>
+            <div class="stat"><span>24h</span><strong>$0,099</strong></div>
+          </div>
+          <div class="pool-note">Nach Rückgang wieder starke 24h. Erst weitere Bestätigung abwarten.</div>
+        </article>
+
+        <article class="pool yellow">
+          <div class="pool-top">
+            <div><div class="pool-name">ASTY / three</div><div class="pool-status">Sehr hoch · steigend</div></div>
+            <div class="score">85<small>Score</small></div>
+          </div>
+          <div class="pool-stats">
+            <div class="stat"><span>TVL</span><strong>$107,91</strong></div>
+            <div class="stat"><span>Einnahmen 30T</span><strong>$0,589</strong></div>
+            <div class="stat"><span>Einnahmen 7T</span><strong>$0,576</strong></div>
+            <div class="stat"><span>24h</span><strong>$0,047</strong></div>
+          </div>
+          <div class="pool-note">Fast die gesamten 30T-Einnahmen entstanden in den letzten 7 Tagen. Stark, aber noch jung.</div>
+        </article>
+
+        <article class="pool yellow">
+          <div class="pool-top">
+            <div><div class="pool-name">ASTY / Buttcoin</div><div class="pool-status">Sehr hoch · rückläufig</div></div>
+            <div class="score">85<small>Score</small></div>
+          </div>
+          <div class="pool-stats">
+            <div class="stat"><span>TVL</span><strong>$197,13</strong></div>
+            <div class="stat"><span>Einnahmen 30T</span><strong>$2,40</strong></div>
+            <div class="stat"><span>Einnahmen 7T</span><strong>$0,359</strong></div>
+            <div class="stat"><span>24h</span><strong>$0,072</strong></div>
+          </div>
+          <div class="pool-note">7T schwächer als 30T, die letzten 24h zeigen jedoch wieder eine Erholung.</div>
+        </article>
+
+        <article class="pool yellow">
+          <div class="pool-top">
+            <div><div class="pool-name">ASTY / Punch</div><div class="pool-status">Sehr hoch · rückläufig</div></div>
+            <div class="score">89<small>Score</small></div>
+          </div>
+          <div class="pool-stats">
+            <div class="stat"><span>TVL</span><strong>$53,53</strong></div>
+            <div class="stat"><span>Einnahmen 30T</span><strong>$1,20</strong></div>
+            <div class="stat"><span>Einnahmen / TVL 30T</span><strong>2,23 %</strong></div>
+            <div class="stat"><span>24h</span><strong>$0,019</strong></div>
+          </div>
+          <div class="pool-note">Sehr effizient, kurzfristig aber rückläufig. Keine Erhöhung bis zur Stabilisierung.</div>
+        </article>
+
+        <article class="pool yellow">
+          <div class="pool-top">
+            <div><div class="pool-name">ASTY / MET</div><div class="pool-status">Hoch · rückläufig</div></div>
+            <div class="score">65<small>Score</small></div>
+          </div>
+          <div class="pool-stats">
+            <div class="stat"><span>TVL</span><strong>$1.280,79</strong></div>
+            <div class="stat"><span>Einnahmen 30T</span><strong>$4,13</strong></div>
+            <div class="stat"><span>Einnahmen 7T</span><strong>$0,593</strong></div>
+            <div class="stat"><span>24h</span><strong>$0,115</strong></div>
+          </div>
+          <div class="pool-note">Aktuelle 24h liegen über dem 7T-Tagesdurchschnitt. Halten.</div>
+        </article>
+
+        <article class="pool yellow">
+          <div class="pool-top">
+            <div><div class="pool-name">ASTY / JTO</div><div class="pool-status">Mittel · steigend</div></div>
+            <div class="score">62<small>Score</small></div>
+          </div>
+          <div class="pool-stats">
+            <div class="stat"><span>TVL</span><strong>$1.124,57</strong></div>
+            <div class="stat"><span>Einnahmen 30T</span><strong>$2,59</strong></div>
+            <div class="stat"><span>Einnahmen 7T</span><strong>$0,507</strong></div>
+            <div class="stat"><span>24h</span><strong>$0,113</strong></div>
+          </div>
+          <div class="pool-note">Jüngere Entwicklung verbessert sich. Aktuell kein Grund für eine Reduzierung.</div>
+        </article>
+
+        <article class="pool yellow">
+          <div class="pool-top">
+            <div><div class="pool-name">ASTY / BOME</div><div class="pool-status">Hoch · steigend</div></div>
+            <div class="score">73<small>Score</small></div>
+          </div>
+          <div class="pool-stats">
+            <div class="stat"><span>TVL</span><strong>$308,25</strong></div>
+            <div class="stat"><span>Einnahmen 30T</span><strong>$1,04</strong></div>
+            <div class="stat"><span>Einnahmen 7T</span><strong>$0,486</strong></div>
+            <div class="stat"><span>24h</span><strong>$0,045</strong></div>
+          </div>
+          <div class="pool-note">Positive Entwicklung. Bei weiterer Bestätigung möglicher Kandidat für kleine Erhöhung.</div>
+        </article>
+      </div>
+    </section>
+
+    <section>
+      <div class="section-head">
+        <div class="section-title">🔴 Kapital überprüfen</div>
+        <div class="section-sub">Hohe Kapitalbindung bei aktuell niedriger relativer Performance. Keine automatische Reduzierung, sondern gezielte Prüfung.</div>
+      </div>
+
+      <div class="cards">
+        <article class="pool red">
+          <div class="pool-top">
+            <div><div class="pool-name">ASTY / WBTC</div><div class="pool-status">Sehr niedrig · stark rückläufig</div></div>
+            <div class="score">11<small>Score</small></div>
+          </div>
+          <div class="pool-stats">
+            <div class="stat"><span>TVL</span><strong>$1.409,94</strong></div>
+            <div class="stat"><span>Einnahmen 30T</span><strong>$0,88</strong></div>
+            <div class="stat"><span>Volumen 24h</span><strong>$0</strong></div>
+            <div class="stat"><span>Volumen 30T</span><strong>$105,12</strong></div>
+          </div>
+          <div class="pool-note">Deutliche Reduzierung prüfen. Sehr viel Kapital bei sehr geringer Aktivität.</div>
+        </article>
+
+        <article class="pool red">
+          <div class="pool-top">
+            <div><div class="pool-name">ASTY / Cake</div><div class="pool-status">Sehr niedrig · rückläufig</div></div>
+            <div class="score">15<small>Score</small></div>
+          </div>
+          <div class="pool-stats">
+            <div class="stat"><span>TVL</span><strong>$783,04</strong></div>
+            <div class="stat"><span>Einnahmen 30T</span><strong>$0,46</strong></div>
+            <div class="stat"><span>Einnahmen 7T</span><strong>$0,020</strong></div>
+            <div class="stat"><span>Volumen 7T</span><strong>$2,46</strong></div>
+          </div>
+          <div class="pool-note">Aktuell kaum relevante Aktivität. Reduzierung prüfen.</div>
+        </article>
+
+        <article class="pool red">
+          <div class="pool-top">
+            <div><div class="pool-name">ASTY / WIF</div><div class="pool-status">Sehr niedrig · stark rückläufig</div></div>
+            <div class="score">22<small>Score</small></div>
+          </div>
+          <div class="pool-stats">
+            <div class="stat"><span>TVL</span><strong>$568,74</strong></div>
+            <div class="stat"><span>Einnahmen 30T</span><strong>$0,54</strong></div>
+            <div class="stat"><span>Volumen 24h</span><strong>$0</strong></div>
+            <div class="stat"><span>Volumen 7T</span><strong>$1,45</strong></div>
+          </div>
+          <div class="pool-note">Die jüngste Performance rechtfertigt die aktuelle Kapitalbindung kaum.</div>
+        </article>
+
+        <article class="pool red">
+          <div class="pool-top">
+            <div><div class="pool-name">ASTY / RENDER</div><div class="pool-status">Niedrig · steigend</div></div>
+            <div class="score">34<small>Score</small></div>
+          </div>
+          <div class="pool-stats">
+            <div class="stat"><span>TVL</span><strong>$1.095,41</strong></div>
+            <div class="stat"><span>Einnahmen 30T</span><strong>$0,75</strong></div>
+            <div class="stat"><span>Einnahmen 7T</span><strong>$0,247</strong></div>
+            <div class="stat"><span>24h</span><strong>$0,039</strong></div>
+          </div>
+          <div class="pool-note">Niedrige Kapitalproduktivität. Teilweise Reduzierung prüfen, falls Kapital anderswo benötigt wird.</div>
+        </article>
+
+        <article class="pool red">
+          <div class="pool-top">
+            <div><div class="pool-name">ASTY / ETH</div><div class="pool-status">Niedrig · stabil</div></div>
+            <div class="score">32<small>Score</small></div>
+          </div>
+          <div class="pool-stats">
+            <div class="stat"><span>TVL</span><strong>$1.414,47</strong></div>
+            <div class="stat"><span>Einnahmen 30T</span><strong>$1,05</strong></div>
+            <div class="stat"><span>Einnahmen 7T</span><strong>$0,266</strong></div>
+            <div class="stat"><span>24h</span><strong>$0,038</strong></div>
+          </div>
+          <div class="pool-note">Für die gebundene Liquidität vergleichsweise geringe Einnahmen.</div>
+        </article>
+
+        <article class="pool red">
+          <div class="pool-top">
+            <div><div class="pool-name">ASTY / RAY</div><div class="pool-status">Niedrig · rückläufig</div></div>
+            <div class="score">37<small>Score</small></div>
+          </div>
+          <div class="pool-stats">
+            <div class="stat"><span>TVL</span><strong>$1.497,28</strong></div>
+            <div class="stat"><span>Einnahmen 30T</span><strong>$2,11</strong></div>
+            <div class="stat"><span>Einnahmen 7T</span><strong>$0,115</strong></div>
+            <div class="stat"><span>24h</span><strong>$0,046</strong></div>
+          </div>
+          <div class="pool-note">Weiterhin Einnahmen vorhanden, aber deutlich schwächere Kapitalproduktivität als bei den Top-Pools.</div>
+        </article>
+      </div>
+    </section>
+
+    <section>
+      <div class="section-head">
+        <div class="section-title">🟣 Basis-Pools</div>
+        <div class="section-sub">Werden wegen ihrer Funktion für Liquidität und Preisbildung separat von normalen Performance-Pools betrachtet.</div>
+      </div>
+
+      <div class="anchor-grid">
+        <article class="anchor">
+          <div class="a-name">ASTY / SOL · Meteora</div>
+          <div class="a-fee">0,25 % Poolgebühr</div>
+          <div class="a-val"><span>TVL</span><strong>$5.640,87</strong></div>
+          <div class="a-val"><span>Score</span><strong>36</strong></div>
+          <div class="a-val"><span>Einnahmen 30T</span><strong>$4,96</strong></div>
+        </article>
+
+        <article class="anchor">
+          <div class="a-name">ASTY / SOL · Raydium</div>
+          <div class="a-fee">0,25 % Poolgebühr</div>
+          <div class="a-val"><span>TVL</span><strong>$872,76</strong></div>
+          <div class="a-val"><span>Score</span><strong>54</strong></div>
+          <div class="a-val"><span>Einnahmen 30T</span><strong>$1,29</strong></div>
+        </article>
+
+        <article class="anchor">
+          <div class="a-name">ASTY / USDC</div>
+          <div class="a-fee">1,00 % Poolgebühr</div>
+          <div class="a-val"><span>TVL</span><strong>$1.597,36</strong></div>
+          <div class="a-val"><span>Score</span><strong>32</strong></div>
+          <div class="a-val"><span>Einnahmen 30T</span><strong>$1,50</strong></div>
+        </article>
+
+        <article class="anchor">
+          <div class="a-name">ASTY / USDC</div>
+          <div class="a-fee">0,25 % Poolgebühr</div>
+          <div class="a-val"><span>TVL</span><strong>$2.949,99</strong></div>
+          <div class="a-val"><span>Score</span><strong>24</strong></div>
+          <div class="a-val"><span>Einnahmen 30T</span><strong>$2,07</strong></div>
+        </article>
+      </div>
+    </section>
+
+    <section>
+      <div class="section-head">
+        <div class="section-title">Schwerpunkt bis zum nächsten Bericht</div>
+        <div class="section-sub">Die nächste Auswertung soll vor allem zeigen, ob konkrete Liquiditätsänderungen tatsächlich zusätzliche Einnahmen erzeugt haben.</div>
+      </div>
+
+      <div class="actions">
+        <div class="action"><b>01</b>Starke Pools nur schrittweise erhöhen.</div>
+        <div class="action"><b>02</b>Auswirkungen jeder TVL-Änderung separat messen.</div>
+        <div class="action"><b>03</b>Neue Liquidität nicht gegen alte 30T-Einnahmen bewerten.</div>
+        <div class="action"><b>04</b>Schwach gebundenes Kapital gezielt überprüfen.</div>
+        <div class="action"><b>05</b>Basis-Pools weiterhin separat bewerten.</div>
+      </div>
+    </section>
+
+    <div class="note">
+      <strong>Methodischer Hinweis:</strong>
+      Die 30T-Werte sind rollierende Daten und kein abgeschlossener Kalendermonat.
+      Wenn innerhalb des Zeitraums Liquidität hinzugefügt oder entfernt wurde, können historische
+      Einnahmen/TVL-Werte verzerrt sein. Für Reallokationen sollte deshalb besonders die Performance
+      ab dem jeweiligen Änderungszeitpunkt betrachtet werden.
+    </div>
+
+    <footer>
+      <span>Interner ASTY Team-Bericht</span>
+      <span>Performance Snapshot · August 2026</span>
+    </footer>
+  </main>
+
+  <script>
+    /*
+      Zukünftige Monate:
+      - Im monthSelect einen neuen <option>-Eintrag ergänzen.
+      - Die Inhalte können später auf ein REPORTS-Objekt umgestellt werden,
+        wenn mehrere Monatsdatensätze direkt in derselben Datei gepflegt werden sollen.
+    */
+  </script>
+</body>
+</html>
