@@ -950,42 +950,194 @@
 
     <section>
       <div class="section-head">
-        <div class="section-title">🟣 Basis-Pools</div>
-        <div class="section-sub">Werden wegen ihrer Funktion für Liquidität und Preisbildung separat von normalen Performance-Pools betrachtet.</div>
+        <div class="section-title">🟣 Basis-Pools · Zusammenführung im Test</div>
+        <div class="section-sub">
+          Umstellung am 9. August 2026. Seitdem wird geprüft, ob die Konzentration der SOL- und USDC-Liquidität
+          nicht nur strukturell sauberer ist, sondern auch Volumen, Einnahmen und Kapitaleffizienz verbessert.
+        </div>
+      </div>
+
+      <div class="metric-grid">
+        <article class="metric">
+          <div class="metric-label">SOL · Zielstruktur</div>
+          <div class="metric-value">99,5 %</div>
+          <div class="metric-foot">der aktuellen SOL-Liquidität liegt in den beiden 0,25-%-Zielpools</div>
+        </article>
+
+        <article class="metric">
+          <div class="metric-label">USDC · Zielstruktur</div>
+          <div class="metric-value">99,6 %</div>
+          <div class="metric-foot">der aktuellen USDC-Liquidität liegt in den 0,25-%- und 1-%-Zielpools</div>
+        </article>
+
+        <article class="metric">
+          <div class="metric-label">Testbeginn</div>
+          <div class="metric-value">09.08.</div>
+          <div class="metric-foot">Performance wird ab diesem Zeitpunkt separat betrachtet</div>
+        </article>
+
+        <article class="metric">
+          <div class="metric-label">Aktueller Status</div>
+          <div class="metric-value">LÄUFT</div>
+          <div class="metric-foot">noch keine belastbare 7T- oder 30T-Nachher-Periode vorhanden</div>
+        </article>
+      </div>
+
+      <div class="spotlight">
+        <article class="focus-card">
+          <div class="focus-title">SOL · Zusammenführung</div>
+          <div class="focus-number">3 → 2 <span class="arr">Zielpools</span></div>
+          <div class="focus-copy">
+            Die alten Meteora-SOL-Pools mit 1 %, 0,3 % und 2 % wurden aus der aktiven Kapitalbewertung ausgeklammert.
+            Die Liquidität wurde auf Meteora 0,25 % und Raydium 0,25 % konzentriert.
+          </div>
+
+          <div class="bar-block">
+            <div class="bar-row">
+              <span>Zielpools</span>
+              <div class="bar"><div class="fill" style="width:99.5%"></div></div>
+              <strong>99,5 %</strong>
+            </div>
+          </div>
+        </article>
+
+        <article class="focus-card">
+          <div class="focus-title">USDC · Zusammenführung</div>
+          <div class="focus-number">5 → 2 <span class="arr">Zielpools</span></div>
+          <div class="focus-copy">
+            Die USDC-Liquidität wurde auf den 0,25-%- und den 1-%-Pool konzentriert.
+            Die 0,3-%-, 2-%- und 6-%-Pools wurden aus der aktiven Kapitalbewertung ausgeklammert.
+          </div>
+
+          <div class="bar-block">
+            <div class="bar-row">
+              <span>Zielpools</span>
+              <div class="bar"><div class="fill" style="width:99.6%"></div></div>
+              <strong>99,6 %</strong>
+            </div>
+          </div>
+        </article>
+      </div>
+
+      <div class="section-head" style="margin-top:22px">
+        <div class="section-title">Vergleichslogik</div>
+        <div class="section-sub">
+          Bewertet werden ausschließlich gleich lange Zeiträume vor und nach dem 9. August.
+          Mischwerte aus dem aktuellen 7T- oder 30T-Fenster werden nicht als Nachweis verwendet.
+        </div>
+      </div>
+
+      <div class="cards">
+        <article class="pool purple">
+          <div class="pool-top">
+            <div>
+              <div class="pool-name">3 Tage vorher → 3 Tage nachher</div>
+              <div class="pool-status">Erster Kurzfristvergleich</div>
+            </div>
+            <div class="score">3T<small>Test</small></div>
+          </div>
+          <div class="pool-note">
+            Vergleich von Gesamtvolumen, Einnahmen, durchschnittlichem TVL, Volumen/TVL und Einnahmen/TVL
+            für SOL und USDC. Dieser Vergleich dient nur als frühes Signal und nicht als endgültige Bewertung.
+          </div>
+        </article>
+
+        <article class="pool yellow">
+          <div class="pool-top">
+            <div>
+              <div class="pool-name">7 Tage vorher → 7 Tage nachher</div>
+              <div class="pool-status">Noch nicht vollständig</div>
+            </div>
+            <div class="score">7T<small>Test</small></div>
+          </div>
+          <div class="pool-note">
+            Erste belastbare Zwischenbewertung. Vollständig erst möglich, wenn sieben komplette Tage nach der Umstellung vorliegen.
+          </div>
+        </article>
+
+        <article class="pool yellow">
+          <div class="pool-top">
+            <div>
+              <div class="pool-name">30 Tage vorher → 30 Tage nachher</div>
+              <div class="pool-status">Noch nicht verfügbar</div>
+            </div>
+            <div class="score">30T<small>Test</small></div>
+          </div>
+          <div class="pool-note">
+            Langfristige Bewertung der Zusammenführung. Erst dieser Vergleich zeigt, ob der Effekt auch über einen vollständigen 30-Tage-Zeitraum Bestand hat.
+          </div>
+        </article>
+
+        <article class="pool purple">
+          <div class="pool-top">
+            <div>
+              <div class="pool-name">Bewertungskriterien</div>
+              <div class="pool-status">Nicht nur Volumen</div>
+            </div>
+            <div class="score">5<small>KPIs</small></div>
+          </div>
+          <div class="pool-note">
+            Gesamtvolumen · Einnahmen · Ø TVL · Volumen/TVL · Einnahmen/TVL.
+            Eine Zusammenführung gilt nur dann als klar positiv, wenn nicht lediglich Liquidität verschoben wurde,
+            sondern die Kapitalproduktivität insgesamt steigt oder stabiler wird.
+          </div>
+        </article>
+      </div>
+
+      <div class="section-head" style="margin-top:22px">
+        <div class="section-title">Aktuelle Zielpools</div>
+        <div class="section-sub">Die aktuellen Scores bleiben sichtbar, werden aber für die Bewertung der Zusammenführung noch nicht isoliert herangezogen.</div>
       </div>
 
       <div class="anchor-grid">
         <article class="anchor">
           <div class="a-name">ASTY / SOL · Meteora</div>
-          <div class="a-fee">0,25 % Poolgebühr</div>
+          <div class="a-fee">0,25 % · Zielpool</div>
           <div class="a-val"><span>TVL</span><strong>$5.640,87</strong></div>
           <div class="a-val"><span>Score</span><strong>36</strong></div>
-          <div class="a-val"><span>Einnahmen 30T</span><strong>$4,96</strong></div>
+          <div class="a-val"><span>Volumen 24h</span><strong>$43,48</strong></div>
+          <div class="a-val"><span>Einnahmen 24h</span><strong>$0,087</strong></div>
         </article>
 
         <article class="anchor">
           <div class="a-name">ASTY / SOL · Raydium</div>
-          <div class="a-fee">0,25 % Poolgebühr</div>
+          <div class="a-fee">0,25 % · Zielpool</div>
           <div class="a-val"><span>TVL</span><strong>$872,76</strong></div>
           <div class="a-val"><span>Score</span><strong>54</strong></div>
-          <div class="a-val"><span>Einnahmen 30T</span><strong>$1,29</strong></div>
+          <div class="a-val"><span>Volumen 24h</span><strong>$10,65</strong></div>
+          <div class="a-val"><span>Einnahmen 24h</span><strong>$0,027</strong></div>
         </article>
 
         <article class="anchor">
           <div class="a-name">ASTY / USDC</div>
-          <div class="a-fee">1,00 % Poolgebühr</div>
+          <div class="a-fee">1,00 % · Zielpool</div>
           <div class="a-val"><span>TVL</span><strong>$1.597,36</strong></div>
           <div class="a-val"><span>Score</span><strong>32</strong></div>
-          <div class="a-val"><span>Einnahmen 30T</span><strong>$1,50</strong></div>
+          <div class="a-val"><span>Volumen 24h</span><strong>$2,31</strong></div>
+          <div class="a-val"><span>Einnahmen 24h</span><strong>$0,019</strong></div>
         </article>
 
         <article class="anchor">
           <div class="a-name">ASTY / USDC</div>
-          <div class="a-fee">0,25 % Poolgebühr</div>
+          <div class="a-fee">0,25 % · Zielpool</div>
           <div class="a-val"><span>TVL</span><strong>$2.949,99</strong></div>
           <div class="a-val"><span>Score</span><strong>24</strong></div>
-          <div class="a-val"><span>Einnahmen 30T</span><strong>$2,07</strong></div>
+          <div class="a-val"><span>Volumen 24h</span><strong>$27,62</strong></div>
+          <div class="a-val"><span>Einnahmen 24h</span><strong>$0,055</strong></div>
         </article>
+      </div>
+
+      <div class="note" style="margin-top:14px">
+        <strong>Zwischenbewertung:</strong><br>
+        Die Zusammenführung ist <strong>strukturell erfolgreich</strong>, weil die Liquidität heute nahezu vollständig
+        in den vorgesehenen Zielpools liegt.<br><br>
+
+        Eine Aussage wie „die Zusammenführung hat das Volumen erhöht“ oder „die Effizienz verbessert“
+        wird im Bericht aktuell bewusst <strong>noch nicht</strong> getroffen. Dafür werden gleich lange Vorher-/Nachher-Zeiträume benötigt.<br><br>
+
+        <strong>Nächster sinnvoller Prüfpunkt:</strong> 7 vollständige Tage nach dem 9. August 2026.
+        Danach können SOL und USDC erstmals sauber über einen 7T-Vorher-/Nachher-Vergleich bewertet werden.
+        Der 30T-Vergleich folgt nach 30 vollständigen Tagen.
       </div>
     </section>
 
@@ -1000,7 +1152,7 @@
         <div class="action"><b>02</b>Auswirkungen jeder TVL-Änderung separat messen.</div>
         <div class="action"><b>03</b>Neue Liquidität nicht gegen alte 30T-Einnahmen bewerten.</div>
         <div class="action"><b>04</b>Schwach gebundenes Kapital gezielt überprüfen.</div>
-        <div class="action"><b>05</b>Basis-Pools weiterhin separat bewerten.</div>
+        <div class="action"><b>05</b>3T-, 7T- und 30T-Vorher-/Nachher-Vergleich für SOL und USDC durchführen.</div>
       </div>
     </section>
 
