@@ -624,8 +624,14 @@
       line-height: 1.4;
     }
 
+    .reserve-stats {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(145px, 1fr));
+      gap: 10px;
+    }
+
     .reserve-usd {
-      min-width: max-content;
+      min-width: 0;
       padding: 10px 13px;
       border-radius: 13px;
       border: 1px solid rgba(167,139,250,0.16);
@@ -1223,6 +1229,10 @@
         grid-template-columns: 1fr;
       }
 
+      .reserve-stats {
+        width: 100%;
+      }
+
       .reserve-usd {
         width: 100%;
         text-align: left;
@@ -1402,9 +1412,16 @@
         </div>
       </div>
 
-      <div class="reserve-usd">
-        <div class="reserve-usd-label">Current USD value</div>
-        <div class="reserve-usd-value" id="lpReserveUsd">—</div>
+      <div class="reserve-stats">
+        <div class="reserve-usd">
+          <div class="reserve-usd-label">Share of Current Supply</div>
+          <div class="reserve-usd-value" id="lpReserveSupplyShare">—</div>
+        </div>
+
+        <div class="reserve-usd">
+          <div class="reserve-usd-label">Current USD value</div>
+          <div class="reserve-usd-value" id="lpReserveUsd">—</div>
+        </div>
       </div>
     </section>
 
@@ -2343,6 +2360,7 @@
     function setReserveLoading(message, attempt = null) {
       const status = el("lpReserveStatus");
       const value = el("lpReserveAsty");
+      const share = el("lpReserveSupplyShare");
       const usd = el("lpReserveUsd");
 
       if (status) {
@@ -2355,6 +2373,10 @@
 
       if (value && !Number.isFinite(state.summary?.lpReserveAsty)) {
         value.textContent = "Loading $ASTY";
+      }
+
+      if (share && !Number.isFinite(state.summary?.lpReserveSupplyShare)) {
+        share.textContent = "Loading";
       }
 
       if (usd && !Number.isFinite(state.summary?.lpReserveUsd)) {
@@ -2716,6 +2738,12 @@
         Number.isFinite(lpReserveAsty) && Number.isFinite(reference.price)
           ? lpReserveAsty * reference.price
           : null;
+      const lpReserveSupplyShare =
+        Number.isFinite(lpReserveAsty) &&
+        Number.isFinite(currentSupply) &&
+        currentSupply > 0
+          ? lpReserveAsty / currentSupply * 100
+          : null;
       const launchOnePercentTokens = INITIAL_SUPPLY * 0.01;
       const launchOnePercentNow = Number.isFinite(currentSupply) && currentSupply > 0
         ? launchOnePercentTokens / currentSupply * 100
@@ -2744,6 +2772,7 @@
         sincePresale,
         lpReserveAsty,
         lpReserveUsd,
+        lpReserveSupplyShare,
         launchOnePercentTokens,
         launchOnePercentNow
       };
@@ -2810,6 +2839,12 @@
         Number.isFinite(summary.lpReserveAsty)
           ? `${fmtNumber(summary.lpReserveAsty, 0)} $ASTY`
           : "— $ASTY"
+      );
+      setMetric(
+        "lpReserveSupplyShare",
+        Number.isFinite(summary.lpReserveSupplyShare)
+          ? `${summary.lpReserveSupplyShare.toFixed(2)}%`
+          : "—"
       );
       setMetric("lpReserveUsd", fmtUsd(summary.lpReserveUsd, true));
 
