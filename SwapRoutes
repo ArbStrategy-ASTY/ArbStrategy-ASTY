@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>ASTY Swap Routes</title>
+<title>ASTY Swap Routes · V2</title>
 <style>
 :root{
   --bg:#07070b;--panel:#0d0d14;--panel2:#11111a;--line:rgba(255,255,255,.08);
@@ -114,7 +114,7 @@ footer{text-align:center;color:#5e5968;font-size:9px;margin-top:22px;line-height
   <div class="statusbar">
     <div class="stat"><small>ASTY Pools</small><strong id="poolStat"><span class="dot"></span>Laden…</strong></div>
     <div class="stat"><small>Gegen-Token</small><strong id="tokenStat">—</strong></div>
-    <div class="stat"><small>Jupiter Modus</small><strong>Keyless · 0,5 RPS</strong></div>
+    <div class="stat"><small>Jupiter Modus</small><strong id="jupStat">Keyless · Verbindung wird geprüft</strong></div>
   </div>
 </section>
 
@@ -133,7 +133,7 @@ footer{text-align:center;color:#5e5968;font-size:9px;margin-top:22px;line-height
     <button class="primary" id="compareBtn" disabled>ROUTEN VERGLEICHEN</button>
     <button class="secondary" id="sizeBtn" disabled>3 EINSATZGRÖSSEN TESTEN</button>
     <div class="progress" id="progress"><i id="progressBar"></i></div>
-    <div class="help" id="progressText">Jupiter-Keyless wird absichtlich langsam abgefragt. Ein Vergleich benötigt 3 Quotes und dauert ungefähr 5 Sekunden. Der Größentest benötigt 9 Quotes.</div>
+    <div class="help" id="progressText">Jupiter-Keyless wird absichtlich langsam abgefragt. Ein Vergleich benötigt 3 Quotes und dauert ungefähr 5–8 Sekunden. Falls api.jup.ag im Browser nicht antwortet, versucht die Seite automatisch den offiziellen Lite-Endpunkt als Fallback.</div>
   </div>
 
   <div class="card route-result" id="result">
@@ -148,7 +148,7 @@ footer{text-align:center;color:#5e5968;font-size:9px;margin-top:22px;line-height
 
 <div class="notice"><strong>Reality-Test:</strong> „ASTY Route“ wird nur akzeptiert, wenn Jupiter für beide direkten Legs tatsächlich einen bekannten ASTY-Pool quotiert. Nutzt Jupiter bereits in seiner normalen Best-Route ASTY als Zwischen-Token, wird das ausdrücklich angezeigt. Die Quote enthält AMM-/Poolgebühren im Output. Slippage ist eine Ausführungstoleranz und wird nicht vom angezeigten <code>outAmount</code> abgezogen.</div>
 
-<footer>ASTY Swap Routes · Read-only Route Lab · keine Wallet-Verbindung · keine Trades · Daten: Meteora DAMM v2 + Jupiter Metis Quote API</footer>
+<footer>ASTY Swap Routes V2 · Read-only Route Lab · keine Wallet-Verbindung · keine Trades · Daten: Meteora DAMM v2 + Jupiter Metis Quote API</footer>
 </div>
 
 <script>
@@ -156,8 +156,10 @@ const ASTY_MINT="ASTYqeaoK83Zs1pTFEXZUB6BM8cG8YLTsN852NUkt7ZR";
 const SOL_MINT="So11111111111111111111111111111111111111112";
 const USDC_MINT="EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v";
 const RAYDIUM_ASTY_SOL="m1e9swvUoggDm2zLXzrzKRrbVwmGEP8aQy7BQigFZgK";
-const JUP_QUOTE="https://api.jup.ag/swap/v1/quote";
+const JUP_PRIMARY="https://api.jup.ag/swap/v1/quote";
+const JUP_FALLBACK="https://lite-api.jup.ag/swap/v1/quote";
 const JUP_WAIT_MS=2150;
+let activeJupiterEndpoint="api.jup.ag";
 
 const $=id=>document.getElementById(id);
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
@@ -180,9 +182,28 @@ function setProgress(p,text){
   if(text)$("progressText").textContent=text;
 }
 async function fetchJson(url){
-  const r=await fetch(url,{cache:"no-store",headers:{Accept:"application/json"}});
-  let j=null;try{j=await r.json()}catch{}
-  if(!r.ok)throw new Error(j?.error||j?.message||`HTTP ${r.status}`);
+  let r;
+  try{
+    r=await fetch(url,{cache:"no-store",headers:{Accept:"application/json"}});
+  }catch(e){
+    const err=new Error(`Netzwerk/CORS-Fehler: ${e?.message||"fetch failed"}`);
+    err.kind="network";
+    err.url=url;
+    throw err;
+  }
+  let j=null,raw="";
+  try{j=await r.clone().json()}catch{
+    try{raw=await r.text()}catch{}
+  }
+  if(!r.ok){
+    const msg=j?.error||j?.message||raw||`HTTP ${r.status}`;
+    const err=new Error(`HTTP ${r.status}: ${msg}`);
+    err.status=r.status;
+    err.kind="http";
+    err.payload=j;
+    err.url=url;
+    throw err;
+  }
   return j;
 }
 async function meteoraSide(side){
@@ -256,16 +277,61 @@ async function rateGate(){
   if(wait)await sleep(wait);
   lastQuoteAt=Date.now();
 }
-async function jupiterQuote(inputMint,outputMint,rawAmount,{direct=false,slippageBps=50}={}){
-  await rateGate();
+function makeQuoteParams(inputMint,outputMint,rawAmount,{direct=false,slippageBps=50}={}){
   const p=new URLSearchParams({
-    inputMint,outputMint,amount:String(rawAmount),
+    inputMint,
+    outputMint,
+    amount:String(rawAmount),
     slippageBps:String(slippageBps),
-    instructionVersion:"V2",
-    restrictIntermediateTokens:direct?"true":"false"
+    instructionVersion:"V2"
   });
+  // For our benchmark use Jupiter's safer/recommended intermediate-token restriction.
+  p.set("restrictIntermediateTokens","true");
   if(direct)p.set("onlyDirectRoutes","true");
-  return await fetchJson(`${JUP_QUOTE}?${p}`);
+  return p;
+}
+function looksLikeNoRoute(err){
+  const s=String(err?.message||"").toLowerCase();
+  return err?.status===400 || err?.status===404 ||
+    s.includes("no route") || s.includes("route not found") ||
+    s.includes("could not find") || s.includes("not tradable");
+}
+function shouldTryFallback(err){
+  // Browser/CORS failures and gateway/auth/rate/server failures can be retried on Lite.
+  return err?.kind==="network" ||
+    [401,403,408,429,500,502,503,504].includes(err?.status);
+}
+async function quoteFromEndpoint(endpoint,p){
+  await rateGate();
+  return await fetchJson(`${endpoint}?${p}`);
+}
+async function jupiterQuote(inputMint,outputMint,rawAmount,{direct=false,slippageBps=50,allowNoRoute=false}={}){
+  const p=makeQuoteParams(inputMint,outputMint,rawAmount,{direct,slippageBps});
+  try{
+    const q=await quoteFromEndpoint(JUP_PRIMARY,p);
+    activeJupiterEndpoint="api.jup.ag";
+    $("jupStat").textContent="Keyless · api.jup.ag";
+    return q;
+  }catch(primaryErr){
+    if(allowNoRoute && looksLikeNoRoute(primaryErr)) return null;
+    if(!shouldTryFallback(primaryErr)) throw primaryErr;
+
+    try{
+      const q=await quoteFromEndpoint(JUP_FALLBACK,p);
+      activeJupiterEndpoint="lite-api.jup.ag";
+      $("jupStat").textContent="Keyless · Lite-Fallback";
+      return q;
+    }catch(fallbackErr){
+      if(allowNoRoute && looksLikeNoRoute(fallbackErr)) return null;
+      const err=new Error(
+        `Jupiter nicht erreichbar. api.jup.ag: ${primaryErr.message} · `+
+        `Lite-Fallback: ${fallbackErr.message}`
+      );
+      err.primary=primaryErr;
+      err.fallback=fallbackErr;
+      throw err;
+    }
+  }
 }
 function rawFromUi(amount,decimals){
   if(!(amount>0))throw new Error("Bitte eine gültige Menge eingeben.");
@@ -336,17 +402,34 @@ async function compareRoutes(amountOverride=null,progressBase=0,progressSpan=100
   const raw=rawFromUi(amount,from.decimals);
 
   setProgress(progressBase+progressSpan*.08,`1/3 · Jupiter Best-Route ${from.symbol} → ${to.symbol}`);
-  const normal=await jupiterQuote(from.mint,to.mint,raw,{direct:false,slippageBps:slip});
+  let normal;
+  try{
+    normal=await jupiterQuote(from.mint,to.mint,raw,{direct:false,slippageBps:slip});
+  }catch(e){
+    throw new Error(`Schritt 1 – Jupiter Best-Route ${from.symbol} → ${to.symbol}: ${e.message}`);
+  }
 
   setProgress(progressBase+progressSpan*.38,`2/3 · Direkte ASTY-Einstiegsroute ${from.symbol} → ASTY`);
-  const firstQ=await jupiterQuote(from.mint,ASTY_MINT,raw,{direct:true,slippageBps:slip});
+  let firstQ;
+  try{
+    firstQ=await jupiterQuote(from.mint,ASTY_MINT,raw,{direct:true,slippageBps:slip,allowNoRoute:true});
+  }catch(e){
+    throw new Error(`Schritt 2 – ${from.symbol} → ASTY: ${e.message}`);
+  }
+  if(!firstQ) return {from,to,amount,normal,bridge:null,reason:`Jupiter hat aktuell keine direkte Route für ${from.symbol} → ASTY.`};
   const first=directKnownPoolQuote(firstQ,from.mint,ASTY_MINT);
-  if(!first) return {from,to,amount,normal,bridge:null,reason:`Jupiter quotiert keinen bekannten ASTY-Pool für ${from.symbol} → ASTY.`};
+  if(!first) return {from,to,amount,normal,bridge:null,reason:`Jupiter quotiert ${from.symbol} → ASTY, aber nicht über einen der geladenen ASTY-Pools.`};
 
   setProgress(progressBase+progressSpan*.70,`3/3 · Direkte ASTY-Ausgangsroute ASTY → ${to.symbol}`);
-  const secondQ=await jupiterQuote(ASTY_MINT,to.mint,first.out.toString(),{direct:true,slippageBps:slip});
+  let secondQ;
+  try{
+    secondQ=await jupiterQuote(ASTY_MINT,to.mint,first.out.toString(),{direct:true,slippageBps:slip,allowNoRoute:true});
+  }catch(e){
+    throw new Error(`Schritt 3 – ASTY → ${to.symbol}: ${e.message}`);
+  }
+  if(!secondQ) return {from,to,amount,normal,bridge:null,reason:`Jupiter hat aktuell keine direkte Route für ASTY → ${to.symbol}.`};
   const second=directKnownPoolQuote(secondQ,ASTY_MINT,to.mint);
-  if(!second) return {from,to,amount,normal,bridge:null,reason:`Jupiter quotiert keinen bekannten ASTY-Pool für ASTY → ${to.symbol}.`};
+  if(!second) return {from,to,amount,normal,bridge:null,reason:`Jupiter quotiert ASTY → ${to.symbol}, aber nicht über einen der geladenen ASTY-Pools.`};
 
   const normalOut=BigInt(normal.outAmount||0);
   const bridgeOut=second.out;
@@ -417,8 +500,8 @@ async function runCompare(){
     setProgress(100,"Vergleich abgeschlossen. Quotes sind nur ein Live-Snapshot.");
   }catch(e){
     console.error(e);
-    $("result").innerHTML=`<div class="empty"><b>Vergleich fehlgeschlagen.</b>${esc(e.message||String(e))}<br><br><span style="color:#777">Bei HTTP 429 bitte einige Sekunden warten und erneut versuchen.</span></div>`;
-    setProgress(100,"Fehler beim Abrufen der Jupiter-Quotes.");
+    $("result").innerHTML=`<div class="empty"><b>Vergleich fehlgeschlagen.</b>${esc(e.message||String(e))}<br><br><span style="color:#777">Aktiver Jupiter-Endpunkt: ${esc(activeJupiterEndpoint)}. Bei Rate-Limit kurz warten und erneut versuchen.</span></div>`;
+    setProgress(100,"Jupiter-Quote fehlgeschlagen – genaue Ursache steht rechts im Ergebnisfeld.");
   }finally{
     busy=false;$("compareBtn").disabled=false;$("sizeBtn").disabled=false;
   }
