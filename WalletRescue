@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="de">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#08080d">
-<title>ASTY Wallet Rescue · V2</title>
+<title>ASTY Wallet Rescue · V3</title>
 <style>
 :root{
   --bg:#07070b;--panel:#0e0e16;--panel2:#12121d;--line:rgba(255,255,255,.085);
@@ -101,7 +101,11 @@ footer{text-align:center;font-size:8px;color:#5f5a67;margin-top:20px;line-height
   <div class="card">
     <div class="cardtitle">Wallet Scan</div>
     <div class="statusbox" id="scanStatus"><span class="dot"></span>Wallet noch nicht verbunden.</div>
-    <div class="rpc"><label>Solana RPC</label>
+    <div class="rpc"><label>Rescue RPC Gateway (empfohlen)</label>
+      <input type="url" id="gatewayUrl" placeholder="https://dein-worker.workers.dev" autocomplete="off">
+      <div class="info" style="margin-top:6px">Wenn eingetragen, laufen die Scan-Abfragen über euren eigenen kleinen Gateway. Damit umgehen wir Browser-CORS/403-Probleme öffentlicher Solana-RPCs. Die URL wird nur lokal in diesem Browser gespeichert.</div>
+    </div>
+    <div class="rpc"><label>Direkter RPC-Fallback</label>
       <select id="rpcSelect"><option value="https://solana-rpc.publicnode.com" selected>PublicNode · kostenlos</option><option value="https://api.mainnet-beta.solana.com">Solana Public RPC</option><option value="custom">Eigene RPC-URL</option></select>
       <input type="url" id="customRpc" placeholder="https://..." style="display:none;margin-top:7px">
     </div>
@@ -128,7 +132,7 @@ footer{text-align:center;font-size:8px;color:#5f5a67;margin-top:20px;line-height
 
 <div class="notice"><strong>Sicherheitsprinzip:</strong> ASTY Wallet Rescue schließt in V1 nur Tokenkonten mit Tokenbestand exakt 0. Konten mit Tokenbestand werden nie ausgewählt. Die zurückgeholten Lamports gehen direkt an deine eigene verbundene Wallet. Es gibt in V1 keine ASTY-Service-Fee.</div>
 
-<footer>ASTY Wallet Rescue V2 · Client-side only · kein Custody · keine Seed Phrase · keine privaten Schlüssel · Mainnet Beta</footer>
+<footer>ASTY Wallet Rescue V3 · Client-side only · kein Custody · keine Seed Phrase · keine privaten Schlüssel · Mainnet Beta</footer>
 </div>
 
 <div class="modalback" id="modalBack"><div class="modal">
@@ -156,15 +160,35 @@ let provider=null,walletPubkey=null,emptyAccounts=[],delegates=[],busy=false,act
 function scanStatus(text,kind=""){const cls=kind==="live"?" live":kind==="err"?" err":"";$("scanStatus").innerHTML=`<span class="dot${cls}"></span>${esc(text)}`}
 function progress(v){$("progress").style.display=(v>0&&v<100)?"block":"none";$("bar").style.width=`${v}%`}
 function rpcCandidates(){const chosen=$("rpcSelect").value==="custom"?$("customRpc").value.trim():$("rpcSelect").value;return [...new Set([chosen,"https://solana-rpc.publicnode.com","https://api.mainnet-beta.solana.com"].filter(Boolean))]}
+function gatewayUrl(){return $("gatewayUrl").value.trim().replace(/\/$/,"")}
+async function callRpcUrl(url,method,params){
+  const r=await fetch(url,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({jsonrpc:"2.0",id:1,method,params})});
+  const j=await r.json().catch(()=>null);
+  if(!r.ok||j?.error)throw new Error(j?.error?.message||`HTTP ${r.status}`);
+  return j.result;
+}
 async function rpcRequest(method,params=[]){
   let last=null;
+  const gateway=gatewayUrl();
+  if(gateway){
+    try{
+      const result=await callRpcUrl(gateway,method,params);
+      activeRpc="ASTY Rescue Gateway";
+      return result;
+    }catch(e){
+      last=new Error(`Gateway: ${e.message}`);
+      console.warn(last);
+    }
+  }
   for(const url of rpcCandidates()){
     try{
-      const r=await fetch(url,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({jsonrpc:"2.0",id:1,method,params})});
-      const j=await r.json().catch(()=>null);
-      if(!r.ok||j?.error)throw new Error(j?.error?.message||`HTTP ${r.status}`);
-      activeRpc=url;return j.result;
-    }catch(e){last=new Error(`${url}: ${e.message}`)}
+      const result=await callRpcUrl(url,method,params);
+      activeRpc=url;
+      return result;
+    }catch(e){
+      last=new Error(`${url}: ${e.message}`);
+      console.warn(last);
+    }
   }
   throw last||new Error("Kein RPC erreichbar.");
 }
@@ -233,7 +257,7 @@ async function scanWallet(){
     emptyAccounts=all.filter(a=>a.rawAmount===0n&&authorityCanClose(a)&&!a.isNative);
     delegates=all.filter(a=>!!a.delegate&&a.delegatedRaw>0n);
     renderAccounts();renderDelegates();renderStats();progress(100);
-    scanStatus(`${all.length} Tokenkonten geprüft · RPC: ${activeRpc?.replace("https://","")||"—"}`,"live");
+    scanStatus(`${all.length} Tokenkonten geprüft · Datenquelle: ${activeRpc?.replace?.("https://","")||activeRpc||"—"}`,"live");
   }catch(e){console.error(e);progress(100);scanStatus(`Scan fehlgeschlagen: ${e.message}`,"err")}
   finally{busy=false;$("scanBtn").disabled=false;$("rescueBtn").disabled=false}
 }
@@ -287,6 +311,12 @@ function closeModal(){$("modalBack").style.display="none"}
 $("connectBtn").addEventListener("click",connectWallet);$("disconnectBtn").addEventListener("click",disconnectWallet);$("scanBtn").addEventListener("click",scanWallet);$("rescueBtn").addEventListener("click",openModal);$("cancelBtn").addEventListener("click",closeModal);$("confirmBtn").addEventListener("click",performRescue);
 $("selectAllBtn").addEventListener("click",()=>{const boxes=[...document.querySelectorAll(".acctcheck")];const should=boxes.some(b=>!b.checked);boxes.forEach(b=>b.checked=should);renderStats();$("selectAllBtn").textContent=should?"ALLE ABWÄHLEN":"ALLE AUSWÄHLEN"});
 $("rpcSelect").addEventListener("change",()=>{$("customRpc").style.display=$("rpcSelect").value==="custom"?"block":"none"});
+$("gatewayUrl").value=localStorage.getItem("astyRescueGateway")||"";
+$("gatewayUrl").addEventListener("change",()=>{
+  const v=$("gatewayUrl").value.trim().replace(/\/$/,"");
+  $("gatewayUrl").value=v;
+  if(v)localStorage.setItem("astyRescueGateway",v);else localStorage.removeItem("astyRescueGateway");
+});
 $("modalBack").addEventListener("click",e=>{if(e.target===$("modalBack"))closeModal()});
 
 async function boot(){
