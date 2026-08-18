@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#08080d">
-<title>ASTY Wallet Rescue · V5</title>
+<title>ASTY Wallet Rescue · V6</title>
 <style>
 :root{
   --bg:#07070b;--panel:#0e0e16;--panel2:#12121d;--line:rgba(255,255,255,.085);
@@ -94,22 +94,16 @@ footer{text-align:center;font-size:8px;color:#5f5a67;margin-top:20px;line-height
   <div class="stat"><small>Rückholbares SOL</small><strong class="green" id="recoverSol">—</strong><div class="sub">Brutto vor Netzwerkgebühren</div></div>
   <div class="stat"><small>Leere Konten</small><strong id="emptyCount">—</strong><div class="sub">SPL + Token-2022</div></div>
   <div class="stat"><small>Ausgewählt</small><strong class="cyan" id="selectedCount">—</strong><div class="sub" id="selectedSol">— SOL</div></div>
-  <div class="stat"><small>Aktive Delegates</small><strong class="amber" id="delegateCount">—</strong><div class="sub">Nur Hinweis in V1</div></div>
+  <div class="stat"><small>Aktive Delegates</small><strong class="amber" id="delegateCount">—</strong><div class="sub">Nur Sicherheitscheck</div></div>
 </section>
 
 <section class="grid">
   <div class="card">
     <div class="cardtitle">Wallet Scan</div>
     <div class="statusbox" id="scanStatus"><span class="dot"></span>Wallet noch nicht verbunden.</div>
-    <div class="rpc"><label>Rescue RPC Gateway (empfohlen)</label>
-      <input type="url" id="gatewayUrl" placeholder="https://dein-worker.workers.dev" autocomplete="off">
-      <div class="info" style="margin-top:6px">Wenn eingetragen, laufen die Scan-Abfragen über euren eigenen kleinen Gateway. Damit umgehen wir Browser-CORS/403-Probleme öffentlicher Solana-RPCs. Die URL wird nur lokal in diesem Browser gespeichert.</div>
-      <button class="btn ghost scanbutton" id="testGatewayBtn" type="button">GATEWAY TESTEN</button>
-      <div class="info" id="gatewayTestResult" style="display:none"></div>
-    </div>
-    <div class="rpc"><label>Direkter RPC-Fallback</label>
-      <select id="rpcSelect"><option value="https://solana-rpc.publicnode.com" selected>PublicNode · kostenlos</option><option value="https://api.mainnet-beta.solana.com">Solana Public RPC</option><option value="custom">Eigene RPC-URL</option></select>
-      <input type="url" id="customRpc" placeholder="https://..." style="display:none;margin-top:7px">
+    <div class="rpc">
+      <label>Rescue Network</label>
+      <div class="statusbox" id="gatewayStatus"><span class="dot"></span>Verbindung wird geprüft…</div>
     </div>
     <button class="btn ghost scanbutton" id="scanBtn" disabled>WALLET SCANNEN</button>
     <div class="progress" id="progress"><i id="bar"></i></div>
@@ -128,13 +122,13 @@ footer{text-align:center;font-size:8px;color:#5f5a67;margin-top:20px;line-height
 </div>
 
 <section class="security">
-  <div class="securityhead"><h3>Wallet Security Check</h3><p>Aktive Token-Delegates werden nur angezeigt. V1 ändert oder widerruft keine Berechtigungen.</p></div>
+  <div class="securityhead"><h3>Wallet Security Check</h3><p>Aktive Token-Delegates werden nur angezeigt. Berechtigungen werden nicht automatisch verändert.</p></div>
   <div id="delegateList"><div class="empty"><b>Noch keine Daten.</b>Der Delegate-Check läuft automatisch mit dem Wallet-Scan.</div></div>
 </section>
 
-<div class="notice"><strong>Sicherheitsprinzip:</strong> ASTY Wallet Rescue schließt in V1 nur Tokenkonten mit Tokenbestand exakt 0. Konten mit Tokenbestand werden nie ausgewählt. Die zurückgeholten Lamports gehen direkt an deine eigene verbundene Wallet. Es gibt in V1 keine ASTY-Service-Fee.</div>
+<div class="notice"><strong>Sicherheitsprinzip:</strong> ASTY Wallet Rescue schließt nur Tokenkonten mit Tokenbestand exakt 0. Konten mit Tokenbestand werden nie ausgewählt. Die zurückgeholten Lamports gehen direkt an deine eigene verbundene Wallet. Aktuell gibt es keine ASTY-Service-Fee.</div>
 
-<footer>ASTY Wallet Rescue V5 · Client-side only · kein Custody · keine Seed Phrase · keine privaten Schlüssel · Mainnet Beta</footer>
+<footer>ASTY Wallet Rescue V6 · Client-side only · kein Custody · keine Seed Phrase · keine privaten Schlüssel · Mainnet Beta</footer>
 </div>
 
 <div class="modalback" id="modalBack"><div class="modal">
@@ -150,6 +144,7 @@ const LAMPORTS_PER_SOL=1_000_000_000;
 const TOKEN_PROGRAM_ID_STR="TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA";
 const TOKEN_2022_PROGRAM_ID_STR="TokenzQdYh7D4m3rZPFYycgPPK3uTQxjTzqkJ9dM9";
 const BATCH_SIZE=7;
+const RESCUE_GATEWAY="https://walletrescue.mail-timothy.workers.dev";
 const $=id=>document.getElementById(id);
 const esc=s=>String(s??"").replace(/[&<>'"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","'":"&#39;",'"':"&quot;"}[c]));
 const short=s=>s?`${s.slice(0,5)}…${s.slice(-5)}`:"—";
@@ -161,41 +156,24 @@ let provider=null,walletPubkey=null,emptyAccounts=[],delegates=[],busy=false,con
 
 function scanStatus(text,kind=""){const cls=kind==="live"?" live":kind==="err"?" err":"";$("scanStatus").innerHTML=`<span class="dot${cls}"></span>${esc(text)}`}
 function progress(v){$("progress").style.display=(v>0&&v<100)?"block":"none";$("bar").style.width=`${v}%`}
-function rpcCandidates(){const chosen=$("rpcSelect").value==="custom"?$("customRpc").value.trim():$("rpcSelect").value;return [...new Set([chosen,"https://solana-rpc.publicnode.com","https://api.mainnet-beta.solana.com"].filter(Boolean))]}
-function gatewayUrl(){return $("gatewayUrl").value.trim().replace(/\/$/,"")}
 async function callRpcUrl(url,method,params){
-  const r=await fetch(url,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({jsonrpc:"2.0",id:1,method,params})});
+  const r=await fetch(url,{
+    method:"POST",
+    headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({jsonrpc:"2.0",id:1,method,params})
+  });
   const j=await r.json().catch(()=>null);
   if(!r.ok||j?.error)throw new Error(j?.error?.message||`HTTP ${r.status}`);
   return j.result;
 }
 async function rpcRequest(method,params=[]){
-  let last=null;
-  const gateway=gatewayUrl();
-
-  // If a Gateway is configured, treat it as the primary data source and show
-  // its real error instead of masking it with a later mobile-browser RPC failure.
-  if(gateway){
-    try{
-      const result=await callRpcUrl(gateway,method,params);
-      activeRpc="ASTY Rescue Gateway";
-      return result;
-    }catch(e){
-      throw new Error(`ASTY Rescue Gateway fehlgeschlagen: ${e.message}`);
-    }
+  try{
+    const result=await callRpcUrl(RESCUE_GATEWAY,method,params);
+    activeRpc="ASTY Rescue Network";
+    return result;
+  }catch(e){
+    throw new Error(`Rescue Network nicht erreichbar: ${e.message}`);
   }
-
-  for(const url of rpcCandidates()){
-    try{
-      const result=await callRpcUrl(url,method,params);
-      activeRpc=url;
-      return result;
-    }catch(e){
-      last=new Error(`${url}: ${e.message}`);
-      console.warn(last);
-    }
-  }
-  throw last||new Error("Kein RPC erreichbar.");
 }
 async function loadSdk(){
   const w=await import("https://esm.sh/@solana/web3.js@1.98.4?bundle");
@@ -368,7 +346,7 @@ async function scanWallet(){
     emptyAccounts=all.filter(a=>a.rawAmount===0n&&authorityCanClose(a)&&!a.isNative);
     delegates=all.filter(a=>!!a.delegate&&a.delegatedRaw>0n);
     renderAccounts();renderDelegates();renderStats();progress(100);
-    scanStatus(`${all.length} Tokenkonten geprüft · Datenquelle: ${activeRpc?.replace?.("https://","")||activeRpc||"—"}`,"live");
+    scanStatus(`${all.length} Tokenkonten geprüft · Scan abgeschlossen`,"live");
   }catch(e){console.error(e);progress(100);scanStatus(`Scan fehlgeschlagen: ${e.message}`,"err")}
   finally{busy=false;$("scanBtn").disabled=false;$("rescueBtn").disabled=false}
 }
@@ -421,40 +399,27 @@ function closeModal(){$("modalBack").style.display="none"}
 
 $("connectBtn").addEventListener("click",connectWallet);$("disconnectBtn").addEventListener("click",disconnectWallet);$("scanBtn").addEventListener("click",scanWallet);$("rescueBtn").addEventListener("click",openModal);$("cancelBtn").addEventListener("click",closeModal);$("confirmBtn").addEventListener("click",performRescue);
 $("selectAllBtn").addEventListener("click",()=>{const boxes=[...document.querySelectorAll(".acctcheck")];const should=boxes.some(b=>!b.checked);boxes.forEach(b=>b.checked=should);renderStats();$("selectAllBtn").textContent=should?"ALLE ABWÄHLEN":"ALLE AUSWÄHLEN"});
-$("rpcSelect").addEventListener("change",()=>{$("customRpc").style.display=$("rpcSelect").value==="custom"?"block":"none"});
-$("gatewayUrl").value=localStorage.getItem("astyRescueGateway")||"";
-$("gatewayUrl").addEventListener("change",()=>{
-  const v=$("gatewayUrl").value.trim().replace(/\/$/,"");
-  $("gatewayUrl").value=v;
-  if(v)localStorage.setItem("astyRescueGateway",v);else localStorage.removeItem("astyRescueGateway");
-});
-$("testGatewayBtn").addEventListener("click",async()=>{
-  const url=gatewayUrl();
-  const box=$("gatewayTestResult");
-  box.style.display="block";
-  if(!url){box.textContent="Bitte zuerst die Worker-URL eintragen.";return}
-  box.textContent="Gateway wird getestet…";
+async function checkRescueNetwork(){
+  const box=$("gatewayStatus");
   try{
-    const r=await fetch(url,{method:"GET",cache:"no-store"});
-    const text=await r.text();
-    let j=null;try{j=JSON.parse(text)}catch{}
-    if(!r.ok)throw new Error(`HTTP ${r.status}: ${text}`);
-    if(j?.service){
-      const lines=(j.upstreams||[]).map(x=>`${x.upstream}: ${x.ok?"OK":x.error}`).join(" · ");
-      box.textContent=`Gateway V${j.version||"?"}: ${j.ok?"OK":"KEIN UPSTREAM"} · ${lines}`;
-    }else{
-      box.textContent=`Gateway antwortet, aber noch nicht mit V2-Healthcheck: ${text.slice(0,220)}`;
-    }
+    const r=await fetch(RESCUE_GATEWAY,{method:"GET",cache:"no-store"});
+    const j=await r.json().catch(()=>null);
+    if(!r.ok||!j?.ok)throw new Error(j?.error||"Kein RPC-Upstream verfügbar");
+    const live=(j.upstreams||[]).find(x=>x.ok);
+    box.innerHTML=`<span class="dot live"></span>Online${live?.upstream?` · ${esc(live.upstream)}`:""}`;
+    return true;
   }catch(e){
-    box.textContent=`Gateway-Test fehlgeschlagen: ${e.message||e}`;
+    box.innerHTML=`<span class="dot err"></span>Vorübergehend nicht erreichbar`;
+    return false;
   }
-});
+}
 $("modalBack").addEventListener("click",e=>{if(e.target===$("modalBack"))closeModal()});
 
 async function boot(){
   try{
     scanStatus("Solana SDK wird geladen…");
     await loadSdk();
+    await checkRescueNetwork();
     updateWalletButton();
 
     const p=findProvider();
