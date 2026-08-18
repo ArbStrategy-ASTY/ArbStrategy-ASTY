@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#08080d">
+<title>ASTY Wallet Rescue</title>
+<style>
+:root{
+  --bg:#07070b;--panel:#0e0e16;--panel2:#12121d;--line:rgba(255,255,255,.085);
+  --text:#f6f2ff;--muted:#9f99ad;--purple:#bd8cff;--purple2:#7a59ff;
+  --cyan:#63e5f4;--green:#72efa9;--red:#ff748f;--amber:#ffc96b;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:
+radial-gradient(circle at 12% -6%,rgba(137,86,255,.18),transparent 30%),
+radial-gradient(circle at 94% 7%,rgba(64,213,244,.09),transparent 25%),var(--bg);
+color:var(--text);font-family:Inter,ui-sans-serif,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+body{min-height:100vh}
+.wrap{width:min(1120px,calc(100% - 26px));margin:auto;padding:18px 0 44px}
+header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:24px}
+.brand{display:flex;align-items:center;gap:11px;font-weight:1000}
+.logo{width:40px;height:40px;border-radius:50%;display:grid;place-items:center;border:1px solid rgba(189,140,255,.42);
+background:linear-gradient(135deg,rgba(189,140,255,.22),rgba(99,229,244,.14));box-shadow:0 0 30px rgba(151,98,255,.14)}
+.logo:before{content:"A";font-size:19px;font-weight:1000;color:var(--purple)}
+.topbadge{font-size:9px;font-weight:1000;letter-spacing:.12em;color:#d9c3ff;padding:7px 10px;border:1px solid rgba(189,140,255,.26);border-radius:999px}
+.hero{padding:25px;border:1px solid var(--line);border-radius:24px;background:linear-gradient(145deg,rgba(18,17,29,.95),rgba(8,8,14,.96))}
+.eyebrow{font-size:9px;font-weight:1000;letter-spacing:.18em;color:var(--purple);margin-bottom:9px}
+h1{font-size:clamp(38px,7vw,72px);line-height:.93;letter-spacing:-.06em;margin:0}
+h1 span{background:linear-gradient(90deg,var(--purple),var(--cyan));-webkit-background-clip:text;background-clip:text;color:transparent}
+.lead{max-width:780px;margin:15px 0 0;color:#bbb5c8;font-size:13px;line-height:1.75}
+.hero-actions{display:flex;gap:9px;flex-wrap:wrap;margin-top:20px}
+button{font:inherit}
+.btn{border-radius:13px;padding:13px 17px;font-weight:950;cursor:pointer}
+.btn.primary{border:0;color:white;background:linear-gradient(90deg,#805dff,#ba83ff)}
+.btn.outline{border:1px solid rgba(189,140,255,.28);background:rgba(189,140,255,.045);color:#dac5ff}
+.btn.ghost{border:1px solid var(--line);background:#0b0b12;color:#cfc9d8}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.connected{margin-top:13px;font-size:10px;color:var(--muted);display:none}.connected b{color:var(--green)}
+.statusgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:9px;margin-top:14px}
+.stat{border:1px solid var(--line);border-radius:16px;padding:13px;background:rgba(255,255,255,.022)}
+.stat small{display:block;font-size:8px;font-weight:1000;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-bottom:6px}
+.stat strong{font-size:17px;letter-spacing:-.02em}.stat .sub{font-size:9px;color:#777283;margin-top:4px;line-height:1.45}
+.green{color:var(--green)}.cyan{color:var(--cyan)}.amber{color:var(--amber)}
+.grid{display:grid;grid-template-columns:.72fr 1.28fr;gap:13px;margin-top:13px}
+.card{border:1px solid var(--line);background:rgba(13,13,20,.94);border-radius:20px;padding:17px}
+.cardtitle{font-size:10px;font-weight:1000;letter-spacing:.11em;text-transform:uppercase;color:var(--purple);margin-bottom:14px}
+.statusbox{border:1px solid var(--line);background:#09090f;border-radius:14px;padding:13px;font-size:10px;line-height:1.6;color:#aca6b8}
+.dot{display:inline-block;width:8px;height:8px;border-radius:99px;background:#716c79;margin-right:7px}
+.dot.live{background:var(--green);box-shadow:0 0 13px rgba(114,239,169,.55)}.dot.err{background:var(--red)}
+.rpc{margin-top:12px}
+label{display:block;font-size:8px;text-transform:uppercase;letter-spacing:.1em;font-weight:1000;color:var(--muted);margin-bottom:6px}
+select,input[type=url]{width:100%;background:#09090f;color:var(--text);border:1px solid var(--line);border-radius:12px;padding:11px;font:inherit;font-size:11px;outline:none}
+.info{font-size:9px;line-height:1.65;color:var(--muted);margin-top:12px}
+.progress{height:5px;border-radius:999px;background:#171722;overflow:hidden;margin-top:12px;display:none}.progress i{height:100%;width:0;display:block;background:linear-gradient(90deg,var(--purple2),var(--cyan))}
+.scanbutton{width:100%;margin-top:12px}.accounts{overflow:hidden;padding:0}
+.listhead{padding:15px 16px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;gap:10px}
+.listhead h3{font-size:12px;margin:0}.selectall{font-size:9px;color:var(--purple);background:none;border:0;font-weight:900;cursor:pointer}
+.empty{text-align:center;padding:55px 18px;color:var(--muted);font-size:11px;line-height:1.6}.empty b{display:block;color:#d7d1df;margin-bottom:7px;font-size:13px}
+.account{display:grid;grid-template-columns:28px 1fr auto;gap:10px;align-items:center;padding:13px 15px;border-bottom:1px solid var(--line)}
+.account input{width:17px;height:17px;accent-color:#9f72ff}.tokenname{font-size:11px;font-weight:900}.meta{font-size:8px;color:#777181;margin-top:4px;line-height:1.5;word-break:break-all}
+.value{text-align:right}.value b{display:block;font-size:11px;color:var(--green)}.value small{font-size:8px;color:var(--muted)}
+.actionbar{position:sticky;bottom:9px;margin-top:13px;border:1px solid rgba(189,140,255,.28);border-radius:18px;padding:13px;background:rgba(12,11,20,.95);display:none;align-items:center;justify-content:space-between;gap:12px}
+.actiontext small{display:block;color:var(--muted);font-size:8px;text-transform:uppercase;font-weight:1000;letter-spacing:.08em}.actiontext strong{font-size:17px;color:var(--green)}
+.security{margin-top:13px;border:1px solid var(--line);border-radius:20px;overflow:hidden;background:rgba(13,13,20,.94)}
+.securityhead{padding:15px 16px;border-bottom:1px solid var(--line)}.securityhead h3{margin:0;font-size:12px}.securityhead p{font-size:9px;color:var(--muted);margin:5px 0 0;line-height:1.55}
+.delegate{padding:12px 15px;border-bottom:1px solid var(--line);display:grid;grid-template-columns:1fr auto;gap:10px}.delegate b{font-size:10px}.delegate span{font-size:8px;color:var(--muted);display:block;margin-top:3px}
+.badge{display:inline-flex;border-radius:999px;padding:4px 7px;font-size:8px;font-weight:1000;border:1px solid rgba(255,201,107,.25);color:var(--amber);height:max-content}
+.notice{margin-top:13px;padding:14px;border-radius:17px;border:1px solid rgba(255,201,107,.2);background:rgba(255,201,107,.035);font-size:10px;line-height:1.68;color:#c8c1cf}.notice strong{color:var(--amber)}
+.modalback{position:fixed;inset:0;background:rgba(0,0,0,.72);display:none;align-items:center;justify-content:center;padding:16px;z-index:50}
+.modal{width:min(520px,100%);border:1px solid var(--line);border-radius:20px;background:#0d0d15;padding:18px}.modal h3{margin:0 0 8px;font-size:16px}.modal p{font-size:10px;line-height:1.65;color:var(--muted)}
+.modalstats{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:13px 0}.modalstat{border:1px solid var(--line);border-radius:13px;padding:11px}.modalstat small{display:block;color:var(--muted);font-size:8px;text-transform:uppercase;font-weight:900;margin-bottom:5px}.modalstat b{font-size:13px}
+.modalactions{display:flex;justify-content:flex-end;gap:8px;margin-top:14px}.txlog{max-height:180px;overflow:auto;font-size:9px;line-height:1.55;color:#a9a3b4;background:#08080d;border:1px solid var(--line);border-radius:12px;padding:9px;margin-top:10px;display:none}
+footer{text-align:center;font-size:8px;color:#5f5a67;margin-top:20px;line-height:1.7}
+@media(max-width:820px){.grid{grid-template-columns:1fr}.statusgrid{grid-template-columns:1fr 1fr}}
+@media(max-width:560px){.wrap{width:calc(100% - 18px);padding-top:10px}.hero{padding:18px}.statusgrid{grid-template-columns:1fr 1fr}.account{grid-template-columns:26px 1fr}.value{grid-column:2;text-align:left}.actionbar{align-items:flex-start;flex-direction:column}.actionbar .btn{width:100%}.modalstats{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header><div class="brand"><div class="logo"></div><div>ArbStrategy</div></div><div class="topbadge">ASTY UTILITY</div></header>
+
+<section class="hero">
+  <div class="eyebrow">SOLANA WALLET CLEANUP</div>
+  <h1>ASTY <span>Wallet Rescue</span></h1>
+  <p class="lead">Findet ungenutzte, leere Solana-Tokenkonten und zeigt dir exakt, wie viel dort noch als Rent in SOL gebunden ist. Du entscheidest selbst, welche Konten geschlossen werden. Tokens werden in V1 niemals verbrannt oder übertragen.</p>
+  <div class="hero-actions"><button class="btn primary" id="connectBtn">PHANTOM VERBINDEN</button><button class="btn outline" id="disconnectBtn" style="display:none">TRENNEN</button></div>
+  <div class="connected" id="connectedLine">Verbunden: <b id="walletAddress"></b></div>
+</section>
+
+<section class="statusgrid">
+  <div class="stat"><small>Rückholbares SOL</small><strong class="green" id="recoverSol">—</strong><div class="sub">Brutto vor Netzwerkgebühren</div></div>
+  <div class="stat"><small>Leere Konten</small><strong id="emptyCount">—</strong><div class="sub">SPL + Token-2022</div></div>
+  <div class="stat"><small>Ausgewählt</small><strong class="cyan" id="selectedCount">—</strong><div class="sub" id="selectedSol">— SOL</div></div>
+  <div class="stat"><small>Aktive Delegates</small><strong class="amber" id="delegateCount">—</strong><div class="sub">Nur Hinweis in V1</div></div>
+</section>
+
+<section class="grid">
+  <div class="card">
+    <div class="cardtitle">Wallet Scan</div>
+    <div class="statusbox" id="scanStatus"><span class="dot"></span>Wallet noch nicht verbunden.</div>
+    <div class="rpc"><label>Solana RPC</label>
+      <select id="rpcSelect"><option value="https://solana-rpc.publicnode.com" selected>PublicNode · kostenlos</option><option value="https://api.mainnet-beta.solana.com">Solana Public RPC</option><option value="custom">Eigene RPC-URL</option></select>
+      <input type="url" id="customRpc" placeholder="https://..." style="display:none;margin-top:7px">
+    </div>
+    <button class="btn ghost scanbutton" id="scanBtn" disabled>WALLET SCANNEN</button>
+    <div class="progress" id="progress"><i id="bar"></i></div>
+    <div class="info">Es werden ausschließlich Accounts gelesen, die deiner verbundenen Wallet gehören. Für den Scan fragt die Seite das klassische SPL-Token-Programm und Token-2022 ab.</div>
+  </div>
+
+  <div class="card accounts">
+    <div class="listhead"><h3>Leere, schließbare Tokenkonten</h3><button class="selectall" id="selectAllBtn" disabled>ALLE AUSWÄHLEN</button></div>
+    <div id="accountList"><div class="empty"><b>Noch kein Scan.</b>Verbinde Phantom und starte den Wallet-Scan.</div></div>
+  </div>
+</section>
+
+<div class="actionbar" id="actionBar">
+  <div class="actiontext"><small>Auswahl zurückholen</small><strong id="actionSol">0 SOL</strong></div>
+  <button class="btn primary" id="rescueBtn">SOL ZURÜCKHOLEN</button>
+</div>
+
+<section class="security">
+  <div class="securityhead"><h3>Wallet Security Check</h3><p>Aktive Token-Delegates werden nur angezeigt. V1 ändert oder widerruft keine Berechtigungen.</p></div>
+  <div id="delegateList"><div class="empty"><b>Noch keine Daten.</b>Der Delegate-Check läuft automatisch mit dem Wallet-Scan.</div></div>
+</section>
+
+<div class="notice"><strong>Sicherheitsprinzip:</strong> ASTY Wallet Rescue schließt in V1 nur Tokenkonten mit Tokenbestand exakt 0. Konten mit Tokenbestand werden nie ausgewählt. Die zurückgeholten Lamports gehen direkt an deine eigene verbundene Wallet. Es gibt in V1 keine ASTY-Service-Fee.</div>
+
+<footer>ASTY Wallet Rescue V1 · Client-side only · kein Custody · keine Seed Phrase · keine privaten Schlüssel · Mainnet Beta</footer>
+</div>
+
+<div class="modalback" id="modalBack"><div class="modal">
+  <h3>SOL zurückholen</h3>
+  <p>Du bist dabei, die ausgewählten leeren Tokenkonten zu schließen. Die darin gebundenen Lamports werden direkt an deine Wallet gesendet. Phantom zeigt dir jede Transaktion vor der Signatur an.</p>
+  <div class="modalstats"><div class="modalstat"><small>Konten</small><b id="modalCount">—</b></div><div class="modalstat"><small>Brutto rückholbar</small><b class="green" id="modalSol">—</b></div></div>
+  <p id="batchInfo"></p><div class="txlog" id="txLog"></div>
+  <div class="modalactions"><button class="btn ghost" id="cancelBtn">ABBRECHEN</button><button class="btn primary" id="confirmBtn">IN PHANTOM BESTÄTIGEN</button></div>
+</div></div>
+
+<script type="module">
+const LAMPORTS_PER_SOL=1_000_000_000;
+const TOKEN_PROGRAM_ID_STR="TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA";
+const TOKEN_2022_PROGRAM_ID_STR="TokenzQdYh7D4m3rZPFYycgPPK3uTQxjTzqkJ9dM9";
+const BATCH_SIZE=7;
+const $=id=>document.getElementById(id);
+const esc=s=>String(s??"").replace(/[&<>'"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","'":"&#39;",'"':"&quot;"}[c]));
+const short=s=>s?`${s.slice(0,5)}…${s.slice(-5)}`:"—";
+const fmtSol=n=>Number.isFinite(n)?`${n.toLocaleString("de-DE",{minimumFractionDigits:4,maximumFractionDigits:6})} SOL`:"—";
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+
+let PublicKey,Transaction,createCloseAccountInstruction,TOKEN_PROGRAM_ID,TOKEN_2022_PROGRAM_ID;
+let provider=null,walletPubkey=null,emptyAccounts=[],delegates=[],busy=false,activeRpc=null;
+
+function scanStatus(text,kind=""){const cls=kind==="live"?" live":kind==="err"?" err":"";$("scanStatus").innerHTML=`<span class="dot${cls}"></span>${esc(text)}`}
+function progress(v){$("progress").style.display=(v>0&&v<100)?"block":"none";$("bar").style.width=`${v}%`}
+function rpcCandidates(){const chosen=$("rpcSelect").value==="custom"?$("customRpc").value.trim():$("rpcSelect").value;return [...new Set([chosen,"https://solana-rpc.publicnode.com","https://api.mainnet-beta.solana.com"].filter(Boolean))]}
+async function rpcRequest(method,params=[]){
+  let last=null;
+  for(const url of rpcCandidates()){
+    try{
+      const r=await fetch(url,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({jsonrpc:"2.0",id:1,method,params})});
+      const j=await r.json().catch(()=>null);
+      if(!r.ok||j?.error)throw new Error(j?.error?.message||`HTTP ${r.status}`);
+      activeRpc=url;return j.result;
+    }catch(e){last=new Error(`${url}: ${e.message}`)}
+  }
+  throw last||new Error("Kein RPC erreichbar.");
+}
+async function loadSdk(){
+  const w=await import("https://esm.sh/@solana/web3.js@1.98.4?bundle");
+  const s=await import("https://esm.sh/@solana/spl-token@0.4.14?bundle&deps=@solana/web3.js@1.98.4");
+  PublicKey=w.PublicKey;Transaction=w.Transaction;
+  createCloseAccountInstruction=s.createCloseAccountInstruction;
+  TOKEN_PROGRAM_ID=s.TOKEN_PROGRAM_ID;TOKEN_2022_PROGRAM_ID=s.TOKEN_2022_PROGRAM_ID;
+}
+function findProvider(){if(window.phantom?.solana?.isPhantom)return window.phantom.solana;if(window.solana?.isPhantom)return window.solana;return null}
+async function connectWallet(){
+  try{
+    if(!provider)provider=findProvider();
+    if(!provider){scanStatus("Phantom wurde in diesem Browser nicht gefunden.","err");alert("Phantom wurde nicht gefunden. Auf dem Handy die Seite bitte im Phantom-In-App-Browser öffnen.");return}
+    const resp=await provider.connect();walletPubkey=resp.publicKey||provider.publicKey;
+    $("walletAddress").textContent=short(walletPubkey.toString());$("connectedLine").style.display="block";$("connectBtn").style.display="none";$("disconnectBtn").style.display="";$("scanBtn").disabled=false;
+    scanStatus("Wallet verbunden. Bereit zum Scan.","live");await scanWallet();
+  }catch(e){console.error(e);scanStatus(`Wallet-Verbindung fehlgeschlagen: ${e.message}`,"err")}
+}
+async function disconnectWallet(){try{if(provider?.disconnect)await provider.disconnect()}catch{}walletPubkey=null;emptyAccounts=[];delegates=[];$("connectedLine").style.display="none";$("connectBtn").style.display="";$("disconnectBtn").style.display="none";$("scanBtn").disabled=true;resetResults();scanStatus("Wallet getrennt.")}
+function resetResults(){$("recoverSol").textContent="—";$("emptyCount").textContent="—";$("selectedCount").textContent="—";$("selectedSol").textContent="— SOL";$("delegateCount").textContent="—";$("accountList").innerHTML=`<div class="empty"><b>Noch kein Scan.</b>Verbinde Phantom und starte den Wallet-Scan.</div>`;$("delegateList").innerHTML=`<div class="empty"><b>Noch keine Daten.</b>Der Delegate-Check läuft automatisch mit dem Wallet-Scan.</div>`;$("actionBar").style.display="none";$("selectAllBtn").disabled=true}
+async function getParsedAccounts(programId){return await rpcRequest("getTokenAccountsByOwner",[walletPubkey.toString(),{programId},{encoding:"jsonParsed",commitment:"confirmed"}])}
+function parseTokenAccount(row,programId){
+  const info=row?.account?.data?.parsed?.info;if(!info)return null;
+  const tokenAmount=info.tokenAmount||{};const rawAmount=BigInt(tokenAmount.amount||"0");
+  return {address:row.pubkey,mint:info.mint,owner:info.owner||null,closeAuthority:info.closeAuthority||null,delegate:info.delegate||null,delegatedRaw:BigInt(info.delegatedAmount?.amount||"0"),rawAmount,lamports:Number(row.account.lamports||0),programId,isNative:!!info.isNative};
+}
+function authorityCanClose(a){const w=walletPubkey.toString();return a.owner===w&&(!a.closeAuthority||a.closeAuthority===w)}
+async function scanWallet(){
+  if(!walletPubkey||busy)return;busy=true;$("scanBtn").disabled=true;$("rescueBtn").disabled=true;progress(12);scanStatus("SPL-Tokenkonten werden geladen…");
+  try{
+    const [classic,t22]=await Promise.all([getParsedAccounts(TOKEN_PROGRAM_ID.toString()),getParsedAccounts(TOKEN_2022_PROGRAM_ID.toString())]);progress(58);
+    const all=[...(classic?.value||[]).map(x=>parseTokenAccount(x,TOKEN_PROGRAM_ID.toString())),...(t22?.value||[]).map(x=>parseTokenAccount(x,TOKEN_2022_PROGRAM_ID.toString()))].filter(Boolean);
+    emptyAccounts=all.filter(a=>a.rawAmount===0n&&authorityCanClose(a)&&!a.isNative);
+    delegates=all.filter(a=>!!a.delegate&&a.delegatedRaw>0n);
+    renderAccounts();renderDelegates();renderStats();progress(100);
+    scanStatus(`${all.length} Tokenkonten geprüft · RPC: ${activeRpc?.replace("https://","")||"—"}`,"live");
+  }catch(e){console.error(e);progress(100);scanStatus(`Scan fehlgeschlagen: ${e.message}`,"err")}
+  finally{busy=false;$("scanBtn").disabled=false;$("rescueBtn").disabled=false}
+}
+function programLabel(a){return a.programId===TOKEN_2022_PROGRAM_ID.toString()?"Token-2022":"SPL Token"}
+function renderAccounts(){
+  if(!emptyAccounts.length){$("accountList").innerHTML=`<div class="empty"><b>Keine leeren schließbaren Konten gefunden.</b>In dieser Wallet liegt aktuell kein offensichtliches Rent-Potential aus leeren Tokenkonten.</div>`;$("selectAllBtn").disabled=true;$("actionBar").style.display="none";return}
+  $("selectAllBtn").disabled=false;$("accountList").innerHTML=emptyAccounts.map((a,i)=>`<label class="account"><input type="checkbox" class="acctcheck" data-index="${i}" checked><div><div class="tokenname">${short(a.mint)}</div><div class="meta">${programLabel(a)} · Account ${short(a.address)} · Tokenbestand 0</div></div><div class="value"><b>${fmtSol(a.lamports/LAMPORTS_PER_SOL)}</b><small>gebundene Lamports</small></div></label>`).join("");
+  document.querySelectorAll(".acctcheck").forEach(c=>c.addEventListener("change",renderStats));
+}
+function renderDelegates(){
+  if(!delegates.length){$("delegateList").innerHTML=`<div class="empty"><b>Keine aktiven Delegates gefunden.</b>Für die gescannten Tokenkonten wurde keine aktive Delegate-Berechtigung erkannt.</div>`;return}
+  $("delegateList").innerHTML=delegates.map(a=>`<div class="delegate"><div><b>Mint ${short(a.mint)}</b><span>Delegate ${short(a.delegate)} · Account ${short(a.address)}</span></div><div class="badge">PRÜFEN</div></div>`).join("");
+}
+function selectedAccounts(){return [...document.querySelectorAll(".acctcheck:checked")].map(c=>emptyAccounts[Number(c.dataset.index)]).filter(Boolean)}
+function renderStats(){
+  const total=emptyAccounts.reduce((s,a)=>s+a.lamports,0)/LAMPORTS_PER_SOL;const sel=selectedAccounts();const selected=sel.reduce((s,a)=>s+a.lamports,0)/LAMPORTS_PER_SOL;
+  $("recoverSol").textContent=fmtSol(total);$("emptyCount").textContent=emptyAccounts.length;$("selectedCount").textContent=sel.length;$("selectedSol").textContent=fmtSol(selected);$("delegateCount").textContent=delegates.length;$("actionSol").textContent=fmtSol(selected);$("actionBar").style.display=sel.length?"flex":"none";
+}
+function splitBatches(arr,size){const out=[];for(let i=0;i<arr.length;i+=size)out.push(arr.slice(i,i+size));return out}
+async function latestBlockhash(){const r=await rpcRequest("getLatestBlockhash",[{commitment:"confirmed"}]);return r.value}
+async function confirmSignature(sig){
+  for(let i=0;i<24;i++){
+    const r=await rpcRequest("getSignatureStatuses",[[sig],{searchTransactionHistory:true}]);const s=r?.value?.[0];
+    if(s?.err)throw new Error("Transaktion fehlgeschlagen.");if(s?.confirmationStatus==="confirmed"||s?.confirmationStatus==="finalized")return true;await sleep(1000);
+  }
+  return false;
+}
+function log(msg){$("txLog").style.display="block";$("txLog").insertAdjacentHTML("beforeend",`${esc(msg)}<br>`);$("txLog").scrollTop=$("txLog").scrollHeight}
+async function performRescue(){
+  const selected=selectedAccounts();if(!selected.length)return;const batches=splitBatches(selected,BATCH_SIZE);
+  $("confirmBtn").disabled=true;$("cancelBtn").disabled=true;$("txLog").innerHTML="";$("txLog").style.display="block";
+  let done=0;
+  try{
+    for(let i=0;i<batches.length;i++){
+      const bh=await latestBlockhash();const tx=new Transaction({feePayer:walletPubkey,recentBlockhash:bh.blockhash});
+      for(const a of batches[i]){
+        const program=a.programId===TOKEN_2022_PROGRAM_ID.toString()?TOKEN_2022_PROGRAM_ID:TOKEN_PROGRAM_ID;
+        tx.add(createCloseAccountInstruction(new PublicKey(a.address),walletPubkey,walletPubkey,[],program));
+      }
+      log(`Batch ${i+1}/${batches.length}: ${batches[i].length} Konten · Phantom öffnen…`);
+      const sent=await provider.signAndSendTransaction(tx);const sig=typeof sent==="string"?sent:sent.signature;log(`Gesendet: ${short(sig)}`);
+      const confirmed=await confirmSignature(sig);log(confirmed?"✓ Bestätigt":"⚠ Gesendet, Bestätigung noch ausstehend");done+=batches[i].length;
+    }
+    log(`Fertig: ${done} Konten bearbeitet.`);await sleep(1300);closeModal();await scanWallet();
+  }catch(e){console.error(e);log(`FEHLER: ${e.message||e}`);$("cancelBtn").disabled=false;$("cancelBtn").textContent="SCHLIESSEN"}
+  finally{$("confirmBtn").disabled=false}
+}
+function openModal(){const sel=selectedAccounts();if(!sel.length)return;const sol=sel.reduce((s,a)=>s+a.lamports,0)/LAMPORTS_PER_SOL;const batches=Math.ceil(sel.length/BATCH_SIZE);$("modalCount").textContent=sel.length;$("modalSol").textContent=fmtSol(sol);$("batchInfo").textContent=`Maximal ${BATCH_SIZE} Close-Instructions pro Transaktion. Das ergibt ${batches} Phantom-Signatur${batches===1?"":"en"}.`;$("txLog").style.display="none";$("confirmBtn").disabled=false;$("cancelBtn").disabled=false;$("modalBack").style.display="flex"}
+function closeModal(){$("modalBack").style.display="none"}
+
+$("connectBtn").addEventListener("click",connectWallet);$("disconnectBtn").addEventListener("click",disconnectWallet);$("scanBtn").addEventListener("click",scanWallet);$("rescueBtn").addEventListener("click",openModal);$("cancelBtn").addEventListener("click",closeModal);$("confirmBtn").addEventListener("click",performRescue);
+$("selectAllBtn").addEventListener("click",()=>{const boxes=[...document.querySelectorAll(".acctcheck")];const should=boxes.some(b=>!b.checked);boxes.forEach(b=>b.checked=should);renderStats();$("selectAllBtn").textContent=should?"ALLE ABWÄHLEN":"ALLE AUSWÄHLEN"});
+$("rpcSelect").addEventListener("change",()=>{$("customRpc").style.display=$("rpcSelect").value==="custom"?"block":"none"});
+$("modalBack").addEventListener("click",e=>{if(e.target===$("modalBack"))closeModal()});
+
+async function boot(){
+  try{
+    scanStatus("Solana SDK wird geladen…");await loadSdk();scanStatus("Bereit. Wallet verbinden.","live");
+    const p=findProvider();if(p?.isConnected&&p.publicKey){provider=p;walletPubkey=p.publicKey;$("walletAddress").textContent=short(walletPubkey.toString());$("connectedLine").style.display="block";$("connectBtn").style.display="none";$("disconnectBtn").style.display="";$("scanBtn").disabled=false;await scanWallet()}
+  }catch(e){console.error(e);scanStatus(`Initialisierung fehlgeschlagen: ${e.message}`,"err")}
+}
+boot();
+</script>
+</body>
+</html>
