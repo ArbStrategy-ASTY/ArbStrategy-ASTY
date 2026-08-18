@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#08080d">
-<title>ASTY Wallet Rescue · V3</title>
+<title>ASTY Wallet Rescue · V4</title>
 <style>
 :root{
   --bg:#07070b;--panel:#0e0e16;--panel2:#12121d;--line:rgba(255,255,255,.085);
@@ -84,7 +84,7 @@ footer{text-align:center;font-size:8px;color:#5f5a67;margin-top:20px;line-height
 <section class="hero">
   <div class="eyebrow">SOLANA WALLET CLEANUP</div>
   <h1>ASTY <span>Wallet Rescue</span></h1>
-  <p class="lead">Findet ungenutzte, leere Solana-Tokenkonten und zeigt dir exakt, wie viel dort noch als Rent in SOL gebunden ist. Du entscheidest selbst, welche Konten geschlossen werden. Tokens werden in V1 niemals verbrannt oder übertragen.</p>
+  <p class="lead">Findet ungenutzte, leere Solana-Tokenkonten und zeigt dir exakt, wie viel dort noch als Rent in SOL gebunden ist. Du entscheidest selbst, welche Konten geschlossen werden. Tokens werden niemals automatisch verbrannt oder übertragen.</p>
   <div class="hero-actions"><button class="btn primary" id="connectBtn">PHANTOM VERBINDEN</button><button class="btn outline" id="disconnectBtn" style="display:none">TRENNEN</button></div>
   <div class="mobilehint" id="mobileHint">Auf iPhone/Android muss die Seite innerhalb von Phantom geöffnet werden. Der Button öffnet diese exakte Seite direkt im Phantom-Browser.</div>
   <div class="connected" id="connectedLine">Verbunden: <b id="walletAddress"></b></div>
@@ -132,7 +132,7 @@ footer{text-align:center;font-size:8px;color:#5f5a67;margin-top:20px;line-height
 
 <div class="notice"><strong>Sicherheitsprinzip:</strong> ASTY Wallet Rescue schließt in V1 nur Tokenkonten mit Tokenbestand exakt 0. Konten mit Tokenbestand werden nie ausgewählt. Die zurückgeholten Lamports gehen direkt an deine eigene verbundene Wallet. Es gibt in V1 keine ASTY-Service-Fee.</div>
 
-<footer>ASTY Wallet Rescue V3 · Client-side only · kein Custody · keine Seed Phrase · keine privaten Schlüssel · Mainnet Beta</footer>
+<footer>ASTY Wallet Rescue V4 · Client-side only · kein Custody · keine Seed Phrase · keine privaten Schlüssel · Mainnet Beta</footer>
 </div>
 
 <div class="modalback" id="modalBack"><div class="modal">
@@ -155,7 +155,7 @@ const fmtSol=n=>Number.isFinite(n)?`${n.toLocaleString("de-DE",{minimumFractionD
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 
 let PublicKey,Transaction,createCloseAccountInstruction,TOKEN_PROGRAM_ID,TOKEN_2022_PROGRAM_ID;
-let provider=null,walletPubkey=null,emptyAccounts=[],delegates=[],busy=false,activeRpc=null;
+let provider=null,walletPubkey=null,emptyAccounts=[],delegates=[],busy=false,connecting=false,activeRpc=null;
 
 function scanStatus(text,kind=""){const cls=kind==="live"?" live":kind==="err"?" err":"";$("scanStatus").innerHTML=`<span class="dot${cls}"></span>${esc(text)}`}
 function progress(v){$("progress").style.display=(v>0&&v<100)?"block":"none";$("bar").style.width=`${v}%`}
@@ -222,7 +222,79 @@ function updateWalletButton(){
     $("mobileHint").style.display="none";
   }
 }
+async function applyConnectedWallet(pubkey,{autoScan=true}={}){
+  if(!pubkey)return false;
+  walletPubkey=pubkey;
+  $("walletAddress").textContent=short(walletPubkey.toString());
+  $("connectedLine").style.display="block";
+  $("connectBtn").style.display="none";
+  $("disconnectBtn").style.display="";
+  $("mobileHint").style.display="none";
+  $("scanBtn").disabled=false;
+  scanStatus(`Phantom verbunden · ${short(walletPubkey.toString())}`,"live");
+  if(autoScan){
+    await sleep(350);
+    await scanWallet();
+  }
+  return true;
+}
+function waitForConnectSignal(timeoutMs=30000){
+  return new Promise((resolve,reject)=>{
+    let finished=false;
+    const done=(key)=>{
+      if(finished)return;
+      finished=true;
+      clearTimeout(timer);
+      resolve(key||provider?.publicKey||null);
+    };
+    const timer=setTimeout(()=>{
+      if(finished)return;
+      finished=true;
+      reject(new Error("Keine Rückmeldung von Phantom nach 30 Sekunden."));
+    },timeoutMs);
+    try{
+      provider.on("connect",done);
+    }catch{}
+    const poll=setInterval(()=>{
+      if(finished){clearInterval(poll);return}
+      if(provider?.isConnected&&provider?.publicKey){
+        clearInterval(poll);
+        done(provider.publicKey);
+      }
+    },250);
+  });
+}
+function installProviderListeners(){
+  if(!provider||provider.__astyListenersInstalled)return;
+  provider.__astyListenersInstalled=true;
+  try{
+    provider.on("connect",async (publicKey)=>{
+      console.log("Phantom connect event",publicKey?.toString?.());
+      await applyConnectedWallet(publicKey||provider.publicKey,{autoScan:true});
+    });
+    provider.on("disconnect",()=>{
+      walletPubkey=null;
+      $("connectedLine").style.display="none";
+      $("connectBtn").style.display="";
+      $("disconnectBtn").style.display="none";
+      $("scanBtn").disabled=true;
+      updateWalletButton();
+      resetResults();
+      scanStatus("Phantom getrennt.");
+    });
+    provider.on("accountChanged",async (publicKey)=>{
+      if(publicKey){
+        await applyConnectedWallet(publicKey,{autoScan:true});
+      }else{
+        scanStatus("Phantom-Konto gewechselt · erneute Verbindung erforderlich.");
+        $("connectBtn").style.display="";
+        $("disconnectBtn").style.display="none";
+      }
+    });
+  }catch(e){console.warn("Provider listener",e)}
+}
 async function connectWallet(){
+  if(connecting)return;
   try{
     if(!provider)provider=findProvider();
     if(!provider){
@@ -235,10 +307,44 @@ async function connectWallet(){
       alert("Phantom wurde nicht gefunden. Bitte installiere/aktiviere die Phantom Browser-Erweiterung.");
       return;
     }
-    const resp=await provider.connect();walletPubkey=resp.publicKey||provider.publicKey;
-    $("walletAddress").textContent=short(walletPubkey.toString());$("connectedLine").style.display="block";$("connectBtn").style.display="none";$("disconnectBtn").style.display="";$("scanBtn").disabled=false;
-    scanStatus("Wallet verbunden. Bereit zum Scan.","live");await scanWallet();
-  }catch(e){console.error(e);scanStatus(`Wallet-Verbindung fehlgeschlagen: ${e.message}`,"err")}
+
+    installProviderListeners();
+    connecting=true;
+    $("connectBtn").disabled=true;
+    $("connectBtn").textContent="WARTE AUF PHANTOM…";
+    scanStatus("Verbindungsanfrage an Phantom gesendet · bitte in Phantom auf Verbinden tippen.");
+
+    const signalPromise=waitForConnectSignal(30000);
+    let responseKey=null;
+    try{
+      const resp=await Promise.race([
+        provider.connect(),
+        signalPromise
+      ]);
+      responseKey=resp?.publicKey||resp||provider.publicKey||null;
+    }catch(e){
+      // 4001 means user rejected/closed the Phantom prompt.
+      if(e?.code===4001){
+        throw new Error("Verbindung in Phantom abgelehnt oder geschlossen.");
+      }
+      throw e;
+    }
+
+    const key=responseKey||provider.publicKey;
+    if(!key)throw new Error("Phantom hat die Anfrage bestätigt, aber keinen Public Key zurückgegeben.");
+
+    await applyConnectedWallet(key,{autoScan:true});
+  }catch(e){
+    console.error(e);
+    scanStatus(`Wallet-Verbindung fehlgeschlagen: ${e.message||e}`,"err");
+    $("connectBtn").style.display="";
+  }finally{
+    connecting=false;
+    $("connectBtn").disabled=false;
+    if(!$("connectedLine").offsetParent){
+      updateWalletButton();
+    }
+  }
 }
 async function disconnectWallet(){try{if(provider?.disconnect)await provider.disconnect()}catch{}walletPubkey=null;emptyAccounts=[];delegates=[];$("connectedLine").style.display="none";$("connectBtn").style.display="";$("disconnectBtn").style.display="none";$("scanBtn").disabled=true;resetResults();scanStatus("Wallet getrennt.")}
 function resetResults(){$("recoverSol").textContent="—";$("emptyCount").textContent="—";$("selectedCount").textContent="—";$("selectedSol").textContent="— SOL";$("delegateCount").textContent="—";$("accountList").innerHTML=`<div class="empty"><b>Noch kein Scan.</b>Verbinde Phantom und starte den Wallet-Scan.</div>`;$("delegateList").innerHTML=`<div class="empty"><b>Noch keine Daten.</b>Der Delegate-Check läuft automatisch mit dem Wallet-Scan.</div>`;$("actionBar").style.display="none";$("selectAllBtn").disabled=true}
@@ -324,19 +430,33 @@ async function boot(){
     scanStatus("Solana SDK wird geladen…");
     await loadSdk();
     updateWalletButton();
+
     const p=findProvider();
-    if(p?.isConnected&&p.publicKey){
-      provider=p;walletPubkey=p.publicKey;
-      $("walletAddress").textContent=short(walletPubkey.toString());
-      $("connectedLine").style.display="block";
-      $("connectBtn").style.display="none";$("disconnectBtn").style.display="";
-      $("mobileHint").style.display="none";
-      $("scanBtn").disabled=false;
-      await scanWallet();
-    }else if(p){
+    if(p){
+      provider=p;
+      installProviderListeners();
+
+      if(p.isConnected&&p.publicKey){
+        await applyConnectedWallet(p.publicKey,{autoScan:true});
+        return;
+      }
+
+      // Phantom documents an eager trusted reconnect which does not open a prompt.
+      try{
+        const resp=await p.connect({onlyIfTrusted:true});
+        const key=resp?.publicKey||p.publicKey;
+        if(key){
+          await applyConnectedWallet(key,{autoScan:true});
+          return;
+        }
+      }catch{}
+
       scanStatus("Phantom erkannt. Wallet verbinden.","live");
     }
-  }catch(e){console.error(e);scanStatus(`Initialisierung fehlgeschlagen: ${e.message}`,"err")}
+  }catch(e){
+    console.error(e);
+    scanStatus(`Initialisierung fehlgeschlagen: ${e.message}`,"err");
+  }
 }
 boot();
 </script>
