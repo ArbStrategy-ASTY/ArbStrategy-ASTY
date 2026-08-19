@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#08080d">
-<title>ASTY Wallet Rescue · V9</title>
+<title>ASTY Wallet Rescue · V10</title>
 <style>
 :root{
   --bg:#07070b;--panel:#0e0e16;--panel2:#12121d;--line:rgba(255,255,255,.085);
@@ -128,7 +128,7 @@ footer{text-align:center;font-size:8px;color:#5f5a67;margin-top:20px;line-height
 
 <div class="notice"><strong>Sicherheitsprinzip:</strong> ASTY Wallet Rescue schließt nur Tokenkonten mit Tokenbestand exakt 0. Konten mit Tokenbestand werden nie ausgewählt. Die zurückgeholten Lamports gehen direkt an deine eigene verbundene Wallet. Aktuell gibt es keine ASTY-Service-Fee.</div>
 
-<footer>ASTY Wallet Rescue V9 · Client-side only · kein Custody · keine Seed Phrase · keine privaten Schlüssel · Mainnet Beta</footer>
+<footer>ASTY Wallet Rescue V10 · Client-side only · kein Custody · keine Seed Phrase · keine privaten Schlüssel · Mainnet Beta</footer>
 </div>
 
 <div class="modalback" id="modalBack"><div class="modal">
@@ -144,7 +144,7 @@ const LAMPORTS_PER_SOL=1_000_000_000;
 const TOKEN_PROGRAM_ID_STR="TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA";
 const TOKEN_2022_PROGRAM_ID_STR="TokenzQdYh7D4m3rZPFYycgPPK3uTQxjTzqkJ9dM9";
 const BATCH_SIZE=7;
-const RESCUE_GATEWAY="https://walletrescue.mail-timothy.workers.dev";
+const RESCUE_GATEWAY="/rpc";
 const $=id=>document.getElementById(id);
 const esc=s=>String(s??"").replace(/[&<>'"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","'":"&#39;",'"':"&quot;"}[c]));
 const short=s=>s?`${s.slice(0,5)}…${s.slice(-5)}`:"—";
@@ -439,7 +439,7 @@ $("selectAllBtn").addEventListener("click",()=>{const boxes=[...document.querySe
 async function checkRescueNetwork(){
   const box=$("gatewayStatus");
   try{
-    const r=await fetch(RESCUE_GATEWAY,{method:"GET",cache:"no-store"});
+    const r=await fetch("/health",{method:"GET",cache:"no-store"});
     const j=await r.json().catch(()=>null);
     if(!r.ok||!j?.ok)throw new Error("offline");
     rescueNetworkOnline=true;
