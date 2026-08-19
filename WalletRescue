@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#08080d">
-<title>ASTY Wallet Rescue · V16</title>
+<title>ASTY Wallet Rescue · V17</title>
 <style>
 :root{
   --bg:#07070b;--panel:#0e0e16;--panel2:#12121d;--line:rgba(255,255,255,.085);
@@ -124,7 +124,7 @@ footer{text-align:center;font-size:8px;color:#5f5a67;margin-top:20px;line-height
 
 <div class="notice"><strong>Rescue-Prinzip:</strong> Es werden ausschließlich Tokenkonten mit Tokenbestand exakt 0 geschlossen. Von dem tatsächlich zurückgeholten SOL gehen 2 % als ASTY Rescue Fee an die ASTY Utility Wallet. Die Fee wird pro erfolgreich bestätigtem Batch zusammen mit dem Rescue ausgeführt. Netzwerkgebühren sind separat.</div>
 
-<footer>ASTY Wallet Rescue V16 · kein Custody · keine Seed Phrase · keine privaten Schlüssel · Mainnet Beta</footer>
+<footer>ASTY Wallet Rescue V17 · kein Custody · keine Seed Phrase · keine privaten Schlüssel · Mainnet Beta</footer>
 </div>
 
 <div class="modalback" id="modalBack"><div class="modal">
@@ -143,7 +143,7 @@ footer{text-align:center;font-size:8px;color:#5f5a67;margin-top:20px;line-height
 <script type="module">
 const LAMPORTS_PER_SOL=1_000_000_000;
 const TOKEN_PROGRAM_ID_STR="TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA";
-const TOKEN_2022_PROGRAM_ID_STR="TokenzQdYh7D4m3rZPFYycgPPK3uTQxjTzqkJ9dM9";
+const TOKEN_2022_PROGRAM_ID_STR="TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb";
 const BATCH_SIZE=7;
 const RESCUE_FEE_BPS=200;
 const RESCUE_FEE_WALLET="7jJ8wC8fquf4uEz4DpMiu6SFP89sEMy1VcY1LLYyZ3nK";
@@ -157,7 +157,7 @@ const feeForLamports=lamports=>(BigInt(lamports)*BigInt(RESCUE_FEE_BPS))/10000n;
 const netForLamports=lamports=>BigInt(lamports)-feeForLamports(lamports);
 const fmtLamports=lamports=>fmtSol(Number(BigInt(lamports))/LAMPORTS_PER_SOL);
 
-let PublicKey,Transaction,SystemProgram,createCloseAccountInstruction,TOKEN_PROGRAM_ID,TOKEN_2022_PROGRAM_ID;
+let PublicKey,Transaction,TransactionInstruction,SystemProgram,createCloseAccountInstruction,TOKEN_PROGRAM_ID,TOKEN_2022_PROGRAM_ID;
 let provider=null,walletPubkey=null,emptyAccounts=[],busy=false,activeRpc=null,rescueNetworkOnline=false,connectionPending=false,connectionSyncBusy=false;
 
 function scanStatus(text,kind=""){const cls=kind==="live"?" live":kind==="err"?" err":"";$("scanStatus").innerHTML=`<span class="dot${cls}"></span>${esc(text)}`}
@@ -244,11 +244,31 @@ async function checkRescueNetwork(){
 }
 
 async function loadSdk(){
+  // Wallet Rescue only needs web3.js. The token-program constants are created
+  // from their official on-chain addresses instead of relying on a second CDN module.
   const w=await import("https://esm.sh/@solana/web3.js@1.98.4?bundle");
-  const s=await import("https://esm.sh/@solana/spl-token@0.4.14?bundle&deps=@solana/web3.js@1.98.4");
-  PublicKey=w.PublicKey;Transaction=w.Transaction;SystemProgram=w.SystemProgram;
-  createCloseAccountInstruction=s.createCloseAccountInstruction;
-  TOKEN_PROGRAM_ID=s.TOKEN_PROGRAM_ID;TOKEN_2022_PROGRAM_ID=s.TOKEN_2022_PROGRAM_ID;
+
+  PublicKey=w.PublicKey;
+  Transaction=w.Transaction;
+  TransactionInstruction=w.TransactionInstruction;
+  SystemProgram=w.SystemProgram;
+
+  TOKEN_PROGRAM_ID=new PublicKey(TOKEN_PROGRAM_ID_STR);
+  TOKEN_2022_PROGRAM_ID=new PublicKey(TOKEN_2022_PROGRAM_ID_STR);
+
+  // SPL Token CloseAccount is instruction 9 for the base token interface.
+  // It is accepted by both the original Token Program and Token-2022.
+  createCloseAccountInstruction=(account,destination,authority,_multiSigners=[],programId=TOKEN_PROGRAM_ID)=>{
+    return new TransactionInstruction({
+      programId,
+      keys:[
+        {pubkey:account,isSigner:false,isWritable:true},
+        {pubkey:destination,isSigner:false,isWritable:true},
+        {pubkey:authority,isSigner:true,isWritable:false}
+      ],
+      data:new Uint8Array([9])
+    });
+  };
 }
 function findProvider(){if(window.phantom?.solana?.isPhantom)return window.phantom.solana;if(window.solana?.isPhantom)return window.solana;return null}
 function isMobile(){return /iPhone|iPad|iPod|Android/i.test(navigator.userAgent)}
@@ -436,6 +456,18 @@ document.addEventListener("visibilitychange",()=>{
 
 async function disconnectWallet(){try{if(provider?.disconnect)await provider.disconnect()}catch{}connectionPending=false;walletPubkey=null;emptyAccounts=[];$("connectedLine").style.display="none";$("connectBtn").style.display="";$("disconnectBtn").style.display="none";$("scanBtn").disabled=true;resetResults();scanStatus("Wallet getrennt.")}
 function resetResults(){$("recoverSol").textContent="—";$("emptyCount").textContent="—";$("selectedCount").textContent="—";$("selectedSol").textContent="— SOL";$("accountList").innerHTML=`<div class="empty"><b>Noch kein Scan.</b>Verbinde Phantom und starte den Wallet-Scan.</div>`;$("actionBar").style.display="none";$("selectAllBtn").disabled=true}
+function assertSolanaProgramsReady(){
+  if(!TOKEN_PROGRAM_ID||!TOKEN_2022_PROGRAM_ID){
+    throw new Error("Solana Token Programs wurden nicht initialisiert.");
+  }
+  if(TOKEN_PROGRAM_ID.toString()!==TOKEN_PROGRAM_ID_STR){
+    throw new Error("SPL Token Program ID ist ungültig.");
+  }
+  if(TOKEN_2022_PROGRAM_ID.toString()!==TOKEN_2022_PROGRAM_ID_STR){
+    throw new Error("Token-2022 Program ID ist ungültig.");
+  }
+}
+
 async function getParsedAccounts(programId){return await rpcRequest("getTokenAccountsByOwner",[walletPubkey.toString(),{programId},{encoding:"jsonParsed",commitment:"confirmed"}])}
 function parseTokenAccount(row,programId){
   const info=row?.account?.data?.parsed?.info;if(!info)return null;
@@ -446,6 +478,7 @@ function authorityCanClose(a){const w=walletPubkey.toString();return a.owner===w
 async function scanWallet(){
   if(!walletPubkey||busy)return;busy=true;$("scanBtn").disabled=true;$("rescueBtn").disabled=true;progress(12);scanStatus("Rescue Network wird kontaktiert…");
   try{
+    assertSolanaProgramsReady();
     const [classic,t22]=await Promise.all([getParsedAccounts(TOKEN_PROGRAM_ID.toString()),getParsedAccounts(TOKEN_2022_PROGRAM_ID.toString())]);progress(58);
     const all=[...(classic?.value||[]).map(x=>parseTokenAccount(x,TOKEN_PROGRAM_ID.toString())),...(t22?.value||[]).map(x=>parseTokenAccount(x,TOKEN_2022_PROGRAM_ID.toString()))].filter(Boolean);
     emptyAccounts=all.filter(a=>a.rawAmount===0n&&authorityCanClose(a)&&!a.isNative);
