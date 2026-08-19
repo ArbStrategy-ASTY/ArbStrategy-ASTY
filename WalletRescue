@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#08080d">
-<title>ASTY Wallet Rescue · V8</title>
+<title>ASTY Wallet Rescue · V9</title>
 <style>
 :root{
   --bg:#07070b;--panel:#0e0e16;--panel2:#12121d;--line:rgba(255,255,255,.085);
@@ -128,7 +128,7 @@ footer{text-align:center;font-size:8px;color:#5f5a67;margin-top:20px;line-height
 
 <div class="notice"><strong>Sicherheitsprinzip:</strong> ASTY Wallet Rescue schließt nur Tokenkonten mit Tokenbestand exakt 0. Konten mit Tokenbestand werden nie ausgewählt. Die zurückgeholten Lamports gehen direkt an deine eigene verbundene Wallet. Aktuell gibt es keine ASTY-Service-Fee.</div>
 
-<footer>ASTY Wallet Rescue V8 · Client-side only · kein Custody · keine Seed Phrase · keine privaten Schlüssel · Mainnet Beta</footer>
+<footer>ASTY Wallet Rescue V9 · Client-side only · kein Custody · keine Seed Phrase · keine privaten Schlüssel · Mainnet Beta</footer>
 </div>
 
 <div class="modalback" id="modalBack"><div class="modal">
@@ -152,7 +152,7 @@ const fmtSol=n=>Number.isFinite(n)?`${n.toLocaleString("de-DE",{minimumFractionD
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 
 let PublicKey,Transaction,createCloseAccountInstruction,TOKEN_PROGRAM_ID,TOKEN_2022_PROGRAM_ID;
-let provider=null,walletPubkey=null,emptyAccounts=[],delegates=[],busy=false,activeRpc=null,rescueNetworkOnline=false;
+let provider=null,walletPubkey=null,emptyAccounts=[],delegates=[],busy=false,activeRpc=null,rescueNetworkOnline=false,connectionPending=false,connectionSyncBusy=false;
 
 function scanStatus(text,kind=""){const cls=kind==="live"?" live":kind==="err"?" err":"";$("scanStatus").innerHTML=`<span class="dot${cls}"></span>${esc(text)}`}
 function progress(v){$("progress").style.display=(v>0&&v<100)?"block":"none";$("bar").style.width=`${v}%`}
@@ -207,26 +207,80 @@ function updateWalletButton(){
 }
 async function applyConnectedWallet(pubkey,{autoScan=true}={}){
   if(!pubkey)return false;
+
+  const nextKey=pubkey.toString();
+  const alreadySame=walletPubkey?.toString?.()===nextKey;
+
   walletPubkey=pubkey;
-  $("walletAddress").textContent=short(walletPubkey.toString());
+  connectionPending=false;
+
+  $("walletAddress").textContent=short(nextKey);
   $("connectedLine").style.display="block";
   $("connectBtn").style.display="none";
   $("disconnectBtn").style.display="";
   $("mobileHint").style.display="none";
   $("scanBtn").disabled=!rescueNetworkOnline;
-  scanStatus(`Phantom verbunden · ${short(walletPubkey.toString())}`,"live");
-  if(autoScan&&rescueNetworkOnline){
+
+  scanStatus(`Phantom verbunden · ${short(nextKey)}`,"live");
+
+  if(autoScan && rescueNetworkOnline && !busy && !alreadySame){
     await sleep(250);
     await scanWallet();
   }
   return true;
 }
+
+async function syncPhantomConnection(){
+  if(connectionSyncBusy)return false;
+  if(!provider)provider=findProvider();
+  if(!provider)return false;
+
+  connectionSyncBusy=true;
+  try{
+    // First trust the provider's live state.
+    if(provider.isConnected && provider.publicKey){
+      await applyConnectedWallet(provider.publicKey,{autoScan:true});
+      return true;
+    }
+
+    // After the user has approved Phantom, the site is trusted.
+    // A trusted reconnect should return silently without another approval sheet.
+    if(connectionPending){
+      try{
+        const resp=await provider.connect({onlyIfTrusted:true});
+        const key=resp?.publicKey||provider.publicKey;
+        if(key){
+          await applyConnectedWallet(key,{autoScan:true});
+          return true;
+        }
+      }catch{}
+    }
+    return false;
+  }finally{
+    connectionSyncBusy=false;
+  }
+}
+
+function schedulePhantomSync(){
+  // Mobile WebViews sometimes resume slightly after the approval sheet closes.
+  [0,150,450,1000,2000].forEach(ms=>{
+    setTimeout(()=>syncPhantomConnection().catch(()=>{}),ms);
+  });
+}
+
 function installProviderListeners(){
   if(!provider||provider.__astyListenersInstalled)return;
   try{provider.__astyListenersInstalled=true}catch{}
+
   try{
+    provider.on("connect",async(publicKey)=>{
+      const key=publicKey||provider.publicKey;
+      if(key)await applyConnectedWallet(key,{autoScan:true});
+    });
+
     provider.on("disconnect",()=>{
       walletPubkey=null;
+      connectionPending=false;
       $("connectedLine").style.display="none";
       $("connectBtn").style.display="";
       $("disconnectBtn").style.display="none";
@@ -235,14 +289,28 @@ function installProviderListeners(){
       updateWalletButton();
       scanStatus("Phantom getrennt.");
     });
+
     provider.on("accountChanged",async(publicKey)=>{
-      if(publicKey)await applyConnectedWallet(publicKey,{autoScan:true});
+      if(publicKey){
+        await applyConnectedWallet(publicKey,{autoScan:true});
+      }else{
+        schedulePhantomSync();
+      }
     });
-  }catch(e){console.warn(e)}
+  }catch(e){
+    console.warn("Phantom listener",e);
+  }
 }
+
 async function connectWallet(){
+  if(connectionPending){
+    schedulePhantomSync();
+    return;
+  }
+
   try{
     if(!provider)provider=findProvider();
+
     if(!provider){
       if(isMobile()){
         scanStatus("Öffne ASTY Wallet Rescue jetzt in Phantom…");
@@ -252,27 +320,53 @@ async function connectWallet(){
       scanStatus("Phantom wurde nicht gefunden.","err");
       return;
     }
+
     installProviderListeners();
+
+    connectionPending=true;
     $("connectBtn").disabled=true;
-    $("connectBtn").textContent="PHANTOM WIRD GEÖFFNET…";
+    $("connectBtn").textContent="WARTE AUF PHANTOM…";
     scanStatus("Bitte die Verbindungsanfrage in Phantom bestätigen.");
-    const resp=await provider.connect();
-    const key=resp?.publicKey||provider.publicKey;
-    if(!key)throw new Error("Phantom hat keinen Public Key zurückgegeben.");
-    await applyConnectedWallet(key,{autoScan:true});
+
+    // Important on Phantom mobile:
+    // Trigger connect from the user gesture, but do not make the entire UI depend
+    // on this Promise resolving while the approval sheet changes WebView state.
+    provider.connect()
+      .then(async resp=>{
+        const key=resp?.publicKey||provider.publicKey;
+        if(key)await applyConnectedWallet(key,{autoScan:true});
+      })
+      .catch(e=>{
+        console.error(e);
+        if(e?.code===4001){
+          connectionPending=false;
+          scanStatus("Verbindung in Phantom abgelehnt oder geschlossen.","err");
+          $("connectBtn").disabled=false;
+          updateWalletButton();
+        }
+      });
+
+    // Parallel recovery path for Phantom's mobile in-app browser.
+    schedulePhantomSync();
+
   }catch(e){
     console.error(e);
-    scanStatus(e?.code===4001
-      ?"Verbindung in Phantom abgelehnt oder geschlossen."
-      :`Wallet-Verbindung fehlgeschlagen: ${e.message||e}`,"err");
-    $("connectBtn").style.display="";
-  }finally{
+    connectionPending=false;
+    scanStatus(`Wallet-Verbindung fehlgeschlagen: ${e.message||e}`,"err");
     $("connectBtn").disabled=false;
-    if(!walletPubkey)updateWalletButton();
+    updateWalletButton();
   }
 }
 
-async function disconnectWallet(){try{if(provider?.disconnect)await provider.disconnect()}catch{}walletPubkey=null;emptyAccounts=[];delegates=[];$("connectedLine").style.display="none";$("connectBtn").style.display="";$("disconnectBtn").style.display="none";$("scanBtn").disabled=true;resetResults();scanStatus("Wallet getrennt.")}
+// When Phantom's approval UI closes, the mobile WebView becomes active again.
+// Re-read the provider state immediately instead of waiting for a page reload.
+window.addEventListener("focus",schedulePhantomSync);
+window.addEventListener("pageshow",schedulePhantomSync);
+document.addEventListener("visibilitychange",()=>{
+  if(document.visibilityState==="visible")schedulePhantomSync();
+});
+
+async function disconnectWallet(){try{if(provider?.disconnect)await provider.disconnect()}catch{}connectionPending=false;walletPubkey=null;emptyAccounts=[];delegates=[];$("connectedLine").style.display="none";$("connectBtn").style.display="";$("disconnectBtn").style.display="none";$("scanBtn").disabled=true;resetResults();scanStatus("Wallet getrennt.")}
 function resetResults(){$("recoverSol").textContent="—";$("emptyCount").textContent="—";$("selectedCount").textContent="—";$("selectedSol").textContent="— SOL";$("delegateCount").textContent="—";$("accountList").innerHTML=`<div class="empty"><b>Noch kein Scan.</b>Verbinde Phantom und starte den Wallet-Scan.</div>`;$("delegateList").innerHTML=`<div class="empty"><b>Noch keine Daten.</b>Der Delegate-Check läuft automatisch mit dem Wallet-Scan.</div>`;$("actionBar").style.display="none";$("selectAllBtn").disabled=true}
 async function getParsedAccounts(programId){return await rpcRequest("getTokenAccountsByOwner",[walletPubkey.toString(),{programId},{encoding:"jsonParsed",commitment:"confirmed"}])}
 function parseTokenAccount(row,programId){
@@ -368,14 +462,18 @@ async function boot(){
     await loadSdk();
     await checkRescueNetwork();
     updateWalletButton();
+
     const p=findProvider();
     if(p){
       provider=p;
       installProviderListeners();
-      if(p.isConnected&&p.publicKey){
+
+      if(p.isConnected && p.publicKey){
         await applyConnectedWallet(p.publicKey,{autoScan:true});
         return;
       }
+
+      // Silent reconnect for a site Phantom already trusts.
       try{
         const resp=await p.connect({onlyIfTrusted:true});
         const key=resp?.publicKey||p.publicKey;
@@ -384,7 +482,9 @@ async function boot(){
           return;
         }
       }catch{}
+
       scanStatus("Phantom erkannt. Wallet verbinden.","live");
+      schedulePhantomSync();
     }
   }catch(e){
     console.error(e);
