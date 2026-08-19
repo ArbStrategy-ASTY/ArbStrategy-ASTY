@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#08080d">
-<title>ASTY Wallet Rescue · V15</title>
+<title>ASTY Wallet Rescue · V16</title>
 <style>
 :root{
   --bg:#07070b;--panel:#0e0e16;--panel2:#12121d;--line:rgba(255,255,255,.085);
@@ -124,7 +124,7 @@ footer{text-align:center;font-size:8px;color:#5f5a67;margin-top:20px;line-height
 
 <div class="notice"><strong>Rescue-Prinzip:</strong> Es werden ausschließlich Tokenkonten mit Tokenbestand exakt 0 geschlossen. Von dem tatsächlich zurückgeholten SOL gehen 2 % als ASTY Rescue Fee an die ASTY Utility Wallet. Die Fee wird pro erfolgreich bestätigtem Batch zusammen mit dem Rescue ausgeführt. Netzwerkgebühren sind separat.</div>
 
-<footer>ASTY Wallet Rescue V15 · kein Custody · keine Seed Phrase · keine privaten Schlüssel · Mainnet Beta</footer>
+<footer>ASTY Wallet Rescue V16 · kein Custody · keine Seed Phrase · keine privaten Schlüssel · Mainnet Beta</footer>
 </div>
 
 <div class="modalback" id="modalBack"><div class="modal">
@@ -162,46 +162,83 @@ let provider=null,walletPubkey=null,emptyAccounts=[],busy=false,activeRpc=null,r
 
 function scanStatus(text,kind=""){const cls=kind==="live"?" live":kind==="err"?" err":"";$("scanStatus").innerHTML=`<span class="dot${cls}"></span>${esc(text)}`}
 function progress(v){$("progress").style.display=(v>0&&v<100)?"block":"none";$("bar").style.width=`${v}%`}
-async function callRpcUrl(url,method,params){
-  const r=await fetch(url,{
-    method:"POST",
-    headers:{"Content-Type":"application/json"},
-    body:JSON.stringify({jsonrpc:"2.0",id:1,method,params})
-  });
-  const j=await r.json().catch(()=>null);
-  if(!r.ok||j?.error)throw new Error(j?.error?.message||`HTTP ${r.status}`);
-  return j.result;
+async function callRpcUrl(url,method,params,timeoutMs=12000){
+  const controller=new AbortController();
+  const timer=setTimeout(()=>controller.abort(),timeoutMs);
+
+  try{
+    const r=await fetch(url,{
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({jsonrpc:"2.0",id:1,method,params}),
+      signal:controller.signal
+    });
+
+    const j=await r.json().catch(()=>null);
+
+    if(!r.ok||j?.error){
+      throw new Error(j?.error?.message||`HTTP ${r.status}`);
+    }
+
+    return j.result;
+  }catch(e){
+    if(e?.name==="AbortError")throw new Error("Zeitüberschreitung beim Rescue Network");
+    throw e;
+  }finally{
+    clearTimeout(timer);
+  }
 }
 async function rpcRequest(method,params=[]){
   try{
     const result=await callRpcUrl(RESCUE_GATEWAY,method,params);
     activeRpc="ASTY Rescue Network";
+    rescueNetworkOnline=true;
+
+    if($("gatewayStatus")){
+      $("gatewayStatus").innerHTML=`<span class="dot live"></span>Online · Helius`;
+    }
+
     return result;
   }catch(e){
-    throw new Error("Rescue Network ist momentan nicht erreichbar.");
+    rescueNetworkOnline=false;
+
+    if($("gatewayStatus")){
+      $("gatewayStatus").innerHTML=`<span class="dot err"></span>Vorübergehend nicht erreichbar`;
+    }
+
+    throw new Error(`Rescue Network: ${e.message||e}`);
   }
 }
 async function checkRescueNetwork(){
   const box=$("gatewayStatus");
+
   try{
-    const r=await fetch("/health",{method:"GET",cache:"no-store"});
+    const controller=new AbortController();
+    const timer=setTimeout(()=>controller.abort(),6000);
+
+    let r;
+    try{
+      r=await fetch("/health",{
+        method:"GET",
+        cache:"no-store",
+        signal:controller.signal
+      });
+    }finally{
+      clearTimeout(timer);
+    }
+
     const j=await r.json().catch(()=>null);
 
     if(!r.ok||!j?.ok)throw new Error("offline");
 
     rescueNetworkOnline=true;
     const live=(j.upstreams||[]).find(x=>x.ok);
-
     box.innerHTML=`<span class="dot live"></span>Online${live?.upstream?` · ${esc(live.upstream)}`:""}`;
-
-    if(walletPubkey)$("scanBtn").disabled=false;
     return true;
 
   }catch(e){
     rescueNetworkOnline=false;
-    box.innerHTML=`<span class="dot err"></span>Vorübergehend nicht erreichbar`;
-
-    if(walletPubkey)$("scanBtn").disabled=true;
+    box.innerHTML=`<span class="dot err"></span>Healthcheck nicht verfügbar · Scan kann trotzdem testen`;
     return false;
   }
 }
@@ -250,11 +287,11 @@ async function applyConnectedWallet(pubkey,{autoScan=true}={}){
   $("connectBtn").style.display="none";
   $("disconnectBtn").style.display="";
   $("mobileHint").style.display="none";
-  $("scanBtn").disabled=!rescueNetworkOnline;
+  $("scanBtn").disabled=false;
 
   scanStatus(`Phantom verbunden · ${short(nextKey)}`,"live");
 
-  if(autoScan && rescueNetworkOnline && !busy && !alreadySame){
+  if(autoScan && !busy && !alreadySame){
     await sleep(250);
     await scanWallet();
   }
@@ -407,7 +444,7 @@ function parseTokenAccount(row,programId){
 }
 function authorityCanClose(a){const w=walletPubkey.toString();return a.owner===w&&(!a.closeAuthority||a.closeAuthority===w)}
 async function scanWallet(){
-  if(!walletPubkey||busy)return;busy=true;$("scanBtn").disabled=true;$("rescueBtn").disabled=true;progress(12);scanStatus("SPL-Tokenkonten werden geladen…");
+  if(!walletPubkey||busy)return;busy=true;$("scanBtn").disabled=true;$("rescueBtn").disabled=true;progress(12);scanStatus("Rescue Network wird kontaktiert…");
   try{
     const [classic,t22]=await Promise.all([getParsedAccounts(TOKEN_PROGRAM_ID.toString()),getParsedAccounts(TOKEN_2022_PROGRAM_ID.toString())]);progress(58);
     const all=[...(classic?.value||[]).map(x=>parseTokenAccount(x,TOKEN_PROGRAM_ID.toString())),...(t22?.value||[]).map(x=>parseTokenAccount(x,TOKEN_2022_PROGRAM_ID.toString()))].filter(Boolean);
@@ -578,7 +615,7 @@ async function boot(){
   try{
     scanStatus("Solana SDK wird geladen…");
     await loadSdk();
-    await checkRescueNetwork();
+    checkRescueNetwork().catch(()=>{});
     updateWalletButton();
 
     const p=findProvider();
