@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<html lang="de">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#08080d">
-<title>ASTY Wallet Rescue · V18</title>
+<title>ASTY Unlockr · V19</title>
 <style>
 :root{
   --bg:#07070b;--panel:#0e0e16;--panel2:#12121d;--line:rgba(255,255,255,.085);
@@ -75,50 +75,265 @@ select,input[type=url]{width:100%;background:#09090f;color:var(--text);border:1p
 footer{text-align:center;font-size:8px;color:#5f5a67;margin-top:20px;line-height:1.7}
 @media(max-width:820px){.grid{grid-template-columns:1fr}.statusgrid{grid-template-columns:1fr 1fr}}
 @media(max-width:560px){.wrap{width:calc(100% - 18px);padding-top:10px}.hero{padding:18px}.statusgrid{grid-template-columns:1fr 1fr}.account{grid-template-columns:26px 1fr}.value{grid-column:2;text-align:left}.actionbar{align-items:flex-start;flex-direction:column}.actionbar .btn{width:100%}.modalstats{grid-template-columns:1fr}}
+
+/* ===== ASTY Unlockr V19 branding / UX layer ===== */
+body{overflow-x:hidden}
+body::before{
+  content:"";position:fixed;inset:0;pointer-events:none;z-index:-1;
+  background:
+    linear-gradient(115deg,rgba(125,89,255,.035),transparent 28%),
+    radial-gradient(circle at 50% 115%,rgba(99,229,244,.06),transparent 32%);
+}
+.topbar{
+  position:sticky;top:0;z-index:20;
+  width:min(1180px,calc(100% - 26px));margin:0 auto 18px;
+  padding:11px 13px;border:1px solid var(--line);border-radius:18px;
+  background:rgba(9,9,15,.78);backdrop-filter:blur(18px);
+  box-shadow:0 14px 45px rgba(0,0,0,.24);
+}
+.topbar-inner{display:flex;align-items:center;justify-content:space-between;gap:16px}
+.brand-new{display:flex;align-items:center;gap:10px;min-width:max-content;text-decoration:none;color:var(--text)}
+.brand-logo{
+  width:42px;height:42px;object-fit:contain;border-radius:13px;
+  filter:drop-shadow(0 0 18px rgba(189,140,255,.28));
+}
+.brand-copy{display:flex;flex-direction:column;line-height:1.05}
+.brand-copy strong{font-size:13px;letter-spacing:.02em}
+.brand-copy span{font-size:8px;color:var(--muted);text-transform:uppercase;letter-spacing:.16em;margin-top:4px}
+.navlinks{display:flex;align-items:center;justify-content:flex-end;gap:7px;flex-wrap:wrap}
+.navlink,.lang-toggle{
+  min-height:34px;display:inline-flex;align-items:center;justify-content:center;
+  padding:8px 10px;border-radius:10px;border:1px solid var(--line);
+  background:rgba(255,255,255,.025);color:#c9c3d3;text-decoration:none;
+  font-size:8px;font-weight:950;letter-spacing:.07em;text-transform:uppercase;
+  transition:.2s ease;cursor:pointer;
+}
+.navlink:hover,.lang-toggle:hover{
+  color:white;border-color:rgba(189,140,255,.35);background:rgba(189,140,255,.08);
+  transform:translateY(-1px)
+}
+.navlink.system{border-color:rgba(99,229,244,.25);color:#a9f1f8}
+.lang-toggle{color:#e5d6ff;border-color:rgba(189,140,255,.3);min-width:48px}
+
+.unlockr-hero{
+  position:relative;overflow:hidden;
+  display:grid;grid-template-columns:minmax(0,1.18fr) minmax(250px,.82fr);gap:12px;
+  padding:clamp(22px,4vw,40px);border:1px solid var(--line);border-radius:26px;
+  background:
+    radial-gradient(circle at 82% 28%,rgba(99,229,244,.09),transparent 30%),
+    radial-gradient(circle at 25% 10%,rgba(189,140,255,.12),transparent 38%),
+    linear-gradient(145deg,rgba(18,17,29,.97),rgba(8,8,14,.98));
+  box-shadow:0 24px 80px rgba(0,0,0,.3);
+}
+.unlockr-hero::after{
+  content:"";position:absolute;width:380px;height:380px;right:-200px;bottom:-220px;border-radius:50%;
+  border:1px solid rgba(99,229,244,.12);box-shadow:0 0 90px rgba(99,229,244,.05)
+}
+.hero-copy-new{position:relative;z-index:2;align-self:center}
+.eyebrow-new{
+  display:inline-flex;align-items:center;gap:7px;font-size:8px;font-weight:1000;
+  letter-spacing:.18em;color:var(--purple);text-transform:uppercase;margin-bottom:11px
+}
+.eyebrow-new::before{content:"";width:22px;height:1px;background:linear-gradient(90deg,var(--purple),var(--cyan))}
+.unlockr-title{
+  margin:0;font-size:clamp(42px,7vw,78px);line-height:.9;letter-spacing:-.065em
+}
+.unlockr-title span{
+  background:linear-gradient(90deg,#c493ff 2%,#8d83ff 48%,#65e5f3 100%);
+  -webkit-background-clip:text;background-clip:text;color:transparent
+}
+.unlockr-lead{max-width:700px;margin:17px 0 0;color:#bbb5c8;font-size:13px;line-height:1.75}
+.hero-actions-new{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin-top:21px}
+.hero-actions-new .btn.primary{
+  min-width:190px;box-shadow:0 10px 34px rgba(128,93,255,.18);
+  position:relative;overflow:hidden
+}
+.hero-actions-new .btn.primary::after{
+  content:"";position:absolute;inset:-2px auto -2px -30%;width:24%;
+  transform:skewX(-18deg);background:rgba(255,255,255,.22);filter:blur(2px);
+  animation:buttonSheen 4.2s ease-in-out infinite
+}
+@keyframes buttonSheen{0%,62%{left:-30%}82%,100%{left:125%}}
+.wolf-stage{
+  position:relative;min-height:285px;display:flex;align-items:flex-end;justify-content:center;
+  border:1px solid rgba(189,140,255,.12);border-radius:22px;overflow:hidden;
+  background:
+    radial-gradient(circle at 50% 55%,rgba(189,140,255,.13),transparent 33%),
+    linear-gradient(180deg,rgba(255,255,255,.015),rgba(99,229,244,.025));
+}
+.wolf-stage::before{
+  content:"";position:absolute;width:210px;height:210px;left:50%;top:50%;transform:translate(-50%,-50%);
+  border-radius:50%;border:1px solid rgba(189,140,255,.18);
+  box-shadow:0 0 65px rgba(125,89,255,.16),inset 0 0 55px rgba(99,229,244,.05);
+  animation:wolfHalo 4s ease-in-out infinite
+}
+@keyframes wolfHalo{50%{transform:translate(-50%,-50%) scale(1.06);opacity:.7}}
+.wolf-img{
+  position:relative;z-index:1;max-width:88%;max-height:310px;object-fit:contain;
+  filter:drop-shadow(0 18px 30px rgba(0,0,0,.42)) drop-shadow(0 0 20px rgba(189,140,255,.13));
+  transform:translateY(4px)
+}
+.wolf-tag{
+  position:absolute;z-index:2;right:12px;bottom:12px;padding:6px 9px;border-radius:999px;
+  border:1px solid rgba(99,229,244,.19);background:rgba(7,7,11,.65);backdrop-filter:blur(10px);
+  font-size:7px;font-weight:1000;letter-spacing:.13em;color:#9beef6;text-transform:uppercase
+}
+.connected-new{margin-top:11px;font-size:9px;color:var(--muted);display:none}
+.connected-new b{color:var(--green)}
+
+.statusgrid{margin-top:13px}
+.stat{transition:.2s ease}.stat:hover{border-color:rgba(189,140,255,.19);transform:translateY(-1px)}
+.card,.security,.notice{box-shadow:0 10px 36px rgba(0,0,0,.12)}
+.actionbar{z-index:8}
+footer{padding-bottom:10px}
+
+/* Opening sequence */
+.unlockr-splash{
+  position:fixed;inset:0;z-index:9999;display:grid;place-items:center;overflow:hidden;
+  background:
+    radial-gradient(circle at 50% 45%,rgba(125,89,255,.18),transparent 27%),
+    radial-gradient(circle at 54% 58%,rgba(99,229,244,.08),transparent 25%),
+    #060609;
+  animation:splashOut .55s ease 1.55s forwards;
+}
+.unlockr-splash.done{display:none}
+.splash-inner{position:relative;text-align:center;min-width:260px}
+.splash-logo{
+  width:78px;height:78px;object-fit:contain;
+  filter:drop-shadow(0 0 32px rgba(189,140,255,.42));
+  opacity:0;transform:scale(.72);animation:logoIn .6s cubic-bezier(.2,.8,.2,1) .08s forwards
+}
+.splash-wolf{
+  position:absolute;width:145px;height:145px;object-fit:contain;left:50%;top:10px;
+  transform:translate(-50%,-10%) scale(.85);opacity:0;filter:drop-shadow(0 0 30px rgba(99,229,244,.16));
+  animation:wolfFlash .7s ease .48s forwards
+}
+.splash-title{
+  position:relative;margin-top:18px;font-size:24px;font-weight:1000;letter-spacing:-.045em;
+  opacity:0;transform:translateY(8px);animation:textIn .55s ease .62s forwards
+}
+.splash-title span{color:var(--purple)}
+.splash-sub{
+  margin-top:5px;font-size:7px;font-weight:950;letter-spacing:.22em;text-transform:uppercase;color:#7f788d;
+  opacity:0;animation:textIn .5s ease .77s forwards
+}
+.splash-line{width:180px;height:2px;border-radius:10px;background:#17151f;margin:15px auto 0;overflow:hidden}
+.splash-line i{display:block;width:0;height:100%;background:linear-gradient(90deg,var(--purple2),var(--cyan));animation:loadLine 1.12s ease .36s forwards}
+@keyframes logoIn{to{opacity:1;transform:scale(1)}}
+@keyframes wolfFlash{0%{opacity:0}45%{opacity:.26}100%{opacity:.08;transform:translate(-50%,-10%) scale(1.12)}}
+@keyframes textIn{to{opacity:1;transform:none}}
+@keyframes loadLine{to{width:100%}}
+@keyframes splashOut{to{opacity:0;visibility:hidden;pointer-events:none}}
+
+@media(max-width:900px){
+  .topbar-inner{align-items:flex-start;flex-direction:column}
+  .navlinks{justify-content:flex-start;width:100%}
+  .unlockr-hero{grid-template-columns:1fr}
+  .wolf-stage{min-height:215px}
+  .wolf-img{max-height:235px}
+}
+@media(max-width:560px){
+  .topbar{width:calc(100% - 18px);border-radius:15px;padding:10px;margin-bottom:10px}
+  .brand-logo{width:36px;height:36px}
+  .navlinks{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+  .navlink,.lang-toggle{width:100%;font-size:7px;padding:8px 5px}
+  .navlink.system{grid-column:span 2}
+  .unlockr-hero{padding:19px;border-radius:20px}
+  .unlockr-lead{font-size:11px}
+  .wolf-stage{min-height:185px}
+  .wolf-img{max-height:205px}
+  .hero-actions-new .btn{width:100%}
+}
+@media(prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;scroll-behavior:auto!important}
+}
+
 </style>
 </head>
 <body>
-<div class="wrap">
-<header><div class="brand"><div class="logo"></div><div>ArbStrategy</div></div><div class="topbadge">ASTY UTILITY</div></header>
+<div id="unlockrSplash" class="unlockr-splash" aria-hidden="true">
+  <div class="splash-inner">
+    <img src="assets/logo.png" alt="" class="splash-logo">
+    <img src="assets/wolf.png" alt="" class="splash-wolf">
+    <div class="splash-title">ASTY <span>Unlockr</span></div>
+    <div class="splash-sub">Unlock hidden SOL</div>
+    <div class="splash-line"><i></i></div>
+  </div>
+</div>
 
-<section class="hero">
-  <div class="eyebrow">SOLANA WALLET CLEANUP</div>
-  <h1>ASTY <span>Wallet Rescue</span></h1>
-  <p class="lead">Findet ungenutzte, leere Solana-Tokenkonten und zeigt dir exakt, wie viel dort noch als Rent in SOL gebunden ist. Du entscheidest selbst, welche Konten geschlossen werden. Es werden ausschließlich leere Tokenkonten geschlossen. Tokens mit Bestand werden niemals angetastet.</p>
-  <div class="hero-actions"><button class="btn primary" id="connectBtn">PHANTOM VERBINDEN</button><button class="btn outline" id="disconnectBtn" style="display:none">TRENNEN</button></div>
-  <div class="mobilehint" id="mobileHint">Auf iPhone/Android muss die Seite innerhalb von Phantom geöffnet werden. Der Button öffnet diese exakte Seite direkt im Phantom-Browser.</div>
-  <div class="connected" id="connectedLine">Verbunden: <b id="walletAddress"></b></div>
+<header class="topbar">
+  <div class="topbar-inner">
+    <a class="brand-new" href="https://arbstrategy.net/" target="_blank" rel="noopener">
+      <img src="assets/logo.png" alt="ASTY Logo" class="brand-logo">
+      <div class="brand-copy"><strong>$ASTY</strong><span>ArbStrategy</span></div>
+    </a>
+    <nav class="navlinks" aria-label="ASTY Navigation">
+      <a class="navlink" href="https://htmlpreview.github.io/?https://github.com/ArbStrategy-ASTY/ArbStrategy-ASTY/blob/main/pools.html" target="_blank" rel="noopener" data-en="Pool Dashboard" data-de="Pool Dashboard">Pool Dashboard</a>
+      <a class="navlink" href="https://arbstrategy.net/" target="_blank" rel="noopener" data-en="Token Dashboard" data-de="Token Dashboard">Token Dashboard</a>
+      <a class="navlink" href="https://birdeye.so/solana/token/ASTYqeaoK83Zs1pTFEXZUB6BM8cG8YLTsN852NUkt7ZR" target="_blank" rel="noopener">Birdeye</a>
+      <a class="navlink" href="https://t.me/ArbStrategyASTY" target="_blank" rel="noopener">Telegram</a>
+      <a class="navlink system" href="https://arbstrategy.net/" target="_blank" rel="noopener" data-en="Understand the System" data-de="System verstehen">Understand the System</a>
+      <button id="langToggle" class="lang-toggle" type="button" aria-label="Switch language">DE</button>
+    </nav>
+  </div>
+</header>
+
+<div class="wrap">
+<section class="unlockr-hero">
+  <div class="hero-copy-new">
+    <div class="eyebrow-new" data-en="SOLANA WALLET UTILITY" data-de="SOLANA WALLET UTILITY">SOLANA WALLET UTILITY</div>
+    <h1 class="unlockr-title">ASTY <span>Unlockr</span></h1>
+    <p class="unlockr-lead"
+       data-en="Find unused, empty Solana token accounts and unlock the SOL still tied up in them as rent. You choose exactly which accounts to close. Token accounts with a balance are never touched."
+       data-de="Finde ungenutzte, leere Solana-Tokenkonten und hole das dort noch als Rent gebundene SOL zurück. Du entscheidest selbst, welche Konten geschlossen werden. Tokenkonten mit Bestand werden niemals angetastet.">
+       Find unused, empty Solana token accounts and unlock the SOL still tied up in them as rent. You choose exactly which accounts to close. Token accounts with a balance are never touched.
+    </p>
+    <div class="hero-actions-new">
+      <button class="btn primary" id="connectBtn" data-en="CONNECT PHANTOM" data-de="PHANTOM VERBINDEN">CONNECT PHANTOM</button>
+      <button class="btn outline" id="disconnectBtn" style="display:none" data-en="DISCONNECT" data-de="TRENNEN">DISCONNECT</button>
+    </div>
+    <div class="mobilehint" id="mobileHint"
+         data-en="On iPhone/Android, open this page inside Phantom. This button will open the exact current page in Phantom's in-app browser."
+         data-de="Auf iPhone/Android muss die Seite innerhalb von Phantom geöffnet werden. Der Button öffnet diese exakte Seite direkt im Phantom-In-App-Browser.">
+      On iPhone/Android, open this page inside Phantom. This button will open the exact current page in Phantom's in-app browser.
+    </div>
+    <div class="connected connected-new" id="connectedLine"><span data-en="Connected:" data-de="Verbunden:">Connected:</span> <b id="walletAddress"></b></div>
+  </div>
+  <div class="wolf-stage" aria-hidden="true">
+    <img src="assets/wolf.png" alt="" class="wolf-img">
+    <div class="wolf-tag">ASTY Utility</div>
+  </div>
 </section>
 
 <section class="statusgrid">
-  <div class="stat"><small>Rückholbares SOL</small><strong class="green" id="recoverSol">—</strong><div class="sub">Brutto vor Netzwerkgebühren</div></div>
-  <div class="stat"><small>Leere Konten</small><strong id="emptyCount">—</strong><div class="sub">SPL + Token-2022</div></div>
-  <div class="stat"><small>Ausgewählt</small><strong class="cyan" id="selectedCount">—</strong><div class="sub" id="selectedSol">— SOL</div></div>
-  <div class="stat"><small>ASTY Rescue Fee</small><strong class="amber">2 %</strong><div class="sub" id="feeStat">— SOL bei aktueller Auswahl</div><span id="delegateCount" style="display:none"></span></div>
+  <div class="stat"><small data-en="Recoverable SOL" data-de="Rückholbares SOL">Recoverable SOL</small><strong class="green" id="recoverSol">—</strong><div class="sub" data-en="Gross before network fees" data-de="Brutto vor Netzwerkgebühren">Gross before network fees</div></div>
+  <div class="stat"><small data-en="Empty Accounts" data-de="Leere Konten">Empty Accounts</small><strong id="emptyCount">—</strong><div class="sub">SPL + Token-2022</div></div>
+  <div class="stat"><small data-en="Selected" data-de="Ausgewählt">Selected</small><strong class="cyan" id="selectedCount">—</strong><div class="sub" id="selectedSol">— SOL</div></div>
+  <div class="stat"><small>ASTY Rescue Fee</small><strong class="amber">2 %</strong><div class="sub" id="feeStat">— SOL</div><span id="delegateCount" style="display:none"></span></div>
 </section>
 
 <section class="grid">
   <div class="card">
-    <div class="cardtitle">Wallet Scan</div>
-    <div class="statusbox" id="scanStatus"><span class="dot"></span>Wallet noch nicht verbunden.</div>
+    <div class="cardtitle" data-en="Wallet Scan" data-de="Wallet Scan">Wallet Scan</div>
+    <div class="statusbox" id="scanStatus"><span class="dot"></span>Wallet not connected yet.</div>
     <div class="rpc">
-      <label>Rescue Network</label>
-      <div class="statusbox" id="gatewayStatus"><span class="dot"></span>Verbindung wird geprüft…</div>
+      <label data-en="Rescue Network" data-de="Rescue Network">Rescue Network</label>
+      <div class="statusbox" id="gatewayStatus"><span class="dot"></span>Checking connection…</div>
     </div>
-    <button class="btn ghost scanbutton" id="scanBtn" disabled>WALLET SCANNEN</button>
+    <button class="btn ghost scanbutton" id="scanBtn" disabled data-en="SCAN WALLET" data-de="WALLET SCANNEN">SCAN WALLET</button>
     <div class="progress" id="progress"><i id="bar"></i></div>
-    <div class="info">Es werden ausschließlich Accounts gelesen, die deiner verbundenen Wallet gehören. Für den Scan fragt die Seite das klassische SPL-Token-Programm und Token-2022 ab.</div>
+    <div class="info" data-en="Only accounts belonging to your connected wallet are read. The scan checks both the classic SPL Token Program and Token-2022." data-de="Es werden ausschließlich Accounts gelesen, die deiner verbundenen Wallet gehören. Für den Scan fragt die Seite das klassische SPL-Token-Programm und Token-2022 ab.">Only accounts belonging to your connected wallet are read. The scan checks both the classic SPL Token Program and Token-2022.</div>
   </div>
 
   <div class="card accounts">
-    <div class="listhead"><h3>Leere, schließbare Tokenkonten</h3><button class="selectall" id="selectAllBtn" disabled>ALLE AUSWÄHLEN</button></div>
-    <div id="accountList"><div class="empty"><b>Noch kein Scan.</b>Verbinde Phantom und starte den Wallet-Scan.</div></div>
+    <div class="listhead"><h3 data-en="Empty, closable token accounts" data-de="Leere, schließbare Tokenkonten">Empty, closable token accounts</h3><button class="selectall" id="selectAllBtn" disabled data-en="SELECT ALL" data-de="ALLE AUSWÄHLEN">SELECT ALL</button></div>
+    <div id="accountList"><div class="empty"><b data-en="No scan yet." data-de="Noch kein Scan.">No scan yet.</b><span data-en="Connect Phantom and start the wallet scan." data-de="Verbinde Phantom und starte den Wallet-Scan.">Connect Phantom and start the wallet scan.</span></div></div>
   </div>
 </section>
 
 <div class="actionbar" id="actionBar">
-  <div class="actiontext"><small>Nach 2 % Rescue Fee</small><strong id="actionSol">0 SOL</strong></div>
-  <button class="btn primary" id="rescueBtn">SOL ZURÜCKHOLEN</button>
+  <div class="actiontext"><small data-en="After 2% Rescue Fee" data-de="Nach 2 % Rescue Fee">After 2% Rescue Fee</small><strong id="actionSol">0 SOL</strong></div>
+  <button class="btn primary" id="rescueBtn" data-en="UNLOCK MY SOL" data-de="SOL ZURÜCKHOLEN">UNLOCK MY SOL</button>
 </div>
 
 <section class="security" style="display:none" aria-hidden="true">
@@ -126,22 +341,22 @@ footer{text-align:center;font-size:8px;color:#5f5a67;margin-top:20px;line-height
   <div id="delegateList"><div class="empty"><b>Noch keine Daten.</b>Der Delegate-Check läuft automatisch mit dem Wallet-Scan.</div></div>
 </section>
 
-<div class="notice"><strong>Rescue-Prinzip:</strong> Es werden ausschließlich Tokenkonten mit Tokenbestand exakt 0 geschlossen. Von dem tatsächlich zurückgeholten SOL gehen 2 % als ASTY Rescue Fee an die ASTY Utility Wallet. Netzwerkgebühren sind separat.</div>
+<div class="notice"><strong data-en="Unlock principle:" data-de="Rescue-Prinzip:">Unlock principle:</strong> <span data-en="Only token accounts with an exact token balance of 0 are closed. 2% of the SOL actually recovered is sent to the ASTY Utility Wallet as the ASTY Rescue Fee. Network fees are separate." data-de="Es werden ausschließlich Tokenkonten mit Tokenbestand exakt 0 geschlossen. Von dem tatsächlich zurückgeholten SOL gehen 2 % als ASTY Rescue Fee an die ASTY Utility Wallet. Netzwerkgebühren sind separat.">Only token accounts with an exact token balance of 0 are closed. 2% of the SOL actually recovered is sent to the ASTY Utility Wallet as the ASTY Rescue Fee. Network fees are separate.</span></div>
 
-<footer>ASTY Wallet Rescue V18 · Client-side only · kein Custody · keine Seed Phrase · keine privaten Schlüssel · Mainnet Beta</footer>
+<footer><span data-en="ASTY Unlockr V19 · Client-side utility · no custody · no seed phrase · no private keys · Mainnet Beta" data-de="ASTY Unlockr V19 · Client-side Utility · kein Custody · keine Seed Phrase · keine privaten Schlüssel · Mainnet Beta">ASTY Unlockr V19 · Client-side utility · no custody · no seed phrase · no private keys · Mainnet Beta</span></footer>
 </div>
 
 <div class="modalback" id="modalBack"><div class="modal">
-  <h3>SOL zurückholen</h3>
-  <p>Du bist dabei, die ausgewählten leeren Tokenkonten zu schließen. Die darin gebundenen Lamports werden direkt an deine Wallet gesendet. Phantom zeigt dir jede Transaktion vor der Signatur an.</p>
+  <h3 data-en="Unlock SOL" data-de="SOL zurückholen">Unlock SOL</h3>
+  <p data-en="You are about to close the selected empty token accounts. The lamports tied up in them will be sent directly to your wallet. Phantom shows every transaction before you sign it." data-de="Du bist dabei, die ausgewählten leeren Tokenkonten zu schließen. Die darin gebundenen Lamports werden direkt an deine Wallet gesendet. Phantom zeigt dir jede Transaktion vor der Signatur an.">You are about to close the selected empty token accounts. The lamports tied up in them will be sent directly to your wallet. Phantom shows every transaction before you sign it.</p>
   <div class="modalstats">
-  <div class="modalstat"><small>Konten</small><b id="modalCount">—</b></div>
-  <div class="modalstat"><small>Brutto rückholbar</small><b class="green" id="modalSol">—</b></div>
+  <div class="modalstat"><small data-en="Accounts" data-de="Konten">Accounts</small><b id="modalCount">—</b></div>
+  <div class="modalstat"><small data-en="Gross recoverable" data-de="Brutto rückholbar">Gross recoverable</small><b class="green" id="modalSol">—</b></div>
   <div class="modalstat"><small>ASTY Rescue Fee · 2 %</small><b class="amber" id="modalFee">—</b></div>
-  <div class="modalstat"><small>Du erhältst</small><b class="green" id="modalNet">—</b></div>
+  <div class="modalstat"><small data-en="You receive" data-de="Du erhältst">You receive</small><b class="green" id="modalNet">—</b></div>
 </div>
   <p id="batchInfo"></p><div class="txlog" id="txLog"></div>
-  <div class="modalactions"><button class="btn ghost" id="cancelBtn">ABBRECHEN</button><button class="btn primary" id="confirmBtn">IN PHANTOM BESTÄTIGEN</button></div>
+  <div class="modalactions"><button class="btn ghost" id="cancelBtn" data-en="CANCEL" data-de="ABBRECHEN">CANCEL</button><button class="btn primary" id="confirmBtn" data-en="CONFIRM IN PHANTOM" data-de="IN PHANTOM BESTÄTIGEN">CONFIRM IN PHANTOM</button></div>
 </div></div>
 
 <script type="module">
@@ -159,8 +374,95 @@ const fmtSol=n=>Number.isFinite(n)?`${n.toLocaleString("de-DE",{minimumFractionD
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 const feeLamports=n=>Math.floor(Number(n)*RESCUE_FEE_BPS/10000);
 
+let currentLang="en";
+const TXT={
+  walletNotConnected:{en:"Wallet not connected yet.",de:"Wallet noch nicht verbunden."},
+  mobileOpen:{en:"Mobile browser detected · open in Phantom for wallet access.",de:"Mobiler Browser erkannt · für Wallet-Zugriff in Phantom öffnen."},
+  openingPhantom:{en:"Opening ASTY Unlockr in Phantom…",de:"Öffne ASTY Unlockr jetzt in Phantom…"},
+  phantomMissing:{en:"Phantom was not found.",de:"Phantom wurde nicht gefunden."},
+  confirmPhantom:{en:"Please confirm the connection request in Phantom.",de:"Bitte die Verbindungsanfrage in Phantom bestätigen."},
+  rejected:{en:"Connection rejected or closed in Phantom.",de:"Verbindung in Phantom abgelehnt oder geschlossen."},
+  connectionFailed:{en:"Wallet connection failed: {msg}",de:"Wallet-Verbindung fehlgeschlagen: {msg}"},
+  connected:{en:"Phantom connected · {wallet}",de:"Phantom verbunden · {wallet}"},
+  disconnected:{en:"Phantom disconnected.",de:"Phantom getrennt."},
+  loadingSpl:{en:"Loading SPL token accounts…",de:"SPL-Tokenkonten werden geladen…"},
+  scanDone:{en:"{count} token accounts checked · scan complete",de:"{count} Tokenkonten geprüft · Scan abgeschlossen"},
+  scanFailed:{en:"Scan failed: {msg}",de:"Scan fehlgeschlagen: {msg}"},
+  networkDown:{en:"Rescue Network is currently unavailable.",de:"Rescue Network ist momentan nicht erreichbar."},
+  checking:{en:"Checking connection…",de:"Verbindung wird geprüft…"},
+  online:{en:"Online",de:"Online"},
+  temporaryDown:{en:"Temporarily unavailable",de:"Vorübergehend nicht erreichbar"},
+  scanReady:{en:"Phantom detected. Connect wallet.",de:"Phantom erkannt. Wallet verbinden."},
+  sdkLoading:{en:"Loading Solana SDK…",de:"Solana SDK wird geladen…"},
+  initFailed:{en:"Initialization failed: {msg}",de:"Initialisierung fehlgeschlagen: {msg}"},
+  noEmptyTitle:{en:"No empty closable accounts found.",de:"Keine leeren schließbaren Konten gefunden."},
+  noEmptyBody:{en:"This wallet currently has no obvious rent recovery potential from empty token accounts.",de:"In dieser Wallet liegt aktuell kein offensichtliches Rent-Potential aus leeren Tokenkonten."},
+  tokenBalanceZero:{en:"Token balance 0",de:"Tokenbestand 0"},
+  boundLamports:{en:"locked lamports",de:"gebundene Lamports"},
+  selectAll:{en:"SELECT ALL",de:"ALLE AUSWÄHLEN"},
+  deselectAll:{en:"DESELECT ALL",de:"ALLE ABWÄHLEN"},
+  gross:{en:"Gross",de:"Brutto"},
+  feeCurrent:{en:"{sol} for current selection",de:"{sol} bei aktueller Auswahl"},
+  batchInfo:{en:"Maximum {size} close instructions per transaction. This results in {batches} Phantom signature(s). The 2% fee is transferred per executed batch.",de:"Maximal {size} Close-Instructions pro Transaktion. Das ergibt {batches} Phantom-Signatur(en). Die 2-%-Fee wird pro ausgeführtem Batch übertragen."},
+  batchLog:{en:"Batch {i}/{total}: {accounts} accounts · Gross {gross} · Fee {fee} · Net {net}",de:"Batch {i}/{total}: {accounts} Konten · Brutto {gross} · Fee {fee} · Netto {net}"},
+  openingWallet:{en:"open Phantom…",de:"Phantom öffnen…"},
+  sent:{en:"Sent: {sig}",de:"Gesendet: {sig}"},
+  confirmed:{en:"✓ Confirmed",de:"✓ Bestätigt"},
+  pending:{en:"⚠ Sent, confirmation still pending",de:"⚠ Gesendet, Bestätigung noch ausstehend"},
+  finished:{en:"Done: {count} accounts processed.",de:"Fertig: {count} Konten bearbeitet."},
+  txFailed:{en:"Transaction failed.",de:"Transaktion fehlgeschlagen."},
+  error:{en:"ERROR: {msg}",de:"FEHLER: {msg}"},
+  connectedLabel:{en:"Connected:",de:"Verbunden:"},
+  openInPhantom:{en:"OPEN IN PHANTOM",de:"IN PHANTOM ÖFFNEN"},
+  connectPhantom:{en:"CONNECT PHANTOM",de:"PHANTOM VERBINDEN"},
+  waitingPhantom:{en:"WAITING FOR PHANTOM…",de:"WARTE AUF PHANTOM…"},
+  scanWallet:{en:"SCAN WALLET",de:"WALLET SCANNEN"},
+  unlockSol:{en:"UNLOCK MY SOL",de:"SOL ZURÜCKHOLEN"},
+};
+function tr(key,vars={}){
+  let s=(TXT[key]?.[currentLang]??TXT[key]?.en??key);
+  for(const [k,v] of Object.entries(vars))s=s.replaceAll(`{${k}}`,String(v));
+  return s;
+}
+function applyLanguage(lang){
+  currentLang=lang==="de"?"de":"en";
+  document.documentElement.lang=currentLang;
+  document.querySelectorAll("[data-en][data-de]").forEach(el=>{
+    el.textContent=el.dataset[currentLang];
+  });
+  $("langToggle").textContent=currentLang==="en"?"DE":"EN";
+
+  if(walletPubkey){
+    scanStatus(tr("connected",{wallet:short(walletPubkey.toString())}),"live");
+  }else{
+    updateWalletButton();
+    if(findProvider())scanStatus(tr("scanReady"),"live");
+  }
+
+  if(rescueNetworkOnline){
+    const dot='<span class="dot live"></span>';
+    $("gatewayStatus").innerHTML=`${dot}${tr("online")}${rescueUpstream?` · ${esc(rescueUpstream)}`:""}`;
+  }else{
+    const dot='<span class="dot err"></span>';
+    $("gatewayStatus").innerHTML=`${dot}${tr("temporaryDown")}`;
+  }
+
+  if(hasScanned){
+    renderAccounts();
+    renderDelegates();
+    renderStats();
+  }
+
+  const boxes=[...document.querySelectorAll(".acctcheck")];
+  if(boxes.length){
+    const allSelected=boxes.every(b=>b.checked);
+    $("selectAllBtn").textContent=allSelected?tr("deselectAll"):tr("selectAll");
+  }
+}
+
+
 let PublicKey,Transaction,SystemProgram,createCloseAccountInstruction,TOKEN_PROGRAM_ID,TOKEN_2022_PROGRAM_ID;
-let provider=null,walletPubkey=null,emptyAccounts=[],delegates=[],busy=false,activeRpc=null,rescueNetworkOnline=false,connectionPending=false,connectionSyncBusy=false;
+let provider=null,walletPubkey=null,emptyAccounts=[],delegates=[],busy=false,activeRpc=null,rescueNetworkOnline=false,connectionPending=false,connectionSyncBusy=false,hasScanned=false,rescueUpstream="";
 
 function scanStatus(text,kind=""){const cls=kind==="live"?" live":kind==="err"?" err":"";$("scanStatus").innerHTML=`<span class="dot${cls}"></span>${esc(text)}`}
 function progress(v){$("progress").style.display=(v>0&&v<100)?"block":"none";$("bar").style.width=`${v}%`}
@@ -180,7 +482,7 @@ async function rpcRequest(method,params=[]){
     activeRpc="ASTY Rescue Network";
     return result;
   }catch(e){
-    throw new Error("Rescue Network ist momentan nicht erreichbar.");
+    throw new Error(tr("networkDown"));
   }
 }
 async function loadSdk(){
@@ -200,16 +502,16 @@ function phantomBrowseUrl(){
 function updateWalletButton(){
   const p=findProvider();
   if(p){
-    $("connectBtn").textContent="PHANTOM VERBINDEN";
+    $("connectBtn").textContent=tr("connectPhantom");
     $("mobileHint").style.display="none";
     return;
   }
   if(isMobile()){
-    $("connectBtn").textContent="IN PHANTOM ÖFFNEN";
+    $("connectBtn").textContent=tr("openInPhantom");
     $("mobileHint").style.display="block";
-    scanStatus("Mobiler Browser erkannt · für Wallet-Zugriff in Phantom öffnen.");
+    scanStatus(tr("mobileOpen"));
   }else{
-    $("connectBtn").textContent="PHANTOM VERBINDEN";
+    $("connectBtn").textContent=tr("connectPhantom");
     $("mobileHint").style.display="none";
   }
 }
@@ -229,7 +531,7 @@ async function applyConnectedWallet(pubkey,{autoScan=true}={}){
   $("mobileHint").style.display="none";
   $("scanBtn").disabled=!rescueNetworkOnline;
 
-  scanStatus(`Phantom verbunden · ${short(nextKey)}`,"live");
+  scanStatus(tr("connected",{wallet:short(nextKey)}),"live");
 
   if(autoScan && rescueNetworkOnline && !busy && !alreadySame){
     await sleep(250);
@@ -295,7 +597,7 @@ function installProviderListeners(){
       $("scanBtn").disabled=true;
       resetResults();
       updateWalletButton();
-      scanStatus("Phantom getrennt.");
+      scanStatus(tr("disconnected"));
     });
 
     provider.on("accountChanged",async(publicKey)=>{
@@ -321,11 +623,11 @@ async function connectWallet(){
 
     if(!provider){
       if(isMobile()){
-        scanStatus("Öffne ASTY Wallet Rescue jetzt in Phantom…");
+        scanStatus(tr("openingPhantom"));
         window.location.href=phantomBrowseUrl();
         return;
       }
-      scanStatus("Phantom wurde nicht gefunden.","err");
+      scanStatus(tr("phantomMissing"),"err");
       return;
     }
 
@@ -333,8 +635,8 @@ async function connectWallet(){
 
     connectionPending=true;
     $("connectBtn").disabled=true;
-    $("connectBtn").textContent="WARTE AUF PHANTOM…";
-    scanStatus("Bitte die Verbindungsanfrage in Phantom bestätigen.");
+    $("connectBtn").textContent=tr("waitingPhantom");
+    scanStatus(tr("confirmPhantom"));
 
     // Important on Phantom mobile:
     // Trigger connect from the user gesture, but do not make the entire UI depend
@@ -348,7 +650,7 @@ async function connectWallet(){
         console.error(e);
         if(e?.code===4001){
           connectionPending=false;
-          scanStatus("Verbindung in Phantom abgelehnt oder geschlossen.","err");
+          scanStatus(tr("rejected"),"err");
           $("connectBtn").disabled=false;
           updateWalletButton();
         }
@@ -360,7 +662,7 @@ async function connectWallet(){
   }catch(e){
     console.error(e);
     connectionPending=false;
-    scanStatus(`Wallet-Verbindung fehlgeschlagen: ${e.message||e}`,"err");
+    scanStatus(tr("connectionFailed",{msg:e.message||e}),"err");
     $("connectBtn").disabled=false;
     updateWalletButton();
   }
@@ -375,7 +677,7 @@ document.addEventListener("visibilitychange",()=>{
 });
 
 async function disconnectWallet(){try{if(provider?.disconnect)await provider.disconnect()}catch{}connectionPending=false;walletPubkey=null;emptyAccounts=[];delegates=[];$("connectedLine").style.display="none";$("connectBtn").style.display="";$("disconnectBtn").style.display="none";$("scanBtn").disabled=true;resetResults();scanStatus("Wallet getrennt.")}
-function resetResults(){$("recoverSol").textContent="—";$("emptyCount").textContent="—";$("selectedCount").textContent="—";$("selectedSol").textContent="— SOL";$("delegateCount").textContent="—";$("accountList").innerHTML=`<div class="empty"><b>Noch kein Scan.</b>Verbinde Phantom und starte den Wallet-Scan.</div>`;$("delegateList").innerHTML=`<div class="empty"><b>Noch keine Daten.</b>Der Delegate-Check läuft automatisch mit dem Wallet-Scan.</div>`;$("actionBar").style.display="none";$("selectAllBtn").disabled=true}
+function resetResults(){hasScanned=false;$("recoverSol").textContent="—";$("emptyCount").textContent="—";$("selectedCount").textContent="—";$("selectedSol").textContent="— SOL";$("delegateCount").textContent="—";$("accountList").innerHTML=`<div class="empty"><b>Noch kein Scan.</b>Verbinde Phantom und starte den Wallet-Scan.</div>`;$("delegateList").innerHTML=`<div class="empty"><b>Noch keine Daten.</b>Der Delegate-Check läuft automatisch mit dem Wallet-Scan.</div>`;$("actionBar").style.display="none";$("selectAllBtn").disabled=true}
 async function getParsedAccounts(programId){return await rpcRequest("getTokenAccountsByOwner",[walletPubkey.toString(),{programId},{encoding:"jsonParsed",commitment:"confirmed"}])}
 function parseTokenAccount(row,programId){
   const info=row?.account?.data?.parsed?.info;if(!info)return null;
@@ -384,21 +686,30 @@ function parseTokenAccount(row,programId){
 }
 function authorityCanClose(a){const w=walletPubkey.toString();return a.owner===w&&(!a.closeAuthority||a.closeAuthority===w)}
 async function scanWallet(){
-  if(!walletPubkey||busy)return;busy=true;$("scanBtn").disabled=true;$("rescueBtn").disabled=true;progress(12);scanStatus("SPL-Tokenkonten werden geladen…");
+  if(!walletPubkey||busy)return;busy=true;$("scanBtn").disabled=true;$("rescueBtn").disabled=true;progress(12);scanStatus(tr("loadingSpl"));
   try{
     const [classic,t22]=await Promise.all([getParsedAccounts(TOKEN_PROGRAM_ID.toString()),getParsedAccounts(TOKEN_2022_PROGRAM_ID.toString())]);progress(58);
     const all=[...(classic?.value||[]).map(x=>parseTokenAccount(x,TOKEN_PROGRAM_ID.toString())),...(t22?.value||[]).map(x=>parseTokenAccount(x,TOKEN_2022_PROGRAM_ID.toString()))].filter(Boolean);
     emptyAccounts=all.filter(a=>a.rawAmount===0n&&authorityCanClose(a)&&!a.isNative);
     delegates=all.filter(a=>!!a.delegate&&a.delegatedRaw>0n);
+    hasScanned=true;
     renderAccounts();renderDelegates();renderStats();progress(100);
-    scanStatus(`${all.length} Tokenkonten geprüft · Scan abgeschlossen`,"live");
-  }catch(e){console.error(e);progress(100);scanStatus(`Scan fehlgeschlagen: ${e.message}`,"err")}
+    scanStatus(tr("scanDone",{count:all.length}),"live");
+  }catch(e){console.error(e);progress(100);scanStatus(tr("scanFailed",{msg:e.message}),"err")}
   finally{busy=false;$("scanBtn").disabled=false;$("rescueBtn").disabled=false}
 }
 function programLabel(a){return a.programId===TOKEN_2022_PROGRAM_ID.toString()?"Token-2022":"SPL Token"}
 function renderAccounts(){
-  if(!emptyAccounts.length){$("accountList").innerHTML=`<div class="empty"><b>Keine leeren schließbaren Konten gefunden.</b>In dieser Wallet liegt aktuell kein offensichtliches Rent-Potential aus leeren Tokenkonten.</div>`;$("selectAllBtn").disabled=true;$("actionBar").style.display="none";return}
-  $("selectAllBtn").disabled=false;$("accountList").innerHTML=emptyAccounts.map((a,i)=>`<label class="account"><input type="checkbox" class="acctcheck" data-index="${i}" checked><div><div class="tokenname">${short(a.mint)}</div><div class="meta">${programLabel(a)} · Account ${short(a.address)} · Tokenbestand 0</div></div><div class="value"><b>${fmtSol(a.lamports/LAMPORTS_PER_SOL)}</b><small>gebundene Lamports</small></div></label>`).join("");
+  if(!emptyAccounts.length){
+    $("accountList").innerHTML=`<div class="empty"><b>${esc(tr("noEmptyTitle"))}</b>${esc(tr("noEmptyBody"))}</div>`;
+    $("selectAllBtn").disabled=true;$("actionBar").style.display="none";return
+  }
+  $("selectAllBtn").disabled=false;
+  $("accountList").innerHTML=emptyAccounts.map((a,i)=>`<label class="account">
+    <input type="checkbox" class="acctcheck" data-index="${i}" checked>
+    <div><div class="tokenname">${short(a.mint)}</div><div class="meta">${programLabel(a)} · Account ${short(a.address)} · ${esc(tr("tokenBalanceZero"))}</div></div>
+    <div class="value"><b>${fmtSol(a.lamports/LAMPORTS_PER_SOL)}</b><small>${esc(tr("boundLamports"))}</small></div>
+  </label>`).join("");
   document.querySelectorAll(".acctcheck").forEach(c=>c.addEventListener("change",renderStats));
 }
 function renderDelegates(){
@@ -414,11 +725,11 @@ function renderStats(){
   const selectedNet=selectedLamports-selectedFee;
 
   $("recoverSol").textContent=fmtSol(totalLamports/LAMPORTS_PER_SOL);
-  $("emptyCount").textContent=emptyAccounts.length;
-  $("selectedCount").textContent=sel.length;
-  $("selectedSol").textContent=`Brutto ${fmtSol(selectedLamports/LAMPORTS_PER_SOL)}`;
+  $("emptyCount").textContent=emptyAccounts.length||"—";
+  $("selectedCount").textContent=sel.length||"—";
+  $("selectedSol").textContent=selectedLamports?`${tr("gross")} ${fmtSol(selectedLamports/LAMPORTS_PER_SOL)}`:"— SOL";
   $("delegateCount").textContent=delegates.length;
-  $("feeStat").textContent=`${fmtSol(selectedFee/LAMPORTS_PER_SOL)} bei aktueller Auswahl`;
+  $("feeStat").textContent=selectedLamports?tr("feeCurrent",{sol:fmtSol(selectedFee/LAMPORTS_PER_SOL)}):"— SOL";
   $("actionSol").textContent=fmtSol(selectedNet/LAMPORTS_PER_SOL);
   $("actionBar").style.display=sel.length?"flex":"none";
 }
@@ -427,7 +738,7 @@ async function latestBlockhash(){const r=await rpcRequest("getLatestBlockhash",[
 async function confirmSignature(sig){
   for(let i=0;i<24;i++){
     const r=await rpcRequest("getSignatureStatuses",[[sig],{searchTransactionHistory:true}]);const s=r?.value?.[0];
-    if(s?.err)throw new Error("Transaktion fehlgeschlagen.");if(s?.confirmationStatus==="confirmed"||s?.confirmationStatus==="finalized")return true;await sleep(1000);
+    if(s?.err)throw new Error(tr("txFailed"));if(s?.confirmationStatus==="confirmed"||s?.confirmationStatus==="finalized")return true;await sleep(1000);
   }
   return false;
 }
@@ -453,12 +764,12 @@ async function performRescue(){
         tx.add(SystemProgram.transfer({fromPubkey:walletPubkey,toPubkey:feeWallet,lamports:batchFee}));
       }
 
-      log(`Batch ${i+1}/${batches.length}: ${batch.length} Konten · Brutto ${fmtSol(batchGross/LAMPORTS_PER_SOL)} · Fee ${fmtSol(batchFee/LAMPORTS_PER_SOL)} · Netto ${fmtSol(batchNet/LAMPORTS_PER_SOL)}`);
-      const sent=await provider.signAndSendTransaction(tx);const sig=typeof sent==="string"?sent:sent.signature;log(`Gesendet: ${short(sig)}`);
-      const confirmed=await confirmSignature(sig);log(confirmed?"✓ Bestätigt":"⚠ Gesendet, Bestätigung noch ausstehend");done+=batch.length;
+      log(tr("batchLog",{i:i+1,total:batches.length,accounts:batch.length,gross:fmtSol(batchGross/LAMPORTS_PER_SOL),fee:fmtSol(batchFee/LAMPORTS_PER_SOL),net:fmtSol(batchNet/LAMPORTS_PER_SOL)}));
+      const sent=await provider.signAndSendTransaction(tx);const sig=typeof sent==="string"?sent:sent.signature;log(tr("sent",{sig:short(sig)}));
+      const confirmed=await confirmSignature(sig);log(confirmed?tr("confirmed"):tr("pending"));done+=batch.length;
     }
-    log(`Fertig: ${done} Konten bearbeitet.`);await sleep(1300);closeModal();await scanWallet();
-  }catch(e){console.error(e);log(`FEHLER: ${e.message||e}`);$("cancelBtn").disabled=false;$("cancelBtn").textContent="SCHLIESSEN"}
+    log(tr("finished",{count:done}));await sleep(1300);closeModal();await scanWallet();
+  }catch(e){console.error(e);log(tr("error",{msg:e.message||e}));$("cancelBtn").disabled=false;$("cancelBtn").textContent=currentLang==="en"?"CLOSE":"SCHLIESSEN"}
   finally{$("confirmBtn").disabled=false}
 }
 function openModal(){
@@ -471,13 +782,13 @@ function openModal(){
   $("modalSol").textContent=fmtSol(gross/LAMPORTS_PER_SOL);
   $("modalFee").textContent=fmtSol(fee/LAMPORTS_PER_SOL);
   $("modalNet").textContent=fmtSol(net/LAMPORTS_PER_SOL);
-  $("batchInfo").textContent=`Maximal ${BATCH_SIZE} Close-Instructions pro Transaktion. Das ergibt ${batches} Phantom-Signatur${batches===1?"":"en"}. Die 2-%-Fee wird pro ausgeführtem Batch übertragen.`;
+  $("batchInfo").textContent=tr("batchInfo",{size:BATCH_SIZE,batches});
   $("txLog").style.display="none";$("confirmBtn").disabled=false;$("cancelBtn").disabled=false;$("modalBack").style.display="flex"
 }
 function closeModal(){$("modalBack").style.display="none"}
 
 $("connectBtn").addEventListener("click",connectWallet);$("disconnectBtn").addEventListener("click",disconnectWallet);$("scanBtn").addEventListener("click",scanWallet);$("rescueBtn").addEventListener("click",openModal);$("cancelBtn").addEventListener("click",closeModal);$("confirmBtn").addEventListener("click",performRescue);
-$("selectAllBtn").addEventListener("click",()=>{const boxes=[...document.querySelectorAll(".acctcheck")];const should=boxes.some(b=>!b.checked);boxes.forEach(b=>b.checked=should);renderStats();$("selectAllBtn").textContent=should?"ALLE ABWÄHLEN":"ALLE AUSWÄHLEN"});
+$("selectAllBtn").addEventListener("click",()=>{const boxes=[...document.querySelectorAll(".acctcheck")];const should=boxes.some(b=>!b.checked);boxes.forEach(b=>b.checked=should);renderStats();$("selectAllBtn").textContent=should?tr("deselectAll"):tr("selectAll")});
 async function checkRescueNetwork(){
   const box=$("gatewayStatus");
   try{
@@ -486,12 +797,13 @@ async function checkRescueNetwork(){
     if(!r.ok||!j?.ok)throw new Error("offline");
     rescueNetworkOnline=true;
     const live=(j.upstreams||[]).find(x=>x.ok);
-    box.innerHTML=`<span class="dot live"></span>Online${live?.upstream?` · ${esc(live.upstream)}`:""}`;
+    rescueUpstream=live?.upstream||"";
+    box.innerHTML=`<span class="dot live"></span>${tr("online")}${rescueUpstream?` · ${esc(rescueUpstream)}`:""}`;
     if(walletPubkey)$("scanBtn").disabled=false;
     return true;
   }catch{
     rescueNetworkOnline=false;
-    box.innerHTML=`<span class="dot err"></span>Vorübergehend nicht erreichbar`;
+    box.innerHTML=`<span class="dot err"></span>${tr("temporaryDown")}`;
     if(walletPubkey)$("scanBtn").disabled=true;
     return false;
   }
@@ -500,7 +812,7 @@ $("modalBack").addEventListener("click",e=>{if(e.target===$("modalBack"))closeMo
 
 async function boot(){
   try{
-    scanStatus("Solana SDK wird geladen…");
+    scanStatus(tr("sdkLoading"));
     await loadSdk();
     await checkRescueNetwork();
     updateWalletButton();
@@ -525,14 +837,24 @@ async function boot(){
         }
       }catch{}
 
-      scanStatus("Phantom erkannt. Wallet verbinden.","live");
+      scanStatus(tr("scanReady"),"live");
       schedulePhantomSync();
     }
   }catch(e){
     console.error(e);
-    scanStatus(`Initialisierung fehlgeschlagen: ${e.message}`,"err");
+    scanStatus(tr("initFailed",{msg:e.message}),"err");
   }
 }
+
+$("langToggle").addEventListener("click",()=>applyLanguage(currentLang==="en"?"de":"en"));
+
+(function initUnlockrSplash(){
+  const splash=$("unlockrSplash");
+  if(!splash)return;
+  setTimeout(()=>splash.classList.add("done"),2200);
+})();
+
+applyLanguage("en");
 boot();
 </script>
 </body>
