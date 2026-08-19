@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#08080d">
-<title>ASTY Wallet Rescue · V17</title>
+<title>ASTY Wallet Rescue · V18</title>
 <style>
 :root{
   --bg:#07070b;--panel:#0e0e16;--panel2:#12121d;--line:rgba(255,255,255,.085);
@@ -94,7 +94,7 @@ footer{text-align:center;font-size:8px;color:#5f5a67;margin-top:20px;line-height
   <div class="stat"><small>Rückholbares SOL</small><strong class="green" id="recoverSol">—</strong><div class="sub">Brutto vor Netzwerkgebühren</div></div>
   <div class="stat"><small>Leere Konten</small><strong id="emptyCount">—</strong><div class="sub">SPL + Token-2022</div></div>
   <div class="stat"><small>Ausgewählt</small><strong class="cyan" id="selectedCount">—</strong><div class="sub" id="selectedSol">— SOL</div></div>
-  <div class="stat"><small>ASTY Rescue Fee</small><strong class="amber">2 %</strong><div class="sub" id="feeStat">— SOL bei aktueller Auswahl</div></div>
+  <div class="stat"><small>ASTY Rescue Fee</small><strong class="amber">2 %</strong><div class="sub" id="feeStat">— SOL bei aktueller Auswahl</div><span id="delegateCount" style="display:none"></span></div>
 </section>
 
 <section class="grid">
@@ -117,25 +117,29 @@ footer{text-align:center;font-size:8px;color:#5f5a67;margin-top:20px;line-height
 </section>
 
 <div class="actionbar" id="actionBar">
-  <div class="actiontext"><small>Du erhältst nach 2 % Fee</small><strong id="actionSol">0 SOL</strong></div>
+  <div class="actiontext"><small>Nach 2 % Rescue Fee</small><strong id="actionSol">0 SOL</strong></div>
   <button class="btn primary" id="rescueBtn">SOL ZURÜCKHOLEN</button>
 </div>
 
+<section class="security" style="display:none" aria-hidden="true">
+  <div class="securityhead"><h3>Wallet Security Check</h3><p>Aktive Token-Delegates werden nur angezeigt. Berechtigungen werden nicht automatisch verändert.</p></div>
+  <div id="delegateList"><div class="empty"><b>Noch keine Daten.</b>Der Delegate-Check läuft automatisch mit dem Wallet-Scan.</div></div>
+</section>
 
-<div class="notice"><strong>Rescue-Prinzip:</strong> Es werden ausschließlich Tokenkonten mit Tokenbestand exakt 0 geschlossen. Von dem tatsächlich zurückgeholten SOL gehen 2 % als ASTY Rescue Fee an die ASTY Utility Wallet. Die Fee wird pro erfolgreich bestätigtem Batch zusammen mit dem Rescue ausgeführt. Netzwerkgebühren sind separat.</div>
+<div class="notice"><strong>Rescue-Prinzip:</strong> Es werden ausschließlich Tokenkonten mit Tokenbestand exakt 0 geschlossen. Von dem tatsächlich zurückgeholten SOL gehen 2 % als ASTY Rescue Fee an die ASTY Utility Wallet. Netzwerkgebühren sind separat.</div>
 
-<footer>ASTY Wallet Rescue V17 · kein Custody · keine Seed Phrase · keine privaten Schlüssel · Mainnet Beta</footer>
+<footer>ASTY Wallet Rescue V18 · Client-side only · kein Custody · keine Seed Phrase · keine privaten Schlüssel · Mainnet Beta</footer>
 </div>
 
 <div class="modalback" id="modalBack"><div class="modal">
   <h3>SOL zurückholen</h3>
-  <p>Du bist dabei, die ausgewählten leeren Tokenkonten zu schließen. Die darin gebundenen Lamports werden zuerst an deine Wallet zurückgeführt. Im selben bestätigten Batch werden 2 % des tatsächlich zurückgeholten Betrags als ASTY Rescue Fee übertragen. Phantom zeigt dir jede Transaktion vor der Signatur an.</p>
+  <p>Du bist dabei, die ausgewählten leeren Tokenkonten zu schließen. Die darin gebundenen Lamports werden direkt an deine Wallet gesendet. Phantom zeigt dir jede Transaktion vor der Signatur an.</p>
   <div class="modalstats">
-      <div class="modalstat"><small>Konten</small><b id="modalCount">—</b></div>
-      <div class="modalstat"><small>Brutto rückholbar</small><b class="green" id="modalSol">—</b></div>
-      <div class="modalstat"><small>ASTY Rescue Fee · 2 %</small><b class="amber" id="modalFee">—</b></div>
-      <div class="modalstat"><small>Du erhältst</small><b class="green" id="modalNet">—</b></div>
-    </div>
+  <div class="modalstat"><small>Konten</small><b id="modalCount">—</b></div>
+  <div class="modalstat"><small>Brutto rückholbar</small><b class="green" id="modalSol">—</b></div>
+  <div class="modalstat"><small>ASTY Rescue Fee · 2 %</small><b class="amber" id="modalFee">—</b></div>
+  <div class="modalstat"><small>Du erhältst</small><b class="green" id="modalNet">—</b></div>
+</div>
   <p id="batchInfo"></p><div class="txlog" id="txLog"></div>
   <div class="modalactions"><button class="btn ghost" id="cancelBtn">ABBRECHEN</button><button class="btn primary" id="confirmBtn">IN PHANTOM BESTÄTIGEN</button></div>
 </div></div>
@@ -143,7 +147,7 @@ footer{text-align:center;font-size:8px;color:#5f5a67;margin-top:20px;line-height
 <script type="module">
 const LAMPORTS_PER_SOL=1_000_000_000;
 const TOKEN_PROGRAM_ID_STR="TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA";
-const TOKEN_2022_PROGRAM_ID_STR="TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb";
+const TOKEN_2022_PROGRAM_ID_STR="TokenzQdYh7D4m3rZPFYycgPPK3uTQxjTzqkJ9dM9";
 const BATCH_SIZE=7;
 const RESCUE_FEE_BPS=200;
 const RESCUE_FEE_WALLET="7jJ8wC8fquf4uEz4DpMiu6SFP89sEMy1VcY1LLYyZ3nK";
@@ -153,122 +157,38 @@ const esc=s=>String(s??"").replace(/[&<>'"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&
 const short=s=>s?`${s.slice(0,5)}…${s.slice(-5)}`:"—";
 const fmtSol=n=>Number.isFinite(n)?`${n.toLocaleString("de-DE",{minimumFractionDigits:4,maximumFractionDigits:6})} SOL`:"—";
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
-const feeForLamports=lamports=>(BigInt(lamports)*BigInt(RESCUE_FEE_BPS))/10000n;
-const netForLamports=lamports=>BigInt(lamports)-feeForLamports(lamports);
-const fmtLamports=lamports=>fmtSol(Number(BigInt(lamports))/LAMPORTS_PER_SOL);
+const feeLamports=n=>Math.floor(Number(n)*RESCUE_FEE_BPS/10000);
 
-let PublicKey,Transaction,TransactionInstruction,SystemProgram,createCloseAccountInstruction,TOKEN_PROGRAM_ID,TOKEN_2022_PROGRAM_ID;
-let provider=null,walletPubkey=null,emptyAccounts=[],busy=false,activeRpc=null,rescueNetworkOnline=false,connectionPending=false,connectionSyncBusy=false;
+let PublicKey,Transaction,SystemProgram,createCloseAccountInstruction,TOKEN_PROGRAM_ID,TOKEN_2022_PROGRAM_ID;
+let provider=null,walletPubkey=null,emptyAccounts=[],delegates=[],busy=false,activeRpc=null,rescueNetworkOnline=false,connectionPending=false,connectionSyncBusy=false;
 
 function scanStatus(text,kind=""){const cls=kind==="live"?" live":kind==="err"?" err":"";$("scanStatus").innerHTML=`<span class="dot${cls}"></span>${esc(text)}`}
 function progress(v){$("progress").style.display=(v>0&&v<100)?"block":"none";$("bar").style.width=`${v}%`}
-async function callRpcUrl(url,method,params,timeoutMs=12000){
-  const controller=new AbortController();
-  const timer=setTimeout(()=>controller.abort(),timeoutMs);
-
-  try{
-    const r=await fetch(url,{
-      method:"POST",
-      headers:{"Content-Type":"application/json"},
-      body:JSON.stringify({jsonrpc:"2.0",id:1,method,params}),
-      signal:controller.signal
-    });
-
-    const j=await r.json().catch(()=>null);
-
-    if(!r.ok||j?.error){
-      throw new Error(j?.error?.message||`HTTP ${r.status}`);
-    }
-
-    return j.result;
-  }catch(e){
-    if(e?.name==="AbortError")throw new Error("Zeitüberschreitung beim Rescue Network");
-    throw e;
-  }finally{
-    clearTimeout(timer);
-  }
+async function callRpcUrl(url,method,params){
+  const r=await fetch(url,{
+    method:"POST",
+    headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({jsonrpc:"2.0",id:1,method,params})
+  });
+  const j=await r.json().catch(()=>null);
+  if(!r.ok||j?.error)throw new Error(j?.error?.message||`HTTP ${r.status}`);
+  return j.result;
 }
 async function rpcRequest(method,params=[]){
   try{
     const result=await callRpcUrl(RESCUE_GATEWAY,method,params);
     activeRpc="ASTY Rescue Network";
-    rescueNetworkOnline=true;
-
-    if($("gatewayStatus")){
-      $("gatewayStatus").innerHTML=`<span class="dot live"></span>Online · Helius`;
-    }
-
     return result;
   }catch(e){
-    rescueNetworkOnline=false;
-
-    if($("gatewayStatus")){
-      $("gatewayStatus").innerHTML=`<span class="dot err"></span>Vorübergehend nicht erreichbar`;
-    }
-
-    throw new Error(`Rescue Network: ${e.message||e}`);
+    throw new Error("Rescue Network ist momentan nicht erreichbar.");
   }
 }
-async function checkRescueNetwork(){
-  const box=$("gatewayStatus");
-
-  try{
-    const controller=new AbortController();
-    const timer=setTimeout(()=>controller.abort(),6000);
-
-    let r;
-    try{
-      r=await fetch("/health",{
-        method:"GET",
-        cache:"no-store",
-        signal:controller.signal
-      });
-    }finally{
-      clearTimeout(timer);
-    }
-
-    const j=await r.json().catch(()=>null);
-
-    if(!r.ok||!j?.ok)throw new Error("offline");
-
-    rescueNetworkOnline=true;
-    const live=(j.upstreams||[]).find(x=>x.ok);
-    box.innerHTML=`<span class="dot live"></span>Online${live?.upstream?` · ${esc(live.upstream)}`:""}`;
-    return true;
-
-  }catch(e){
-    rescueNetworkOnline=false;
-    box.innerHTML=`<span class="dot err"></span>Healthcheck nicht verfügbar · Scan kann trotzdem testen`;
-    return false;
-  }
-}
-
 async function loadSdk(){
-  // Wallet Rescue only needs web3.js. The token-program constants are created
-  // from their official on-chain addresses instead of relying on a second CDN module.
   const w=await import("https://esm.sh/@solana/web3.js@1.98.4?bundle");
-
-  PublicKey=w.PublicKey;
-  Transaction=w.Transaction;
-  TransactionInstruction=w.TransactionInstruction;
-  SystemProgram=w.SystemProgram;
-
-  TOKEN_PROGRAM_ID=new PublicKey(TOKEN_PROGRAM_ID_STR);
-  TOKEN_2022_PROGRAM_ID=new PublicKey(TOKEN_2022_PROGRAM_ID_STR);
-
-  // SPL Token CloseAccount is instruction 9 for the base token interface.
-  // It is accepted by both the original Token Program and Token-2022.
-  createCloseAccountInstruction=(account,destination,authority,_multiSigners=[],programId=TOKEN_PROGRAM_ID)=>{
-    return new TransactionInstruction({
-      programId,
-      keys:[
-        {pubkey:account,isSigner:false,isWritable:true},
-        {pubkey:destination,isSigner:false,isWritable:true},
-        {pubkey:authority,isSigner:true,isWritable:false}
-      ],
-      data:new Uint8Array([9])
-    });
-  };
+  const s=await import("https://esm.sh/@solana/spl-token@0.4.14?bundle&deps=@solana/web3.js@1.98.4");
+  PublicKey=w.PublicKey;Transaction=w.Transaction;SystemProgram=w.SystemProgram;
+  createCloseAccountInstruction=s.createCloseAccountInstruction;
+  TOKEN_PROGRAM_ID=s.TOKEN_PROGRAM_ID;TOKEN_2022_PROGRAM_ID=s.TOKEN_2022_PROGRAM_ID;
 }
 function findProvider(){if(window.phantom?.solana?.isPhantom)return window.phantom.solana;if(window.solana?.isPhantom)return window.solana;return null}
 function isMobile(){return /iPhone|iPad|iPod|Android/i.test(navigator.userAgent)}
@@ -307,11 +227,11 @@ async function applyConnectedWallet(pubkey,{autoScan=true}={}){
   $("connectBtn").style.display="none";
   $("disconnectBtn").style.display="";
   $("mobileHint").style.display="none";
-  $("scanBtn").disabled=false;
+  $("scanBtn").disabled=!rescueNetworkOnline;
 
   scanStatus(`Phantom verbunden · ${short(nextKey)}`,"live");
 
-  if(autoScan && !busy && !alreadySame){
+  if(autoScan && rescueNetworkOnline && !busy && !alreadySame){
     await sleep(250);
     await scanWallet();
   }
@@ -454,35 +374,23 @@ document.addEventListener("visibilitychange",()=>{
   if(document.visibilityState==="visible")schedulePhantomSync();
 });
 
-async function disconnectWallet(){try{if(provider?.disconnect)await provider.disconnect()}catch{}connectionPending=false;walletPubkey=null;emptyAccounts=[];$("connectedLine").style.display="none";$("connectBtn").style.display="";$("disconnectBtn").style.display="none";$("scanBtn").disabled=true;resetResults();scanStatus("Wallet getrennt.")}
-function resetResults(){$("recoverSol").textContent="—";$("emptyCount").textContent="—";$("selectedCount").textContent="—";$("selectedSol").textContent="— SOL";$("accountList").innerHTML=`<div class="empty"><b>Noch kein Scan.</b>Verbinde Phantom und starte den Wallet-Scan.</div>`;$("actionBar").style.display="none";$("selectAllBtn").disabled=true}
-function assertSolanaProgramsReady(){
-  if(!TOKEN_PROGRAM_ID||!TOKEN_2022_PROGRAM_ID){
-    throw new Error("Solana Token Programs wurden nicht initialisiert.");
-  }
-  if(TOKEN_PROGRAM_ID.toString()!==TOKEN_PROGRAM_ID_STR){
-    throw new Error("SPL Token Program ID ist ungültig.");
-  }
-  if(TOKEN_2022_PROGRAM_ID.toString()!==TOKEN_2022_PROGRAM_ID_STR){
-    throw new Error("Token-2022 Program ID ist ungültig.");
-  }
-}
-
+async function disconnectWallet(){try{if(provider?.disconnect)await provider.disconnect()}catch{}connectionPending=false;walletPubkey=null;emptyAccounts=[];delegates=[];$("connectedLine").style.display="none";$("connectBtn").style.display="";$("disconnectBtn").style.display="none";$("scanBtn").disabled=true;resetResults();scanStatus("Wallet getrennt.")}
+function resetResults(){$("recoverSol").textContent="—";$("emptyCount").textContent="—";$("selectedCount").textContent="—";$("selectedSol").textContent="— SOL";$("delegateCount").textContent="—";$("accountList").innerHTML=`<div class="empty"><b>Noch kein Scan.</b>Verbinde Phantom und starte den Wallet-Scan.</div>`;$("delegateList").innerHTML=`<div class="empty"><b>Noch keine Daten.</b>Der Delegate-Check läuft automatisch mit dem Wallet-Scan.</div>`;$("actionBar").style.display="none";$("selectAllBtn").disabled=true}
 async function getParsedAccounts(programId){return await rpcRequest("getTokenAccountsByOwner",[walletPubkey.toString(),{programId},{encoding:"jsonParsed",commitment:"confirmed"}])}
 function parseTokenAccount(row,programId){
   const info=row?.account?.data?.parsed?.info;if(!info)return null;
   const tokenAmount=info.tokenAmount||{};const rawAmount=BigInt(tokenAmount.amount||"0");
-  return {address:row.pubkey,mint:info.mint,owner:info.owner||null,closeAuthority:info.closeAuthority||null,rawAmount,lamports:Number(row.account.lamports||0),programId,isNative:!!info.isNative};
+  return {address:row.pubkey,mint:info.mint,owner:info.owner||null,closeAuthority:info.closeAuthority||null,delegate:info.delegate||null,delegatedRaw:BigInt(info.delegatedAmount?.amount||"0"),rawAmount,lamports:Number(row.account.lamports||0),programId,isNative:!!info.isNative};
 }
 function authorityCanClose(a){const w=walletPubkey.toString();return a.owner===w&&(!a.closeAuthority||a.closeAuthority===w)}
 async function scanWallet(){
-  if(!walletPubkey||busy)return;busy=true;$("scanBtn").disabled=true;$("rescueBtn").disabled=true;progress(12);scanStatus("Rescue Network wird kontaktiert…");
+  if(!walletPubkey||busy)return;busy=true;$("scanBtn").disabled=true;$("rescueBtn").disabled=true;progress(12);scanStatus("SPL-Tokenkonten werden geladen…");
   try{
-    assertSolanaProgramsReady();
     const [classic,t22]=await Promise.all([getParsedAccounts(TOKEN_PROGRAM_ID.toString()),getParsedAccounts(TOKEN_2022_PROGRAM_ID.toString())]);progress(58);
     const all=[...(classic?.value||[]).map(x=>parseTokenAccount(x,TOKEN_PROGRAM_ID.toString())),...(t22?.value||[]).map(x=>parseTokenAccount(x,TOKEN_2022_PROGRAM_ID.toString()))].filter(Boolean);
     emptyAccounts=all.filter(a=>a.rawAmount===0n&&authorityCanClose(a)&&!a.isNative);
-    renderAccounts();renderStats();progress(100);
+    delegates=all.filter(a=>!!a.delegate&&a.delegatedRaw>0n);
+    renderAccounts();renderDelegates();renderStats();progress(100);
     scanStatus(`${all.length} Tokenkonten geprüft · Scan abgeschlossen`,"live");
   }catch(e){console.error(e);progress(100);scanStatus(`Scan fehlgeschlagen: ${e.message}`,"err")}
   finally{busy=false;$("scanBtn").disabled=false;$("rescueBtn").disabled=false}
@@ -493,21 +401,25 @@ function renderAccounts(){
   $("selectAllBtn").disabled=false;$("accountList").innerHTML=emptyAccounts.map((a,i)=>`<label class="account"><input type="checkbox" class="acctcheck" data-index="${i}" checked><div><div class="tokenname">${short(a.mint)}</div><div class="meta">${programLabel(a)} · Account ${short(a.address)} · Tokenbestand 0</div></div><div class="value"><b>${fmtSol(a.lamports/LAMPORTS_PER_SOL)}</b><small>gebundene Lamports</small></div></label>`).join("");
   document.querySelectorAll(".acctcheck").forEach(c=>c.addEventListener("change",renderStats));
 }
-
+function renderDelegates(){
+  if(!delegates.length){$("delegateList").innerHTML=`<div class="empty"><b>Keine aktiven Delegates gefunden.</b>Für die gescannten Tokenkonten wurde keine aktive Delegate-Berechtigung erkannt.</div>`;return}
+  $("delegateList").innerHTML=delegates.map(a=>`<div class="delegate"><div><b>Mint ${short(a.mint)}</b><span>Delegate ${short(a.delegate)} · Account ${short(a.address)}</span></div><div class="badge">PRÜFEN</div></div>`).join("");
+}
 function selectedAccounts(){return [...document.querySelectorAll(".acctcheck:checked")].map(c=>emptyAccounts[Number(c.dataset.index)]).filter(Boolean)}
 function renderStats(){
-  const totalLamports=emptyAccounts.reduce((s,a)=>s+BigInt(a.lamports),0n);
+  const totalLamports=emptyAccounts.reduce((s,a)=>s+a.lamports,0);
   const sel=selectedAccounts();
-  const selectedLamports=sel.reduce((s,a)=>s+BigInt(a.lamports),0n);
-  const selectedFee=feeForLamports(selectedLamports);
+  const selectedLamports=sel.reduce((s,a)=>s+a.lamports,0);
+  const selectedFee=feeLamports(selectedLamports);
   const selectedNet=selectedLamports-selectedFee;
 
-  $("recoverSol").textContent=fmtLamports(totalLamports);
+  $("recoverSol").textContent=fmtSol(totalLamports/LAMPORTS_PER_SOL);
   $("emptyCount").textContent=emptyAccounts.length;
   $("selectedCount").textContent=sel.length;
-  $("selectedSol").textContent=`Brutto ${fmtLamports(selectedLamports)} · Netto ${fmtLamports(selectedNet)}`;
-  $("feeStat").textContent=`${fmtLamports(selectedFee)} bei aktueller Auswahl`;
-  $("actionSol").textContent=fmtLamports(selectedNet);
+  $("selectedSol").textContent=`Brutto ${fmtSol(selectedLamports/LAMPORTS_PER_SOL)}`;
+  $("delegateCount").textContent=delegates.length;
+  $("feeStat").textContent=`${fmtSol(selectedFee/LAMPORTS_PER_SOL)} bei aktueller Auswahl`;
+  $("actionSol").textContent=fmtSol(selectedNet/LAMPORTS_PER_SOL);
   $("actionBar").style.display=sel.length?"flex":"none";
 }
 function splitBatches(arr,size){const out=[];for(let i=0;i<arr.length;i+=size)out.push(arr.slice(i,i+size));return out}
@@ -521,134 +433,76 @@ async function confirmSignature(sig){
 }
 function log(msg){$("txLog").style.display="block";$("txLog").insertAdjacentHTML("beforeend",`${esc(msg)}<br>`);$("txLog").scrollTop=$("txLog").scrollHeight}
 async function performRescue(){
-  const selected=selectedAccounts();
-  if(!selected.length)return;
-
-  const batches=splitBatches(selected,BATCH_SIZE);
+  const selected=selectedAccounts();if(!selected.length)return;const batches=splitBatches(selected,BATCH_SIZE);
   const feeWallet=new PublicKey(RESCUE_FEE_WALLET);
-
-  $("confirmBtn").disabled=true;
-  $("cancelBtn").disabled=true;
-  $("txLog").innerHTML="";
-  $("txLog").style.display="block";
-
+  $("confirmBtn").disabled=true;$("cancelBtn").disabled=true;$("txLog").innerHTML="";$("txLog").style.display="block";
   let done=0;
-
   try{
     for(let i=0;i<batches.length;i++){
       const batch=batches[i];
-      const batchGross=batch.reduce((s,a)=>s+BigInt(a.lamports),0n);
-      const batchFee=feeForLamports(batchGross);
+      const batchGross=batch.reduce((s,a)=>s+a.lamports,0);
+      const batchFee=feeLamports(batchGross);
       const batchNet=batchGross-batchFee;
 
-      const bh=await latestBlockhash();
-      const tx=new Transaction({
-        feePayer:walletPubkey,
-        recentBlockhash:bh.blockhash
-      });
-
-      // 1) Close empty token accounts and return their rent to the user's wallet.
+      const bh=await latestBlockhash();const tx=new Transaction({feePayer:walletPubkey,recentBlockhash:bh.blockhash});
       for(const a of batch){
-        const program=a.programId===TOKEN_2022_PROGRAM_ID.toString()
-          ?TOKEN_2022_PROGRAM_ID
-          :TOKEN_PROGRAM_ID;
-
-        tx.add(createCloseAccountInstruction(
-          new PublicKey(a.address),
-          walletPubkey,
-          walletPubkey,
-          [],
-          program
-        ));
+        const program=a.programId===TOKEN_2022_PROGRAM_ID.toString()?TOKEN_2022_PROGRAM_ID:TOKEN_PROGRAM_ID;
+        tx.add(createCloseAccountInstruction(new PublicKey(a.address),walletPubkey,walletPubkey,[],program));
+      }
+      if(batchFee>0){
+        tx.add(SystemProgram.transfer({fromPubkey:walletPubkey,toPubkey:feeWallet,lamports:batchFee}));
       }
 
-      // 2) Take exactly 2% of the rent actually recovered in THIS batch.
-      // Because this instruction is in the same transaction after the closes,
-      // the operation is atomic: if the transaction fails, no fee is transferred.
-      if(batchFee>0n){
-        tx.add(SystemProgram.transfer({
-          fromPubkey:walletPubkey,
-          toPubkey:feeWallet,
-          lamports:Number(batchFee)
-        }));
-      }
-
-      log(`Batch ${i+1}/${batches.length}: ${batch.length} Konten`);
-      log(`Brutto: ${fmtLamports(batchGross)} · Fee: ${fmtLamports(batchFee)} · Netto: ${fmtLamports(batchNet)}`);
-      log("Phantom öffnen…");
-
-      const sent=await provider.signAndSendTransaction(tx);
-      const sig=typeof sent==="string"?sent:sent.signature;
-      log(`Gesendet: ${short(sig)}`);
-
-      const confirmed=await confirmSignature(sig);
-      log(confirmed?"✓ Bestätigt":"⚠ Gesendet, Bestätigung noch ausstehend");
-
-      done+=batch.length;
+      log(`Batch ${i+1}/${batches.length}: ${batch.length} Konten · Brutto ${fmtSol(batchGross/LAMPORTS_PER_SOL)} · Fee ${fmtSol(batchFee/LAMPORTS_PER_SOL)} · Netto ${fmtSol(batchNet/LAMPORTS_PER_SOL)}`);
+      const sent=await provider.signAndSendTransaction(tx);const sig=typeof sent==="string"?sent:sent.signature;log(`Gesendet: ${short(sig)}`);
+      const confirmed=await confirmSignature(sig);log(confirmed?"✓ Bestätigt":"⚠ Gesendet, Bestätigung noch ausstehend");done+=batch.length;
     }
-
-    log(`Fertig: ${done} Konten bearbeitet.`);
-    await sleep(1300);
-    closeModal();
-    await scanWallet();
-
-  }catch(e){
-    console.error(e);
-    log(`FEHLER: ${e.message||e}`);
-    $("cancelBtn").disabled=false;
-    $("cancelBtn").textContent="SCHLIESSEN";
-  }finally{
-    $("confirmBtn").disabled=false;
-  }
+    log(`Fertig: ${done} Konten bearbeitet.`);await sleep(1300);closeModal();await scanWallet();
+  }catch(e){console.error(e);log(`FEHLER: ${e.message||e}`);$("cancelBtn").disabled=false;$("cancelBtn").textContent="SCHLIESSEN"}
+  finally{$("confirmBtn").disabled=false}
 }
 function openModal(){
-  const sel=selectedAccounts();
-  if(!sel.length)return;
-
-  const gross=sel.reduce((s,a)=>s+BigInt(a.lamports),0n);
-  const fee=feeForLamports(gross);
+  const sel=selectedAccounts();if(!sel.length)return;
+  const gross=sel.reduce((s,a)=>s+a.lamports,0);
+  const fee=feeLamports(gross);
   const net=gross-fee;
   const batches=Math.ceil(sel.length/BATCH_SIZE);
-
   $("modalCount").textContent=sel.length;
-  $("modalSol").textContent=fmtLamports(gross);
-  $("modalFee").textContent=fmtLamports(fee);
-  $("modalNet").textContent=fmtLamports(net);
-
-  $("batchInfo").textContent=
-    `Maximal ${BATCH_SIZE} leere Konten pro Transaktion. `+
-    `Das ergibt ${batches} Phantom-Signatur${batches===1?"":"en"}. `+
-    `Die 2-%-Fee wird pro erfolgreich bestätigtem Batch berechnet.`;
-
-  $("txLog").style.display="none";
-  $("txLog").innerHTML="";
-  $("confirmBtn").disabled=false;
-  $("cancelBtn").disabled=false;
-  $("cancelBtn").textContent="ABBRECHEN";
-  $("modalBack").style.display="flex";
+  $("modalSol").textContent=fmtSol(gross/LAMPORTS_PER_SOL);
+  $("modalFee").textContent=fmtSol(fee/LAMPORTS_PER_SOL);
+  $("modalNet").textContent=fmtSol(net/LAMPORTS_PER_SOL);
+  $("batchInfo").textContent=`Maximal ${BATCH_SIZE} Close-Instructions pro Transaktion. Das ergibt ${batches} Phantom-Signatur${batches===1?"":"en"}. Die 2-%-Fee wird pro ausgeführtem Batch übertragen.`;
+  $("txLog").style.display="none";$("confirmBtn").disabled=false;$("cancelBtn").disabled=false;$("modalBack").style.display="flex"
 }
+function closeModal(){$("modalBack").style.display="none"}
 
-$("connectBtn").addEventListener("click",connectWallet);
-$("disconnectBtn").addEventListener("click",disconnectWallet);
-$("scanBtn").addEventListener("click",scanWallet);
-$("rescueBtn").addEventListener("click",openModal);
-$("cancelBtn").addEventListener("click",closeModal);
-$("confirmBtn").addEventListener("click",performRescue);
-$("selectAllBtn").addEventListener("click",()=>{
-  const boxes=[...document.querySelectorAll(".acctcheck")];
-  const should=boxes.some(b=>!b.checked);
-  boxes.forEach(b=>b.checked=should);
-  renderStats();
-  $("selectAllBtn").textContent=should?"ALLE ABWÄHLEN":"ALLE AUSWÄHLEN";
-});
-
+$("connectBtn").addEventListener("click",connectWallet);$("disconnectBtn").addEventListener("click",disconnectWallet);$("scanBtn").addEventListener("click",scanWallet);$("rescueBtn").addEventListener("click",openModal);$("cancelBtn").addEventListener("click",closeModal);$("confirmBtn").addEventListener("click",performRescue);
+$("selectAllBtn").addEventListener("click",()=>{const boxes=[...document.querySelectorAll(".acctcheck")];const should=boxes.some(b=>!b.checked);boxes.forEach(b=>b.checked=should);renderStats();$("selectAllBtn").textContent=should?"ALLE ABWÄHLEN":"ALLE AUSWÄHLEN"});
+async function checkRescueNetwork(){
+  const box=$("gatewayStatus");
+  try{
+    const r=await fetch("/health",{method:"GET",cache:"no-store"});
+    const j=await r.json().catch(()=>null);
+    if(!r.ok||!j?.ok)throw new Error("offline");
+    rescueNetworkOnline=true;
+    const live=(j.upstreams||[]).find(x=>x.ok);
+    box.innerHTML=`<span class="dot live"></span>Online${live?.upstream?` · ${esc(live.upstream)}`:""}`;
+    if(walletPubkey)$("scanBtn").disabled=false;
+    return true;
+  }catch{
+    rescueNetworkOnline=false;
+    box.innerHTML=`<span class="dot err"></span>Vorübergehend nicht erreichbar`;
+    if(walletPubkey)$("scanBtn").disabled=true;
+    return false;
+  }
+}
 $("modalBack").addEventListener("click",e=>{if(e.target===$("modalBack"))closeModal()});
 
 async function boot(){
   try{
     scanStatus("Solana SDK wird geladen…");
     await loadSdk();
-    checkRescueNetwork().catch(()=>{});
+    await checkRescueNetwork();
     updateWalletButton();
 
     const p=findProvider();
