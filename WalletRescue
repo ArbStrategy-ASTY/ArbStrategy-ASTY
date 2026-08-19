@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#08080d">
-<title>ASTY Wallet Rescue · V14</title>
+<title>ASTY Wallet Rescue · V15</title>
 <style>
 :root{
   --bg:#07070b;--panel:#0e0e16;--panel2:#12121d;--line:rgba(255,255,255,.085);
@@ -124,7 +124,7 @@ footer{text-align:center;font-size:8px;color:#5f5a67;margin-top:20px;line-height
 
 <div class="notice"><strong>Rescue-Prinzip:</strong> Es werden ausschließlich Tokenkonten mit Tokenbestand exakt 0 geschlossen. Von dem tatsächlich zurückgeholten SOL gehen 2 % als ASTY Rescue Fee an die ASTY Utility Wallet. Die Fee wird pro erfolgreich bestätigtem Batch zusammen mit dem Rescue ausgeführt. Netzwerkgebühren sind separat.</div>
 
-<footer>ASTY Wallet Rescue V14 · kein Custody · keine Seed Phrase · keine privaten Schlüssel · Mainnet Beta</footer>
+<footer>ASTY Wallet Rescue V15 · kein Custody · keine Seed Phrase · keine privaten Schlüssel · Mainnet Beta</footer>
 </div>
 
 <div class="modalback" id="modalBack"><div class="modal">
@@ -557,6 +557,21 @@ function openModal(){
   $("cancelBtn").textContent="ABBRECHEN";
   $("modalBack").style.display="flex";
 }
+
+$("connectBtn").addEventListener("click",connectWallet);
+$("disconnectBtn").addEventListener("click",disconnectWallet);
+$("scanBtn").addEventListener("click",scanWallet);
+$("rescueBtn").addEventListener("click",openModal);
+$("cancelBtn").addEventListener("click",closeModal);
+$("confirmBtn").addEventListener("click",performRescue);
+$("selectAllBtn").addEventListener("click",()=>{
+  const boxes=[...document.querySelectorAll(".acctcheck")];
+  const should=boxes.some(b=>!b.checked);
+  boxes.forEach(b=>b.checked=should);
+  renderStats();
+  $("selectAllBtn").textContent=should?"ALLE ABWÄHLEN":"ALLE AUSWÄHLEN";
+});
+
 $("modalBack").addEventListener("click",e=>{if(e.target===$("modalBack"))closeModal()});
 
 async function boot(){
