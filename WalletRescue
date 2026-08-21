@@ -835,6 +835,10 @@ const TXT={
   feeCurrent:{en:"{sol} for current selection",de:"{sol} bei aktueller Auswahl"},
   batchInfo:{en:"Maximum {size} close instructions per transaction. This results in {batches} Phantom signature(s). The 2% fee is transferred per executed batch.",de:"Maximal {size} Close-Instructions pro Transaktion. Das ergibt {batches} Phantom-Signatur(en). Die 2-%-Fee wird pro ausgeführtem Batch übertragen."},
   batchLog:{en:"Batch {i}/{total}: {accounts} accounts · Gross {gross} · Fee {fee} · Net {net}",de:"Batch {i}/{total}: {accounts} Konten · Brutto {gross} · Fee {fee} · Netto {net}"},
+  preflightCheck:{en:"Preflight check: simulating transaction before Phantom…",de:"Preflight-Check: Transaktion wird vor Phantom simuliert…"},
+  preflightOk:{en:"✓ Simulation successful · ready for Phantom",de:"✓ Simulation erfolgreich · bereit für Phantom"},
+  simulationNoResult:{en:"Simulation returned no usable result.",de:"Die Simulation hat kein verwertbares Ergebnis geliefert."},
+  simulationFailed:{en:"Simulation failed: {reason}",de:"Simulation fehlgeschlagen: {reason}"},
   openingWallet:{en:"open Phantom…",de:"Phantom öffnen…"},
   sent:{en:"Sent: {sig}",de:"Gesendet: {sig}"},
   confirmed:{en:"✓ Confirmed",de:"✓ Bestätigt"},
@@ -1166,6 +1170,32 @@ function renderStats(){
 }
 function splitBatches(arr,size){const out=[];for(let i=0;i<arr.length;i+=size)out.push(arr.slice(i,i+size));return out}
 async function latestBlockhash(){const r=await rpcRequest("getLatestBlockhash",[{commitment:"confirmed"}]);return r.value}
+function bytesToBase64(bytes){
+  let binary="";
+  const chunkSize=0x8000;
+  for(let i=0;i<bytes.length;i+=chunkSize){
+    binary+=String.fromCharCode(...bytes.subarray(i,Math.min(i+chunkSize,bytes.length)));
+  }
+  return btoa(binary);
+}
+async function simulateRescueTransaction(tx){
+  const serialized=tx.serialize({requireAllSignatures:false,verifySignatures:false});
+  const encoded=bytesToBase64(serialized);
+  const result=await rpcRequest("simulateTransaction",[
+    encoded,
+    {encoding:"base64",sigVerify:false,commitment:"confirmed"}
+  ]);
+  const value=result?.value;
+  if(!value)throw new Error(tr("simulationNoResult"));
+  if(value.err){
+    const reason=typeof value.err==="string"?value.err:JSON.stringify(value.err);
+    const tail=Array.isArray(value.logs)&&value.logs.length
+      ?value.logs.slice(-3).join(" | ")
+      :"";
+    throw new Error(tr("simulationFailed",{reason:tail?`${reason} · ${tail}`:reason}));
+  }
+  return value;
+}
 async function confirmSignature(sig){
   for(let i=0;i<24;i++){
     const r=await rpcRequest("getSignatureStatuses",[[sig],{searchTransactionHistory:true}]);const s=r?.value?.[0];
@@ -1196,6 +1226,9 @@ async function performRescue(){
       }
 
       log(tr("batchLog",{i:i+1,total:batches.length,accounts:batch.length,gross:fmtSol(batchGross/LAMPORTS_PER_SOL),fee:fmtSol(batchFee/LAMPORTS_PER_SOL),net:fmtSol(batchNet/LAMPORTS_PER_SOL)}));
+      log(tr("preflightCheck"));
+      await simulateRescueTransaction(tx);
+      log(tr("preflightOk"));
       const sent=await provider.signAndSendTransaction(tx);const sig=typeof sent==="string"?sent:sent.signature;log(tr("sent",{sig:short(sig)}));
       const confirmed=await confirmSignature(sig);log(confirmed?tr("confirmed"):tr("pending"));done+=batch.length;
     }
