@@ -816,7 +816,9 @@ const TXT={
   connected:{en:"Phantom connected · {wallet}",de:"Phantom verbunden · {wallet}"},
   disconnected:{en:"Phantom disconnected.",de:"Phantom getrennt."},
   loadingSpl:{en:"Loading SPL token accounts…",de:"SPL-Tokenkonten werden geladen…"},
+  checkingClosability:{en:"Checking Token-2022 close eligibility…",de:"Token-2022-Konten werden auf Schließbarkeit geprüft…"},
   scanDone:{en:"{count} token accounts checked · scan complete",de:"{count} Tokenkonten geprüft · Scan abgeschlossen"},
+  scanDoneSkipped:{en:"{count} token accounts checked · {skipped} Token-2022 account(s) skipped because withheld transfer fees currently prevent closing",de:"{count} Tokenkonten geprüft · {skipped} Token-2022-Konto/Konten übersprungen, weil einbehaltene Transfer-Fees das Schließen aktuell verhindern"},
   scanFailed:{en:"Scan failed: {msg}",de:"Scan fehlgeschlagen: {msg}"},
   networkDown:{en:"Rescue Network is currently unavailable.",de:"Rescue Network ist momentan nicht erreichbar."},
   checking:{en:"Checking connection…",de:"Verbindung wird geprüft…"},
@@ -897,7 +899,7 @@ function applyLanguage(lang){
 
 
 let PublicKey,Transaction,SystemProgram,createCloseAccountInstruction,TOKEN_PROGRAM_ID,TOKEN_2022_PROGRAM_ID;
-let provider=null,walletPubkey=null,emptyAccounts=[],delegates=[],busy=false,activeRpc=null,rescueNetworkOnline=false,connectionPending=false,connectionSyncBusy=false,hasScanned=false,rescueUpstream="";
+let provider=null,walletPubkey=null,emptyAccounts=[],delegates=[],skippedWithheldFeeAccounts=[],busy=false,activeRpc=null,rescueNetworkOnline=false,connectionPending=false,connectionSyncBusy=false,hasScanned=false,rescueUpstream="";
 
 function scanStatus(text,kind=""){const cls=kind==="live"?" live":kind==="err"?" err":"";$("scanStatus").innerHTML=`<span class="dot${cls}"></span>${esc(text)}`}
 function progress(v){$("progress").style.display=(v>0&&v<100)?"block":"none";$("bar").style.width=`${v}%`}
@@ -1111,7 +1113,7 @@ document.addEventListener("visibilitychange",()=>{
   if(document.visibilityState==="visible")schedulePhantomSync();
 });
 
-async function disconnectWallet(){try{if(provider?.disconnect)await provider.disconnect()}catch{}connectionPending=false;walletPubkey=null;emptyAccounts=[];delegates=[];$("connectedLine").style.display="none";$("connectBtn").style.display="";$("disconnectBtn").style.display="none";$("scanBtn").disabled=true;resetResults();scanStatus("Wallet getrennt.")}
+async function disconnectWallet(){try{if(provider?.disconnect)await provider.disconnect()}catch{}connectionPending=false;walletPubkey=null;emptyAccounts=[];delegates=[];skippedWithheldFeeAccounts=[];$("connectedLine").style.display="none";$("connectBtn").style.display="";$("disconnectBtn").style.display="none";$("scanBtn").disabled=true;resetResults();scanStatus("Wallet getrennt.")}
 function resetResults(){hasScanned=false;$("recoverSol").textContent="—";$("emptyCount").textContent="—";$("selectedCount").textContent="—";$("selectedSol").textContent="— SOL";$("delegateCount").textContent="—";$("accountList").innerHTML=`<div class="empty"><b>Noch kein Scan.</b>Verbinde Phantom und starte den Wallet-Scan.</div>`;$("delegateList").innerHTML=`<div class="empty"><b>Noch keine Daten.</b>Der Delegate-Check läuft automatisch mit dem Wallet-Scan.</div>`;$("actionBar").style.display="none";$("selectAllBtn").disabled=true}
 async function getParsedAccounts(programId){return await rpcRequest("getTokenAccountsByOwner",[walletPubkey.toString(),{programId},{encoding:"jsonParsed",commitment:"confirmed"}])}
 function parseTokenAccount(row,programId){
@@ -1120,16 +1122,90 @@ function parseTokenAccount(row,programId){
   return {address:row.pubkey,mint:info.mint,owner:info.owner||null,closeAuthority:info.closeAuthority||null,delegate:info.delegate||null,delegatedRaw:BigInt(info.delegatedAmount?.amount||"0"),rawAmount,lamports:Number(row.account.lamports||0),programId,isNative:!!info.isNative};
 }
 function authorityCanClose(a){const w=walletPubkey.toString();return a.owner===w&&(!a.closeAuthority||a.closeAuthority===w)}
+
+function hasWithheldFeeCloseError(value){
+  if(!value?.err)return false;
+  const logs=Array.isArray(value.logs)?value.logs:[];
+  return logs.some(line=>/withheld fee balance is zero/i.test(String(line)));
+}
+
+async function simulateCloseEligibilityBatch(batch,blockhash){
+  const tx=new Transaction({feePayer:walletPubkey,recentBlockhash:blockhash});
+  for(const a of batch){
+    const program=a.programId===TOKEN_2022_PROGRAM_ID.toString()?TOKEN_2022_PROGRAM_ID:TOKEN_PROGRAM_ID;
+    tx.add(createCloseAccountInstruction(new PublicKey(a.address),walletPubkey,walletPubkey,[],program));
+  }
+
+  const serialized=tx.serialize({requireAllSignatures:false,verifySignatures:false});
+  const encoded=bytesToBase64(serialized);
+  const result=await rpcRequest("simulateTransaction",[
+    encoded,
+    {encoding:"base64",sigVerify:false,commitment:"confirmed"}
+  ]);
+  return result?.value||null;
+}
+
+async function findWithheldFeeBlockedAccounts(batch,blockhash){
+  if(!batch.length)return [];
+
+  const value=await simulateCloseEligibilityBatch(batch,blockhash);
+
+  // Pace scan-time simulations so the public /rpc rate limit is not hit
+  // when a wallet contains many Token-2022 accounts.
+  await sleep(600);
+
+  if(!hasWithheldFeeCloseError(value))return [];
+  if(batch.length===1)return [batch[0]];
+
+  const mid=Math.ceil(batch.length/2);
+  const left=await findWithheldFeeBlockedAccounts(batch.slice(0,mid),blockhash);
+  const right=await findWithheldFeeBlockedAccounts(batch.slice(mid),blockhash);
+  return [...left,...right];
+}
+
+async function filterWithheldFeeBlockedAccounts(candidates){
+  const token2022=candidates.filter(a=>a.programId===TOKEN_2022_PROGRAM_ID.toString());
+  if(!token2022.length)return {closable:candidates,blocked:[]};
+
+  scanStatus(tr("checkingClosability"));
+  const bh=await latestBlockhash();
+  const blocked=[];
+
+  for(const batch of splitBatches(token2022,BATCH_SIZE)){
+    const found=await findWithheldFeeBlockedAccounts(batch,bh.blockhash);
+    blocked.push(...found);
+  }
+
+  if(!blocked.length)return {closable:candidates,blocked:[]};
+
+  const blockedAddresses=new Set(blocked.map(a=>a.address));
+  return {
+    closable:candidates.filter(a=>!blockedAddresses.has(a.address)),
+    blocked
+  };
+}
+
 async function scanWallet(){
   if(!walletPubkey||busy)return;busy=true;$("scanBtn").disabled=true;$("rescueBtn").disabled=true;progress(12);scanStatus(tr("loadingSpl"));
   try{
     const [classic,t22]=await Promise.all([getParsedAccounts(TOKEN_PROGRAM_ID.toString()),getParsedAccounts(TOKEN_2022_PROGRAM_ID.toString())]);progress(58);
     const all=[...(classic?.value||[]).map(x=>parseTokenAccount(x,TOKEN_PROGRAM_ID.toString())),...(t22?.value||[]).map(x=>parseTokenAccount(x,TOKEN_2022_PROGRAM_ID.toString()))].filter(Boolean);
-    emptyAccounts=all.filter(a=>a.rawAmount===0n&&authorityCanClose(a)&&!a.isNative);
+    const zeroBalanceCandidates=all.filter(a=>a.rawAmount===0n&&authorityCanClose(a)&&!a.isNative);
     delegates=all.filter(a=>!!a.delegate&&a.delegatedRaw>0n);
+
+    progress(68);
+    const eligibility=await filterWithheldFeeBlockedAccounts(zeroBalanceCandidates);
+    emptyAccounts=eligibility.closable;
+    skippedWithheldFeeAccounts=eligibility.blocked;
+
     hasScanned=true;
     renderAccounts();renderDelegates();renderStats();progress(100);
-    scanStatus(tr("scanDone",{count:all.length}),"live");
+
+    if(skippedWithheldFeeAccounts.length){
+      scanStatus(tr("scanDoneSkipped",{count:all.length,skipped:skippedWithheldFeeAccounts.length}),"live");
+    }else{
+      scanStatus(tr("scanDone",{count:all.length}),"live");
+    }
   }catch(e){console.error(e);progress(100);scanStatus(tr("scanFailed",{msg:e.message}),"err")}
   finally{busy=false;$("scanBtn").disabled=false;$("rescueBtn").disabled=false}
 }
@@ -1234,7 +1310,6 @@ async function performRescue(){
     }
     log(tr("finished",{count:done}));await sleep(1300);closeModal();await scanWallet();
   }catch(e){console.error(e);log(tr("error",{msg:e.message||e}));$("cancelBtn").disabled=false;$("cancelBtn").textContent=currentLang==="en"?"CLOSE":"SCHLIESSEN"}
-  finally{$("confirmBtn").disabled=false}
 }
 function openModal(){
   const sel=selectedAccounts();if(!sel.length)return;
@@ -1247,7 +1322,11 @@ function openModal(){
   $("modalFee").textContent=fmtSol(fee/LAMPORTS_PER_SOL);
   $("modalNet").textContent=fmtSol(net/LAMPORTS_PER_SOL);
   $("batchInfo").textContent=tr("batchInfo",{size:BATCH_SIZE,batches});
-  $("txLog").style.display="none";$("confirmBtn").disabled=false;$("cancelBtn").disabled=false;$("modalBack").style.display="flex"
+  $("txLog").style.display="none";
+  $("confirmBtn").disabled=false;
+  $("cancelBtn").disabled=false;
+  $("cancelBtn").textContent=currentLang==="en"?"CANCEL":"ABBRECHEN";
+  $("modalBack").style.display="flex"
 }
 function closeModal(){$("modalBack").style.display="none"}
 
