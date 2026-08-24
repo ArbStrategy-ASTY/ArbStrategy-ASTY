@@ -1240,7 +1240,7 @@
     </section>
 
     <div class="footer-note">
-      My ASTY is a read-only analytics view. Wallets are scanned through public Solana data only; no connection or signature is required. Values are informational. No investment advice.
+      My ASTY is a read-only analytics view. Wallets are scanned through public read-only data sources only; no connection or signature is required. Values are informational. No investment advice.
     </div>
   </main>
 
@@ -1254,6 +1254,7 @@
     // Primary read-only source: SolanaFM REST.
     // It avoids direct browser JSON-RPC for normal My ASTY scans.
     const SOLANAFM_API = "https://api.solana.fm";
+    const THREE_WS_WALLET_API = "https://three.ws/api/crypto/wallet";
 
     // Current RPC fallbacks only.
     // SubQuery's public Solana RPC has been retired.
@@ -1272,7 +1273,7 @@
 
     const RPC_TIMEOUT_MS = 12000;
     const REST_TIMEOUT_MS = 12000;
-    const WALLET_REST_DELAY_MS = 350;
+    const WALLET_REST_DELAY_MS = 1250;
     const RESCUE_WALLET_DELAY_MS = 900;
 
     let preferredRpcUrl = null;
@@ -2037,6 +2038,103 @@
       };
     }
 
+    async function getWalletAstyViaThreeWs(
+      address
+    ) {
+      const url =
+        `${THREE_WS_WALLET_API}?address=` +
+        `${encodeURIComponent(address)}` +
+        `&chain=solana`;
+
+      const payload =
+        await fetchJsonGet(
+          url,
+          15000
+        );
+
+      const tokens =
+        Array.isArray(payload?.tokens)
+          ? payload.tokens
+          : [];
+
+      let asty = 0;
+      let tokenAccounts = 0;
+
+      for (const token of tokens) {
+        if (
+          token?.mint === ASTY_MINT
+        ) {
+          asty +=
+            Number(token?.amount) || 0;
+
+          tokenAccounts++;
+        }
+      }
+
+      return {
+        address,
+        asty,
+        tokenAccounts,
+        error: false,
+        errorMessage: "",
+        source: "Three.ws"
+      };
+    }
+
+    async function getWalletsViaThreeWs(
+      wallets
+    ) {
+      const results = [];
+
+      for (
+        let i = 0;
+        i < wallets.length;
+        i++
+      ) {
+        const address =
+          wallets[i];
+
+        setStatus(
+          "Reading wallets",
+          `Wallet ${i + 1} of ${wallets.length} • ${shortAddr(address)}`,
+          "READ ONLY"
+        );
+
+        try {
+          results.push(
+            await getWalletAstyViaThreeWs(
+              address
+            )
+          );
+        } catch (error) {
+          console.warn(
+            "Primary wallet REST failed:",
+            address,
+            error
+          );
+
+          results.push({
+            address,
+            asty: 0,
+            tokenAccounts: 0,
+            error: true,
+            errorMessage:
+              error?.message ||
+              "Primary wallet source unavailable",
+            source: "Three.ws"
+          });
+        }
+
+        if (
+          i < wallets.length - 1
+        ) {
+          await sleep(450);
+        }
+      }
+
+      return results;
+    }
+
     async function getWalletAstyViaSolanaFm(
       address
     ) {
@@ -2157,6 +2255,70 @@
       }
 
       return results;
+    }
+
+    async function rescueFailedWalletsWithSolanaFm(
+      walletResults
+    ) {
+      const failedIndexes =
+        walletResults
+          .map(
+            (wallet, index) =>
+              wallet.error
+                ? index
+                : -1
+          )
+          .filter(
+            index => index >= 0
+          );
+
+      if (!failedIndexes.length) {
+        return walletResults;
+      }
+
+      setStatus(
+        "Trying backup source",
+        `${failedIndexes.length} wallet` +
+        `${failedIndexes.length === 1 ? "" : "s"} need a REST retry...`,
+        "BACKUP"
+      );
+
+      for (
+        let i = 0;
+        i < failedIndexes.length;
+        i++
+      ) {
+        const resultIndex =
+          failedIndexes[i];
+
+        const address =
+          walletResults[resultIndex]
+            .address;
+
+        try {
+          walletResults[resultIndex] =
+            await getWalletAstyViaSolanaFm(
+              address
+            );
+        } catch (error) {
+          console.warn(
+            "SolanaFM wallet fallback failed:",
+            address,
+            error
+          );
+        }
+
+        if (
+          i < failedIndexes.length - 1
+        ) {
+          // SolanaFM documents 1 RPS on this endpoint.
+          await sleep(
+            WALLET_REST_DELAY_MS
+          );
+        }
+      }
+
+      return walletResults;
     }
 
     async function rescueFailedWalletsWithCore(
@@ -2291,6 +2453,75 @@
       };
     }
 
+    async function fetchAstySnapshotFromGeckoTerminal() {
+      const url =
+        `https://api.geckoterminal.com/api/v2/networks/solana/tokens/${ASTY_MINT}`;
+
+      const response =
+        await fetchWithTimeout(
+          url,
+          {
+            headers: {
+              "Accept":
+                "application/json;version=20230203"
+            }
+          },
+          12000
+        );
+
+      if (!response.ok) {
+        throw new Error(
+          `GeckoTerminal HTTP ${response.status}`
+        );
+      }
+
+      const json =
+        await response.json();
+
+      const attr =
+        json?.data?.attributes || {};
+
+      const decimals =
+        Number(attr?.decimals);
+
+      const normalizedSupply =
+        Number(
+          attr?.normalized_total_supply
+        );
+
+      const rawSupply =
+        Number(attr?.total_supply);
+
+      let currentSupply = 0;
+
+      if (
+        Number.isFinite(
+          normalizedSupply
+        ) &&
+        normalizedSupply > 0
+      ) {
+        currentSupply =
+          normalizedSupply;
+      } else if (
+        Number.isFinite(rawSupply) &&
+        rawSupply > 0 &&
+        Number.isFinite(decimals)
+      ) {
+        currentSupply =
+          rawSupply /
+          Math.pow(10, decimals);
+      }
+
+      const priceUsd =
+        Number(attr?.price_usd) || 0;
+
+      return {
+        currentSupply,
+        priceUsd,
+        source: "GeckoTerminal"
+      };
+    }
+
     async function fetchPriceFromGeckoTerminal() {
       const url = `https://api.geckoterminal.com/api/v2/networks/solana/tokens/${ASTY_MINT}?include=top_pools&include_composition=false&include_inactive_source=false`;
 
@@ -2369,10 +2600,26 @@
 
       state.totalUsd = state.totalAsty * state.priceUsd;
 
-      state.burnedSupply = Math.max(0, ORIGINAL_SUPPLY - state.currentSupply);
-      state.burnRate = ORIGINAL_SUPPLY > 0
-        ? (state.burnedSupply / ORIGINAL_SUPPLY) * 100
+      const hasSupply =
+        Number.isFinite(state.currentSupply) &&
+        state.currentSupply > 0;
+
+      state.burnedSupply = hasSupply
+        ? Math.max(
+            0,
+            ORIGINAL_SUPPLY -
+            state.currentSupply
+          )
         : 0;
+
+      state.burnRate =
+        hasSupply &&
+        ORIGINAL_SUPPLY > 0
+          ? (
+              state.burnedSupply /
+              ORIGINAL_SUPPLY
+            ) * 100
+          : 0;
 
       state.baselineShare = ORIGINAL_SUPPLY > 0
         ? (state.totalAsty / ORIGINAL_SUPPLY) * 100
@@ -2404,29 +2651,94 @@
     function render() {
       ui.heroAsty.textContent = `${formatNum(state.totalAsty, 4)} ASTY`;
       ui.heroUsd.textContent = formatUsd(state.totalUsd, 2);
-      ui.orbShare.textContent = formatPct(state.currentShare, 4);
+      const hasSupply =
+        Number.isFinite(state.currentSupply) &&
+        state.currentSupply > 0;
+
+      ui.orbShare.textContent =
+        hasSupply
+          ? formatPct(
+              state.currentShare,
+              4
+            )
+          : "N/A";
 
       ui.heroCopy.textContent = state.wallets.length
         ? `Across ${state.wallets.length} analyzed wallet${state.wallets.length === 1 ? "" : "s"}, your current balance represents ${formatPct(state.currentShare, 4)} of the live ASTY supply.`
         : "Add one or more wallets to see your combined ASTY balance, current supply share and the effect of ASTY's shrinking supply on that balance.";
 
-      ui.metricCurrentShare.textContent = formatPct(state.currentShare, 4);
-      ui.metricBoost.textContent = formatPct(state.ownershipBoost, 2, true);
-      ui.metricBurned.textContent = formatNum(state.burnedSupply, 2);
-      ui.metricBurnedSub.textContent = `${formatPct(state.burnRate, 2)} of original supply.`;
+      ui.metricCurrentShare.textContent =
+        hasSupply
+          ? formatPct(
+              state.currentShare,
+              4
+            )
+          : "N/A";
+
+      ui.metricBoost.textContent =
+        hasSupply
+          ? formatPct(
+              state.ownershipBoost,
+              2,
+              true
+            )
+          : "N/A";
+
+      ui.metricBurned.textContent =
+        hasSupply
+          ? formatNum(
+              state.burnedSupply,
+              2
+            )
+          : "N/A";
+
+      ui.metricBurnedSub.textContent =
+        hasSupply
+          ? `${formatPct(state.burnRate, 2)} of original supply.`
+          : "Supply data temporarily unavailable.";
       ui.metricPrice.textContent = formatUsd(state.priceUsd, 5);
       ui.metricPriceSource.textContent = state.priceSource || "Waiting for market data.";
 
-      ui.effectBoost.textContent = formatPct(state.ownershipBoost, 2, true);
-      ui.baselineShare.textContent = formatPct(state.baselineShare, 4);
-      ui.currentShare.textContent = formatPct(state.currentShare, 4);
-      ui.equivalentAsty.textContent = `${formatNum(state.equivalentAsty, 2)} ASTY`;
-      ui.sharePointGain.textContent = `${state.sharePointGain >= 0 ? "+" : ""}${state.sharePointGain.toLocaleString("en-US", {
-        minimumFractionDigits: 4,
-        maximumFractionDigits: 4
-      })} percentage points`;
+      ui.effectBoost.textContent =
+        hasSupply
+          ? formatPct(
+              state.ownershipBoost,
+              2,
+              true
+            )
+          : "N/A";
 
-      if (state.totalAsty > 0) {
+      ui.baselineShare.textContent =
+        formatPct(
+          state.baselineShare,
+          4
+        );
+
+      ui.currentShare.textContent =
+        hasSupply
+          ? formatPct(
+              state.currentShare,
+              4
+            )
+          : "N/A";
+
+      ui.equivalentAsty.textContent =
+        hasSupply
+          ? `${formatNum(state.equivalentAsty, 2)} ASTY`
+          : "N/A";
+
+      ui.sharePointGain.textContent =
+        hasSupply
+          ? `${state.sharePointGain >= 0 ? "+" : ""}${state.sharePointGain.toLocaleString("en-US", {
+              minimumFractionDigits: 4,
+              maximumFractionDigits: 4
+            })} percentage points`
+          : "N/A";
+
+      if (
+        state.totalAsty > 0 &&
+        hasSupply
+      ) {
         ui.effectNote.innerHTML =
           `With the same <strong>${formatNum(state.totalAsty, 2)} ASTY</strong>, your share moves from ` +
           `<strong>${formatPct(state.baselineShare, 4)}</strong> at a 10M supply to ` +
@@ -2438,9 +2750,29 @@
           "This comparison uses your current ASTY balance as a constant and compares it with the original 10,000,000 ASTY supply. It does not assume when you bought your tokens and does not reconstruct your wallet history.";
       }
 
-      ui.currentSupply.textContent = formatNum(state.currentSupply, 2);
-      ui.burnedSupply.textContent = formatNum(state.burnedSupply, 2);
-      ui.burnRate.textContent = formatPct(state.burnRate, 2);
+      ui.currentSupply.textContent =
+        hasSupply
+          ? formatNum(
+              state.currentSupply,
+              2
+            )
+          : "N/A";
+
+      ui.burnedSupply.textContent =
+        hasSupply
+          ? formatNum(
+              state.burnedSupply,
+              2
+            )
+          : "N/A";
+
+      ui.burnRate.textContent =
+        hasSupply
+          ? formatPct(
+              state.burnRate,
+              2
+            )
+          : "N/A";
       ui.walletCount.textContent = String(state.wallets.length);
       ui.walletCountLabel.textContent = `${state.wallets.length} wallet${state.wallets.length === 1 ? "" : "s"}`;
 
@@ -2452,7 +2784,10 @@
 
       ui.supplyFill.style.width = `${remainingPct}%`;
       ui.burnedSegment.style.width = `${burnedPct}%`;
-      ui.supplyCurrentLabel.textContent = `Current: ${formatNum(state.currentSupply, 2)}`;
+      ui.supplyCurrentLabel.textContent =
+        hasSupply
+          ? `Current: ${formatNum(state.currentSupply, 2)}`
+          : "Current: unavailable";
 
       renderWallets();
     }
@@ -2597,9 +2932,7 @@
           ui.walletInput.value
         );
 
-      if (
-        !parsed.valid.length
-      ) {
+      if (!parsed.valid.length) {
         const invalidMsg =
           parsed.invalid.length
             ? `${parsed.invalid.length} invalid address` +
@@ -2626,154 +2959,117 @@
         "Analyzing...";
 
       try {
-        preferredRpcUrl = null;
-
         setStatus(
           "Starting My ASTY",
-          "Loading public on-chain data...",
+          "Loading wallet and token data...",
           "READ ONLY"
         );
 
-        // Price is separate from wallet/supply data.
-        const pricePromise =
-          getAstyPrice()
+        /*
+         * No direct Solana JSON-RPC in the browser.
+         *
+         * Wallets:
+         *   1) three.ws keyless wallet REST
+         *   2) SolanaFM REST fallback (slow, 1 RPS)
+         *
+         * Supply:
+         *   1) GeckoTerminal normalized on-chain supply
+         *   2) SolanaFM REST fallback
+         */
+        const snapshotPromise =
+          fetchAstySnapshotFromGeckoTerminal()
             .catch(error => {
               console.warn(
-                "Price unavailable:",
+                "GeckoTerminal snapshot failed:",
                 error
               );
-
               return null;
             });
 
-        /*
-         * PRIMARY MODE:
-         * Standard HTTPS GET requests to SolanaFM.
-         * No direct Solana JSON-RPC is needed when these succeed.
-         */
-        const [
-          restSupplyResult,
-          restWalletsResult
-        ] = await Promise.allSettled([
-          getAstySupplyViaSolanaFm(),
-          getWalletsViaSolanaFm(
+        let walletResults =
+          await getWalletsViaThreeWs(
             parsed.valid
-          )
-        ]);
-
-        let dataMode =
-          "SolanaFM";
-
-        let tokenProgramId =
-          ASTY_TOKEN_PROGRAM_ID;
-
-        if (
-          restSupplyResult.status ===
-          "fulfilled"
-        ) {
-          state.currentSupply =
-            restSupplyResult.value;
-        } else {
-          console.warn(
-            "SolanaFM supply failed:",
-            restSupplyResult.reason
           );
 
-          setStatus(
-            "Supply fallback",
-            "REST supply unavailable • trying Core RPC...",
-            "CORE FALLBACK"
-          );
-
-          await sleep(500);
-
-          state.currentSupply =
-            await getAstySupply();
-
-          dataMode =
-            "SolanaFM + Core";
-        }
-
-        let walletResults;
-
-        if (
-          restWalletsResult.status ===
-          "fulfilled"
-        ) {
-          walletResults =
-            restWalletsResult.value;
-        } else {
-          console.warn(
-            "SolanaFM wallets failed:",
-            restWalletsResult.reason
-          );
-
-          walletResults =
-            parsed.valid.map(
-              address => ({
-                address,
-                asty: 0,
-                tokenAccounts: 0,
-                error: true,
-                errorMessage:
-                  "REST wallet source unavailable",
-                source: "SolanaFM"
-              })
-            );
-        }
-
-        const failedBeforeRescue =
+        const primaryFailed =
           walletResults.filter(
             wallet =>
               wallet.error
           ).length;
 
-        if (
-          failedBeforeRescue
-        ) {
-          try {
-            walletResults =
-              await rescueFailedWalletsWithCore(
-                walletResults,
-                tokenProgramId
-              );
+        if (primaryFailed) {
+          walletResults =
+            await rescueFailedWalletsWithSolanaFm(
+              walletResults
+            );
+        }
 
-            dataMode =
-              dataMode === "SolanaFM"
-                ? "SolanaFM + Core"
-                : dataMode;
+        const snapshot =
+          await snapshotPromise;
+
+        if (
+          snapshot?.currentSupply
+        ) {
+          state.currentSupply =
+            Number(
+              snapshot.currentSupply
+            ) || 0;
+        } else {
+          setStatus(
+            "Loading supply",
+            "Trying backup supply source...",
+            "BACKUP"
+          );
+
+          try {
+            state.currentSupply =
+              await getAstySupplyViaSolanaFm();
           } catch (error) {
             console.warn(
-              "Core wallet rescue unavailable:",
+              "Backup supply failed:",
               error
             );
+
+            // Do NOT fail the whole wallet scan
+            // just because supply is unavailable.
+            state.currentSupply = 0;
           }
         }
 
         if (
-          !state.currentSupply
+          snapshot?.priceUsd
         ) {
-          throw new Error(
-            "Could not load ASTY supply"
-          );
-        }
-
-        const priceResult =
-          await pricePromise;
-
-        if (priceResult) {
           state.priceUsd =
             Number(
-              priceResult.priceUsd
+              snapshot.priceUsd
             ) || 0;
 
           state.priceSource =
-            priceResult.source ||
-            "Market data";
+            snapshot.source ||
+            "GeckoTerminal";
         } else {
-          state.priceUsd = 0;
-          state.priceSource =
-            "Price temporarily unavailable";
+          try {
+            const price =
+              await fetchPriceFromDexScreener();
+
+            state.priceUsd =
+              Number(
+                price.priceUsd
+              ) || 0;
+
+            state.priceSource =
+              price.source ||
+              "DEX Screener";
+          } catch (error) {
+            console.warn(
+              "Price fallback failed:",
+              error
+            );
+
+            state.priceUsd = 0;
+            state.priceSource =
+              "Price temporarily unavailable";
+          }
         }
 
         state.wallets =
@@ -2840,8 +3136,10 @@
             ` • ${parsed.invalid.length} invalid ignored`;
         }
 
-        summary +=
-          ` • ${dataMode}`;
+        if (!state.currentSupply) {
+          summary +=
+            " • supply temporarily unavailable";
+        }
 
         setStatus(
           failed
@@ -2863,15 +3161,6 @@
 
         if (
           message.includes(
-            "HTTP 403"
-          )
-        ) {
-          message =
-            "The fallback RPC is blocking browser access. The primary REST source was also unavailable.";
-        }
-
-        if (
-          message.includes(
             "Failed to fetch"
           ) ||
           message.includes(
@@ -2882,7 +3171,7 @@
           )
         ) {
           message =
-            "Public data access is currently unavailable from this browser.";
+            "The public REST data sources are currently unavailable from this browser.";
         }
 
         setStatus(
