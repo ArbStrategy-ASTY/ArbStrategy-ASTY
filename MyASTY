@@ -995,7 +995,7 @@
           </label>
 
           <div class="read-only-note">
-            No wallet connection. No signing. No permissions. My ASTY securely reads public on-chain data for the addresses you enter.
+            No wallet connection. No signing. No permissions. My ASTY reads public on-chain data for the addresses you enter.
           </div>
         </div>
 
@@ -1194,21 +1194,18 @@
     const ASTY_MINT = "ASTYqeaoK83Zs1pTFEXZUB6BM8cG8YLTsN852NUkt7ZR";
     const ORIGINAL_SUPPLY = 10_000_000;
 
-    // Primary My ASTY backend. Helius stays server-side.
-    const MY_ASTY_API_BASE =
-      location.hostname === "myasty.arbstrategy.net"
-        ? location.origin
-        : "https://myasty.arbstrategy.net";
     const STORAGE_KEY = "myAsty.wallets.v1";
     const STORAGE_REMEMBER_KEY = "myAsty.remember.v1";
     const RPC_TIMEOUT_MS = 12000;
 
     const RPC_FALLBACKS = [
-      "https://api.mainnet-beta.solana.com",
       "https://solana-rpc.publicnode.com",
+      "https://api.mainnet-beta.solana.com",
       "https://solana.api.onfinality.io/public",
       "https://solana.rpc.subquery.network/public"
     ];
+
+    let preferredRpcUrl = null;
 
     const ui = {
       walletInput: document.getElementById("walletInput"),
@@ -1390,57 +1387,152 @@
     }
 
     async function solanaRpc(rpcUrl, method, params) {
-      const res = await fetchWithTimeout(rpcUrl, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          jsonrpc: "2.0",
-          id: Date.now(),
-          method,
-          params
-        })
+      const body = JSON.stringify({
+        jsonrpc: "2.0",
+        id: `${method}-${Date.now()}-${Math.random()}`,
+        method,
+        params
       });
 
-      if (!res.ok) {
-        throw new Error(`${rpcName(rpcUrl)} HTTP ${res.status}`);
-      }
+      const headerModes = [
+        {
+          "Content-Type": "application/json",
+          "Accept": "application/json"
+        },
+        {
+          "Content-Type": "text/plain",
+          "Accept": "application/json"
+        }
+      ];
 
-      const json = await res.json();
-
-      if (json.error) {
-        throw new Error(json.error.message || "RPC error");
-      }
-
-      return json.result;
-    }
-
-    async function solanaRpcWithFallback(method, params, quiet = false) {
       let lastError = null;
 
-      for (let round = 1; round <= 2; round++) {
-        for (const rpcUrl of RPC_FALLBACKS) {
+      for (const headers of headerModes) {
+        try {
+          const res = await fetchWithTimeout(
+            rpcUrl,
+            {
+              method: "POST",
+              headers,
+              body
+            },
+            RPC_TIMEOUT_MS
+          );
+
+          const text = await res.text();
+
+          if (!res.ok) {
+            throw new Error(
+              `${rpcName(rpcUrl)} HTTP ${res.status}`
+            );
+          }
+
+          let json;
+
+          try {
+            json = JSON.parse(text);
+          } catch {
+            throw new Error(
+              `${rpcName(rpcUrl)} returned invalid JSON`
+            );
+          }
+
+          if (json?.error) {
+            throw new Error(
+              json.error.message ||
+              `${rpcName(rpcUrl)} RPC error`
+            );
+          }
+
+          return json.result;
+        } catch (error) {
+          lastError = error;
+        }
+      }
+
+      throw lastError ||
+        new Error(`${rpcName(rpcUrl)} request failed`);
+    }
+
+    function orderedRpcs() {
+      const rpcs = [...RPC_FALLBACKS];
+
+      if (
+        preferredRpcUrl &&
+        rpcs.includes(preferredRpcUrl)
+      ) {
+        return [
+          preferredRpcUrl,
+          ...rpcs.filter(
+            rpc => rpc !== preferredRpcUrl
+          )
+        ];
+      }
+
+      return rpcs;
+    }
+
+    async function solanaRpcWithFallback(
+      method,
+      params,
+      quiet = false,
+      rounds = 3
+    ) {
+      let lastError = null;
+
+      for (
+        let round = 1;
+        round <= rounds;
+        round++
+      ) {
+        for (const rpcUrl of orderedRpcs()) {
           try {
             if (!quiet) {
               setStatus(
                 "Reading Solana",
-                `${rpcName(rpcUrl)} • ${method}${round > 1 ? " • retry" : ""}`,
-                "BACKUP"
+                `${rpcName(rpcUrl)} • ${method}` +
+                `${round > 1 ? ` • retry ${round}` : ""}`,
+                "LIVE"
               );
             }
 
-            return await solanaRpc(rpcUrl, method, params);
+            const result = await solanaRpc(
+              rpcUrl,
+              method,
+              params
+            );
+
+            preferredRpcUrl = rpcUrl;
+            return result;
           } catch (error) {
             lastError = error;
-            console.warn("RPC failed:", rpcUrl, method, `round ${round}`, error);
+
+            console.warn(
+              "RPC failed:",
+              rpcUrl,
+              method,
+              `round ${round}`,
+              error
+            );
+
+            if (preferredRpcUrl === rpcUrl) {
+              preferredRpcUrl = null;
+            }
           }
         }
 
-        if (round < 2) {
-          await new Promise(resolve => setTimeout(resolve, 450));
+        if (round < rounds) {
+          await new Promise(
+            resolve =>
+              setTimeout(resolve, 350 * round)
+          );
         }
       }
 
-      throw lastError || new Error("All public RPC endpoints failed");
+      throw lastError ||
+        new Error(
+          "All public Solana data sources failed"
+        );
     }
 
     async function getAstySupply() {
@@ -1826,128 +1918,73 @@
     }
 
     function sleep(ms) {
-      return new Promise(resolve => setTimeout(resolve, ms));
-    }
-
-    async function fetchGatewayAnalysis(wallets) {
-      const res = await fetchWithTimeout(
-        `${MY_ASTY_API_BASE}/api/myasty`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "Accept": "application/json"
-          },
-          body: JSON.stringify({ wallets })
-        },
-        18000
+      return new Promise(
+        resolve => setTimeout(resolve, ms)
       );
-
-      if (!res.ok) {
-        const text = await res.text().catch(() => "");
-        throw new Error(`ASTY Data Gateway HTTP ${res.status}${text ? `: ${text.slice(0, 160)}` : ""}`);
-      }
-
-      const json = await res.json();
-
-      if (!json?.ok || !Array.isArray(json?.wallets) || !Number(json?.currentSupply)) {
-        throw new Error(json?.error || "ASTY Data Gateway returned invalid data");
-      }
-
-      return json;
     }
 
-    async function getWalletAstyBalancePublicWithRetry(ownerAddress, attempts = 3) {
+    async function scanSingleWallet(
+      address,
+      attempts = 2
+    ) {
       let lastError = null;
 
-      for (let attempt = 1; attempt <= attempts; attempt++) {
+      for (
+        let attempt = 1;
+        attempt <= attempts;
+        attempt++
+      ) {
         try {
-          return await getWalletAstyBalance(ownerAddress);
+          const result =
+            await getWalletAstyBalance(address);
+
+          return {
+            address,
+            asty: result.asty,
+            tokenAccounts:
+              result.tokenAccounts,
+            error: false,
+            errorMessage: ""
+          };
         } catch (error) {
           lastError = error;
+
           if (attempt < attempts) {
-            await sleep(350 * attempt);
+            await sleep(300 * attempt);
           }
         }
       }
 
-      throw lastError || new Error("Wallet scan failed");
-    }
-
-    async function scanViaPublicFallback(wallets) {
-      setStatus(
-        "Using backup network",
-        "Primary data service unavailable • retrying through the backup network...",
-        "BACKUP"
-      );
-
-      const [supplyResult, priceResult] = await Promise.allSettled([
-        getAstySupply(),
-        getAstyPrice()
-      ]);
-
-      if (supplyResult.status !== "fulfilled" || !supplyResult.value) {
-        throw new Error(
-          supplyResult.status === "rejected"
-            ? supplyResult.reason?.message || "Could not read ASTY supply"
-            : "Could not read ASTY supply"
-        );
-      }
-
-      const walletResults = [];
-
-      for (let i = 0; i < wallets.length; i++) {
-        const address = wallets[i];
-
-        setStatus(
-          "Backup wallet scan",
-          `Wallet ${i + 1} of ${wallets.length} • ${shortAddr(address)}`,
-          "BACKUP"
-        );
-
-        try {
-          const result = await getWalletAstyBalancePublicWithRetry(address, 3);
-
-          walletResults.push({
-            address,
-            asty: result.asty,
-            tokenAccounts: result.tokenAccounts,
-            error: false,
-            errorMessage: ""
-          });
-        } catch (error) {
-          walletResults.push({
-            address,
-            asty: 0,
-            tokenAccounts: 0,
-            error: true,
-            errorMessage: error?.message || "Wallet scan failed after retries"
-          });
-        }
-      }
-
       return {
-        currentSupply: supplyResult.value,
-        priceUsd: priceResult.status === "fulfilled" ? priceResult.value.priceUsd : 0,
-        priceSource: priceResult.status === "fulfilled"
-          ? `${priceResult.value.source} • backup mode`
-          : "Price unavailable • backup mode",
-        wallets: walletResults,
-        dataSource: "BACKUP"
+        address,
+        asty: 0,
+        tokenAccounts: 0,
+        error: true,
+        errorMessage:
+          lastError?.message ||
+          "Wallet could not be read"
       };
     }
 
     async function scanWallets() {
       if (state.scanning) return;
 
-      const parsed = parseWallets(ui.walletInput.value);
+      const parsed =
+        parseWallets(ui.walletInput.value);
 
       if (!parsed.valid.length) {
-        const invalidMsg = parsed.invalid.length
-          ? `${parsed.invalid.length} invalid address${parsed.invalid.length === 1 ? "" : "es"} found.`
-          : "Paste at least one valid Solana wallet address.";
+        const invalidMsg =
+          parsed.invalid.length
+            ? `${parsed.invalid.length} invalid address` +
+              `${parsed.invalid.length === 1 ? "" : "es"} found.`
+            : "Paste at least one valid Solana wallet address.";
 
-        setStatus("No valid wallet", invalidMsg, "CHECK INPUT");
+        setStatus(
+          "No valid wallet",
+          invalidMsg,
+          "CHECK INPUT"
+        );
+
         return;
       }
 
@@ -1957,83 +1994,226 @@
       setLoading(true);
       ui.scanBtn.disabled = true;
       ui.clearBtn.disabled = true;
-      ui.scanBtn.textContent = "Analyzing...";
+      ui.scanBtn.textContent =
+        "Analyzing...";
 
       try {
-        let analysis = null;
-        let gatewayError = null;
+        setStatus(
+          "Loading ASTY",
+          "Reading live supply and market data...",
+          "LIVE"
+        );
 
-        try {
+        const [
+          supplyResult,
+          priceResult
+        ] = await Promise.allSettled([
+          getAstySupply(),
+          getAstyPrice()
+        ]);
+
+        if (
+          supplyResult.status !== "fulfilled" ||
+          !supplyResult.value
+        ) {
+          throw new Error(
+            supplyResult.status === "rejected"
+              ? supplyResult.reason?.message ||
+                "Could not read ASTY supply"
+              : "Could not read ASTY supply"
+          );
+        }
+
+        state.currentSupply =
+          Number(supplyResult.value) || 0;
+
+        if (
+          priceResult.status === "fulfilled"
+        ) {
+          state.priceUsd =
+            Number(
+              priceResult.value.priceUsd
+            ) || 0;
+
+          state.priceSource =
+            priceResult.value.source ||
+            "Market data";
+        } else {
+          state.priceUsd = 0;
+          state.priceSource =
+            "Price temporarily unavailable";
+        }
+
+        const walletResults = [];
+
+        // First pass: deliberately sequential.
+        // Public RPCs are much more reliable
+        // when we do not burst many requests.
+        for (
+          let i = 0;
+          i < parsed.valid.length;
+          i++
+        ) {
+          const address =
+            parsed.valid[i];
+
           setStatus(
-            "Connecting to My ASTY",
-            `Preparing ${parsed.valid.length} wallet${parsed.valid.length === 1 ? "" : "s"} for analysis...`,
+            "Analyzing wallets",
+            `Wallet ${i + 1} of ${parsed.valid.length} • ` +
+            `${shortAddr(address)}`,
             "LIVE"
           );
 
-          analysis = await fetchGatewayAnalysis(parsed.valid);
-        } catch (error) {
-          gatewayError = error;
-          console.warn("ASTY gateway unavailable, using public fallback:", error);
+          walletResults.push(
+            await scanSingleWallet(
+              address,
+              2
+            )
+          );
+
+          if (
+            i < parsed.valid.length - 1
+          ) {
+            await sleep(140);
+          }
         }
 
-        if (!analysis) {
-          analysis = await scanViaPublicFallback(parsed.valid);
+        // Rescue pass for only the failed wallets.
+        const failedIndexes =
+          walletResults
+            .map(
+              (wallet, index) =>
+                wallet.error
+                  ? index
+                  : -1
+            )
+            .filter(
+              index => index >= 0
+            );
+
+        if (failedIndexes.length) {
+          setStatus(
+            "Retrying wallets",
+            `${failedIndexes.length} wallet` +
+            `${failedIndexes.length === 1 ? "" : "s"} ` +
+            `need another pass...`,
+            "RETRY"
+          );
+
+          // Start the rescue pass without
+          // preferring the previously used RPC.
+          preferredRpcUrl = null;
+
+          await sleep(900);
+
+          for (
+            let i = 0;
+            i < failedIndexes.length;
+            i++
+          ) {
+            const resultIndex =
+              failedIndexes[i];
+
+            const address =
+              parsed.valid[resultIndex];
+
+            setStatus(
+              "Retrying wallets",
+              `Retry ${i + 1} of ${failedIndexes.length} • ` +
+              `${shortAddr(address)}`,
+              "RETRY"
+            );
+
+            walletResults[resultIndex] =
+              await scanSingleWallet(
+                address,
+                3
+              );
+
+            if (
+              i < failedIndexes.length - 1
+            ) {
+              await sleep(250);
+            }
+          }
         }
 
-        state.currentSupply = Number(analysis.currentSupply) || 0;
-        state.priceUsd = Number(analysis.priceUsd) || 0;
-        state.priceSource = analysis.priceSource || (
-          analysis.dataSource === "LIVE"
-            ? "ASTY Data Gateway"
-            : "Public fallback"
-        );
-
-        state.wallets = (analysis.wallets || []).map(wallet => ({
-          address: wallet.address,
-          asty: Number(wallet.asty) || 0,
-          tokenAccounts: Number(wallet.tokenAccounts) || 0,
-          error: Boolean(wallet.error),
-          errorMessage: wallet.errorMessage || ""
-        }));
+        state.wallets =
+          walletResults;
 
         calculateDerivedState();
         render();
 
-        const failed = state.wallets.filter(w => w.error).length;
-        const empty = state.wallets.filter(w => !w.error && w.asty <= 0).length;
-        const success = state.wallets.length - failed;
-        const source = analysis.dataSource === "LIVE"
-          ? "My ASTY data service"
-          : "backup data service";
+        const failed =
+          walletResults.filter(
+            wallet => wallet.error
+          ).length;
 
-        let summary = `${success} wallet${success === 1 ? "" : "s"} read successfully`;
-        if (empty) summary += ` • ${empty} with no ASTY`;
-        if (failed) summary += ` • ${failed} failed after retries`;
-        if (parsed.invalid.length) summary += ` • ${parsed.invalid.length} invalid ignored`;
-        summary += ` • ${source}`;
+        const empty =
+          walletResults.filter(
+            wallet =>
+              !wallet.error &&
+              wallet.asty <= 0
+          ).length;
+
+        const success =
+          walletResults.length - failed;
+
+        let summary =
+          `${success} wallet` +
+          `${success === 1 ? "" : "s"} read successfully`;
+
+        if (empty) {
+          summary +=
+            ` • ${empty} with no ASTY`;
+        }
+
+        if (failed) {
+          summary +=
+            ` • ${failed} could not be read`;
+        }
+
+        if (parsed.invalid.length) {
+          summary +=
+            ` • ${parsed.invalid.length} invalid ignored`;
+        }
+
+        if (preferredRpcUrl) {
+          summary +=
+            ` • ${rpcName(preferredRpcUrl)}`;
+        }
 
         setStatus(
-          "Analysis complete",
+          failed
+            ? "Analysis complete with warnings"
+            : "Analysis complete",
           summary,
-          analysis.dataSource === "LIVE" ? "MY ASTY" : "BACKUP MODE"
+          failed ? "CHECK" : "MY ASTY"
         );
-
-        if (gatewayError && analysis.dataSource !== "LIVE") {
-          console.info("Primary gateway error:", gatewayError.message);
-        }
       } catch (error) {
         console.error(error);
 
-        const message = String(error?.message || "Could not complete analysis")
-          .replace("Failed to fetch", "Network request failed");
+        const message =
+          String(
+            error?.message ||
+            "Could not complete analysis"
+          ).replace(
+            "Failed to fetch",
+            "Network request failed"
+          );
 
-        setStatus("Analysis failed", message, "ERROR");
+        setStatus(
+          "Analysis failed",
+          message,
+          "ERROR"
+        );
       } finally {
         state.scanning = false;
         setLoading(false);
         ui.scanBtn.disabled = false;
         ui.clearBtn.disabled = false;
-        ui.scanBtn.textContent = "Analyze My ASTY";
+        ui.scanBtn.textContent =
+          "Analyze My ASTY";
       }
     }
 
