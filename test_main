@@ -1,0 +1,1869 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<script>document.documentElement.classList.add("js");</script>
+
+<title>ArbStrategy - ASTY</title>
+
+<meta
+name="description"
+content="ASTY deploys liquidity across Solana markets and uses trading activity to feed burns, liquidity growth and strategic reserves."
+/>
+
+<style>
+:root {
+  --bg-main: #050710;
+  --bg-soft: #070a13;
+  --bg-blue: #0b1020;
+  --panel: rgba(255, 255, 255, 0.045);
+  --panel-hover: rgba(255, 255, 255, 0.062);
+  --line: rgba(255, 255, 255, 0.09);
+  --line-purple: rgba(167, 139, 250, 0.30);
+  --line-cyan: rgba(103, 232, 249, 0.24);
+  --text-main: #f7f5ff;
+  --text-soft: #c8c4d8;
+  --text-muted: #9791ad;
+  --purple: #a78bfa;
+  --purple-light: #c4b5fd;
+  --purple-dark: #7c3aed;
+  --cyan: #67e8f9;
+  --radius-medium: 17px;
+  --radius-large: 20px;
+  --radius-hero: 24px;
+  --shadow-panel: 0 18px 48px rgba(0, 0, 0, 0.26);
+}
+
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  overflow-x: hidden;
+  font-family: Inter, Arial, sans-serif;
+  color: var(--text-main);
+  background:
+    radial-gradient(circle at 14% 4%, rgba(124, 58, 237, 0.19), transparent 28%),
+    radial-gradient(circle at 88% 18%, rgba(34, 211, 238, 0.085), transparent 26%),
+    linear-gradient(180deg, var(--bg-blue) 0%, var(--bg-soft) 44%, var(--bg-main) 100%);
+}
+
+body.menu-open { overflow: hidden; }
+a { color: var(--purple-light); text-decoration: none; }
+button, a { -webkit-tap-highlight-color: transparent; }
+button { font-family: inherit; }
+
+.container {
+  width: min(1140px, calc(100% - 40px));
+  margin: 0 auto;
+  position: relative;
+  z-index: 2;
+}
+
+/* BACKGROUND */
+.blur-orb {
+  position: fixed;
+  width: 350px;
+  height: 350px;
+  border-radius: 50%;
+  filter: blur(110px);
+  opacity: 0.14;
+  pointer-events: none;
+  z-index: 0;
+  animation: floatOrb 15s ease-in-out infinite;
+}
+.orb-1 { top: 80px; left: -120px; background: var(--purple-dark); }
+.orb-2 { right: -130px; bottom: 70px; background: #22d3ee; animation-delay: 4s; }
+
+@keyframes floatOrb {
+  0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
+  50% { transform: translate3d(22px, -28px, 0) scale(1.05); }
+}
+
+/* HEADER */
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: rgba(5, 7, 16, 0.80);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.075);
+  backdrop-filter: blur(17px);
+  -webkit-backdrop-filter: blur(17px);
+}
+
+.nav {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  min-height: 74px;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  flex: 0 0 auto;
+}
+
+.brand-logo {
+  width: 46px;
+  height: 46px;
+  display: block;
+  object-fit: cover;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(196, 181, 253, 0.18);
+  box-shadow: 0 0 0 4px rgba(124, 58, 237, 0.055), 0 0 25px rgba(124, 58, 237, 0.30);
+  animation: logoPulse 3.8s ease-in-out infinite;
+}
+
+@keyframes logoPulse {
+  0%, 100% { box-shadow: 0 0 0 4px rgba(124, 58, 237, 0.045), 0 0 20px rgba(124, 58, 237, 0.24); }
+  50% { box-shadow: 0 0 0 5px rgba(124, 58, 237, 0.075), 0 0 32px rgba(167, 139, 250, 0.40); }
+}
+
+.brand-text { display: flex; flex-direction: column; gap: 2px; }
+.brand-text strong { font-size: 16px; line-height: 1.35; letter-spacing: 0.5px; color: #fff; }
+.brand-text span { font-size: 12px; color: var(--text-muted); }
+.header-actions { display: flex; align-items: center; justify-content: flex-end; gap: 9px; }
+.desktop-nav { display: flex; align-items: center; justify-content: flex-end; gap: 9px; }
+
+.nav-link,
+.lang-toggle,
+.menu-toggle,
+.hero-btn,
+.copy-btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  border: 1px solid var(--line-purple);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.025);
+  color: #f8f6ff;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform .2s ease, border-color .2s ease, background .2s ease, box-shadow .2s ease;
+}
+
+.nav-link,
+.lang-toggle,
+.menu-toggle {
+  min-height: 40px;
+  padding: 10px 14px;
+  font-size: 13px;
+  line-height: 1.25;
+}
+
+.nav-link::before,
+.lang-toggle::before,
+.menu-toggle::before,
+.hero-btn::before,
+.copy-btn::before {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  background: linear-gradient(110deg, transparent 20%, rgba(196,181,253,.16) 42%, rgba(103,232,249,.12) 52%, transparent 72%);
+  transform: translateX(-115%);
+  transition: transform .55s ease;
+  pointer-events: none;
+}
+
+.nav-link:hover,
+.lang-toggle:hover,
+.menu-toggle:hover,
+.hero-btn:hover,
+.copy-btn:hover {
+  transform: translateY(-1px);
+  border-color: rgba(196,181,253,.55);
+  background: rgba(124,58,237,.075);
+  box-shadow: 0 0 0 1px rgba(167,139,250,.05), 0 0 24px rgba(124,58,237,.18);
+}
+
+.nav-link:hover::before,
+.lang-toggle:hover::before,
+.menu-toggle:hover::before,
+.hero-btn:hover::before,
+.copy-btn:hover::before { transform: translateX(115%); }
+
+.lang-toggle { min-width: 48px; border-color: var(--line-cyan); color: var(--cyan); }
+.menu-toggle { display: none; width: 42px; height: 40px; padding: 0; }
+.menu-icon { position: relative; width: 17px; height: 12px; }
+.menu-icon span {
+  position: absolute;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  border-radius: 999px;
+  background: var(--purple-light);
+  transition: top .25s ease, transform .25s ease, opacity .2s ease;
+}
+.menu-icon span:nth-child(1) { top: 0; }
+.menu-icon span:nth-child(2) { top: 5px; }
+.menu-icon span:nth-child(3) { top: 10px; }
+.menu-toggle.active .menu-icon span:nth-child(1) { top: 5px; transform: rotate(45deg); }
+.menu-toggle.active .menu-icon span:nth-child(2) { opacity: 0; }
+.menu-toggle.active .menu-icon span:nth-child(3) { top: 5px; transform: rotate(-45deg); }
+
+.mobile-menu {
+  position: absolute;
+  top: calc(100% + 10px);
+  left: 0;
+  right: 0;
+  z-index: 110;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: rgba(7, 10, 19, 0.97);
+  box-shadow: 0 20px 46px rgba(0, 0, 0, 0.38);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-12px) scale(.98);
+  transition: opacity .25s ease, visibility .25s ease, transform .25s ease;
+}
+.mobile-menu.open { opacity: 1; visibility: visible; transform: translateY(0) scale(1); }
+.mobile-menu-grid { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 9px; }
+.mobile-menu-link {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 53px;
+  padding: 13px 15px;
+  border: 1px solid rgba(255,255,255,.085);
+  border-radius: 13px;
+  background: rgba(255,255,255,.035);
+  color: #f7f5ff;
+  font-size: 13px;
+  font-weight: 700;
+  text-align: center;
+}
+.mobile-menu-link:hover { border-color: var(--line-purple); background: rgba(124,58,237,.08); }
+
+/* HERO */
+.hero-intro { padding: 42px 0 24px; }
+.hero-panel {
+  position: relative;
+  overflow: hidden;
+  padding: clamp(28px, 5vw, 54px);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-hero);
+  background: linear-gradient(135deg, rgba(124,58,237,.11), rgba(255,255,255,.025) 48%, rgba(34,211,238,.04));
+  box-shadow: var(--shadow-panel);
+}
+.hero-panel::before {
+  content: "";
+  position: absolute;
+  width: 290px;
+  height: 290px;
+  top: -160px;
+  right: -90px;
+  border-radius: 50%;
+  background: rgba(103,232,249,.10);
+  filter: blur(65px);
+  pointer-events: none;
+}
+
+.hero-grid {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  grid-template-columns: minmax(0, 1.05fr) minmax(320px, .95fr);
+  gap: 34px;
+  align-items: center;
+}
+.hero-copy { min-width: 0; }
+.hero-kicker {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  margin-bottom: 18px;
+  padding: 8px 12px;
+  border: 1px solid rgba(167,139,250,.22);
+  border-radius: 999px;
+  background: rgba(124,58,237,.065);
+  color: var(--purple-light);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: .9px;
+  text-transform: uppercase;
+}
+.hero-kicker-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--purple);
+  box-shadow: 0 0 14px rgba(167,139,250,.88);
+  animation: statusPulse 2.2s ease-in-out infinite;
+}
+@keyframes statusPulse {
+  0%,100% { opacity: .72; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.25); }
+}
+.hero-title {
+  margin: 0;
+  max-width: 760px;
+  font-size: clamp(42px, 6vw, 68px);
+  line-height: 1.07;
+  letter-spacing: -2.2px;
+  background: linear-gradient(90deg, #fff 0%, var(--purple-light) 54%, var(--cyan) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.hero-sub {
+  max-width: 700px;
+  margin: 20px 0 0;
+  color: var(--text-soft);
+  font-size: clamp(16px, 2vw, 18px);
+  line-height: 1.75;
+}
+.hero-actions { display: flex; flex-wrap: wrap; gap: 11px; margin-top: 26px; }
+.hero-btn { min-height: 46px; padding: 12px 18px; font-size: 14px; }
+.hero-btn.primary {
+  border-color: rgba(196,181,253,.50);
+  background: linear-gradient(135deg, rgba(124,58,237,.28), rgba(124,58,237,.12));
+}
+.hero-btn.secondary { border-color: var(--line-cyan); color: var(--cyan); }
+
+.hero-visual {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid rgba(255,255,255,.09);
+  border-radius: 20px;
+  background: rgba(5,7,16,.34);
+  box-shadow: 0 18px 44px rgba(0,0,0,.24);
+}
+.hero-banner-img { width: 100%; height: auto; display: block; }
+.hero-visual::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(167,139,250,.06), transparent 38%, rgba(103,232,249,.04));
+  pointer-events: none;
+}
+
+.hero-principles {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0,1fr));
+  gap: 12px;
+  margin-top: 32px;
+}
+.hero-principle {
+  padding: 18px;
+  border: 1px solid rgba(255,255,255,.085);
+  border-radius: 16px;
+  background: rgba(5,7,16,.36);
+}
+.hero-principle strong { display: block; margin-bottom: 7px; color: #fff; font-size: 15px; }
+.hero-principle span { color: var(--text-soft); font-size: 13px; line-height: 1.58; }
+.hero-principle:last-child { border-color: rgba(103,232,249,.18); }
+
+/* SECTIONS */
+.section { padding: 40px 0; }
+.section-head { max-width: 870px; }
+.section-title {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 0 0 15px;
+  font-size: clamp(28px, 4vw, 35px);
+  line-height: 1.28;
+  letter-spacing: -.75px;
+  color: var(--purple-light);
+}
+.section-title::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  background: var(--purple);
+  box-shadow: 0 0 0 4px rgba(124,58,237,.075), 0 0 16px rgba(167,139,250,.78);
+  animation: headingPulse 2.7s ease-in-out infinite;
+}
+@keyframes headingPulse {
+  0%,100% { opacity: .70; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.16); }
+}
+.section-sub { max-width: 830px; margin: 0; color: var(--text-soft); font-size: 16px; line-height: 1.78; }
+
+/* LIVE DASHBOARD */
+.dashboard-trust-wrap { padding: 18px 0 26px; }
+.dashboard-trust-card {
+  position: relative;
+  display: grid;
+  grid-template-columns: auto minmax(270px,1.15fr) minmax(390px,.95fr) auto;
+  align-items: center;
+  gap: 18px;
+  padding: 20px 22px;
+  overflow: hidden;
+  border: 1px solid rgba(167,139,250,.25);
+  border-radius: var(--radius-large);
+  background: linear-gradient(125deg, rgba(124,58,237,.12), rgba(255,255,255,.035) 52%, rgba(34,211,238,.055));
+  box-shadow: var(--shadow-panel);
+  transition: transform .25s ease, border-color .25s ease, box-shadow .25s ease;
+}
+.dashboard-trust-card:hover {
+  transform: translateY(-3px);
+  border-color: rgba(196,181,253,.48);
+  box-shadow: 0 20px 46px rgba(0,0,0,.30), 0 0 28px rgba(124,58,237,.14);
+}
+.live-status {
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  border: 1px solid rgba(167,139,250,.25);
+  border-radius: 50%;
+  background: rgba(124,58,237,.10);
+}
+.live-status-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--purple);
+  box-shadow: 0 0 0 5px rgba(124,58,237,.09), 0 0 18px rgba(167,139,250,.90);
+  animation: livePulse 1.9s ease-in-out infinite;
+}
+@keyframes livePulse { 0%,100% { transform: scale(.92); opacity: .72; } 50% { transform: scale(1.18); opacity: 1; } }
+.dashboard-trust-copy { min-width: 0; }
+.dashboard-trust-label { display: block; margin-bottom: 5px; color: var(--purple-light); font-size: 11px; font-weight: 850; letter-spacing: .9px; text-transform: uppercase; }
+.dashboard-trust-title { display: block; margin-bottom: 5px; color: #fff; font-size: 19px; font-weight: 750; line-height: 1.4; }
+.dashboard-trust-description { display: block; max-width: 540px; color: var(--text-soft); font-size: 13px; line-height: 1.6; }
+.live-metrics {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0,1fr));
+  overflow: hidden;
+  border: 1px solid rgba(255,255,255,.09);
+  border-radius: 15px;
+  background: rgba(5,7,16,.46);
+}
+.live-stat { min-width: 0; padding: 15px 14px 13px; text-align: center; }
+.live-stat:not(:last-child) { border-right: 1px solid rgba(255,255,255,.08); }
+.live-stat-label { display: block; margin-bottom: 6px; color: var(--purple-light); font-size: 9px; font-weight: 850; letter-spacing: .65px; text-transform: uppercase; white-space: nowrap; }
+.live-stat:nth-child(3) .live-stat-label { color: var(--cyan); }
+.live-stat-value { display: block; min-height: 24px; color: #fff; font-size: 18px; font-weight: 850; line-height: 1.25; white-space: nowrap; }
+.live-stat.loading .live-stat-value { color: transparent; position: relative; }
+.live-stat.loading .live-stat-value::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 58px;
+  height: 12px;
+  border-radius: 999px;
+  transform: translate(-50%,-50%);
+  background: linear-gradient(90deg, rgba(255,255,255,.05), rgba(196,181,253,.24), rgba(255,255,255,.05));
+  background-size: 220% 100%;
+  animation: statLoading 1.1s linear infinite;
+}
+@keyframes statLoading { from { background-position: 100% 0; } to { background-position: -120% 0; } }
+.dashboard-trust-arrow {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border: 1px solid var(--line-cyan);
+  border-radius: 50%;
+  background: rgba(34,211,238,.045);
+  color: var(--cyan);
+  font-size: 19px;
+  font-weight: 700;
+}
+
+/* HOW ASTY WORKS */
+.simple-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0,1fr));
+  gap: 15px;
+  margin-top: 26px;
+}
+.simple-card {
+  position: relative;
+  min-height: 185px;
+  padding: 22px;
+  border: 1px solid rgba(255,255,255,.09);
+  border-radius: var(--radius-medium);
+  background: rgba(5,7,16,.34);
+  transition: transform .25s ease, border-color .25s ease, box-shadow .25s ease;
+}
+.simple-card:hover { transform: translateY(-4px); border-color: rgba(167,139,250,.30); box-shadow: 0 16px 34px rgba(0,0,0,.22); }
+.step-tag {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 38px;
+  height: 28px;
+  margin-bottom: 14px;
+  padding: 0 9px;
+  border: 1px solid rgba(167,139,250,.34);
+  border-radius: 8px;
+  background: linear-gradient(145deg, rgba(124,58,237,.18), rgba(124,58,237,.06));
+  color: var(--purple-light);
+  font-size: 11px;
+  font-weight: 850;
+}
+.simple-card:last-child .step-tag { border-color: rgba(103,232,249,.30); color: var(--cyan); background: rgba(34,211,238,.06); }
+.simple-card strong { display: block; margin-bottom: 9px; color: #fff; font-size: 18px; line-height: 1.4; }
+.simple-card p { margin: 0; color: var(--text-soft); font-size: 14px; line-height: 1.68; }
+
+.arb-details {
+  margin-top: 18px;
+  border: 1px solid rgba(167,139,250,.18);
+  border-radius: var(--radius-medium);
+  background: rgba(124,58,237,.055);
+  overflow: hidden;
+}
+.arb-details summary {
+  list-style: none;
+  cursor: pointer;
+  padding: 17px 20px;
+  color: var(--purple-light);
+  font-size: 14px;
+  font-weight: 800;
+}
+.arb-details summary::-webkit-details-marker { display: none; }
+.arb-details summary::after { content: "+"; float: right; color: var(--cyan); font-size: 18px; }
+.arb-details[open] summary::after { content: "−"; }
+.arb-details-content { padding: 0 20px 20px; color: var(--text-soft); font-size: 14px; line-height: 1.72; }
+.arb-example-grid { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 12px; margin-top: 16px; }
+.arb-example {
+  padding: 16px;
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: 14px;
+  background: rgba(5,7,16,.32);
+}
+.arb-example strong { display: block; margin-bottom: 6px; color: #fff; }
+.arb-example span { color: var(--text-soft); font-size: 13px; line-height: 1.55; }
+
+/* ASTY EFFECT */
+.effect-stage {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0,1fr) 205px;
+  gap: 22px;
+  align-items: center;
+  margin-top: 30px;
+  padding: 30px;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-large);
+  background: linear-gradient(135deg, rgba(255,255,255,.035), rgba(124,58,237,.07));
+}
+.effect-content { position: relative; z-index: 2; min-width: 0; }
+.effect-flow { position: relative; display: grid; grid-template-columns: repeat(5,minmax(0,1fr)); gap: 11px; }
+.effect-line {
+  position: absolute;
+  left: 8%;
+  right: 8%;
+  top: 50%;
+  height: 2px;
+  z-index: 0;
+  transform: translateY(-50%) scaleX(0);
+  transform-origin: left center;
+  background: linear-gradient(90deg, var(--purple-dark), var(--purple-light), var(--cyan));
+  box-shadow: 0 0 12px rgba(167,139,250,.55), 0 0 20px rgba(103,232,249,.18);
+}
+.reveal.visible .effect-line { animation: drawEffectLine 1.7s .25s ease forwards; }
+@keyframes drawEffectLine { to { transform: translateY(-50%) scaleX(1); } }
+.effect-step {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-height: 145px;
+  padding: 17px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-medium);
+  background: rgba(7,10,19,.96);
+  text-align: center;
+}
+.effect-step::before {
+  content: "";
+  position: absolute;
+  top: -6px;
+  left: 50%;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  transform: translateX(-50%);
+  background: var(--purple);
+  box-shadow: 0 0 0 4px rgba(124,58,237,.09), 0 0 15px rgba(167,139,250,.85);
+}
+.effect-step:last-child::before { background: var(--cyan); }
+.effect-step strong { display: block; margin-bottom: 7px; color: #fff; font-size: 15px; line-height: 1.38; }
+.effect-step span { color: var(--text-soft); font-size: 12px; line-height: 1.55; }
+.effect-step-highlight { border-color: rgba(167,139,250,.26); background: linear-gradient(145deg, rgba(124,58,237,.17), rgba(7,10,19,.96)); }
+.wolf-wrap { position: relative; z-index: 2; display: flex; align-items: center; justify-content: center; min-height: 220px; }
+.wolf-wrap::before {
+  content: "";
+  position: absolute;
+  width: 170px;
+  height: 170px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(124,58,237,.27), rgba(124,58,237,.07) 48%, transparent 72%);
+  filter: blur(12px);
+  animation: wolfGlow 3.5s ease-in-out infinite;
+}
+@keyframes wolfGlow { 0%,100% { transform: scale(.94); opacity: .65; } 50% { transform: scale(1.06); opacity: 1; } }
+.wolf-image { position: relative; z-index: 2; display: block; width: min(100%,165px); height: auto; object-fit: contain; filter: drop-shadow(0 18px 26px rgba(0,0,0,.40)) drop-shadow(0 0 18px rgba(124,58,237,.20)); animation: wolfFloat 5s ease-in-out infinite; }
+@keyframes wolfFloat { 0%,100% { transform: translateY(0) rotate(-.5deg); } 50% { transform: translateY(-7px) rotate(.5deg); } }
+
+.tokenomics-grid { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 16px; margin-top: 24px; }
+.tokenomics-card {
+  position: relative;
+  overflow: hidden;
+  padding: 27px 25px 25px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-large);
+  background: linear-gradient(145deg, rgba(255,255,255,.055), rgba(255,255,255,.035));
+}
+.tokenomics-card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, rgba(124,58,237,0), rgba(139,92,246,.85), rgba(196,181,253,.70), rgba(124,58,237,0));
+}
+.tokenomics-card:nth-child(3)::before { background: linear-gradient(90deg, rgba(34,211,238,0), rgba(34,211,238,.75), rgba(103,232,249,.85), rgba(34,211,238,0)); }
+.tokenomics-number { display: block; margin-bottom: 13px; font-size: clamp(38px,5vw,51px); font-weight: 850; line-height: 1.12; letter-spacing: -1.5px; color: var(--purple-light); }
+.tokenomics-card:nth-child(3) .tokenomics-number { color: var(--cyan); }
+.tokenomics-card strong { display: block; margin-bottom: 9px; color: #fff; font-size: 17px; }
+.tokenomics-card p { margin: 0; color: var(--text-soft); font-size: 14px; line-height: 1.68; }
+.tokenomics-bar { height: 6px; margin-top: 21px; overflow: hidden; border-radius: 999px; background: rgba(255,255,255,.07); }
+.tokenomics-bar span { display: block; width: var(--bar-width); height: 100%; border-radius: inherit; background: linear-gradient(90deg,var(--purple-dark),var(--purple-light)); transform: scaleX(0); transform-origin: left center; }
+.tokenomics-card:nth-child(3) .tokenomics-bar span { background: linear-gradient(90deg,#0891b2,var(--cyan)); }
+.reveal.visible .tokenomics-bar span { animation: growTokenomicsBar 1.15s .45s ease forwards; }
+@keyframes growTokenomicsBar { to { transform: scaleX(1); } }
+
+/* HOLDER */
+.holder-panel {
+  margin-top: 28px;
+  padding: 28px;
+  border: 1px solid rgba(167,139,250,.20);
+  border-radius: var(--radius-large);
+  background: linear-gradient(135deg, rgba(124,58,237,.10), rgba(255,255,255,.028) 52%, rgba(34,211,238,.035));
+  box-shadow: var(--shadow-panel);
+}
+.holder-example-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  margin-bottom: 18px;
+  padding: 14px 16px;
+  border: 1px solid rgba(167,139,250,.16);
+  border-radius: 14px;
+  background: rgba(5,7,16,.28);
+}
+.holder-example-head strong { color: #fff; font-size: 14px; line-height: 1.45; }
+.holder-example-head span { color: var(--text-muted); font-size: 12px; line-height: 1.45; text-align: right; }
+.holder-flow { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: 14px; }
+.holder-card {
+  position: relative;
+  min-height: 245px;
+  padding: 22px 18px;
+  border: 1px solid rgba(255,255,255,.09);
+  border-radius: var(--radius-medium);
+  background: rgba(5,7,16,.34);
+  text-align: center;
+}
+.holder-card:not(:last-child)::after {
+  content: "›";
+  position: absolute;
+  top: 50%;
+  right: -10px;
+  z-index: 4;
+  transform: translateY(-50%);
+  color: var(--purple);
+  font-size: 24px;
+}
+.holder-mini { display: inline-flex; align-items: center; justify-content: center; min-width: 90px; padding: 7px 12px; margin-bottom: 14px; border: 1px solid rgba(167,139,250,.22); border-radius: 999px; background: rgba(124,58,237,.08); color: var(--purple-light); font-size: 10px; font-weight: 800; letter-spacing: .7px; text-transform: uppercase; }
+.holder-value { display: block; margin-bottom: 8px; font-size: clamp(25px,3.3vw,34px); font-weight: 850; line-height: 1.18; letter-spacing: -1px; color: #fff; }
+.holder-card.cyan { border-color: rgba(103,232,249,.20); background: linear-gradient(145deg, rgba(34,211,238,.05), rgba(5,7,16,.34)); }
+.holder-card.cyan .holder-value { color: var(--cyan); }
+.holder-card strong { display: block; margin-bottom: 8px; color: #fff; font-size: 15px; line-height: 1.4; }
+.holder-card p { margin: 0; color: var(--text-soft); font-size: 13px; line-height: 1.62; }
+.holder-subvalue {
+  display: block;
+  margin: -1px 0 12px;
+  color: var(--purple-light);
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 1.45;
+}
+.holder-card.cyan .holder-subvalue { color: var(--cyan); }
+.holder-result {
+  display: grid;
+  grid-template-columns: repeat(3,minmax(0,1fr));
+  gap: 1px;
+  margin-top: 18px;
+  overflow: hidden;
+  border: 1px solid rgba(103,232,249,.17);
+  border-radius: var(--radius-medium);
+  background: rgba(255,255,255,.07);
+}
+.holder-result-item {
+  padding: 20px 16px;
+  background: linear-gradient(135deg, rgba(34,211,238,.045), rgba(124,58,237,.055));
+  text-align: center;
+}
+.holder-result-item strong { display: block; margin-bottom: 7px; color: var(--text-soft); font-size: 12px; line-height: 1.45; }
+.holder-result-item span { display: block; color: var(--cyan); font-size: clamp(22px,3.2vw,31px); font-weight: 850; line-height: 1.2; }
+.holder-result-item:first-child span { color: #fff; }
+.holder-note { margin-top: 13px; color: var(--text-muted); font-size: 12px; line-height: 1.62; text-align: center; }
+
+/* CAPITAL ALLOCATION */
+.allocation-panel {
+  margin-top: 26px;
+  padding: 26px;
+  border: 1px solid rgba(167,139,250,.18);
+  border-radius: var(--radius-large);
+  background: rgba(255,255,255,.03);
+}
+.allocation-flow { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 14px; }
+.allocation-card { padding: 20px; border: 1px solid rgba(255,255,255,.08); border-radius: var(--radius-medium); background: rgba(5,7,16,.30); }
+.allocation-card strong { display: block; margin-bottom: 7px; color: #fff; font-size: 16px; }
+.allocation-card p { margin: 0; color: var(--text-soft); font-size: 14px; line-height: 1.65; }
+
+/* CONTRACT */
+.contract-section { padding-bottom: 78px; }
+.contract-card {
+  display: grid;
+  grid-template-columns: auto minmax(0,1fr) auto;
+  align-items: center;
+  gap: 17px;
+  margin-top: 25px;
+  padding: 18px;
+  border: 1px solid rgba(167,139,250,.25);
+  border-radius: var(--radius-large);
+  background: linear-gradient(130deg, rgba(124,58,237,.15), rgba(255,255,255,.038) 55%, rgba(34,211,238,.05));
+  box-shadow: 0 15px 38px rgba(0,0,0,.24), inset 0 1px 0 rgba(255,255,255,.05);
+}
+.contract-logo { width: 48px; height: 48px; display: block; object-fit: cover; border-radius: 50%; border: 1px solid rgba(196,181,253,.20); box-shadow: 0 0 20px rgba(124,58,237,.25); }
+.contract-content { min-width: 0; text-align: center; }
+.contract-label { display: block; margin-bottom: 7px; color: var(--purple-light); font-size: 11px; font-weight: 800; letter-spacing: .9px; text-transform: uppercase; }
+.contract-address { display: block; overflow-wrap: anywhere; color: #fff; font-family: ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace; font-size: 14px; line-height: 1.6; }
+.copy-btn { min-width: 94px; min-height: 42px; padding: 11px 15px; font-size: 13px; }
+
+/* REVEAL */
+.reveal { opacity: 1; transform: none; filter: none; transition: opacity .8s ease, transform .8s cubic-bezier(.2,.7,.25,1), filter .8s ease; }
+.js .reveal { opacity: 0; transform: translateY(34px) scale(.99); filter: blur(4px); }
+.js .reveal.visible { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); }
+.stagger-item { opacity: 1; transform: none; filter: none; transition: opacity .65s ease, transform .65s cubic-bezier(.2,.7,.25,1), filter .65s ease; transition-delay: var(--delay,0ms); }
+.js .reveal .stagger-item { opacity: 0; transform: translateY(18px); filter: blur(3px); }
+.js .reveal.visible .stagger-item { opacity: 1; transform: translateY(0); filter: blur(0); }
+
+/* SCROLL TOP */
+#scrollTopBtn {
+  position: fixed;
+  right: 26px;
+  bottom: 26px;
+  z-index: 100;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border: 1px solid var(--line-purple);
+  border-radius: 50%;
+  background: rgba(10,12,24,.88);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  color: var(--purple-light);
+  font-size: 21px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+/* RESPONSIVE */
+@media (max-width: 1080px) {
+  .hero-grid { grid-template-columns: 1fr; }
+  .hero-visual { max-width: 760px; }
+  .dashboard-trust-card { grid-template-columns: auto minmax(0,1fr) auto; }
+  .live-metrics { grid-column: 2 / 3; width: 100%; }
+}
+
+@media (max-width: 900px) {
+  .desktop-nav { display: none; }
+  .menu-toggle { display: inline-flex; }
+  .effect-stage { grid-template-columns: 1fr; }
+  .wolf-wrap { min-height: 180px; }
+  .wolf-image { width: min(45%,155px); }
+  .effect-flow { grid-template-columns: repeat(2,minmax(0,1fr)); }
+  .effect-line { display: none; }
+  .effect-step:last-child { grid-column: span 2; }
+}
+
+@media (max-width: 760px) {
+  .container { width: min(100% - 28px, 1140px); }
+  body.menu-open::after { content: ""; position: fixed; inset: 0; z-index: 90; background: rgba(2,3,9,.50); backdrop-filter: blur(2px); }
+  .topbar { z-index: 120; }
+  .nav { min-height: 66px; }
+  .brand-logo { width: 42px; height: 42px; }
+  .hero-intro { padding-top: 24px; }
+  .hero-panel { padding: 28px 20px; }
+  .hero-title { letter-spacing: -1.3px; }
+  .hero-principles,
+  .simple-grid,
+  .tokenomics-grid,
+  .holder-flow,
+  .holder-result,
+  .allocation-flow,
+  .arb-example-grid { grid-template-columns: 1fr; }
+  .holder-card:not(:last-child)::after { display: none; }
+  .holder-card { min-height: auto; }
+  .holder-example-head { flex-direction: column; align-items: flex-start; }
+  .holder-example-head span { text-align: left; }
+  .effect-stage { padding: 24px 18px; }
+  .effect-flow { grid-template-columns: 1fr; gap: 16px; }
+  .effect-step:last-child { grid-column: auto; }
+  .effect-step { min-height: 125px; }
+  .wolf-wrap { min-height: 160px; }
+  .wolf-image { width: min(43%,140px); }
+  .dashboard-trust-card { grid-template-columns: auto minmax(0,1fr); padding: 19px; }
+  .dashboard-trust-arrow { display: none; }
+  .live-metrics { grid-column: 1 / -1; }
+  .contract-card { grid-template-columns: 1fr; justify-items: center; padding: 22px 16px; }
+  .copy-btn { width: 100%; }
+  #scrollTopBtn { right: 17px; bottom: 17px; }
+}
+
+@media (max-width: 520px) {
+  .hero-actions { display: grid; grid-template-columns: 1fr; }
+  .hero-btn { width: 100%; }
+  .live-metrics { grid-template-columns: 1fr; }
+  .live-stat:not(:last-child) { border-right: 0; border-bottom: 1px solid rgba(255,255,255,.08); }
+  .live-stat-value { font-size: 20px; }
+}
+
+@media (max-width: 460px) {
+  .brand-text span { display: none; }
+  .mobile-menu-grid { grid-template-columns: repeat(2,minmax(0,1fr)); }
+  .dashboard-trust-card { grid-template-columns: 1fr; text-align: center; justify-items: center; }
+  .dashboard-trust-copy { text-align: center; }
+  .live-status { width: 42px; height: 42px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
+  .reveal, .stagger-item { opacity: 1 !important; transform: none !important; filter: none !important; }
+  .effect-line { transform: translateY(-50%) scaleX(1) !important; }
+  .tokenomics-bar span { transform: scaleX(1) !important; }
+}
+
+/* ==================================================
+   ASTY PRELOADER
+================================================== */
+body.preloader-active { overflow: hidden; }
+
+.asty-preloader {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: grid;
+  place-items: center;
+  background:
+    radial-gradient(circle at 50% 38%, rgba(124, 58, 237, 0.22), transparent 30%),
+    radial-gradient(circle at 72% 62%, rgba(103, 232, 249, 0.08), transparent 28%),
+    linear-gradient(180deg, #090d1a 0%, #060811 52%, #04060d 100%);
+  opacity: 1;
+  visibility: visible;
+  transition: opacity .55s ease, visibility .55s ease;
+}
+.asty-preloader::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(rgba(255,255,255,.018) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,.018) 1px, transparent 1px);
+  background-size: 44px 44px;
+  mask-image: linear-gradient(to bottom, rgba(0,0,0,.55), transparent 82%);
+  -webkit-mask-image: linear-gradient(to bottom, rgba(0,0,0,.55), transparent 82%);
+}
+.asty-preloader.is-hidden {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+.preloader-inner {
+  position: relative;
+  width: min(420px, calc(100vw - 54px));
+  text-align: center;
+  transform: translateY(-1vh);
+}
+.preloader-logo-shell {
+  width: 116px;
+  height: 116px;
+  margin: 0 auto 25px;
+  position: relative;
+  display: grid;
+  place-items: center;
+}
+.preloader-logo-shell::before,
+.preloader-logo-shell::after {
+  content: '';
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+}
+.preloader-logo-shell::before {
+  inset: -13px;
+  border: 1px solid rgba(196,181,253,.18);
+  box-shadow: 0 0 42px rgba(124,58,237,.25), inset 0 0 28px rgba(124,58,237,.07);
+  animation: preloaderHalo 2.2s ease-in-out infinite;
+}
+.preloader-logo-shell::after {
+  inset: -27px;
+  border: 1px solid rgba(103,232,249,.07);
+  animation: preloaderRing 4.5s linear infinite;
+}
+.preloader-logo {
+  width: 92px;
+  height: 92px;
+  display: block;
+  object-fit: cover;
+  border-radius: 50%;
+  border: 1px solid rgba(196,181,253,.24);
+  background: rgba(255,255,255,.035);
+  box-shadow: 0 0 0 6px rgba(124,58,237,.055), 0 0 34px rgba(167,139,250,.28);
+}
+.preloader-brand {
+  margin: 0;
+  font-size: clamp(30px, 8vw, 42px);
+  line-height: 1;
+  letter-spacing: .13em;
+  font-weight: 900;
+  color: #fff;
+  text-shadow: 0 0 28px rgba(167,139,250,.28);
+}
+.preloader-subbrand {
+  margin-top: 9px;
+  color: var(--purple-light);
+  font-size: 12px;
+  line-height: 1.4;
+  font-weight: 800;
+  letter-spacing: .22em;
+  text-transform: uppercase;
+}
+.preloader-copy {
+  margin: 28px auto 14px;
+  color: var(--text-soft);
+  font-size: 13px;
+  line-height: 1.55;
+  letter-spacing: .025em;
+}
+.preloader-track {
+  height: 7px;
+  width: 100%;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(255,255,255,.065);
+  border: 1px solid rgba(255,255,255,.055);
+  box-shadow: inset 0 1px 7px rgba(0,0,0,.35);
+}
+.preloader-progress {
+  width: 0%;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #7c3aed 0%, #a78bfa 52%, #67e8f9 100%);
+  box-shadow: 0 0 18px rgba(167,139,250,.48);
+  transition: width .22s ease-out;
+}
+.preloader-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  margin-top: 11px;
+  color: var(--text-muted);
+  font-size: 11px;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+}
+.preloader-percent {
+  color: var(--purple-light);
+  font-variant-numeric: tabular-nums;
+  font-weight: 800;
+}
+@keyframes preloaderHalo {
+  0%, 100% { transform: scale(.98); opacity: .72; }
+  50% { transform: scale(1.045); opacity: 1; }
+}
+@keyframes preloaderRing {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+</style>
+</head>
+
+<body class="preloader-active">
+
+<div id="astyPreloader" class="asty-preloader" role="status" aria-live="polite" aria-label="Loading ASTY">
+  <div class="preloader-inner">
+    <div class="preloader-logo-shell">
+      <img src="assets/logo.png" onerror="this.onerror=null;this.src='https://raw.githubusercontent.com/ArbStrategy-ASTY/ArbStrategy-ASTY/main/assets/logo.png';" alt="ASTY Logo" class="preloader-logo" />
+    </div>
+    <h1 class="preloader-brand">$ASTY</h1>
+    <div class="preloader-subbrand">ArbStrategy</div>
+    <div class="preloader-copy" data-en="Loading the ASTY system…" data-de="ASTY-System wird geladen…">Loading the ASTY system…</div>
+    <div class="preloader-track" aria-hidden="true"><div id="preloaderProgress" class="preloader-progress"></div></div>
+    <div class="preloader-meta">
+      <span data-en="System initialization" data-de="Systeminitialisierung">System initialization</span>
+      <span id="preloaderPercent" class="preloader-percent">0%</span>
+    </div>
+  </div>
+</div>
+
+<div class="blur-orb orb-1"></div>
+<div class="blur-orb orb-2"></div>
+
+<header class="topbar">
+  <div class="container nav">
+    <a class="brand" href="#" aria-label="ASTY Home">
+      <img src="assets/logo.png" onerror="this.onerror=null;this.src='https://raw.githubusercontent.com/ArbStrategy-ASTY/ArbStrategy-ASTY/main/assets/logo.png';" alt="ASTY Logo" class="brand-logo" />
+      <div class="brand-text">
+        <strong>$ASTY</strong>
+        <span>ArbStrategy</span>
+      </div>
+    </a>
+
+    <div class="header-actions">
+      <nav class="desktop-nav" aria-label="Main navigation">
+        <a href="https://htmlpreview.github.io/?https://github.com/ArbStrategy-ASTY/ArbStrategy-ASTY/blob/main/Dashboard.html" target="_blank" rel="noopener noreferrer" class="nav-link">Live Dashboard</a>
+        <a href="https://birdeye.so/solana/token/ASTYqeaoK83Zs1pTFEXZUB6BM8cG8YLTsN852NUkt7ZR" target="_blank" rel="noopener noreferrer" class="nav-link">Birdeye</a>
+        <a href="https://t.me/ArbStrategyASTY" target="_blank" rel="noopener noreferrer" class="nav-link">Telegram</a>
+        <a href="https://x.com/ArbStrategyASTY" target="_blank" rel="noopener noreferrer" class="nav-link">X Twitter</a>
+      </nav>
+
+      <button id="langToggle" class="lang-toggle" type="button" aria-label="Switch language">DE</button>
+      <button id="menuToggle" class="menu-toggle" type="button" aria-label="Open menu" aria-expanded="false" aria-controls="mobileMenu">
+        <span class="menu-icon" aria-hidden="true"><span></span><span></span><span></span></span>
+      </button>
+    </div>
+
+    <div id="mobileMenu" class="mobile-menu" aria-hidden="true">
+      <nav class="mobile-menu-grid" aria-label="Mobile navigation">
+        <a href="https://htmlpreview.github.io/?https://github.com/ArbStrategy-ASTY/ArbStrategy-ASTY/blob/main/Dashboard.html" target="_blank" rel="noopener noreferrer" class="mobile-menu-link">Live Dashboard</a>
+        <a href="https://birdeye.so/solana/token/ASTYqeaoK83Zs1pTFEXZUB6BM8cG8YLTsN852NUkt7ZR" target="_blank" rel="noopener noreferrer" class="mobile-menu-link">Birdeye</a>
+        <a href="https://t.me/ArbStrategyASTY" target="_blank" rel="noopener noreferrer" class="mobile-menu-link">Telegram</a>
+        <a href="https://x.com/ArbStrategyASTY" target="_blank" rel="noopener noreferrer" class="mobile-menu-link">X Twitter</a>
+      </nav>
+    </div>
+  </div>
+</header>
+
+<main class="container">
+
+  <!-- HERO -->
+  <section class="hero-intro">
+    <div class="hero-panel">
+      <div class="hero-grid">
+        <div class="hero-copy">
+          <div class="hero-kicker">
+            <span class="hero-kicker-dot"></span>
+            <span data-en="Performance-based liquidity on Solana" data-de="Performancebasierte Liquidität auf Solana">Performance-based liquidity on Solana</span>
+          </div>
+
+          <h1 class="hero-title" data-en="ASTY turns trading activity into continuous system growth." data-de="ASTY verwandelt Handelsaktivität in kontinuierliches Systemwachstum.">
+            ASTY turns trading activity into continuous system growth.
+          </h1>
+
+          <p class="hero-sub" data-en="ASTY provides liquidity across multiple Solana markets. Trading and arbitrage generate activity that feeds burns, liquidity growth and strategic reserves." data-de="ASTY stellt Liquidität in mehreren Solana-Märkten bereit. Trading und Arbitrage erzeugen Aktivität, die Burns, Liquiditätswachstum und strategische Reserven speist.">
+            ASTY provides liquidity across multiple Solana markets. Trading and arbitrage generate activity that feeds burns, liquidity growth and strategic reserves.
+          </p>
+
+          <div class="hero-actions">
+            <a class="hero-btn primary" href="https://htmlpreview.github.io/?https://github.com/ArbStrategy-ASTY/ArbStrategy-ASTY/blob/main/Dashboard.html" target="_blank" rel="noopener noreferrer" data-en="See it live" data-de="Live ansehen">See it live</a>
+            <a class="hero-btn secondary" href="https://birdeye.so/solana/token/ASTYqeaoK83Zs1pTFEXZUB6BM8cG8YLTsN852NUkt7ZR" target="_blank" rel="noopener noreferrer" data-en="Buy $ASTY" data-de="$ASTY kaufen">Buy $ASTY</a>
+          </div>
+        </div>
+
+        <div class="hero-visual">
+          <img src="assets/banner.png" onerror="this.onerror=null;this.src='https://raw.githubusercontent.com/ArbStrategy-ASTY/ArbStrategy-ASTY/main/assets/banner.png';" alt="ASTY ArbStrategy Banner" class="hero-banner-img" />
+        </div>
+      </div>
+
+      <div class="hero-principles">
+        <div class="hero-principle">
+          <strong data-en="Liquidity" data-de="Liquidität">Liquidity</strong>
+          <span data-en="ASTY liquidity works across multiple Solana markets." data-de="ASTY-Liquidität arbeitet gleichzeitig in mehreren Solana-Märkten.">ASTY liquidity works across multiple Solana markets.</span>
+        </div>
+        <div class="hero-principle">
+          <strong data-en="Activity" data-de="Aktivität">Activity</strong>
+          <span data-en="Trading and arbitrage create continuous fee activity." data-de="Trading und Arbitrage erzeugen fortlaufende Gebührenaktivität.">Trading and arbitrage create continuous fee activity.</span>
+        </div>
+        <div class="hero-principle">
+          <strong data-en="Growth" data-de="Wachstum">Growth</strong>
+          <span data-en="Fees feed burns, liquidity growth and strategic reserves." data-de="Gebühren speisen Burns, Liquiditätswachstum und strategische Reserven.">Fees feed burns, liquidity growth and strategic reserves.</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- LIVE PROOF -->
+  <section class="dashboard-trust-wrap reveal">
+    <a class="dashboard-trust-card stagger-item" href="https://htmlpreview.github.io/?https://github.com/ArbStrategy-ASTY/ArbStrategy-ASTY/blob/main/Dashboard.html" target="_blank" rel="noopener noreferrer">
+      <span class="live-status"><span class="live-status-dot"></span></span>
+
+      <span class="dashboard-trust-copy">
+        <span class="dashboard-trust-label" data-en="Transparent live proof" data-de="Transparenter Live-Beweis">Transparent live proof</span>
+        <span class="dashboard-trust-title" data-en="See the ASTY system working live" data-de="Sieh das ASTY-System live arbeiten">See the ASTY system working live</span>
+        <span class="dashboard-trust-description" data-en="Real market data, real liquidity and a transparent view into the system." data-de="Echte Marktdaten, echte Liquidität und ein transparenter Einblick in das System.">Real market data, real liquidity and a transparent view into the system.</span>
+      </span>
+
+      <div class="live-metrics">
+        <div class="live-stat loading" id="livePriceStat">
+          <span class="live-stat-label" data-en="$ASTY Price" data-de="$ASTY Preis">$ASTY Price</span>
+          <span class="live-stat-value" id="livePrice">--</span>
+        </div>
+        <div class="live-stat loading" id="liveMarketCapStat">
+          <span class="live-stat-label" data-en="Market Cap" data-de="Market Cap">Market Cap</span>
+          <span class="live-stat-value" id="liveMarketCap">--</span>
+        </div>
+        <div class="live-stat loading" id="liveLiquidityStat">
+          <span class="live-stat-label" data-en="Liquidity" data-de="Liquidität">Liquidity</span>
+          <span class="live-stat-value" id="liveLiquidity">--</span>
+        </div>
+      </div>
+
+      <span class="dashboard-trust-arrow">↗</span>
+    </a>
+  </section>
+
+  <!-- HOW ASTY WORKS -->
+  <section class="section reveal">
+    <div class="section-head">
+      <h2 class="section-title" data-en="How ASTY works" data-de="Wie ASTY funktioniert">How ASTY works</h2>
+      <p class="section-sub" data-en="The core idea is simple: ASTY liquidity creates markets, market activity generates fees and those fees strengthen the system." data-de="Die Grundidee ist einfach: ASTY-Liquidität schafft Märkte, Marktaktivität erzeugt Gebühren und diese Gebühren stärken das System.">
+        The core idea is simple: ASTY liquidity creates markets, market activity generates fees and those fees strengthen the system.
+      </p>
+    </div>
+
+    <div class="simple-grid">
+      <div class="simple-card stagger-item">
+        <span class="step-tag">01</span>
+        <strong data-en="Liquidity across Solana" data-de="Liquidität über Solana">Liquidity across Solana</strong>
+        <p data-en="ASTY is paired with selected Solana assets across multiple liquidity pools." data-de="ASTY wird mit ausgewählten Solana-Assets in mehreren Liquiditätspools gepaart.">ASTY is paired with selected Solana assets across multiple liquidity pools.</p>
+      </div>
+
+      <div class="simple-card stagger-item">
+        <span class="step-tag">02</span>
+        <strong data-en="Trading and arbitrage" data-de="Trading und Arbitrage">Trading and arbitrage</strong>
+        <p data-en="Price differences between markets attract traders and arbitrage bots, creating activity across the pool network." data-de="Preisunterschiede zwischen Märkten ziehen Trader und Arbitrage-Bots an und erzeugen Aktivität im Poolnetzwerk.">Price differences between markets attract traders and arbitrage bots, creating activity across the pool network.</p>
+      </div>
+
+      <div class="simple-card stagger-item">
+        <span class="step-tag">03</span>
+        <strong data-en="The ASTY-Effect" data-de="Der ASTY-Effect">The ASTY-Effect</strong>
+        <p data-en="ASTY activity triggers the fixed 1% fee that feeds burns, growth capital and strategic reserves." data-de="ASTY-Aktivität löst die feste 1%-Gebühr aus, die Burns, Wachstumskapital und strategische Reserven speist.">ASTY activity triggers the fixed 1% fee that feeds burns, growth capital and strategic reserves.</p>
+      </div>
+    </div>
+
+    <details class="arb-details stagger-item">
+      <summary data-en="How does arbitrage work?" data-de="Wie funktioniert Arbitrage?">How does arbitrage work?</summary>
+      <div class="arb-details-content">
+        <p data-en="Imagine the same sneaker costs $100 in one shop and $110 in another. Buying it for $100 and selling it for $110 captures the price difference. Crypto markets work similarly: the same token can trade at slightly different prices across exchanges and liquidity pools. Automated arbitrage bots detect these temporary differences and trade between them." data-de="Stell dir vor, derselbe Sneaker kostet in einem Shop 100 $ und in einem anderen 110 $. Du kaufst ihn für 100 $ und verkaufst ihn für 110 $ und nutzt damit die Preisdifferenz. In Krypto funktioniert es ähnlich: Derselbe Token kann auf verschiedenen Börsen und in Liquiditätspools leicht unterschiedliche Preise haben. Automatisierte Arbitrage-Bots erkennen diese Unterschiede und handeln zwischen den Märkten.">
+          Imagine the same sneaker costs $100 in one shop and $110 in another. Buying it for $100 and selling it for $110 captures the price difference. Crypto markets work similarly: the same token can trade at slightly different prices across exchanges and liquidity pools. Automated arbitrage bots detect these temporary differences and trade between them.
+        </p>
+
+        <div class="arb-example-grid">
+          <div class="arb-example"><strong>$100</strong><span data-en="Buy where the asset is cheaper." data-de="Dort kaufen, wo der Asset günstiger ist.">Buy where the asset is cheaper.</span></div>
+          <div class="arb-example"><strong>$110</strong><span data-en="Sell where the asset is priced higher." data-de="Dort verkaufen, wo der Asset höher bewertet ist.">Sell where the asset is priced higher.</span></div>
+          <div class="arb-example"><strong style="color:var(--cyan)">+$10</strong><span data-en="The price difference becomes the arbitrage opportunity." data-de="Die Preisdifferenz wird zur Arbitrage-Chance.">The price difference becomes the arbitrage opportunity.</span></div>
+        </div>
+      </div>
+    </details>
+  </section>
+
+  <!-- ASTY EFFECT -->
+  <section class="section reveal">
+    <div class="section-head">
+      <h2 class="section-title" data-en="The ASTY-Effect" data-de="Der ASTY-Effect">The ASTY-Effect</h2>
+      <p class="section-sub" data-en="Every ASTY buy, sell and wallet-to-wallet transfer creates the same fixed 1% fee. The fee is split between permanent burn, future growth and strategic reserves." data-de="Jeder ASTY-Kauf, Verkauf und Wallet-zu-Wallet-Transfer erzeugt dieselbe feste Gebühr von 1%. Die Gebühr wird zwischen permanentem Burn, zukünftigem Wachstum und strategischen Reserven aufgeteilt.">
+        Every ASTY buy, sell and wallet-to-wallet transfer creates the same fixed 1% fee. The fee is split between permanent burn, future growth and strategic reserves.
+      </p>
+    </div>
+
+    <div class="effect-stage">
+      <div class="effect-content">
+        <div class="effect-flow">
+          <div class="effect-line"></div>
+          <div class="effect-step"><strong data-en="Volatility" data-de="Volatilität">Volatility</strong><span data-en="Price movement creates differences between markets." data-de="Preisbewegungen erzeugen Unterschiede zwischen Märkten.">Price movement creates differences between markets.</span></div>
+          <div class="effect-step"><strong data-en="Bot activity" data-de="Bot-Aktivität">Bot activity</strong><span data-en="Arbitrage bots trade through ASTY liquidity pairs." data-de="Arbitrage-Bots handeln über ASTY-Liquiditätspaare.">Arbitrage bots trade through ASTY liquidity pairs.</span></div>
+          <div class="effect-step effect-step-highlight"><strong data-en="1% ASTY fee" data-de="1% ASTY-Gebühr">1% ASTY fee</strong><span data-en="ASTY activity feeds one connected system." data-de="ASTY-Aktivität speist ein zusammenhängendes System.">ASTY activity feeds one connected system.</span></div>
+          <div class="effect-step"><strong data-en="System growth" data-de="Systemwachstum">System growth</strong><span data-en="Supply decreases while liquidity and reserves can grow." data-de="Die Supply sinkt, während Liquidität und Reserven wachsen können.">Supply decreases while liquidity and reserves can grow.</span></div>
+          <div class="effect-step"><strong data-en="Next cycle" data-de="Nächster Zyklus">Next cycle</strong><span data-en="A stronger system can support more future activity." data-de="Ein stärkeres System kann mehr zukünftige Aktivität unterstützen.">A stronger system can support more future activity.</span></div>
+        </div>
+
+        <div class="tokenomics-grid">
+          <div class="tokenomics-card stagger-item">
+            <span class="tokenomics-number counter" data-target="40">0%</span>
+            <strong data-en="Permanent burn" data-de="Permanenter Burn">Permanent burn</strong>
+            <p data-en="ASTY is permanently removed from circulation, reducing the remaining supply over time." data-de="ASTY wird dauerhaft aus dem Umlauf entfernt. Dadurch sinkt die verbleibende Supply im Laufe der Zeit.">ASTY is permanently removed from circulation, reducing the remaining supply over time.</p>
+            <div class="tokenomics-bar"><span style="--bar-width:40%"></span></div>
+          </div>
+
+          <div class="tokenomics-card stagger-item">
+            <span class="tokenomics-number counter" data-target="40">0%</span>
+            <strong data-en="Growth wallet" data-de="Growth Wallet">Growth wallet</strong>
+            <p data-en="Capital is accumulated to expand efficient ASTY liquidity pools and strengthen future system activity." data-de="Kapital wird gesammelt, um effiziente ASTY-Liquiditätspools auszubauen und zukünftige Systemaktivität zu stärken.">Capital is accumulated to expand efficient ASTY liquidity pools and strengthen future system activity.</p>
+            <div class="tokenomics-bar"><span style="--bar-width:40%"></span></div>
+          </div>
+
+          <div class="tokenomics-card stagger-item">
+            <span class="tokenomics-number counter" data-target="20">0%</span>
+            <strong data-en="Treasury reserve" data-de="Treasury-Reserve">Treasury reserve</strong>
+            <p data-en="Value is converted into SOL or USDC and held outside ASTY as a strategic reserve." data-de="Wert wird in SOL oder USDC umgewandelt und außerhalb von ASTY als strategische Reserve gehalten.">Value is converted into SOL or USDC and held outside ASTY as a strategic reserve.</p>
+            <div class="tokenomics-bar"><span style="--bar-width:20%"></span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="wolf-wrap stagger-item">
+        <img src="assets/wolf.png" onerror="this.onerror=null;this.src='https://raw.githubusercontent.com/ArbStrategy-ASTY/ArbStrategy-ASTY/main/assets/wolf.png';" alt="ASTY Wolf" class="wolf-image" />
+      </div>
+    </div>
+  </section>
+
+  <!-- HOLDER EFFECT -->
+  <section class="section reveal">
+    <div class="section-head">
+      <h2 class="section-title" data-en="Why this matters for holders" data-de="Warum das für Holder relevant ist">Why this matters for holders</h2>
+      <p class="section-sub" data-en="Burns do not add tokens to your wallet. They reduce the total supply. If the total market capitalization stays the same while supply falls, the same ASTY balance represents a larger share of the network and a higher value per token." data-de="Burns fügen deiner Wallet keine zusätzlichen Token hinzu. Sie reduzieren die gesamte Supply. Bleibt die gesamte Market Cap gleich, während die Supply sinkt, repräsentiert derselbe ASTY-Bestand einen größeren Anteil am Netzwerk und einen höheren Wert pro Token.">
+        Burns do not add tokens to your wallet. They reduce the total supply. If the total market capitalization stays the same while supply falls, the same ASTY balance represents a larger share of the network and a higher value per token.
+      </p>
+    </div>
+
+    <div class="holder-panel stagger-item">
+      <div class="holder-example-head">
+        <strong data-en="Simple example with a constant $100,000 market cap" data-de="Einfaches Beispiel bei konstanten 100.000 $ Market Cap">Simple example with a constant $100,000 market cap</strong>
+        <span data-en="100,000 ASTY held • no additional tokens added" data-de="100.000 ASTY gehalten • keine zusätzlichen Token">100,000 ASTY held • no additional tokens added</span>
+      </div>
+
+      <div class="holder-flow">
+        <div class="holder-card">
+          <div class="holder-mini" data-en="Starting position" data-de="Ausgangsposition">Starting position</div>
+          <span class="holder-value">100,000 ASTY</span>
+          <span class="holder-subvalue">1.00% of supply</span>
+          <strong data-en="$1,000 position value" data-de="1.000 $ Positionswert">$1,000 position value</strong>
+          <p data-en="At 10,000,000 ASTY supply and a $100,000 market cap, one ASTY is worth $0.0100 in this example." data-de="Bei 10.000.000 ASTY Supply und 100.000 $ Market Cap entspricht ein ASTY in diesem Beispiel 0,0100 $.">At 10,000,000 ASTY supply and a $100,000 market cap, one ASTY is worth $0.0100 in this example.</p>
+        </div>
+
+        <div class="holder-card">
+          <div class="holder-mini" data-en="Supply burn" data-de="Supply Burn">Supply burn</div>
+          <span class="holder-value">10M → 9M</span>
+          <span class="holder-subvalue">−10% supply</span>
+          <strong data-en="1,000,000 ASTY removed" data-de="1.000.000 ASTY entfernt">1,000,000 ASTY removed</strong>
+          <p data-en="Your wallet still holds exactly 100,000 ASTY. Only the total remaining supply has changed." data-de="Deine Wallet hält weiterhin exakt 100.000 ASTY. Nur die gesamte verbleibende Supply hat sich verändert.">Your wallet still holds exactly 100,000 ASTY. Only the total remaining supply has changed.</p>
+        </div>
+
+        <div class="holder-card">
+          <div class="holder-mini" data-en="Constant market cap" data-de="Konstante Market Cap">Constant market cap</div>
+          <span class="holder-value">$100K → $100K</span>
+          <span class="holder-subvalue">$0.0100 → $0.01111 / ASTY</span>
+          <strong data-en="The same value is spread across fewer ASTY" data-de="Derselbe Gesamtwert verteilt sich auf weniger ASTY">The same value is spread across fewer ASTY</strong>
+          <p data-en="If market capitalization remains unchanged, the mathematical price per remaining ASTY increases because there are fewer tokens." data-de="Bleibt die Market Cap unverändert, steigt der rechnerische Wert je verbleibendem ASTY, weil weniger Token existieren.">If market capitalization remains unchanged, the mathematical price per remaining ASTY increases because there are fewer tokens.</p>
+        </div>
+
+        <div class="holder-card cyan">
+          <div class="holder-mini" data-en="Result" data-de="Ergebnis">Result</div>
+          <span class="holder-value">1.00% → 1.11%</span>
+          <span class="holder-subvalue">$1,000 → ~$1,111</span>
+          <strong data-en="The same 100,000 ASTY represents more" data-de="Dieselben 100.000 ASTY repräsentieren mehr">The same 100,000 ASTY represents more</strong>
+          <p data-en="At the same $100,000 market cap, the unchanged balance now represents about 1.11% of supply and about $1,111 of value." data-de="Bei derselben Market Cap von 100.000 $ repräsentiert der unveränderte Bestand nun rund 1,11 % der Supply und etwa 1.111 $ Wert.">At the same $100,000 market cap, the unchanged balance now represents about 1.11% of supply and about $1,111 of value.</p>
+        </div>
+      </div>
+
+      <div class="holder-result">
+        <div class="holder-result-item">
+          <strong data-en="Additional ASTY required" data-de="Zusätzliche ASTY nötig">Additional ASTY required</strong>
+          <span>0</span>
+        </div>
+        <div class="holder-result-item">
+          <strong data-en="Relative share increase" data-de="Anstieg des relativen Anteils">Relative share increase</strong>
+          <span>+11.11%</span>
+        </div>
+        <div class="holder-result-item">
+          <strong data-en="Position value in this example" data-de="Positionswert in diesem Beispiel">Position value in this example</strong>
+          <span>+$111</span>
+        </div>
+      </div>
+
+      <div class="holder-note" data-en="Example only. The $1,000 → ~$1,111 value change assumes ASTY market capitalization remains constant at $100,000 while supply falls from 10,000,000 to 9,000,000 ASTY. In the real market, price and market capitalization can rise or fall independently. This is not a guarantee of price performance or investment return." data-de="Nur ein Beispiel. Die Veränderung von 1.000 $ auf rund 1.111 $ setzt voraus, dass die ASTY Market Cap konstant bei 100.000 $ bleibt, während die Supply von 10.000.000 auf 9.000.000 ASTY sinkt. Am realen Markt können Preis und Market Cap unabhängig davon steigen oder fallen. Dies ist keine Garantie für eine Preisentwicklung oder Rendite.">
+        Example only. The $1,000 → ~$1,111 value change assumes ASTY market capitalization remains constant at $100,000 while supply falls from 10,000,000 to 9,000,000 ASTY. In the real market, price and market capitalization can rise or fall independently. This is not a guarantee of price performance or investment return.
+      </div>
+    </div>
+  </section>
+
+  <!-- CAPITAL ALLOCATION -->
+  <section class="section reveal">
+    <div class="section-head">
+      <h2 class="section-title" data-en="Smart capital allocation" data-de="Intelligente Kapitalallokation">Smart capital allocation</h2>
+      <p class="section-sub" data-en="Growth capital is not distributed blindly. Pool performance is continuously compared so additional liquidity can be directed toward markets where capital works most efficiently." data-de="Wachstumskapital wird nicht blind verteilt. Die Pool-Performance wird fortlaufend verglichen, damit zusätzliche Liquidität in Märkte fließen kann, in denen das Kapital besonders effizient arbeitet.">
+        Growth capital is not distributed blindly. Pool performance is continuously compared so additional liquidity can be directed toward markets where capital works most efficiently.
+      </p>
+    </div>
+
+    <div class="allocation-panel stagger-item">
+      <div class="allocation-flow">
+        <div class="allocation-card"><strong data-en="Measure" data-de="Messen">Measure</strong><p data-en="Volume, income, activity and existing liquidity are evaluated." data-de="Volumen, Einnahmen, Aktivität und bestehende Liquidität werden ausgewertet.">Volume, income, activity and existing liquidity are evaluated.</p></div>
+        <div class="allocation-card"><strong data-en="Compare" data-de="Vergleichen">Compare</strong><p data-en="Pools are compared by their measurable capital efficiency." data-de="Pools werden anhand ihrer messbaren Kapitaleffizienz verglichen.">Pools are compared by their measurable capital efficiency.</p></div>
+        <div class="allocation-card"><strong data-en="Allocate" data-de="Allokieren">Allocate</strong><p data-en="Strong pools can receive more growth capital while weak pools are not automatically expanded." data-de="Starke Pools können mehr Wachstumskapital erhalten, während schwache Pools nicht automatisch erweitert werden.">Strong pools can receive more growth capital while weak pools are not automatically expanded.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CONTRACT -->
+  <section class="section contract-section reveal">
+    <div class="section-head">
+      <h2 class="section-title" data-en="ASTY contract address" data-de="ASTY Contract-Adresse">ASTY contract address</h2>
+      <p class="section-sub" data-en="Always verify the official contract address before buying, transferring or interacting with ASTY." data-de="Prüfe vor jedem Kauf, Transfer oder jeder Interaktion mit ASTY immer die offizielle Contract-Adresse.">
+        Always verify the official contract address before buying, transferring or interacting with ASTY.
+      </p>
+    </div>
+
+    <div class="contract-card stagger-item">
+      <img src="assets/logo.png" onerror="this.onerror=null;this.src='https://raw.githubusercontent.com/ArbStrategy-ASTY/ArbStrategy-ASTY/main/assets/logo.png';" alt="ASTY Logo" class="contract-logo" />
+      <div class="contract-content">
+        <span class="contract-label" data-en="Official Solana contract" data-de="Offizieller Solana-Contract">Official Solana contract</span>
+        <span class="contract-address" id="contractAddress">ASTYqeaoK83Zs1pTFEXZUB6BM8cG8YLTsN852NUkt7ZR</span>
+      </div>
+      <button class="copy-btn" id="copyContractBtn" type="button" data-en="Copy" data-de="Kopieren">Copy</button>
+    </div>
+  </section>
+
+</main>
+
+<button id="scrollTopBtn" type="button" aria-label="Back to top">↑</button>
+
+<script>
+/* ==================================================
+   ASTY LIVE DATA CONFIG
+================================================== */
+
+const ASTY_MINT = "ASTYqeaoK83Zs1pTFEXZUB6BM8cG8YLTsN852NUkt7ZR";
+const CHUNK_SIZE = 25;
+const LIVE_REFRESH_MS = 60000;
+const BIRDEYE_PRICE_PROXY = "/api/birdeye-price";
+
+const RPC_ENDPOINTS = [
+  "https://solana.rpc.subquery.network/public",
+  "https://solana.drpc.org",
+  "https://solana.api.onfinality.io/public",
+  "https://solana-rpc.publicnode.com",
+  "https://api.mainnet-beta.solana.com"
+];
+
+const ASTY_POOLS = [
+  ["3UvhqPrMyf13qgRodARDi5oGJGoxHYb2ykZdCaa1TV8i","ASTY/$WIF",1],
+  ["HeuivHLqCEmsgKhYhX1M6MGthEbtHrGmZdXQSCBVkstP","ASTY/ALCH",1],
+  ["CSD1NpGwhnohByefBp73Jyk6u6ZCkwwDFDVqvmkDrfxE","ASTY/ARBX",1],
+  ["DxMFG4kn8pxuf7AoKD1ffXjUhPpj4a8WAdgw87gyM2mj","ASTY/ARBX",0.3],
+  ["CoD6KLgnW2wKe2UtnNjSQk4RSS6fMU4P2vwKqsUxK9Bf","ASTY/Bonk",1],
+  ["7T6HixJyUfzSR88dhWC9tAjasXcdFyDrKmDtuzrXgt9j","ASTY/ETH",1],
+  ["B6fq1uNpMkyGANAQo5D9GJfMCkcaNewc6q8sWZAfWZ4M","ASTY/Fartcoin",1],
+  ["8aXv2DDRG3k5N3ADTw37Di4ytHGJ3ZaS2tPp1f2EW5ZD","ASTY/GEOD",1],
+  ["CRGcFA8f577F2BEZSmgohd4cuBTVsBpLjwqfVHrG8krE","ASTY/BOME",1],
+  ["3UapB8rB3T88Kac7CG3F44SKCa5xSBsKaJndbx8YrxWG","ASTY/RTM",1],
+  ["92RKFRJSctMAuw8Tym7cZgd2yjMcHeZ5hDUMdnZd54zV","ASTY/Grandma",1],
+  ["Gec7ENkk9irtsmmwpwLHk1i4VntB4vFGRAe1ET3LeT3J","ASTY/JTO",1],
+  ["iZXTZMMS51US5erGnviWfc8CNGx5QDDzp6DERH25EtW","ASTY/JUP",1],
+  ["29eKi5ipMR9fLgkYpM91Xrab2LVBnUU75SYG8kCt1nis","ASTY/MET",1],
+  ["CSiAzSiCMNGjLwYKRdhDUjNwz4obf3Q5ZnMQECnmxshV","ASTY/PENGU",1],
+  ["2uNbRDLDeMizdJNEqKaapzAGJWVwa3uuJ3w4trVud4ZW","ASTY/pippin",1],
+  ["GyVyv2H2SB4fYaC7C6raWNSQqNhShdzNuSqQwG9uUUcE","ASTY/POPCAT",1],
+  ["RYztJXyPCmwUmfi7punwCf7q6FbxoJbRtBEodZ7j7GH","ASTY/PsyopAnime",1],
+  ["DfJsn7Ui6YBUC25kM5FoqrCYrqfRVCoSxpTeyEzWv4vT","ASTY/RAY",1],
+  ["2ufiEWc5wF8gJB1a9YiPkFuLwrFn4Zgyma1kdQRakoAr","ASTY/SOL",0.25],
+  ["7tbbdGzFZpjrPmM7jQderyyv1x8Ebz1vhwqNhEW97osb","ASTY/SOL",1],
+  ["HAieGroddWr3NZpSZYqqm39w2aTUuknWNXxfF6vWNpaR","ASTY/SOL",0.3],
+  ["BBVxTUtaagQgG5AgmNSYS9Pqwidc7yAbRF6avt48iF2u","ASTY/TAX",1],
+  ["CFcyQpye4K4pyhVPoSAgj3BAqNoWpZCvHpNncXssy7qH","ASTY/TAX",1],
+  ["tDqqTi8tJds88AkxFvhjZTQK5iDtV5ZG9ZkNYxh23MG","ASTY/UNI",1],
+  ["3HhGsPNMtSg1dNV9SVSfzGCQLx3Zp5giAvYJdQuuNqU9","ASTY/USDC",0.3],
+  ["5zCsWjFoEQ7jGNaHNwBRvZq7RMqVh6vQhmiYv4NWkDZK","ASTY/USDC",1],
+  ["BqdoyTYoXpnAzRafoBQPrY4ubVSzYE42rxJzNJwoxmZP","ASTY/USDC",0.25],
+  ["BWFDr72tjXJsRdUyAfqghv6sGXgQr2zJ78KdeV3c74q1","ASTY/USDC",2],
+  ["2Hjjn2aoVdUeGraV4vRak94GGAAW5w9syfVBeXU4Ad5J","ASTY/WBTC",1],
+  ["7Fr58kHKW85XiFgZ8WibumE7P5CLZFo4A8qsQxKNEWaE","ASTY/WhiteWhale",1],
+  ["4TgvcTKzq9zZR5znyak2y3tvaXg4q6hvKWEZgxesQqkx","ASTY/WLFI",1],
+  ["5wpSZwUmdXy5kB96n7U24iFzvbSNEvFd4BvERhhqYjQY","ASTY/WOJAK",1],
+  ["2aWCx2qrYmjen1N8UW3eLBzNu7fCPqxjL9NKXqHGXPHc","ASTY/ZBCN",1],
+  ["2WRrdtnKKr2eq67o4ZK2VQv7dXu4Pm8iz6TMN8UXvhbV","ASTY/SOL",2],
+  ["4iHVvcWHNYFDPFySosAx1qGZoFsDN7gXHxKqUFnGq6oJ","ASTY/BAT",1],
+  ["4kWT67c13svR9EfxM4TGn8inNqFsXeuAWQhn8KBVajBs","ASTY/ACC",1],
+  ["5fEodJwZNUTwXbiTRKU2KPCc4Xr15fPKVmxbAph7yX7v","ASTY/BTAX",1],
+  ["61HTuoKeWhEfscoBcd5zSNvmAyGpxdaUNMriLNnyyREz","ASTY/USDC",6],
+  ["8fBYS2Kq9f4Lm1SYdt4sdHRL27Ni8UcRMPtFNLdEcnAH","ASTY/Cake",1],
+  ["DdK87cRD7uzoUWc9JZNRNxPoLHXeAcGkfU2b49YTZrm3","ASTY/AVA",1],
+  ["DwZZHyqnzWEqNP4VuczHHwfJsni6xqo57TBm7SoeJ62u","ASTY/RENDER",1],
+  ["HvmNZyopYSwHRUXCUti4D6YANpfWscVLSQVv9nw2XYhx","ASTY/TURBO",1],
+  ["m1e9swvUoggDm2zLXzrzKRrbVwmGEP8aQy7BQigFZgK","ASTY/SOL",0.25],
+  ["3PVPMEseLJxE6yyB5eBJ3qzRCzCGN6L9qa85stcZH4FM","ASTY/testicle",1],
+  ["BM9W33kccA1GCdbkuGoNDvJLTQW5xKbKwXht8sCXayc3","ASTY/Buttcoin",1],
+  ["AiazXNe6ShtCbQHZbmpnkuuswVHFKh5rLZKeudzWU3aq","ASTY/BP",1],
+  ["DitqC25rriaMeZyiQPeXLNgfxqRTZL2qxFHp3MHrxM6t","ASTY/Punch",1],
+  ["mwsmVXehTt2aFonhJDyZWbwgpxDVM9MMfo7GUYrYL7K","ASTY/Restart",1],
+  ["EybMABxhsZ9MajRseP1X3c3v38U1P88YpvweFsGvgPSS","ASTY/INCOME",1],
+  ["AwmLBQ3keEicdD93gTr22avcJqsXwDTGMaLt25Jvyexo","ASTY/ORCA",1],
+  ["4UPuDZPPkrC5YHdpFnfv4RX7dfHYnjz8BYZaTCewSn5v","ASTY/MOODENG",1],
+  ["9dvPJ67AEzZZD9ThHAEJzkzVwxiVQrvC2Virv8KyGgZb","ASTY/SEARCH",1],
+  ["Dz8AuKtEJLrVeuAvhBg4gbTkBeNqC89wfLt3fJKZKk8v","ASTY/USD",4],
+  ["28yNWBwCvNLaC8h2Lf8AFcZqzfRpKMQMynwjjMibRwRU","ASTY/HYPE",1],
+  ["7wCaiBEGFHPhB5iDTCERsNXbzsc7bZyamqQsHNxuhdYU","ASTY/SATO",1],
+  ["Ax38rDrpRMturM59zKBEGsNn2HjE96rC9Jz3WbAgXtYw","ASTY/SIMPLR",1],
+  ["444uxc7K8jDZhtRUiuDAM822Pe93RYkHytzWuLKNyxVs","ASTY/TAO",1],
+  ["EDrT8LWDRuYE7v75Dkc9gUjLk7MvDYdezvDcnoHGqwuq","ASTY/TROLL",1],
+  ["39dM3NfQuPiGwC3M93BUsXKrRdXTAZWPX6VxianCSevn","ASTY/GREM",1],
+  ["ArKpj5vcNtHJTLhUKeADCmvuBpn1ZZoGNHZZYQ1QXq5n","ASTY/CUPSEY",1],
+  ["9zrdaC8tHges3JLTfsRVuibQ2xhXivZx3keymkZV2PAa","ASTY/three",1],
+  ["DGuvY79xbLuJRb3CzwQL59z5zoit7KLnFwyL2t6EQCcj","ASTY/SERIOUS",1]
+];
+
+const liveDataState = { rows: [], price: null, marketCap: null, liquidity: null };
+
+/* SCROLL REVEAL */
+const reveals = document.querySelectorAll(".reveal");
+reveals.forEach(section => {
+  section.querySelectorAll(".stagger-item").forEach((item, index) => item.style.setProperty("--delay", `${index * 90}ms`));
+});
+
+const revealObserver = new IntersectionObserver(entries => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      entry.target.classList.add("visible");
+      revealObserver.unobserve(entry.target);
+    }
+  });
+}, { threshold: 0.12, rootMargin: "0px 0px -7% 0px" });
+reveals.forEach(element => revealObserver.observe(element));
+
+/* MOBILE MENU */
+const menuToggle = document.getElementById("menuToggle");
+const mobileMenu = document.getElementById("mobileMenu");
+const mobileMenuLinks = mobileMenu.querySelectorAll("a");
+
+function openMobileMenu() {
+  menuToggle.classList.add("active");
+  mobileMenu.classList.add("open");
+  document.body.classList.add("menu-open");
+  menuToggle.setAttribute("aria-expanded", "true");
+  mobileMenu.setAttribute("aria-hidden", "false");
+}
+function closeMobileMenu() {
+  menuToggle.classList.remove("active");
+  mobileMenu.classList.remove("open");
+  document.body.classList.remove("menu-open");
+  menuToggle.setAttribute("aria-expanded", "false");
+  mobileMenu.setAttribute("aria-hidden", "true");
+}
+menuToggle.addEventListener("click", event => {
+  event.stopPropagation();
+  mobileMenu.classList.contains("open") ? closeMobileMenu() : openMobileMenu();
+});
+mobileMenu.addEventListener("click", event => event.stopPropagation());
+mobileMenuLinks.forEach(link => link.addEventListener("click", closeMobileMenu));
+document.addEventListener("click", () => { if (mobileMenu.classList.contains("open")) closeMobileMenu(); });
+window.addEventListener("resize", () => { if (window.innerWidth > 900) closeMobileMenu(); });
+
+/* BACK TO TOP */
+const scrollTopBtn = document.getElementById("scrollTopBtn");
+window.addEventListener("scroll", () => { scrollTopBtn.style.display = window.scrollY > 350 ? "flex" : "none"; });
+scrollTopBtn.addEventListener("click", () => window.scrollTo({ top: 0, behavior: "smooth" }));
+
+/* LANGUAGE */
+const langToggle = document.getElementById("langToggle");
+let currentLang = localStorage.getItem("astyLanguage") || "en";
+function setLanguage(language) {
+  currentLang = language;
+  document.querySelectorAll("[data-en][data-de]").forEach(element => {
+    const translated = element.getAttribute(`data-${language}`);
+    if (translated !== null) element.textContent = translated;
+  });
+  document.documentElement.lang = language;
+  langToggle.textContent = language === "en" ? "DE" : "EN";
+  localStorage.setItem("astyLanguage", language);
+}
+langToggle.addEventListener("click", () => setLanguage(currentLang === "en" ? "de" : "en"));
+setLanguage(currentLang);
+
+/* PRELOADER */
+const astyPreloader = document.getElementById("astyPreloader");
+const preloaderProgress = document.getElementById("preloaderProgress");
+const preloaderPercent = document.getElementById("preloaderPercent");
+let preloaderValue = 0;
+let preloaderFinished = false;
+const preloaderStartedAt = performance.now();
+const PRELOADER_MIN_MS = 720;
+const PRELOADER_MAX_MS = 2600;
+
+function setPreloaderProgress(value) {
+  preloaderValue = Math.max(preloaderValue, Math.min(100, Math.round(value)));
+  preloaderProgress.style.width = `${preloaderValue}%`;
+  preloaderPercent.textContent = `${preloaderValue}%`;
+}
+function finishPreloader() {
+  if (preloaderFinished) return;
+  preloaderFinished = true;
+  const elapsed = performance.now() - preloaderStartedAt;
+  const wait = Math.max(0, PRELOADER_MIN_MS - elapsed);
+  window.setTimeout(() => {
+    setPreloaderProgress(100);
+    window.setTimeout(() => {
+      astyPreloader.classList.add("is-hidden");
+      document.body.classList.remove("preloader-active");
+      window.setTimeout(() => astyPreloader.remove(), 620);
+    }, 240);
+  }, wait);
+}
+setPreloaderProgress(8);
+const preloaderTimer = window.setInterval(() => {
+  if (preloaderFinished) { clearInterval(preloaderTimer); return; }
+  if (preloaderValue < 42) setPreloaderProgress(preloaderValue + Math.ceil(Math.random() * 7));
+  else if (preloaderValue < 72) setPreloaderProgress(preloaderValue + Math.ceil(Math.random() * 4));
+  else if (preloaderValue < 91) setPreloaderProgress(preloaderValue + 1);
+}, 120);
+window.addEventListener("load", finishPreloader, { once: true });
+window.setTimeout(finishPreloader, PRELOADER_MAX_MS);
+window.addEventListener("pageshow", event => {
+  if (event.persisted && astyPreloader?.isConnected) finishPreloader();
+});
+
+
+/* TOKENOMICS COUNTERS */
+const counters = document.querySelectorAll(".counter");
+function animateCounter(counter) {
+  const target = Number(counter.dataset.target);
+  const duration = 1250;
+  const startTime = performance.now();
+  function updateCounter(now) {
+    const progress = Math.min((now - startTime) / duration, 1);
+    const eased = 1 - Math.pow(1 - progress, 3);
+    counter.textContent = `${Math.round(target * eased)}%`;
+    if (progress < 1) requestAnimationFrame(updateCounter);
+  }
+  requestAnimationFrame(updateCounter);
+}
+const counterObserver = new IntersectionObserver(entries => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      animateCounter(entry.target);
+      counterObserver.unobserve(entry.target);
+    }
+  });
+}, { threshold: 0.65 });
+counters.forEach(counter => counterObserver.observe(counter));
+
+/* HELPERS */
+function safeNumber(value) { const number = Number(value); return Number.isFinite(number) ? number : null; }
+function chunkArray(array, size) { const chunks = []; for (let index = 0; index < array.length; index += size) chunks.push(array.slice(index, index + size)); return chunks; }
+function median(values) {
+  if (!values.length) return null;
+  const sorted = [...values].sort((a,b) => a-b);
+  const middle = Math.floor(sorted.length / 2);
+  return sorted.length % 2 ? sorted[middle] : (sorted[middle - 1] + sorted[middle]) / 2;
+}
+function bigintAmountToNumber(amountString, decimals) {
+  const raw = BigInt(amountString);
+  const factor = 10n ** BigInt(decimals);
+  const whole = raw / factor;
+  const fraction = raw % factor;
+  return Number(whole) + Number(fraction) / (10 ** decimals);
+}
+async function fetchJson(url, options = {}, timeoutMs = 12000) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const response = await fetch(url, { ...options, signal: controller.signal });
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    return await response.json();
+  } finally { clearTimeout(timer); }
+}
+async function fetchJsonWithRetry(url, options = {}, retries = 1) {
+  let lastError;
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    try { return await fetchJson(url, options); }
+    catch (error) {
+      lastError = error;
+      if (attempt < retries) await new Promise(resolve => setTimeout(resolve, 700 * (attempt + 1)));
+    }
+  }
+  throw lastError;
+}
+function mintFromRelationship(relationship) {
+  const id = relationship?.data?.id || "";
+  const prefix = "solana_";
+  return id.startsWith(prefix) ? id.slice(prefix.length) : id;
+}
+function tokenSymbolMapFromIncluded(included = []) {
+  const map = new Map();
+  for (const item of included) {
+    const id = item?.id || "";
+    const mint = id.startsWith("solana_") ? id.slice(7) : id;
+    const symbol = item?.attributes?.symbol;
+    if (mint && symbol) map.set(mint, symbol);
+  }
+  return map;
+}
+
+/* GECKOTERMINAL */
+async function fetchGeckoChunk(chunk) {
+  const ids = chunk.map(([id]) => id);
+  const encodedIds = encodeURIComponent(ids.join(","));
+  const url = `https://api.geckoterminal.com/api/v2/networks/solana/pools/multi/${encodedIds}?include=base_token,quote_token&include_volume_breakdown=false&include_composition=false`;
+  const payload = await fetchJsonWithRetry(url, { headers: { Accept: "application/json;version=20230203" }, cache: "no-store" }, 1);
+  return {
+    requestedIds: ids,
+    data: Array.isArray(payload?.data) ? payload.data : [],
+    included: Array.isArray(payload?.included) ? payload.included : []
+  };
+}
+
+function parseGeckoLiveRow(config, item, tokenSymbols) {
+  const [id, configuredLabel] = config;
+  const attrs = item?.attributes || {};
+  const relationships = item?.relationships || {};
+  const baseMint = mintFromRelationship(relationships.base_token);
+  const quoteMint = mintFromRelationship(relationships.quote_token);
+  const basePrice = safeNumber(attrs.base_token_price_usd);
+  const quotePrice = safeNumber(attrs.quote_token_price_usd);
+  const astyIsBase = baseMint === ASTY_MINT;
+  const astyIsQuote = quoteMint === ASTY_MINT;
+  const counterMint = astyIsBase ? quoteMint : astyIsQuote ? baseMint : null;
+  const configuredMarket = configuredLabel.split("/").slice(1).join("/") || "Unknown";
+  const liveMarket = counterMint ? tokenSymbols.get(counterMint) : null;
+  const marketLabel = liveMarket || configuredMarket;
+  const liquidity = safeNumber(attrs.reserve_in_usd) ?? 0;
+  const astyPrice = astyIsBase ? basePrice : astyIsQuote ? quotePrice : null;
+  return { id, marketLabel, liquidity, astyPrice, status: liquidity > 0 ? "live" : "inactive" };
+}
+
+async function loadConfiguredPools() {
+  const chunks = chunkArray(ASTY_POOLS, CHUNK_SIZE);
+  const settled = await Promise.allSettled(chunks.map(fetchGeckoChunk));
+  const itemMap = new Map();
+  const tokenSymbols = new Map();
+  const successfulIds = new Set();
+  let successfulChunks = 0;
+
+  for (const result of settled) {
+    if (result.status !== "fulfilled") continue;
+    successfulChunks++;
+    for (const id of result.value.requestedIds) successfulIds.add(id);
+    for (const item of result.value.data) {
+      const address = item?.attributes?.address;
+      if (address) itemMap.set(address, item);
+    }
+    for (const [mint, symbol] of tokenSymbolMapFromIncluded(result.value.included)) tokenSymbols.set(mint, symbol);
+  }
+
+  if (!successfulChunks) throw new Error("All GeckoTerminal requests failed");
+  const previous = new Map(liveDataState.rows.map(row => [row.id, row]));
+
+  return ASTY_POOLS.map(config => {
+    const id = config[0];
+    const item = itemMap.get(id);
+    if (item) return parseGeckoLiveRow(config, item, tokenSymbols);
+    if (!successfulIds.has(id) && previous.has(id)) return previous.get(id);
+    return { id, marketLabel: config[1].split("/").slice(1).join("/") || "Unknown", liquidity: null, astyPrice: null, status: "unavailable" };
+  });
+}
+
+/* SUPPLY */
+async function loadCurrentSupply() {
+  let lastError;
+  for (const endpoint of RPC_ENDPOINTS) {
+    try {
+      const payload = await fetchJsonWithRetry(endpoint, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ jsonrpc: "2.0", id: 1, method: "getTokenSupply", params: [ASTY_MINT, { commitment: "confirmed" }] }),
+        cache: "no-store"
+      }, 0);
+      const value = payload?.result?.value;
+      if (!value?.amount || !Number.isInteger(value?.decimals)) throw new Error("Unexpected RPC response");
+      return { currentSupply: bigintAmountToNumber(value.amount, value.decimals) };
+    } catch (error) { lastError = error; }
+  }
+  throw (lastError || new Error("Supply unavailable"));
+}
+
+/* BIRDEYE PRICE */
+function firstFiniteNumber(...values) {
+  for (const value of values) {
+    const number = safeNumber(value);
+    if (Number.isFinite(number)) return number;
+  }
+  return null;
+}
+
+async function loadBirdEyePrice() {
+  if (!BIRDEYE_PRICE_PROXY) return null;
+  const separator = BIRDEYE_PRICE_PROXY.includes("?") ? "&" : "?";
+  const url = `${BIRDEYE_PRICE_PROXY}${separator}address=${encodeURIComponent(ASTY_MINT)}`;
+  const payload = await fetchJson(url, { headers: { Accept: "application/json" }, cache: "no-store" }, 7000);
+  const data = payload?.data ?? payload;
+  const price = firstFiniteNumber(data?.price, data?.value, data?.priceUsd, data?.price_usd);
+  if (!Number.isFinite(price) || price <= 0) throw new Error("BirdEye price unavailable");
+  return { price };
+}
+
+/* REFERENCE PRICE */
+function buildReferencePrice(rows, birdEye = null) {
+  if (Number.isFinite(birdEye?.price) && birdEye.price > 0) return { price: birdEye.price, method: "birdeye-usd" };
+  const priced = rows.filter(row => Number.isFinite(row.astyPrice) && row.astyPrice > 0 && Number.isFinite(row.liquidity) && row.liquidity > 0);
+  if (!priced.length) return { price: null, method: "unavailable" };
+
+  const stableReference = priced
+    .filter(row => ["USDC", "USDT"].includes(String(row.marketLabel).toUpperCase()) && row.liquidity >= 100)
+    .sort((a,b) => b.liquidity - a.liquidity)[0];
+  if (stableReference) return { price: stableReference.astyPrice, method: "primary-stable-pool" };
+
+  let candidates = priced.filter(row => row.liquidity >= 100);
+  if (candidates.length < 3) candidates = priced;
+  const medianPrice = median(candidates.map(row => row.astyPrice));
+  const filtered = medianPrice ? candidates.filter(row => Math.abs(row.astyPrice / medianPrice - 1) <= .15) : candidates;
+  const used = filtered.length >= 3 ? filtered : candidates;
+  const weight = used.reduce((sum,row) => sum + row.liquidity, 0);
+  const price = weight > 0 ? used.reduce((sum,row) => sum + row.astyPrice * row.liquidity, 0) / weight : null;
+  return { price, method: "weighted-fallback" };
+}
+
+function calculateLandingLiveSummary(rows, supply, birdEye) {
+  const liveRows = rows.filter(row => Number.isFinite(row.liquidity) && row.liquidity > 0);
+  const liquidity = liveRows.reduce((sum,row) => sum + row.liquidity, 0);
+  const reference = buildReferencePrice(liveRows, birdEye);
+  const currentSupply = supply?.currentSupply ?? null;
+  const marketCap = Number.isFinite(reference.price) && Number.isFinite(currentSupply) ? reference.price * currentSupply : null;
+  return { price: reference.price, liquidity, marketCap };
+}
+
+/* FORMATTING */
+function fmtPrice(value) {
+  if (!Number.isFinite(value)) return "—";
+  const decimals = value < .01 ? 8 : value < 1 ? 6 : 4;
+  return "$" + value.toLocaleString("en-US", { minimumFractionDigits: 0, maximumFractionDigits: decimals });
+}
+function fmtUsd(value, compact = false) {
+  if (!Number.isFinite(value)) return "—";
+  const abs = Math.abs(value);
+  if (compact && abs >= 1e9) return "$" + (value / 1e9).toFixed(2) + "B";
+  if (compact && abs >= 1e6) return "$" + (value / 1e6).toFixed(2) + "M";
+  if (compact && abs >= 1e3) return "$" + (value / 1e3).toFixed(2) + "K";
+  return "$" + value.toLocaleString("en-US", { minimumFractionDigits: abs < 100 ? 2 : 0, maximumFractionDigits: abs < 100 ? 2 : 0 });
+}
+
+/* LIVE VALUE ANIMATION */
+const livePrice = document.getElementById("livePrice");
+const liveMarketCap = document.getElementById("liveMarketCap");
+const liveLiquidity = document.getElementById("liveLiquidity");
+const livePriceStat = document.getElementById("livePriceStat");
+const liveMarketCapStat = document.getElementById("liveMarketCapStat");
+const liveLiquidityStat = document.getElementById("liveLiquidityStat");
+
+function animateLiveNumber(element, from, to, formatter, duration = 850) {
+  if (!Number.isFinite(to)) { element.textContent = "—"; return; }
+  const validFrom = Number.isFinite(from) ? from : 0;
+  const start = performance.now();
+  function frame(now) {
+    const progress = Math.min((now - start) / duration, 1);
+    const eased = 1 - Math.pow(1 - progress, 3);
+    const value = validFrom + (to - validFrom) * eased;
+    element.textContent = formatter(value);
+    if (progress < 1) requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+}
+
+let liveRefreshRunning = false;
+async function refreshLandingLiveData() {
+  if (liveRefreshRunning) return;
+  liveRefreshRunning = true;
+  try {
+    const [poolsResult, supplyResult, birdEyeResult] = await Promise.allSettled([
+      loadConfiguredPools(),
+      loadCurrentSupply(),
+      loadBirdEyePrice()
+    ]);
+    if (poolsResult.status !== "fulfilled") throw poolsResult.reason;
+    const rows = poolsResult.value;
+    const supply = supplyResult.status === "fulfilled" ? supplyResult.value : null;
+    const birdEye = birdEyeResult.status === "fulfilled" ? birdEyeResult.value : null;
+    const summary = calculateLandingLiveSummary(rows, supply, birdEye);
+
+    livePriceStat.classList.remove("loading");
+    liveMarketCapStat.classList.remove("loading");
+    liveLiquidityStat.classList.remove("loading");
+
+    animateLiveNumber(livePrice, liveDataState.price, summary.price, fmtPrice);
+    animateLiveNumber(liveLiquidity, liveDataState.liquidity, summary.liquidity, value => fmtUsd(value, true));
+    animateLiveNumber(liveMarketCap, liveDataState.marketCap, summary.marketCap, value => fmtUsd(value, true));
+
+    liveDataState.rows = rows;
+    liveDataState.price = summary.price;
+    liveDataState.marketCap = summary.marketCap;
+    liveDataState.liquidity = summary.liquidity;
+  } catch (error) {
+    livePriceStat.classList.remove("loading");
+    liveMarketCapStat.classList.remove("loading");
+    liveLiquidityStat.classList.remove("loading");
+    if (!Number.isFinite(liveDataState.price)) livePrice.textContent = "—";
+    if (!Number.isFinite(liveDataState.marketCap)) liveMarketCap.textContent = "—";
+    if (!Number.isFinite(liveDataState.liquidity)) liveLiquidity.textContent = "—";
+  } finally {
+    liveRefreshRunning = false;
+  }
+}
+
+refreshLandingLiveData();
+setInterval(refreshLandingLiveData, LIVE_REFRESH_MS);
+document.addEventListener("visibilitychange", () => {
+  if (document.visibilityState === "visible") refreshLandingLiveData();
+});
+
+/* COPY CONTRACT */
+const copyContractBtn = document.getElementById("copyContractBtn");
+let copyResetTimer;
+async function copyContractAddress() {
+  try {
+    await navigator.clipboard.writeText(ASTY_MINT);
+  } catch (error) {
+    const temporaryInput = document.createElement("textarea");
+    temporaryInput.value = ASTY_MINT;
+    temporaryInput.setAttribute("readonly", "");
+    temporaryInput.style.position = "fixed";
+    temporaryInput.style.opacity = "0";
+    document.body.appendChild(temporaryInput);
+    temporaryInput.select();
+    document.execCommand("copy");
+    document.body.removeChild(temporaryInput);
+  }
+
+  clearTimeout(copyResetTimer);
+  copyContractBtn.textContent = currentLang === "en" ? "Copied!" : "Kopiert!";
+  copyResetTimer = setTimeout(() => {
+    copyContractBtn.textContent = currentLang === "en" ? "Copy" : "Kopieren";
+  }, 1600);
+}
+copyContractBtn.addEventListener("click", copyContractAddress);
+</script>
+
+</body>
+</html>
