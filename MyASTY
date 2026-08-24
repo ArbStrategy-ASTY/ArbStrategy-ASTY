@@ -279,6 +279,13 @@
     }
 
     .status-main{min-width:0}
+    .status-head{
+      display:flex;
+      align-items:center;
+      gap:8px;
+      min-width:0;
+    }
+
     .status-title{
       font-size:12px;
       font-weight:900;
@@ -301,6 +308,27 @@
       font-weight:900;
       letter-spacing:.11em;
       text-transform:uppercase;
+    }
+
+    .loading-spinner{
+      width:14px;
+      height:14px;
+      flex:0 0 auto;
+      border-radius:50%;
+      border:2px solid rgba(192,132,252,.16);
+      border-top-color:var(--purple2);
+      box-shadow:0 0 12px rgba(168,85,247,.24);
+      animation:loaderSpin .75s linear infinite;
+      display:none;
+    }
+
+    .status.loading .loading-spinner{
+      display:inline-block;
+    }
+
+    @keyframes loaderSpin{
+      from{transform:rotate(0deg)}
+      to{transform:rotate(360deg)}
     }
 
     .hero{
@@ -987,9 +1015,12 @@
         </div>
       </div>
 
-      <div class="status">
+      <div class="status" id="statusBar">
         <div class="status-main">
-          <div class="status-title" id="statusTitle">Ready</div>
+          <div class="status-head">
+            <div class="status-title" id="statusTitle">Ready</div>
+            <div class="loading-spinner" id="loadingSpinner" aria-hidden="true"></div>
+          </div>
           <div class="status-sub" id="statusSub">Paste a wallet address to calculate your personal ASTY view.</div>
         </div>
         <div class="status-tag" id="statusTag">READ ONLY</div>
@@ -1194,9 +1225,11 @@
       rememberWallets: document.getElementById("rememberWallets"),
       scanBtn: document.getElementById("scanBtn"),
       clearBtn: document.getElementById("clearBtn"),
+      statusBar: document.getElementById("statusBar"),
       statusTitle: document.getElementById("statusTitle"),
       statusSub: document.getElementById("statusSub"),
       statusTag: document.getElementById("statusTag"),
+      loadingSpinner: document.getElementById("loadingSpinner"),
 
       heroAsty: document.getElementById("heroAsty"),
       heroUsd: document.getElementById("heroUsd"),
@@ -1298,6 +1331,14 @@
       ui.statusTitle.textContent = title;
       ui.statusSub.textContent = sub;
       ui.statusTag.textContent = tag;
+    }
+
+    function setLoading(active) {
+      if (active) {
+        ui.statusBar.classList.add("loading");
+      } else {
+        ui.statusBar.classList.remove("loading");
+      }
     }
 
     function isValidSolanaAddress(address) {
@@ -1779,6 +1820,7 @@
       });
 
       render();
+      setLoading(false);
       setStatus("Ready", "Paste a wallet address to calculate your personal ASTY view.", "READ ONLY");
     }
 
@@ -1799,6 +1841,7 @@
       persistWalletsIfEnabled();
 
       state.scanning = true;
+      setLoading(true);
       ui.scanBtn.disabled = true;
       ui.clearBtn.disabled = true;
       ui.scanBtn.textContent = "Analyzing...";
@@ -1886,6 +1929,7 @@
         setStatus("Analysis failed", message, "ERROR");
       } finally {
         state.scanning = false;
+        setLoading(false);
         ui.scanBtn.disabled = false;
         ui.clearBtn.disabled = false;
         ui.scanBtn.textContent = "Analyze My ASTY";
