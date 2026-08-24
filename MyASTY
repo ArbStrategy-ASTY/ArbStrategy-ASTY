@@ -1199,13 +1199,11 @@
     const RPC_TIMEOUT_MS = 12000;
 
     const RPC_FALLBACKS = [
-      "https://solana-rpc.publicnode.com",
-      "https://api.mainnet-beta.solana.com",
+      "https://solana.rpc.subquery.network/public",
       "https://solana.api.onfinality.io/public",
-      "https://solana.rpc.subquery.network/public"
+      "https://solana-rpc.publicnode.com",
+      "https://api.mainnet-beta.solana.com"
     ];
-
-    let preferredRpcUrl = null;
 
     const ui = {
       walletInput: document.getElementById("walletInput"),
@@ -1386,13 +1384,8 @@
       }
     }
 
-    async function solanaRpc(rpcUrl, method, params) {
-      const body = JSON.stringify({
-        jsonrpc: "2.0",
-        id: `${method}-${Date.now()}-${Math.random()}`,
-        method,
-        params
-      });
+    async function postRpcPayload(rpcUrl, payload) {
+      const body = JSON.stringify(payload);
 
       const headerModes = [
         {
@@ -1409,7 +1402,7 @@
 
       for (const headers of headerModes) {
         try {
-          const res = await fetchWithTimeout(
+          const response = await fetchWithTimeout(
             rpcUrl,
             {
               method: "POST",
@@ -1419,11 +1412,11 @@
             RPC_TIMEOUT_MS
           );
 
-          const text = await res.text();
+          const text = await response.text();
 
-          if (!res.ok) {
+          if (!response.ok) {
             throw new Error(
-              `${rpcName(rpcUrl)} HTTP ${res.status}`
+              `${rpcName(rpcUrl)} HTTP ${response.status}`
             );
           }
 
@@ -1437,14 +1430,7 @@
             );
           }
 
-          if (json?.error) {
-            throw new Error(
-              json.error.message ||
-              `${rpcName(rpcUrl)} RPC error`
-            );
-          }
-
-          return json.result;
+          return json;
         } catch (error) {
           lastError = error;
         }
@@ -1454,131 +1440,282 @@
         new Error(`${rpcName(rpcUrl)} request failed`);
     }
 
-    function orderedRpcs() {
-      const rpcs = [...RPC_FALLBACKS];
+    function buildAstyBatch(wallets) {
+      const requests = [
+        {
+          jsonrpc: "2.0",
+          id: "supply",
+          method: "getTokenSupply",
+          params: [
+            ASTY_MINT,
+            {
+              commitment: "confirmed"
+            }
+          ]
+        }
+      ];
 
-      if (
-        preferredRpcUrl &&
-        rpcs.includes(preferredRpcUrl)
-      ) {
-        return [
-          preferredRpcUrl,
-          ...rpcs.filter(
-            rpc => rpc !== preferredRpcUrl
-          )
-        ];
-      }
+      wallets.forEach((address, index) => {
+        requests.push({
+          jsonrpc: "2.0",
+          id: `wallet-${index}`,
+          method: "getTokenAccountsByOwner",
+          params: [
+            address,
+            {
+              mint: ASTY_MINT
+            },
+            {
+              encoding: "jsonParsed",
+              commitment: "confirmed"
+            }
+          ]
+        });
+      });
 
-      return rpcs;
+      return requests;
     }
 
-    async function solanaRpcWithFallback(
-      method,
-      params,
-      quiet = false,
-      rounds = 3
+    function parseWalletTokenAccounts(result) {
+      const accounts =
+        Array.isArray(result?.value)
+          ? result.value
+          : [];
+
+      let asty = 0;
+
+      for (const item of accounts) {
+        const amount =
+          item?.account?.data?.parsed?.info
+            ?.tokenAmount?.uiAmountString ??
+          item?.account?.data?.parsed?.info
+            ?.tokenAmount?.uiAmount ??
+          "0";
+
+        asty += Number(amount) || 0;
+      }
+
+      return {
+        asty,
+        tokenAccounts: accounts.length
+      };
+    }
+
+    function parseAstyBatchResponse(
+      response,
+      wallets
     ) {
+      if (!Array.isArray(response)) {
+        throw new Error(
+          "RPC does not support batch requests"
+        );
+      }
+
+      const byId = new Map(
+        response.map(item => [
+          String(item?.id),
+          item
+        ])
+      );
+
+      const supplyItem =
+        byId.get("supply");
+
+      if (
+        !supplyItem ||
+        supplyItem.error ||
+        !supplyItem.result?.value
+      ) {
+        throw new Error(
+          supplyItem?.error?.message ||
+          "ASTY supply missing from batch"
+        );
+      }
+
+      const currentSupply =
+        Number(
+          supplyItem.result.value
+            .uiAmountString ??
+          supplyItem.result.value
+            .uiAmount ??
+          0
+        ) || 0;
+
+      if (!currentSupply) {
+        throw new Error(
+          "ASTY supply returned zero"
+        );
+      }
+
+      const walletResults =
+        wallets.map((address, index) => {
+          const item =
+            byId.get(`wallet-${index}`);
+
+          if (!item) {
+            return {
+              address,
+              asty: 0,
+              tokenAccounts: 0,
+              error: true,
+              errorMessage:
+                "Wallet result missing from RPC batch"
+            };
+          }
+
+          if (item.error) {
+            return {
+              address,
+              asty: 0,
+              tokenAccounts: 0,
+              error: true,
+              errorMessage:
+                item.error.message ||
+                "RPC wallet error"
+            };
+          }
+
+          const parsed =
+            parseWalletTokenAccounts(
+              item.result
+            );
+
+          return {
+            address,
+            asty: parsed.asty,
+            tokenAccounts:
+              parsed.tokenAccounts,
+            error: false,
+            errorMessage: ""
+          };
+        });
+
+      return {
+        currentSupply,
+        wallets: walletResults
+      };
+    }
+
+    async function fetchAstyBatch(
+      wallets
+    ) {
+      const payload =
+        buildAstyBatch(wallets);
+
       let lastError = null;
 
       for (
         let round = 1;
-        round <= rounds;
+        round <= 2;
         round++
       ) {
-        for (const rpcUrl of orderedRpcs()) {
+        for (
+          const rpcUrl of RPC_FALLBACKS
+        ) {
           try {
-            if (!quiet) {
-              setStatus(
-                "Reading Solana",
-                `${rpcName(rpcUrl)} • ${method}` +
-                `${round > 1 ? ` • retry ${round}` : ""}`,
-                "LIVE"
-              );
-            }
-
-            const result = await solanaRpc(
-              rpcUrl,
-              method,
-              params
+            setStatus(
+              "Reading ASTY",
+              `${rpcName(rpcUrl)} • ${wallets.length} wallet` +
+              `${wallets.length === 1 ? "" : "s"}` +
+              `${round > 1 ? " • retry" : ""}`,
+              "LIVE"
             );
 
-            preferredRpcUrl = rpcUrl;
-            return result;
+            const response =
+              await postRpcPayload(
+                rpcUrl,
+                payload
+              );
+
+            const parsed =
+              parseAstyBatchResponse(
+                response,
+                wallets
+              );
+
+            return {
+              ...parsed,
+              rpcUrl
+            };
           } catch (error) {
             lastError = error;
 
             console.warn(
-              "RPC failed:",
+              "Batch RPC failed:",
               rpcUrl,
-              method,
               `round ${round}`,
               error
             );
-
-            if (preferredRpcUrl === rpcUrl) {
-              preferredRpcUrl = null;
-            }
           }
         }
 
-        if (round < rounds) {
-          await new Promise(
-            resolve =>
-              setTimeout(resolve, 350 * round)
-          );
+        if (round < 2) {
+          await sleep(650);
         }
       }
 
       throw lastError ||
         new Error(
-          "All public Solana data sources failed"
+          "All public Solana RPCs rejected the wallet batch"
         );
     }
 
-    async function getAstySupply() {
-      const result = await solanaRpcWithFallback("getTokenSupply", [
-        ASTY_MINT,
-        { commitment: "confirmed" }
-      ]);
+    async function fetchMissingWallets(
+      walletResults
+    ) {
+      const failedIndexes =
+        walletResults
+          .map(
+            (wallet, index) =>
+              wallet.error
+                ? index
+                : -1
+          )
+          .filter(
+            index => index >= 0
+          );
 
-      return Number(
-        result?.value?.uiAmountString ??
-        result?.value?.uiAmount ??
-        0
-      ) || 0;
-    }
-
-    async function getWalletAstyBalance(ownerAddress) {
-      const result = await solanaRpcWithFallback(
-        "getTokenAccountsByOwner",
-        [
-          ownerAddress,
-          { mint: ASTY_MINT },
-          {
-            encoding: "jsonParsed",
-            commitment: "confirmed"
-          }
-        ],
-        true
-      );
-
-      const accounts = Array.isArray(result?.value) ? result.value : [];
-
-      let total = 0;
-
-      for (const item of accounts) {
-        const amount =
-          item?.account?.data?.parsed?.info?.tokenAmount?.uiAmountString ??
-          item?.account?.data?.parsed?.info?.tokenAmount?.uiAmount ??
-          "0";
-
-        total += Number(amount) || 0;
+      if (!failedIndexes.length) {
+        return walletResults;
       }
 
-      return {
-        asty: total,
-        tokenAccounts: accounts.length
-      };
+      // Retry only missing wallet results,
+      // again as one compact batch.
+      const retryWallets =
+        failedIndexes.map(
+          index =>
+            walletResults[index].address
+        );
+
+      setStatus(
+        "Retrying wallets",
+        `${retryWallets.length} incomplete wallet` +
+        `${retryWallets.length === 1 ? "" : "s"} • one rescue batch`,
+        "RETRY"
+      );
+
+      await sleep(700);
+
+      try {
+        const retry =
+          await fetchAstyBatch(
+            retryWallets
+          );
+
+        failedIndexes.forEach(
+          (originalIndex, retryIndex) => {
+            walletResults[originalIndex] =
+              retry.wallets[retryIndex];
+          }
+        );
+      } catch (error) {
+        console.warn(
+          "Rescue batch failed:",
+          error
+        );
+      }
+
+      return walletResults;
     }
 
     async function fetchPriceFromDexScreener() {
@@ -1923,54 +2060,13 @@
       );
     }
 
-    async function scanSingleWallet(
-      address,
-      attempts = 2
-    ) {
-      let lastError = null;
-
-      for (
-        let attempt = 1;
-        attempt <= attempts;
-        attempt++
-      ) {
-        try {
-          const result =
-            await getWalletAstyBalance(address);
-
-          return {
-            address,
-            asty: result.asty,
-            tokenAccounts:
-              result.tokenAccounts,
-            error: false,
-            errorMessage: ""
-          };
-        } catch (error) {
-          lastError = error;
-
-          if (attempt < attempts) {
-            await sleep(300 * attempt);
-          }
-        }
-      }
-
-      return {
-        address,
-        asty: 0,
-        tokenAccounts: 0,
-        error: true,
-        errorMessage:
-          lastError?.message ||
-          "Wallet could not be read"
-      };
-    }
-
     async function scanWallets() {
       if (state.scanning) return;
 
       const parsed =
-        parseWallets(ui.walletInput.value);
+        parseWallets(
+          ui.walletInput.value
+        );
 
       if (!parsed.valid.length) {
         const invalidMsg =
@@ -1999,143 +2095,64 @@
 
       try {
         setStatus(
-          "Loading ASTY",
-          "Reading live supply and market data...",
+          "Preparing analysis",
+          `Scanning ${parsed.valid.length} wallet` +
+          `${parsed.valid.length === 1 ? "" : "s"} in one compact request...`,
           "LIVE"
         );
 
-        const [
-          supplyResult,
-          priceResult
-        ] = await Promise.allSettled([
-          getAstySupply(),
-          getAstyPrice()
-        ]);
+        // Price is independent from Solana RPC,
+        // so load it in parallel.
+        const pricePromise =
+          getAstyPrice();
 
-        if (
-          supplyResult.status !== "fulfilled" ||
-          !supplyResult.value
-        ) {
-          throw new Error(
-            supplyResult.status === "rejected"
-              ? supplyResult.reason?.message ||
-                "Could not read ASTY supply"
-              : "Could not read ASTY supply"
+        // Main improvement:
+        // all wallet balances + supply in one JSON-RPC batch.
+        const batch =
+          await fetchAstyBatch(
+            parsed.valid
+          );
+
+        state.currentSupply =
+          Number(
+            batch.currentSupply
+          ) || 0;
+
+        let walletResults =
+          batch.wallets;
+
+        // Usually not needed, but if an RPC returned
+        // only part of the batch, retry only those wallets.
+        walletResults =
+          await fetchMissingWallets(
+            walletResults
+          );
+
+        let priceResult = null;
+
+        try {
+          priceResult =
+            await pricePromise;
+        } catch (error) {
+          console.warn(
+            "Price unavailable:",
+            error
           );
         }
 
-        state.currentSupply =
-          Number(supplyResult.value) || 0;
-
-        if (
-          priceResult.status === "fulfilled"
-        ) {
+        if (priceResult) {
           state.priceUsd =
             Number(
-              priceResult.value.priceUsd
+              priceResult.priceUsd
             ) || 0;
 
           state.priceSource =
-            priceResult.value.source ||
+            priceResult.source ||
             "Market data";
         } else {
           state.priceUsd = 0;
           state.priceSource =
             "Price temporarily unavailable";
-        }
-
-        const walletResults = [];
-
-        // First pass: deliberately sequential.
-        // Public RPCs are much more reliable
-        // when we do not burst many requests.
-        for (
-          let i = 0;
-          i < parsed.valid.length;
-          i++
-        ) {
-          const address =
-            parsed.valid[i];
-
-          setStatus(
-            "Analyzing wallets",
-            `Wallet ${i + 1} of ${parsed.valid.length} • ` +
-            `${shortAddr(address)}`,
-            "LIVE"
-          );
-
-          walletResults.push(
-            await scanSingleWallet(
-              address,
-              2
-            )
-          );
-
-          if (
-            i < parsed.valid.length - 1
-          ) {
-            await sleep(140);
-          }
-        }
-
-        // Rescue pass for only the failed wallets.
-        const failedIndexes =
-          walletResults
-            .map(
-              (wallet, index) =>
-                wallet.error
-                  ? index
-                  : -1
-            )
-            .filter(
-              index => index >= 0
-            );
-
-        if (failedIndexes.length) {
-          setStatus(
-            "Retrying wallets",
-            `${failedIndexes.length} wallet` +
-            `${failedIndexes.length === 1 ? "" : "s"} ` +
-            `need another pass...`,
-            "RETRY"
-          );
-
-          // Start the rescue pass without
-          // preferring the previously used RPC.
-          preferredRpcUrl = null;
-
-          await sleep(900);
-
-          for (
-            let i = 0;
-            i < failedIndexes.length;
-            i++
-          ) {
-            const resultIndex =
-              failedIndexes[i];
-
-            const address =
-              parsed.valid[resultIndex];
-
-            setStatus(
-              "Retrying wallets",
-              `Retry ${i + 1} of ${failedIndexes.length} • ` +
-              `${shortAddr(address)}`,
-              "RETRY"
-            );
-
-            walletResults[resultIndex] =
-              await scanSingleWallet(
-                address,
-                3
-              );
-
-            if (
-              i < failedIndexes.length - 1
-            ) {
-              await sleep(250);
-            }
-          }
         }
 
         state.wallets =
@@ -2157,7 +2174,8 @@
           ).length;
 
         const success =
-          walletResults.length - failed;
+          walletResults.length -
+          failed;
 
         let summary =
           `${success} wallet` +
@@ -2173,34 +2191,51 @@
             ` • ${failed} could not be read`;
         }
 
-        if (parsed.invalid.length) {
+        if (
+          parsed.invalid.length
+        ) {
           summary +=
             ` • ${parsed.invalid.length} invalid ignored`;
         }
 
-        if (preferredRpcUrl) {
-          summary +=
-            ` • ${rpcName(preferredRpcUrl)}`;
-        }
+        summary +=
+          ` • ${rpcName(batch.rpcUrl)}`;
 
         setStatus(
           failed
             ? "Analysis complete with warnings"
             : "Analysis complete",
           summary,
-          failed ? "CHECK" : "MY ASTY"
+          failed
+            ? "CHECK"
+            : "MY ASTY"
         );
       } catch (error) {
         console.error(error);
 
-        const message =
+        const rawMessage =
           String(
             error?.message ||
             "Could not complete analysis"
-          ).replace(
-            "Failed to fetch",
-            "Network request failed"
           );
+
+        let message =
+          rawMessage;
+
+        if (
+          rawMessage.includes(
+            "Failed to fetch"
+          ) ||
+          rawMessage.includes(
+            "NetworkError"
+          ) ||
+          rawMessage.includes(
+            "Load failed"
+          )
+        ) {
+          message =
+            "The public Solana RPCs are currently blocking browser requests. Please try again shortly.";
+        }
 
         setStatus(
           "Analysis failed",
