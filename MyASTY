@@ -2407,50 +2407,187 @@
     }
 
     async function fetchPriceFromDexScreener() {
-      const url = `https://api.dexscreener.com/tokens/v1/solana/${ASTY_MINT}`;
-      const res = await fetchWithTimeout(url, {
-        headers: { accept: "application/json" }
-      }, 10000);
+      const url =
+        `https://api.dexscreener.com/tokens/v1/solana/${ASTY_MINT}`;
+
+      const res =
+        await fetchWithTimeout(
+          url,
+          {
+            headers: {
+              accept: "application/json"
+            }
+          },
+          10000
+        );
 
       if (!res.ok) {
-        throw new Error(`DEX Screener HTTP ${res.status}`);
+        throw new Error(
+          `DEX Screener HTTP ${res.status}`
+        );
       }
 
-      const pairs = await res.json();
-      const usable = (Array.isArray(pairs) ? pairs : [])
-        .filter(pair => pair?.baseToken?.address === ASTY_MINT)
-        .map(pair => ({
-          price: Number(pair?.priceUsd),
-          liquidity: Number(pair?.liquidity?.usd) || 0
-        }))
-        .filter(p => Number.isFinite(p.price) && p.price > 0);
+      const pairs =
+        await res.json();
+
+      const usable =
+        (Array.isArray(pairs)
+          ? pairs
+          : [])
+          .filter(
+            pair =>
+              pair?.baseToken?.address ===
+              ASTY_MINT
+          )
+          .map(pair => {
+            const price =
+              Number(pair?.priceUsd);
+
+            const liquidity =
+              Number(
+                pair?.liquidity?.usd
+              ) || 0;
+
+            const fdv =
+              Number(pair?.fdv);
+
+            const supplyEstimate =
+              Number.isFinite(fdv) &&
+              fdv > 0 &&
+              Number.isFinite(price) &&
+              price > 0
+                ? fdv / price
+                : 0;
+
+            return {
+              price,
+              liquidity,
+              supplyEstimate
+            };
+          })
+          .filter(
+            row =>
+              Number.isFinite(
+                row.price
+              ) &&
+              row.price > 0
+          );
 
       if (!usable.length) {
-        throw new Error("No ASTY USD price returned by DEX Screener");
+        throw new Error(
+          "No ASTY USD price returned by DEX Screener"
+        );
       }
 
-      usable.sort((a, b) => b.liquidity - a.liquidity);
+      usable.sort(
+        (a, b) =>
+          b.liquidity -
+          a.liquidity
+      );
 
-      const top = usable.slice(0, 8);
-      const positiveLiquidity = top.filter(p => p.liquidity > 0);
-      const totalLiquidity = positiveLiquidity.reduce((sum, p) => sum + p.liquidity, 0);
+      const top =
+        usable.slice(0, 8);
+
+      const positiveLiquidity =
+        top.filter(
+          row =>
+            row.liquidity > 0
+        );
+
+      const totalLiquidity =
+        positiveLiquidity.reduce(
+          (sum, row) =>
+            sum + row.liquidity,
+          0
+        );
+
+      let priceUsd =
+        usable[0].price;
 
       if (totalLiquidity > 0) {
-        const weightedPrice = positiveLiquidity.reduce(
-          (sum, p) => sum + p.price * p.liquidity,
-          0
-        ) / totalLiquidity;
+        priceUsd =
+          positiveLiquidity.reduce(
+            (sum, row) =>
+              sum +
+              row.price *
+              row.liquidity,
+            0
+          ) /
+          totalLiquidity;
+      }
 
-        return {
-          priceUsd: weightedPrice,
-          source: `DEX Screener • liquidity-weighted ${positiveLiquidity.length} pool${positiveLiquidity.length === 1 ? "" : "s"}`
-        };
+      /*
+       * DEX Screener's FDV is another useful fallback for supply:
+       * supply ≈ FDV / price.
+       *
+       * Use the median of plausible estimates from the most liquid
+       * ASTY pools so one odd pool cannot distort the result.
+       */
+      const supplyCandidates =
+        top
+          .map(
+            row =>
+              row.supplyEstimate
+          )
+          .filter(
+            value =>
+              Number.isFinite(value) &&
+              value > 0 &&
+              value <=
+                ORIGINAL_SUPPLY *
+                1.02
+          )
+          .sort(
+            (a, b) =>
+              a - b
+          );
+
+      let supplyEstimate = 0;
+
+      if (
+        supplyCandidates.length
+      ) {
+        const mid =
+          Math.floor(
+            supplyCandidates.length /
+            2
+          );
+
+        supplyEstimate =
+          supplyCandidates.length % 2
+            ? supplyCandidates[mid]
+            : (
+                supplyCandidates[
+                  mid - 1
+                ] +
+                supplyCandidates[mid]
+              ) / 2;
       }
 
       return {
-        priceUsd: usable[0].price,
-        source: "DEX Screener"
+        priceUsd,
+        supplyEstimate,
+        source:
+          totalLiquidity > 0
+            ? `DEX Screener • liquidity-weighted ${positiveLiquidity.length} pool${positiveLiquidity.length === 1 ? "" : "s"}`
+            : "DEX Screener",
+        supplySource:
+          supplyEstimate > 0
+            ? "DEX Screener FDV"
+            : ""
       };
+    }
+
+    function isPlausibleAstySupply(
+      value
+    ) {
+      return (
+        Number.isFinite(value) &&
+        value > 0 &&
+        value <=
+          ORIGINAL_SUPPLY *
+          1.02
+      );
     }
 
     async function fetchAstySnapshotFromGeckoTerminal() {
@@ -2479,10 +2616,13 @@
         await response.json();
 
       const attr =
-        json?.data?.attributes || {};
+        json?.data?.attributes ||
+        {};
 
       const decimals =
-        Number(attr?.decimals);
+        Number(
+          attr?.decimals
+        );
 
       const normalizedSupply =
         Number(
@@ -2490,35 +2630,123 @@
         );
 
       const rawSupply =
-        Number(attr?.total_supply);
+        Number(
+          attr?.total_supply
+        );
 
-      let currentSupply = 0;
+      const priceUsd =
+        Number(
+          attr?.price_usd
+        ) || 0;
+
+      const fdvUsd =
+        Number(
+          attr?.fdv_usd
+        );
+
+      const supplyCandidates = [];
+
+      if (
+        isPlausibleAstySupply(
+          normalizedSupply
+        )
+      ) {
+        supplyCandidates.push({
+          value:
+            normalizedSupply,
+          source:
+            "GeckoTerminal on-chain supply"
+        });
+      }
 
       if (
         Number.isFinite(
-          normalizedSupply
+          rawSupply
         ) &&
-        normalizedSupply > 0
-      ) {
-        currentSupply =
-          normalizedSupply;
-      } else if (
-        Number.isFinite(rawSupply) &&
         rawSupply > 0 &&
-        Number.isFinite(decimals)
+        Number.isFinite(
+          decimals
+        )
       ) {
-        currentSupply =
+        const normalizedRaw =
           rawSupply /
-          Math.pow(10, decimals);
+          Math.pow(
+            10,
+            decimals
+          );
+
+        if (
+          isPlausibleAstySupply(
+            normalizedRaw
+          )
+        ) {
+          supplyCandidates.push({
+            value:
+              normalizedRaw,
+            source:
+              "GeckoTerminal token supply"
+          });
+        }
       }
 
-      const priceUsd =
-        Number(attr?.price_usd) || 0;
+      /*
+       * IMPORTANT FIX:
+       * GeckoTerminal documents FDV as being based on on-chain
+       * supply and current price. Therefore FDV / price gives us
+       * another independent way to recover the current ASTY supply.
+       */
+      if (
+        Number.isFinite(
+          fdvUsd
+        ) &&
+        fdvUsd > 0 &&
+        Number.isFinite(
+          priceUsd
+        ) &&
+        priceUsd > 0
+      ) {
+        const fdvSupply =
+          fdvUsd /
+          priceUsd;
+
+        if (
+          isPlausibleAstySupply(
+            fdvSupply
+          )
+        ) {
+          supplyCandidates.push({
+            value:
+              fdvSupply,
+            source:
+              "GeckoTerminal FDV/on-chain supply"
+          });
+        }
+      }
+
+      const best =
+        supplyCandidates[0] ||
+        {
+          value: 0,
+          source: ""
+        };
 
       return {
-        currentSupply,
+        currentSupply:
+          best.value,
         priceUsd,
-        source: "GeckoTerminal"
+        source:
+          "GeckoTerminal",
+        supplySource:
+          best.source,
+        debugSupplyCandidates:
+          supplyCandidates.map(
+            item => ({
+              value:
+                item.value,
+              source:
+                item.source
+            })
+          )
       };
     }
 
@@ -2986,6 +3214,16 @@
               return null;
             });
 
+        const dexSnapshotPromise =
+          fetchPriceFromDexScreener()
+            .catch(error => {
+              console.warn(
+                "DEX Screener snapshot failed:",
+                error
+              );
+              return null;
+            });
+
         let walletResults =
           await getWalletsViaThreeWs(
             parsed.valid
@@ -3004,73 +3242,135 @@
             );
         }
 
-        const snapshot =
-          await snapshotPromise;
+        const [
+          snapshot,
+          dexSnapshot
+        ] = await Promise.all([
+          snapshotPromise,
+          dexSnapshotPromise
+        ]);
+
+        /*
+         * SUPPLY RESOLUTION
+         * -----------------
+         * 1. GeckoTerminal direct/on-chain supply
+         * 2. GeckoTerminal FDV / price
+         * 3. DEX Screener FDV / price
+         * 4. Slow SolanaFM REST supply fallback
+         *
+         * The working V10 wallet engine above is untouched.
+         */
+        let supplySource = "";
 
         if (
-          snapshot?.currentSupply
+          isPlausibleAstySupply(
+            Number(
+              snapshot?.currentSupply
+            )
+          )
         ) {
           state.currentSupply =
             Number(
               snapshot.currentSupply
-            ) || 0;
+            );
+
+          supplySource =
+            snapshot?.supplySource ||
+            "GeckoTerminal";
+        } else if (
+          isPlausibleAstySupply(
+            Number(
+              dexSnapshot?.supplyEstimate
+            )
+          )
+        ) {
+          state.currentSupply =
+            Number(
+              dexSnapshot.supplyEstimate
+            );
+
+          supplySource =
+            dexSnapshot?.supplySource ||
+            "DEX Screener FDV";
         } else {
           setStatus(
             "Loading supply",
-            "Trying backup supply source...",
+            "Trying final supply source...",
             "BACKUP"
           );
 
           try {
-            state.currentSupply =
+            const backupSupply =
               await getAstySupplyViaSolanaFm();
+
+            if (
+              isPlausibleAstySupply(
+                Number(
+                  backupSupply
+                )
+              )
+            ) {
+              state.currentSupply =
+                Number(
+                  backupSupply
+                );
+
+              supplySource =
+                "SolanaFM";
+            } else {
+              state.currentSupply = 0;
+            }
           } catch (error) {
             console.warn(
-              "Backup supply failed:",
+              "Final supply fallback failed:",
               error
             );
 
-            // Do NOT fail the whole wallet scan
-            // just because supply is unavailable.
             state.currentSupply = 0;
           }
         }
 
+        /*
+         * PRICE RESOLUTION
+         * Keep the same price behavior that already works in V10.
+         */
         if (
-          snapshot?.priceUsd
+          Number(
+            snapshot?.priceUsd
+          ) > 0
         ) {
           state.priceUsd =
             Number(
               snapshot.priceUsd
-            ) || 0;
+            );
 
           state.priceSource =
             snapshot.source ||
             "GeckoTerminal";
-        } else {
-          try {
-            const price =
-              await fetchPriceFromDexScreener();
-
-            state.priceUsd =
-              Number(
-                price.priceUsd
-              ) || 0;
-
-            state.priceSource =
-              price.source ||
-              "DEX Screener";
-          } catch (error) {
-            console.warn(
-              "Price fallback failed:",
-              error
+        } else if (
+          Number(
+            dexSnapshot?.priceUsd
+          ) > 0
+        ) {
+          state.priceUsd =
+            Number(
+              dexSnapshot.priceUsd
             );
 
-            state.priceUsd = 0;
-            state.priceSource =
-              "Price temporarily unavailable";
-          }
+          state.priceSource =
+            dexSnapshot.source ||
+            "DEX Screener";
+        } else {
+          state.priceUsd = 0;
+          state.priceSource =
+            "Price temporarily unavailable";
         }
+
+        console.info(
+          "My ASTY supply:",
+          state.currentSupply,
+          supplySource || "unavailable"
+        );
 
         state.wallets =
           walletResults.map(
@@ -3139,6 +3439,9 @@
         if (!state.currentSupply) {
           summary +=
             " • supply temporarily unavailable";
+        } else if (supplySource) {
+          summary +=
+            ` • Supply: ${supplySource}`;
         }
 
         setStatus(
