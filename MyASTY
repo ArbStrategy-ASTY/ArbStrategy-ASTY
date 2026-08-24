@@ -8,6 +8,60 @@
   <link rel="canonical" href="https://myasty.arbstrategy.net/" />
   <meta name="description" content="My ASTY — a read-only view of your ASTY holdings, current supply share and personal ASTY-Effect." />
 
+  <script>
+    window.__loadSolanaWeb3 = new Promise((resolve, reject) => {
+      const sources = [
+        "https://cdn.jsdelivr.net/npm/@solana/web3.js@1.98.4/lib/index.iife.min.js",
+        "https://unpkg.com/@solana/web3.js@1.98.4/lib/index.iife.min.js",
+        "https://cdn.jsdelivr.net/npm/@solana/web3.js@1.95.3/lib/index.iife.min.js",
+        "https://unpkg.com/@solana/web3.js@1.95.3/lib/index.iife.min.js"
+      ];
+
+      let index = 0;
+
+      function loadNext() {
+        if (
+          window.solanaWeb3 &&
+          window.solanaWeb3.PublicKey
+        ) {
+          resolve(window.solanaWeb3);
+          return;
+        }
+
+        if (index >= sources.length) {
+          reject(
+            new Error(
+              "Solana Web3 library failed to load"
+            )
+          );
+          return;
+        }
+
+        const script =
+          document.createElement("script");
+
+        script.src = sources[index++];
+        script.async = true;
+
+        script.onload = () => {
+          if (
+            window.solanaWeb3 &&
+            window.solanaWeb3.PublicKey
+          ) {
+            resolve(window.solanaWeb3);
+          } else {
+            loadNext();
+          }
+        };
+
+        script.onerror = loadNext;
+        document.head.appendChild(script);
+      }
+
+      loadNext();
+    });
+  </script>
+
   <style>
     :root{
       --bg:#06040a;
@@ -1186,7 +1240,7 @@
     </section>
 
     <div class="footer-note">
-      My ASTY is a read-only analytics view. Values are informational and depend on public RPC and market-data availability. No investment advice.
+      My ASTY is a read-only analytics view. Wallets are scanned through public Solana data only; no connection or signature is required. Values are informational. No investment advice.
     </div>
   </main>
 
@@ -1196,6 +1250,9 @@
 
     const STORAGE_KEY = "myAsty.wallets.v1";
     const STORAGE_REMEMBER_KEY = "myAsty.remember.v1";
+
+    // Same browser-friendly RPC order that made the old CoreScanner useful.
+    // dRPC is intentionally omitted because its free Solana route has rejected requests.
     const RPC_FALLBACKS = [
       "https://solana.rpc.subquery.network/public",
       "https://solana.api.onfinality.io/public",
@@ -1203,11 +1260,17 @@
       "https://api.mainnet-beta.solana.com"
     ];
 
-    const WALLET_DELAY_MS = 850;
-    const RETRY_DELAY_MS = 1400;
+    const ASSOCIATED_TOKEN_PROGRAM_ID =
+      "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL";
+
     const RPC_TIMEOUT_MS = 12000;
 
+    // Keep requests spaced out. Public RPCs behave far better this way.
+    const RPC_COOLDOWN_MS = 650;
+    const RESCUE_WALLET_DELAY_MS = 900;
+
     let preferredRpcUrl = null;
+    let cachedAstyTokenProgramId = null;
 
     const ui = {
       walletInput: document.getElementById("walletInput"),
@@ -1374,21 +1437,72 @@
       };
     }
 
-    async function fetchWithTimeout(url, options = {}, timeoutMs = RPC_TIMEOUT_MS) {
-      const controller = new AbortController();
-      const timer = setTimeout(() => controller.abort(), timeoutMs);
+    async function loadSolanaWeb3() {
+      if (
+        window.solanaWeb3 &&
+        window.solanaWeb3.PublicKey
+      ) {
+        return window.solanaWeb3;
+      }
+
+      if (window.__loadSolanaWeb3) {
+        await window.__loadSolanaWeb3;
+      }
+
+      if (
+        !window.solanaWeb3 ||
+        !window.solanaWeb3.PublicKey
+      ) {
+        throw new Error(
+          "Solana Web3 library failed to load"
+        );
+      }
+
+      return window.solanaWeb3;
+    }
+
+    async function fetchWithTimeout(
+      url,
+      options = {},
+      timeoutMs = RPC_TIMEOUT_MS
+    ) {
+      const controller =
+        new AbortController();
+
+      const timeout =
+        setTimeout(
+          () => controller.abort(),
+          timeoutMs
+        );
 
       try {
-        return await fetch(url, {
-          ...options,
-          signal: controller.signal
-        });
+        return await fetch(
+          url,
+          {
+            ...options,
+            signal: controller.signal
+          }
+        );
+      } catch (error) {
+        if (
+          error?.name === "AbortError"
+        ) {
+          throw new Error(
+            "Request timeout"
+          );
+        }
+
+        throw error;
       } finally {
-        clearTimeout(timer);
+        clearTimeout(timeout);
       }
     }
 
-    async function solanaRpc(rpcUrl, method, params) {
+    async function solanaRpc(
+      rpcUrl,
+      method,
+      params
+    ) {
       const body = JSON.stringify({
         jsonrpc: "2.0",
         id: `${method}-${Date.now()}-${Math.random()}`,
@@ -1396,15 +1510,19 @@
         params
       });
 
-      // Some public browser RPCs prefer JSON,
-      // others behave better with text/plain.
+      /*
+       * IMPORTANT:
+       * text/plain comes FIRST, just like in the original CoreScanner.
+       * It can avoid the application/json CORS preflight that some
+       * public Solana RPC providers reject in browsers.
+       */
       const headerModes = [
         {
-          "Content-Type": "application/json",
+          "Content-Type": "text/plain",
           "Accept": "application/json"
         },
         {
-          "Content-Type": "text/plain",
+          "Content-Type": "application/json",
           "Accept": "application/json"
         }
       ];
@@ -1413,17 +1531,19 @@
 
       for (const headers of headerModes) {
         try {
-          const response = await fetchWithTimeout(
-            rpcUrl,
-            {
-              method: "POST",
-              headers,
-              body
-            },
-            RPC_TIMEOUT_MS
-          );
+          const response =
+            await fetchWithTimeout(
+              rpcUrl,
+              {
+                method: "POST",
+                headers,
+                body
+              },
+              RPC_TIMEOUT_MS
+            );
 
-          const text = await response.text();
+          const text =
+            await response.text();
 
           if (!response.ok) {
             throw new Error(
@@ -1454,19 +1574,26 @@
         }
       }
 
-      throw lastError ||
-        new Error(`${rpcName(rpcUrl)} request failed`);
+      throw (
+        lastError ||
+        new Error(
+          `${rpcName(rpcUrl)} request failed`
+        )
+      );
     }
 
     function orderedRpcs() {
       if (
         preferredRpcUrl &&
-        RPC_FALLBACKS.includes(preferredRpcUrl)
+        RPC_FALLBACKS.includes(
+          preferredRpcUrl
+        )
       ) {
         return [
           preferredRpcUrl,
           ...RPC_FALLBACKS.filter(
-            url => url !== preferredRpcUrl
+            url =>
+              url !== preferredRpcUrl
           )
         ];
       }
@@ -1477,28 +1604,39 @@
     async function solanaRpcWithFallback(
       method,
       params,
-      quiet = false
+      {
+        quiet = false,
+        cooldown = true
+      } = {}
     ) {
       let lastError = null;
 
-      for (const rpcUrl of orderedRpcs()) {
+      for (
+        const rpcUrl of orderedRpcs()
+      ) {
         try {
           if (!quiet) {
             setStatus(
-              "Reading Solana",
+              "Reading ASTY",
               `${rpcName(rpcUrl)} • ${method}`,
-              "LIVE"
+              "CORE MODE"
             );
           }
 
-          const result = await solanaRpc(
-            rpcUrl,
-            method,
-            params
-          );
+          const result =
+            await solanaRpc(
+              rpcUrl,
+              method,
+              params
+            );
 
-          preferredRpcUrl = rpcUrl;
-          return result;
+          preferredRpcUrl =
+            rpcUrl;
+
+          return {
+            result,
+            rpcUrl
+          };
         } catch (error) {
           lastError = error;
 
@@ -1509,31 +1647,298 @@
             error
           );
 
-          if (preferredRpcUrl === rpcUrl) {
+          if (
+            preferredRpcUrl ===
+            rpcUrl
+          ) {
             preferredRpcUrl = null;
           }
 
-          // Small cooldown before trying the next provider.
-          await sleep(300);
+          if (cooldown) {
+            await sleep(300);
+          }
         }
       }
 
-      throw lastError ||
+      throw (
+        lastError ||
         new Error(
           "All public Solana RPCs failed"
+        )
+      );
+    }
+
+    async function getAstyTokenProgramId() {
+      if (
+        cachedAstyTokenProgramId
+      ) {
+        return (
+          cachedAstyTokenProgramId
         );
+      }
+
+      const { result } =
+        await solanaRpcWithFallback(
+          "getAccountInfo",
+          [
+            ASTY_MINT,
+            {
+              encoding: "jsonParsed",
+              commitment: "confirmed"
+            }
+          ]
+        );
+
+      const owner =
+        result?.value?.owner;
+
+      if (!owner) {
+        throw new Error(
+          "Could not detect ASTY token program"
+        );
+      }
+
+      cachedAstyTokenProgramId =
+        owner;
+
+      return owner;
+    }
+
+    function deriveAssociatedTokenAccount(
+      web3,
+      ownerAddress,
+      mintAddress,
+      tokenProgramId
+    ) {
+      const owner =
+        new web3.PublicKey(
+          ownerAddress
+        );
+
+      const mint =
+        new web3.PublicKey(
+          mintAddress
+        );
+
+      const tokenProgram =
+        new web3.PublicKey(
+          tokenProgramId
+        );
+
+      const associatedTokenProgram =
+        new web3.PublicKey(
+          ASSOCIATED_TOKEN_PROGRAM_ID
+        );
+
+      const [ata] =
+        web3.PublicKey
+          .findProgramAddressSync(
+            [
+              owner.toBuffer(),
+              tokenProgram.toBuffer(),
+              mint.toBuffer()
+            ],
+            associatedTokenProgram
+          );
+
+      return ata.toBase58();
+    }
+
+    function parseTokenAccountAmount(
+      accountInfo
+    ) {
+      if (!accountInfo) {
+        return 0;
+      }
+
+      const amount =
+        accountInfo?.data?.parsed?.info
+          ?.tokenAmount?.uiAmountString ??
+        accountInfo?.data?.parsed?.info
+          ?.tokenAmount?.uiAmount ??
+        "0";
+
+      return Number(amount) || 0;
+    }
+
+    async function getAstyBalancesCore(
+      wallets,
+      tokenProgramId
+    ) {
+      const web3 =
+        await loadSolanaWeb3();
+
+      const atas =
+        wallets.map(
+          address =>
+            deriveAssociatedTokenAccount(
+              web3,
+              address,
+              ASTY_MINT,
+              tokenProgramId
+            )
+        );
+
+      /*
+       * getMultipleAccounts is ONE normal JSON-RPC method call.
+       * This is NOT an HTTP JSON-RPC batch, so it avoids the HTTP 415
+       * problem while still reading all standard ASTY ATAs together.
+       */
+      const { result, rpcUrl } =
+        await solanaRpcWithFallback(
+          "getMultipleAccounts",
+          [
+            atas,
+            {
+              encoding: "jsonParsed",
+              commitment: "confirmed"
+            }
+          ]
+        );
+
+      const values =
+        Array.isArray(result?.value)
+          ? result.value
+          : [];
+
+      if (
+        values.length !== atas.length
+      ) {
+        throw new Error(
+          "RPC returned an incomplete wallet response"
+        );
+      }
+
+      const walletResults =
+        wallets.map(
+          (address, index) => ({
+            address,
+            ata: atas[index],
+            asty:
+              parseTokenAccountAmount(
+                values[index]
+              ),
+            tokenAccounts:
+              values[index] ? 1 : 0,
+            error: false,
+            errorMessage: ""
+          })
+        );
+
+      return {
+        wallets: walletResults,
+        rpcUrl
+      };
+    }
+
+    async function getAstyBalanceByAta(
+      address,
+      ata
+    ) {
+      try {
+        const { result } =
+          await solanaRpcWithFallback(
+            "getAccountInfo",
+            [
+              ata,
+              {
+                encoding: "jsonParsed",
+                commitment: "confirmed"
+              }
+            ],
+            {
+              quiet: true
+            }
+          );
+
+        return {
+          address,
+          ata,
+          asty:
+            parseTokenAccountAmount(
+              result?.value
+            ),
+          tokenAccounts:
+            result?.value ? 1 : 0,
+          error: false,
+          errorMessage: ""
+        };
+      } catch (error) {
+        return {
+          address,
+          ata,
+          asty: 0,
+          tokenAccounts: 0,
+          error: true,
+          errorMessage:
+            error?.message ||
+            "Wallet could not be read"
+        };
+      }
+    }
+
+    async function getAstyBalancesRescue(
+      wallets,
+      tokenProgramId
+    ) {
+      const web3 =
+        await loadSolanaWeb3();
+
+      const results = [];
+
+      for (
+        let i = 0;
+        i < wallets.length;
+        i++
+      ) {
+        const address =
+          wallets[i];
+
+        const ata =
+          deriveAssociatedTokenAccount(
+            web3,
+            address,
+            ASTY_MINT,
+            tokenProgramId
+          );
+
+        setStatus(
+          "Core rescue scan",
+          `Wallet ${i + 1} of ${wallets.length} • ${shortAddr(address)}`,
+          "RESCUE"
+        );
+
+        results.push(
+          await getAstyBalanceByAta(
+            address,
+            ata
+          )
+        );
+
+        if (
+          i <
+          wallets.length - 1
+        ) {
+          await sleep(
+            RESCUE_WALLET_DELAY_MS
+          );
+        }
+      }
+
+      return results;
     }
 
     async function getAstySupply() {
-      const result = await solanaRpcWithFallback(
-        "getTokenSupply",
-        [
-          ASTY_MINT,
-          {
-            commitment: "confirmed"
-          }
-        ]
-      );
+      const { result } =
+        await solanaRpcWithFallback(
+          "getTokenSupply",
+          [
+            ASTY_MINT,
+            {
+              commitment: "confirmed"
+            }
+          ]
+        );
 
       return Number(
         result?.value?.uiAmountString ??
@@ -1541,47 +1946,6 @@
         0
       ) || 0;
     }
-
-    async function getWalletAstyBalance(ownerAddress) {
-      const result = await solanaRpcWithFallback(
-        "getTokenAccountsByOwner",
-        [
-          ownerAddress,
-          {
-            mint: ASTY_MINT
-          },
-          {
-            encoding: "jsonParsed",
-            commitment: "confirmed"
-          }
-        ],
-        true
-      );
-
-      const accounts =
-        Array.isArray(result?.value)
-          ? result.value
-          : [];
-
-      let asty = 0;
-
-      for (const item of accounts) {
-        const amount =
-          item?.account?.data?.parsed?.info
-            ?.tokenAmount?.uiAmountString ??
-          item?.account?.data?.parsed?.info
-            ?.tokenAmount?.uiAmount ??
-          "0";
-
-        asty += Number(amount) || 0;
-      }
-
-      return {
-        asty,
-        tokenAccounts: accounts.length
-      };
-    }
-
     async function fetchPriceFromDexScreener() {
       const url = `https://api.dexscreener.com/tokens/v1/solana/${ASTY_MINT}`;
       const res = await fetchWithTimeout(url, {
@@ -1920,56 +2284,24 @@
 
     function sleep(ms) {
       return new Promise(
-        resolve => setTimeout(resolve, ms)
+        resolve =>
+          setTimeout(resolve, ms)
       );
     }
 
-    async function scanSingleWallet(
-      address,
-      retry = false
-    ) {
-      try {
-        const result =
-          await getWalletAstyBalance(address);
-
-        return {
-          address,
-          asty: result.asty,
-          tokenAccounts:
-            result.tokenAccounts,
-          error: false,
-          errorMessage: ""
-        };
-      } catch (error) {
-        console.warn(
-          retry
-            ? "Retry wallet failed:"
-            : "Wallet scan failed:",
-          address,
-          error
-        );
-
-        return {
-          address,
-          asty: 0,
-          tokenAccounts: 0,
-          error: true,
-          errorMessage:
-            error?.message ||
-            "Wallet could not be read"
-        };
-      }
-    }
-
     async function scanWallets() {
-      if (state.scanning) return;
+      if (state.scanning) {
+        return;
+      }
 
       const parsed =
         parseWallets(
           ui.walletInput.value
         );
 
-      if (!parsed.valid.length) {
+      if (
+        !parsed.valid.length
+      ) {
         const invalidMsg =
           parsed.invalid.length
             ? `${parsed.invalid.length} invalid address` +
@@ -1989,6 +2321,7 @@
 
       state.scanning = true;
       setLoading(true);
+
       ui.scanBtn.disabled = true;
       ui.clearBtn.disabled = true;
       ui.scanBtn.textContent =
@@ -1998,140 +2331,124 @@
         preferredRpcUrl = null;
 
         setStatus(
-          "Loading ASTY",
-          "Reading live supply...",
-          "LIVE"
+          "Starting Core Scanner",
+          "Preparing Solana wallet engine...",
+          "CORE MODE"
         );
 
-        const currentSupply =
-          await getAstySupply();
+        await loadSolanaWeb3();
 
-        if (!currentSupply) {
-          throw new Error(
-            "Could not read ASTY supply"
-          );
-        }
-
-        state.currentSupply =
-          currentSupply;
-
-        // Give the RPC a short break before wallet reads.
-        await sleep(600);
-
-        // Market price does not use Solana RPC.
+        // Price is independent from Solana RPC.
         const pricePromise =
-          getAstyPrice().catch(error => {
-            console.warn(
-              "Price unavailable:",
-              error
+          getAstyPrice()
+            .catch(error => {
+              console.warn(
+                "Price unavailable:",
+                error
+              );
+
+              return null;
+            });
+
+        /*
+         * Request 1:
+         * Detect the ASTY token program.
+         */
+        setStatus(
+          "Detecting ASTY",
+          "Reading ASTY mint program...",
+          "CORE MODE"
+        );
+
+        const tokenProgramId =
+          await getAstyTokenProgramId();
+
+        await sleep(
+          RPC_COOLDOWN_MS
+        );
+
+        /*
+         * Request 2:
+         * Derive every ATA locally and read all wallets
+         * through one normal getMultipleAccounts call.
+         */
+        setStatus(
+          "Scanning wallets",
+          `${parsed.valid.length} wallet` +
+          `${parsed.valid.length === 1 ? "" : "s"} • optimized Core scan`,
+          "CORE MODE"
+        );
+
+        let walletResults;
+        let scanMode =
+          "Core multi-account";
+
+        try {
+          const coreResult =
+            await getAstyBalancesCore(
+              parsed.valid,
+              tokenProgramId
             );
-            return null;
-          });
 
-        const walletResults = [];
-
-        // Main pass: deliberately slow and sequential.
-        for (
-          let i = 0;
-          i < parsed.valid.length;
-          i++
-        ) {
-          const address =
-            parsed.valid[i];
-
-          setStatus(
-            "Analyzing wallets",
-            `Wallet ${i + 1} of ${parsed.valid.length} • ` +
-            `${shortAddr(address)}`,
-            "LIVE"
+          walletResults =
+            coreResult.wallets;
+        } catch (coreError) {
+          console.warn(
+            "Optimized Core scan failed, using ATA rescue:",
+            coreError
           );
 
-          const result =
-            await scanSingleWallet(
-              address,
-              false
-            );
-
-          walletResults.push(result);
-
-          // This is the important change:
-          // wait before requesting the next wallet.
-          if (
-            i < parsed.valid.length - 1
-          ) {
-            setStatus(
-              "Analyzing wallets",
-              `Wallet ${i + 1} of ${parsed.valid.length} complete • cooling down...`,
-              "LIVE"
-            );
-
-            await sleep(
-              WALLET_DELAY_MS
-            );
-          }
-        }
-
-        // Retry only failed wallets, after a longer cooldown.
-        const failedIndexes =
-          walletResults
-            .map(
-              (wallet, index) =>
-                wallet.error
-                  ? index
-                  : -1
-            )
-            .filter(
-              index => index >= 0
-            );
-
-        if (failedIndexes.length) {
-          setStatus(
-            "Retrying wallets",
-            `${failedIndexes.length} wallet` +
-            `${failedIndexes.length === 1 ? "" : "s"} ` +
-            `will be retried after a short pause...`,
-            "RETRY"
-          );
-
-          // Do not stick to the RPC that just failed.
+          /*
+           * Rescue mode = the exact basic idea that worked
+           * in the first CoreScanner:
+           * one derived ATA -> one getAccountInfo request.
+           * Only used when getMultipleAccounts is rejected.
+           */
           preferredRpcUrl = null;
 
-          await sleep(
-            RETRY_DELAY_MS
+          setStatus(
+            "Switching scan mode",
+            "Optimized request rejected • using delayed Core rescue...",
+            "RESCUE"
           );
 
-          for (
-            let i = 0;
-            i < failedIndexes.length;
-            i++
-          ) {
-            const resultIndex =
-              failedIndexes[i];
+          await sleep(
+            1100
+          );
 
-            const address =
-              parsed.valid[resultIndex];
-
-            setStatus(
-              "Retrying wallets",
-              `Retry ${i + 1} of ${failedIndexes.length} • ` +
-              `${shortAddr(address)}`,
-              "RETRY"
+          walletResults =
+            await getAstyBalancesRescue(
+              parsed.valid,
+              tokenProgramId
             );
 
-            walletResults[resultIndex] =
-              await scanSingleWallet(
-                address,
-                true
-              );
+          scanMode =
+            "Delayed ATA rescue";
+        }
 
-            if (
-              i < failedIndexes.length - 1
-            ) {
-              await sleep(
-                WALLET_DELAY_MS
-              );
-            }
-          }
+        await sleep(
+          RPC_COOLDOWN_MS
+        );
+
+        /*
+         * Request 3:
+         * Supply only after wallet reads to avoid bursting RPCs.
+         */
+        setStatus(
+          "Loading supply",
+          "Reading current ASTY supply...",
+          "CORE MODE"
+        );
+
+        state.currentSupply =
+          await getAstySupply();
+
+        if (
+          !state.currentSupply
+        ) {
+          throw new Error(
+            "ASTY supply returned zero"
+          );
         }
 
         const priceResult =
@@ -2153,25 +2470,41 @@
         }
 
         state.wallets =
-          walletResults;
+          walletResults.map(
+            wallet => ({
+              address:
+                wallet.address,
+              asty:
+                Number(wallet.asty) || 0,
+              tokenAccounts:
+                Number(
+                  wallet.tokenAccounts
+                ) || 0,
+              error:
+                Boolean(wallet.error),
+              errorMessage:
+                wallet.errorMessage || ""
+            })
+          );
 
         calculateDerivedState();
         render();
 
         const failed =
-          walletResults.filter(
-            wallet => wallet.error
+          state.wallets.filter(
+            wallet =>
+              wallet.error
           ).length;
 
         const empty =
-          walletResults.filter(
+          state.wallets.filter(
             wallet =>
               !wallet.error &&
               wallet.asty <= 0
           ).length;
 
         const success =
-          walletResults.length -
+          state.wallets.length -
           failed;
 
         let summary =
@@ -2194,6 +2527,9 @@
           summary +=
             ` • ${parsed.invalid.length} invalid ignored`;
         }
+
+        summary +=
+          ` • ${scanMode}`;
 
         if (preferredRpcUrl) {
           summary +=
@@ -2219,10 +2555,12 @@
           );
 
         if (
-          message.includes("HTTP 415")
+          message.includes(
+            "HTTP 415"
+          )
         ) {
           message =
-            "This RPC rejected the browser request. Trying another provider should normally handle this.";
+            "A public RPC rejected the request format. My ASTY already tried the browser-safe mode and available fallback providers.";
         }
 
         if (
@@ -2237,7 +2575,7 @@
           )
         ) {
           message =
-            "Public Solana RPC request blocked. Please try again shortly.";
+            "Public Solana RPC access is currently being blocked by the browser or provider.";
         }
 
         setStatus(
@@ -2248,8 +2586,13 @@
       } finally {
         state.scanning = false;
         setLoading(false);
-        ui.scanBtn.disabled = false;
-        ui.clearBtn.disabled = false;
+
+        ui.scanBtn.disabled =
+          false;
+
+        ui.clearBtn.disabled =
+          false;
+
         ui.scanBtn.textContent =
           "Analyze My ASTY";
       }
