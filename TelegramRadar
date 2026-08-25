@@ -421,34 +421,475 @@ body.embed-mode .metric-value{font-size:21px}
 body.embed-mode .content-grid{display:none}
 body.embed-mode .passport-foot{padding:12px 16px}
 
-@media(max-width:900px){
-  .primary-grid{grid-template-columns:repeat(2,1fr)}
-  .content-grid{grid-template-columns:1fr}
-  .panel + .panel{border-left:0;border-top:1px solid var(--line)}
-  .tools{grid-template-columns:1fr}
-  .info-grid{grid-template-columns:1fr}
-}
-@media(max-width:620px){
-  .wrap{width:min(100% - 20px,1180px)}
-  .topbar{align-items:flex-start}
+
+
+@media(max-width:760px){
+  body{
+    background:
+      radial-gradient(circle at 50% -6%,rgba(128,103,255,.18),transparent 28%),
+      linear-gradient(180deg,#070914 0%,#080a15 58%,#060711 100%);
+  }
+
+  .wrap{
+    width:100%;
+    padding:0 12px;
+  }
+
+  .topbar{
+    padding:14px 2px 8px;
+    gap:10px;
+    align-items:center;
+  }
+
+  .brand{
+    gap:9px;
+    font-size:14px;
+    min-width:0;
+  }
+
+  .brand-mark{
+    width:28px;
+    height:28px;
+    flex:0 0 28px;
+  }
+
   .brand small{display:none}
+
+  .nav-actions{
+    gap:6px;
+    flex:0 0 auto;
+  }
+
   .nav-actions .btn:first-child{display:none}
-  .hero{padding-top:48px}
-  .search-row{flex-direction:column}
-  .search-card{padding:10px}
-  .search-row .btn{width:100%}
-  .quickline{align-items:flex-start}
-  .passport-head{align-items:flex-start;flex-direction:column}
-  .head-links{width:100%}
-  .head-links .btn{flex:1}
-  .primary-grid{grid-template-columns:1fr 1fr}
-  .metric{padding:17px}
-  .passport{border-radius:20px}
-  .token-logo{width:54px;height:54px}
-  .token-title h2{font-size:23px}
-  .panel{padding:19px}
-  body.embed-mode .primary-grid{grid-template-columns:1fr 1fr}
+
+  .btn{
+    min-height:44px;
+    border-radius:12px;
+    padding:11px 14px;
+  }
+
+  .btn.slim{
+    min-height:40px;
+    padding:9px 12px;
+    font-size:12px;
+  }
+
+  .hero{
+    padding:36px 2px 20px;
+    text-align:left;
+  }
+
+  .eyebrow{
+    font-size:10px;
+    padding:6px 9px;
+  }
+
+  h1{
+    margin:14px 0 12px;
+    max-width:100%;
+    font-size:clamp(38px,12vw,54px);
+    line-height:.98;
+    letter-spacing:-.058em;
+  }
+
+  .hero p{
+    margin:0;
+    max-width:100%;
+    font-size:15px;
+    line-height:1.55;
+  }
+
+  .search-card{
+    margin-top:24px;
+    padding:10px;
+    border-radius:18px;
+  }
+
+  .search-row{
+    display:grid;
+    grid-template-columns:1fr;
+    gap:9px;
+  }
+
+  .input-wrap{
+    min-height:52px;
+    padding:0 13px;
+    border-radius:13px;
+  }
+
+  #tokenInput{
+    font-size:16px;
+    padding:14px 0;
+  }
+
+  .search-row .btn{
+    width:100%;
+    min-height:50px;
+    font-size:15px;
+  }
+
+  .quickline{
+    padding:2px 2px 0;
+    gap:6px;
+    font-size:11px;
+    align-items:center;
+  }
+
+  .quickline > span{
+    max-width:58%;
+    line-height:1.35;
+  }
+
+  .link-btn{
+    text-align:right;
+    font-size:11px;
+  }
+
+  .status{
+    width:100%;
+    margin-top:10px;
+    font-size:12px;
+    line-height:1.4;
+  }
+
+  #passportSection{
+    padding:14px 0 46px;
+  }
+
+  .passport{
+    border-radius:20px;
+    box-shadow:0 16px 46px rgba(0,0,0,.28);
+  }
+
+  .passport-head{
+    padding:18px;
+    gap:14px;
+  }
+
+  .token-id{
+    gap:12px;
+    width:100%;
+    align-items:flex-start;
+  }
+
+  .token-logo{
+    width:50px;
+    height:50px;
+    border-radius:14px;
+    flex:0 0 50px;
+  }
+
+  .token-title{
+    min-width:0;
+    flex:1;
+  }
+
+  .token-title h2{
+    font-size:22px;
+    line-height:1.1;
+    overflow-wrap:anywhere;
+  }
+
+  .token-meta{
+    gap:6px;
+    margin-top:7px;
+  }
+
+  .address-line{
+    display:block;
+    width:100%;
+    max-width:100%;
+    font-size:11px;
+  }
+
+  .head-links{
+    width:100%;
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:8px;
+  }
+
+  .head-links .btn{
+    width:100%;
+    min-width:0;
+  }
+
+  .primary-grid{
+    grid-template-columns:1fr 1fr;
+  }
+
+  .metric{
+    padding:16px 14px;
+    min-height:112px;
+  }
+
+  .metric-label{
+    font-size:9px;
+    letter-spacing:.075em;
+  }
+
+  .metric-value{
+    margin-top:8px;
+    font-size:23px;
+    line-height:1.02;
+  }
+
+  .metric-sub{
+    margin-top:7px;
+    font-size:10px;
+    line-height:1.3;
+  }
+
+  .content-grid{
+    grid-template-columns:1fr;
+  }
+
+  .panel{
+    padding:18px;
+  }
+
+  .panel + .panel{
+    border-left:0;
+    border-top:1px solid var(--line);
+  }
+
+  .panel-title{
+    align-items:flex-start;
+    margin-bottom:14px;
+  }
+
+  .panel-title h3{
+    font-size:15px;
+  }
+
+  .panel-title span{
+    font-size:10px;
+    text-align:right;
+  }
+
+  .fact-list{
+    gap:8px;
+  }
+
+  .fact{
+    padding:12px 12px;
+    gap:10px;
+    align-items:flex-start;
+  }
+
+  .fact span:first-child{
+    font-size:12px;
+    line-height:1.35;
+  }
+
+  .fact strong{
+    font-size:12px;
+    line-height:1.35;
+    max-width:48%;
+  }
+
+  .dex-list{
+    margin-top:12px;
+    gap:6px;
+  }
+
+  .dex-chip{
+    padding:6px 8px;
+    font-size:10px;
+  }
+
+  .pool-panel{
+    padding-left:0;
+    padding-right:0;
+  }
+
+  .pool-panel .panel-title{
+    padding:0 18px;
+  }
+
+  .pool-table-wrap{
+    overflow-x:auto;
+    -webkit-overflow-scrolling:touch;
+    scrollbar-width:none;
+  }
+
+  .pool-table-wrap::-webkit-scrollbar{
+    display:none;
+  }
+
+  table{
+    min-width:610px;
+  }
+
+  th{
+    font-size:9px;
+    padding:9px 10px;
+  }
+
+  td{
+    font-size:11px;
+    padding:11px 10px;
+  }
+
+  .passport-foot{
+    padding:15px 18px;
+    gap:10px;
+    align-items:flex-start;
+  }
+
+  .powered{
+    font-size:11px;
+  }
+
+  .source-note{
+    width:100%;
+    line-height:1.45;
+  }
+
+  .tools{
+    grid-template-columns:1fr;
+    gap:12px;
+    margin-top:12px;
+  }
+
+  .tool-card{
+    border-radius:18px;
+    padding:18px;
+  }
+
+  .tool-card h3{
+    font-size:17px;
+  }
+
+  .tool-card p{
+    font-size:12px;
+    line-height:1.5;
+  }
+
+  .tool-actions{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:8px;
+  }
+
+  .tool-actions .btn{
+    width:100%;
+    min-width:0;
+    padding:10px 8px;
+    font-size:12px;
+  }
+
+  .tool-actions .btn.primary{
+    grid-column:1 / -1;
+  }
+
+  .codebox{
+    display:block;
+    padding:10px;
+  }
+
+  .codebox code{
+    display:block;
+    white-space:normal;
+    overflow-wrap:anywhere;
+    word-break:break-word;
+    font-size:10px;
+    line-height:1.45;
+    max-height:120px;
+    overflow:auto;
+  }
+
+  .codebox .btn{
+    width:100%;
+    margin-top:9px;
+  }
+
+  .note{
+    font-size:10px;
+    padding:11px 12px;
+  }
+
+  .section-info{
+    padding:42px 2px 60px;
+    text-align:left;
+  }
+
+  .section-info h2{
+    font-size:28px;
+  }
+
+  .section-info p{
+    font-size:14px;
+    margin:10px 0 0;
+    line-height:1.55;
+  }
+
+  .info-grid{
+    grid-template-columns:1fr;
+    gap:9px;
+    margin-top:20px;
+  }
+
+  .info{
+    padding:16px;
+    border-radius:15px;
+  }
+
+  .site-footer{
+    padding:20px 2px 28px;
+  }
+
+  .footer-row{
+    display:block;
+    line-height:1.55;
+  }
+
+  .footer-row span{
+    display:block;
+  }
+
+  .footer-row span + span{
+    margin-top:4px;
+  }
 }
+
+@media(max-width:390px){
+  .wrap{padding:0 9px}
+
+  .hero{
+    padding-top:30px;
+  }
+
+  h1{
+    font-size:36px;
+  }
+
+  .primary-grid{
+    grid-template-columns:1fr;
+  }
+
+  .metric{
+    min-height:auto;
+    padding:15px 16px;
+  }
+
+  .metric-value{
+    font-size:25px;
+  }
+
+  .head-links{
+    grid-template-columns:1fr;
+  }
+
+  .tool-actions{
+    grid-template-columns:1fr;
+  }
+
+  .tool-actions .btn.primary{
+    grid-column:auto;
+  }
+}
+
 </style>
 </head>
 <body>
@@ -897,7 +1338,7 @@ body.embed-mode .passport-foot{padding:12px 16px}
     current = data;
     els.name.textContent = data.name;
     els.symbol.textContent = data.symbol ? "$" + data.symbol : "";
-    els.address.textContent = data.token;
+    els.address.textContent = window.innerWidth <= 760 ? shortAddress(data.token) : data.token;
     els.address.title = data.token;
     els.fallback.textContent = (data.symbol || data.name || "?").slice(0,2).toUpperCase();
 
@@ -1247,6 +1688,12 @@ body.embed-mode .passport-foot{padding:12px 16px}
     if (!current) return;
     const url = buildLiveUrl(current.token);
     window.open("https://t.me/share/url?url="+encodeURIComponent(url)+"&text="+encodeURIComponent(shareText()),"_blank","noopener");
+  });
+
+  window.addEventListener("resize",()=>{
+    if (current) {
+      els.address.textContent = window.innerWidth <= 760 ? shortAddress(current.token) : current.token;
+    }
   });
 
   $("makeCard").addEventListener("click",makeShareCard);
