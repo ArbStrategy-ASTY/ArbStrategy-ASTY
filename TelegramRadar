@@ -1,0 +1,1274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="color-scheme" content="dark">
+
+<title>ASTY Telegram Radar</title>
+
+<meta
+  name="description"
+  content="Search public Telegram mentions for tokens, tickers, projects and contract addresses across multiple public sources."
+>
+
+<style>
+:root{
+  --bg:#070914;
+  --bg2:#0b0e1d;
+  --card:#101426;
+  --card2:#0d1121;
+
+  --text:#f5f3ff;
+  --muted:#9499b3;
+  --muted2:#6f7694;
+
+  --purple:#aa8cff;
+  --purple2:#8067ff;
+  --purple3:#c7b7ff;
+
+  --line:rgba(171,144,255,.16);
+  --line2:rgba(255,255,255,.07);
+
+  --green:#66e3b4;
+
+  --shadow:0 24px 80px rgba(0,0,0,.34);
+}
+
+*{
+  box-sizing:border-box;
+}
+
+html{
+  scroll-behavior:smooth;
+}
+
+body{
+  margin:0;
+  min-height:100vh;
+
+  font-family:
+    Inter,
+    ui-sans-serif,
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
+
+  color:var(--text);
+
+  background:
+    radial-gradient(
+      circle at 20% 0%,
+      rgba(128,103,255,.15),
+      transparent 32rem
+    ),
+    radial-gradient(
+      circle at 90% 20%,
+      rgba(170,140,255,.08),
+      transparent 30rem
+    ),
+    linear-gradient(
+      180deg,
+      var(--bg),
+      #060812 70%
+    );
+}
+
+a{
+  color:inherit;
+}
+
+.wrap{
+  width:min(1040px,calc(100% - 28px));
+  margin:0 auto;
+}
+
+/* HEADER */
+
+header{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+
+  padding:24px 0 8px;
+
+  gap:16px;
+}
+
+.brand{
+  display:flex;
+  align-items:center;
+  gap:11px;
+
+  font-weight:850;
+  letter-spacing:.2px;
+}
+
+.logo{
+  width:34px;
+  height:34px;
+
+  border-radius:11px;
+
+  display:grid;
+  place-items:center;
+
+  background:
+    linear-gradient(
+      135deg,
+      var(--purple),
+      var(--purple2)
+    );
+
+  box-shadow:
+    0 0 28px rgba(147,116,255,.35);
+
+  color:#080a14;
+
+  font-weight:1000;
+}
+
+.badge{
+  border:1px solid var(--line);
+
+  background:
+    rgba(255,255,255,.025);
+
+  color:var(--muted);
+
+  border-radius:999px;
+
+  padding:8px 11px;
+
+  font-size:12px;
+}
+
+/* HERO */
+
+.hero{
+  padding:82px 0 42px;
+  text-align:center;
+}
+
+.kicker{
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+
+  color:var(--purple3);
+
+  font-size:13px;
+  font-weight:800;
+
+  border:1px solid var(--line);
+
+  border-radius:999px;
+
+  padding:8px 12px;
+
+  background:
+    rgba(170,140,255,.05);
+}
+
+.dot{
+  width:7px;
+  height:7px;
+
+  border-radius:50%;
+
+  background:var(--purple);
+
+  box-shadow:
+    0 0 16px var(--purple);
+}
+
+h1{
+  margin:20px auto 14px;
+
+  font-size:
+    clamp(42px,7vw,72px);
+
+  line-height:.98;
+
+  letter-spacing:-2.7px;
+
+  max-width:850px;
+
+  background:
+    linear-gradient(
+      180deg,
+      #fff 10%,
+      #d8d0ff 62%,
+      #9f8aff 100%
+    );
+
+  -webkit-background-clip:text;
+  background-clip:text;
+
+  color:transparent;
+}
+
+.sub{
+  max-width:720px;
+
+  margin:0 auto;
+
+  color:var(--muted);
+
+  font-size:
+    clamp(16px,2.3vw,19px);
+
+  line-height:1.65;
+}
+
+/* SEARCH */
+
+.searchbox{
+  margin:34px auto 0;
+
+  max-width:780px;
+
+  padding:10px;
+
+  display:flex;
+
+  gap:10px;
+
+  border:1px solid var(--line);
+
+  background:
+    rgba(15,19,37,.88);
+
+  border-radius:20px;
+
+  box-shadow:var(--shadow);
+
+  backdrop-filter:blur(15px);
+}
+
+.searchbox input{
+  flex:1;
+
+  min-width:0;
+
+  border:0;
+  outline:0;
+
+  background:transparent;
+
+  color:var(--text);
+
+  padding:14px 16px;
+
+  font-size:16px;
+}
+
+.searchbox input::placeholder{
+  color:#68708d;
+}
+
+.btn{
+  border:0;
+
+  cursor:pointer;
+
+  padding:14px 20px;
+
+  border-radius:14px;
+
+  color:#0a0c16;
+
+  font-weight:900;
+
+  font-size:14px;
+
+  background:
+    linear-gradient(
+      135deg,
+      var(--purple3),
+      var(--purple2)
+    );
+
+  box-shadow:
+    0 10px 28px rgba(128,103,255,.22);
+
+  transition:
+    .18s transform,
+    .18s filter;
+}
+
+.btn:hover{
+  transform:translateY(-1px);
+  filter:brightness(1.05);
+}
+
+.examples{
+  margin-top:15px;
+
+  color:var(--muted2);
+
+  font-size:12px;
+}
+
+/* RESULTS */
+
+.results{
+  display:none;
+
+  padding:4px 0 72px;
+}
+
+.query-card{
+  border:1px solid var(--line);
+
+  background:
+    linear-gradient(
+      180deg,
+      rgba(17,21,42,.96),
+      rgba(10,13,28,.96)
+    );
+
+  border-radius:22px;
+
+  padding:22px;
+
+  box-shadow:var(--shadow);
+}
+
+.query-top{
+  display:flex;
+
+  justify-content:space-between;
+
+  align-items:flex-start;
+
+  gap:14px;
+
+  flex-wrap:wrap;
+}
+
+.label{
+  color:var(--muted2);
+
+  font-size:11px;
+
+  text-transform:uppercase;
+
+  letter-spacing:1.25px;
+
+  font-weight:850;
+}
+
+.query-text{
+  margin-top:7px;
+
+  font-size:20px;
+
+  font-weight:850;
+
+  word-break:break-word;
+}
+
+.status{
+  display:inline-flex;
+
+  align-items:center;
+
+  gap:7px;
+
+  color:var(--green);
+
+  font-size:12px;
+
+  font-weight:800;
+}
+
+.status i{
+  width:7px;
+
+  height:7px;
+
+  background:var(--green);
+
+  border-radius:50%;
+
+  display:inline-block;
+
+  box-shadow:
+    0 0 13px rgba(102,227,180,.6);
+}
+
+/* SOURCE GRID */
+
+.grid{
+  display:grid;
+
+  grid-template-columns:
+    repeat(2,minmax(0,1fr));
+
+  gap:14px;
+
+  margin-top:14px;
+}
+
+.source{
+  text-decoration:none;
+
+  padding:20px;
+
+  border:1px solid var(--line2);
+
+  border-radius:18px;
+
+  background:
+    rgba(255,255,255,.025);
+
+  transition:
+    .2s transform,
+    .2s border-color,
+    .2s background;
+}
+
+.source:hover{
+  transform:translateY(-2px);
+
+  border-color:
+    rgba(171,144,255,.32);
+
+  background:
+    rgba(171,144,255,.055);
+}
+
+.source-head{
+  display:flex;
+
+  align-items:center;
+
+  justify-content:space-between;
+
+  gap:12px;
+}
+
+.source-title{
+  font-weight:900;
+
+  font-size:16px;
+}
+
+.arrow{
+  color:var(--purple3);
+
+  font-size:20px;
+}
+
+.source p{
+  margin:9px 0 0;
+
+  color:var(--muted);
+
+  font-size:13px;
+
+  line-height:1.5;
+}
+
+.source small{
+  display:inline-block;
+
+  margin-top:13px;
+
+  color:var(--purple3);
+
+  font-size:11px;
+
+  border:1px solid var(--line);
+
+  padding:5px 8px;
+
+  border-radius:999px;
+}
+
+/* VARIANTS */
+
+.variants{
+  margin-top:14px;
+
+  padding:20px;
+
+  border:1px solid var(--line2);
+
+  border-radius:18px;
+
+  background:
+    rgba(255,255,255,.02);
+}
+
+.variant-row{
+  display:flex;
+
+  gap:8px;
+
+  flex-wrap:wrap;
+
+  margin-top:12px;
+}
+
+.chip{
+  border:1px solid var(--line);
+
+  background:
+    rgba(170,140,255,.04);
+
+  color:#dcd5ff;
+
+  border-radius:999px;
+
+  padding:8px 11px;
+
+  font-size:12px;
+
+  cursor:pointer;
+}
+
+/* INFO */
+
+.note{
+  margin:18px auto 0;
+
+  max-width:900px;
+
+  color:var(--muted2);
+
+  font-size:12px;
+
+  line-height:1.6;
+
+  text-align:center;
+}
+
+/* FOOTER */
+
+footer{
+  padding:0 0 36px;
+
+  text-align:center;
+
+  color:#5e6580;
+
+  font-size:12px;
+}
+
+footer strong{
+  color:#9886dd;
+}
+
+/* MOBILE */
+
+@media(max-width:680px){
+
+  header{
+    padding-top:18px;
+  }
+
+  .hero{
+    padding-top:58px;
+  }
+
+  .searchbox{
+    flex-direction:column;
+  }
+
+  .btn{
+    width:100%;
+  }
+
+  .grid{
+    grid-template-columns:1fr;
+  }
+
+  h1{
+    letter-spacing:-1.8px;
+  }
+}
+</style>
+</head>
+
+<body>
+
+<div class="wrap">
+
+<header>
+
+  <div class="brand">
+
+    <div class="logo">
+      A
+    </div>
+
+    <div>
+      ASTY Telegram Radar
+    </div>
+
+  </div>
+
+  <div class="badge">
+    Public-source search
+  </div>
+
+</header>
+
+<main>
+
+<section class="hero">
+
+  <div class="kicker">
+    <span class="dot"></span>
+    Telegram Token Search
+  </div>
+
+  <h1>
+    See who's talking about a token.
+  </h1>
+
+  <p class="sub">
+    Search public Telegram mentions across multiple indexed sources.
+    Enter a token name, ticker or contract address.
+  </p>
+
+  <form
+    class="searchbox"
+    id="searchForm"
+  >
+
+    <input
+      id="q"
+      autocomplete="off"
+      spellcheck="false"
+      placeholder="ASTY, $ASTY, ArbStrategy or contract address"
+    >
+
+    <button
+      class="btn"
+      type="submit"
+    >
+      Search Telegram
+    </button>
+
+  </form>
+
+  <div class="examples">
+    No wallet connection · No login · No API key
+  </div>
+
+</section>
+
+<section
+  class="results"
+  id="results"
+>
+
+<div class="query-card">
+
+  <div class="query-top">
+
+    <div>
+
+      <div class="label">
+        Searching public mentions for
+      </div>
+
+      <div
+        class="query-text"
+        id="queryText"
+      ></div>
+
+    </div>
+
+    <div class="status">
+      <i></i>
+      Ready
+    </div>
+
+  </div>
+
+
+  <div class="grid">
+
+    <!-- GOOGLE TELEGRAM -->
+
+    <a
+      class="source"
+      id="googleTg"
+      target="_blank"
+      rel="noopener noreferrer"
+    >
+
+      <div class="source-head">
+
+        <div class="source-title">
+          Google · Telegram
+        </div>
+
+        <div class="arrow">
+          ↗
+        </div>
+
+      </div>
+
+      <p>
+        Search Google's index specifically for public
+        <b>t.me</b>
+        pages mentioning this term.
+      </p>
+
+      <small>
+        site:t.me
+      </small>
+
+    </a>
+
+
+    <!-- BING TELEGRAM -->
+
+    <a
+      class="source"
+      id="bingTg"
+      target="_blank"
+      rel="noopener noreferrer"
+    >
+
+      <div class="source-head">
+
+        <div class="source-title">
+          Bing · Telegram
+        </div>
+
+        <div class="arrow">
+          ↗
+        </div>
+
+      </div>
+
+      <p>
+        Run the same Telegram-only search through Bing
+        for additional indexed mentions.
+      </p>
+
+      <small>
+        site:t.me
+      </small>
+
+    </a>
+
+
+    <!-- TGSTAT -->
+
+    <a
+      class="source"
+      id="tgstat"
+      target="_blank"
+      rel="noopener noreferrer"
+    >
+
+      <div class="source-head">
+
+        <div class="source-title">
+          TGStat
+        </div>
+
+        <div class="arrow">
+          ↗
+        </div>
+
+      </div>
+
+      <p>
+        Open TGStat's public post-search interface
+        with the current search term.
+      </p>
+
+      <small>
+        Telegram index
+      </small>
+
+    </a>
+
+
+    <!-- TELEMETRIO -->
+
+    <a
+      class="source"
+      id="telemetrio"
+      target="_blank"
+      rel="noopener noreferrer"
+    >
+
+      <div class="source-head">
+
+        <div class="source-title">
+          Telemetrio Index
+        </div>
+
+        <div class="arrow">
+          ↗
+        </div>
+
+      </div>
+
+      <p>
+        Look for Telemetrio's indexed Telegram
+        post-search pages matching this term.
+      </p>
+
+      <small>
+        Public web index
+      </small>
+
+    </a>
+
+
+    <!-- TGSTAT GOOGLE -->
+
+    <a
+      class="source"
+      id="tgstatGoogle"
+      target="_blank"
+      rel="noopener noreferrer"
+    >
+
+      <div class="source-head">
+
+        <div class="source-title">
+          TGStat via Google
+        </div>
+
+        <div class="arrow">
+          ↗
+        </div>
+
+      </div>
+
+      <p>
+        Search indexed TGStat pages for mentions
+        that may not surface in a normal web search.
+      </p>
+
+      <small>
+        site:tgstat.com
+      </small>
+
+    </a>
+
+
+    <!-- EXACT MATCH -->
+
+    <a
+      class="source"
+      id="exactTg"
+      target="_blank"
+      rel="noopener noreferrer"
+    >
+
+      <div class="source-head">
+
+        <div class="source-title">
+          Exact Telegram Match
+        </div>
+
+        <div class="arrow">
+          ↗
+        </div>
+
+      </div>
+
+      <p>
+        Search the exact phrase on public Telegram pages.
+        Especially useful for contract addresses.
+      </p>
+
+      <small>
+        Exact phrase
+      </small>
+
+    </a>
+
+  </div>
+
+
+  <div class="variants">
+
+    <div class="label">
+      Quick variants
+    </div>
+
+    <div
+      class="variant-row"
+      id="variants"
+    ></div>
+
+  </div>
+
+</div>
+
+
+<div class="note">
+
+  This tool searches public web indexes and third-party Telegram indexes.
+  It does not claim to search every Telegram message,
+  private group or unindexed post.
+
+</div>
+
+</section>
+
+</main>
+
+
+<footer>
+
+  Powered by
+  <strong>ASTY</strong>
+  🟣
+
+</footer>
+
+</div>
+
+
+<script>
+
+/* =======================================
+   SIMPLE SELECTOR
+======================================= */
+
+const $ = (selector) =>
+  document.querySelector(selector);
+
+
+/* =======================================
+   SEARCH URL HELPERS
+======================================= */
+
+function googleUrl(query){
+
+  return (
+    "https://www.google.com/search?q=" +
+    encodeURIComponent(query)
+  );
+
+}
+
+
+function bingUrl(query){
+
+  return (
+    "https://www.bing.com/search?q=" +
+    encodeURIComponent(query)
+  );
+
+}
+
+
+function tgstatUrl(query){
+
+  return (
+    "https://tgstat.com/search?q=" +
+    encodeURIComponent(query)
+  );
+
+}
+
+
+/* =======================================
+   CLEAN INPUT
+======================================= */
+
+function cleanTerm(value){
+
+  return value
+    .trim()
+    .replace(/\s+/g," ");
+
+}
+
+
+/* =======================================
+   RENDER SEARCH
+======================================= */
+
+function render(term){
+
+  term = cleanTerm(term);
+
+  if(!term){
+    return;
+  }
+
+
+  /* SHOW CURRENT TERM */
+
+  $("#queryText").textContent = term;
+
+
+  /* EXACT SEARCH STRING */
+
+  const exact =
+    `"${term.replace(/"/g,"")}"`;
+
+
+  /* =====================================
+     GOOGLE TELEGRAM
+  ===================================== */
+
+  $("#googleTg").href =
+    googleUrl(
+      `site:t.me ${exact}`
+    );
+
+
+  /* =====================================
+     BING TELEGRAM
+  ===================================== */
+
+  $("#bingTg").href =
+    bingUrl(
+      `site:t.me ${exact}`
+    );
+
+
+  /* =====================================
+     TGSTAT
+  ===================================== */
+
+  $("#tgstat").href =
+    tgstatUrl(term);
+
+
+  /* =====================================
+     TELEMETRIO VIA GOOGLE INDEX
+  ===================================== */
+
+  $("#telemetrio").href =
+    googleUrl(
+      `site:telemetr.io/en/posts-search ${exact}`
+    );
+
+
+  /* =====================================
+     TGSTAT VIA GOOGLE
+  ===================================== */
+
+  $("#tgstatGoogle").href =
+    googleUrl(
+      `site:tgstat.com ${exact}`
+    );
+
+
+  /* =====================================
+     EXACT TELEGRAM MATCH
+  ===================================== */
+
+  $("#exactTg").href =
+    googleUrl(
+      `site:t.me ${exact}`
+    );
+
+
+  /* =====================================
+     QUICK VARIANTS
+  ===================================== */
+
+  const variants = [];
+
+  variants.push(term);
+
+
+  /*
+    Example:
+
+    ASTY
+    becomes
+
+    ASTY
+    $ASTY
+  */
+
+  if(
+    /^[A-Za-z0-9_-]{2,15}$/.test(term)
+    &&
+    !term.startsWith("$")
+  ){
+
+    variants.push(
+      "$" + term.toUpperCase()
+    );
+
+  }
+
+
+  /*
+    Example:
+
+    $ASTY
+    becomes
+
+    $ASTY
+    ASTY
+  */
+
+  if(
+    /^\$[A-Za-z0-9_-]{2,15}$/.test(term)
+  ){
+
+    variants.push(
+      term.slice(1)
+    );
+
+  }
+
+
+  /*
+    Remove duplicate variants
+  */
+
+  const unique =
+    [...new Set(variants)];
+
+
+  $("#variants").innerHTML = "";
+
+
+  unique.forEach((variant)=>{
+
+    const button =
+      document.createElement("button");
+
+    button.type = "button";
+
+    button.className = "chip";
+
+    button.textContent = variant;
+
+
+    button.addEventListener(
+      "click",
+      ()=>{
+
+        $("#q").value =
+          variant;
+
+        render(
+          variant
+        );
+
+        window.scrollTo({
+          top:
+            $("#results").offsetTop - 20,
+
+          behavior:
+            "smooth"
+        });
+
+      }
+    );
+
+
+    $("#variants")
+      .appendChild(button);
+
+  });
+
+
+  /* =====================================
+     SHOW RESULTS
+  ===================================== */
+
+  $("#results").style.display =
+    "block";
+
+
+  /* =====================================
+     SAVE SEARCH IN URL
+  ===================================== */
+
+  const url =
+    new URL(
+      location.href
+    );
+
+
+  url.searchParams.set(
+    "q",
+    term
+  );
+
+
+  history.replaceState(
+    {},
+    "",
+    url
+  );
+
+
+  /* =====================================
+     SCROLL TO RESULTS
+  ===================================== */
+
+  window.scrollTo({
+
+    top:
+      $("#results").offsetTop - 20,
+
+    behavior:
+      "smooth"
+
+  });
+
+}
+
+
+/* =======================================
+   FORM SUBMIT
+======================================= */
+
+$("#searchForm")
+  .addEventListener(
+    "submit",
+    (event)=>{
+
+      event.preventDefault();
+
+      render(
+        $("#q").value
+      );
+
+    }
+  );
+
+
+/* =======================================
+   LOAD QUERY FROM URL
+======================================= */
+
+const initial =
+  new URLSearchParams(
+    location.search
+  ).get("q");
+
+
+if(initial){
+
+  $("#q").value =
+    initial;
+
+  render(
+    initial
+  );
+
+}
+
+</script>
+
+</body>
+</html>
