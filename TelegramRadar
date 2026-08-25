@@ -7,52 +7,32 @@
 
 <title>Token Telegram Radar</title>
 
-<meta
-  name="description"
-  content="Search public Telegram mentions for crypto tokens, tickers, project names and contract addresses."
->
-
 <style>
 :root{
   --bg:#070914;
-  --bg2:#0b0e1d;
-
   --card:#101426;
-  --card2:#0c1020;
-
   --text:#f5f3ff;
   --muted:#9499b3;
-  --muted2:#6f7694;
-
+  --muted2:#69708e;
   --purple:#aa8cff;
   --purple2:#8067ff;
   --purple3:#c7b7ff;
-
   --green:#69e6b7;
-  --red:#ff7f9e;
-
-  --line:rgba(171,144,255,.17);
+  --red:#ff7898;
+  --line:rgba(171,144,255,.16);
   --line2:rgba(255,255,255,.07);
-
-  --shadow:0 24px 80px rgba(0,0,0,.34);
 }
 
 *{
   box-sizing:border-box;
 }
 
-html{
-  scroll-behavior:smooth;
-}
-
 body{
   margin:0;
-
   min-height:100vh;
 
   font-family:
     Inter,
-    ui-sans-serif,
     system-ui,
     -apple-system,
     BlinkMacSystemFont,
@@ -63,64 +43,39 @@ body{
 
   background:
     radial-gradient(
-      circle at 15% 0%,
-      rgba(128,103,255,.17),
+      circle at 20% 0%,
+      rgba(128,103,255,.16),
       transparent 34rem
-    ),
-    radial-gradient(
-      circle at 95% 18%,
-      rgba(170,140,255,.08),
-      transparent 30rem
     ),
     linear-gradient(
       180deg,
-      var(--bg),
-      #060812 72%
+      #070914,
+      #050711
     );
-}
-
-a{
-  color:inherit;
-}
-
-button,
-input{
-  font:inherit;
 }
 
 .wrap{
   width:min(1000px,calc(100% - 28px));
-  margin:0 auto;
+  margin:auto;
 }
-
-
-/* =========================
-   HEADER
-========================= */
 
 header{
   display:flex;
-  align-items:center;
   justify-content:space-between;
-
-  gap:16px;
-
-  padding:24px 0 8px;
+  align-items:center;
+  padding:24px 0;
 }
 
 .brand{
   display:flex;
   align-items:center;
-
   gap:11px;
-
   font-weight:850;
 }
 
 .logo{
-  width:35px;
-  height:35px;
-
+  width:36px;
+  height:36px;
   display:grid;
   place-items:center;
 
@@ -133,54 +88,34 @@ header{
       var(--purple2)
     );
 
-  color:#080a14;
-
+  color:#090b14;
   font-weight:1000;
-
-  box-shadow:
-    0 0 28px rgba(147,116,255,.35);
 }
 
 .badge{
-  padding:8px 11px;
-
   border:1px solid var(--line);
-
   border-radius:999px;
 
-  background:
-    rgba(255,255,255,.025);
+  padding:7px 10px;
 
+  font-size:11px;
   color:var(--muted);
-
-  font-size:12px;
 }
 
-
-/* =========================
-   HERO
-========================= */
-
 .hero{
-  padding:78px 0 36px;
-
   text-align:center;
+  padding:65px 0 35px;
 }
 
 .kicker{
   display:inline-flex;
   align-items:center;
-
   gap:8px;
 
-  padding:8px 12px;
-
   border:1px solid var(--line);
-
   border-radius:999px;
 
-  background:
-    rgba(170,140,255,.05);
+  padding:8px 12px;
 
   color:var(--purple3);
 
@@ -197,27 +132,27 @@ header{
   background:var(--purple);
 
   box-shadow:
-    0 0 16px var(--purple);
+    0 0 14px var(--purple);
 }
 
 h1{
-  max-width:850px;
-
   margin:20px auto 14px;
+
+  max-width:850px;
 
   font-size:
     clamp(42px,7vw,70px);
 
-  line-height:.99;
+  line-height:1;
 
-  letter-spacing:-2.6px;
+  letter-spacing:-2.5px;
 
   background:
     linear-gradient(
       180deg,
-      #fff 10%,
-      #d8d0ff 62%,
-      #9f8aff 100%
+      #fff,
+      #d8d0ff 65%,
+      #9f8aff
     );
 
   -webkit-background-clip:text;
@@ -226,78 +161,58 @@ h1{
   color:transparent;
 }
 
-.sub{
+.subtitle{
   max-width:700px;
-
-  margin:0 auto;
+  margin:auto;
 
   color:var(--muted);
 
-  font-size:
-    clamp(16px,2.3vw,19px);
-
-  line-height:1.65;
+  font-size:17px;
+  line-height:1.6;
 }
 
+.searchbox{
+  max-width:820px;
 
-/* =========================
-   SEARCH
-========================= */
-
-.search-panel{
-  max-width:840px;
-
-  margin:32px auto 0;
-
-  padding:10px;
+  margin:30px auto 0;
 
   display:flex;
-
   gap:10px;
+
+  padding:10px;
 
   border:1px solid var(--line);
 
   border-radius:20px;
 
   background:
-    rgba(15,19,37,.9);
-
-  box-shadow:var(--shadow);
-
-  backdrop-filter:blur(14px);
+    rgba(16,20,38,.9);
 }
 
-.search-panel input{
+.searchbox input{
   flex:1;
-
   min-width:0;
 
   border:0;
-  outline:0;
+  outline:none;
 
-  padding:15px 16px;
+  background:none;
 
-  background:transparent;
+  padding:15px;
 
-  color:var(--text);
+  color:white;
 
   font-size:16px;
 }
 
-.search-panel input::placeholder{
-  color:#68708d;
-}
-
-.search-btn{
+.searchbox button{
   border:0;
-
-  cursor:pointer;
 
   padding:14px 22px;
 
   border-radius:14px;
 
-  color:#090b14;
+  cursor:pointer;
 
   font-weight:900;
 
@@ -308,17 +223,15 @@ h1{
       var(--purple2)
     );
 
-  box-shadow:
-    0 10px 28px rgba(128,103,255,.22);
+  color:#090b14;
 }
 
-.search-btn:disabled{
-  opacity:.6;
-  cursor:not-allowed;
+.searchbox button:disabled{
+  opacity:.5;
 }
 
 .examples{
-  margin-top:13px;
+  margin-top:12px;
 
   color:var(--muted2);
 
@@ -326,358 +239,206 @@ h1{
 }
 
 
-/* =========================
-   RESULTS
-========================= */
+/* RESULTS */
 
-.results-section{
+#resultSection{
   display:none;
 
-  padding:0 0 70px;
+  padding-bottom:70px;
 }
 
-.summary{
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
+.stats{
+  display:grid;
+
+  grid-template-columns:
+    repeat(3,1fr);
 
   gap:12px;
 
-  margin-bottom:14px;
-
-  flex-wrap:wrap;
+  margin-bottom:18px;
 }
 
-.summary-left{
-  display:flex;
-  flex-direction:column;
+.stat{
+  padding:18px;
 
-  gap:4px;
+  border:1px solid var(--line);
+
+  border-radius:17px;
+
+  background:
+    rgba(255,255,255,.025);
 }
 
-.summary-label{
+.stat-label{
   color:var(--muted2);
 
   font-size:11px;
 
   text-transform:uppercase;
 
-  letter-spacing:1.1px;
-
-  font-weight:800;
+  letter-spacing:1px;
 }
 
-.summary-query{
-  font-size:20px;
-  font-weight:850;
+.stat-value{
+  margin-top:6px;
 
-  word-break:break-word;
+  font-size:25px;
+
+  font-weight:900;
 }
 
-.status{
-  display:flex;
-  align-items:center;
+.statusbox{
+  margin-bottom:14px;
 
-  gap:7px;
-
-  font-size:12px;
-
-  color:var(--muted);
-}
-
-.status-dot{
-  width:7px;
-  height:7px;
-
-  border-radius:50%;
-
-  background:var(--purple);
-}
-
-.status.success{
-  color:var(--green);
-}
-
-.status.success .status-dot{
-  background:var(--green);
-
-  box-shadow:
-    0 0 12px rgba(105,230,183,.5);
-}
-
-.status.error{
-  color:var(--red);
-}
-
-.status.error .status-dot{
-  background:var(--red);
-}
-
-
-/* =========================
-   LOADING
-========================= */
-
-.loading{
-  display:none;
-
-  padding:42px 20px;
-
-  text-align:center;
+  padding:16px;
 
   border:1px solid var(--line);
 
-  border-radius:20px;
-
-  background:
-    linear-gradient(
-      180deg,
-      rgba(17,21,42,.96),
-      rgba(10,13,28,.96)
-    );
-}
-
-.spinner{
-  width:34px;
-  height:34px;
-
-  margin:0 auto 14px;
-
-  border:3px solid
-    rgba(170,140,255,.15);
-
-  border-top-color:
-    var(--purple);
-
-  border-radius:50%;
-
-  animation:
-    spin .8s linear infinite;
-}
-
-@keyframes spin{
-  to{
-    transform:rotate(360deg);
-  }
-}
-
-.loading-title{
-  font-weight:850;
-}
-
-.loading-sub{
-  margin-top:7px;
+  border-radius:16px;
 
   color:var(--muted);
 
   font-size:13px;
 }
 
+.progress{
+  width:100%;
+  height:5px;
 
-/* =========================
-   RESULT CARDS
-========================= */
+  margin-top:10px;
+
+  overflow:hidden;
+
+  border-radius:10px;
+
+  background:
+    rgba(255,255,255,.07);
+}
+
+.progressbar{
+  width:0;
+  height:100%;
+
+  background:
+    linear-gradient(
+      90deg,
+      var(--purple),
+      var(--purple3)
+    );
+
+  transition:
+    width .25s;
+}
 
 .results{
   display:grid;
-
   gap:12px;
 }
 
 .result{
   display:block;
 
-  padding:19px;
+  padding:18px;
 
   border:1px solid var(--line2);
 
-  border-radius:18px;
-
-  background:
-    linear-gradient(
-      180deg,
-      rgba(18,22,42,.96),
-      rgba(10,13,28,.96)
-    );
-
-  text-decoration:none;
-
-  box-shadow:
-    0 12px 35px rgba(0,0,0,.15);
-
-  transition:
-    transform .18s ease,
-    border-color .18s ease,
-    background .18s ease;
-}
-
-.result:hover{
-  transform:translateY(-2px);
-
-  border-color:
-    rgba(171,144,255,.3);
-
-  background:
-    rgba(171,144,255,.055);
-}
-
-.result-top{
-  display:flex;
-  align-items:flex-start;
-  justify-content:space-between;
-
-  gap:14px;
-}
-
-.result-title{
-  color:#dcd4ff;
-
-  font-size:16px;
-  font-weight:850;
-
-  line-height:1.35;
-}
-
-.arrow{
-  flex:none;
-
-  color:var(--purple3);
-
-  font-size:19px;
-}
-
-.result-url{
-  margin-top:7px;
-
-  color:#7669a7;
-
-  font-size:12px;
-
-  white-space:nowrap;
-  overflow:hidden;
-  text-overflow:ellipsis;
-}
-
-.result-snippet{
-  margin-top:10px;
-
-  color:var(--muted);
-
-  font-size:13px;
-
-  line-height:1.6;
-}
-
-
-/* =========================
-   EMPTY / ERROR
-========================= */
-
-.message{
-  display:none;
-
-  padding:28px;
-
-  border:1px solid var(--line);
-
-  border-radius:20px;
+  border-radius:17px;
 
   background:
     rgba(255,255,255,.025);
 
-  text-align:center;
+  text-decoration:none;
+
+  color:inherit;
 }
 
-.message-title{
-  font-size:17px;
+.result:hover{
+  border-color:
+    rgba(171,144,255,.3);
+}
+
+.result-top{
+  display:flex;
+
+  justify-content:space-between;
+
+  gap:15px;
+}
+
+.channel{
+  color:var(--purple3);
 
   font-weight:850;
 }
 
-.message-text{
-  max-width:600px;
+.open{
+  color:var(--purple3);
+}
 
-  margin:8px auto 0;
+.snippet{
+  margin-top:10px;
 
   color:var(--muted);
 
-  font-size:13px;
+  line-height:1.55;
 
-  line-height:1.6;
+  font-size:13px;
 }
 
-
-/* =========================
-   DISCLAIMER
-========================= */
-
-.note{
-  margin-top:16px;
-
-  padding:16px 18px;
-
-  border:1px solid var(--line2);
-
-  border-radius:16px;
+.source{
+  margin-top:10px;
 
   color:var(--muted2);
 
-  font-size:12px;
-
-  line-height:1.6;
-
-  text-align:center;
+  font-size:11px;
 }
 
+.empty{
+  display:none;
 
-/* =========================
-   FOOTER
-========================= */
+  padding:35px;
 
-footer{
-  padding:20px 0 40px;
+  border:1px solid var(--line);
+
+  border-radius:18px;
 
   text-align:center;
 
-  color:#626983;
+  color:var(--muted);
+}
+
+footer{
+  padding:30px;
+
+  text-align:center;
+
+  color:var(--muted2);
 
   font-size:12px;
 }
 
 footer strong{
-  color:#a18def;
+  color:var(--purple);
 }
 
+@media(max-width:650px){
 
-/* =========================
-   MOBILE
-========================= */
-
-@media(max-width:680px){
-
-  header{
-    padding-top:18px;
-  }
-
-  .hero{
-    padding-top:58px;
-  }
-
-  h1{
-    letter-spacing:-1.7px;
-  }
-
-  .search-panel{
+  .searchbox{
     flex-direction:column;
   }
 
-  .search-btn{
+  .searchbox button{
     width:100%;
+  }
+
+  .stats{
+    grid-template-columns:1fr;
   }
 
 }
 </style>
 </head>
+
 
 <body>
 
@@ -691,21 +452,16 @@ footer strong{
       T
     </div>
 
-    <div>
-      Token Telegram Radar
-    </div>
+    Token Telegram Radar
 
   </div>
 
-
   <div class="badge">
-    Public Search
+    Experimental
   </div>
 
 </header>
 
-
-<main>
 
 <section class="hero">
 
@@ -719,35 +475,31 @@ footer strong{
 
 
   <h1>
-    Find where a token is being discussed.
+    Find who's talking about a token.
   </h1>
 
 
-  <p class="sub">
+  <div class="subtitle">
 
-    Search public Telegram mentions for any crypto project.
-    Enter a token name, ticker or contract address.
+    Search public crypto Telegram channels
+    for token names, tickers and contract addresses.
 
-  </p>
+  </div>
 
 
   <form
     id="searchForm"
-    class="search-panel"
+    class="searchbox"
   >
 
     <input
       id="searchInput"
-      type="text"
+      placeholder="ASTY, $JUP, BONK or contract address"
       autocomplete="off"
-      spellcheck="false"
-      placeholder="BONK, $JUP, Raydium or contract address"
     >
 
-
     <button
-      id="searchButton"
-      class="search-btn"
+      id="searchBtn"
       type="submit"
     >
       Search Telegram
@@ -758,128 +510,107 @@ footer strong{
 
   <div class="examples">
 
-    Try:
-    ASTY · $JUP · BONK · Raydium · or any contract address
+    No login · No API key · No wallet connection
 
   </div>
 
 </section>
 
 
-<section
-  id="resultsSection"
-  class="results-section"
+
+<section id="resultSection">
+
+
+<div class="stats">
+
+  <div class="stat">
+
+    <div class="stat-label">
+      Mentions
+    </div>
+
+    <div
+      id="mentionCount"
+      class="stat-value"
+    >
+      0
+    </div>
+
+  </div>
+
+
+  <div class="stat">
+
+    <div class="stat-label">
+      Channels
+    </div>
+
+    <div
+      id="channelCount"
+      class="stat-value"
+    >
+      0
+    </div>
+
+  </div>
+
+
+  <div class="stat">
+
+    <div class="stat-label">
+      Scanned
+    </div>
+
+    <div
+      id="scanCount"
+      class="stat-value"
+    >
+      0
+    </div>
+
+  </div>
+
+</div>
+
+
+
+<div class="statusbox">
+
+  <div id="statusText">
+    Ready
+  </div>
+
+  <div class="progress">
+
+    <div
+      id="progressBar"
+      class="progressbar"
+    ></div>
+
+  </div>
+
+</div>
+
+
+
+<div
+  id="results"
+  class="results"
+></div>
+
+
+<div
+  id="empty"
+  class="empty"
 >
 
-  <div class="summary">
+  No mentions found in the scanned
+  public Telegram channels.
 
-    <div class="summary-left">
+</div>
 
-      <div class="summary-label">
-        Public Telegram results
-      </div>
-
-      <div
-        id="summaryQuery"
-        class="summary-query"
-      ></div>
-
-    </div>
-
-
-    <div
-      id="status"
-      class="status"
-    >
-
-      <span class="status-dot"></span>
-
-      <span id="statusText">
-        Ready
-      </span>
-
-    </div>
-
-  </div>
-
-
-  <div
-    id="loading"
-    class="loading"
-  >
-
-    <div class="spinner"></div>
-
-    <div class="loading-title">
-      Searching public Telegram…
-    </div>
-
-    <div
-      id="loadingSub"
-      class="loading-sub"
-    >
-      Checking public search sources
-    </div>
-
-  </div>
-
-
-  <div
-    id="results"
-    class="results"
-  ></div>
-
-
-  <div
-    id="emptyMessage"
-    class="message"
-  >
-
-    <div class="message-title">
-      No public Telegram results found
-    </div>
-
-    <div class="message-text">
-
-      Try the project name, ticker with a $
-      or the exact token contract address.
-
-    </div>
-
-  </div>
-
-
-  <div
-    id="errorMessage"
-    class="message"
-  >
-
-    <div class="message-title">
-      Public search is temporarily unavailable
-    </div>
-
-    <div class="message-text">
-
-      The free public search servers are currently
-      blocking browser requests or have disabled
-      their JSON search output.
-
-    </div>
-
-  </div>
-
-
-  <div class="note">
-
-    This tool searches publicly indexed Telegram pages only.
-    Private groups, private channels and unindexed posts
-    cannot be searched.
-
-  </div>
 
 </section>
-
-</main>
 
 
 <footer>
@@ -893,90 +624,498 @@ footer strong{
 </div>
 
 
+
 <script>
 
-/* ==================================================
-   CONFIG
-================================================== */
-
 /*
-  Public SearXNG instances.
+====================================================
+CHANNEL DATABASE
+====================================================
 
-  They are intentionally tried ONE AFTER ANOTHER.
+Add as many public Telegram CHANNEL usernames
+as you want here.
 
-  Public servers can change, rate-limit traffic,
-  disable JSON or block browser requests at any time.
+Only the username, without:
+https://t.me/
+or @
+
+The scanner skips channels that cannot be read.
 */
 
-const SEARX_INSTANCES = [
+const CHANNELS = [
 
-  "https://searx.tiekoetter.com",
+  {
+    name:"Cointelegraph",
+    username:"cointelegraph"
+  },
 
-  "https://searx.be",
+  {
+    name:"Binance Announcements",
+    username:"binance_announcements"
+  },
 
-  "https://search.sapti.me"
+  {
+    name:"Solana Announcements",
+    username:"solanaannouncements"
+  }
 
 ];
 
 
 /*
-  Maximum number of cards shown.
+====================================================
+SETTINGS
+====================================================
 */
 
-const MAX_RESULTS = 20;
+const MAX_RESULTS = 50;
+
+const REQUEST_TIMEOUT = 12000;
 
 
 /*
-  Timeout per server.
+====================================================
+ELEMENTS
+====================================================
 */
 
-const REQUEST_TIMEOUT = 8000;
-
-
-/* ==================================================
-   ELEMENTS
-================================================== */
-
-const searchForm =
+const form =
   document.getElementById("searchForm");
 
-const searchInput =
+const input =
   document.getElementById("searchInput");
 
-const searchButton =
-  document.getElementById("searchButton");
+const button =
+  document.getElementById("searchBtn");
 
-const resultsSection =
-  document.getElementById("resultsSection");
+const section =
+  document.getElementById("resultSection");
 
-const resultsContainer =
+const resultsBox =
   document.getElementById("results");
 
-const loading =
-  document.getElementById("loading");
-
-const loadingSub =
-  document.getElementById("loadingSub");
-
-const emptyMessage =
-  document.getElementById("emptyMessage");
-
-const errorMessage =
-  document.getElementById("errorMessage");
-
-const summaryQuery =
-  document.getElementById("summaryQuery");
-
-const status =
-  document.getElementById("status");
+const emptyBox =
+  document.getElementById("empty");
 
 const statusText =
   document.getElementById("statusText");
 
+const progressBar =
+  document.getElementById("progressBar");
 
-/* ==================================================
-   HELPERS
-================================================== */
+const mentionCount =
+  document.getElementById("mentionCount");
+
+const channelCount =
+  document.getElementById("channelCount");
+
+const scanCount =
+  document.getElementById("scanCount");
+
+
+
+/*
+====================================================
+SEARCH TERMS
+====================================================
+*/
+
+function buildTerms(value){
+
+  let text =
+    value
+      .trim()
+      .toLowerCase();
+
+  const terms =
+    new Set();
+
+
+  if(!text){
+    return [];
+  }
+
+
+  terms.add(text);
+
+
+  /*
+  $JUP → also JUP
+  */
+
+  if(text.startsWith("$")){
+
+    terms.add(
+      text.substring(1)
+    );
+
+  }
+
+
+  /*
+  JUP → also $JUP
+  */
+
+  else if(
+    /^[a-z0-9_-]{2,15}$/i.test(text)
+  ){
+
+    terms.add(
+      "$" + text
+    );
+
+  }
+
+
+  return [...terms];
+
+}
+
+
+
+/*
+====================================================
+FETCH TIMEOUT
+====================================================
+*/
+
+async function timeoutFetch(
+  url,
+  ms
+){
+
+  const controller =
+    new AbortController();
+
+
+  const timer =
+    setTimeout(
+      () => controller.abort(),
+      ms
+    );
+
+
+  try{
+
+    const response =
+      await fetch(
+        url,
+        {
+          signal:
+            controller.signal
+        }
+      );
+
+
+    if(!response.ok){
+
+      throw new Error(
+        "HTTP " +
+        response.status
+      );
+
+    }
+
+
+    return response;
+
+  }
+
+  finally{
+
+    clearTimeout(timer);
+
+  }
+
+}
+
+
+
+/*
+====================================================
+READ PUBLIC TELEGRAM CHANNEL
+====================================================
+*/
+
+async function getChannelText(username){
+
+  /*
+  First try Telegram directly.
+  */
+
+  const telegramURL =
+    "https://t.me/s/" +
+    username;
+
+
+  try{
+
+    const response =
+      await timeoutFetch(
+        telegramURL,
+        REQUEST_TIMEOUT
+      );
+
+
+    return await response.text();
+
+  }
+
+  catch(error){
+
+    console.log(
+      "Direct Telegram blocked:",
+      username
+    );
+
+  }
+
+
+  /*
+  FALLBACK:
+
+  Jina Reader converts the public Telegram
+  web page into readable text.
+
+  No personal API key is stored here.
+  */
+
+  const readerURL =
+    "https://r.jina.ai/http://t.me/s/"
+    +
+    username;
+
+
+  const response =
+    await timeoutFetch(
+      readerURL,
+      REQUEST_TIMEOUT
+    );
+
+
+  return await response.text();
+
+}
+
+
+
+/*
+====================================================
+NORMALIZE TEXT
+====================================================
+*/
+
+function cleanText(text){
+
+  return text
+
+    .replace(
+      /<script[\s\S]*?<\/script>/gi,
+      " "
+    )
+
+    .replace(
+      /<style[\s\S]*?<\/style>/gi,
+      " "
+    )
+
+    .replace(
+      /<[^>]+>/g,
+      " "
+    )
+
+    .replace(
+      /&nbsp;/gi,
+      " "
+    )
+
+    .replace(
+      /&amp;/gi,
+      "&"
+    )
+
+    .replace(
+      /\s+/g,
+      " "
+    )
+
+    .trim();
+
+}
+
+
+
+/*
+====================================================
+FIND MATCHES
+====================================================
+*/
+
+function findMatches(
+  text,
+  terms,
+  channel
+){
+
+  const clean =
+    cleanText(text);
+
+
+  const lower =
+    clean.toLowerCase();
+
+
+  const matches =
+    [];
+
+
+  for(
+    const term of terms
+  ){
+
+    let start =
+      0;
+
+
+    while(true){
+
+      const pos =
+        lower.indexOf(
+          term,
+          start
+        );
+
+
+      if(pos === -1){
+        break;
+      }
+
+
+      /*
+      Build a readable snippet
+      around the match.
+      */
+
+      const snippetStart =
+        Math.max(
+          0,
+          pos - 160
+        );
+
+
+      const snippetEnd =
+        Math.min(
+          clean.length,
+          pos + term.length + 220
+        );
+
+
+      let snippet =
+        clean.substring(
+          snippetStart,
+          snippetEnd
+        );
+
+
+      if(snippetStart > 0){
+        snippet =
+          "…" + snippet;
+      }
+
+
+      if(snippetEnd < clean.length){
+        snippet += "…";
+      }
+
+
+      matches.push({
+
+        channel:
+          channel.name,
+
+        username:
+          channel.username,
+
+        snippet:
+          snippet,
+
+        position:
+          pos
+
+      });
+
+
+      start =
+        pos + term.length;
+
+
+      /*
+      Prevent one huge channel from flooding
+      all results.
+      */
+
+      if(matches.length >= 10){
+        break;
+      }
+
+    }
+
+
+    if(matches.length >= 10){
+      break;
+    }
+
+  }
+
+
+  /*
+  Remove matches that are basically
+  the same piece of text.
+  */
+
+  const unique =
+    [];
+
+
+  const seen =
+    new Set();
+
+
+  for(
+    const match of matches
+  ){
+
+    const key =
+      match.snippet
+        .toLowerCase()
+        .substring(0,180);
+
+
+    if(
+      seen.has(key)
+    ){
+      continue;
+    }
+
+
+    seen.add(key);
+
+    unique.push(match);
+
+  }
+
+
+  return unique;
+
+}
+
+
+
+/*
+====================================================
+ESCAPE HTML
+====================================================
+*/
 
 function escapeHTML(value){
 
@@ -995,740 +1134,309 @@ function escapeHTML(value){
 }
 
 
-/* ==================================================
-   BUILD SEARCH QUERY
-================================================== */
 
-function buildSearchQuery(term){
+/*
+====================================================
+RENDER RESULT
+====================================================
+*/
 
-  const clean =
-    term
-      .trim()
-      .replace(/\s+/g," ");
+function renderResult(item){
 
-
-  /*
-    The important part:
-
-    site:t.me
-
-    tells supported search engines to return
-    Telegram pages only.
-  */
-
-
-  /*
-    Contract address
-  */
-
-  if(
-    clean.length >= 30 &&
-    !clean.includes(" ")
-  ){
-
-    return `site:t.me "${clean}"`;
-
-  }
-
-
-  /*
-    Ticker beginning with $
-  */
-
-  if(
-    clean.startsWith("$")
-  ){
-
-    const ticker =
-      clean.substring(1);
-
-    return (
-      `site:t.me ("${clean}" OR "${ticker}")`
-    );
-
-  }
-
-
-  /*
-    Short token ticker
-  */
-
-  if(
-    /^[A-Za-z0-9_-]{2,12}$/.test(clean)
-  ){
-
-    return (
-      `site:t.me ("${clean}" OR "$${clean}")`
-    );
-
-  }
-
-
-  /*
-    Project name
-  */
-
-  return (
-    `site:t.me "${clean}"`
-  );
-
-}
-
-
-/* ==================================================
-   TIMEOUT FETCH
-================================================== */
-
-async function fetchWithTimeout(
-  url,
-  timeout
-){
-
-  const controller =
-    new AbortController();
-
-
-  const timer =
-    setTimeout(
-      ()=>{
-        controller.abort();
-      },
-      timeout
-    );
-
-
-  try{
-
-    return await fetch(
-      url,
-      {
-        method:"GET",
-
-        headers:{
-          "Accept":"application/json"
-        },
-
-        signal:
-          controller.signal
-      }
-    );
-
-  }
-  finally{
-
-    clearTimeout(timer);
-
-  }
-
-}
-
-
-/* ==================================================
-   TRY ONE SEARXNG INSTANCE
-================================================== */
-
-async function queryInstance(
-  baseUrl,
-  query
-){
-
-  const url =
-    baseUrl
-    +
-    "/search?q="
-    +
-    encodeURIComponent(query)
-    +
-    "&format=json"
-    +
-    "&categories=general"
-    +
-    "&language=all"
-    +
-    "&safesearch=0";
-
-
-  const response =
-    await fetchWithTimeout(
-      url,
-      REQUEST_TIMEOUT
-    );
-
-
-  if(
-    !response.ok
-  ){
-
-    throw new Error(
-      "HTTP " + response.status
-    );
-
-  }
-
-
-  const type =
-    response.headers
-      .get("content-type")
-      || "";
-
-
-  if(
-    !type.includes("json")
-  ){
-
-    throw new Error(
-      "JSON not available"
-    );
-
-  }
-
-
-  const data =
-    await response.json();
-
-
-  if(
-    !data ||
-    !Array.isArray(data.results)
-  ){
-
-    throw new Error(
-      "Invalid response"
-    );
-
-  }
-
-
-  return data.results;
-
-}
-
-
-/* ==================================================
-   TRY PUBLIC SERVERS
-================================================== */
-
-async function searchPublicSources(query){
-
-  let lastError = null;
-
-
-  for(
-    let i = 0;
-    i < SEARX_INSTANCES.length;
-    i++
-  ){
-
-    const instance =
-      SEARX_INSTANCES[i];
-
-
-    try{
-
-      loadingSub.textContent =
-        `Checking search source ${i + 1} of ${SEARX_INSTANCES.length}…`;
-
-
-      const results =
-        await queryInstance(
-          instance,
-          query
-        );
-
-
-      /*
-        If the server responds successfully,
-        return immediately.
-      */
-
-      return {
-        results,
-        instance
-      };
-
-    }
-    catch(error){
-
-      console.warn(
-        "Search source failed:",
-        instance,
-        error
-      );
-
-
-      lastError =
-        error;
-
-    }
-
-  }
-
-
-  throw (
-    lastError ||
-    new Error("No search source available")
-  );
-
-}
-
-
-/* ==================================================
-   TELEGRAM FILTER
-================================================== */
-
-function isTelegramURL(url){
-
-  try{
-
-    const parsed =
-      new URL(url);
-
-
-    const host =
-      parsed.hostname
-        .toLowerCase()
-        .replace(/^www\./,"");
-
-
-    return (
-      host === "t.me"
-      ||
-      host.endsWith(".t.me")
-    );
-
-  }
-  catch{
-
-    return false;
-
-  }
-
-}
-
-
-/* ==================================================
-   REMOVE DUPLICATES
-================================================== */
-
-function uniqueResults(results){
-
-  const seen =
-    new Set();
-
-
-  const output =
-    [];
-
-
-  for(
-    const item of results
-  ){
-
-    if(
-      !item ||
-      !item.url
-    ){
-
-      continue;
-
-    }
-
-
-    if(
-      !isTelegramURL(item.url)
-    ){
-
-      continue;
-
-    }
-
-
-    /*
-      Normalize URL
-    */
-
-    let normalized =
-      item.url.split("#")[0];
-
-
-    if(
-      normalized.endsWith("/")
-    ){
-
-      normalized =
-        normalized.slice(0,-1);
-
-    }
-
-
-    if(
-      seen.has(normalized)
-    ){
-
-      continue;
-
-    }
-
-
-    seen.add(normalized);
-
-
-    output.push(item);
-
-
-    if(
-      output.length >= MAX_RESULTS
-    ){
-
-      break;
-
-    }
-
-  }
-
-
-  return output;
-
-}
-
-
-/* ==================================================
-   CHANNEL NAME
-================================================== */
-
-function getTelegramPath(url){
-
-  try{
-
-    const parsed =
-      new URL(url);
-
-
-    let path =
-      parsed.pathname
-        .replace(/^\/+/,"");
-
-
-    return (
-      path ||
-      "Telegram"
-    );
-
-  }
-  catch{
-
-    return "Telegram";
-
-  }
-
-}
-
-
-/* ==================================================
-   RESULT CARD
-================================================== */
-
-function createResultCard(item){
-
-  const link =
+  const card =
     document.createElement("a");
 
 
-  link.className =
+  card.className =
     "result";
 
 
-  link.href =
-    item.url;
-
-
-  link.target =
+  card.target =
     "_blank";
 
 
-  link.rel =
+  card.rel =
     "noopener noreferrer";
 
 
-  const title =
-    item.title
-    ||
-    getTelegramPath(item.url)
-    ||
-    "Telegram result";
+  card.href =
+    "https://t.me/" +
+    item.username;
 
 
-  const snippet =
-    item.content
-    ||
-    item.snippet
-    ||
-    "Public Telegram result";
-
-
-  const telegramPath =
-    getTelegramPath(item.url);
-
-
-  link.innerHTML = `
+  card.innerHTML = `
 
     <div class="result-top">
 
-      <div class="result-title">
-        ${escapeHTML(title)}
+      <div class="channel">
+
+        🟣
+        ${escapeHTML(item.channel)}
+
       </div>
 
-      <div class="arrow">
+
+      <div class="open">
         ↗
       </div>
 
     </div>
 
 
-    <div class="result-url">
-      t.me/${escapeHTML(telegramPath)}
+    <div class="snippet">
+
+      ${escapeHTML(item.snippet)}
+
     </div>
 
 
-    <div class="result-snippet">
-      ${escapeHTML(snippet)}
+    <div class="source">
+
+      @${escapeHTML(item.username)}
+
     </div>
 
   `;
 
 
-  return link;
+  resultsBox.appendChild(card);
 
 }
 
 
-/* ==================================================
-   RESET VIEW
-================================================== */
 
-function resetResults(){
+/*
+====================================================
+MAIN SEARCH
+====================================================
+*/
 
-  resultsContainer.innerHTML =
-    "";
+async function searchTelegram(value){
 
-
-  emptyMessage.style.display =
-    "none";
-
-
-  errorMessage.style.display =
-    "none";
-
-
-  loading.style.display =
-    "none";
-
-
-  status.className =
-    "status";
-
-
-  statusText.textContent =
-    "Searching";
-
-}
-
-
-/* ==================================================
-   RUN SEARCH
-================================================== */
-
-async function runSearch(term){
-
-  const clean =
-    term.trim();
+  const terms =
+    buildTerms(value);
 
 
   if(
-    !clean
+    terms.length === 0
   ){
-
     return;
-
   }
 
 
-  resetResults();
-
-
-  resultsSection.style.display =
+  section.style.display =
     "block";
 
 
-  summaryQuery.textContent =
-    clean;
+  resultsBox.innerHTML =
+    "";
 
 
-  loading.style.display =
-    "block";
+  emptyBox.style.display =
+    "none";
 
 
-  searchButton.disabled =
+  mentionCount.textContent =
+    "0";
+
+
+  channelCount.textContent =
+    "0";
+
+
+  scanCount.textContent =
+    "0";
+
+
+  button.disabled =
     true;
 
 
-  searchButton.textContent =
-    "Searching…";
+  button.textContent =
+    "Scanning…";
 
 
-  resultsSection.scrollIntoView({
-    behavior:"smooth",
-    block:"start"
-  });
+  progressBar.style.width =
+    "0%";
 
 
-  const query =
-    buildSearchQuery(clean);
+  const allResults =
+    [];
 
 
-  try{
+  const hitChannels =
+    new Set();
 
-    const response =
-      await searchPublicSources(
-        query
+
+  let scanned =
+    0;
+
+
+  for(
+    let i = 0;
+    i < CHANNELS.length;
+    i++
+  ){
+
+    const channel =
+      CHANNELS[i];
+
+
+    statusText.textContent =
+      "Scanning @" +
+      channel.username +
+      "…";
+
+
+    try{
+
+      const text =
+        await getChannelText(
+          channel.username
+        );
+
+
+      const matches =
+        findMatches(
+          text,
+          terms,
+          channel
+        );
+
+
+      if(
+        matches.length > 0
+      ){
+
+        hitChannels.add(
+          channel.username
+        );
+
+
+        matches.forEach(
+          result => {
+
+            allResults.push(
+              result
+            );
+
+          }
+        );
+
+      }
+
+    }
+
+    catch(error){
+
+      console.warn(
+        "Channel failed:",
+        channel.username,
+        error
       );
-
-
-    const telegramResults =
-      uniqueResults(
-        response.results
-      );
-
-
-    loading.style.display =
-      "none";
-
-
-    if(
-      telegramResults.length === 0
-    ){
-
-      emptyMessage.style.display =
-        "block";
-
-
-      status.className =
-        "status success";
-
-
-      statusText.textContent =
-        "0 results";
-
-
-      return;
 
     }
 
 
-    telegramResults.forEach(
-      item=>{
-
-        resultsContainer.appendChild(
-          createResultCard(item)
-        );
-
-      }
-    );
+    scanned++;
 
 
-    status.className =
-      "status success";
+    scanCount.textContent =
+      scanned;
 
 
-    statusText.textContent =
-      `${telegramResults.length} results`;
+    progressBar.style.width =
+      (
+        scanned /
+        CHANNELS.length *
+        100
+      )
+      +
+      "%";
 
 
-    console.log(
-      "Search source:",
-      response.instance
-    );
+    /*
+    Update counters live
+    */
+
+    mentionCount.textContent =
+      allResults.length;
+
+
+    channelCount.textContent =
+      hitChannels.size;
 
   }
-  catch(error){
 
-    console.error(
-      error
+
+  const limited =
+    allResults.slice(
+      0,
+      MAX_RESULTS
     );
 
 
-    loading.style.display =
-      "none";
+  limited.forEach(
+    renderResult
+  );
 
 
-    errorMessage.style.display =
+  mentionCount.textContent =
+    limited.length;
+
+
+  channelCount.textContent =
+    hitChannels.size;
+
+
+  if(
+    limited.length === 0
+  ){
+
+    emptyBox.style.display =
       "block";
 
-
-    status.className =
-      "status error";
-
-
-    statusText.textContent =
-      "Unavailable";
-
   }
-  finally{
-
-    searchButton.disabled =
-      false;
 
 
-    searchButton.textContent =
-      "Search Telegram";
+  statusText.textContent =
+    "Scan complete · "
+    +
+    scanned
+    +
+    " public channels checked";
 
-  }
+
+  button.disabled =
+    false;
+
+
+  button.textContent =
+    "Search Telegram";
 
 }
 
 
-/* ==================================================
-   FORM
-================================================== */
 
-searchForm.addEventListener(
+/*
+====================================================
+FORM
+====================================================
+*/
+
+form.addEventListener(
   "submit",
-  event=>{
+  event => {
 
     event.preventDefault();
 
 
-    runSearch(
-      searchInput.value
+    searchTelegram(
+      input.value
     );
 
   }
 );
-
-
-/* ==================================================
-   OPTIONAL URL SEARCH
-================================================== */
-
-const initialSearch =
-  new URLSearchParams(
-    window.location.search
-  ).get("q");
-
-
-if(
-  initialSearch
-){
-
-  searchInput.value =
-    initialSearch;
-
-
-  runSearch(
-    initialSearch
-  );
-
-}
 
 </script>
 
