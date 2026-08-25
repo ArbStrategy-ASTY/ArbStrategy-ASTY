@@ -4,1441 +4,1268 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="color-scheme" content="dark">
-
-<title>Token Telegram Radar</title>
-
+<meta name="theme-color" content="#080914">
+<title>Solana Project Passport · Powered by ASTY</title>
+<meta name="description" content="Create a free live Solana Project Passport from any token address. Liquidity, volume, markets, DEX activity and shareable project stats in one place.">
 <style>
 :root{
   --bg:#070914;
-  --card:#101426;
-  --text:#f5f3ff;
-  --muted:#9499b3;
-  --muted2:#69708e;
-  --purple:#aa8cff;
-  --purple2:#8067ff;
-  --purple3:#c7b7ff;
-  --green:#69e6b7;
-  --red:#ff7898;
-  --line:rgba(171,144,255,.16);
+  --bg2:#0b0e1d;
+  --card:#101429;
+  --card2:#0c1021;
+  --text:#f6f3ff;
+  --muted:#969bb5;
+  --muted2:#6e7593;
+  --line:rgba(173,145,255,.16);
   --line2:rgba(255,255,255,.07);
+  --purple:#b093ff;
+  --purple2:#8067ff;
+  --purple3:#674df0;
+  --cyan:#6ee7f9;
+  --green:#71e6a1;
+  --red:#ff7b98;
+  --amber:#f6c96c;
+  --shadow:0 22px 70px rgba(0,0,0,.34);
+  --radius:22px;
 }
-
-*{
-  box-sizing:border-box;
-}
-
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
 body{
   margin:0;
   min-height:100vh;
-
-  font-family:
-    Inter,
-    system-ui,
-    -apple-system,
-    BlinkMacSystemFont,
-    "Segoe UI",
-    sans-serif;
-
   color:var(--text);
-
+  font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
   background:
-    radial-gradient(
-      circle at 20% 0%,
-      rgba(128,103,255,.16),
-      transparent 34rem
-    ),
-    linear-gradient(
-      180deg,
-      #070914,
-      #050711
-    );
+    radial-gradient(circle at 20% -10%,rgba(128,103,255,.18),transparent 34%),
+    radial-gradient(circle at 92% 18%,rgba(110,231,249,.07),transparent 24%),
+    linear-gradient(180deg,#070914 0%,#080a15 50%,#060711 100%);
 }
-
-.wrap{
-  width:min(1000px,calc(100% - 28px));
-  margin:auto;
+body::before{
+  content:"";
+  position:fixed;
+  inset:0;
+  pointer-events:none;
+  opacity:.18;
+  background-image:
+    linear-gradient(rgba(255,255,255,.02) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(255,255,255,.02) 1px,transparent 1px);
+  background-size:34px 34px;
+  mask-image:linear-gradient(to bottom,black,transparent 85%);
 }
-
-header{
+a{color:inherit}
+button,input{font:inherit}
+button{cursor:pointer}
+.wrap{width:min(1180px,calc(100% - 32px));margin:0 auto}
+.topbar{
   display:flex;
-  justify-content:space-between;
   align-items:center;
-  padding:24px 0;
+  justify-content:space-between;
+  gap:18px;
+  padding:22px 0;
 }
-
 .brand{
   display:flex;
   align-items:center;
   gap:11px;
-  font-weight:850;
+  font-weight:800;
+  letter-spacing:-.02em;
 }
-
-.logo{
-  width:36px;
-  height:36px;
-  display:grid;
-  place-items:center;
-
-  border-radius:11px;
-
-  background:
-    linear-gradient(
-      135deg,
-      var(--purple),
-      var(--purple2)
-    );
-
-  color:#090b14;
-  font-weight:1000;
+.brand-mark{
+  width:34px;height:34px;border-radius:50%;
+  background:radial-gradient(circle at 35% 30%,#d8c9ff 0 10%,#a98aff 34%,#7157ff 66%,#33266f 100%);
+  box-shadow:0 0 28px rgba(169,138,255,.4);
+  position:relative;
 }
-
-.badge{
+.brand-mark::after{
+  content:"";
+  position:absolute;
+  inset:8px;
+  border-radius:50%;
+  border:1px solid rgba(255,255,255,.48);
+}
+.brand small{display:block;color:var(--muted);font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;margin-top:1px}
+.nav-actions{display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end}
+.btn{
   border:1px solid var(--line);
-  border-radius:999px;
-
-  padding:7px 10px;
-
-  font-size:11px;
-  color:var(--muted);
+  color:var(--text);
+  background:rgba(255,255,255,.035);
+  padding:11px 15px;
+  border-radius:13px;
+  font-weight:700;
+  transition:.18s ease;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+  text-decoration:none;
 }
-
+.btn:hover{transform:translateY(-1px);border-color:rgba(176,147,255,.38);background:rgba(176,147,255,.08)}
+.btn.primary{
+  border-color:transparent;
+  background:linear-gradient(135deg,var(--purple),var(--purple2));
+  color:#0b0716;
+  box-shadow:0 10px 28px rgba(128,103,255,.18);
+}
+.btn.primary:hover{filter:brightness(1.04)}
+.btn.slim{padding:9px 12px;font-size:13px}
 .hero{
   text-align:center;
-  padding:65px 0 35px;
+  padding:72px 0 35px;
 }
-
-.kicker{
+.eyebrow{
   display:inline-flex;
   align-items:center;
   gap:8px;
-
-  border:1px solid var(--line);
+  padding:7px 11px;
   border-radius:999px;
-
-  padding:8px 12px;
-
-  color:var(--purple3);
-
-  font-size:13px;
+  border:1px solid var(--line);
+  color:#c8b9ff;
+  background:rgba(176,147,255,.055);
+  font-size:12px;
   font-weight:800;
+  letter-spacing:.08em;
+  text-transform:uppercase;
 }
-
-.dot{
-  width:7px;
-  height:7px;
-
-  border-radius:50%;
-
-  background:var(--purple);
-
-  box-shadow:
-    0 0 14px var(--purple);
-}
-
+.dot{width:7px;height:7px;border-radius:50%;background:var(--purple);box-shadow:0 0 14px var(--purple)}
 h1{
-  margin:20px auto 14px;
-
-  max-width:850px;
-
-  font-size:
-    clamp(42px,7vw,70px);
-
-  line-height:1;
-
-  letter-spacing:-2.5px;
-
-  background:
-    linear-gradient(
-      180deg,
-      #fff,
-      #d8d0ff 65%,
-      #9f8aff
-    );
-
+  margin:18px auto 12px;
+  max-width:840px;
+  font-size:clamp(42px,7vw,78px);
+  line-height:.98;
+  letter-spacing:-.055em;
+  background:linear-gradient(90deg,#fff 0%,#e7deff 42%,#ae93ff 76%,#76e2f5 110%);
   -webkit-background-clip:text;
   background-clip:text;
-
   color:transparent;
 }
-
-.subtitle{
+.hero p{
   max-width:700px;
-  margin:auto;
-
+  margin:0 auto;
   color:var(--muted);
-
-  font-size:17px;
-  line-height:1.6;
+  font-size:clamp(16px,2vw,19px);
+  line-height:1.65;
 }
-
-.searchbox{
-  max-width:820px;
-
-  margin:30px auto 0;
-
-  display:flex;
-  gap:10px;
-
-  padding:10px;
-
-  border:1px solid var(--line);
-
+.search-card{
+  margin:34px auto 0;
+  width:min(860px,100%);
+  padding:12px;
   border-radius:20px;
-
-  background:
-    rgba(16,20,38,.9);
+  border:1px solid var(--line);
+  background:linear-gradient(180deg,rgba(255,255,255,.055),rgba(255,255,255,.025));
+  box-shadow:var(--shadow);
 }
-
-.searchbox input{
+.search-row{display:flex;gap:10px}
+.input-wrap{
   flex:1;
   min-width:0;
-
-  border:0;
-  outline:none;
-
-  background:none;
-
-  padding:15px;
-
-  color:white;
-
-  font-size:16px;
-}
-
-.searchbox button{
-  border:0;
-
-  padding:14px 22px;
-
-  border-radius:14px;
-
-  cursor:pointer;
-
-  font-weight:900;
-
-  background:
-    linear-gradient(
-      135deg,
-      var(--purple3),
-      var(--purple2)
-    );
-
-  color:#090b14;
-}
-
-.searchbox button:disabled{
-  opacity:.5;
-}
-
-.examples{
-  margin-top:12px;
-
-  color:var(--muted2);
-
-  font-size:12px;
-}
-
-
-/* RESULTS */
-
-#resultSection{
-  display:none;
-
-  padding-bottom:70px;
-}
-
-.stats{
-  display:grid;
-
-  grid-template-columns:
-    repeat(3,1fr);
-
-  gap:12px;
-
-  margin-bottom:18px;
-}
-
-.stat{
-  padding:18px;
-
-  border:1px solid var(--line);
-
-  border-radius:17px;
-
-  background:
-    rgba(255,255,255,.025);
-}
-
-.stat-label{
-  color:var(--muted2);
-
-  font-size:11px;
-
-  text-transform:uppercase;
-
-  letter-spacing:1px;
-}
-
-.stat-value{
-  margin-top:6px;
-
-  font-size:25px;
-
-  font-weight:900;
-}
-
-.statusbox{
-  margin-bottom:14px;
-
-  padding:16px;
-
-  border:1px solid var(--line);
-
-  border-radius:16px;
-
-  color:var(--muted);
-
-  font-size:13px;
-}
-
-.progress{
-  width:100%;
-  height:5px;
-
-  margin-top:10px;
-
-  overflow:hidden;
-
-  border-radius:10px;
-
-  background:
-    rgba(255,255,255,.07);
-}
-
-.progressbar{
-  width:0;
-  height:100%;
-
-  background:
-    linear-gradient(
-      90deg,
-      var(--purple),
-      var(--purple3)
-    );
-
-  transition:
-    width .25s;
-}
-
-.results{
-  display:grid;
-  gap:12px;
-}
-
-.result{
-  display:block;
-
-  padding:18px;
-
-  border:1px solid var(--line2);
-
-  border-radius:17px;
-
-  background:
-    rgba(255,255,255,.025);
-
-  text-decoration:none;
-
-  color:inherit;
-}
-
-.result:hover{
-  border-color:
-    rgba(171,144,255,.3);
-}
-
-.result-top{
   display:flex;
-
+  align-items:center;
+  gap:10px;
+  padding:0 15px;
+  border-radius:14px;
+  background:#080b18;
+  border:1px solid var(--line2);
+}
+.input-wrap span{color:var(--purple)}
+#tokenInput{
+  width:100%;
+  min-width:0;
+  background:transparent;
+  color:var(--text);
+  border:0;
+  outline:0;
+  padding:15px 0;
+}
+#tokenInput::placeholder{color:#5f6681}
+.quickline{
+  display:flex;
   justify-content:space-between;
-
-  gap:15px;
-}
-
-.channel{
-  color:var(--purple3);
-
-  font-weight:850;
-}
-
-.open{
-  color:var(--purple3);
-}
-
-.snippet{
+  gap:10px;
   margin-top:10px;
-
+  color:var(--muted2);
+  font-size:12px;
+  padding:0 4px;
+}
+.link-btn{
+  padding:0;border:0;background:none;color:#ae99ff;font-weight:700
+}
+.status{
+  margin:16px auto 0;
+  width:min(860px,100%);
+  min-height:24px;
+  text-align:left;
   color:var(--muted);
-
-  line-height:1.55;
-
   font-size:13px;
 }
+.status.error{color:#ff9bb0}
+.status.ok{color:#89e9ad}
 
-.source{
-  margin-top:10px;
+#passportSection{display:none;padding:24px 0 66px}
+#passportSection.show{display:block}
+.passport{
+  overflow:hidden;
+  border:1px solid var(--line);
+  border-radius:28px;
+  background:
+    radial-gradient(circle at 90% 0%,rgba(110,231,249,.07),transparent 24%),
+    radial-gradient(circle at 0% 0%,rgba(176,147,255,.11),transparent 30%),
+    linear-gradient(180deg,rgba(17,21,42,.98),rgba(10,13,28,.98));
+  box-shadow:var(--shadow);
+}
+.passport-head{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:18px;
+  padding:26px;
+  border-bottom:1px solid var(--line);
+}
+.token-id{display:flex;align-items:center;gap:16px;min-width:0}
+.token-logo{
+  width:64px;height:64px;border-radius:18px;object-fit:cover;
+  border:1px solid var(--line);background:#0b0e1c;
+}
+.token-logo.fallback{display:grid;place-items:center;font-weight:900;font-size:22px;color:#d9ceff}
+.token-title{min-width:0}
+.token-title h2{margin:0;font-size:27px;letter-spacing:-.035em}
+.token-meta{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:6px;color:var(--muted);font-size:13px}
+.pill{
+  display:inline-flex;align-items:center;gap:6px;
+  border:1px solid var(--line);
+  background:rgba(176,147,255,.055);
+  padding:5px 8px;border-radius:999px;
+  color:#c9bcf7;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.04em
+}
+.address-line{
+  max-width:410px;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  color:#8e95ae;
+  font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+}
+.live{
+  display:inline-flex;align-items:center;gap:7px;color:#9ff0bb;font-size:12px;font-weight:800
+}
+.live::before{content:"";width:7px;height:7px;border-radius:50%;background:#6ee99d;box-shadow:0 0 12px rgba(110,233,157,.65)}
+.head-links{display:flex;gap:9px;flex-wrap:wrap;justify-content:flex-end}
 
+.primary-grid{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:1px;
+  background:var(--line);
+}
+.metric{
+  min-width:0;
+  background:rgba(11,14,29,.96);
+  padding:23px;
+}
+.metric-label{
   color:var(--muted2);
+  font-size:11px;
+  text-transform:uppercase;
+  font-weight:800;
+  letter-spacing:.08em;
+}
+.metric-value{
+  margin-top:8px;
+  font-size:clamp(22px,3vw,31px);
+  font-weight:850;
+  letter-spacing:-.04em;
+  overflow-wrap:anywhere;
+}
+.metric-sub{margin-top:6px;color:var(--muted);font-size:12px}
+.positive{color:var(--green)}
+.negative{color:var(--red)}
 
+.content-grid{
+  display:grid;
+  grid-template-columns:1.1fr .9fr;
+  gap:0;
+  border-top:1px solid var(--line);
+}
+.panel{padding:25px}
+.panel + .panel{border-left:1px solid var(--line)}
+.panel-title{
+  display:flex;align-items:center;justify-content:space-between;gap:10px;
+  margin-bottom:17px
+}
+.panel-title h3{margin:0;font-size:16px;letter-spacing:-.02em}
+.panel-title span{color:var(--muted2);font-size:12px}
+.fact-list{display:grid;gap:10px}
+.fact{
+  display:flex;align-items:center;justify-content:space-between;gap:16px;
+  padding:13px 14px;border:1px solid var(--line2);border-radius:13px;background:rgba(255,255,255,.018)
+}
+.fact span:first-child{color:var(--muted);font-size:13px}
+.fact strong{text-align:right;font-size:13px}
+.dex-list{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+.dex-chip{
+  padding:7px 9px;border:1px solid var(--line);border-radius:10px;
+  background:rgba(176,147,255,.05);font-size:12px;font-weight:750;color:#cec3f9
+}
+.pool-table-wrap{overflow:auto}
+table{width:100%;border-collapse:collapse;min-width:670px}
+th{
+  color:var(--muted2);font-size:10px;letter-spacing:.07em;text-transform:uppercase;
+  font-weight:800;text-align:left;padding:10px 12px;border-bottom:1px solid var(--line)
+}
+td{padding:13px 12px;border-bottom:1px solid var(--line2);font-size:12px}
+tr:last-child td{border-bottom:0}
+td.num,th.num{text-align:right}
+.pool-token{font-weight:750}
+.muted{color:var(--muted)}
+.pool-link{text-decoration:none;color:#bdabff}
+.pool-link:hover{text-decoration:underline}
+
+.passport-foot{
+  display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;
+  padding:18px 25px;border-top:1px solid var(--line);
+  color:var(--muted2);font-size:11px
+}
+.powered{
+  display:flex;align-items:center;gap:8px;color:#b7aacd;text-decoration:none;font-weight:700
+}
+.powered .mini-dot{width:8px;height:8px;border-radius:50%;background:var(--purple);box-shadow:0 0 12px rgba(176,147,255,.55)}
+.powered strong{color:#dfd6ff}
+
+.tools{
+  margin-top:18px;
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:18px;
+}
+.tool-card{
+  border:1px solid var(--line);
+  border-radius:20px;
+  padding:22px;
+  background:rgba(15,19,38,.78);
+}
+.tool-card h3{margin:0 0 7px;font-size:18px}
+.tool-card p{margin:0;color:var(--muted);font-size:13px;line-height:1.55}
+.tool-actions{display:flex;gap:9px;flex-wrap:wrap;margin-top:17px}
+.codebox{
+  display:flex;
+  align-items:flex-start;
+  gap:10px;
+  margin-top:15px;
+  border:1px solid var(--line2);
+  background:#070a16;
+  border-radius:12px;
+  padding:12px;
+}
+.codebox code{
+  flex:1;min-width:0;color:#aeb5d0;font-size:11px;line-height:1.45;
+  overflow:auto;white-space:nowrap
+}
+.note{
+  margin-top:15px;padding:12px 13px;border-radius:12px;
+  border:1px solid rgba(246,201,108,.15);background:rgba(246,201,108,.045);
+  color:#b8ad93;font-size:11px;line-height:1.5
+}
+.section-info{
+  padding:56px 0 80px;
+  text-align:center;
+}
+.section-info h2{font-size:32px;letter-spacing:-.04em;margin:0}
+.section-info p{max-width:650px;margin:12px auto 0;color:var(--muted);line-height:1.65}
+.info-grid{
+  margin-top:28px;
+  display:grid;grid-template-columns:repeat(3,1fr);gap:14px;text-align:left
+}
+.info{
+  padding:20px;border:1px solid var(--line);border-radius:17px;background:rgba(255,255,255,.022)
+}
+.info b{display:block;margin-bottom:7px}
+.info span{color:var(--muted);font-size:13px;line-height:1.55}
+.site-footer{
+  border-top:1px solid var(--line2);
+  color:var(--muted2);
+  padding:24px 0 34px;
   font-size:11px;
 }
+.footer-row{display:flex;justify-content:space-between;gap:15px;flex-wrap:wrap}
 
-.empty{
-  display:none;
-
-  padding:35px;
-
-  border:1px solid var(--line);
-
-  border-radius:18px;
-
-  text-align:center;
-
-  color:var(--muted);
+.loader{
+  width:15px;height:15px;border-radius:50%;
+  border:2px solid rgba(255,255,255,.16);border-top-color:#c9b7ff;
+  animation:spin .8s linear infinite;display:inline-block;vertical-align:-3px;margin-right:7px
 }
+@keyframes spin{to{transform:rotate(360deg)}}
+.hidden{display:none!important}
 
-footer{
-  padding:30px;
-
-  text-align:center;
-
-  color:var(--muted2);
-
-  font-size:12px;
+body.embed-mode{
+  background:#090c18;
 }
-
-footer strong{
-  color:var(--purple);
+body.embed-mode::before,
+body.embed-mode .topbar,
+body.embed-mode .hero,
+body.embed-mode .tools,
+body.embed-mode .section-info,
+body.embed-mode .site-footer,
+body.embed-mode .head-links,
+body.embed-mode .pool-panel,
+body.embed-mode .passport-foot .source-note{
+  display:none!important
 }
+body.embed-mode .wrap{width:100%;margin:0}
+body.embed-mode #passportSection{padding:0;display:block}
+body.embed-mode .passport{border-radius:16px;box-shadow:none}
+body.embed-mode .passport-head{padding:18px}
+body.embed-mode .token-logo{width:48px;height:48px;border-radius:14px}
+body.embed-mode .token-title h2{font-size:21px}
+body.embed-mode .primary-grid{grid-template-columns:repeat(4,1fr)}
+body.embed-mode .metric{padding:16px}
+body.embed-mode .metric-value{font-size:21px}
+body.embed-mode .content-grid{display:none}
+body.embed-mode .passport-foot{padding:12px 16px}
 
-@media(max-width:650px){
-
-  .searchbox{
-    flex-direction:column;
-  }
-
-  .searchbox button{
-    width:100%;
-  }
-
-  .stats{
-    grid-template-columns:1fr;
-  }
-
+@media(max-width:900px){
+  .primary-grid{grid-template-columns:repeat(2,1fr)}
+  .content-grid{grid-template-columns:1fr}
+  .panel + .panel{border-left:0;border-top:1px solid var(--line)}
+  .tools{grid-template-columns:1fr}
+  .info-grid{grid-template-columns:1fr}
+}
+@media(max-width:620px){
+  .wrap{width:min(100% - 20px,1180px)}
+  .topbar{align-items:flex-start}
+  .brand small{display:none}
+  .nav-actions .btn:first-child{display:none}
+  .hero{padding-top:48px}
+  .search-row{flex-direction:column}
+  .search-card{padding:10px}
+  .search-row .btn{width:100%}
+  .quickline{align-items:flex-start}
+  .passport-head{align-items:flex-start;flex-direction:column}
+  .head-links{width:100%}
+  .head-links .btn{flex:1}
+  .primary-grid{grid-template-columns:1fr 1fr}
+  .metric{padding:17px}
+  .passport{border-radius:20px}
+  .token-logo{width:54px;height:54px}
+  .token-title h2{font-size:23px}
+  .panel{padding:19px}
+  body.embed-mode .primary-grid{grid-template-columns:1fr 1fr}
 }
 </style>
 </head>
-
-
 <body>
 
 <div class="wrap">
-
-<header>
-
-  <div class="brand">
-
-    <div class="logo">
-      T
+  <header class="topbar">
+    <div class="brand">
+      <div class="brand-mark" aria-hidden="true"></div>
+      <div>
+        Solana Project Passport
+        <small>Powered by ASTY</small>
+      </div>
     </div>
-
-    Token Telegram Radar
-
-  </div>
-
-  <div class="badge">
-    Experimental
-  </div>
-
-</header>
-
-
-<section class="hero">
-
-  <div class="kicker">
-
-    <span class="dot"></span>
-
-    Crypto Telegram Search
-
-  </div>
-
-
-  <h1>
-    Find who's talking about a token.
-  </h1>
-
-
-  <div class="subtitle">
-
-    Search public crypto Telegram channels
-    for token names, tickers and contract addresses.
-
-  </div>
-
-
-  <form
-    id="searchForm"
-    class="searchbox"
-  >
-
-    <input
-      id="searchInput"
-      placeholder="ASTY, $JUP, BONK or contract address"
-      autocomplete="off"
-    >
-
-    <button
-      id="searchBtn"
-      type="submit"
-    >
-      Search Telegram
-    </button>
-
-  </form>
-
-
-  <div class="examples">
-
-    No login · No API key · No wallet connection
-
-  </div>
-
-</section>
-
-
-
-<section id="resultSection">
-
-
-<div class="stats">
-
-  <div class="stat">
-
-    <div class="stat-label">
-      Mentions
+    <div class="nav-actions">
+      <a class="btn slim" href="https://arbstrategy.net/" target="_blank" rel="noopener">About ASTY</a>
+      <button class="btn slim" id="topTryAsty">Try ASTY</button>
     </div>
+  </header>
 
-    <div
-      id="mentionCount"
-      class="stat-value"
-    >
-      0
+  <main>
+    <section class="hero">
+      <div class="eyebrow"><span class="dot"></span> Free Solana utility</div>
+      <h1>One token. One live passport.</h1>
+      <p>
+        Turn any Solana token address into a clean, shareable project snapshot with live market,
+        liquidity, volume and DEX data. No login. No wallet connection.
+      </p>
+
+      <div class="search-card">
+        <div class="search-row">
+          <div class="input-wrap">
+            <span>◎</span>
+            <input id="tokenInput" type="text" autocomplete="off" spellcheck="false"
+              placeholder="Paste a Solana token address">
+          </div>
+          <button class="btn primary" id="scanBtn">Create Passport</button>
+        </div>
+        <div class="quickline">
+          <span>Public market data only · read-only</span>
+          <button class="link-btn" id="tryAsty">Use ASTY as example</button>
+        </div>
+      </div>
+      <div class="status" id="status"></div>
+    </section>
+
+    <section id="passportSection">
+      <article class="passport" id="passport">
+        <div class="passport-head">
+          <div class="token-id">
+            <img id="tokenLogo" class="token-logo hidden" alt="">
+            <div id="tokenFallback" class="token-logo fallback">?</div>
+            <div class="token-title">
+              <h2><span id="tokenName">Token</span> <span class="muted" id="tokenSymbol"></span></h2>
+              <div class="token-meta">
+                <span class="live">LIVE</span>
+                <span class="pill">SOLANA</span>
+                <span class="address-line" id="tokenAddress"></span>
+              </div>
+            </div>
+          </div>
+          <div class="head-links">
+            <a class="btn slim" id="dexLink" target="_blank" rel="noopener">DEX Screener ↗</a>
+            <button class="btn slim" id="copyAddress">Copy CA</button>
+          </div>
+        </div>
+
+        <div class="primary-grid">
+          <div class="metric">
+            <div class="metric-label">Price</div>
+            <div class="metric-value" id="price">$—</div>
+            <div class="metric-sub" id="change24">24h —</div>
+          </div>
+          <div class="metric">
+            <div class="metric-label">Liquidity</div>
+            <div class="metric-value" id="liquidity">$—</div>
+            <div class="metric-sub">Across detected pools</div>
+          </div>
+          <div class="metric">
+            <div class="metric-label">24h Volume</div>
+            <div class="metric-value" id="volume24">$—</div>
+            <div class="metric-sub" id="txns24">— transactions</div>
+          </div>
+          <div class="metric">
+            <div class="metric-label">Market Cap</div>
+            <div class="metric-value" id="marketCap">$—</div>
+            <div class="metric-sub" id="fdv">FDV —</div>
+          </div>
+        </div>
+
+        <div class="content-grid">
+          <div class="panel">
+            <div class="panel-title">
+              <h3>Market footprint</h3>
+              <span>aggregated live data</span>
+            </div>
+            <div class="fact-list">
+              <div class="fact"><span>Detected markets</span><strong id="marketCount">—</strong></div>
+              <div class="fact"><span>DEX diversity</span><strong id="dexCount">—</strong></div>
+              <div class="fact"><span>Quote assets</span><strong id="quoteCount">—</strong></div>
+              <div class="fact"><span>Oldest detected pool</span><strong id="oldestPool">—</strong></div>
+              <div class="fact"><span>24h buys / sells</span><strong id="buysSells">—</strong></div>
+            </div>
+            <div class="dex-list" id="dexList"></div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-title">
+              <h3>Data transparency</h3>
+              <span>what this passport means</span>
+            </div>
+            <div class="fact-list">
+              <div class="fact"><span>Market data</span><strong>Live / observed</strong></div>
+              <div class="fact"><span>Wallet connection</span><strong>Not required</strong></div>
+              <div class="fact"><span>Private keys</span><strong>Never requested</strong></div>
+              <div class="fact"><span>Project endorsement</span><strong>None</strong></div>
+              <div class="fact"><span>Last refreshed</span><strong id="lastUpdated">—</strong></div>
+            </div>
+            <div class="note">
+              This passport summarizes public market information. It is not a safety rating,
+              audit, endorsement or investment recommendation.
+            </div>
+          </div>
+        </div>
+
+        <div class="panel pool-panel">
+          <div class="panel-title">
+            <h3>Top detected markets</h3>
+            <span id="poolHint">sorted by liquidity</span>
+          </div>
+          <div class="pool-table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Market</th>
+                  <th>DEX</th>
+                  <th class="num">Liquidity</th>
+                  <th class="num">24h Volume</th>
+                  <th class="num">24h Txns</th>
+                </tr>
+              </thead>
+              <tbody id="poolRows"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="passport-foot">
+          <a class="powered" href="https://arbstrategy.net/" target="_blank" rel="noopener">
+            <span class="mini-dot"></span>
+            Built by <strong>ASTY / ArbStrategy</strong>
+          </a>
+          <span class="source-note">Market data: DEX Screener · public information · not financial advice</span>
+        </div>
+      </article>
+
+      <div class="tools">
+        <div class="tool-card">
+          <h3>Share your Passport</h3>
+          <p>Create a branded snapshot image or share the live Passport link with your community.</p>
+          <div class="tool-actions">
+            <button class="btn primary" id="makeCard">Create Share Card</button>
+            <button class="btn" id="shareX">Share on X</button>
+            <button class="btn" id="shareTelegram">Telegram</button>
+            <button class="btn" id="copyLink">Copy link</button>
+          </div>
+          <canvas id="shareCanvas" class="hidden" width="1200" height="675"></canvas>
+        </div>
+
+        <div class="tool-card">
+          <h3>Add it to your website</h3>
+          <p>Embed a compact, live version of this Passport on any site that accepts an iframe.</p>
+          <div class="codebox">
+            <code id="embedCode">&lt;iframe ...&gt;&lt;/iframe&gt;</code>
+            <button class="btn slim" id="copyEmbed">Copy</button>
+          </div>
+          <div class="note">
+            GitHub Pages can host the Passport itself. The external website only needs to allow iframe embeds.
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section-info">
+      <h2>Facts first. No fake score.</h2>
+      <p>
+        Project Passport does not label a token “safe” or “verified”. It turns observable market data
+        into a simple public snapshot that anyone can inspect and share.
+      </p>
+      <div class="info-grid">
+        <div class="info"><b>🟣 One address</b><span>Paste a public Solana token address. No account or wallet connection is needed.</span></div>
+        <div class="info"><b>🟣 Multiple markets</b><span>Detected pools are combined into one market footprint instead of showing only a single pair.</span></div>
+        <div class="info"><b>🟣 Built to share</b><span>Every result can become a live link, website embed or social snapshot.</span></div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="footer-row">
+      <span>Solana Project Passport · a free ASTY Labs utility</span>
+      <span>Public data only · no wallet connection</span>
     </div>
-
-  </div>
-
-
-  <div class="stat">
-
-    <div class="stat-label">
-      Channels
-    </div>
-
-    <div
-      id="channelCount"
-      class="stat-value"
-    >
-      0
-    </div>
-
-  </div>
-
-
-  <div class="stat">
-
-    <div class="stat-label">
-      Scanned
-    </div>
-
-    <div
-      id="scanCount"
-      class="stat-value"
-    >
-      0
-    </div>
-
-  </div>
-
+  </footer>
 </div>
-
-
-
-<div class="statusbox">
-
-  <div id="statusText">
-    Ready
-  </div>
-
-  <div class="progress">
-
-    <div
-      id="progressBar"
-      class="progressbar"
-    ></div>
-
-  </div>
-
-</div>
-
-
-
-<div
-  id="results"
-  class="results"
-></div>
-
-
-<div
-  id="empty"
-  class="empty"
->
-
-  No mentions found in the scanned
-  public Telegram channels.
-
-</div>
-
-
-</section>
-
-
-<footer>
-
-  Powered by
-  <strong>ASTY</strong>
-  🟣
-
-</footer>
-
-</div>
-
-
 
 <script>
+(() => {
+  "use strict";
 
-/*
-====================================================
-CHANNEL DATABASE
-====================================================
+  const ASTY = "ASTYqeaoK83Zs1pTFEXZUB6BM8cG8YLTsN852NUkt7ZR";
+  const API_BASE = "https://api.dexscreener.com/token-pairs/v1/solana/";
+  const $ = (id) => document.getElementById(id);
 
-Add as many public Telegram CHANNEL usernames
-as you want here.
+  const els = {
+    input: $("tokenInput"),
+    scan: $("scanBtn"),
+    status: $("status"),
+    section: $("passportSection"),
+    logo: $("tokenLogo"),
+    fallback: $("tokenFallback"),
+    name: $("tokenName"),
+    symbol: $("tokenSymbol"),
+    address: $("tokenAddress"),
+    dexLink: $("dexLink"),
+    copyAddress: $("copyAddress"),
+    price: $("price"),
+    change24: $("change24"),
+    liquidity: $("liquidity"),
+    volume24: $("volume24"),
+    txns24: $("txns24"),
+    marketCap: $("marketCap"),
+    fdv: $("fdv"),
+    marketCount: $("marketCount"),
+    dexCount: $("dexCount"),
+    quoteCount: $("quoteCount"),
+    oldestPool: $("oldestPool"),
+    buysSells: $("buysSells"),
+    dexList: $("dexList"),
+    lastUpdated: $("lastUpdated"),
+    poolRows: $("poolRows"),
+    embedCode: $("embedCode"),
+    canvas: $("shareCanvas")
+  };
 
-Only the username, without:
-https://t.me/
-or @
+  let current = null;
+  let loading = false;
 
-The scanner skips channels that cannot be read.
-*/
-
-const CHANNELS = [
-
-  {
-    name:"Cointelegraph",
-    username:"cointelegraph"
-  },
-
-  {
-    name:"Binance Announcements",
-    username:"binance_announcements"
-  },
-
-  {
-    name:"Solana Announcements",
-    username:"solanaannouncements"
+  function isLikelySolanaAddress(value) {
+    return /^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(value);
   }
 
-];
-
-
-/*
-====================================================
-SETTINGS
-====================================================
-*/
-
-const MAX_RESULTS = 50;
-
-const REQUEST_TIMEOUT = 12000;
-
-
-/*
-====================================================
-ELEMENTS
-====================================================
-*/
-
-const form =
-  document.getElementById("searchForm");
-
-const input =
-  document.getElementById("searchInput");
-
-const button =
-  document.getElementById("searchBtn");
-
-const section =
-  document.getElementById("resultSection");
-
-const resultsBox =
-  document.getElementById("results");
-
-const emptyBox =
-  document.getElementById("empty");
-
-const statusText =
-  document.getElementById("statusText");
-
-const progressBar =
-  document.getElementById("progressBar");
-
-const mentionCount =
-  document.getElementById("mentionCount");
-
-const channelCount =
-  document.getElementById("channelCount");
-
-const scanCount =
-  document.getElementById("scanCount");
-
-
-
-/*
-====================================================
-SEARCH TERMS
-====================================================
-*/
-
-function buildTerms(value){
-
-  let text =
-    value
-      .trim()
-      .toLowerCase();
-
-  const terms =
-    new Set();
-
-
-  if(!text){
-    return [];
+  function num(v) {
+    const n = Number(v);
+    return Number.isFinite(n) ? n : 0;
   }
 
-
-  terms.add(text);
-
-
-  /*
-  $JUP → also JUP
-  */
-
-  if(text.startsWith("$")){
-
-    terms.add(
-      text.substring(1)
-    );
-
+  function sum(arr, fn) {
+    return arr.reduce((a, x) => a + num(fn(x)), 0);
   }
 
-
-  /*
-  JUP → also $JUP
-  */
-
-  else if(
-    /^[a-z0-9_-]{2,15}$/i.test(text)
-  ){
-
-    terms.add(
-      "$" + text
-    );
-
+  function uniq(values) {
+    return [...new Set(values.filter(Boolean))];
   }
 
+  function compactMoney(value) {
+    const n = num(value);
+    if (!n) return "$0";
+    const abs = Math.abs(n);
+    if (abs >= 1e9) return "$" + (n / 1e9).toFixed(abs >= 1e10 ? 1 : 2).replace(/\.0+$/,"") + "B";
+    if (abs >= 1e6) return "$" + (n / 1e6).toFixed(abs >= 1e7 ? 1 : 2).replace(/\.0+$/,"") + "M";
+    if (abs >= 1e3) return "$" + (n / 1e3).toFixed(abs >= 1e4 ? 1 : 2).replace(/\.0+$/,"") + "K";
+    return "$" + n.toLocaleString("en-US",{maximumFractionDigits:2});
+  }
 
-  return [...terms];
+  function priceMoney(value) {
+    const n = num(value);
+    if (!n) return "$—";
+    let digits = 2;
+    if (n < 1) digits = 4;
+    if (n < .01) digits = 6;
+    if (n < .0001) digits = 8;
+    return "$" + n.toLocaleString("en-US",{
+      minimumFractionDigits: Math.min(2,digits),
+      maximumFractionDigits: digits
+    });
+  }
 
-}
+  function pct(value) {
+    const n = Number(value);
+    if (!Number.isFinite(n)) return "—";
+    return (n > 0 ? "+" : "") + n.toFixed(2) + "%";
+  }
 
+  function cleanDexName(id) {
+    const map = {
+      meteora:"Meteora",
+      raydium:"Raydium",
+      orca:"Orca",
+      pumpswap:"PumpSwap",
+      fluxbeam:"FluxBeam",
+      phoenix:"Phoenix",
+      lifinity:"Lifinity",
+      openbook:"OpenBook"
+    };
+    return map[String(id || "").toLowerCase()] || String(id || "Unknown").replace(/[-_]/g," ");
+  }
 
+  function ageFrom(timestamp) {
+    const ts = num(timestamp);
+    if (!ts) return "Unknown";
+    const d = Math.max(0, Date.now() - ts);
+    const days = Math.floor(d / 86400000);
+    if (days >= 365) {
+      const y = days / 365;
+      return y >= 2 ? Math.floor(y) + " years" : y.toFixed(1) + " years";
+    }
+    if (days >= 30) return Math.floor(days / 30) + " months";
+    if (days >= 1) return days + (days === 1 ? " day" : " days");
+    const h = Math.floor(d / 3600000);
+    return h + (h === 1 ? " hour" : " hours");
+  }
 
-/*
-====================================================
-FETCH TIMEOUT
-====================================================
-*/
+  function shortAddress(address) {
+    if (!address || address.length < 12) return address || "";
+    return address.slice(0,6) + "…" + address.slice(-6);
+  }
 
-async function timeoutFetch(
-  url,
-  ms
-){
+  function setStatus(message, type="") {
+    els.status.className = "status" + (type ? " " + type : "");
+    els.status.innerHTML = message;
+  }
 
-  const controller =
-    new AbortController();
+  async function copyText(text, button, successText="Copied") {
+    try {
+      await navigator.clipboard.writeText(text);
+      if (button) {
+        const old = button.textContent;
+        button.textContent = successText;
+        setTimeout(() => button.textContent = old, 1300);
+      }
+    } catch {
+      const ta = document.createElement("textarea");
+      ta.value = text;
+      ta.style.position = "fixed";
+      ta.style.opacity = "0";
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand("copy");
+      ta.remove();
+    }
+  }
 
+  function getTokenSide(pair, token) {
+    if (pair?.baseToken?.address === token) return {side:"base", token:pair.baseToken, other:pair.quoteToken};
+    if (pair?.quoteToken?.address === token) return {side:"quote", token:pair.quoteToken, other:pair.baseToken};
+    return null;
+  }
 
-  const timer =
-    setTimeout(
-      () => controller.abort(),
-      ms
-    );
+  function tokenPriceUsdFromPair(pair, token) {
+    const side = getTokenSide(pair, token);
+    if (!side) return 0;
 
-
-  try{
-
-    const response =
-      await fetch(
-        url,
-        {
-          signal:
-            controller.signal
-        }
-      );
-
-
-    if(!response.ok){
-
-      throw new Error(
-        "HTTP " +
-        response.status
-      );
-
+    if (side.side === "base") {
+      return num(pair.priceUsd);
     }
 
-
-    return response;
-
+    // DexScreener priceUsd is the USD price of the BASE token.
+    // priceNative is BASE measured in QUOTE. Therefore:
+    // quote USD price = base USD price / (base amount in quote)
+    const baseUsd = num(pair.priceUsd);
+    const baseInQuote = num(pair.priceNative);
+    if (baseUsd > 0 && baseInQuote > 0) return baseUsd / baseInQuote;
+    return 0;
   }
 
-  finally{
+  function aggregate(pairs, token) {
+    const relevant = pairs.filter(p => getTokenSide(p, token));
+    if (!relevant.length) throw new Error("No Solana markets were found for this token.");
 
-    clearTimeout(timer);
+    const directBase = relevant.filter(p => p?.baseToken?.address === token);
+    const identityPair = directBase.find(p => p?.baseToken?.symbol) || relevant.find(p => getTokenSide(p, token)?.token?.symbol) || relevant[0];
+    const side = getTokenSide(identityPair, token);
+    const tokenInfo = side?.token || {name:"Unknown Token",symbol:"TOKEN",address:token};
 
+    // Prefer a profile/image attached to a pair where the searched token is base.
+    const imagePair = directBase.find(p => p?.info?.imageUrl) || relevant.find(p => p?.info?.imageUrl);
+    const imageUrl = imagePair?.info?.imageUrl || "";
+
+    const totalLiquidity = sum(relevant, p => p?.liquidity?.usd);
+    const totalVolume24 = sum(relevant, p => p?.volume?.h24);
+    const buys24 = sum(relevant, p => p?.txns?.h24?.buys);
+    const sells24 = sum(relevant, p => p?.txns?.h24?.sells);
+
+    // Liquidity-weighted token price across pools where a token USD price can be derived.
+    const priced = relevant
+      .map(p => ({p, price:tokenPriceUsdFromPair(p,token), weight:Math.max(num(p?.liquidity?.usd),1)}))
+      .filter(x => x.price > 0);
+    const weightedPrice = priced.length
+      ? priced.reduce((a,x)=>a + x.price*x.weight,0) / priced.reduce((a,x)=>a+x.weight,0)
+      : 0;
+
+    // DexScreener marketCap/fdv refer to the BASE token, so only use pools where searched token is BASE.
+    const capCandidates = directBase
+      .filter(p => num(p.marketCap) > 0)
+      .sort((a,b)=>num(b?.liquidity?.usd)-num(a?.liquidity?.usd));
+    const fdvCandidates = directBase
+      .filter(p => num(p.fdv) > 0)
+      .sort((a,b)=>num(b?.liquidity?.usd)-num(a?.liquidity?.usd));
+    const marketCap = num(capCandidates[0]?.marketCap);
+    const fdv = num(fdvCandidates[0]?.fdv);
+
+    // 24h change is also base-token oriented. Use the most liquid direct pool.
+    const changePair = directBase
+      .filter(p => Number.isFinite(Number(p?.priceChange?.h24)))
+      .sort((a,b)=>num(b?.liquidity?.usd)-num(a?.liquidity?.usd))[0];
+    const change24 = changePair ? Number(changePair.priceChange.h24) : null;
+
+    const dexes = uniq(relevant.map(p => cleanDexName(p.dexId))).sort();
+    const quoteAssets = uniq(relevant.map(p => getTokenSide(p,token)?.other?.symbol || getTokenSide(p,token)?.other?.name)).sort();
+
+    const timestamps = relevant.map(p => num(p.pairCreatedAt)).filter(Boolean);
+    const oldestTs = timestamps.length ? Math.min(...timestamps) : 0;
+
+    const sortedPools = [...relevant].sort((a,b)=>num(b?.liquidity?.usd)-num(a?.liquidity?.usd));
+
+    return {
+      token,
+      name: tokenInfo?.name || "Unknown Token",
+      symbol: tokenInfo?.symbol || "TOKEN",
+      imageUrl,
+      price: weightedPrice,
+      change24,
+      liquidity: totalLiquidity,
+      volume24: totalVolume24,
+      buys24,
+      sells24,
+      marketCap,
+      fdv,
+      dexes,
+      quoteAssets,
+      marketCount: relevant.length,
+      oldestTs,
+      pools: sortedPools
+    };
   }
 
-}
+  function render(data) {
+    current = data;
+    els.name.textContent = data.name;
+    els.symbol.textContent = data.symbol ? "$" + data.symbol : "";
+    els.address.textContent = data.token;
+    els.address.title = data.token;
+    els.fallback.textContent = (data.symbol || data.name || "?").slice(0,2).toUpperCase();
 
+    if (data.imageUrl) {
+      els.logo.src = data.imageUrl;
+      els.logo.alt = data.name + " logo";
+      els.logo.classList.remove("hidden");
+      els.fallback.classList.add("hidden");
+      els.logo.onerror = () => {
+        els.logo.classList.add("hidden");
+        els.fallback.classList.remove("hidden");
+      };
+    } else {
+      els.logo.classList.add("hidden");
+      els.fallback.classList.remove("hidden");
+    }
 
+    els.price.textContent = priceMoney(data.price);
+    els.liquidity.textContent = compactMoney(data.liquidity);
+    els.volume24.textContent = compactMoney(data.volume24);
+    els.txns24.textContent = (data.buys24 + data.sells24).toLocaleString("en-US") + " transactions";
+    els.marketCap.textContent = data.marketCap ? compactMoney(data.marketCap) : "$—";
+    els.fdv.textContent = data.fdv ? "FDV " + compactMoney(data.fdv) : "FDV —";
 
-/*
-====================================================
-READ PUBLIC TELEGRAM CHANNEL
-====================================================
-*/
+    els.change24.textContent = "24h " + pct(data.change24);
+    els.change24.className = "metric-sub";
+    if (Number.isFinite(data.change24)) {
+      els.change24.classList.add(data.change24 >= 0 ? "positive" : "negative");
+    }
 
-async function getChannelText(username){
+    els.marketCount.textContent = data.marketCount.toLocaleString("en-US");
+    els.dexCount.textContent = data.dexes.length.toLocaleString("en-US");
+    els.quoteCount.textContent = data.quoteAssets.length.toLocaleString("en-US");
+    els.oldestPool.textContent = data.oldestTs ? ageFrom(data.oldestTs) : "Unknown";
+    els.buysSells.textContent = data.buys24.toLocaleString("en-US") + " / " + data.sells24.toLocaleString("en-US");
+    els.lastUpdated.textContent = new Date().toLocaleString([], {dateStyle:"medium",timeStyle:"short"});
 
-  /*
-  First try Telegram directly.
-  */
+    els.dexList.replaceChildren();
+    data.dexes.slice(0,14).forEach(name => {
+      const chip = document.createElement("span");
+      chip.className = "dex-chip";
+      chip.textContent = name;
+      els.dexList.appendChild(chip);
+    });
+    if (data.dexes.length > 14) {
+      const chip = document.createElement("span");
+      chip.className = "dex-chip";
+      chip.textContent = "+" + (data.dexes.length - 14) + " more";
+      els.dexList.appendChild(chip);
+    }
 
-  const telegramURL =
-    "https://t.me/s/" +
-    username;
+    els.poolRows.replaceChildren();
+    data.pools.slice(0,10).forEach(pair => {
+      const side = getTokenSide(pair,data.token);
+      const other = side?.other?.symbol || side?.other?.name || "?";
+      const tr = document.createElement("tr");
 
+      const tdMarket = document.createElement("td");
+      const a = document.createElement("a");
+      a.className = "pool-link pool-token";
+      a.href = pair.url || "#";
+      a.target = "_blank";
+      a.rel = "noopener";
+      a.textContent = data.symbol + " / " + other;
+      tdMarket.appendChild(a);
 
-  try{
+      const tdDex = document.createElement("td");
+      tdDex.textContent = cleanDexName(pair.dexId);
 
-    const response =
-      await timeoutFetch(
-        telegramURL,
-        REQUEST_TIMEOUT
-      );
+      const tdLiq = document.createElement("td");
+      tdLiq.className = "num";
+      tdLiq.textContent = compactMoney(pair?.liquidity?.usd);
 
+      const tdVol = document.createElement("td");
+      tdVol.className = "num";
+      tdVol.textContent = compactMoney(pair?.volume?.h24);
 
-    return await response.text();
+      const tdTx = document.createElement("td");
+      tdTx.className = "num";
+      tdTx.textContent = (num(pair?.txns?.h24?.buys)+num(pair?.txns?.h24?.sells)).toLocaleString("en-US");
 
+      tr.append(tdMarket,tdDex,tdLiq,tdVol,tdTx);
+      els.poolRows.appendChild(tr);
+    });
+
+    els.dexLink.href = "https://dexscreener.com/solana/" + encodeURIComponent(data.token);
+
+    const liveUrl = buildLiveUrl(data.token);
+    els.embedCode.textContent =
+      '<iframe src="' + buildEmbedUrl(data.token) + '" width="100%" height="360" style="border:0;border-radius:16px;overflow:hidden" loading="lazy"></iframe>';
+
+    history.replaceState(null,"",liveUrl);
+    els.section.classList.add("show");
   }
 
-  catch(error){
-
-    console.log(
-      "Direct Telegram blocked:",
-      username
-    );
-
+  function pageBase() {
+    return location.origin && location.origin !== "null"
+      ? location.origin + location.pathname
+      : location.href.split("?")[0].split("#")[0];
   }
 
+  function buildLiveUrl(token) {
+    return pageBase() + "?token=" + encodeURIComponent(token);
+  }
 
-  /*
-  FALLBACK:
+  function buildEmbedUrl(token) {
+    return pageBase() + "?token=" + encodeURIComponent(token) + "&embed=1";
+  }
 
-  Jina Reader converts the public Telegram
-  web page into readable text.
+  async function loadToken(token, {silent=false}={}) {
+    token = String(token || "").trim();
+    if (loading) return;
 
-  No personal API key is stored here.
-  */
+    if (!isLikelySolanaAddress(token)) {
+      setStatus("Please enter a valid-looking Solana token address.", "error");
+      return;
+    }
 
-  const readerURL =
-    "https://r.jina.ai/http://t.me/s/"
-    +
-    username;
+    loading = true;
+    els.scan.disabled = true;
+    els.scan.innerHTML = '<span class="loader"></span>Loading';
+    if (!silent) setStatus('<span class="loader"></span>Reading public Solana market data…');
 
-
-  const response =
-    await timeoutFetch(
-      readerURL,
-      REQUEST_TIMEOUT
-    );
-
-
-  return await response.text();
-
-}
-
-
-
-/*
-====================================================
-NORMALIZE TEXT
-====================================================
-*/
-
-function cleanText(text){
-
-  return text
-
-    .replace(
-      /<script[\s\S]*?<\/script>/gi,
-      " "
-    )
-
-    .replace(
-      /<style[\s\S]*?<\/style>/gi,
-      " "
-    )
-
-    .replace(
-      /<[^>]+>/g,
-      " "
-    )
-
-    .replace(
-      /&nbsp;/gi,
-      " "
-    )
-
-    .replace(
-      /&amp;/gi,
-      "&"
-    )
-
-    .replace(
-      /\s+/g,
-      " "
-    )
-
-    .trim();
-
-}
-
-
-
-/*
-====================================================
-FIND MATCHES
-====================================================
-*/
-
-function findMatches(
-  text,
-  terms,
-  channel
-){
-
-  const clean =
-    cleanText(text);
-
-
-  const lower =
-    clean.toLowerCase();
-
-
-  const matches =
-    [];
-
-
-  for(
-    const term of terms
-  ){
-
-    let start =
-      0;
-
-
-    while(true){
-
-      const pos =
-        lower.indexOf(
-          term,
-          start
-        );
-
-
-      if(pos === -1){
-        break;
-      }
-
-
-      /*
-      Build a readable snippet
-      around the match.
-      */
-
-      const snippetStart =
-        Math.max(
-          0,
-          pos - 160
-        );
-
-
-      const snippetEnd =
-        Math.min(
-          clean.length,
-          pos + term.length + 220
-        );
-
-
-      let snippet =
-        clean.substring(
-          snippetStart,
-          snippetEnd
-        );
-
-
-      if(snippetStart > 0){
-        snippet =
-          "…" + snippet;
-      }
-
-
-      if(snippetEnd < clean.length){
-        snippet += "…";
-      }
-
-
-      matches.push({
-
-        channel:
-          channel.name,
-
-        username:
-          channel.username,
-
-        snippet:
-          snippet,
-
-        position:
-          pos
-
+    try {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 15000);
+      const res = await fetch(API_BASE + encodeURIComponent(token), {
+        method:"GET",
+        headers:{"Accept":"application/json"},
+        signal:controller.signal
       });
+      clearTimeout(timeout);
 
-
-      start =
-        pos + term.length;
-
-
-      /*
-      Prevent one huge channel from flooding
-      all results.
-      */
-
-      if(matches.length >= 10){
-        break;
+      if (!res.ok) throw new Error("Data provider returned HTTP " + res.status + ".");
+      const pairs = await res.json();
+      if (!Array.isArray(pairs) || !pairs.length) {
+        throw new Error("No DEX Screener markets were found for this token.");
       }
 
-    }
-
-
-    if(matches.length >= 10){
-      break;
-    }
-
-  }
-
-
-  /*
-  Remove matches that are basically
-  the same piece of text.
-  */
-
-  const unique =
-    [];
-
-
-  const seen =
-    new Set();
-
-
-  for(
-    const match of matches
-  ){
-
-    const key =
-      match.snippet
-        .toLowerCase()
-        .substring(0,180);
-
-
-    if(
-      seen.has(key)
-    ){
-      continue;
-    }
-
-
-    seen.add(key);
-
-    unique.push(match);
-
-  }
-
-
-  return unique;
-
-}
-
-
-
-/*
-====================================================
-ESCAPE HTML
-====================================================
-*/
-
-function escapeHTML(value){
-
-  return String(value)
-
-    .replaceAll("&","&amp;")
-
-    .replaceAll("<","&lt;")
-
-    .replaceAll(">","&gt;")
-
-    .replaceAll('"',"&quot;")
-
-    .replaceAll("'","&#039;");
-
-}
-
-
-
-/*
-====================================================
-RENDER RESULT
-====================================================
-*/
-
-function renderResult(item){
-
-  const card =
-    document.createElement("a");
-
-
-  card.className =
-    "result";
-
-
-  card.target =
-    "_blank";
-
-
-  card.rel =
-    "noopener noreferrer";
-
-
-  card.href =
-    "https://t.me/" +
-    item.username;
-
-
-  card.innerHTML = `
-
-    <div class="result-top">
-
-      <div class="channel">
-
-        🟣
-        ${escapeHTML(item.channel)}
-
-      </div>
-
-
-      <div class="open">
-        ↗
-      </div>
-
-    </div>
-
-
-    <div class="snippet">
-
-      ${escapeHTML(item.snippet)}
-
-    </div>
-
-
-    <div class="source">
-
-      @${escapeHTML(item.username)}
-
-    </div>
-
-  `;
-
-
-  resultsBox.appendChild(card);
-
-}
-
-
-
-/*
-====================================================
-MAIN SEARCH
-====================================================
-*/
-
-async function searchTelegram(value){
-
-  const terms =
-    buildTerms(value);
-
-
-  if(
-    terms.length === 0
-  ){
-    return;
-  }
-
-
-  section.style.display =
-    "block";
-
-
-  resultsBox.innerHTML =
-    "";
-
-
-  emptyBox.style.display =
-    "none";
-
-
-  mentionCount.textContent =
-    "0";
-
-
-  channelCount.textContent =
-    "0";
-
-
-  scanCount.textContent =
-    "0";
-
-
-  button.disabled =
-    true;
-
-
-  button.textContent =
-    "Scanning…";
-
-
-  progressBar.style.width =
-    "0%";
-
-
-  const allResults =
-    [];
-
-
-  const hitChannels =
-    new Set();
-
-
-  let scanned =
-    0;
-
-
-  for(
-    let i = 0;
-    i < CHANNELS.length;
-    i++
-  ){
-
-    const channel =
-      CHANNELS[i];
-
-
-    statusText.textContent =
-      "Scanning @" +
-      channel.username +
-      "…";
-
-
-    try{
-
-      const text =
-        await getChannelText(
-          channel.username
-        );
-
-
-      const matches =
-        findMatches(
-          text,
-          terms,
-          channel
-        );
-
-
-      if(
-        matches.length > 0
-      ){
-
-        hitChannels.add(
-          channel.username
-        );
-
-
-        matches.forEach(
-          result => {
-
-            allResults.push(
-              result
-            );
-
-          }
-        );
-
+      const data = aggregate(pairs, token);
+      render(data);
+      setStatus("Passport created from " + data.marketCount + " detected market" + (data.marketCount === 1 ? "" : "s") + ".", "ok");
+
+      if (document.body.classList.contains("embed-mode")) {
+        els.status.classList.add("hidden");
+      } else {
+        setTimeout(() => els.section.scrollIntoView({behavior:"smooth",block:"start"}),60);
       }
+    } catch (err) {
+      console.error(err);
+      const message = err?.name === "AbortError"
+        ? "The data request timed out. Please try again."
+        : (err?.message || "Unable to load market data.");
+      setStatus(message, "error");
+    } finally {
+      loading = false;
+      els.scan.disabled = false;
+      els.scan.textContent = "Create Passport";
+    }
+  }
 
+  function roundedRect(ctx,x,y,w,h,r) {
+    const rr = Math.min(r,w/2,h/2);
+    ctx.beginPath();
+    ctx.moveTo(x+rr,y);
+    ctx.arcTo(x+w,y,x+w,y+h,rr);
+    ctx.arcTo(x+w,y+h,x,y+h,rr);
+    ctx.arcTo(x,y+h,x,y,rr);
+    ctx.arcTo(x,y,x+w,y,rr);
+    ctx.closePath();
+  }
+
+  function cardMetric(ctx, label, value, x, y, w) {
+    ctx.fillStyle = "rgba(255,255,255,.045)";
+    roundedRect(ctx,x,y,w,116,18);
+    ctx.fill();
+    ctx.strokeStyle = "rgba(183,154,255,.14)";
+    ctx.stroke();
+
+    ctx.fillStyle = "#7f86a3";
+    ctx.font = "700 17px Inter, Arial, sans-serif";
+    ctx.fillText(label.toUpperCase(),x+20,y+31);
+
+    ctx.fillStyle = "#f8f6ff";
+    ctx.font = "800 35px Inter, Arial, sans-serif";
+    ctx.fillText(value,x+20,y+78);
+  }
+
+  async function makeShareCard() {
+    if (!current) return;
+    const c = els.canvas;
+    const ctx = c.getContext("2d");
+    const W = c.width, H = c.height;
+
+    const bg = ctx.createLinearGradient(0,0,W,H);
+    bg.addColorStop(0,"#080914");
+    bg.addColorStop(.55,"#0d1021");
+    bg.addColorStop(1,"#090b17");
+    ctx.fillStyle = bg;
+    ctx.fillRect(0,0,W,H);
+
+    const glow = ctx.createRadialGradient(1050,40,0,1050,40,440);
+    glow.addColorStop(0,"rgba(120,226,246,.12)");
+    glow.addColorStop(1,"rgba(120,226,246,0)");
+    ctx.fillStyle = glow;
+    ctx.fillRect(0,0,W,H);
+
+    const glow2 = ctx.createRadialGradient(100,0,0,100,0,500);
+    glow2.addColorStop(0,"rgba(164,130,255,.19)");
+    glow2.addColorStop(1,"rgba(164,130,255,0)");
+    ctx.fillStyle = glow2;
+    ctx.fillRect(0,0,W,H);
+
+    ctx.fillStyle = "#b49aff";
+    ctx.beginPath();
+    ctx.arc(69,64,8,0,Math.PI*2);
+    ctx.fill();
+
+    ctx.fillStyle = "#c9bcff";
+    ctx.font = "800 20px Inter, Arial, sans-serif";
+    ctx.fillText("SOLANA PROJECT PASSPORT",91,71);
+
+    ctx.fillStyle = "#7e849f";
+    ctx.font = "600 16px Inter, Arial, sans-serif";
+    ctx.textAlign = "right";
+    ctx.fillText("LIVE MARKET SNAPSHOT",1130,70);
+    ctx.textAlign = "left";
+
+    ctx.fillStyle = "#ffffff";
+    ctx.font = "850 62px Inter, Arial, sans-serif";
+    const title = (current.name + "  $" + current.symbol).slice(0,32);
+    ctx.fillText(title,68,164);
+
+    ctx.fillStyle = "#888faa";
+    ctx.font = "500 19px Inter, Arial, sans-serif";
+    ctx.fillText(shortAddress(current.token) + "  ·  Solana",70,201);
+
+    cardMetric(ctx,"Price",priceMoney(current.price),68,250,248);
+    cardMetric(ctx,"Liquidity",compactMoney(current.liquidity),332,250,248);
+    cardMetric(ctx,"24h Volume",compactMoney(current.volume24),596,250,248);
+    cardMetric(ctx,"Markets",String(current.marketCount),860,250,270);
+
+    ctx.fillStyle = "#747b96";
+    ctx.font = "600 17px Inter, Arial, sans-serif";
+    ctx.fillText("DEX FOOTPRINT",70,427);
+
+    const dexText = current.dexes.slice(0,7).join("  ·  ") || "No DEX labels";
+    ctx.fillStyle = "#d8d1ed";
+    ctx.font = "700 22px Inter, Arial, sans-serif";
+    ctx.fillText(dexText.slice(0,78),70,463);
+
+    ctx.fillStyle = "#747b96";
+    ctx.font = "500 16px Inter, Arial, sans-serif";
+    ctx.fillText("Public market data · " + new Date().toLocaleString([], {dateStyle:"medium",timeStyle:"short"}),70,511);
+
+    ctx.strokeStyle = "rgba(183,154,255,.16)";
+    ctx.beginPath();
+    ctx.moveTo(70,555);
+    ctx.lineTo(1130,555);
+    ctx.stroke();
+
+    ctx.fillStyle = "#aa93ff";
+    ctx.beginPath();
+    ctx.arc(76,604,7,0,Math.PI*2);
+    ctx.fill();
+    ctx.fillStyle = "#bfb3d4";
+    ctx.font = "700 18px Inter, Arial, sans-serif";
+    ctx.fillText("Built by ASTY / ArbStrategy",94,611);
+
+    ctx.fillStyle = "#6f7690";
+    ctx.font = "500 15px Inter, Arial, sans-serif";
+    ctx.textAlign = "right";
+    ctx.fillText("No safety rating · Not financial advice",1130,611);
+    ctx.textAlign = "left";
+
+    const blob = await new Promise(resolve => c.toBlob(resolve,"image/png",.95));
+    if (!blob) return;
+
+    const filename = (current.symbol || "SOLANA").replace(/[^a-z0-9_-]/gi,"_") + "_Project_Passport.png";
+    const file = new File([blob], filename, {type:"image/png"});
+
+    if (navigator.share && navigator.canShare && navigator.canShare({files:[file]})) {
+      try {
+        await navigator.share({
+          files:[file],
+          title:current.name + " Solana Project Passport",
+          text:"Live Solana Project Passport · powered by ASTY"
+        });
+        return;
+      } catch (e) {
+        if (e?.name === "AbortError") return;
+      }
     }
 
-    catch(error){
-
-      console.warn(
-        "Channel failed:",
-        channel.username,
-        error
-      );
-
-    }
-
-
-    scanned++;
-
-
-    scanCount.textContent =
-      scanned;
-
-
-    progressBar.style.width =
-      (
-        scanned /
-        CHANNELS.length *
-        100
-      )
-      +
-      "%";
-
-
-    /*
-    Update counters live
-    */
-
-    mentionCount.textContent =
-      allResults.length;
-
-
-    channelCount.textContent =
-      hitChannels.size;
-
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(()=>URL.revokeObjectURL(url),1200);
   }
 
-
-  const limited =
-    allResults.slice(
-      0,
-      MAX_RESULTS
-    );
-
-
-  limited.forEach(
-    renderResult
-  );
-
-
-  mentionCount.textContent =
-    limited.length;
-
-
-  channelCount.textContent =
-    hitChannels.size;
-
-
-  if(
-    limited.length === 0
-  ){
-
-    emptyBox.style.display =
-      "block";
-
+  function shareText() {
+    if (!current) return "";
+    return `${current.name} ($${current.symbol}) · Solana Project Passport\n\n` +
+      `Price: ${priceMoney(current.price)}\n` +
+      `Liquidity: ${compactMoney(current.liquidity)}\n` +
+      `24h Volume: ${compactMoney(current.volume24)}\n` +
+      `Markets: ${current.marketCount}\n\n` +
+      `Live public market snapshot · powered by ASTY`;
   }
 
+  els.scan.addEventListener("click",()=>loadToken(els.input.value));
+  els.input.addEventListener("keydown",e=>{
+    if (e.key === "Enter") loadToken(els.input.value);
+  });
 
-  statusText.textContent =
-    "Scan complete · "
-    +
-    scanned
-    +
-    " public channels checked";
+  [$("tryAsty"),$("topTryAsty")].forEach(btn=>{
+    btn.addEventListener("click",()=>{
+      els.input.value = ASTY;
+      loadToken(ASTY);
+    });
+  });
 
+  els.copyAddress.addEventListener("click",()=>{
+    if (current) copyText(current.token,els.copyAddress,"Copied");
+  });
 
-  button.disabled =
-    false;
+  $("copyLink").addEventListener("click",()=>{
+    if (current) copyText(buildLiveUrl(current.token),$("copyLink"),"Copied");
+  });
 
+  $("copyEmbed").addEventListener("click",()=>{
+    if (current) copyText(els.embedCode.textContent,$("copyEmbed"),"Copied");
+  });
 
-  button.textContent =
-    "Search Telegram";
+  $("shareX").addEventListener("click",()=>{
+    if (!current) return;
+    const text = shareText();
+    const url = buildLiveUrl(current.token);
+    window.open("https://twitter.com/intent/tweet?text="+encodeURIComponent(text)+"&url="+encodeURIComponent(url),"_blank","noopener");
+  });
 
-}
+  $("shareTelegram").addEventListener("click",()=>{
+    if (!current) return;
+    const url = buildLiveUrl(current.token);
+    window.open("https://t.me/share/url?url="+encodeURIComponent(url)+"&text="+encodeURIComponent(shareText()),"_blank","noopener");
+  });
 
+  $("makeCard").addEventListener("click",makeShareCard);
 
+  const params = new URLSearchParams(location.search);
+  const tokenParam = params.get("token");
+  const embed = params.get("embed") === "1";
 
-/*
-====================================================
-FORM
-====================================================
-*/
-
-form.addEventListener(
-  "submit",
-  event => {
-
-    event.preventDefault();
-
-
-    searchTelegram(
-      input.value
-    );
-
+  if (embed) {
+    document.body.classList.add("embed-mode");
   }
-);
 
+  if (tokenParam) {
+    els.input.value = tokenParam;
+    loadToken(tokenParam,{silent:true});
+  } else if (embed) {
+    setStatus("Missing token parameter.","error");
+  }
+})();
 </script>
-
 </body>
 </html>
