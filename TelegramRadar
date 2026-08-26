@@ -1917,6 +1917,32 @@ body.embed-mode .passport-foot{padding:12px 16px}
     ctx.stroke();
   }
 
+  function drawAstyFooterBadge(ctx, x, y, size) {
+    const g = ctx.createLinearGradient(x, y, x + size, y + size);
+    g.addColorStop(0, "#bc9cff");
+    g.addColorStop(.52, "#8e6fff");
+    g.addColorStop(1, "#60dcee");
+    ctx.fillStyle = g;
+    ctx.beginPath();
+    ctx.arc(x + size/2, y + size/2, size/2, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.strokeStyle = "rgba(255,255,255,.42)";
+    ctx.lineWidth = 1.6;
+    ctx.beginPath();
+    ctx.arc(x + size/2, y + size/2, size/2 - 1.4, 0, Math.PI * 2);
+    ctx.stroke();
+
+    ctx.fillStyle = "#0b0d17";
+    ctx.font = "900 " + Math.round(size * .44) + "px Inter, Arial, sans-serif";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText("A", x + size/2, y + size/2 + 1);
+    ctx.textAlign = "left";
+    ctx.textBaseline = "alphabetic";
+  }
+
+
   async function makeShareCard() {
     if (!current) return;
     const cardButton = $("makeCard");
@@ -1928,7 +1954,6 @@ body.embed-mode .passport-foot{padding:12px 16px}
     const ctx = c.getContext("2d");
     const W = c.width, H = c.height;
 
-    // Deep premium background
     const bg = ctx.createLinearGradient(0,0,W,H);
     bg.addColorStop(0,"#080914");
     bg.addColorStop(.48,"#0b0f20");
@@ -1936,7 +1961,6 @@ body.embed-mode .passport-foot{padding:12px 16px}
     ctx.fillStyle = bg;
     ctx.fillRect(0,0,W,H);
 
-    // Ambient glows
     const purpleGlow = ctx.createRadialGradient(120,100,0,120,100,530);
     purpleGlow.addColorStop(0,"rgba(143,105,255,.29)");
     purpleGlow.addColorStop(.42,"rgba(106,79,218,.13)");
@@ -1951,7 +1975,6 @@ body.embed-mode .passport-foot{padding:12px 16px}
     ctx.fillStyle = cyanGlow;
     ctx.fillRect(0,0,W,H);
 
-    // very subtle dots
     ctx.fillStyle = "rgba(255,255,255,.06)";
     const dots = [
       [936,124,2],[885,194,1.5],[988,277,1.3],[84,780,1.4],[122,861,1.7],
@@ -1963,7 +1986,6 @@ body.embed-mode .passport-foot{padding:12px 16px}
       ctx.fill();
     });
 
-    // Outer social-card frame
     ctx.save();
     ctx.shadowColor = "rgba(0,0,0,.45)";
     ctx.shadowBlur = 38;
@@ -1985,7 +2007,6 @@ body.embed-mode .passport-foot{padding:12px 16px}
     roundedRect(ctx,40.75,40.75,W-81.5,H-81.5,40);
     ctx.stroke();
 
-    // Header badge
     ctx.fillStyle = "rgba(164,132,255,.10)";
     roundedRect(ctx,72,72,340,48,24);
     ctx.fill();
@@ -2007,7 +2028,6 @@ body.embed-mode .passport-foot{padding:12px 16px}
     ctx.fillText("LIVE MARKET SNAPSHOT",1004,101);
     ctx.textAlign = "left";
 
-    // Token hero panel
     ctx.save();
     ctx.shadowColor = "rgba(0,0,0,.34)";
     ctx.shadowBlur = 28;
@@ -2068,7 +2088,6 @@ body.embed-mode .passport-foot{padding:12px 16px}
     ctx.font = "500 18px Inter, Arial, sans-serif";
     ctx.fillText(shortAddress(current.token) + "  ·  Solana",238,301);
 
-    // DEX line
     ctx.fillStyle = "#7f86a3";
     ctx.font = "700 15px Inter, Arial, sans-serif";
     ctx.fillText("DEX FOOTPRINT",72,363);
@@ -2078,7 +2097,6 @@ body.embed-mode .passport-foot{padding:12px 16px}
     ctx.font = "700 21px Inter, Arial, sans-serif";
     ctx.fillText(dexText.slice(0,58),72,394);
 
-    // KPI cards
     cardMetric(ctx,"Price",priceMoney(current.price),72,430,292,140,"cyan");
 
     const changeNum = Number(current.change24);
@@ -2092,7 +2110,6 @@ body.embed-mode .passport-foot{padding:12px 16px}
     cardMetric(ctx,"24h Volume",compactMoney(current.volume24),72,600,452,142);
     cardMetric(ctx,"Market Cap",current.marketCap ? compactMoney(current.marketCap) : "$—",556,600,452,142);
 
-    // Small context line
     ctx.fillStyle = "#737a95";
     ctx.font = "500 15px Inter, Arial, sans-serif";
     ctx.fillText(
@@ -2107,51 +2124,50 @@ body.embed-mode .passport-foot{padding:12px 16px}
       ctx.fillText("Market Cap uses FDV fallback",556,728);
     }
 
-    // Footer strip with simpler CTA
+    // Cleaner footer bar
     ctx.save();
     ctx.shadowColor = "rgba(0,0,0,.18)";
-    ctx.shadowBlur = 14;
-    ctx.shadowOffsetY = 6;
-    const footerGrad = ctx.createLinearGradient(72,910,1008,988);
-    footerGrad.addColorStop(0,"rgba(132,99,255,.16)");
-    footerGrad.addColorStop(1,"rgba(61,212,235,.07)");
+    ctx.shadowBlur = 12;
+    ctx.shadowOffsetY = 5;
+    const footerGrad = ctx.createLinearGradient(72,914,1008,972);
+    footerGrad.addColorStop(0,"rgba(132,99,255,.12)");
+    footerGrad.addColorStop(.45,"rgba(64,47,120,.12)");
+    footerGrad.addColorStop(1,"rgba(61,212,235,.06)");
     ctx.fillStyle = footerGrad;
-    roundedRect(ctx,72,898,936,92,24);
+    roundedRect(ctx,72,906,936,68,22);
     ctx.fill();
     ctx.restore();
 
-    ctx.strokeStyle = "rgba(179,155,255,.16)";
-    ctx.lineWidth = 1.25;
-    roundedRect(ctx,72.75,898.75,934.5,90.5,24);
+    ctx.strokeStyle = "rgba(179,155,255,.14)";
+    ctx.lineWidth = 1.15;
+    roundedRect(ctx,72.75,906.75,934.5,66.5,22);
     ctx.stroke();
 
-    const footerY = 950;
-    const dotR = 6;
+    const footerY = 949;
+    const dotR = 5.5;
 
-    ctx.fillStyle = "#e1d8ff";
-    ctx.font = "800 22px Inter, Arial, sans-serif";
-    ctx.fillText("$ASTY",98,footerY);
+    drawAstyFooterBadge(ctx, 96, 930, 26);
 
-    ctx.fillStyle = "#ae93ff";
-    ctx.beginPath();
-    ctx.arc(183,footerY-7,dotR,0,Math.PI*2);
-    ctx.fill();
-
-    ctx.fillStyle = "#e1d8ff";
-    ctx.fillText("ArbStrategy.net",205,footerY);
+    ctx.fillStyle = "#e4dbff";
+    ctx.font = "800 21px Inter, Arial, sans-serif";
+    ctx.fillText("$ASTY",132,footerY);
 
     ctx.fillStyle = "#ae93ff";
     ctx.beginPath();
-    ctx.arc(409,footerY-7,dotR,0,Math.PI*2);
+    ctx.arc(215,footerY-7,dotR,0,Math.PI*2);
     ctx.fill();
 
-    ctx.fillStyle = "#d3c8ee";
-    ctx.font = "700 19px Inter, Arial, sans-serif";
-    ctx.fillText("Create your own token passport for free",430,footerY);
+    ctx.fillStyle = "#e4dbff";
+    ctx.fillText("ArbStrategy.net",235,footerY);
 
-    ctx.fillStyle = "#717892";
-    ctx.font = "500 13px Inter, Arial, sans-serif";
-    ctx.fillText("No safety rating · Not financial advice",98,979);
+    ctx.fillStyle = "#ae93ff";
+    ctx.beginPath();
+    ctx.arc(439,footerY-7,dotR,0,Math.PI*2);
+    ctx.fill();
+
+    ctx.fillStyle = "#d7ccf2";
+    ctx.font = "700 18px Inter, Arial, sans-serif";
+    ctx.fillText("Create your own passport for free",460,footerY);
 
     if (loadedLogo?.objectUrl) URL.revokeObjectURL(loadedLogo.objectUrl);
 
@@ -2186,7 +2202,7 @@ body.embed-mode .passport-foot{padding:12px 16px}
         await navigator.share({
           files:[file],
           title:current.name + " Solana Project Passport",
-          text:"Live Solana Project Passport · $ASTY · ArbStrategy.net · Create your own token passport for free"
+          text:"Live Solana Project Passport · $ASTY · ArbStrategy.net · Create your own passport for free"
         });
         cardButton.disabled = false;
         cardButton.textContent = oldButtonText;
