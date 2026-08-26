@@ -1973,6 +1973,10 @@ body.embed-mode .passport-foot{padding:12px 16px}
     const ctx = c.getContext("2d");
     const W = c.width, H = c.height;
 
+    // Improve overall raster quality for small logos/text
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = "high";
+
     const bg = ctx.createLinearGradient(0,0,W,H);
     bg.addColorStop(0,"#080914");
     bg.addColorStop(.48,"#0b0f20");
@@ -2143,7 +2147,7 @@ body.embed-mode .passport-foot{padding:12px 16px}
       ctx.fillText("Market Cap uses FDV fallback",556,728);
     }
 
-    // Minimal brand signature footer
+    // Clean footer line + evenly spaced brand signature
     const lineGrad = ctx.createLinearGradient(72,0,1008,0);
     lineGrad.addColorStop(0,"rgba(176,147,255,.30)");
     lineGrad.addColorStop(.55,"rgba(255,255,255,.06)");
@@ -2156,40 +2160,76 @@ body.embed-mode .passport-foot{padding:12px 16px}
     ctx.stroke();
 
     const brandLogo = await loadAstyBrandLogo();
-    const brandSize = 32;
-    const brandX = 72;
-    const brandY = 926;
+    const brandSize = 22; // smaller -> looks crisper
+    const baselineY = 950;
+    const brandY = baselineY - 18;
+    const itemFont = "800 20px Inter, Arial, sans-serif";
+    const ctaFont = "800 20px Inter, Arial, sans-serif";
+    const labelColor = "#e6ddff";
+    const ctaColor = "#e6ddff";
+    const dotColor = "#ae93ff";
+    const gapSmall = 14;
+    const gapDot = 18;
+    const dotR = 5;
+
+    const text1 = "$ASTY";
+    const text2 = "Create yours free →";
+    const text3 = "ArbStrategy.net";
+
+    ctx.font = itemFont;
+    const text1W = ctx.measureText(text1).width;
+    ctx.font = ctaFont;
+    const text2W = ctx.measureText(text2).width;
+    ctx.font = itemFont;
+    const text3W = ctx.measureText(text3).width;
+
+    const totalW =
+      brandSize +
+      gapSmall +
+      text1W +
+      gapDot + dotR*2 + gapDot +
+      text2W +
+      gapDot + dotR*2 + gapDot +
+      text3W;
+
+    let x = (W - totalW) / 2;
 
     if (brandLogo?.img) {
-      drawCircularImage(ctx, brandLogo.img, brandX, brandY, brandSize);
+      drawCircularImage(ctx, brandLogo.img, x, brandY, brandSize);
     } else {
-      drawTokenLogoFallback(ctx, brandX, brandY, brandSize, "A");
+      drawTokenLogoFallback(ctx, x, brandY, brandSize, "A");
     }
+    if (brandLogo?.objectUrl) URL.revokeObjectURL(brandLogo.objectUrl);
 
-    const baseY = 950;
-    const dotR = 5.5;
+    x += brandSize + gapSmall;
 
-    ctx.fillStyle = "#ece4ff";
-    ctx.font = "800 23px Inter, Arial, sans-serif";
-    ctx.fillText("$ASTY",116,baseY);
+    ctx.fillStyle = labelColor;
+    ctx.font = itemFont;
+    ctx.fillText(text1, x, baselineY);
+    x += text1W + gapDot;
 
-    ctx.fillStyle = "#ae93ff";
+    ctx.fillStyle = dotColor;
     ctx.beginPath();
-    ctx.arc(198,baseY-7,dotR,0,Math.PI*2);
+    ctx.arc(x + dotR, baselineY - 7, dotR, 0, Math.PI*2);
     ctx.fill();
+    x += dotR*2 + gapDot;
 
-    ctx.fillStyle = "#dcd2f7";
-    ctx.font = "700 21px Inter, Arial, sans-serif";
-    ctx.fillText("ArbStrategy.net",220,baseY);
+    ctx.fillStyle = ctaColor;
+    ctx.font = ctaFont;
+    ctx.fillText(text2, x, baselineY);
+    x += text2W + gapDot;
 
-    ctx.textAlign = "right";
-    ctx.fillStyle = "#e2d8ff";
-    ctx.font = "800 21px Inter, Arial, sans-serif";
-    ctx.fillText("Create yours free →",1008,baseY);
-    ctx.textAlign = "left";
+    ctx.fillStyle = dotColor;
+    ctx.beginPath();
+    ctx.arc(x + dotR, baselineY - 7, dotR, 0, Math.PI*2);
+    ctx.fill();
+    x += dotR*2 + gapDot;
+
+    ctx.fillStyle = labelColor;
+    ctx.font = itemFont;
+    ctx.fillText(text3, x, baselineY);
 
     if (loadedLogo?.objectUrl) URL.revokeObjectURL(loadedLogo.objectUrl);
-    if (brandLogo?.objectUrl) URL.revokeObjectURL(brandLogo.objectUrl);
 
     let blob = null;
     try {
@@ -2222,7 +2262,7 @@ body.embed-mode .passport-foot{padding:12px 16px}
         await navigator.share({
           files:[file],
           title:current.name + " Solana Project Passport",
-          text:"Live Solana Project Passport · $ASTY · ArbStrategy.net · Create yours free"
+          text:"Live Solana Project Passport · $ASTY · Create yours free · ArbStrategy.net"
         });
         cardButton.disabled = false;
         cardButton.textContent = oldButtonText;
