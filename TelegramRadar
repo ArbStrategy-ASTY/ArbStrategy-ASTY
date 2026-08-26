@@ -1054,7 +1054,7 @@ body.embed-mode .passport-foot{padding:12px 16px}
             <button class="btn" id="shareTelegram">Telegram</button>
             <button class="btn" id="copyLink">Copy link</button>
           </div>
-          <canvas id="shareCanvas" class="hidden" width="1200" height="675"></canvas>
+          <canvas id="shareCanvas" class="hidden" width="1080" height="1080"></canvas>
         </div>
 
         <div class="tool-card">
@@ -1451,6 +1451,31 @@ body.embed-mode .passport-foot{padding:12px 16px}
       if ((!data.name || data.name === "Unknown Token") && side?.token?.name) data.name = side.token.name;
       if ((!data.symbol || data.symbol === "TOKEN") && side?.token?.symbol) data.symbol = side.token.symbol;
       if (!data.imageUrl && metaPair?.info?.imageUrl) data.imageUrl = metaPair.info.imageUrl;
+
+      const directBaseByLiquidity = direct
+        .filter(p => p?.baseToken?.address === token)
+        .sort((a,b)=>num(b?.liquidity?.usd)-num(a?.liquidity?.usd));
+
+      const capPair = directBaseByLiquidity.find(p => num(p?.marketCap) > 0);
+      const fdvPair = directBaseByLiquidity.find(p => num(p?.fdv) > 0);
+      const changePair = directBaseByLiquidity.find(p => Number.isFinite(Number(p?.priceChange?.h24)));
+
+      if ((!data.marketCap || data.marketCap <= 0) && capPair) {
+        data.marketCap = num(capPair.marketCap);
+      }
+
+      if ((!data.fdv || data.fdv <= 0) && fdvPair) {
+        data.fdv = num(fdvPair.fdv);
+      }
+
+      if ((!Number.isFinite(Number(data.change24))) && changePair) {
+        data.change24 = Number(changePair.priceChange.h24);
+      }
+
+      if ((!data.marketCap || data.marketCap <= 0) && data.fdv > 0) {
+        data.marketCap = data.fdv;
+        data.marketCapEstimated = true;
+      }
     } catch (e) {
       console.warn("Metadata fallback unavailable:",e);
     }
@@ -1557,7 +1582,7 @@ body.embed-mode .passport-foot{padding:12px 16px}
     els.volume24.textContent = compactMoney(data.volume24);
     els.txns24.textContent = (data.buys24 + data.sells24).toLocaleString("en-US") + " transactions";
     els.marketCap.textContent = data.marketCap ? compactMoney(data.marketCap) : "$—";
-    els.fdv.textContent = data.fdv ? "FDV " + compactMoney(data.fdv) : "FDV —";
+    els.fdv.textContent = data.fdv ? ((data.marketCapEstimated ? "FDV fallback " : "FDV ") + compactMoney(data.fdv)) : "FDV —";
 
     els.change24.textContent = "24h " + pct(data.change24);
     els.change24.className = "metric-sub";
@@ -1725,20 +1750,26 @@ body.embed-mode .passport-foot{padding:12px 16px}
     ctx.closePath();
   }
 
-  function cardMetric(ctx, label, value, x, y, w) {
+  function cardMetric(ctx, label, value, x, y, w, h=134, accent="default") {
     ctx.fillStyle = "rgba(255,255,255,.045)";
-    roundedRect(ctx,x,y,w,116,18);
+    roundedRect(ctx,x,y,w,h,24);
     ctx.fill();
     ctx.strokeStyle = "rgba(183,154,255,.14)";
+    ctx.lineWidth = 1;
     ctx.stroke();
 
     ctx.fillStyle = "#7f86a3";
-    ctx.font = "700 17px Inter, Arial, sans-serif";
-    ctx.fillText(label.toUpperCase(),x+20,y+31);
+    ctx.font = "700 18px Inter, Arial, sans-serif";
+    ctx.fillText(label.toUpperCase(),x+22,y+36);
 
-    ctx.fillStyle = "#f8f6ff";
-    ctx.font = "800 35px Inter, Arial, sans-serif";
-    ctx.fillText(value,x+20,y+78);
+    let fill = "#f8f6ff";
+    if (accent === "positive") fill = "#71e6a1";
+    if (accent === "negative") fill = "#ff7b98";
+    if (accent === "cyan") fill = "#76e2f5";
+
+    ctx.fillStyle = fill;
+    ctx.font = "800 40px Inter, Arial, sans-serif";
+    ctx.fillText(value,x+22,y+88);
   }
 
 
@@ -1855,43 +1886,58 @@ body.embed-mode .passport-foot{padding:12px 16px}
 
     const bg = ctx.createLinearGradient(0,0,W,H);
     bg.addColorStop(0,"#080914");
-    bg.addColorStop(.55,"#0d1021");
+    bg.addColorStop(.58,"#0d1021");
     bg.addColorStop(1,"#090b17");
     ctx.fillStyle = bg;
     ctx.fillRect(0,0,W,H);
 
-    const glow = ctx.createRadialGradient(1050,40,0,1050,40,440);
-    glow.addColorStop(0,"rgba(120,226,246,.12)");
+    const glow = ctx.createRadialGradient(960,80,0,960,80,420);
+    glow.addColorStop(0,"rgba(120,226,246,.13)");
     glow.addColorStop(1,"rgba(120,226,246,0)");
     ctx.fillStyle = glow;
     ctx.fillRect(0,0,W,H);
 
-    const glow2 = ctx.createRadialGradient(100,0,0,100,0,500);
-    glow2.addColorStop(0,"rgba(164,130,255,.19)");
+    const glow2 = ctx.createRadialGradient(80,20,0,80,20,430);
+    glow2.addColorStop(0,"rgba(164,130,255,.20)");
     glow2.addColorStop(1,"rgba(164,130,255,0)");
     ctx.fillStyle = glow2;
     ctx.fillRect(0,0,W,H);
 
+    ctx.strokeStyle = "rgba(255,255,255,.028)";
+    ctx.lineWidth = 1;
+    for (let x=0; x<W; x+=54) {
+      ctx.beginPath();
+      ctx.moveTo(x,0);
+      ctx.lineTo(x,H);
+      ctx.stroke();
+    }
+    for (let y=0; y<H; y+=54) {
+      ctx.beginPath();
+      ctx.moveTo(0,y);
+      ctx.lineTo(W,y);
+      ctx.stroke();
+    }
+
     ctx.fillStyle = "#b49aff";
     ctx.beginPath();
-    ctx.arc(69,64,8,0,Math.PI*2);
+    ctx.arc(66,60,8,0,Math.PI*2);
     ctx.fill();
 
     ctx.fillStyle = "#c9bcff";
-    ctx.font = "800 20px Inter, Arial, sans-serif";
-    ctx.fillText("SOLANA PROJECT PASSPORT",91,71);
+    ctx.font = "800 22px Inter, Arial, sans-serif";
+    ctx.fillText("SOLANA PROJECT PASSPORT",88,67);
 
     ctx.fillStyle = "#7e849f";
-    ctx.font = "600 16px Inter, Arial, sans-serif";
+    ctx.font = "600 17px Inter, Arial, sans-serif";
     ctx.textAlign = "right";
-    ctx.fillText("LIVE MARKET SNAPSHOT",1130,70);
+    ctx.fillText("LIVE MARKET SNAPSHOT",W-66,67);
     ctx.textAlign = "left";
 
-    // Token logo / symbol is always present on the share card.
-    const logoSize = 76;
-    const logoX = 68;
-    const logoY = 112;
     const loadedLogo = await loadCardLogo(current.imageUrl);
+
+    const logoSize = 92;
+    const logoX = 66;
+    const logoY = 108;
     if (loadedLogo?.img) {
       drawCircularImage(ctx,loadedLogo.img,logoX,logoY,logoSize);
     } else {
@@ -1899,53 +1945,85 @@ body.embed-mode .passport-foot{padding:12px 16px}
     }
 
     ctx.fillStyle = "#ffffff";
-    ctx.font = "850 54px Inter, Arial, sans-serif";
-    const title = (current.name + "  $" + current.symbol).slice(0,30);
-    ctx.fillText(title,166,157);
+    ctx.font = "850 58px Inter, Arial, sans-serif";
+    const title = (current.name || current.symbol || "Token").slice(0,24);
+    ctx.fillText(title,182,156);
+
+    ctx.fillStyle = "#d7cdf7";
+    ctx.font = "800 42px Inter, Arial, sans-serif";
+    ctx.fillText("$" + (current.symbol || "TOKEN"),182,208);
 
     ctx.fillStyle = "#888faa";
     ctx.font = "500 19px Inter, Arial, sans-serif";
-    ctx.fillText(shortAddress(current.token) + "  ·  Solana",168,188);
-
-    if (loadedLogo?.objectUrl) URL.revokeObjectURL(loadedLogo.objectUrl);
-
-    cardMetric(ctx,"Price",priceMoney(current.price),68,252,248);
-    cardMetric(ctx,"Liquidity",compactMoney(current.liquidity),332,252,248);
-    cardMetric(ctx,"24h Volume",compactMoney(current.volume24),596,252,248);
-    cardMetric(ctx,"Markets",String(current.marketCount),860,252,270);
+    ctx.fillText(shortAddress(current.token) + "  ·  Solana",182,240);
 
     ctx.fillStyle = "#747b96";
-    ctx.font = "600 17px Inter, Arial, sans-serif";
-    ctx.fillText("DEX FOOTPRINT",70,427);
+    ctx.font = "600 18px Inter, Arial, sans-serif";
+    ctx.fillText("DEX FOOTPRINT",68,300);
 
-    const dexText = current.dexes.slice(0,7).join("  ·  ") || "No DEX labels";
+    const dexText = current.dexes.slice(0,5).join("  ·  ") || "No DEX labels";
     ctx.fillStyle = "#d8d1ed";
-    ctx.font = "700 22px Inter, Arial, sans-serif";
-    ctx.fillText(dexText.slice(0,78),70,463);
+    ctx.font = "700 24px Inter, Arial, sans-serif";
+    ctx.fillText(dexText.slice(0,58),68,336);
+
+    cardMetric(ctx,"Price",priceMoney(current.price),68,386,300,138,"cyan");
+    const changeNum = Number(current.change24);
+    const changeText = Number.isFinite(changeNum) ? pct(changeNum) : "—";
+    const changeAccent = Number.isFinite(changeNum) ? (changeNum >= 0 ? "positive" : "negative") : "default";
+    cardMetric(ctx,"24h Change",changeText,390,386,300,138,changeAccent);
+    cardMetric(ctx,"Liquidity",compactMoney(current.liquidity),712,386,300,138);
+    cardMetric(ctx,"24h Volume",compactMoney(current.volume24),68,548,460,138);
+    cardMetric(ctx,"Market Cap",current.marketCap ? compactMoney(current.marketCap) : "$—",552,548,460,138);
 
     ctx.fillStyle = "#747b96";
     ctx.font = "500 16px Inter, Arial, sans-serif";
-    ctx.fillText("Public market data · " + new Date().toLocaleString([], {dateStyle:"medium",timeStyle:"short"}),70,511);
+    ctx.fillText("Public market data · " + new Date().toLocaleString([], {dateStyle:"medium",timeStyle:"short"}),68,742);
+
+    if (current.marketCapEstimated) {
+      ctx.fillStyle = "#8e95ae";
+      ctx.font = "500 15px Inter, Arial, sans-serif";
+      ctx.fillText("Market Cap currently uses FDV fallback",68,770);
+    }
+
+    ctx.fillStyle = "rgba(255,255,255,.045)";
+    roundedRect(ctx,68,816,944,136,28);
+    ctx.fill();
+    ctx.strokeStyle = "rgba(183,154,255,.14)";
+    ctx.stroke();
+
+    ctx.fillStyle = "#7f86a3";
+    ctx.font = "700 18px Inter, Arial, sans-serif";
+    ctx.fillText("BUYS / SELLS (24H)",94,862);
+
+    ctx.fillStyle = "#f8f6ff";
+    ctx.font = "850 46px Inter, Arial, sans-serif";
+    ctx.fillText(
+      current.buys24.toLocaleString("en-US") + " / " + current.sells24.toLocaleString("en-US"),
+      94,918
+    );
 
     ctx.strokeStyle = "rgba(183,154,255,.16)";
     ctx.beginPath();
-    ctx.moveTo(70,555);
-    ctx.lineTo(1130,555);
+    ctx.moveTo(68,988);
+    ctx.lineTo(1012,988);
     ctx.stroke();
 
     ctx.fillStyle = "#aa93ff";
     ctx.beginPath();
-    ctx.arc(76,604,7,0,Math.PI*2);
+    ctx.arc(76,1024,7,0,Math.PI*2);
     ctx.fill();
-    ctx.fillStyle = "#bfb3d4";
-    ctx.font = "700 18px Inter, Arial, sans-serif";
-    ctx.fillText("Built by ASTY / ArbStrategy",94,611);
+
+    ctx.fillStyle = "#d7cdf7";
+    ctx.font = "800 22px Inter, Arial, sans-serif";
+    ctx.fillText("Powered by ArbStrategy.net $ASTY",94,1032);
 
     ctx.fillStyle = "#6f7690";
     ctx.font = "500 15px Inter, Arial, sans-serif";
     ctx.textAlign = "right";
-    ctx.fillText("No safety rating · Not financial advice",1130,611);
+    ctx.fillText("No safety rating · Not financial advice",1008,1032);
     ctx.textAlign = "left";
+
+    if (loadedLogo?.objectUrl) URL.revokeObjectURL(loadedLogo.objectUrl);
 
     let blob = null;
     try {
@@ -1964,7 +2042,7 @@ body.embed-mode .passport-foot{padding:12px 16px}
       return;
     }
 
-    const filename = (current.symbol || "SOLANA").replace(/[^a-z0-9_-]/gi,"_") + "_Project_Passport.png";
+    const filename = (current.symbol || "SOLANA").replace(/[^a-z0-9_-]/gi,"_") + "_Project_Passport_Square.png";
     const file = new File([blob], filename, {type:"image/png"});
 
     if (navigator.share && navigator.canShare && navigator.canShare({files:[file]})) {
@@ -1972,7 +2050,7 @@ body.embed-mode .passport-foot{padding:12px 16px}
         await navigator.share({
           files:[file],
           title:current.name + " Solana Project Passport",
-          text:"Live Solana Project Passport · powered by ASTY"
+          text:"Live Solana Project Passport · powered by ArbStrategy.net $ASTY"
         });
         cardButton.disabled = false;
         cardButton.textContent = oldButtonText;
@@ -1996,7 +2074,7 @@ body.embed-mode .passport-foot{padding:12px 16px}
     setTimeout(()=>URL.revokeObjectURL(url),1200);
     cardButton.disabled = false;
     cardButton.textContent = oldButtonText;
-    setStatus("Share Card created with token branding.","ok");
+    setStatus("Square Share Card created with token branding.","ok");
   }
 
   function shareText() {
