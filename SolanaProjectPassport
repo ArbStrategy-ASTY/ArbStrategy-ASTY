@@ -1072,6 +1072,12 @@ body.embed-mode .passport-foot{padding:12px 16px}
   "use strict";
 
   const ASTY = "ASTYqeaoK83Zs1pTFEXZUB6BM8cG8YLTsN852NUkt7ZR";
+  // All Passport numbers come from Birdeye through the protected Worker.
+  // Worker name: SolanaProjectPassport
+  const BIRDEYE_GATEWAY = "https://solanaprojectpassport.mail-timothy.workers.dev/api/token";
+
+  // GeckoTerminal is used ONLY to discover which DEX names should be shown
+  // as decorative/info bubbles. Its liquidity/price/volume values are ignored.
   const GECKO_BASE = "https://api.geckoterminal.com/api/v2";
   const DEXSCREENER_BASE = "https://api.dexscreener.com/token-pairs/v1/solana/";
   const $ = (id) => document.getElementById(id);
@@ -1632,7 +1638,12 @@ body.embed-mode .passport-foot{padding:12px 16px}
     if (els.lastUpdated) {
       els.lastUpdated.textContent = new Date().toLocaleString([], {dateStyle:"medium",timeStyle:"short"});
     }
-    if (els.dataSource) els.dataSource.textContent = data.source || "Live / observed";
+    if (els.dataSource) els.dataSource.textContent = "Live market data";
+
+    const dexOnly = document.querySelector(".dex-only");
+    if (dexOnly) {
+      dexOnly.style.display = data.dexes.length ? "" : "none";
+    }
 
     els.dexList.replaceChildren();
     data.dexes.slice(0,14).forEach(name => {
@@ -1714,6 +1725,128 @@ body.embed-mode .passport-foot{padding:12px 16px}
     return pageBase() + "?token=" + encodeURIComponent(token) + "&embed=1";
   }
 
+
+  async function fetchBirdeyePassport(token) {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 15000);
+
+    try {
+      const url =
+        BIRDEYE_GATEWAY +
+        "?address=" +
+        encodeURIComponent(token);
+
+      const res = await fetch(url, {
+        method: "GET",
+        headers: {
+          "Accept": "application/json"
+        },
+        signal: controller.signal
+      });
+
+      let payload = null;
+
+      try {
+        payload = await res.json();
+      } catch {
+        payload = null;
+      }
+
+      if (!res.ok || !payload?.success || !payload?.data) {
+        const message =
+          payload?.detail ||
+          payload?.error ||
+          ("Passport API returned HTTP " + res.status + ".");
+
+        throw new Error(message);
+      }
+
+      return payload.data;
+    } finally {
+      clearTimeout(timeout);
+    }
+  }
+
+  async function fetchDexBubbles(token) {
+    try {
+      const gecko = await fetchGeckoPools(token);
+      const pairs = Array.isArray(gecko?.pairs) ? gecko.pairs : [];
+
+      const dexes = uniq(
+        pairs.map(p => cleanDexName(p?.dexId))
+      ).sort();
+
+      const quoteAssets = uniq(
+        pairs.map(p => getTokenSide(p, token)?.other?.symbol)
+      ).sort();
+
+      const timestamps = pairs
+        .map(p => num(p?.pairCreatedAt))
+        .filter(Boolean);
+
+      return {
+        dexes,
+        quoteAssets,
+        pools: pairs,
+        oldestTs: timestamps.length ? Math.min(...timestamps) : 0,
+        marketCount: pairs.length,
+        tokenMeta: gecko?.tokenMeta || null
+      };
+    } catch (error) {
+      console.warn("DEX bubble discovery unavailable:", error);
+      return {
+        dexes: [],
+        quoteAssets: [],
+        pools: [],
+        oldestTs: 0,
+        marketCount: 0,
+        tokenMeta: null
+      };
+    }
+  }
+
+  function passportDataFromBirdeye(token, bird, dexInfo) {
+    const meta = dexInfo?.tokenMeta || {};
+
+    return {
+      token,
+      name: bird?.name || meta?.name || "Unknown Token",
+      symbol: bird?.symbol || meta?.symbol || "TOKEN",
+      imageUrl: bird?.imageUrl || meta?.imageUrl || "",
+
+      // IMPORTANT:
+      // These values come directly from Birdeye Token Overview.
+      price: num(bird?.price),
+      change24:
+        Number.isFinite(Number(bird?.priceChange24h))
+          ? Number(bird.priceChange24h)
+          : null,
+      liquidity: num(bird?.liquidity),
+      volume24: num(bird?.volume24h),
+      buys24: num(bird?.buy24h),
+      sells24: num(bird?.sell24h),
+      marketCap: num(bird?.marketCap),
+      fdv: num(bird?.fdv),
+
+      // Birdeye numberMarkets is preferred if supplied.
+      // Gecko's count is only a visual/discovery fallback.
+      marketCount:
+        num(bird?.numberMarkets) ||
+        num(dexInfo?.marketCount),
+
+      dexes: Array.isArray(dexInfo?.dexes) ? dexInfo.dexes : [],
+      quoteAssets:
+        Array.isArray(dexInfo?.quoteAssets)
+          ? dexInfo.quoteAssets
+          : [],
+      oldestTs: num(dexInfo?.oldestTs),
+      pools: Array.isArray(dexInfo?.pools) ? dexInfo.pools : [],
+
+      source: "Birdeye",
+      marketCapEstimated: false
+    };
+  }
+
   async function loadToken(token, {silent=false}={}) {
     token = String(token || "").trim();
     if (loading) return;
@@ -1726,56 +1859,74 @@ body.embed-mode .passport-foot{padding:12px 16px}
     loading = true;
     els.scan.disabled = true;
     els.scan.innerHTML = '<span class="loader"></span>Loading';
-    if (!silent) setStatus('<span class="loader"></span>Reading public Solana market data…');
+
+    if (!silent) {
+      setStatus('<span class="loader"></span>Creating Passport…');
+    }
 
     try {
-      let pairs = [];
-      let geckoMeta = null;
-      let source = "GeckoTerminal";
+      // Birdeye is authoritative for ALL displayed numerical values.
+      // GeckoTerminal runs in parallel only to discover DEX names.
+      const [bird, dexInfo] = await Promise.all([
+        fetchBirdeyePassport(token),
+        fetchDexBubbles(token)
+      ]);
 
-      try {
-        const gecko = await fetchGeckoPools(token);
-        pairs = gecko.pairs;
-        geckoMeta = gecko.tokenMeta;
-      } catch (geckoError) {
-        console.warn("GeckoTerminal unavailable, using DEX Screener fallback:",geckoError);
-        source = "DEX Screener fallback";
-        pairs = await fetchDexScreener(token);
+      const data = passportDataFromBirdeye(token, bird, dexInfo);
+
+      // Only use a metadata fallback when Birdeye did not provide an image/name.
+      if (!data.imageUrl || data.name === "Unknown Token" || data.symbol === "TOKEN") {
+        try {
+          const fallbackPairs = await fetchDexScreener(token);
+          const relevant = fallbackPairs.filter(p => getTokenSide(p, token));
+          const identity =
+            relevant.find(p => p?.baseToken?.address === token) ||
+            relevant[0];
+
+          const side = identity ? getTokenSide(identity, token) : null;
+          const imagePair =
+            relevant.find(p => p?.info?.imageUrl) ||
+            identity;
+
+          if (data.name === "Unknown Token" && side?.token?.name) {
+            data.name = side.token.name;
+          }
+
+          if (data.symbol === "TOKEN" && side?.token?.symbol) {
+            data.symbol = side.token.symbol;
+          }
+
+          if (!data.imageUrl && imagePair?.info?.imageUrl) {
+            data.imageUrl = imagePair.info.imageUrl;
+          }
+        } catch (metadataError) {
+          console.warn("Metadata fallback unavailable:", metadataError);
+        }
       }
-
-      if (!Array.isArray(pairs) || !pairs.length) {
-        throw new Error("No active markets were found for this token.");
-      }
-
-      let data = aggregate(pairs, token);
-      data.source = source;
-
-      if (geckoMeta) {
-        if (geckoMeta.name) data.name = geckoMeta.name;
-        if (geckoMeta.symbol) data.symbol = geckoMeta.symbol;
-        if (geckoMeta.imageUrl) data.imageUrl = geckoMeta.imageUrl;
-      }
-
-      data = await enrichMetadataFromDexScreener(data,token);
 
       render(data);
       persistContractPreference();
-      setStatus(
-        "Passport created from " + data.marketCount + " detected market" +
-        (data.marketCount === 1 ? "" : "s") + ".",
-        "ok"
-      );
+      setStatus("Passport created.", "ok");
 
       if (document.body.classList.contains("embed-mode")) {
         els.status.classList.add("hidden");
       } else {
-        setTimeout(() => els.section.scrollIntoView({behavior:"smooth",block:"start"}),60);
+        setTimeout(
+          () => els.section.scrollIntoView({
+            behavior: "smooth",
+            block: "start"
+          }),
+          60
+        );
       }
     } catch (err) {
       console.error(err);
-      const message = err?.name === "AbortError"
-        ? "The data request timed out. Please try again."
-        : (err?.message || "Unable to load market data.");
+
+      const message =
+        err?.name === "AbortError"
+          ? "The Birdeye request timed out. Please try again."
+          : (err?.message || "Unable to load Birdeye token data.");
+
       setStatus(message, "error");
     } finally {
       loading = false;
