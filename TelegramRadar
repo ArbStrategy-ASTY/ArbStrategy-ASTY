@@ -2147,7 +2147,7 @@ body.embed-mode .passport-foot{padding:12px 16px}
       ctx.fillText("Market Cap uses FDV fallback",556,728);
     }
 
-    // Clean footer line + evenly spaced brand signature
+    // Clean two-line centered footer
     const lineGrad = ctx.createLinearGradient(72,0,1008,0);
     lineGrad.addColorStop(0,"rgba(176,147,255,.30)");
     lineGrad.addColorStop(.55,"rgba(255,255,255,.06)");
@@ -2160,76 +2160,46 @@ body.embed-mode .passport-foot{padding:12px 16px}
     ctx.stroke();
 
     const brandLogo = await loadAstyBrandLogo();
-    const brandSize = 22; // smaller -> looks crisper
-    const baselineY = 950;
-    const brandY = baselineY - 18;
-    const itemFont = "800 20px Inter, Arial, sans-serif";
-    const ctaFont = "800 20px Inter, Arial, sans-serif";
-    const labelColor = "#e6ddff";
-    const ctaColor = "#e6ddff";
-    const dotColor = "#ae93ff";
-    const gapSmall = 14;
-    const gapDot = 18;
-    const dotR = 5;
+    const brandSize = 24;
+    const row1Y = 944;
+    const row2Y = 974;
+    const row1Font = "800 22px Inter, Arial, sans-serif";
+    const row2Font = "700 18px Inter, Arial, sans-serif";
+    const row1Color = "#ece4ff";
+    const row2Color = "#ddd2f8";
 
-    const text1 = "$ASTY";
-    const text2 = "Create yours free →";
-    const text3 = "ArbStrategy.net";
-
-    ctx.font = itemFont;
-    const text1W = ctx.measureText(text1).width;
-    ctx.font = ctaFont;
-    const text2W = ctx.measureText(text2).width;
-    ctx.font = itemFont;
-    const text3W = ctx.measureText(text3).width;
-
-    const totalW =
-      brandSize +
-      gapSmall +
-      text1W +
-      gapDot + dotR*2 + gapDot +
-      text2W +
-      gapDot + dotR*2 + gapDot +
-      text3W;
-
-    let x = (W - totalW) / 2;
+    // Row 1: centered logo + $ASTY
+    const row1Text = "$ASTY";
+    ctx.font = row1Font;
+    const row1TextW = ctx.measureText(row1Text).width;
+    const row1Gap = 12;
+    const row1TotalW = brandSize + row1Gap + row1TextW;
+    let row1X = (W - row1TotalW) / 2;
+    const logoY2 = row1Y - 19;
 
     if (brandLogo?.img) {
-      drawCircularImage(ctx, brandLogo.img, x, brandY, brandSize);
+      drawCircularImage(ctx, brandLogo.img, row1X, logoY2, brandSize);
     } else {
-      drawTokenLogoFallback(ctx, x, brandY, brandSize, "A");
+      drawTokenLogoFallback(ctx, row1X, logoY2, brandSize, "A");
     }
-    if (brandLogo?.objectUrl) URL.revokeObjectURL(brandLogo.objectUrl);
+    row1X += brandSize + row1Gap;
 
-    x += brandSize + gapSmall;
+    ctx.fillStyle = row1Color;
+    ctx.font = row1Font;
+    ctx.fillText(row1Text, row1X, row1Y);
 
-    ctx.fillStyle = labelColor;
-    ctx.font = itemFont;
-    ctx.fillText(text1, x, baselineY);
-    x += text1W + gapDot;
+    // Row 2: centered CTA + site
+    const row2Text = "Create your token passport for free → ArbStrategy.net";
+    ctx.font = row2Font;
+    const row2TextW = ctx.measureText(row2Text).width;
+    const row2X = (W - row2TextW) / 2;
 
-    ctx.fillStyle = dotColor;
-    ctx.beginPath();
-    ctx.arc(x + dotR, baselineY - 7, dotR, 0, Math.PI*2);
-    ctx.fill();
-    x += dotR*2 + gapDot;
-
-    ctx.fillStyle = ctaColor;
-    ctx.font = ctaFont;
-    ctx.fillText(text2, x, baselineY);
-    x += text2W + gapDot;
-
-    ctx.fillStyle = dotColor;
-    ctx.beginPath();
-    ctx.arc(x + dotR, baselineY - 7, dotR, 0, Math.PI*2);
-    ctx.fill();
-    x += dotR*2 + gapDot;
-
-    ctx.fillStyle = labelColor;
-    ctx.font = itemFont;
-    ctx.fillText(text3, x, baselineY);
+    ctx.fillStyle = row2Color;
+    ctx.font = row2Font;
+    ctx.fillText(row2Text, row2X, row2Y);
 
     if (loadedLogo?.objectUrl) URL.revokeObjectURL(loadedLogo.objectUrl);
+    if (brandLogo?.objectUrl) URL.revokeObjectURL(brandLogo.objectUrl);
 
     let blob = null;
     try {
@@ -2262,7 +2232,7 @@ body.embed-mode .passport-foot{padding:12px 16px}
         await navigator.share({
           files:[file],
           title:current.name + " Solana Project Passport",
-          text:"Live Solana Project Passport · $ASTY · Create yours free · ArbStrategy.net"
+          text:"Live Solana Project Passport · $ASTY · Create your token passport for free → ArbStrategy.net"
         });
         cardButton.disabled = false;
         cardButton.textContent = oldButtonText;
