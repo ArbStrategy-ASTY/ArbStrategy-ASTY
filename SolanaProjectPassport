@@ -374,7 +374,7 @@ td.num,th.num{text-align:right}
 .tools{
   margin-top:18px;
   display:grid;
-  grid-template-columns:1fr 1fr;
+  grid-template-columns:1fr;
   gap:18px;
 }
 .tool-card{
@@ -1050,7 +1050,7 @@ body.embed-mode .passport-foot{padding:12px 16px}
           <h3>Share your Passport</h3>
           <p>Create a branded snapshot image and share the live Passport.</p>
           <div class="tool-actions">
-            <button class="btn primary" id="makeCard">Create Share Card</button>
+            <button class="btn primary" id="makeCard">Download Share Card</button>
             <button class="btn" id="shareX">Share on X</button>
             <button class="btn" id="shareTelegram">Telegram</button>
           </div>
@@ -2167,7 +2167,7 @@ body.embed-mode .passport-foot{padding:12px 16px}
       ctx.fillText("Market Cap uses FDV fallback",556,728);
     }
 
-    // Clean two-line centered footer
+    // Clean two-line centered footer area with site below CTA
     const lineGrad = ctx.createLinearGradient(72,0,1008,0);
     lineGrad.addColorStop(0,"rgba(176,147,255,.30)");
     lineGrad.addColorStop(.55,"rgba(255,255,255,.06)");
@@ -2181,12 +2181,15 @@ body.embed-mode .passport-foot{padding:12px 16px}
 
     const brandLogo = await loadAstyBrandLogo();
     const brandSize = 24;
-    const row1Y = 944;
-    const row2Y = 974;
+    const row1Y = 942;
+    const row2Y = 972;
+    const row3Y = 999;
     const row1Font = "800 22px Inter, Arial, sans-serif";
     const row2Font = "700 18px Inter, Arial, sans-serif";
+    const row3Font = "800 18px Inter, Arial, sans-serif";
     const row1Color = "#ece4ff";
     const row2Color = "#ddd2f8";
+    const row3Color = "#bdafff";
 
     // Row 1: centered logo + $ASTY
     const row1Text = "$ASTY";
@@ -2208,15 +2211,21 @@ body.embed-mode .passport-foot{padding:12px 16px}
     ctx.font = row1Font;
     ctx.fillText(row1Text, row1X, row1Y);
 
-    // Row 2: centered CTA + site
-    const row2Text = "Create your token passport for free → ArbStrategy.net";
+    // Row 2: CTA
+    const row2Text = "Create your Token Passport for free.";
     ctx.font = row2Font;
     const row2TextW = ctx.measureText(row2Text).width;
     const row2X = (W - row2TextW) / 2;
-
     ctx.fillStyle = row2Color;
-    ctx.font = row2Font;
     ctx.fillText(row2Text, row2X, row2Y);
+
+    // Row 3: site
+    const row3Text = "ArbStrategy.net";
+    ctx.font = row3Font;
+    const row3TextW = ctx.measureText(row3Text).width;
+    const row3X = (W - row3TextW) / 2;
+    ctx.fillStyle = row3Color;
+    ctx.fillText(row3Text, row3X, row3Y);
 
     if (loadedLogo?.objectUrl) URL.revokeObjectURL(loadedLogo.objectUrl);
     if (brandLogo?.objectUrl) URL.revokeObjectURL(brandLogo.objectUrl);
@@ -2245,26 +2254,6 @@ body.embed-mode .passport-foot{padding:12px 16px}
     const filename =
       (current.symbol || "SOLANA").replace(/[^a-z0-9_-]/gi,"_") +
       "_Project_Passport_Square.png";
-    const file = new File([blob], filename, {type:"image/png"});
-
-    if (navigator.share && navigator.canShare && navigator.canShare({files:[file]})) {
-      try {
-        await navigator.share({
-          files:[file],
-          title:current.name + " Solana Project Passport",
-          text:"Live Solana Project Passport · Powered by ArbStrategy.net"
-        });
-        cardButton.disabled = false;
-        cardButton.textContent = oldButtonText;
-        return;
-      } catch (e) {
-        if (e?.name === "AbortError") {
-          cardButton.disabled = false;
-          cardButton.textContent = oldButtonText;
-          return;
-        }
-      }
-    }
 
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
@@ -2277,7 +2266,7 @@ body.embed-mode .passport-foot{padding:12px 16px}
 
     cardButton.disabled = false;
     cardButton.textContent = oldButtonText;
-    setStatus("Social Share Card updated.","ok");
+    setStatus("Share Card downloaded.","ok");
   }
 
   function shareText() {
@@ -2327,25 +2316,9 @@ const copyEmbedBtn = $("copyEmbed");
     window.open("https://twitter.com/intent/tweet?text="+encodeURIComponent(text),"_blank","noopener");
   });
 
-  $("shareTelegram").addEventListener("click",async()=>{
+  $("shareTelegram").addEventListener("click",()=>{
     if (!current) return;
-
-    const text = shareText();
-
-    if (navigator.share) {
-      try {
-        await navigator.share({
-          title: current.name + " Solana Project Passport",
-          text
-        });
-        return;
-      } catch (e) {
-        if (e?.name === "AbortError") return;
-        console.warn("Native share unavailable:", e);
-      }
-    }
-
-    await copyText(text, $("shareTelegram"), "Copied for Telegram");
+    window.open("https://t.me/share/url?url=&text="+encodeURIComponent(shareText()),"_blank","noopener");
   });
 
   window.addEventListener("resize",()=>{
