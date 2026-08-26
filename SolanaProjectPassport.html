@@ -1829,6 +1829,8 @@ body.embed-mode .passport-foot{padding:12px 16px}
 
   function passportDataFromBirdeye(token, bird, dexInfo) {
     const meta = dexInfo?.tokenMeta || {};
+    // These are fallback candidates only. DEX Screener candidates are
+    // prepended later and therefore get first priority.
     const imageCandidates = uniq([
       bird?.imageUrl,
       meta?.imageUrl
@@ -1901,44 +1903,46 @@ body.embed-mode .passport-foot{padding:12px 16px}
 
       const data = passportDataFromBirdeye(token, bird, dexInfo);
 
-      // Metadata is intentionally collected from several public sources.
-      // Birdeye remains authoritative for ALL numeric values, while token
-      // identity/logo can safely fall back to GeckoTerminal or DEX Screener.
+      // DEX Screener is the FIRST source for token identity metadata.
+      // Birdeye remains authoritative for ALL numerical values.
       try {
         const fallbackPairs = await fetchDexScreener(token);
         const relevant = fallbackPairs.filter(p => getTokenSide(p, token));
-        const identity =
-          relevant.find(p => p?.baseToken?.address === token) ||
-          relevant[0];
 
+        // Prefer a pool where the searched token is the BASE token.
+        // Within that group prefer the highest-liquidity pool.
+        const sortedIdentityPairs = [...relevant].sort((a,b) => {
+          const aBase = a?.baseToken?.address === token ? 1 : 0;
+          const bBase = b?.baseToken?.address === token ? 1 : 0;
+          if (aBase !== bBase) return bBase - aBase;
+          return num(b?.liquidity?.usd) - num(a?.liquidity?.usd);
+        });
+
+        const identity = sortedIdentityPairs[0] || null;
         const side = identity ? getTokenSide(identity, token) : null;
 
-        if (
-          (!data.name || data.name === "Unknown Token") &&
-          side?.token?.name
-        ) {
+        // DEX Screener wins for name + ticker whenever it has them.
+        if (side?.token?.name) {
           data.name = side.token.name;
         }
 
-        if (
-          (!data.symbol || data.symbol === "TOKEN") &&
-          side?.token?.symbol
-        ) {
+        if (side?.token?.symbol) {
           data.symbol = side.token.symbol;
         }
 
-        const dexImages = relevant
+        // DEX Screener logo candidates go FIRST.
+        const dexImages = sortedIdentityPairs
           .map(p => p?.info?.imageUrl)
           .filter(Boolean);
 
         data.imageCandidates = uniq([
-          ...(Array.isArray(data.imageCandidates) ? data.imageCandidates : []),
-          ...dexImages
+          ...dexImages,
+          ...(Array.isArray(data.imageCandidates) ? data.imageCandidates : [])
         ]);
 
         data.imageUrl = data.imageCandidates[0] || "";
       } catch (metadataError) {
-        console.warn("DEX Screener metadata fallback unavailable:", metadataError);
+        console.warn("DEX Screener metadata unavailable, using Birdeye/Gecko fallback:", metadataError);
       }
 
       render(data);
