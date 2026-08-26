@@ -1742,23 +1742,68 @@ body.embed-mode .passport-foot{padding:12px 16px}
   }
 
 
-  async function loadCardLogo(url) {
-    if (!url) return null;
+  async function blobToCardImage(blob) {
+    const objectUrl = URL.createObjectURL(blob);
+    const img = new Image();
     try {
-      const res = await fetch(url,{mode:"cors"});
-      if (!res.ok) return null;
-      const blob = await res.blob();
-      const objectUrl = URL.createObjectURL(blob);
-      const img = new Image();
       await new Promise((resolve,reject)=>{
         img.onload = resolve;
         img.onerror = reject;
         img.src = objectUrl;
       });
       return {img,objectUrl};
-    } catch {
-      return null;
+    } catch (e) {
+      URL.revokeObjectURL(objectUrl);
+      throw e;
     }
+  }
+
+  async function fetchLogoBlob(url) {
+    const controller = new AbortController();
+    const timeout = setTimeout(()=>controller.abort(),9000);
+    try {
+      const res = await fetch(url,{
+        mode:"cors",
+        cache:"force-cache",
+        signal:controller.signal
+      });
+      if (!res.ok) throw new Error("Logo HTTP " + res.status);
+      const blob = await res.blob();
+      if (!blob.type.startsWith("image/")) throw new Error("Not an image");
+      return blob;
+    } finally {
+      clearTimeout(timeout);
+    }
+  }
+
+  async function loadCardLogo(url) {
+    if (!url) return null;
+
+    // 1) Best case: fetch the original token image directly. Converting it to
+    // a same-origin Blob URL keeps the Canvas export untainted.
+    try {
+      const blob = await fetchLogoBlob(url);
+      return await blobToCardImage(blob);
+    } catch (directError) {
+      console.warn("Direct Canvas logo load blocked:",directError);
+    }
+
+    // 2) Some token CDNs allow display in <img> but block Canvas CORS.
+    // weserv.nl is used only as an image-normalization fallback and returns
+    // a Canvas-safe PNG. No wallet/token information other than the public
+    // logo URL is sent.
+    try {
+      const proxyUrl =
+        "https://images.weserv.nl/?url=" +
+        encodeURIComponent(url) +
+        "&w=256&h=256&fit=cover&output=png";
+      const blob = await fetchLogoBlob(proxyUrl);
+      return await blobToCardImage(blob);
+    } catch (proxyError) {
+      console.warn("Canvas logo proxy fallback unavailable:",proxyError);
+    }
+
+    return null;
   }
 
   function drawTokenLogoFallback(ctx,x,y,size,symbol) {
@@ -1800,6 +1845,10 @@ body.embed-mode .passport-foot{padding:12px 16px}
 
   async function makeShareCard() {
     if (!current) return;
+    const cardButton = $("makeCard");
+    const oldButtonText = cardButton.textContent;
+    cardButton.disabled = true;
+    cardButton.innerHTML = '<span class="loader"></span>Creating card';
     const c = els.canvas;
     const ctx = c.getContext("2d");
     const W = c.width, H = c.height;
@@ -1898,8 +1947,22 @@ body.embed-mode .passport-foot{padding:12px 16px}
     ctx.fillText("No safety rating · Not financial advice",1130,611);
     ctx.textAlign = "left";
 
-    const blob = await new Promise(resolve => c.toBlob(resolve,"image/png",.95));
-    if (!blob) return;
+    let blob = null;
+    try {
+      blob = await new Promise((resolve,reject)=>{
+        try {
+          c.toBlob(b => b ? resolve(b) : reject(new Error("PNG export returned no data")),"image/png",.95);
+        } catch (e) {
+          reject(e);
+        }
+      });
+    } catch (exportError) {
+      console.error("Share Card export failed:",exportError);
+      setStatus("Share Card could not be exported. Please reload the token and try again.","error");
+      cardButton.disabled = false;
+      cardButton.textContent = oldButtonText;
+      return;
+    }
 
     const filename = (current.symbol || "SOLANA").replace(/[^a-z0-9_-]/gi,"_") + "_Project_Passport.png";
     const file = new File([blob], filename, {type:"image/png"});
@@ -1911,9 +1974,15 @@ body.embed-mode .passport-foot{padding:12px 16px}
           title:current.name + " Solana Project Passport",
           text:"Live Solana Project Passport · powered by ASTY"
         });
+        cardButton.disabled = false;
+        cardButton.textContent = oldButtonText;
         return;
       } catch (e) {
-        if (e?.name === "AbortError") return;
+        if (e?.name === "AbortError") {
+          cardButton.disabled = false;
+          cardButton.textContent = oldButtonText;
+          return;
+        }
       }
     }
 
@@ -1925,6 +1994,9 @@ body.embed-mode .passport-foot{padding:12px 16px}
     a.click();
     a.remove();
     setTimeout(()=>URL.revokeObjectURL(url),1200);
+    cardButton.disabled = false;
+    cardButton.textContent = oldButtonText;
+    setStatus("Share Card created with token branding.","ok");
   }
 
   function shareText() {
