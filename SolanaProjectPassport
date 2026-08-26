@@ -70,20 +70,23 @@ button{cursor:pointer}
   font-weight:800;
   letter-spacing:-.02em;
 }
-.brand-mark{
-  width:34px;height:34px;border-radius:50%;
-  background:radial-gradient(circle at 35% 30%,#d8c9ff 0 10%,#a98aff 34%,#7157ff 66%,#33266f 100%);
-  box-shadow:0 0 28px rgba(169,138,255,.4);
-  position:relative;
-}
-.brand-mark::after{
-  content:"";
-  position:absolute;
-  inset:8px;
+.brand-logo{
+  width:38px;
+  height:38px;
   border-radius:50%;
-  border:1px solid rgba(255,255,255,.48);
+  object-fit:cover;
+  flex:0 0 38px;
+  box-shadow:0 0 22px rgba(169,138,255,.20);
 }
-.brand small{display:block;color:var(--muted);font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;margin-top:1px}
+.brand small{
+  display:block;
+  color:#cfc3f4;
+  font-size:10px;
+  font-weight:800;
+  letter-spacing:.11em;
+  text-transform:uppercase;
+  margin-top:2px;
+}
 .nav-actions{display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end}
 .btn{
   border:1px solid var(--line);
@@ -189,6 +192,31 @@ h1{
 .link-btn{
   padding:0;border:0;background:none;color:#ae99ff;font-weight:700
 }
+
+.remember-row{
+  display:flex;
+  align-items:center;
+  justify-content:flex-start;
+  margin-top:10px;
+  padding:0 4px;
+}
+.remember-label{
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  color:var(--muted);
+  font-size:12px;
+  cursor:pointer;
+  user-select:none;
+}
+.remember-label input{
+  width:16px;
+  height:16px;
+  margin:0;
+  accent-color:var(--purple2);
+  cursor:pointer;
+}
+
 .status{
   margin:16px auto 0;
   width:min(860px,100%);
@@ -281,7 +309,7 @@ h1{
 
 .content-grid{
   display:grid;
-  grid-template-columns:1.1fr .9fr;
+  grid-template-columns:1fr;
   gap:0;
   border-top:1px solid var(--line);
 }
@@ -385,7 +413,13 @@ td.num,th.num{text-align:right}
   padding:24px 0 34px;
   font-size:11px;
 }
-.footer-row{display:flex;justify-content:space-between;gap:15px;flex-wrap:wrap}
+.footer-row{display:flex;justify-content:center;gap:15px;flex-wrap:wrap}
+.footer-powered{
+  color:#bfb3d4;
+  text-decoration:none;
+  font-weight:700;
+}
+.footer-powered:hover{color:#e1d8ff}
 
 .loader{
   width:15px;height:15px;border-radius:50%;
@@ -447,20 +481,23 @@ body.embed-mode .passport-foot{padding:12px 16px}
     min-width:0;
   }
 
-  .brand-mark{
-    width:28px;
-    height:28px;
-    flex:0 0 28px;
+  .brand-logo{
+    width:30px;
+    height:30px;
+    flex:0 0 30px;
   }
 
-  .brand small{display:none}
+  .brand small{
+    display:block;
+    font-size:8px;
+    letter-spacing:.08em;
+  }
 
   .nav-actions{
     gap:6px;
     flex:0 0 auto;
   }
 
-  .nav-actions .btn:first-child{display:none}
 
   .btn{
     min-height:44px;
@@ -897,14 +934,18 @@ body.embed-mode .passport-foot{padding:12px 16px}
 <div class="wrap">
   <header class="topbar">
     <div class="brand">
-      <div class="brand-mark" aria-hidden="true"></div>
+      <img
+        class="brand-logo"
+        src="assets/logo.png"
+        alt="ASTY logo"
+        onerror="this.onerror=null;this.src='https://raw.githubusercontent.com/ArbStrategy-ASTY/ArbStrategy-ASTY/main/assets/logo.png';">
       <div>
         Solana Project Passport
-        <small>Powered by ASTY</small>
+        <small>Powered by ArbStrategy</small>
       </div>
     </div>
     <div class="nav-actions">
-      <a class="btn slim" href="https://arbstrategy.net/" target="_blank" rel="noopener">About ASTY</a>
+      <a class="btn slim" href="https://arbstrategy.net/" target="_blank" rel="noopener">About $ASTY</a>
     </div>
   </header>
 
@@ -925,7 +966,12 @@ body.embed-mode .passport-foot{padding:12px 16px}
           </div>
           <button class="btn primary" id="scanBtn">Create Passport</button>
         </div>
-
+        <div class="remember-row">
+          <label class="remember-label">
+            <input type="checkbox" id="rememberContract">
+            <span>Remember my Contract Address</span>
+          </label>
+        </div>
       </div>
       <div class="status" id="status"></div>
     </section>
@@ -989,65 +1035,24 @@ body.embed-mode .passport-foot{padding:12px 16px}
             </div>
             <div class="dex-list" id="dexList"></div>
           </div>
-
-          <div class="panel">
-            <div class="panel-title">
-              <h3>Data transparency</h3>
-              <span>what this passport means</span>
-            </div>
-            <div class="fact-list">
-              <div class="fact"><span>Market data</span><strong id="dataSource">GeckoTerminal</strong></div>
-              <div class="fact"><span>Wallet connection</span><strong>Not required</strong></div>
-              <div class="fact"><span>Private keys</span><strong>Never requested</strong></div>
-              <div class="fact"><span>Project endorsement</span><strong>None</strong></div>
-              <div class="fact"><span>Last refreshed</span><strong id="lastUpdated">—</strong></div>
-            </div>
-            <div class="note">
-              This passport summarizes public market information. It is not a safety rating,
-              audit, endorsement or investment recommendation.
-            </div>
-          </div>
-        </div>
-
-        <div class="panel pool-panel">
-          <div class="panel-title">
-            <h3>Top detected markets</h3>
-            <span id="poolHint">sorted by liquidity</span>
-          </div>
-          <div class="pool-table-wrap">
-            <table>
-              <thead>
-                <tr>
-                  <th>Market</th>
-                  <th>DEX</th>
-                  <th class="num">Liquidity</th>
-                  <th class="num">24h Volume</th>
-                  <th class="num">24h Txns</th>
-                </tr>
-              </thead>
-              <tbody id="poolRows"></tbody>
-            </table>
-          </div>
         </div>
 
         <div class="passport-foot">
           <a class="powered" href="https://arbstrategy.net/" target="_blank" rel="noopener">
             <span class="mini-dot"></span>
-            Built by <strong>ASTY / ArbStrategy</strong>
+            Powered by <strong>ArbStrategy.net</strong>
           </a>
-          <span class="source-note">Primary market data: GeckoTerminal · DEX Screener fallback · public information · not financial advice</span>
         </div>
       </article>
 
       <div class="tools">
         <div class="tool-card">
           <h3>Share your Passport</h3>
-          <p>Create a branded snapshot image or share the live Passport link with your community.</p>
+          <p>Create a branded snapshot image and share the live Passport.</p>
           <div class="tool-actions">
             <button class="btn primary" id="makeCard">Create Share Card</button>
             <button class="btn" id="shareX">Share on X</button>
             <button class="btn" id="shareTelegram">Telegram</button>
-            <button class="btn" id="copyLink">Copy link</button>
           </div>
           <canvas id="shareCanvas" class="hidden" width="1080" height="1080"></canvas>
         </div>
@@ -1057,7 +1062,7 @@ body.embed-mode .passport-foot{padding:12px 16px}
 
   <footer class="site-footer">
     <div class="footer-row">
-      <span>Solana Project Passport · Powered by ASTY</span>
+      <a class="footer-powered" href="https://arbstrategy.net/" target="_blank" rel="noopener">Powered by ArbStrategy.net</a>
     </div>
   </footer>
 </div>
@@ -1100,11 +1105,46 @@ body.embed-mode .passport-foot{padding:12px 16px}
     dataSource: $("dataSource"),
     poolRows: $("poolRows"),
     embedCode: $("embedCode"),
-    canvas: $("shareCanvas")
+    canvas: $("shareCanvas"),
+    rememberContract: $("rememberContract")
   };
 
   let current = null;
   let loading = false;
+
+  const REMEMBER_KEY = "astyPassportRememberContract";
+  const CONTRACT_KEY = "astyPassportContract";
+
+  function restoreRememberedContract() {
+    try {
+      const shouldRemember = localStorage.getItem(REMEMBER_KEY) === "1";
+      if (els.rememberContract) els.rememberContract.checked = shouldRemember;
+
+      if (shouldRemember) {
+        const savedContract = localStorage.getItem(CONTRACT_KEY) || "";
+        if (savedContract) els.input.value = savedContract;
+      }
+    } catch (e) {
+      console.warn("Could not restore saved contract:", e);
+    }
+  }
+
+  function persistContractPreference() {
+    try {
+      if (!els.rememberContract) return;
+
+      if (els.rememberContract.checked) {
+        localStorage.setItem(REMEMBER_KEY, "1");
+        const contract = els.input.value.trim();
+        if (contract) localStorage.setItem(CONTRACT_KEY, contract);
+      } else {
+        localStorage.removeItem(REMEMBER_KEY);
+        localStorage.removeItem(CONTRACT_KEY);
+      }
+    } catch (e) {
+      console.warn("Could not save contract preference:", e);
+    }
+  }
 
   function isLikelySolanaAddress(value) {
     return /^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(value);
@@ -1564,7 +1604,9 @@ body.embed-mode .passport-foot{padding:12px 16px}
     els.quoteCount.textContent = data.quoteAssets.length.toLocaleString("en-US");
     els.oldestPool.textContent = data.oldestTs ? ageFrom(data.oldestTs) : "Unknown";
     els.buysSells.textContent = data.buys24.toLocaleString("en-US") + " / " + data.sells24.toLocaleString("en-US");
-    els.lastUpdated.textContent = new Date().toLocaleString([], {dateStyle:"medium",timeStyle:"short"});
+    if (els.lastUpdated) {
+      els.lastUpdated.textContent = new Date().toLocaleString([], {dateStyle:"medium",timeStyle:"short"});
+    }
     if (els.dataSource) els.dataSource.textContent = data.source || "Live / observed";
 
     els.dexList.replaceChildren();
@@ -1581,8 +1623,9 @@ body.embed-mode .passport-foot{padding:12px 16px}
       els.dexList.appendChild(chip);
     }
 
-    els.poolRows.replaceChildren();
+    if (els.poolRows) els.poolRows.replaceChildren();
     data.pools.slice(0,10).forEach(pair => {
+      if (!els.poolRows) return;
       const side = getTokenSide(pair,data.token);
       const other = side?.other?.symbol || side?.other?.name || "?";
       const tr = document.createElement("tr");
@@ -1691,9 +1734,10 @@ body.embed-mode .passport-foot{padding:12px 16px}
       data = await enrichMetadataFromDexScreener(data,token);
 
       render(data);
+      persistContractPreference();
       setStatus(
         "Passport created from " + data.marketCount + " detected market" +
-        (data.marketCount === 1 ? "" : "s") + " · " + data.source + ".",
+        (data.marketCount === 1 ? "" : "s") + ".",
         "ok"
       );
 
@@ -2208,7 +2252,7 @@ body.embed-mode .passport-foot{padding:12px 16px}
         await navigator.share({
           files:[file],
           title:current.name + " Solana Project Passport",
-          text:"Live Solana Project Passport · $ASTY · Create your token passport for free → ArbStrategy.net"
+          text:"Live Solana Project Passport · Powered by ArbStrategy.net"
         });
         cardButton.disabled = false;
         cardButton.textContent = oldButtonText;
@@ -2238,12 +2282,27 @@ body.embed-mode .passport-foot{padding:12px 16px}
 
   function shareText() {
     if (!current) return "";
-    return `${current.name} ($${current.symbol}) · Solana Project Passport\n\n` +
-      `Price: ${priceMoney(current.price)}\n` +
-      `Liquidity: ${compactMoney(current.liquidity)}\n` +
-      `24h Volume: ${compactMoney(current.volume24)}\n` +
-      `Markets: ${current.marketCount}\n\n` +
-      `Live public market snapshot · powered by ASTY`;
+    const change = Number.isFinite(Number(current.change24)) ? pct(current.change24) : "—";
+    const buys = Number.isFinite(Number(current.buys24)) ? Number(current.buys24).toLocaleString("en-US") : "—";
+    const sells = Number.isFinite(Number(current.sells24)) ? Number(current.sells24).toLocaleString("en-US") : "—";
+
+    return `${current.name} ($${current.symbol}) · Solana Project Passport
+
+` +
+      `Price: ${priceMoney(current.price)}
+` +
+      `24h Change: ${change}
+` +
+      `Liquidity: ${compactMoney(current.liquidity)}
+` +
+      `24h Volume: ${compactMoney(current.volume24)}
+` +
+      `24h Buys / Sells: ${buys} / ${sells}
+` +
+      `Markets: ${current.marketCount}
+
+` +
+      `Powered by ArbStrategy.net`;
   }
 
   els.scan.addEventListener("click",()=>loadToken(els.input.value));
@@ -2257,15 +2316,7 @@ body.embed-mode .passport-foot{padding:12px 16px}
       loadToken(ASTY);
     });
   });
-
-  const copyLinkBtn = $("copyLink");
-  if (copyLinkBtn) {
-    copyLinkBtn.addEventListener("click",()=>{
-      if (current) copyText(buildLiveUrl(current.token),copyLinkBtn,"Copied");
-    });
-  }
-
-  const copyEmbedBtn = $("copyEmbed");
+const copyEmbedBtn = $("copyEmbed");
   if (copyEmbedBtn) {
     copyEmbedBtn.addEventListener("click",()=>{
       if (current && els.embedCode) copyText(els.embedCode.textContent,copyEmbedBtn,"Copied");
@@ -2275,14 +2326,12 @@ body.embed-mode .passport-foot{padding:12px 16px}
   $("shareX").addEventListener("click",()=>{
     if (!current) return;
     const text = shareText();
-    const url = buildLiveUrl(current.token);
-    window.open("https://twitter.com/intent/tweet?text="+encodeURIComponent(text)+"&url="+encodeURIComponent(url),"_blank","noopener");
+    window.open("https://twitter.com/intent/tweet?text="+encodeURIComponent(text),"_blank","noopener");
   });
 
   $("shareTelegram").addEventListener("click",()=>{
     if (!current) return;
-    const url = buildLiveUrl(current.token);
-    window.open("https://t.me/share/url?url="+encodeURIComponent(url)+"&text="+encodeURIComponent(shareText()),"_blank","noopener");
+    window.open("https://t.me/share/url?url=&text="+encodeURIComponent(shareText()),"_blank","noopener");
   });
 
   window.addEventListener("resize",()=>{
@@ -2292,6 +2341,12 @@ body.embed-mode .passport-foot{padding:12px 16px}
   });
 
   $("makeCard").addEventListener("click",makeShareCard);
+
+  if (els.rememberContract) {
+    els.rememberContract.addEventListener("change",persistContractPreference);
+  }
+
+  restoreRememberedContract();
 
   const params = new URLSearchParams(location.search);
   const tokenParam = params.get("token");
