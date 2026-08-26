@@ -1,0 +1,2604 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="color-scheme" content="dark">
+<meta name="theme-color" content="#080914">
+<title>Solana Project Passport · Powered by ASTY</title>
+<meta name="description" content="Create a free live Solana Project Passport from any token address. Liquidity, volume, markets, DEX activity and shareable project stats in one place.">
+<style>
+:root{
+  --bg:#070914;
+  --bg2:#0b0e1d;
+  --card:#101429;
+  --card2:#0c1021;
+  --text:#f6f3ff;
+  --muted:#969bb5;
+  --muted2:#6e7593;
+  --line:rgba(173,145,255,.16);
+  --line2:rgba(255,255,255,.07);
+  --purple:#b093ff;
+  --purple2:#8067ff;
+  --purple3:#674df0;
+  --cyan:#6ee7f9;
+  --green:#71e6a1;
+  --red:#ff7b98;
+  --amber:#f6c96c;
+  --shadow:0 22px 70px rgba(0,0,0,.34);
+  --radius:22px;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0;
+  min-height:100vh;
+  color:var(--text);
+  font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  background:
+    radial-gradient(circle at 20% -10%,rgba(128,103,255,.18),transparent 34%),
+    radial-gradient(circle at 92% 18%,rgba(110,231,249,.07),transparent 24%),
+    linear-gradient(180deg,#070914 0%,#080a15 50%,#060711 100%);
+}
+body::before{
+  content:"";
+  position:fixed;
+  inset:0;
+  pointer-events:none;
+  opacity:.18;
+  background-image:
+    linear-gradient(rgba(255,255,255,.02) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(255,255,255,.02) 1px,transparent 1px);
+  background-size:34px 34px;
+  mask-image:linear-gradient(to bottom,black,transparent 85%);
+}
+a{color:inherit}
+button,input{font:inherit}
+button{cursor:pointer}
+.wrap{width:min(1180px,calc(100% - 32px));margin:0 auto}
+.topbar{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:18px;
+  padding:22px 0;
+}
+.brand{
+  display:flex;
+  align-items:center;
+  gap:11px;
+  font-weight:800;
+  letter-spacing:-.02em;
+}
+.brand-logo{
+  width:38px;
+  height:38px;
+  border-radius:50%;
+  object-fit:cover;
+  flex:0 0 38px;
+  box-shadow:0 0 22px rgba(169,138,255,.20);
+}
+.brand small{
+  display:block;
+  color:#cfc3f4;
+  font-size:10px;
+  font-weight:800;
+  letter-spacing:.11em;
+  text-transform:uppercase;
+  margin-top:2px;
+}
+.nav-actions{display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end}
+.btn{
+  border:1px solid var(--line);
+  color:var(--text);
+  background:rgba(255,255,255,.035);
+  padding:11px 15px;
+  border-radius:13px;
+  font-weight:700;
+  transition:.18s ease;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+  text-decoration:none;
+}
+.btn:hover{transform:translateY(-1px);border-color:rgba(176,147,255,.38);background:rgba(176,147,255,.08)}
+.btn.primary{
+  border-color:transparent;
+  background:linear-gradient(135deg,var(--purple),var(--purple2));
+  color:#0b0716;
+  box-shadow:0 10px 28px rgba(128,103,255,.18);
+}
+.btn.primary:hover{filter:brightness(1.04)}
+.btn.slim{padding:9px 12px;font-size:13px}
+.hero{
+  text-align:center;
+  padding:72px 0 35px;
+}
+.eyebrow{
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  padding:7px 11px;
+  border-radius:999px;
+  border:1px solid var(--line);
+  color:#c8b9ff;
+  background:rgba(176,147,255,.055);
+  font-size:12px;
+  font-weight:800;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+}
+.dot{width:7px;height:7px;border-radius:50%;background:var(--purple);box-shadow:0 0 14px var(--purple)}
+h1{
+  margin:18px auto 12px;
+  max-width:840px;
+  font-size:clamp(42px,7vw,78px);
+  line-height:.98;
+  letter-spacing:-.055em;
+  background:linear-gradient(90deg,#fff 0%,#e7deff 42%,#ae93ff 76%,#76e2f5 110%);
+  -webkit-background-clip:text;
+  background-clip:text;
+  color:transparent;
+}
+.hero p{
+  max-width:700px;
+  margin:0 auto;
+  color:var(--muted);
+  font-size:clamp(16px,2vw,19px);
+  line-height:1.65;
+}
+.search-card{
+  margin:34px auto 0;
+  width:min(860px,100%);
+  padding:12px;
+  border-radius:20px;
+  border:1px solid var(--line);
+  background:linear-gradient(180deg,rgba(255,255,255,.055),rgba(255,255,255,.025));
+  box-shadow:var(--shadow);
+}
+.search-row{display:flex;gap:10px}
+.input-wrap{
+  flex:1;
+  min-width:0;
+  display:flex;
+  align-items:center;
+  gap:10px;
+  padding:0 15px;
+  border-radius:14px;
+  background:#080b18;
+  border:1px solid var(--line2);
+}
+.input-wrap span{color:var(--purple)}
+#tokenInput{
+  width:100%;
+  min-width:0;
+  background:transparent;
+  color:var(--text);
+  border:0;
+  outline:0;
+  padding:15px 0;
+}
+#tokenInput::placeholder{color:#5f6681}
+.quickline{
+  display:flex;
+  justify-content:space-between;
+  gap:10px;
+  margin-top:10px;
+  color:var(--muted2);
+  font-size:12px;
+  padding:0 4px;
+}
+.link-btn{
+  padding:0;border:0;background:none;color:#ae99ff;font-weight:700
+}
+
+.remember-row{
+  display:flex;
+  align-items:center;
+  justify-content:flex-start;
+  margin-top:10px;
+  padding:0 4px;
+}
+.remember-label{
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  color:var(--muted);
+  font-size:12px;
+  cursor:pointer;
+  user-select:none;
+}
+.remember-label input{
+  width:16px;
+  height:16px;
+  margin:0;
+  accent-color:var(--purple2);
+  cursor:pointer;
+}
+
+.status{
+  margin:16px auto 0;
+  width:min(860px,100%);
+  min-height:24px;
+  text-align:left;
+  color:var(--muted);
+  font-size:13px;
+}
+.status.error{color:#ff9bb0}
+.status.ok{color:#89e9ad}
+
+#passportSection{display:none;padding:24px 0 66px}
+#passportSection.show{display:block}
+.passport{
+  overflow:hidden;
+  border:1px solid var(--line);
+  border-radius:28px;
+  background:
+    radial-gradient(circle at 90% 0%,rgba(110,231,249,.07),transparent 24%),
+    radial-gradient(circle at 0% 0%,rgba(176,147,255,.11),transparent 30%),
+    linear-gradient(180deg,rgba(17,21,42,.98),rgba(10,13,28,.98));
+  box-shadow:var(--shadow);
+}
+.passport-head{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:18px;
+  padding:26px;
+  border-bottom:1px solid var(--line);
+}
+.token-id{display:flex;align-items:center;gap:16px;min-width:0}
+.token-logo{
+  width:64px;height:64px;border-radius:18px;object-fit:cover;
+  border:1px solid var(--line);background:#0b0e1c;
+}
+.token-logo.fallback{display:grid;place-items:center;font-weight:900;font-size:22px;color:#d9ceff}
+.token-title{min-width:0}
+.token-title h2{margin:0;font-size:27px;letter-spacing:-.035em}
+.token-meta{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:6px;color:var(--muted);font-size:13px}
+.pill{
+  display:inline-flex;align-items:center;gap:6px;
+  border:1px solid var(--line);
+  background:rgba(176,147,255,.055);
+  padding:5px 8px;border-radius:999px;
+  color:#c9bcf7;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.04em
+}
+.address-line{
+  max-width:410px;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  color:#8e95ae;
+  font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+}
+.live{
+  display:inline-flex;align-items:center;gap:7px;color:#9ff0bb;font-size:12px;font-weight:800
+}
+.live::before{content:"";width:7px;height:7px;border-radius:50%;background:#6ee99d;box-shadow:0 0 12px rgba(110,233,157,.65)}
+.head-links{display:flex;gap:9px;flex-wrap:wrap;justify-content:flex-end}
+
+.primary-grid{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:1px;
+  background:var(--line);
+}
+.metric{
+  min-width:0;
+  background:rgba(11,14,29,.96);
+  padding:23px;
+}
+.metric-label{
+  color:var(--muted2);
+  font-size:11px;
+  text-transform:uppercase;
+  font-weight:800;
+  letter-spacing:.08em;
+}
+.metric-value{
+  margin-top:8px;
+  font-size:clamp(22px,3vw,31px);
+  font-weight:850;
+  letter-spacing:-.04em;
+  overflow-wrap:anywhere;
+}
+.metric-sub{margin-top:6px;color:var(--muted);font-size:12px}
+.positive{color:var(--green)}
+.negative{color:var(--red)}
+
+.content-grid{
+  display:grid;
+  grid-template-columns:1fr;
+  gap:0;
+  border-top:1px solid var(--line);
+}
+.panel{padding:25px}
+.panel + .panel{border-left:1px solid var(--line)}
+.panel-title{
+  display:flex;align-items:center;justify-content:space-between;gap:10px;
+  margin-bottom:17px
+}
+.panel-title h3{margin:0;font-size:16px;letter-spacing:-.02em}
+.panel-title span{color:var(--muted2);font-size:12px}
+.fact-list{display:grid;gap:10px}
+.fact{
+  display:flex;align-items:center;justify-content:space-between;gap:16px;
+  padding:13px 14px;border:1px solid var(--line2);border-radius:13px;background:rgba(255,255,255,.018)
+}
+.fact span:first-child{color:var(--muted);font-size:13px}
+.fact strong{text-align:right;font-size:13px}
+.dex-list{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+.dex-chip{
+  padding:7px 9px;border:1px solid var(--line);border-radius:10px;
+  background:rgba(176,147,255,.05);font-size:12px;font-weight:750;color:#cec3f9
+}
+.pool-table-wrap{overflow:auto}
+table{width:100%;border-collapse:collapse;min-width:670px}
+th{
+  color:var(--muted2);font-size:10px;letter-spacing:.07em;text-transform:uppercase;
+  font-weight:800;text-align:left;padding:10px 12px;border-bottom:1px solid var(--line)
+}
+td{padding:13px 12px;border-bottom:1px solid var(--line2);font-size:12px}
+tr:last-child td{border-bottom:0}
+td.num,th.num{text-align:right}
+.pool-token{font-weight:750}
+.muted{color:var(--muted)}
+.pool-link{text-decoration:none;color:#bdabff}
+.pool-link:hover{text-decoration:underline}
+
+
+.dex-only{
+  padding:15px 24px 17px;
+  border-top:1px solid var(--line);
+  background:rgba(11,14,29,.56);
+}
+.dex-only .dex-list{
+  margin-top:0;
+}
+@media(max-width:760px){
+  .dex-only{padding:13px 18px 15px}
+}
+
+.passport-foot{
+  display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;
+  padding:18px 25px;border-top:1px solid var(--line);
+  color:var(--muted2);font-size:11px
+}
+.powered{
+  display:flex;align-items:center;gap:8px;color:#b7aacd;text-decoration:none;font-weight:700
+}
+.powered .mini-dot{width:8px;height:8px;border-radius:50%;background:var(--purple);box-shadow:0 0 12px rgba(176,147,255,.55)}
+.powered strong{color:#dfd6ff}
+
+.tools{
+  margin-top:18px;
+  display:grid;
+  grid-template-columns:1fr;
+  gap:18px;
+}
+.tool-card{
+  border:1px solid var(--line);
+  border-radius:20px;
+  padding:22px;
+  background:rgba(15,19,38,.78);
+}
+.tool-card h3{margin:0 0 7px;font-size:18px}
+.tool-card p{margin:0;color:var(--muted);font-size:13px;line-height:1.55}
+.tool-actions{display:flex;gap:9px;flex-wrap:wrap;margin-top:17px}
+.codebox{
+  display:flex;
+  align-items:flex-start;
+  gap:10px;
+  margin-top:15px;
+  border:1px solid var(--line2);
+  background:#070a16;
+  border-radius:12px;
+  padding:12px;
+}
+.codebox code{
+  flex:1;min-width:0;color:#aeb5d0;font-size:11px;line-height:1.45;
+  overflow:auto;white-space:nowrap
+}
+.note{
+  margin-top:15px;padding:12px 13px;border-radius:12px;
+  border:1px solid rgba(246,201,108,.15);background:rgba(246,201,108,.045);
+  color:#b8ad93;font-size:11px;line-height:1.5
+}
+.section-info{
+  padding:56px 0 80px;
+  text-align:center;
+}
+.section-info h2{font-size:32px;letter-spacing:-.04em;margin:0}
+.section-info p{max-width:650px;margin:12px auto 0;color:var(--muted);line-height:1.65}
+.info-grid{
+  margin-top:28px;
+  display:grid;grid-template-columns:repeat(3,1fr);gap:14px;text-align:left
+}
+.info{
+  padding:20px;border:1px solid var(--line);border-radius:17px;background:rgba(255,255,255,.022)
+}
+.info b{display:block;margin-bottom:7px}
+.info span{color:var(--muted);font-size:13px;line-height:1.55}
+.site-footer{
+  border-top:1px solid var(--line2);
+  color:var(--muted2);
+  padding:24px 0 34px;
+  font-size:11px;
+}
+.footer-row{display:flex;justify-content:center;gap:15px;flex-wrap:wrap}
+.footer-powered{
+  color:#bfb3d4;
+  text-decoration:none;
+  font-weight:700;
+}
+.footer-powered:hover{color:#e1d8ff}
+
+.loader{
+  width:15px;height:15px;border-radius:50%;
+  border:2px solid rgba(255,255,255,.16);border-top-color:#c9b7ff;
+  animation:spin .8s linear infinite;display:inline-block;vertical-align:-3px;margin-right:7px
+}
+@keyframes spin{to{transform:rotate(360deg)}}
+.hidden{display:none!important}
+
+body.embed-mode{
+  background:#090c18;
+}
+body.embed-mode::before,
+body.embed-mode .topbar,
+body.embed-mode .hero,
+body.embed-mode .tools,
+body.embed-mode .section-info,
+body.embed-mode .site-footer,
+body.embed-mode .head-links,
+body.embed-mode .pool-panel,
+body.embed-mode .passport-foot .source-note{
+  display:none!important
+}
+body.embed-mode .wrap{width:100%;margin:0}
+body.embed-mode #passportSection{padding:0;display:block}
+body.embed-mode .passport{border-radius:16px;box-shadow:none}
+body.embed-mode .passport-head{padding:18px}
+body.embed-mode .token-logo{width:48px;height:48px;border-radius:14px}
+body.embed-mode .token-title h2{font-size:21px}
+body.embed-mode .primary-grid{grid-template-columns:repeat(4,1fr)}
+body.embed-mode .metric{padding:16px}
+body.embed-mode .metric-value{font-size:21px}
+body.embed-mode .content-grid{display:none}
+body.embed-mode .passport-foot{padding:12px 16px}
+
+
+
+@media(max-width:760px){
+  body{
+    background:
+      radial-gradient(circle at 50% -6%,rgba(128,103,255,.18),transparent 28%),
+      linear-gradient(180deg,#070914 0%,#080a15 58%,#060711 100%);
+  }
+
+  .wrap{
+    width:100%;
+    padding:0 12px;
+  }
+
+  .topbar{
+    padding:14px 2px 8px;
+    gap:10px;
+    align-items:center;
+  }
+
+  .brand{
+    gap:9px;
+    font-size:14px;
+    min-width:0;
+  }
+
+  .brand-logo{
+    width:30px;
+    height:30px;
+    flex:0 0 30px;
+  }
+
+  .brand small{
+    display:block;
+    font-size:8px;
+    letter-spacing:.08em;
+  }
+
+  .nav-actions{
+    gap:6px;
+    flex:0 0 auto;
+  }
+
+
+  .btn{
+    min-height:44px;
+    border-radius:12px;
+    padding:11px 14px;
+  }
+
+  .btn.slim{
+    min-height:40px;
+    padding:9px 12px;
+    font-size:12px;
+  }
+
+  .hero{
+    padding:36px 2px 20px;
+    text-align:left;
+  }
+
+  .eyebrow{
+    font-size:10px;
+    padding:6px 9px;
+  }
+
+  h1{
+    margin:14px 0 12px;
+    max-width:100%;
+    font-size:clamp(38px,12vw,54px);
+    line-height:.98;
+    letter-spacing:-.058em;
+  }
+
+  .hero p{
+    margin:0;
+    max-width:100%;
+    font-size:15px;
+    line-height:1.55;
+  }
+
+  .search-card{
+    margin-top:24px;
+    padding:10px;
+    border-radius:18px;
+  }
+
+  .search-row{
+    display:grid;
+    grid-template-columns:1fr;
+    gap:9px;
+  }
+
+  .input-wrap{
+    min-height:52px;
+    padding:0 13px;
+    border-radius:13px;
+  }
+
+  #tokenInput{
+    font-size:16px;
+    padding:14px 0;
+  }
+
+  .search-row .btn{
+    width:100%;
+    min-height:50px;
+    font-size:15px;
+  }
+
+  .quickline{
+    padding:2px 2px 0;
+    gap:6px;
+    font-size:11px;
+    align-items:center;
+  }
+
+  .quickline > span{
+    max-width:58%;
+    line-height:1.35;
+  }
+
+  .link-btn{
+    text-align:right;
+    font-size:11px;
+  }
+
+  .status{
+    width:100%;
+    margin-top:10px;
+    font-size:12px;
+    line-height:1.4;
+  }
+
+  #passportSection{
+    padding:14px 0 46px;
+  }
+
+  .passport{
+    border-radius:20px;
+    box-shadow:0 16px 46px rgba(0,0,0,.28);
+  }
+
+  .passport-head{
+    padding:18px;
+    gap:14px;
+  }
+
+  .token-id{
+    gap:12px;
+    width:100%;
+    align-items:flex-start;
+  }
+
+  .token-logo{
+    width:50px;
+    height:50px;
+    border-radius:14px;
+    flex:0 0 50px;
+  }
+
+  .token-title{
+    min-width:0;
+    flex:1;
+  }
+
+  .token-title h2{
+    font-size:22px;
+    line-height:1.1;
+    overflow-wrap:anywhere;
+  }
+
+  .token-meta{
+    gap:6px;
+    margin-top:7px;
+  }
+
+  .address-line{
+    display:block;
+    width:100%;
+    max-width:100%;
+    font-size:11px;
+  }
+
+  .head-links{
+    width:100%;
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:8px;
+  }
+
+  .head-links .btn{
+    width:100%;
+    min-width:0;
+  }
+
+  .primary-grid{
+    grid-template-columns:1fr 1fr;
+  }
+
+  .metric{
+    padding:16px 14px;
+    min-height:112px;
+  }
+
+  .metric-label{
+    font-size:9px;
+    letter-spacing:.075em;
+  }
+
+  .metric-value{
+    margin-top:8px;
+    font-size:23px;
+    line-height:1.02;
+  }
+
+  .metric-sub{
+    margin-top:7px;
+    font-size:10px;
+    line-height:1.3;
+  }
+
+  .content-grid{
+    grid-template-columns:1fr;
+  }
+
+  .panel{
+    padding:18px;
+  }
+
+  .panel + .panel{
+    border-left:0;
+    border-top:1px solid var(--line);
+  }
+
+  .panel-title{
+    align-items:flex-start;
+    margin-bottom:14px;
+  }
+
+  .panel-title h3{
+    font-size:15px;
+  }
+
+  .panel-title span{
+    font-size:10px;
+    text-align:right;
+  }
+
+  .fact-list{
+    gap:8px;
+  }
+
+  .fact{
+    padding:12px 12px;
+    gap:10px;
+    align-items:flex-start;
+  }
+
+  .fact span:first-child{
+    font-size:12px;
+    line-height:1.35;
+  }
+
+  .fact strong{
+    font-size:12px;
+    line-height:1.35;
+    max-width:48%;
+  }
+
+  .dex-list{
+    margin-top:12px;
+    gap:6px;
+  }
+
+  .dex-chip{
+    padding:6px 8px;
+    font-size:10px;
+  }
+
+  .pool-panel{
+    padding-left:0;
+    padding-right:0;
+  }
+
+  .pool-panel .panel-title{
+    padding:0 18px;
+  }
+
+  .pool-table-wrap{
+    overflow-x:auto;
+    -webkit-overflow-scrolling:touch;
+    scrollbar-width:none;
+  }
+
+  .pool-table-wrap::-webkit-scrollbar{
+    display:none;
+  }
+
+  table{
+    min-width:610px;
+  }
+
+  th{
+    font-size:9px;
+    padding:9px 10px;
+  }
+
+  td{
+    font-size:11px;
+    padding:11px 10px;
+  }
+
+  .passport-foot{
+    padding:15px 18px;
+    gap:10px;
+    align-items:flex-start;
+  }
+
+  .powered{
+    font-size:11px;
+  }
+
+  .source-note{
+    width:100%;
+    line-height:1.45;
+  }
+
+  .tools{
+    grid-template-columns:1fr;
+    gap:12px;
+    margin-top:12px;
+  }
+
+  .tool-card{
+    border-radius:18px;
+    padding:18px;
+  }
+
+  .tool-card h3{
+    font-size:17px;
+  }
+
+  .tool-card p{
+    font-size:12px;
+    line-height:1.5;
+  }
+
+  .tool-actions{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:8px;
+  }
+
+  .tool-actions .btn{
+    width:100%;
+    min-width:0;
+    padding:10px 8px;
+    font-size:12px;
+  }
+
+  .tool-actions .btn.primary{
+    grid-column:1 / -1;
+  }
+
+  .codebox{
+    display:block;
+    padding:10px;
+  }
+
+  .codebox code{
+    display:block;
+    white-space:normal;
+    overflow-wrap:anywhere;
+    word-break:break-word;
+    font-size:10px;
+    line-height:1.45;
+    max-height:120px;
+    overflow:auto;
+  }
+
+  .codebox .btn{
+    width:100%;
+    margin-top:9px;
+  }
+
+  .note{
+    font-size:10px;
+    padding:11px 12px;
+  }
+
+  .section-info{
+    padding:42px 2px 60px;
+    text-align:left;
+  }
+
+  .section-info h2{
+    font-size:28px;
+  }
+
+  .section-info p{
+    font-size:14px;
+    margin:10px 0 0;
+    line-height:1.55;
+  }
+
+  .info-grid{
+    grid-template-columns:1fr;
+    gap:9px;
+    margin-top:20px;
+  }
+
+  .info{
+    padding:16px;
+    border-radius:15px;
+  }
+
+  .site-footer{
+    padding:20px 2px 28px;
+  }
+
+  .footer-row{
+    display:block;
+    line-height:1.55;
+  }
+
+  .footer-row span{
+    display:block;
+  }
+
+  .footer-row span + span{
+    margin-top:4px;
+  }
+}
+
+@media(max-width:390px){
+  .wrap{padding:0 9px}
+
+  .hero{
+    padding-top:30px;
+  }
+
+  h1{
+    font-size:36px;
+  }
+
+  .primary-grid{
+    grid-template-columns:1fr;
+  }
+
+  .metric{
+    min-height:auto;
+    padding:15px 16px;
+  }
+
+  .metric-value{
+    font-size:25px;
+  }
+
+  .head-links{
+    grid-template-columns:1fr;
+  }
+
+  .tool-actions{
+    grid-template-columns:1fr;
+  }
+
+  .tool-actions .btn.primary{
+    grid-column:auto;
+  }
+}
+
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header class="topbar">
+    <div class="brand">
+      <img
+        class="brand-logo"
+        src="assets/logo.png"
+        alt="ASTY logo"
+        onerror="this.onerror=null;this.src='https://raw.githubusercontent.com/ArbStrategy-ASTY/ArbStrategy-ASTY/main/assets/logo.png';">
+      <div>
+        Solana Project Passport
+        <small>Powered by ArbStrategy</small>
+      </div>
+    </div>
+    <div class="nav-actions">
+      <a class="btn slim" href="https://arbstrategy.net/" target="_blank" rel="noopener">About $ASTY</a>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero">
+      <div class="eyebrow"><span class="dot"></span> Free Solana utility</div>
+      <h1>One token. One live passport.</h1>
+      <p>
+        Turn any Solana token address into a clean, shareable live project snapshot.
+      </p>
+
+      <div class="search-card">
+        <div class="search-row">
+          <div class="input-wrap">
+            <span>◎</span>
+            <input id="tokenInput" type="text" autocomplete="off" spellcheck="false"
+              placeholder="Paste a Solana token address">
+          </div>
+          <button class="btn primary" id="scanBtn">Create Passport</button>
+        </div>
+        <div class="remember-row">
+          <label class="remember-label">
+            <input type="checkbox" id="rememberContract">
+            <span>Remember my Contract Address</span>
+          </label>
+        </div>
+      </div>
+      <div class="status" id="status"></div>
+    </section>
+
+    <section id="passportSection">
+      <article class="passport" id="passport">
+        <div class="passport-head">
+          <div class="token-id">
+            <img id="tokenLogo" class="token-logo hidden" alt="">
+            <div id="tokenFallback" class="token-logo fallback">?</div>
+            <div class="token-title">
+              <h2><span id="tokenName">Token</span> <span class="muted" id="tokenSymbol"></span></h2>
+              <div class="token-meta">
+                <span class="live">LIVE</span>
+                <span class="pill">SOLANA</span>
+                <span class="address-line" id="tokenAddress"></span>
+              </div>
+            </div>
+          </div>
+          <div class="head-links">
+            <a class="btn slim" id="dexLink" target="_blank" rel="noopener">DEX Screener ↗</a>
+            <a class="btn slim" id="birdLink" target="_blank" rel="noopener">BirdEye ↗</a>
+          </div>
+        </div>
+
+        <div class="primary-grid">
+          <div class="metric">
+            <div class="metric-label">Price</div>
+            <div class="metric-value" id="price">$—</div>
+            <div class="metric-sub" id="change24">24h —</div>
+          </div>
+          <div class="metric">
+            <div class="metric-label">Liquidity</div>
+            <div class="metric-value" id="liquidity">$—</div>
+            <div class="metric-sub">Across detected pools</div>
+          </div>
+          <div class="metric">
+            <div class="metric-label">24h Volume</div>
+            <div class="metric-value" id="volume24">$—</div>
+            <div class="metric-sub" id="txns24">— transactions</div>
+          </div>
+          <div class="metric">
+            <div class="metric-label">Market Cap</div>
+            <div class="metric-value" id="marketCap">$—</div>
+            <div class="metric-sub" id="fdv">FDV —</div>
+          </div>
+        </div>
+
+        <div class="dex-only">
+          <div class="dex-list" id="dexList"></div>
+        </div>
+
+        <div class="passport-foot">
+          <a class="powered" href="https://arbstrategy.net/" target="_blank" rel="noopener">
+            <span class="mini-dot"></span>
+            Powered by <strong>ArbStrategy.net</strong>
+          </a>
+        </div>
+      </article>
+
+      <div class="tools">
+        <div class="tool-card">
+          <h3>Share your Passport</h3>
+          <p>Create a branded snapshot image and share the live Passport.</p>
+          <div class="tool-actions">
+            <button class="btn primary" id="makeCard">Create Share Card</button>
+            <button class="btn" id="shareX">Share on X</button>
+            <button class="btn" id="shareTelegram">Share on Telegram</button>
+          </div>
+          <canvas id="shareCanvas" class="hidden" width="1080" height="1080"></canvas>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="footer-row">
+      <a class="footer-powered" href="https://arbstrategy.net/" target="_blank" rel="noopener">Powered by ArbStrategy.net</a>
+    </div>
+  </footer>
+</div>
+
+<script>
+(() => {
+  "use strict";
+
+  const ASTY = "ASTYqeaoK83Zs1pTFEXZUB6BM8cG8YLTsN852NUkt7ZR";
+  // All Passport numbers come from Birdeye through the protected Worker.
+  // Worker name: SolanaProjectPassport
+  const BIRDEYE_GATEWAY = "https://solanaprojectpassport.mail-timothy.workers.dev/api/token";
+
+  // GeckoTerminal is used ONLY to discover which DEX names should be shown
+  // as decorative/info bubbles. Its liquidity/price/volume values are ignored.
+  const GECKO_BASE = "https://api.geckoterminal.com/api/v2";
+  const DEXSCREENER_BASE = "https://api.dexscreener.com/token-pairs/v1/solana/";
+  const $ = (id) => document.getElementById(id);
+
+  const els = {
+    input: $("tokenInput"),
+    scan: $("scanBtn"),
+    status: $("status"),
+    section: $("passportSection"),
+    logo: $("tokenLogo"),
+    fallback: $("tokenFallback"),
+    name: $("tokenName"),
+    symbol: $("tokenSymbol"),
+    address: $("tokenAddress"),
+    dexLink: $("dexLink"),
+    birdLink: $("birdLink"),
+    price: $("price"),
+    change24: $("change24"),
+    liquidity: $("liquidity"),
+    volume24: $("volume24"),
+    txns24: $("txns24"),
+    marketCap: $("marketCap"),
+    fdv: $("fdv"),
+    marketCount: $("marketCount"),
+    dexCount: $("dexCount"),
+    quoteCount: $("quoteCount"),
+    oldestPool: $("oldestPool"),
+    buysSells: $("buysSells"),
+    dexList: $("dexList"),
+    lastUpdated: $("lastUpdated"),
+    dataSource: $("dataSource"),
+    poolRows: $("poolRows"),
+    embedCode: $("embedCode"),
+    canvas: $("shareCanvas"),
+    rememberContract: $("rememberContract")
+  };
+
+  let current = null;
+  let loading = false;
+
+  const REMEMBER_KEY = "astyPassportRememberContract";
+  const CONTRACT_KEY = "astyPassportContract";
+
+  function restoreRememberedContract() {
+    try {
+      const shouldRemember = localStorage.getItem(REMEMBER_KEY) === "1";
+      if (els.rememberContract) els.rememberContract.checked = shouldRemember;
+
+      if (shouldRemember) {
+        const savedContract = localStorage.getItem(CONTRACT_KEY) || "";
+        if (savedContract) els.input.value = savedContract;
+      }
+    } catch (e) {
+      console.warn("Could not restore saved contract:", e);
+    }
+  }
+
+  function persistContractPreference() {
+    try {
+      if (!els.rememberContract) return;
+
+      if (els.rememberContract.checked) {
+        localStorage.setItem(REMEMBER_KEY, "1");
+        const contract = els.input.value.trim();
+        if (contract) localStorage.setItem(CONTRACT_KEY, contract);
+      } else {
+        localStorage.removeItem(REMEMBER_KEY);
+        localStorage.removeItem(CONTRACT_KEY);
+      }
+    } catch (e) {
+      console.warn("Could not save contract preference:", e);
+    }
+  }
+
+  function isLikelySolanaAddress(value) {
+    return /^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(value);
+  }
+
+  function num(v) {
+    const n = Number(v);
+    return Number.isFinite(n) ? n : 0;
+  }
+
+  function sum(arr, fn) {
+    return arr.reduce((a, x) => a + num(fn(x)), 0);
+  }
+
+  function uniq(values) {
+    return [...new Set(values.filter(Boolean))];
+  }
+
+  function compactMoney(value) {
+    const n = num(value);
+    if (!n) return "$0";
+    const abs = Math.abs(n);
+    if (abs >= 1e9) return "$" + (n / 1e9).toFixed(abs >= 1e10 ? 1 : 2).replace(/\.0+$/,"") + "B";
+    if (abs >= 1e6) return "$" + (n / 1e6).toFixed(abs >= 1e7 ? 1 : 2).replace(/\.0+$/,"") + "M";
+    if (abs >= 1e3) return "$" + (n / 1e3).toFixed(abs >= 1e4 ? 1 : 2).replace(/\.0+$/,"") + "K";
+    return "$" + n.toLocaleString("en-US",{maximumFractionDigits:2});
+  }
+
+  function priceMoney(value) {
+    const n = num(value);
+    if (!n) return "$—";
+    let digits = 2;
+    if (n < 1) digits = 4;
+    if (n < .01) digits = 6;
+    if (n < .0001) digits = 8;
+    return "$" + n.toLocaleString("en-US",{
+      minimumFractionDigits: Math.min(2,digits),
+      maximumFractionDigits: digits
+    });
+  }
+
+  function pct(value) {
+    const n = Number(value);
+    if (!Number.isFinite(n)) return "—";
+    return (n > 0 ? "+" : "") + n.toFixed(2) + "%";
+  }
+
+  function cleanDexName(id) {
+    const map = {
+      meteora:"Meteora",
+      raydium:"Raydium",
+      orca:"Orca",
+      pumpswap:"PumpSwap",
+      fluxbeam:"FluxBeam",
+      phoenix:"Phoenix",
+      lifinity:"Lifinity",
+      openbook:"OpenBook"
+    };
+    return map[String(id || "").toLowerCase()] || String(id || "Unknown").replace(/[-_]/g," ");
+  }
+
+  function ageFrom(timestamp) {
+    const ts = num(timestamp);
+    if (!ts) return "Unknown";
+    const d = Math.max(0, Date.now() - ts);
+    const days = Math.floor(d / 86400000);
+    if (days >= 365) {
+      const y = days / 365;
+      return y >= 2 ? Math.floor(y) + " years" : y.toFixed(1) + " years";
+    }
+    if (days >= 30) return Math.floor(days / 30) + " months";
+    if (days >= 1) return days + (days === 1 ? " day" : " days");
+    const h = Math.floor(d / 3600000);
+    return h + (h === 1 ? " hour" : " hours");
+  }
+
+  function shortAddress(address) {
+    if (!address || address.length < 12) return address || "";
+    return address.slice(0,6) + "…" + address.slice(-6);
+  }
+
+  function setStatus(message, type="") {
+    els.status.className = "status" + (type ? " " + type : "");
+    els.status.innerHTML = message;
+  }
+
+  async function copyText(text, button, successText="Copied") {
+    try {
+      await navigator.clipboard.writeText(text);
+      if (button) {
+        const old = button.textContent;
+        button.textContent = successText;
+        setTimeout(() => button.textContent = old, 1300);
+      }
+    } catch {
+      const ta = document.createElement("textarea");
+      ta.value = text;
+      ta.style.position = "fixed";
+      ta.style.opacity = "0";
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand("copy");
+      ta.remove();
+    }
+  }
+
+  function getTokenSide(pair, token) {
+    if (pair?.baseToken?.address === token) return {side:"base", token:pair.baseToken, other:pair.quoteToken};
+    if (pair?.quoteToken?.address === token) return {side:"quote", token:pair.quoteToken, other:pair.baseToken};
+    return null;
+  }
+
+  function tokenPriceUsdFromPair(pair, token) {
+    const side = getTokenSide(pair, token);
+    if (!side) return 0;
+
+    // GeckoTerminal normalization can provide the searched token price directly.
+    if (num(pair?.searchedTokenPriceUsd) > 0) {
+      return num(pair.searchedTokenPriceUsd);
+    }
+
+    if (side.side === "base") {
+      return num(pair.priceUsd);
+    }
+
+    // DEX Screener fallback: priceUsd is BASE token USD price and
+    // priceNative is BASE measured in QUOTE.
+    const baseUsd = num(pair.priceUsd);
+    const baseInQuote = num(pair.priceNative);
+    if (baseUsd > 0 && baseInQuote > 0) return baseUsd / baseInQuote;
+    return 0;
+  }
+
+
+  function relationshipId(item, key) {
+    return item?.relationships?.[key]?.data?.id || "";
+  }
+
+  function addressFromGeckoToken(includedItem) {
+    const a = includedItem?.attributes || {};
+    if (a.address) return a.address;
+    const id = includedItem?.id || "";
+    const prefix = "solana_";
+    return id.startsWith(prefix) ? id.slice(prefix.length) : id;
+  }
+
+  function normalizeGeckoPool(item, includedMap, searchedToken) {
+    const a = item?.attributes || {};
+    const baseRel = relationshipId(item,"base_token");
+    const quoteRel = relationshipId(item,"quote_token");
+    const dexRel = relationshipId(item,"dex");
+
+    const baseInc = includedMap.get(baseRel);
+    const quoteInc = includedMap.get(quoteRel);
+    const dexInc = includedMap.get(dexRel);
+
+    const baseAttr = baseInc?.attributes || {};
+    const quoteAttr = quoteInc?.attributes || {};
+    const baseAddress = addressFromGeckoToken(baseInc);
+    const quoteAddress = addressFromGeckoToken(quoteInc);
+
+    const baseToken = {
+      address: baseAddress,
+      name: baseAttr.name || String(a.name || "").split(" / ")[0] || "Token",
+      symbol: baseAttr.symbol || String(a.name || "").split(" / ")[0] || "TOKEN"
+    };
+    const quoteToken = {
+      address: quoteAddress,
+      name: quoteAttr.name || String(a.name || "").split(" / ")[1] || "Token",
+      symbol: quoteAttr.symbol || String(a.name || "").split(" / ")[1] || "TOKEN"
+    };
+
+    const searchedIsBase = baseAddress === searchedToken;
+    const searchedIsQuote = quoteAddress === searchedToken;
+
+    const searchedPrice = searchedIsBase
+      ? num(a.base_token_price_usd)
+      : searchedIsQuote
+        ? num(a.quote_token_price_usd)
+        : 0;
+
+    const tx24 = a?.transactions?.h24 || {};
+    const change24 = a?.price_change_percentage?.h24;
+
+    return {
+      chainId:"solana",
+      dexId:dexInc?.attributes?.name || dexRel || "Unknown",
+      pairAddress:a.address || item?.id || "",
+      url:a.address ? "https://www.geckoterminal.com/solana/pools/" + a.address : "",
+      baseToken,
+      quoteToken,
+      searchedTokenPriceUsd:searchedPrice,
+      priceUsd:num(a.base_token_price_usd),
+      priceNative:num(a.base_token_price_quote_token),
+      liquidity:{usd:num(a.reserve_in_usd)},
+      volume:{h24:num(a?.volume_usd?.h24)},
+      txns:{h24:{buys:num(tx24.buys),sells:num(tx24.sells)}},
+      priceChange:{h24:Number.isFinite(Number(change24)) ? Number(change24) : null},
+      pairCreatedAt:a.pool_created_at ? Date.parse(a.pool_created_at) : 0,
+      // GeckoTerminal exposes these when available. Keep them attached to the base side.
+      marketCap:num(a.market_cap_usd),
+      fdv:num(a.fdv_usd),
+      info:{
+        imageUrl:
+          (searchedIsBase ? baseAttr.image_url : quoteAttr.image_url) ||
+          baseAttr.image_url || quoteAttr.image_url || ""
+      },
+      source:"GeckoTerminal"
+    };
+  }
+
+  async function fetchGeckoPools(token) {
+    const all = [];
+    const dedupe = new Set();
+    let tokenMeta = null;
+
+    // GeckoTerminal token-pools responses are paginated. We intentionally walk
+    // multiple pages because tokens such as ASTY can have far more than 20 pools.
+    for (let page = 1; page <= 10; page++) {
+      const url =
+        GECKO_BASE + "/networks/solana/tokens/" + encodeURIComponent(token) +
+        "/pools?include=base_token%2Cquote_token%2Cdex&page=" + page;
+
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 15000);
+      let res;
+      try {
+        res = await fetch(url,{
+          method:"GET",
+          headers:{"Accept":"application/json"},
+          signal:controller.signal
+        });
+      } finally {
+        clearTimeout(timeout);
+      }
+
+      if (!res.ok) throw new Error("GeckoTerminal returned HTTP " + res.status + ".");
+
+      const payload = await res.json();
+      const rows = Array.isArray(payload?.data) ? payload.data : [];
+      const included = Array.isArray(payload?.included) ? payload.included : [];
+      const includedMap = new Map(included.map(x => [x.id,x]));
+
+      if (!rows.length) break;
+
+      for (const row of rows) {
+        const normalized = normalizeGeckoPool(row,includedMap,token);
+        const key = normalized.pairAddress || row.id;
+        if (!dedupe.has(key)) {
+          dedupe.add(key);
+          all.push(normalized);
+        }
+
+        if (!tokenMeta) {
+          const baseInc = includedMap.get(relationshipId(row,"base_token"));
+          const quoteInc = includedMap.get(relationshipId(row,"quote_token"));
+          for (const candidate of [baseInc,quoteInc]) {
+            if (addressFromGeckoToken(candidate) === token) {
+              const ca = candidate?.attributes || {};
+              tokenMeta = {
+                name:ca.name || "",
+                symbol:ca.symbol || "",
+                imageUrl:ca.image_url || ""
+              };
+              break;
+            }
+          }
+        }
+      }
+
+      // Public API currently returns a finite page. If there is an explicit next
+      // link use it as the signal; otherwise a short page means we are done.
+      if (!payload?.links?.next && rows.length < 20) break;
+      if (!payload?.links?.next && page >= 10) break;
+    }
+
+    if (!all.length) throw new Error("No GeckoTerminal markets were found for this token.");
+    return {pairs:all, tokenMeta};
+  }
+
+  async function fetchDexScreener(token) {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(),15000);
+    try {
+      const res = await fetch(DEXSCREENER_BASE + encodeURIComponent(token),{
+        method:"GET",
+        headers:{"Accept":"application/json"},
+        signal:controller.signal
+      });
+      if (!res.ok) throw new Error("DEX Screener returned HTTP " + res.status + ".");
+      const pairs = await res.json();
+      return Array.isArray(pairs) ? pairs : [];
+    } finally {
+      clearTimeout(timeout);
+    }
+  }
+
+  async function enrichMetadataFromDexScreener(data, token) {
+    try {
+      const pairs = await fetchDexScreener(token);
+      if (!pairs.length) return data;
+
+      const direct = pairs.filter(p => getTokenSide(p,token));
+      const identity =
+        direct.find(p => p?.baseToken?.address === token && p?.baseToken?.symbol) ||
+        direct.find(p => getTokenSide(p,token)?.token?.symbol);
+
+      const side = identity ? getTokenSide(identity,token) : null;
+      const metaPair =
+        direct.find(p => p?.info?.imageUrl && getTokenSide(p,token)) ||
+        identity;
+
+      if ((!data.name || data.name === "Unknown Token") && side?.token?.name) data.name = side.token.name;
+      if ((!data.symbol || data.symbol === "TOKEN") && side?.token?.symbol) data.symbol = side.token.symbol;
+      if (!data.imageUrl && metaPair?.info?.imageUrl) data.imageUrl = metaPair.info.imageUrl;
+
+      const directBaseByLiquidity = direct
+        .filter(p => p?.baseToken?.address === token)
+        .sort((a,b)=>num(b?.liquidity?.usd)-num(a?.liquidity?.usd));
+
+      const capPair = directBaseByLiquidity.find(p => num(p?.marketCap) > 0);
+      const fdvPair = directBaseByLiquidity.find(p => num(p?.fdv) > 0);
+      const changePair = directBaseByLiquidity.find(p => Number.isFinite(Number(p?.priceChange?.h24)));
+
+      if ((!data.marketCap || data.marketCap <= 0) && capPair) {
+        data.marketCap = num(capPair.marketCap);
+      }
+
+      if ((!data.fdv || data.fdv <= 0) && fdvPair) {
+        data.fdv = num(fdvPair.fdv);
+      }
+
+      if ((!Number.isFinite(Number(data.change24))) && changePair) {
+        data.change24 = Number(changePair.priceChange.h24);
+      }
+
+      if ((!data.marketCap || data.marketCap <= 0) && data.fdv > 0) {
+        data.marketCap = data.fdv;
+        data.marketCapEstimated = true;
+      }
+    } catch (e) {
+      console.warn("Metadata fallback unavailable:",e);
+    }
+    return data;
+  }
+
+  function aggregate(pairs, token) {
+    const relevant = pairs.filter(p => getTokenSide(p, token));
+    if (!relevant.length) throw new Error("No Solana markets were found for this token.");
+
+    const directBase = relevant.filter(p => p?.baseToken?.address === token);
+    const identityPair = directBase.find(p => p?.baseToken?.symbol) || relevant.find(p => getTokenSide(p, token)?.token?.symbol) || relevant[0];
+    const side = getTokenSide(identityPair, token);
+    const tokenInfo = side?.token || {name:"Unknown Token",symbol:"TOKEN",address:token};
+
+    // Prefer a token image supplied by GeckoTerminal; DEX Screener is used later
+    // as a metadata fallback when necessary.
+    const imagePair = relevant.find(p => p?.info?.imageUrl);
+    const imageUrl = imagePair?.info?.imageUrl || "";
+
+    const totalLiquidity = sum(relevant, p => p?.liquidity?.usd);
+    const totalVolume24 = sum(relevant, p => p?.volume?.h24);
+    const buys24 = sum(relevant, p => p?.txns?.h24?.buys);
+    const sells24 = sum(relevant, p => p?.txns?.h24?.sells);
+
+    // Reference price:
+    // Use ONE real market instead of averaging prices across many pools.
+    // Small / imbalanced pools can be far away from the main market and would
+    // otherwise distort the Passport price. Prefer the most liquid pool where
+    // the searched token is BASE; if none exists, use the most liquid valid pool.
+    const pricedPools = relevant
+      .map(p => ({
+        p,
+        price: tokenPriceUsdFromPair(p,token),
+        liquidity: num(p?.liquidity?.usd)
+      }))
+      .filter(x => x.price > 0);
+
+    const directPricedPools = pricedPools
+      .filter(x => x.p?.baseToken?.address === token)
+      .sort((a,b)=>b.liquidity-a.liquidity);
+
+    const allPricedPools = [...pricedPools]
+      .sort((a,b)=>b.liquidity-a.liquidity);
+
+    const referenceMarket =
+      directPricedPools[0] ||
+      allPricedPools[0] ||
+      null;
+
+    const referencePrice = referenceMarket ? referenceMarket.price : 0;
+
+    // Use the exact same reference pool for 24h Change so Price and Change
+    // describe one coherent market rather than two different pools.
+    const referenceChange =
+      referenceMarket &&
+      Number.isFinite(Number(referenceMarket.p?.priceChange?.h24))
+        ? Number(referenceMarket.p.priceChange.h24)
+        : null;
+
+    // DexScreener marketCap/fdv refer to the BASE token, so only use pools where searched token is BASE.
+    const capCandidates = directBase
+      .filter(p => num(p.marketCap) > 0)
+      .sort((a,b)=>num(b?.liquidity?.usd)-num(a?.liquidity?.usd));
+    const fdvCandidates = directBase
+      .filter(p => num(p.fdv) > 0)
+      .sort((a,b)=>num(b?.liquidity?.usd)-num(a?.liquidity?.usd));
+    const marketCap = num(capCandidates[0]?.marketCap);
+    const fdv = num(fdvCandidates[0]?.fdv);
+
+    const change24 = referenceChange;
+
+    const dexes = uniq(relevant.map(p => cleanDexName(p.dexId))).sort();
+    const quoteAssets = uniq(relevant.map(p => getTokenSide(p,token)?.other?.symbol || getTokenSide(p,token)?.other?.name)).sort();
+
+    const timestamps = relevant.map(p => num(p.pairCreatedAt)).filter(Boolean);
+    const oldestTs = timestamps.length ? Math.min(...timestamps) : 0;
+
+    const sortedPools = [...relevant].sort((a,b)=>num(b?.liquidity?.usd)-num(a?.liquidity?.usd));
+
+    return {
+      token,
+      name: tokenInfo?.name || "Unknown Token",
+      symbol: tokenInfo?.symbol || "TOKEN",
+      imageUrl,
+      price: referencePrice,
+      change24,
+      liquidity: totalLiquidity,
+      volume24: totalVolume24,
+      buys24,
+      sells24,
+      marketCap,
+      fdv,
+      dexes,
+      quoteAssets,
+      marketCount: relevant.length,
+      oldestTs,
+      pools: sortedPools,
+      referencePoolAddress: referenceMarket?.p?.pairAddress || "",
+      referenceDex: referenceMarket?.p?.dexId || "",
+      source: relevant.some(p => p?.source === "GeckoTerminal") ? "GeckoTerminal" : "DEX Screener"
+    };
+  }
+
+  function render(data) {
+    current = data;
+    els.name.textContent = data.name;
+    els.symbol.textContent = data.symbol ? "$" + data.symbol : "";
+    els.address.textContent = window.innerWidth <= 760 ? shortAddress(data.token) : data.token;
+    els.address.title = data.token;
+    els.fallback.textContent = (data.symbol || data.name || "?").slice(0,2).toUpperCase();
+
+    if (data.imageUrl) {
+      els.logo.src = data.imageUrl;
+      els.logo.alt = data.name + " logo";
+      els.logo.classList.remove("hidden");
+      els.fallback.classList.add("hidden");
+      els.logo.onerror = () => {
+        els.logo.classList.add("hidden");
+        els.fallback.classList.remove("hidden");
+      };
+    } else {
+      els.logo.classList.add("hidden");
+      els.fallback.classList.remove("hidden");
+    }
+
+    els.price.textContent = priceMoney(data.price);
+    els.liquidity.textContent = compactMoney(data.liquidity);
+    els.volume24.textContent = compactMoney(data.volume24);
+    els.txns24.textContent = (data.buys24 + data.sells24).toLocaleString("en-US") + " transactions";
+    els.marketCap.textContent = data.marketCap ? compactMoney(data.marketCap) : "$—";
+    els.fdv.textContent = data.fdv ? ((data.marketCapEstimated ? "FDV fallback " : "FDV ") + compactMoney(data.fdv)) : "FDV —";
+
+    els.change24.textContent = "24h " + pct(data.change24);
+    els.change24.className = "metric-sub";
+    if (Number.isFinite(data.change24)) {
+      els.change24.classList.add(data.change24 >= 0 ? "positive" : "negative");
+    }
+
+    if (els.marketCount) els.marketCount.textContent = data.marketCount.toLocaleString("en-US");
+    if (els.dexCount) els.dexCount.textContent = data.dexes.length.toLocaleString("en-US");
+    if (els.quoteCount) els.quoteCount.textContent = data.quoteAssets.length.toLocaleString("en-US");
+    if (els.oldestPool) els.oldestPool.textContent = data.oldestTs ? ageFrom(data.oldestTs) : "Unknown";
+    if (els.buysSells) els.buysSells.textContent = data.buys24.toLocaleString("en-US") + " / " + data.sells24.toLocaleString("en-US");
+    if (els.lastUpdated) {
+      els.lastUpdated.textContent = new Date().toLocaleString([], {dateStyle:"medium",timeStyle:"short"});
+    }
+    if (els.dataSource) els.dataSource.textContent = "Live market data";
+
+    const dexOnly = document.querySelector(".dex-only");
+    if (dexOnly) {
+      dexOnly.style.display = data.dexes.length ? "" : "none";
+    }
+
+    els.dexList.replaceChildren();
+    data.dexes.slice(0,14).forEach(name => {
+      const chip = document.createElement("span");
+      chip.className = "dex-chip";
+      chip.textContent = name;
+      els.dexList.appendChild(chip);
+    });
+    if (data.dexes.length > 14) {
+      const chip = document.createElement("span");
+      chip.className = "dex-chip";
+      chip.textContent = "+" + (data.dexes.length - 14) + " more";
+      els.dexList.appendChild(chip);
+    }
+
+    if (els.poolRows) els.poolRows.replaceChildren();
+    data.pools.slice(0,10).forEach(pair => {
+      if (!els.poolRows) return;
+      const side = getTokenSide(pair,data.token);
+      const other = side?.other?.symbol || side?.other?.name || "?";
+      const tr = document.createElement("tr");
+
+      const tdMarket = document.createElement("td");
+      const a = document.createElement("a");
+      a.className = "pool-link pool-token";
+      a.href = pair.url || "#";
+      a.target = "_blank";
+      a.rel = "noopener";
+      a.textContent = data.symbol + " / " + other;
+      tdMarket.appendChild(a);
+
+      const tdDex = document.createElement("td");
+      tdDex.textContent = cleanDexName(pair.dexId);
+
+      const tdLiq = document.createElement("td");
+      tdLiq.className = "num";
+      tdLiq.textContent = compactMoney(pair?.liquidity?.usd);
+
+      const tdVol = document.createElement("td");
+      tdVol.className = "num";
+      tdVol.textContent = compactMoney(pair?.volume?.h24);
+
+      const tdTx = document.createElement("td");
+      tdTx.className = "num";
+      tdTx.textContent = (num(pair?.txns?.h24?.buys)+num(pair?.txns?.h24?.sells)).toLocaleString("en-US");
+
+      tr.append(tdMarket,tdDex,tdLiq,tdVol,tdTx);
+      els.poolRows.appendChild(tr);
+    });
+
+    if (els.dexLink) {
+      els.dexLink.href = "https://dexscreener.com/solana/" + encodeURIComponent(data.token);
+    }
+    if (els.birdLink) {
+      els.birdLink.href = "https://birdeye.so/token/" + encodeURIComponent(data.token) + "?chain=solana";
+    }
+
+    const liveUrl = buildLiveUrl(data.token);
+    if (els.embedCode) {
+      els.embedCode.textContent =
+        '<iframe src="' + buildEmbedUrl(data.token) + '" width="100%" height="360" style="border:0;border-radius:16px;overflow:hidden" loading="lazy"></iframe>';
+    }
+
+    history.replaceState(null,"",liveUrl);
+    els.section.classList.add("show");
+  }
+
+  function pageBase() {
+    return location.origin && location.origin !== "null"
+      ? location.origin + location.pathname
+      : location.href.split("?")[0].split("#")[0];
+  }
+
+  function buildLiveUrl(token) {
+    return pageBase() + "?token=" + encodeURIComponent(token);
+  }
+
+  function buildEmbedUrl(token) {
+    return pageBase() + "?token=" + encodeURIComponent(token) + "&embed=1";
+  }
+
+
+  async function fetchBirdeyePassport(token) {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 15000);
+
+    try {
+      const url =
+        BIRDEYE_GATEWAY +
+        "?address=" +
+        encodeURIComponent(token);
+
+      const res = await fetch(url, {
+        method: "GET",
+        headers: {
+          "Accept": "application/json"
+        },
+        signal: controller.signal
+      });
+
+      let payload = null;
+
+      try {
+        payload = await res.json();
+      } catch {
+        payload = null;
+      }
+
+      if (!res.ok || !payload?.success || !payload?.data) {
+        const message =
+          payload?.detail ||
+          payload?.error ||
+          ("Passport API returned HTTP " + res.status + ".");
+
+        throw new Error(message);
+      }
+
+      return payload.data;
+    } finally {
+      clearTimeout(timeout);
+    }
+  }
+
+  async function fetchDexBubbles(token) {
+    try {
+      const gecko = await fetchGeckoPools(token);
+      const pairs = Array.isArray(gecko?.pairs) ? gecko.pairs : [];
+
+      const dexes = uniq(
+        pairs.map(p => cleanDexName(p?.dexId))
+      ).sort();
+
+      const quoteAssets = uniq(
+        pairs.map(p => getTokenSide(p, token)?.other?.symbol)
+      ).sort();
+
+      const timestamps = pairs
+        .map(p => num(p?.pairCreatedAt))
+        .filter(Boolean);
+
+      return {
+        dexes,
+        quoteAssets,
+        pools: pairs,
+        oldestTs: timestamps.length ? Math.min(...timestamps) : 0,
+        marketCount: pairs.length,
+        tokenMeta: gecko?.tokenMeta || null
+      };
+    } catch (error) {
+      console.warn("DEX bubble discovery unavailable:", error);
+      return {
+        dexes: [],
+        quoteAssets: [],
+        pools: [],
+        oldestTs: 0,
+        marketCount: 0,
+        tokenMeta: null
+      };
+    }
+  }
+
+  function passportDataFromBirdeye(token, bird, dexInfo) {
+    const meta = dexInfo?.tokenMeta || {};
+
+    return {
+      token,
+      name: bird?.name || meta?.name || "Unknown Token",
+      symbol: bird?.symbol || meta?.symbol || "TOKEN",
+      imageUrl: bird?.imageUrl || meta?.imageUrl || "",
+
+      // IMPORTANT:
+      // These values come directly from Birdeye Token Overview.
+      price: num(bird?.price),
+      change24:
+        Number.isFinite(Number(bird?.priceChange24h))
+          ? Number(bird.priceChange24h)
+          : null,
+      liquidity: num(bird?.liquidity),
+      volume24: num(bird?.volume24h),
+      buys24: num(bird?.buy24h),
+      sells24: num(bird?.sell24h),
+      marketCap: num(bird?.marketCap),
+      fdv: num(bird?.fdv),
+
+      // Birdeye numberMarkets is preferred if supplied.
+      // Gecko's count is only a visual/discovery fallback.
+      marketCount:
+        num(bird?.numberMarkets) ||
+        num(dexInfo?.marketCount),
+
+      dexes: Array.isArray(dexInfo?.dexes) ? dexInfo.dexes : [],
+      quoteAssets:
+        Array.isArray(dexInfo?.quoteAssets)
+          ? dexInfo.quoteAssets
+          : [],
+      oldestTs: num(dexInfo?.oldestTs),
+      pools: Array.isArray(dexInfo?.pools) ? dexInfo.pools : [],
+
+      source: "Birdeye",
+      marketCapEstimated: false
+    };
+  }
+
+  async function loadToken(token, {silent=false}={}) {
+    token = String(token || "").trim();
+    if (loading) return;
+
+    if (!isLikelySolanaAddress(token)) {
+      setStatus("Please enter a valid-looking Solana token address.", "error");
+      return;
+    }
+
+    loading = true;
+    els.scan.disabled = true;
+    els.scan.innerHTML = '<span class="loader"></span>Loading';
+
+    if (!silent) {
+      setStatus('<span class="loader"></span>Creating Passport…');
+    }
+
+    try {
+      // Birdeye is authoritative for ALL displayed numerical values.
+      // GeckoTerminal runs in parallel only to discover DEX names.
+      const [bird, dexInfo] = await Promise.all([
+        fetchBirdeyePassport(token),
+        fetchDexBubbles(token)
+      ]);
+
+      const data = passportDataFromBirdeye(token, bird, dexInfo);
+
+      // Only use a metadata fallback when Birdeye did not provide an image/name.
+      if (!data.imageUrl || data.name === "Unknown Token" || data.symbol === "TOKEN") {
+        try {
+          const fallbackPairs = await fetchDexScreener(token);
+          const relevant = fallbackPairs.filter(p => getTokenSide(p, token));
+          const identity =
+            relevant.find(p => p?.baseToken?.address === token) ||
+            relevant[0];
+
+          const side = identity ? getTokenSide(identity, token) : null;
+          const imagePair =
+            relevant.find(p => p?.info?.imageUrl) ||
+            identity;
+
+          if (data.name === "Unknown Token" && side?.token?.name) {
+            data.name = side.token.name;
+          }
+
+          if (data.symbol === "TOKEN" && side?.token?.symbol) {
+            data.symbol = side.token.symbol;
+          }
+
+          if (!data.imageUrl && imagePair?.info?.imageUrl) {
+            data.imageUrl = imagePair.info.imageUrl;
+          }
+        } catch (metadataError) {
+          console.warn("Metadata fallback unavailable:", metadataError);
+        }
+      }
+
+      render(data);
+      persistContractPreference();
+      setStatus("Passport created.", "ok");
+
+      if (document.body.classList.contains("embed-mode")) {
+        els.status.classList.add("hidden");
+      } else {
+        setTimeout(
+          () => els.section.scrollIntoView({
+            behavior: "smooth",
+            block: "start"
+          }),
+          60
+        );
+      }
+    } catch (err) {
+      console.error(err);
+
+      const message =
+        err?.name === "AbortError"
+          ? "The Birdeye request timed out. Please try again."
+          : (err?.message || "Unable to load Birdeye token data.");
+
+      setStatus(message, "error");
+    } finally {
+      loading = false;
+      els.scan.disabled = false;
+      els.scan.textContent = "Create Passport";
+    }
+  }
+
+  function roundedRect(ctx,x,y,w,h,r) {
+    const rr = Math.min(r,w/2,h/2);
+    ctx.beginPath();
+    ctx.moveTo(x+rr,y);
+    ctx.arcTo(x+w,y,x+w,y+h,rr);
+    ctx.arcTo(x+w,y+h,x,y+h,rr);
+    ctx.arcTo(x,y+h,x,y,rr);
+    ctx.arcTo(x,y,x+w,y,rr);
+    ctx.closePath();
+  }
+
+  function cardMetric(ctx, label, value, x, y, w, h=134, accent="default") {
+    ctx.save();
+
+    // soft floating shadow
+    ctx.shadowColor = "rgba(0,0,0,.34)";
+    ctx.shadowBlur = 26;
+    ctx.shadowOffsetY = 12;
+
+    const fillGrad = ctx.createLinearGradient(x,y,x+w,y+h);
+    fillGrad.addColorStop(0,"rgba(31,35,66,.92)");
+    fillGrad.addColorStop(.55,"rgba(18,22,43,.95)");
+    fillGrad.addColorStop(1,"rgba(12,17,34,.96)");
+    ctx.fillStyle = fillGrad;
+    roundedRect(ctx,x,y,w,h,26);
+    ctx.fill();
+
+    ctx.shadowColor = "transparent";
+
+    // subtle accent wash
+    let wash = "rgba(177,151,255,.07)";
+    if (accent === "positive") wash = "rgba(113,230,161,.08)";
+    if (accent === "negative") wash = "rgba(255,123,152,.08)";
+    if (accent === "cyan") wash = "rgba(118,226,245,.09)";
+
+    const glow = ctx.createRadialGradient(x+w*.15,y+h*.05,0,x+w*.15,y+h*.05,w*.8);
+    glow.addColorStop(0,wash);
+    glow.addColorStop(1,"rgba(255,255,255,0)");
+    ctx.fillStyle = glow;
+    roundedRect(ctx,x,y,w,h,26);
+    ctx.fill();
+
+    // border
+    ctx.strokeStyle = "rgba(190,166,255,.18)";
+    ctx.lineWidth = 1.5;
+    roundedRect(ctx,x+.75,y+.75,w-1.5,h-1.5,26);
+    ctx.stroke();
+
+    // top highlight
+    const topLine = ctx.createLinearGradient(x,y,x+w,y);
+    topLine.addColorStop(0,"rgba(255,255,255,.18)");
+    topLine.addColorStop(.5,"rgba(185,160,255,.08)");
+    topLine.addColorStop(1,"rgba(255,255,255,.03)");
+    ctx.strokeStyle = topLine;
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(x+28,y+1);
+    ctx.lineTo(x+w-28,y+1);
+    ctx.stroke();
+
+    ctx.fillStyle = "#8d93ad";
+    ctx.font = "700 18px Inter, Arial, sans-serif";
+    ctx.fillText(label.toUpperCase(),x+22,y+36);
+
+    let fill = "#f8f6ff";
+    if (accent === "positive") fill = "#71e6a1";
+    if (accent === "negative") fill = "#ff7b98";
+    if (accent === "cyan") fill = "#76e2f5";
+
+    ctx.fillStyle = fill;
+    ctx.font = "800 40px Inter, Arial, sans-serif";
+    ctx.fillText(value,x+22,y+88);
+
+    ctx.restore();
+  }
+
+
+  async function blobToCardImage(blob) {
+    const objectUrl = URL.createObjectURL(blob);
+    const img = new Image();
+    try {
+      await new Promise((resolve,reject)=>{
+        img.onload = resolve;
+        img.onerror = reject;
+        img.src = objectUrl;
+      });
+      return {img,objectUrl};
+    } catch (e) {
+      URL.revokeObjectURL(objectUrl);
+      throw e;
+    }
+  }
+
+  async function fetchLogoBlob(url) {
+    const controller = new AbortController();
+    const timeout = setTimeout(()=>controller.abort(),9000);
+    try {
+      const res = await fetch(url,{
+        mode:"cors",
+        cache:"force-cache",
+        signal:controller.signal
+      });
+      if (!res.ok) throw new Error("Logo HTTP " + res.status);
+      const blob = await res.blob();
+      if (!blob.type.startsWith("image/")) throw new Error("Not an image");
+      return blob;
+    } finally {
+      clearTimeout(timeout);
+    }
+  }
+
+
+  async function loadAstyBrandLogo() {
+    // Preferred: use the real ASTY brand asset from the repo when the page is hosted on GitHub.
+    // Fallback: if it cannot be loaded (e.g. standalone local preview), use the token logo.
+    try {
+      const exact = await loadCardLogo("assets/logo.png");
+      if (exact?.img) return exact;
+    } catch (e) {
+      console.warn("ASTY brand logo from assets/logo.png unavailable:", e);
+    }
+    try {
+      const fallback = await loadCardLogo(current?.imageUrl || "");
+      if (fallback?.img) return fallback;
+    } catch (e) {
+      console.warn("ASTY brand logo fallback unavailable:", e);
+    }
+    return null;
+  }
+
+  async function loadCardLogo(url) {
+    if (!url) return null;
+
+    // 1) Best case: fetch the original token image directly. Converting it to
+    // a same-origin Blob URL keeps the Canvas export untainted.
+    try {
+      const blob = await fetchLogoBlob(url);
+      return await blobToCardImage(blob);
+    } catch (directError) {
+      console.warn("Direct Canvas logo load blocked:",directError);
+    }
+
+    // 2) Some token CDNs allow display in <img> but block Canvas CORS.
+    // weserv.nl is used only as an image-normalization fallback and returns
+    // a Canvas-safe PNG. No wallet/token information other than the public
+    // logo URL is sent.
+    try {
+      const proxyUrl =
+        "https://images.weserv.nl/?url=" +
+        encodeURIComponent(url) +
+        "&w=256&h=256&fit=cover&output=png";
+      const blob = await fetchLogoBlob(proxyUrl);
+      return await blobToCardImage(blob);
+    } catch (proxyError) {
+      console.warn("Canvas logo proxy fallback unavailable:",proxyError);
+    }
+
+    return null;
+  }
+
+  function drawTokenLogoFallback(ctx,x,y,size,symbol) {
+    const g = ctx.createLinearGradient(x,y,x+size,y+size);
+    g.addColorStop(0,"#b69cff");
+    g.addColorStop(1,"#5ed9ee");
+    ctx.fillStyle = g;
+    ctx.beginPath();
+    ctx.arc(x+size/2,y+size/2,size/2,0,Math.PI*2);
+    ctx.fill();
+
+    ctx.fillStyle = "#0a0b15";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.font = "900 " + Math.round(size*.32) + "px Inter, Arial, sans-serif";
+    ctx.fillText(String(symbol || "?").slice(0,3).toUpperCase(),x+size/2,y+size/2+1);
+    ctx.textAlign = "left";
+    ctx.textBaseline = "alphabetic";
+  }
+
+  function drawCircularImage(ctx,img,x,y,size) {
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(x+size/2,y+size/2,size/2,0,Math.PI*2);
+    ctx.clip();
+
+    const scale = Math.max(size/img.width,size/img.height);
+    const w = img.width*scale;
+    const h = img.height*scale;
+    ctx.drawImage(img,x+(size-w)/2,y+(size-h)/2,w,h);
+    ctx.restore();
+
+    ctx.strokeStyle = "rgba(190,168,255,.55)";
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.arc(x+size/2,y+size/2,size/2-1.5,0,Math.PI*2);
+    ctx.stroke();
+  }
+
+  function drawAstyFooterBadge(ctx, x, y, size) {
+    const g = ctx.createLinearGradient(x, y, x + size, y + size);
+    g.addColorStop(0, "#bc9cff");
+    g.addColorStop(.52, "#8e6fff");
+    g.addColorStop(1, "#60dcee");
+    ctx.fillStyle = g;
+    ctx.beginPath();
+    ctx.arc(x + size/2, y + size/2, size/2, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.strokeStyle = "rgba(255,255,255,.42)";
+    ctx.lineWidth = 1.6;
+    ctx.beginPath();
+    ctx.arc(x + size/2, y + size/2, size/2 - 1.4, 0, Math.PI * 2);
+    ctx.stroke();
+
+    ctx.fillStyle = "#0b0d17";
+    ctx.font = "900 " + Math.round(size * .44) + "px Inter, Arial, sans-serif";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText("A", x + size/2, y + size/2 + 1);
+    ctx.textAlign = "left";
+    ctx.textBaseline = "alphabetic";
+  }
+
+
+  async function makeShareCard() {
+    if (!current) return;
+    const cardButton = $("makeCard");
+    const oldButtonText = cardButton.textContent;
+    cardButton.disabled = true;
+    cardButton.innerHTML = '<span class="loader"></span>Creating card';
+
+    const c = els.canvas;
+    const ctx = c.getContext("2d");
+    const W = c.width, H = c.height;
+
+    // Improve overall raster quality for small logos/text
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = "high";
+
+    const bg = ctx.createLinearGradient(0,0,W,H);
+    bg.addColorStop(0,"#080914");
+    bg.addColorStop(.48,"#0b0f20");
+    bg.addColorStop(1,"#07111a");
+    ctx.fillStyle = bg;
+    ctx.fillRect(0,0,W,H);
+
+    const purpleGlow = ctx.createRadialGradient(120,100,0,120,100,530);
+    purpleGlow.addColorStop(0,"rgba(143,105,255,.29)");
+    purpleGlow.addColorStop(.42,"rgba(106,79,218,.13)");
+    purpleGlow.addColorStop(1,"rgba(106,79,218,0)");
+    ctx.fillStyle = purpleGlow;
+    ctx.fillRect(0,0,W,H);
+
+    const cyanGlow = ctx.createRadialGradient(970,800,0,970,800,520);
+    cyanGlow.addColorStop(0,"rgba(66,213,239,.14)");
+    cyanGlow.addColorStop(.5,"rgba(66,213,239,.055)");
+    cyanGlow.addColorStop(1,"rgba(66,213,239,0)");
+    ctx.fillStyle = cyanGlow;
+    ctx.fillRect(0,0,W,H);
+
+    ctx.fillStyle = "rgba(255,255,255,.06)";
+    const dots = [
+      [936,124,2],[885,194,1.5],[988,277,1.3],[84,780,1.4],[122,861,1.7],
+      [936,904,1.2],[842,84,1.2],[68,654,1.3],[993,624,1.4],[760,102,1.1]
+    ];
+    dots.forEach(([x,y,r])=>{
+      ctx.beginPath();
+      ctx.arc(x,y,r,0,Math.PI*2);
+      ctx.fill();
+    });
+
+    ctx.save();
+    ctx.shadowColor = "rgba(0,0,0,.45)";
+    ctx.shadowBlur = 38;
+    ctx.shadowOffsetY = 18;
+    const frameGrad = ctx.createLinearGradient(40,42,W-40,H-42);
+    frameGrad.addColorStop(0,"rgba(19,22,45,.88)");
+    frameGrad.addColorStop(1,"rgba(8,13,27,.92)");
+    ctx.fillStyle = frameGrad;
+    roundedRect(ctx,40,40,W-80,H-80,40);
+    ctx.fill();
+    ctx.restore();
+
+    const frameStroke = ctx.createLinearGradient(40,40,W-40,H-40);
+    frameStroke.addColorStop(0,"rgba(184,153,255,.38)");
+    frameStroke.addColorStop(.5,"rgba(255,255,255,.07)");
+    frameStroke.addColorStop(1,"rgba(82,214,239,.19)");
+    ctx.strokeStyle = frameStroke;
+    ctx.lineWidth = 1.5;
+    roundedRect(ctx,40.75,40.75,W-81.5,H-81.5,40);
+    ctx.stroke();
+
+    ctx.fillStyle = "rgba(164,132,255,.10)";
+    roundedRect(ctx,72,72,340,48,24);
+    ctx.fill();
+    ctx.strokeStyle = "rgba(181,156,255,.22)";
+    ctx.stroke();
+
+    ctx.fillStyle = "#b49aff";
+    ctx.beginPath();
+    ctx.arc(95,96,7,0,Math.PI*2);
+    ctx.fill();
+
+    ctx.fillStyle = "#d5c9ff";
+    ctx.font = "800 18px Inter, Arial, sans-serif";
+    ctx.fillText("SOLANA PROJECT PASSPORT",113,102);
+
+    ctx.fillStyle = "#7f86a3";
+    ctx.font = "700 15px Inter, Arial, sans-serif";
+    ctx.textAlign = "right";
+    ctx.fillText("LIVE MARKET SNAPSHOT",1004,101);
+    ctx.textAlign = "left";
+
+    ctx.save();
+    ctx.shadowColor = "rgba(0,0,0,.34)";
+    ctx.shadowBlur = 28;
+    ctx.shadowOffsetY = 14;
+    const heroGrad = ctx.createLinearGradient(72,146,1008,310);
+    heroGrad.addColorStop(0,"rgba(39,34,73,.88)");
+    heroGrad.addColorStop(.5,"rgba(20,24,48,.91)");
+    heroGrad.addColorStop(1,"rgba(13,30,39,.88)");
+    ctx.fillStyle = heroGrad;
+    roundedRect(ctx,72,146,936,178,30);
+    ctx.fill();
+    ctx.restore();
+
+    ctx.strokeStyle = "rgba(187,162,255,.18)";
+    ctx.lineWidth = 1.5;
+    roundedRect(ctx,72.75,146.75,934.5,176.5,30);
+    ctx.stroke();
+
+    const heroGlow = ctx.createRadialGradient(150,180,0,150,180,390);
+    heroGlow.addColorStop(0,"rgba(173,139,255,.17)");
+    heroGlow.addColorStop(1,"rgba(173,139,255,0)");
+    ctx.fillStyle = heroGlow;
+    roundedRect(ctx,72,146,936,178,30);
+    ctx.fill();
+
+    const loadedLogo = await loadCardLogo(current.imageUrl);
+    const logoSize = 108;
+    const logoX = 98;
+    const logoY = 181;
+
+    const logoHalo = ctx.createRadialGradient(
+      logoX+logoSize/2,logoY+logoSize/2,logoSize*.24,
+      logoX+logoSize/2,logoY+logoSize/2,logoSize*.78
+    );
+    logoHalo.addColorStop(0,"rgba(174,145,255,.26)");
+    logoHalo.addColorStop(1,"rgba(174,145,255,0)");
+    ctx.fillStyle = logoHalo;
+    ctx.beginPath();
+    ctx.arc(logoX+logoSize/2,logoY+logoSize/2,logoSize*.85,0,Math.PI*2);
+    ctx.fill();
+
+    if (loadedLogo?.img) {
+      drawCircularImage(ctx,loadedLogo.img,logoX,logoY,logoSize);
+    } else {
+      drawTokenLogoFallback(ctx,logoX,logoY,logoSize,current.symbol);
+    }
+
+    ctx.fillStyle = "#ffffff";
+    ctx.font = "850 58px Inter, Arial, sans-serif";
+    const title = (current.name || current.symbol || "Token").slice(0,24);
+    ctx.fillText(title,238,222);
+
+    ctx.fillStyle = "#cdbdff";
+    ctx.font = "850 38px Inter, Arial, sans-serif";
+    ctx.fillText("$" + (current.symbol || "TOKEN"),238,270);
+
+    ctx.fillStyle = "#8f96af";
+    ctx.font = "500 18px Inter, Arial, sans-serif";
+    ctx.fillText(shortAddress(current.token) + "  ·  Solana",238,301);
+
+    ctx.fillStyle = "#7f86a3";
+    ctx.font = "700 15px Inter, Arial, sans-serif";
+    ctx.fillText("DEX FOOTPRINT",72,363);
+
+    const dexText = current.dexes.slice(0,5).join("  •  ") || "No DEX labels";
+    ctx.fillStyle = "#d9d1ef";
+    ctx.font = "700 21px Inter, Arial, sans-serif";
+    ctx.fillText(dexText.slice(0,58),72,394);
+
+    cardMetric(ctx,"Price",priceMoney(current.price),72,430,292,140,"cyan");
+
+    const changeNum = Number(current.change24);
+    const changeText = Number.isFinite(changeNum) ? pct(changeNum) : "—";
+    const changeAccent = Number.isFinite(changeNum)
+      ? (changeNum >= 0 ? "positive" : "negative")
+      : "default";
+    cardMetric(ctx,"24h Change",changeText,394,430,292,140,changeAccent);
+
+    cardMetric(ctx,"Liquidity",compactMoney(current.liquidity),716,430,292,140);
+    cardMetric(ctx,"24h Volume",compactMoney(current.volume24),72,600,452,142);
+    cardMetric(ctx,"Market Cap",current.marketCap ? compactMoney(current.marketCap) : "$—",556,600,452,142);
+
+    ctx.fillStyle = "#858ca6";
+    ctx.font = "600 18px Inter, Arial, sans-serif";
+    ctx.textAlign = "center";
+    ctx.fillText(
+      "Updated " + new Date().toLocaleString([], {dateStyle:"medium",timeStyle:"short"}) +
+      "  ·  Public market data",
+      W / 2,808
+    );
+    ctx.textAlign = "left";
+
+    if (current.marketCapEstimated) {
+      ctx.fillStyle = "#797f98";
+      ctx.font = "500 12px Inter, Arial, sans-serif";
+      ctx.fillText("Market Cap uses FDV fallback",556,728);
+    }
+
+    // Clean two-line centered footer area with site below CTA
+    const lineGrad = ctx.createLinearGradient(72,0,1008,0);
+    lineGrad.addColorStop(0,"rgba(176,147,255,.30)");
+    lineGrad.addColorStop(.55,"rgba(255,255,255,.06)");
+    lineGrad.addColorStop(1,"rgba(103,232,249,.18)");
+    ctx.strokeStyle = lineGrad;
+    ctx.lineWidth = 1.2;
+    ctx.beginPath();
+    ctx.moveTo(72,905);
+    ctx.lineTo(1008,905);
+    ctx.stroke();
+
+    const brandLogo = await loadAstyBrandLogo();
+    const brandSize = 24;
+    const row1Y = 942;
+    const row2Y = 972;
+    const row3Y = 999;
+    const row1Font = "800 22px Inter, Arial, sans-serif";
+    const row2Font = "700 18px Inter, Arial, sans-serif";
+    const row3Font = "800 18px Inter, Arial, sans-serif";
+    const row1Color = "#ece4ff";
+    const row2Color = "#ddd2f8";
+    const row3Color = "#bdafff";
+
+    // Row 1: centered logo + $ASTY
+    const row1Text = "$ASTY";
+    ctx.font = row1Font;
+    const row1TextW = ctx.measureText(row1Text).width;
+    const row1Gap = 12;
+    const row1TotalW = brandSize + row1Gap + row1TextW;
+    let row1X = (W - row1TotalW) / 2;
+    const logoY2 = row1Y - 19;
+
+    if (brandLogo?.img) {
+      drawCircularImage(ctx, brandLogo.img, row1X, logoY2, brandSize);
+    } else {
+      drawTokenLogoFallback(ctx, row1X, logoY2, brandSize, "A");
+    }
+    row1X += brandSize + row1Gap;
+
+    ctx.fillStyle = row1Color;
+    ctx.font = row1Font;
+    ctx.fillText(row1Text, row1X, row1Y);
+
+    // Row 2: CTA
+    const row2Text = "Create your Token Passport for free.";
+    ctx.font = row2Font;
+    const row2TextW = ctx.measureText(row2Text).width;
+    const row2X = (W - row2TextW) / 2;
+    ctx.fillStyle = row2Color;
+    ctx.fillText(row2Text, row2X, row2Y);
+
+    // Row 3: site
+    const row3Text = "ArbStrategy.net";
+    ctx.font = row3Font;
+    const row3TextW = ctx.measureText(row3Text).width;
+    const row3X = (W - row3TextW) / 2;
+    ctx.fillStyle = row3Color;
+    ctx.fillText(row3Text, row3X, row3Y);
+
+    if (loadedLogo?.objectUrl) URL.revokeObjectURL(loadedLogo.objectUrl);
+    if (brandLogo?.objectUrl) URL.revokeObjectURL(brandLogo.objectUrl);
+
+    let blob = null;
+    try {
+      blob = await new Promise((resolve,reject)=>{
+        try {
+          c.toBlob(
+            b => b ? resolve(b) : reject(new Error("PNG export returned no data")),
+            "image/png",
+            .95
+          );
+        } catch (e) {
+          reject(e);
+        }
+      });
+    } catch (exportError) {
+      console.error("Share Card export failed:",exportError);
+      setStatus("Share Card could not be exported. Please reload the token and try again.","error");
+      cardButton.disabled = false;
+      cardButton.textContent = oldButtonText;
+      return;
+    }
+
+    const filename =
+      (current.symbol || "SOLANA").replace(/[^a-z0-9_-]/gi,"_") +
+      "_Project_Passport_Square.png";
+
+    const file = new File([blob], filename, {type:"image/png"});
+    const isMobile =
+      /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent) ||
+      window.matchMedia("(pointer:coarse)").matches;
+
+    // On mobile, open the native image/file share sheet directly.
+    // On iPhone this exposes actions such as "Save Image".
+    if (
+      isMobile &&
+      navigator.share &&
+      navigator.canShare &&
+      navigator.canShare({files:[file]})
+    ) {
+      try {
+        await navigator.share({
+          files:[file],
+          title:(current.name || current.symbol || "Token") + " Solana Project Passport"
+        });
+
+        cardButton.disabled = false;
+        cardButton.textContent = oldButtonText;
+        setStatus("Share Card created.","ok");
+        return;
+      } catch (e) {
+        if (e?.name === "AbortError") {
+          cardButton.disabled = false;
+          cardButton.textContent = oldButtonText;
+          return;
+        }
+        console.warn("Native image save/share unavailable, using download fallback:",e);
+      }
+    }
+
+    // Desktop and unsupported mobile browsers: direct PNG download.
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(()=>URL.revokeObjectURL(url),1200);
+
+    cardButton.disabled = false;
+    cardButton.textContent = oldButtonText;
+    setStatus("Share Card downloaded.","ok");
+  }
+
+  function shareText() {
+    if (!current) return "";
+
+    const change =
+      Number.isFinite(Number(current.change24))
+        ? pct(current.change24)
+        : "—";
+
+    const buys =
+      Number.isFinite(Number(current.buys24))
+        ? Number(current.buys24).toLocaleString("en-US")
+        : "—";
+
+    const sells =
+      Number.isFinite(Number(current.sells24))
+        ? Number(current.sells24).toLocaleString("en-US")
+        : "—";
+
+    return `Solana Project Passport:
+
+${current.name} ($${current.symbol})
+
+Price: ${priceMoney(current.price)}
+24h Change: ${change}
+Liquidity: ${compactMoney(current.liquidity)}
+24h Volume: ${compactMoney(current.volume24)}
+24h Buys / Sells: ${buys} / ${sells}
+
+Powered by [ArbStrategy.net](https://arbstrategy.net/)`;
+  }
+
+  els.scan.addEventListener("click",()=>loadToken(els.input.value));
+  els.input.addEventListener("keydown",e=>{
+    if (e.key === "Enter") loadToken(els.input.value);
+  });
+
+  [$("tryAsty"),$("topTryAsty")].filter(Boolean).forEach(btn=>{
+    btn.addEventListener("click",()=>{
+      els.input.value = ASTY;
+      loadToken(ASTY);
+    });
+  });
+const copyEmbedBtn = $("copyEmbed");
+  if (copyEmbedBtn) {
+    copyEmbedBtn.addEventListener("click",()=>{
+      if (current && els.embedCode) copyText(els.embedCode.textContent,copyEmbedBtn,"Copied");
+    });
+  }
+
+  $("shareX").addEventListener("click",()=>{
+    if (!current) return;
+    const text = shareText();
+    window.open("https://twitter.com/intent/tweet?text="+encodeURIComponent(text),"_blank","noopener");
+  });
+
+  $("shareTelegram").addEventListener("click",()=>{
+    if (!current) return;
+
+    const text = shareText();
+
+    // Prefer Telegram's native app deep link so mobile users go directly
+    // into Telegram with the prepared text.
+    const tgDeepLink =
+      "tg://msg_url?url=&text=" + encodeURIComponent(text);
+
+    // Clean fallback for browsers/devices that do not accept an empty URL
+    // in the native Telegram scheme. This avoids the ugly htmlpreview link.
+    const webFallback =
+      "https://t.me/share/url?url=" +
+      encodeURIComponent("https://arbstrategy.net/") +
+      "&text=" +
+      encodeURIComponent(text);
+
+    let leftPage = false;
+    const onVisibility = () => {
+      if (document.hidden) leftPage = true;
+    };
+
+    document.addEventListener("visibilitychange", onVisibility, {once:true});
+    window.location.href = tgDeepLink;
+
+    setTimeout(()=>{
+      document.removeEventListener("visibilitychange", onVisibility);
+      if (!leftPage && !document.hidden) {
+        window.location.href = webFallback;
+      }
+    }, 1200);
+  });
+
+  window.addEventListener("resize",()=>{
+    if (current) {
+      els.address.textContent = window.innerWidth <= 760 ? shortAddress(current.token) : current.token;
+    }
+  });
+
+  $("makeCard").addEventListener("click",makeShareCard);
+
+  if (els.rememberContract) {
+    els.rememberContract.addEventListener("change",persistContractPreference);
+  }
+
+  restoreRememberedContract();
+
+  const params = new URLSearchParams(location.search);
+  const tokenParam = params.get("token");
+  const embed = params.get("embed") === "1";
+
+  if (embed) {
+    document.body.classList.add("embed-mode");
+  }
+
+  if (tokenParam) {
+    els.input.value = tokenParam;
+    loadToken(tokenParam,{silent:true});
+  } else if (embed) {
+    setStatus("Missing token parameter.","error");
+  }
+})();
+</script>
+</body>
+</html>
