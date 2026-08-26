@@ -2318,7 +2318,36 @@ const copyEmbedBtn = $("copyEmbed");
 
   $("shareTelegram").addEventListener("click",()=>{
     if (!current) return;
-    window.open("https://t.me/share/url?url=&text="+encodeURIComponent(shareText()),"_blank","noopener");
+
+    const text = shareText();
+
+    // Prefer Telegram's native app deep link so mobile users go directly
+    // into Telegram with the prepared text.
+    const tgDeepLink =
+      "tg://msg_url?url=&text=" + encodeURIComponent(text);
+
+    // Clean fallback for browsers/devices that do not accept an empty URL
+    // in the native Telegram scheme. This avoids the ugly htmlpreview link.
+    const webFallback =
+      "https://t.me/share/url?url=" +
+      encodeURIComponent("https://arbstrategy.net/") +
+      "&text=" +
+      encodeURIComponent(text);
+
+    let leftPage = false;
+    const onVisibility = () => {
+      if (document.hidden) leftPage = true;
+    };
+
+    document.addEventListener("visibilitychange", onVisibility, {once:true});
+    window.location.href = tgDeepLink;
+
+    setTimeout(()=>{
+      document.removeEventListener("visibilitychange", onVisibility);
+      if (!leftPage && !document.hidden) {
+        window.location.href = webFallback;
+      }
+    }, 1200);
   });
 
   window.addEventListener("resize",()=>{
