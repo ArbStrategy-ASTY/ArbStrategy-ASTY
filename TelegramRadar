@@ -1001,7 +1001,7 @@ body.embed-mode .passport-foot{padding:12px 16px}
               <span>what this passport means</span>
             </div>
             <div class="fact-list">
-              <div class="fact"><span>Market data</span><strong>Live / observed</strong></div>
+              <div class="fact"><span>Market data</span><strong id="dataSource">GeckoTerminal</strong></div>
               <div class="fact"><span>Wallet connection</span><strong>Not required</strong></div>
               <div class="fact"><span>Private keys</span><strong>Never requested</strong></div>
               <div class="fact"><span>Project endorsement</span><strong>None</strong></div>
@@ -1040,7 +1040,7 @@ body.embed-mode .passport-foot{padding:12px 16px}
             <span class="mini-dot"></span>
             Built by <strong>ASTY / ArbStrategy</strong>
           </a>
-          <span class="source-note">Market data: DEX Screener · public information · not financial advice</span>
+          <span class="source-note">Primary market data: GeckoTerminal · DEX Screener fallback · public information · not financial advice</span>
         </div>
       </article>
 
@@ -1098,7 +1098,8 @@ body.embed-mode .passport-foot{padding:12px 16px}
   "use strict";
 
   const ASTY = "ASTYqeaoK83Zs1pTFEXZUB6BM8cG8YLTsN852NUkt7ZR";
-  const API_BASE = "https://api.dexscreener.com/token-pairs/v1/solana/";
+  const GECKO_BASE = "https://api.geckoterminal.com/api/v2";
+  const DEXSCREENER_BASE = "https://api.dexscreener.com/token-pairs/v1/solana/";
   const $ = (id) => document.getElementById(id);
 
   const els = {
@@ -1127,6 +1128,7 @@ body.embed-mode .passport-foot{padding:12px 16px}
     buysSells: $("buysSells"),
     dexList: $("dexList"),
     lastUpdated: $("lastUpdated"),
+    dataSource: $("dataSource"),
     poolRows: $("poolRows"),
     embedCode: $("embedCode"),
     canvas: $("shareCanvas")
@@ -1250,17 +1252,209 @@ body.embed-mode .passport-foot{padding:12px 16px}
     const side = getTokenSide(pair, token);
     if (!side) return 0;
 
+    // GeckoTerminal normalization can provide the searched token price directly.
+    if (num(pair?.searchedTokenPriceUsd) > 0) {
+      return num(pair.searchedTokenPriceUsd);
+    }
+
     if (side.side === "base") {
       return num(pair.priceUsd);
     }
 
-    // DexScreener priceUsd is the USD price of the BASE token.
-    // priceNative is BASE measured in QUOTE. Therefore:
-    // quote USD price = base USD price / (base amount in quote)
+    // DEX Screener fallback: priceUsd is BASE token USD price and
+    // priceNative is BASE measured in QUOTE.
     const baseUsd = num(pair.priceUsd);
     const baseInQuote = num(pair.priceNative);
     if (baseUsd > 0 && baseInQuote > 0) return baseUsd / baseInQuote;
     return 0;
+  }
+
+
+  function relationshipId(item, key) {
+    return item?.relationships?.[key]?.data?.id || "";
+  }
+
+  function addressFromGeckoToken(includedItem) {
+    const a = includedItem?.attributes || {};
+    if (a.address) return a.address;
+    const id = includedItem?.id || "";
+    const prefix = "solana_";
+    return id.startsWith(prefix) ? id.slice(prefix.length) : id;
+  }
+
+  function normalizeGeckoPool(item, includedMap, searchedToken) {
+    const a = item?.attributes || {};
+    const baseRel = relationshipId(item,"base_token");
+    const quoteRel = relationshipId(item,"quote_token");
+    const dexRel = relationshipId(item,"dex");
+
+    const baseInc = includedMap.get(baseRel);
+    const quoteInc = includedMap.get(quoteRel);
+    const dexInc = includedMap.get(dexRel);
+
+    const baseAttr = baseInc?.attributes || {};
+    const quoteAttr = quoteInc?.attributes || {};
+    const baseAddress = addressFromGeckoToken(baseInc);
+    const quoteAddress = addressFromGeckoToken(quoteInc);
+
+    const baseToken = {
+      address: baseAddress,
+      name: baseAttr.name || String(a.name || "").split(" / ")[0] || "Token",
+      symbol: baseAttr.symbol || String(a.name || "").split(" / ")[0] || "TOKEN"
+    };
+    const quoteToken = {
+      address: quoteAddress,
+      name: quoteAttr.name || String(a.name || "").split(" / ")[1] || "Token",
+      symbol: quoteAttr.symbol || String(a.name || "").split(" / ")[1] || "TOKEN"
+    };
+
+    const searchedIsBase = baseAddress === searchedToken;
+    const searchedIsQuote = quoteAddress === searchedToken;
+
+    const searchedPrice = searchedIsBase
+      ? num(a.base_token_price_usd)
+      : searchedIsQuote
+        ? num(a.quote_token_price_usd)
+        : 0;
+
+    const tx24 = a?.transactions?.h24 || {};
+    const change24 = a?.price_change_percentage?.h24;
+
+    return {
+      chainId:"solana",
+      dexId:dexInc?.attributes?.name || dexRel || "Unknown",
+      pairAddress:a.address || item?.id || "",
+      url:a.address ? "https://www.geckoterminal.com/solana/pools/" + a.address : "",
+      baseToken,
+      quoteToken,
+      searchedTokenPriceUsd:searchedPrice,
+      priceUsd:num(a.base_token_price_usd),
+      priceNative:num(a.base_token_price_quote_token),
+      liquidity:{usd:num(a.reserve_in_usd)},
+      volume:{h24:num(a?.volume_usd?.h24)},
+      txns:{h24:{buys:num(tx24.buys),sells:num(tx24.sells)}},
+      priceChange:{h24:Number.isFinite(Number(change24)) ? Number(change24) : null},
+      pairCreatedAt:a.pool_created_at ? Date.parse(a.pool_created_at) : 0,
+      // GeckoTerminal exposes these when available. Keep them attached to the base side.
+      marketCap:num(a.market_cap_usd),
+      fdv:num(a.fdv_usd),
+      info:{
+        imageUrl:
+          (searchedIsBase ? baseAttr.image_url : quoteAttr.image_url) ||
+          baseAttr.image_url || quoteAttr.image_url || ""
+      },
+      source:"GeckoTerminal"
+    };
+  }
+
+  async function fetchGeckoPools(token) {
+    const all = [];
+    const dedupe = new Set();
+    let tokenMeta = null;
+
+    // GeckoTerminal token-pools responses are paginated. We intentionally walk
+    // multiple pages because tokens such as ASTY can have far more than 20 pools.
+    for (let page = 1; page <= 10; page++) {
+      const url =
+        GECKO_BASE + "/networks/solana/tokens/" + encodeURIComponent(token) +
+        "/pools?include=base_token%2Cquote_token%2Cdex&page=" + page;
+
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 15000);
+      let res;
+      try {
+        res = await fetch(url,{
+          method:"GET",
+          headers:{"Accept":"application/json"},
+          signal:controller.signal
+        });
+      } finally {
+        clearTimeout(timeout);
+      }
+
+      if (!res.ok) throw new Error("GeckoTerminal returned HTTP " + res.status + ".");
+
+      const payload = await res.json();
+      const rows = Array.isArray(payload?.data) ? payload.data : [];
+      const included = Array.isArray(payload?.included) ? payload.included : [];
+      const includedMap = new Map(included.map(x => [x.id,x]));
+
+      if (!rows.length) break;
+
+      for (const row of rows) {
+        const normalized = normalizeGeckoPool(row,includedMap,token);
+        const key = normalized.pairAddress || row.id;
+        if (!dedupe.has(key)) {
+          dedupe.add(key);
+          all.push(normalized);
+        }
+
+        if (!tokenMeta) {
+          const baseInc = includedMap.get(relationshipId(row,"base_token"));
+          const quoteInc = includedMap.get(relationshipId(row,"quote_token"));
+          for (const candidate of [baseInc,quoteInc]) {
+            if (addressFromGeckoToken(candidate) === token) {
+              const ca = candidate?.attributes || {};
+              tokenMeta = {
+                name:ca.name || "",
+                symbol:ca.symbol || "",
+                imageUrl:ca.image_url || ""
+              };
+              break;
+            }
+          }
+        }
+      }
+
+      // Public API currently returns a finite page. If there is an explicit next
+      // link use it as the signal; otherwise a short page means we are done.
+      if (!payload?.links?.next && rows.length < 20) break;
+      if (!payload?.links?.next && page >= 10) break;
+    }
+
+    if (!all.length) throw new Error("No GeckoTerminal markets were found for this token.");
+    return {pairs:all, tokenMeta};
+  }
+
+  async function fetchDexScreener(token) {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(),15000);
+    try {
+      const res = await fetch(DEXSCREENER_BASE + encodeURIComponent(token),{
+        method:"GET",
+        headers:{"Accept":"application/json"},
+        signal:controller.signal
+      });
+      if (!res.ok) throw new Error("DEX Screener returned HTTP " + res.status + ".");
+      const pairs = await res.json();
+      return Array.isArray(pairs) ? pairs : [];
+    } finally {
+      clearTimeout(timeout);
+    }
+  }
+
+  async function enrichMetadataFromDexScreener(data, token) {
+    try {
+      const pairs = await fetchDexScreener(token);
+      if (!pairs.length) return data;
+
+      const direct = pairs.filter(p => getTokenSide(p,token));
+      const identity =
+        direct.find(p => p?.baseToken?.address === token && p?.baseToken?.symbol) ||
+        direct.find(p => getTokenSide(p,token)?.token?.symbol);
+
+      const side = identity ? getTokenSide(identity,token) : null;
+      const metaPair =
+        direct.find(p => p?.info?.imageUrl && getTokenSide(p,token)) ||
+        identity;
+
+      if ((!data.name || data.name === "Unknown Token") && side?.token?.name) data.name = side.token.name;
+      if ((!data.symbol || data.symbol === "TOKEN") && side?.token?.symbol) data.symbol = side.token.symbol;
+      if (!data.imageUrl && metaPair?.info?.imageUrl) data.imageUrl = metaPair.info.imageUrl;
+    } catch (e) {
+      console.warn("Metadata fallback unavailable:",e);
+    }
+    return data;
   }
 
   function aggregate(pairs, token) {
@@ -1272,8 +1466,9 @@ body.embed-mode .passport-foot{padding:12px 16px}
     const side = getTokenSide(identityPair, token);
     const tokenInfo = side?.token || {name:"Unknown Token",symbol:"TOKEN",address:token};
 
-    // Prefer a profile/image attached to a pair where the searched token is base.
-    const imagePair = directBase.find(p => p?.info?.imageUrl) || relevant.find(p => p?.info?.imageUrl);
+    // Prefer a token image supplied by GeckoTerminal; DEX Screener is used later
+    // as a metadata fallback when necessary.
+    const imagePair = relevant.find(p => p?.info?.imageUrl);
     const imageUrl = imagePair?.info?.imageUrl || "";
 
     const totalLiquidity = sum(relevant, p => p?.liquidity?.usd);
@@ -1330,7 +1525,8 @@ body.embed-mode .passport-foot{padding:12px 16px}
       quoteAssets,
       marketCount: relevant.length,
       oldestTs,
-      pools: sortedPools
+      pools: sortedPools,
+      source: relevant.some(p => p?.source === "GeckoTerminal") ? "GeckoTerminal" : "DEX Screener"
     };
   }
 
@@ -1375,6 +1571,7 @@ body.embed-mode .passport-foot{padding:12px 16px}
     els.oldestPool.textContent = data.oldestTs ? ageFrom(data.oldestTs) : "Unknown";
     els.buysSells.textContent = data.buys24.toLocaleString("en-US") + " / " + data.sells24.toLocaleString("en-US");
     els.lastUpdated.textContent = new Date().toLocaleString([], {dateStyle:"medium",timeStyle:"short"});
+    if (els.dataSource) els.dataSource.textContent = data.source || "Live / observed";
 
     els.dexList.replaceChildren();
     data.dexes.slice(0,14).forEach(name => {
@@ -1463,24 +1660,41 @@ body.embed-mode .passport-foot{padding:12px 16px}
     if (!silent) setStatus('<span class="loader"></span>Reading public Solana market data…');
 
     try {
-      const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), 15000);
-      const res = await fetch(API_BASE + encodeURIComponent(token), {
-        method:"GET",
-        headers:{"Accept":"application/json"},
-        signal:controller.signal
-      });
-      clearTimeout(timeout);
+      let pairs = [];
+      let geckoMeta = null;
+      let source = "GeckoTerminal";
 
-      if (!res.ok) throw new Error("Data provider returned HTTP " + res.status + ".");
-      const pairs = await res.json();
-      if (!Array.isArray(pairs) || !pairs.length) {
-        throw new Error("No DEX Screener markets were found for this token.");
+      try {
+        const gecko = await fetchGeckoPools(token);
+        pairs = gecko.pairs;
+        geckoMeta = gecko.tokenMeta;
+      } catch (geckoError) {
+        console.warn("GeckoTerminal unavailable, using DEX Screener fallback:",geckoError);
+        source = "DEX Screener fallback";
+        pairs = await fetchDexScreener(token);
       }
 
-      const data = aggregate(pairs, token);
+      if (!Array.isArray(pairs) || !pairs.length) {
+        throw new Error("No active markets were found for this token.");
+      }
+
+      let data = aggregate(pairs, token);
+      data.source = source;
+
+      if (geckoMeta) {
+        if (geckoMeta.name) data.name = geckoMeta.name;
+        if (geckoMeta.symbol) data.symbol = geckoMeta.symbol;
+        if (geckoMeta.imageUrl) data.imageUrl = geckoMeta.imageUrl;
+      }
+
+      data = await enrichMetadataFromDexScreener(data,token);
+
       render(data);
-      setStatus("Passport created from " + data.marketCount + " detected market" + (data.marketCount === 1 ? "" : "s") + ".", "ok");
+      setStatus(
+        "Passport created from " + data.marketCount + " detected market" +
+        (data.marketCount === 1 ? "" : "s") + " · " + data.source + ".",
+        "ok"
+      );
 
       if (document.body.classList.contains("embed-mode")) {
         els.status.classList.add("hidden");
@@ -1527,6 +1741,63 @@ body.embed-mode .passport-foot{padding:12px 16px}
     ctx.fillText(value,x+20,y+78);
   }
 
+
+  async function loadCardLogo(url) {
+    if (!url) return null;
+    try {
+      const res = await fetch(url,{mode:"cors"});
+      if (!res.ok) return null;
+      const blob = await res.blob();
+      const objectUrl = URL.createObjectURL(blob);
+      const img = new Image();
+      await new Promise((resolve,reject)=>{
+        img.onload = resolve;
+        img.onerror = reject;
+        img.src = objectUrl;
+      });
+      return {img,objectUrl};
+    } catch {
+      return null;
+    }
+  }
+
+  function drawTokenLogoFallback(ctx,x,y,size,symbol) {
+    const g = ctx.createLinearGradient(x,y,x+size,y+size);
+    g.addColorStop(0,"#b69cff");
+    g.addColorStop(1,"#5ed9ee");
+    ctx.fillStyle = g;
+    ctx.beginPath();
+    ctx.arc(x+size/2,y+size/2,size/2,0,Math.PI*2);
+    ctx.fill();
+
+    ctx.fillStyle = "#0a0b15";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.font = "900 " + Math.round(size*.32) + "px Inter, Arial, sans-serif";
+    ctx.fillText(String(symbol || "?").slice(0,3).toUpperCase(),x+size/2,y+size/2+1);
+    ctx.textAlign = "left";
+    ctx.textBaseline = "alphabetic";
+  }
+
+  function drawCircularImage(ctx,img,x,y,size) {
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(x+size/2,y+size/2,size/2,0,Math.PI*2);
+    ctx.clip();
+
+    const scale = Math.max(size/img.width,size/img.height);
+    const w = img.width*scale;
+    const h = img.height*scale;
+    ctx.drawImage(img,x+(size-w)/2,y+(size-h)/2,w,h);
+    ctx.restore();
+
+    ctx.strokeStyle = "rgba(190,168,255,.55)";
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.arc(x+size/2,y+size/2,size/2-1.5,0,Math.PI*2);
+    ctx.stroke();
+  }
+
   async function makeShareCard() {
     if (!current) return;
     const c = els.canvas;
@@ -1567,19 +1838,32 @@ body.embed-mode .passport-foot{padding:12px 16px}
     ctx.fillText("LIVE MARKET SNAPSHOT",1130,70);
     ctx.textAlign = "left";
 
+    // Token logo / symbol is always present on the share card.
+    const logoSize = 76;
+    const logoX = 68;
+    const logoY = 112;
+    const loadedLogo = await loadCardLogo(current.imageUrl);
+    if (loadedLogo?.img) {
+      drawCircularImage(ctx,loadedLogo.img,logoX,logoY,logoSize);
+    } else {
+      drawTokenLogoFallback(ctx,logoX,logoY,logoSize,current.symbol);
+    }
+
     ctx.fillStyle = "#ffffff";
-    ctx.font = "850 62px Inter, Arial, sans-serif";
-    const title = (current.name + "  $" + current.symbol).slice(0,32);
-    ctx.fillText(title,68,164);
+    ctx.font = "850 54px Inter, Arial, sans-serif";
+    const title = (current.name + "  $" + current.symbol).slice(0,30);
+    ctx.fillText(title,166,157);
 
     ctx.fillStyle = "#888faa";
     ctx.font = "500 19px Inter, Arial, sans-serif";
-    ctx.fillText(shortAddress(current.token) + "  ·  Solana",70,201);
+    ctx.fillText(shortAddress(current.token) + "  ·  Solana",168,188);
 
-    cardMetric(ctx,"Price",priceMoney(current.price),68,250,248);
-    cardMetric(ctx,"Liquidity",compactMoney(current.liquidity),332,250,248);
-    cardMetric(ctx,"24h Volume",compactMoney(current.volume24),596,250,248);
-    cardMetric(ctx,"Markets",String(current.marketCount),860,250,270);
+    if (loadedLogo?.objectUrl) URL.revokeObjectURL(loadedLogo.objectUrl);
+
+    cardMetric(ctx,"Price",priceMoney(current.price),68,252,248);
+    cardMetric(ctx,"Liquidity",compactMoney(current.liquidity),332,252,248);
+    cardMetric(ctx,"24h Volume",compactMoney(current.volume24),596,252,248);
+    cardMetric(ctx,"Markets",String(current.marketCount),860,252,270);
 
     ctx.fillStyle = "#747b96";
     ctx.font = "600 17px Inter, Arial, sans-serif";
