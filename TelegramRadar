@@ -1751,14 +1751,55 @@ body.embed-mode .passport-foot{padding:12px 16px}
   }
 
   function cardMetric(ctx, label, value, x, y, w, h=134, accent="default") {
-    ctx.fillStyle = "rgba(255,255,255,.045)";
-    roundedRect(ctx,x,y,w,h,24);
+    ctx.save();
+
+    // soft floating shadow
+    ctx.shadowColor = "rgba(0,0,0,.34)";
+    ctx.shadowBlur = 26;
+    ctx.shadowOffsetY = 12;
+
+    const fillGrad = ctx.createLinearGradient(x,y,x+w,y+h);
+    fillGrad.addColorStop(0,"rgba(31,35,66,.92)");
+    fillGrad.addColorStop(.55,"rgba(18,22,43,.95)");
+    fillGrad.addColorStop(1,"rgba(12,17,34,.96)");
+    ctx.fillStyle = fillGrad;
+    roundedRect(ctx,x,y,w,h,26);
     ctx.fill();
-    ctx.strokeStyle = "rgba(183,154,255,.14)";
-    ctx.lineWidth = 1;
+
+    ctx.shadowColor = "transparent";
+
+    // subtle accent wash
+    let wash = "rgba(177,151,255,.07)";
+    if (accent === "positive") wash = "rgba(113,230,161,.08)";
+    if (accent === "negative") wash = "rgba(255,123,152,.08)";
+    if (accent === "cyan") wash = "rgba(118,226,245,.09)";
+
+    const glow = ctx.createRadialGradient(x+w*.15,y+h*.05,0,x+w*.15,y+h*.05,w*.8);
+    glow.addColorStop(0,wash);
+    glow.addColorStop(1,"rgba(255,255,255,0)");
+    ctx.fillStyle = glow;
+    roundedRect(ctx,x,y,w,h,26);
+    ctx.fill();
+
+    // border
+    ctx.strokeStyle = "rgba(190,166,255,.18)";
+    ctx.lineWidth = 1.5;
+    roundedRect(ctx,x+.75,y+.75,w-1.5,h-1.5,26);
     ctx.stroke();
 
-    ctx.fillStyle = "#7f86a3";
+    // top highlight
+    const topLine = ctx.createLinearGradient(x,y,x+w,y);
+    topLine.addColorStop(0,"rgba(255,255,255,.18)");
+    topLine.addColorStop(.5,"rgba(185,160,255,.08)");
+    topLine.addColorStop(1,"rgba(255,255,255,.03)");
+    ctx.strokeStyle = topLine;
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(x+28,y+1);
+    ctx.lineTo(x+w-28,y+1);
+    ctx.stroke();
+
+    ctx.fillStyle = "#8d93ad";
     ctx.font = "700 18px Inter, Arial, sans-serif";
     ctx.fillText(label.toUpperCase(),x+22,y+36);
 
@@ -1770,6 +1811,8 @@ body.embed-mode .passport-foot{padding:12px 16px}
     ctx.fillStyle = fill;
     ctx.font = "800 40px Inter, Arial, sans-serif";
     ctx.fillText(value,x+22,y+88);
+
+    ctx.restore();
   }
 
 
@@ -1880,64 +1923,135 @@ body.embed-mode .passport-foot{padding:12px 16px}
     const oldButtonText = cardButton.textContent;
     cardButton.disabled = true;
     cardButton.innerHTML = '<span class="loader"></span>Creating card';
+
     const c = els.canvas;
     const ctx = c.getContext("2d");
     const W = c.width, H = c.height;
 
+    // Deep premium background
     const bg = ctx.createLinearGradient(0,0,W,H);
     bg.addColorStop(0,"#080914");
-    bg.addColorStop(.58,"#0d1021");
-    bg.addColorStop(1,"#090b17");
+    bg.addColorStop(.48,"#0b0f20");
+    bg.addColorStop(1,"#07111a");
     ctx.fillStyle = bg;
     ctx.fillRect(0,0,W,H);
 
-    const glow = ctx.createRadialGradient(960,80,0,960,80,420);
-    glow.addColorStop(0,"rgba(120,226,246,.13)");
-    glow.addColorStop(1,"rgba(120,226,246,0)");
-    ctx.fillStyle = glow;
+    // Large ambient purple glow
+    const purpleGlow = ctx.createRadialGradient(120,100,0,120,100,530);
+    purpleGlow.addColorStop(0,"rgba(143,105,255,.29)");
+    purpleGlow.addColorStop(.42,"rgba(106,79,218,.13)");
+    purpleGlow.addColorStop(1,"rgba(106,79,218,0)");
+    ctx.fillStyle = purpleGlow;
     ctx.fillRect(0,0,W,H);
 
-    const glow2 = ctx.createRadialGradient(80,20,0,80,20,430);
-    glow2.addColorStop(0,"rgba(164,130,255,.20)");
-    glow2.addColorStop(1,"rgba(164,130,255,0)");
-    ctx.fillStyle = glow2;
+    // Cyan lower-right glow
+    const cyanGlow = ctx.createRadialGradient(970,800,0,970,800,520);
+    cyanGlow.addColorStop(0,"rgba(66,213,239,.14)");
+    cyanGlow.addColorStop(.5,"rgba(66,213,239,.055)");
+    cyanGlow.addColorStop(1,"rgba(66,213,239,0)");
+    ctx.fillStyle = cyanGlow;
     ctx.fillRect(0,0,W,H);
 
-    ctx.strokeStyle = "rgba(255,255,255,.028)";
-    ctx.lineWidth = 1;
-    for (let x=0; x<W; x+=54) {
+    // very subtle star/noise dots
+    ctx.fillStyle = "rgba(255,255,255,.06)";
+    const dots = [
+      [936,124,2],[885,194,1.5],[988,277,1.3],[84,780,1.4],[122,861,1.7],
+      [936,904,1.2],[842,84,1.2],[68,654,1.3],[993,624,1.4],[760,102,1.1]
+    ];
+    dots.forEach(([x,y,r])=>{
       ctx.beginPath();
-      ctx.moveTo(x,0);
-      ctx.lineTo(x,H);
-      ctx.stroke();
-    }
-    for (let y=0; y<H; y+=54) {
-      ctx.beginPath();
-      ctx.moveTo(0,y);
-      ctx.lineTo(W,y);
-      ctx.stroke();
-    }
+      ctx.arc(x,y,r,0,Math.PI*2);
+      ctx.fill();
+    });
+
+    // Outer social-card frame
+    ctx.save();
+    ctx.shadowColor = "rgba(0,0,0,.45)";
+    ctx.shadowBlur = 38;
+    ctx.shadowOffsetY = 18;
+    const frameGrad = ctx.createLinearGradient(40,42,W-40,H-42);
+    frameGrad.addColorStop(0,"rgba(19,22,45,.88)");
+    frameGrad.addColorStop(1,"rgba(8,13,27,.92)");
+    ctx.fillStyle = frameGrad;
+    roundedRect(ctx,40,40,W-80,H-80,40);
+    ctx.fill();
+    ctx.restore();
+
+    const frameStroke = ctx.createLinearGradient(40,40,W-40,H-40);
+    frameStroke.addColorStop(0,"rgba(184,153,255,.38)");
+    frameStroke.addColorStop(.5,"rgba(255,255,255,.07)");
+    frameStroke.addColorStop(1,"rgba(82,214,239,.19)");
+    ctx.strokeStyle = frameStroke;
+    ctx.lineWidth = 1.5;
+    roundedRect(ctx,40.75,40.75,W-81.5,H-81.5,40);
+    ctx.stroke();
+
+    // Header badge
+    ctx.fillStyle = "rgba(164,132,255,.10)";
+    roundedRect(ctx,72,72,340,48,24);
+    ctx.fill();
+    ctx.strokeStyle = "rgba(181,156,255,.22)";
+    ctx.stroke();
 
     ctx.fillStyle = "#b49aff";
     ctx.beginPath();
-    ctx.arc(66,60,8,0,Math.PI*2);
+    ctx.arc(95,96,7,0,Math.PI*2);
     ctx.fill();
 
-    ctx.fillStyle = "#c9bcff";
-    ctx.font = "800 22px Inter, Arial, sans-serif";
-    ctx.fillText("SOLANA PROJECT PASSPORT",88,67);
+    ctx.fillStyle = "#d5c9ff";
+    ctx.font = "800 18px Inter, Arial, sans-serif";
+    ctx.fillText("SOLANA PROJECT PASSPORT",113,102);
 
-    ctx.fillStyle = "#7e849f";
-    ctx.font = "600 17px Inter, Arial, sans-serif";
+    ctx.fillStyle = "#7f86a3";
+    ctx.font = "700 15px Inter, Arial, sans-serif";
     ctx.textAlign = "right";
-    ctx.fillText("LIVE MARKET SNAPSHOT",W-66,67);
+    ctx.fillText("LIVE MARKET SNAPSHOT",1004,101);
     ctx.textAlign = "left";
 
-    const loadedLogo = await loadCardLogo(current.imageUrl);
+    // Token hero panel
+    ctx.save();
+    ctx.shadowColor = "rgba(0,0,0,.34)";
+    ctx.shadowBlur = 28;
+    ctx.shadowOffsetY = 14;
+    const heroGrad = ctx.createLinearGradient(72,146,1008,310);
+    heroGrad.addColorStop(0,"rgba(39,34,73,.88)");
+    heroGrad.addColorStop(.5,"rgba(20,24,48,.91)");
+    heroGrad.addColorStop(1,"rgba(13,30,39,.88)");
+    ctx.fillStyle = heroGrad;
+    roundedRect(ctx,72,146,936,178,30);
+    ctx.fill();
+    ctx.restore();
 
-    const logoSize = 92;
-    const logoX = 66;
-    const logoY = 108;
+    ctx.strokeStyle = "rgba(187,162,255,.18)";
+    ctx.lineWidth = 1.5;
+    roundedRect(ctx,72.75,146.75,934.5,176.5,30);
+    ctx.stroke();
+
+    // Hero panel glow
+    const heroGlow = ctx.createRadialGradient(150,180,0,150,180,390);
+    heroGlow.addColorStop(0,"rgba(173,139,255,.17)");
+    heroGlow.addColorStop(1,"rgba(173,139,255,0)");
+    ctx.fillStyle = heroGlow;
+    roundedRect(ctx,72,146,936,178,30);
+    ctx.fill();
+
+    const loadedLogo = await loadCardLogo(current.imageUrl);
+    const logoSize = 108;
+    const logoX = 98;
+    const logoY = 181;
+
+    // logo halo
+    const logoHalo = ctx.createRadialGradient(
+      logoX+logoSize/2,logoY+logoSize/2,logoSize*.24,
+      logoX+logoSize/2,logoY+logoSize/2,logoSize*.78
+    );
+    logoHalo.addColorStop(0,"rgba(174,145,255,.26)");
+    logoHalo.addColorStop(1,"rgba(174,145,255,0)");
+    ctx.fillStyle = logoHalo;
+    ctx.beginPath();
+    ctx.arc(logoX+logoSize/2,logoY+logoSize/2,logoSize*.85,0,Math.PI*2);
+    ctx.fill();
+
     if (loadedLogo?.img) {
       drawCircularImage(ctx,loadedLogo.img,logoX,logoY,logoSize);
     } else {
@@ -1947,81 +2061,108 @@ body.embed-mode .passport-foot{padding:12px 16px}
     ctx.fillStyle = "#ffffff";
     ctx.font = "850 58px Inter, Arial, sans-serif";
     const title = (current.name || current.symbol || "Token").slice(0,24);
-    ctx.fillText(title,182,156);
+    ctx.fillText(title,238,222);
 
-    ctx.fillStyle = "#d7cdf7";
-    ctx.font = "800 42px Inter, Arial, sans-serif";
-    ctx.fillText("$" + (current.symbol || "TOKEN"),182,208);
+    ctx.fillStyle = "#cdbdff";
+    ctx.font = "850 38px Inter, Arial, sans-serif";
+    ctx.fillText("$" + (current.symbol || "TOKEN"),238,270);
 
-    ctx.fillStyle = "#888faa";
-    ctx.font = "500 19px Inter, Arial, sans-serif";
-    ctx.fillText(shortAddress(current.token) + "  ·  Solana",182,240);
+    ctx.fillStyle = "#8f96af";
+    ctx.font = "500 18px Inter, Arial, sans-serif";
+    ctx.fillText(shortAddress(current.token) + "  ·  Solana",238,301);
 
-    ctx.fillStyle = "#747b96";
-    ctx.font = "600 18px Inter, Arial, sans-serif";
-    ctx.fillText("DEX FOOTPRINT",68,300);
+    // DEX badge row
+    ctx.fillStyle = "#7f86a3";
+    ctx.font = "700 15px Inter, Arial, sans-serif";
+    ctx.fillText("DEX FOOTPRINT",72,363);
 
-    const dexText = current.dexes.slice(0,5).join("  ·  ") || "No DEX labels";
-    ctx.fillStyle = "#d8d1ed";
-    ctx.font = "700 24px Inter, Arial, sans-serif";
-    ctx.fillText(dexText.slice(0,58),68,336);
+    const dexText = current.dexes.slice(0,5).join("  •  ") || "No DEX labels";
+    ctx.fillStyle = "#d9d1ef";
+    ctx.font = "700 21px Inter, Arial, sans-serif";
+    ctx.fillText(dexText.slice(0,58),72,394);
 
-    cardMetric(ctx,"Price",priceMoney(current.price),68,386,300,138,"cyan");
+    // KPI cards
+    cardMetric(ctx,"Price",priceMoney(current.price),72,430,292,140,"cyan");
+
     const changeNum = Number(current.change24);
     const changeText = Number.isFinite(changeNum) ? pct(changeNum) : "—";
-    const changeAccent = Number.isFinite(changeNum) ? (changeNum >= 0 ? "positive" : "negative") : "default";
-    cardMetric(ctx,"24h Change",changeText,390,386,300,138,changeAccent);
-    cardMetric(ctx,"Liquidity",compactMoney(current.liquidity),712,386,300,138);
-    cardMetric(ctx,"24h Volume",compactMoney(current.volume24),68,548,460,138);
-    cardMetric(ctx,"Market Cap",current.marketCap ? compactMoney(current.marketCap) : "$—",552,548,460,138);
+    const changeAccent = Number.isFinite(changeNum)
+      ? (changeNum >= 0 ? "positive" : "negative")
+      : "default";
+    cardMetric(ctx,"24h Change",changeText,394,430,292,140,changeAccent);
 
-    ctx.fillStyle = "#747b96";
-    ctx.font = "500 16px Inter, Arial, sans-serif";
-    ctx.fillText("Public market data · " + new Date().toLocaleString([], {dateStyle:"medium",timeStyle:"short"}),68,742);
+    cardMetric(ctx,"Liquidity",compactMoney(current.liquidity),716,430,292,140);
+    cardMetric(ctx,"24h Volume",compactMoney(current.volume24),72,600,452,142);
+    cardMetric(ctx,"Market Cap",current.marketCap ? compactMoney(current.marketCap) : "$—",556,600,452,142);
 
-    if (current.marketCapEstimated) {
-      ctx.fillStyle = "#8e95ae";
-      ctx.font = "500 15px Inter, Arial, sans-serif";
-      ctx.fillText("Market Cap currently uses FDV fallback",68,770);
-    }
-
-    ctx.fillStyle = "rgba(255,255,255,.045)";
-    roundedRect(ctx,68,816,944,136,28);
-    ctx.fill();
-    ctx.strokeStyle = "rgba(183,154,255,.14)";
-    ctx.stroke();
-
-    ctx.fillStyle = "#7f86a3";
-    ctx.font = "700 18px Inter, Arial, sans-serif";
-    ctx.fillText("BUYS / SELLS (24H)",94,862);
-
-    ctx.fillStyle = "#f8f6ff";
-    ctx.font = "850 46px Inter, Arial, sans-serif";
+    // Small context line
+    ctx.fillStyle = "#737a95";
+    ctx.font = "500 15px Inter, Arial, sans-serif";
     ctx.fillText(
-      current.buys24.toLocaleString("en-US") + " / " + current.sells24.toLocaleString("en-US"),
-      94,918
+      "Updated " + new Date().toLocaleString([], {dateStyle:"medium",timeStyle:"short"}) +
+      "  ·  Public market data",
+      72,782
     );
 
-    ctx.strokeStyle = "rgba(183,154,255,.16)";
-    ctx.beginPath();
-    ctx.moveTo(68,988);
-    ctx.lineTo(1012,988);
+    // Buys / sells feature panel
+    ctx.save();
+    ctx.shadowColor = "rgba(0,0,0,.27)";
+    ctx.shadowBlur = 20;
+    ctx.shadowOffsetY = 10;
+    const flowGrad = ctx.createLinearGradient(72,818,1008,938);
+    flowGrad.addColorStop(0,"rgba(28,32,61,.90)");
+    flowGrad.addColorStop(1,"rgba(13,23,38,.92)");
+    ctx.fillStyle = flowGrad;
+    roundedRect(ctx,72,818,936,122,26);
+    ctx.fill();
+    ctx.restore();
+
+    ctx.strokeStyle = "rgba(180,157,255,.16)";
+    ctx.lineWidth = 1.5;
+    roundedRect(ctx,72.75,818.75,934.5,120.5,26);
     ctx.stroke();
 
-    ctx.fillStyle = "#aa93ff";
+    ctx.fillStyle = "#858ca6";
+    ctx.font = "700 16px Inter, Arial, sans-serif";
+    ctx.fillText("24H BUY / SELL ACTIVITY",98,860);
+
+    ctx.fillStyle = "#f8f6ff";
+    ctx.font = "850 43px Inter, Arial, sans-serif";
+    ctx.fillText(
+      current.buys24.toLocaleString("en-US") + " / " + current.sells24.toLocaleString("en-US"),
+      98,914
+    );
+
+    // Footer strip
+    const footerGrad = ctx.createLinearGradient(72,972,1008,1036);
+    footerGrad.addColorStop(0,"rgba(132,99,255,.16)");
+    footerGrad.addColorStop(1,"rgba(61,212,235,.07)");
+    ctx.fillStyle = footerGrad;
+    roundedRect(ctx,72,972,936,58,24);
+    ctx.fill();
+    ctx.strokeStyle = "rgba(179,155,255,.16)";
+    ctx.stroke();
+
+    ctx.fillStyle = "#ae93ff";
     ctx.beginPath();
-    ctx.arc(76,1024,7,0,Math.PI*2);
+    ctx.arc(96,1001,7,0,Math.PI*2);
     ctx.fill();
 
-    ctx.fillStyle = "#d7cdf7";
-    ctx.font = "800 22px Inter, Arial, sans-serif";
-    ctx.fillText("Powered by ArbStrategy.net $ASTY",94,1032);
+    ctx.fillStyle = "#e1d8ff";
+    ctx.font = "800 21px Inter, Arial, sans-serif";
+    ctx.fillText("Powered by ArbStrategy.net $ASTY",116,1008);
 
-    ctx.fillStyle = "#6f7690";
-    ctx.font = "500 15px Inter, Arial, sans-serif";
+    ctx.fillStyle = "#717892";
+    ctx.font = "500 13px Inter, Arial, sans-serif";
     ctx.textAlign = "right";
-    ctx.fillText("No safety rating · Not financial advice",1008,1032);
+    ctx.fillText("No safety rating · Not financial advice",984,1007);
     ctx.textAlign = "left";
+
+    if (current.marketCapEstimated) {
+      ctx.fillStyle = "#797f98";
+      ctx.font = "500 12px Inter, Arial, sans-serif";
+      ctx.fillText("Market Cap uses FDV fallback",556,728);
+    }
 
     if (loadedLogo?.objectUrl) URL.revokeObjectURL(loadedLogo.objectUrl);
 
@@ -2029,7 +2170,11 @@ body.embed-mode .passport-foot{padding:12px 16px}
     try {
       blob = await new Promise((resolve,reject)=>{
         try {
-          c.toBlob(b => b ? resolve(b) : reject(new Error("PNG export returned no data")),"image/png",.95);
+          c.toBlob(
+            b => b ? resolve(b) : reject(new Error("PNG export returned no data")),
+            "image/png",
+            .95
+          );
         } catch (e) {
           reject(e);
         }
@@ -2042,7 +2187,9 @@ body.embed-mode .passport-foot{padding:12px 16px}
       return;
     }
 
-    const filename = (current.symbol || "SOLANA").replace(/[^a-z0-9_-]/gi,"_") + "_Project_Passport_Square.png";
+    const filename =
+      (current.symbol || "SOLANA").replace(/[^a-z0-9_-]/gi,"_") +
+      "_Project_Passport_Square.png";
     const file = new File([blob], filename, {type:"image/png"});
 
     if (navigator.share && navigator.canShare && navigator.canShare({files:[file]})) {
@@ -2050,7 +2197,7 @@ body.embed-mode .passport-foot{padding:12px 16px}
         await navigator.share({
           files:[file],
           title:current.name + " Solana Project Passport",
-          text:"Live Solana Project Passport · powered by ArbStrategy.net $ASTY"
+          text:"Live Solana Project Passport · Powered by ArbStrategy.net $ASTY"
         });
         cardButton.disabled = false;
         cardButton.textContent = oldButtonText;
@@ -2072,9 +2219,10 @@ body.embed-mode .passport-foot{padding:12px 16px}
     a.click();
     a.remove();
     setTimeout(()=>URL.revokeObjectURL(url),1200);
+
     cardButton.disabled = false;
     cardButton.textContent = oldButtonText;
-    setStatus("Square Share Card created with token branding.","ok");
+    setStatus("Social Share Card created.","ok");
   }
 
   function shareText() {
