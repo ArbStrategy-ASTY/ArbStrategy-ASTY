@@ -1050,9 +1050,9 @@ body.embed-mode .passport-foot{padding:12px 16px}
           <h3>Share your Passport</h3>
           <p>Create a branded snapshot image and share the live Passport.</p>
           <div class="tool-actions">
-            <button class="btn primary" id="makeCard">Download Share Card</button>
+            <button class="btn primary" id="makeCard">Create Share Card</button>
             <button class="btn" id="shareX">Share on X</button>
-            <button class="btn" id="shareTelegram">Telegram</button>
+            <button class="btn" id="shareTelegram">Share on Telegram</button>
           </div>
           <canvas id="shareCanvas" class="hidden" width="1080" height="1080"></canvas>
         </div>
@@ -2153,13 +2153,15 @@ body.embed-mode .passport-foot{padding:12px 16px}
     cardMetric(ctx,"24h Volume",compactMoney(current.volume24),72,600,452,142);
     cardMetric(ctx,"Market Cap",current.marketCap ? compactMoney(current.marketCap) : "$—",556,600,452,142);
 
-    ctx.fillStyle = "#737a95";
-    ctx.font = "500 15px Inter, Arial, sans-serif";
+    ctx.fillStyle = "#858ca6";
+    ctx.font = "600 18px Inter, Arial, sans-serif";
+    ctx.textAlign = "center";
     ctx.fillText(
       "Updated " + new Date().toLocaleString([], {dateStyle:"medium",timeStyle:"short"}) +
       "  ·  Public market data",
-      72,782
+      W / 2,808
     );
+    ctx.textAlign = "left";
 
     if (current.marketCapEstimated) {
       ctx.fillStyle = "#797f98";
@@ -2255,6 +2257,40 @@ body.embed-mode .passport-foot{padding:12px 16px}
       (current.symbol || "SOLANA").replace(/[^a-z0-9_-]/gi,"_") +
       "_Project_Passport_Square.png";
 
+    const file = new File([blob], filename, {type:"image/png"});
+    const isMobile =
+      /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent) ||
+      window.matchMedia("(pointer:coarse)").matches;
+
+    // On mobile, open the native image/file share sheet directly.
+    // On iPhone this exposes actions such as "Save Image".
+    if (
+      isMobile &&
+      navigator.share &&
+      navigator.canShare &&
+      navigator.canShare({files:[file]})
+    ) {
+      try {
+        await navigator.share({
+          files:[file],
+          title:(current.name || current.symbol || "Token") + " Solana Project Passport"
+        });
+
+        cardButton.disabled = false;
+        cardButton.textContent = oldButtonText;
+        setStatus("Share Card created.","ok");
+        return;
+      } catch (e) {
+        if (e?.name === "AbortError") {
+          cardButton.disabled = false;
+          cardButton.textContent = oldButtonText;
+          return;
+        }
+        console.warn("Native image save/share unavailable, using download fallback:",e);
+      }
+    }
+
+    // Desktop and unsupported mobile browsers: direct PNG download.
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
@@ -2271,25 +2307,33 @@ body.embed-mode .passport-foot{padding:12px 16px}
 
   function shareText() {
     if (!current) return "";
-    const change = Number.isFinite(Number(current.change24)) ? pct(current.change24) : "—";
-    const buys = Number.isFinite(Number(current.buys24)) ? Number(current.buys24).toLocaleString("en-US") : "—";
-    const sells = Number.isFinite(Number(current.sells24)) ? Number(current.sells24).toLocaleString("en-US") : "—";
 
-    return `${current.name} ($${current.symbol}) · Solana Project Passport
+    const change =
+      Number.isFinite(Number(current.change24))
+        ? pct(current.change24)
+        : "—";
 
-` +
-      `Price: ${priceMoney(current.price)}
-` +
-      `24h Change: ${change}
-` +
-      `Liquidity: ${compactMoney(current.liquidity)}
-` +
-      `24h Volume: ${compactMoney(current.volume24)}
-` +
-      `24h Buys / Sells: ${buys} / ${sells}
+    const buys =
+      Number.isFinite(Number(current.buys24))
+        ? Number(current.buys24).toLocaleString("en-US")
+        : "—";
 
-` +
-      `Powered by ArbStrategy.net`;
+    const sells =
+      Number.isFinite(Number(current.sells24))
+        ? Number(current.sells24).toLocaleString("en-US")
+        : "—";
+
+    return `Solana Project Passport:
+
+${current.name} ($${current.symbol})
+
+Price: ${priceMoney(current.price)}
+24h Change: ${change}
+Liquidity: ${compactMoney(current.liquidity)}
+24h Volume: ${compactMoney(current.volume24)}
+24h Buys / Sells: ${buys} / ${sells}
+
+Powered by [ArbStrategy.net](https://arbstrategy.net/)`;
   }
 
   els.scan.addEventListener("click",()=>loadToken(els.input.value));
