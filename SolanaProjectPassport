@@ -1510,13 +1510,40 @@ body.embed-mode .passport-foot{padding:12px 16px}
     const buys24 = sum(relevant, p => p?.txns?.h24?.buys);
     const sells24 = sum(relevant, p => p?.txns?.h24?.sells);
 
-    // Liquidity-weighted token price across pools where a token USD price can be derived.
-    const priced = relevant
-      .map(p => ({p, price:tokenPriceUsdFromPair(p,token), weight:Math.max(num(p?.liquidity?.usd),1)}))
+    // Reference price:
+    // Use ONE real market instead of averaging prices across many pools.
+    // Small / imbalanced pools can be far away from the main market and would
+    // otherwise distort the Passport price. Prefer the most liquid pool where
+    // the searched token is BASE; if none exists, use the most liquid valid pool.
+    const pricedPools = relevant
+      .map(p => ({
+        p,
+        price: tokenPriceUsdFromPair(p,token),
+        liquidity: num(p?.liquidity?.usd)
+      }))
       .filter(x => x.price > 0);
-    const weightedPrice = priced.length
-      ? priced.reduce((a,x)=>a + x.price*x.weight,0) / priced.reduce((a,x)=>a+x.weight,0)
-      : 0;
+
+    const directPricedPools = pricedPools
+      .filter(x => x.p?.baseToken?.address === token)
+      .sort((a,b)=>b.liquidity-a.liquidity);
+
+    const allPricedPools = [...pricedPools]
+      .sort((a,b)=>b.liquidity-a.liquidity);
+
+    const referenceMarket =
+      directPricedPools[0] ||
+      allPricedPools[0] ||
+      null;
+
+    const referencePrice = referenceMarket ? referenceMarket.price : 0;
+
+    // Use the exact same reference pool for 24h Change so Price and Change
+    // describe one coherent market rather than two different pools.
+    const referenceChange =
+      referenceMarket &&
+      Number.isFinite(Number(referenceMarket.p?.priceChange?.h24))
+        ? Number(referenceMarket.p.priceChange.h24)
+        : null;
 
     // DexScreener marketCap/fdv refer to the BASE token, so only use pools where searched token is BASE.
     const capCandidates = directBase
@@ -1528,11 +1555,7 @@ body.embed-mode .passport-foot{padding:12px 16px}
     const marketCap = num(capCandidates[0]?.marketCap);
     const fdv = num(fdvCandidates[0]?.fdv);
 
-    // 24h change is also base-token oriented. Use the most liquid direct pool.
-    const changePair = directBase
-      .filter(p => Number.isFinite(Number(p?.priceChange?.h24)))
-      .sort((a,b)=>num(b?.liquidity?.usd)-num(a?.liquidity?.usd))[0];
-    const change24 = changePair ? Number(changePair.priceChange.h24) : null;
+    const change24 = referenceChange;
 
     const dexes = uniq(relevant.map(p => cleanDexName(p.dexId))).sort();
     const quoteAssets = uniq(relevant.map(p => getTokenSide(p,token)?.other?.symbol || getTokenSide(p,token)?.other?.name)).sort();
@@ -1547,7 +1570,7 @@ body.embed-mode .passport-foot{padding:12px 16px}
       name: tokenInfo?.name || "Unknown Token",
       symbol: tokenInfo?.symbol || "TOKEN",
       imageUrl,
-      price: weightedPrice,
+      price: referencePrice,
       change24,
       liquidity: totalLiquidity,
       volume24: totalVolume24,
@@ -1560,6 +1583,8 @@ body.embed-mode .passport-foot{padding:12px 16px}
       marketCount: relevant.length,
       oldestTs,
       pools: sortedPools,
+      referencePoolAddress: referenceMarket?.p?.pairAddress || "",
+      referenceDex: referenceMarket?.p?.dexId || "",
       source: relevant.some(p => p?.source === "GeckoTerminal") ? "GeckoTerminal" : "DEX Screener"
     };
   }
