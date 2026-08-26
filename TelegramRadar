@@ -1850,6 +1850,25 @@ body.embed-mode .passport-foot{padding:12px 16px}
     }
   }
 
+
+  async function loadAstyBrandLogo() {
+    // Preferred: use the real ASTY brand asset from the repo when the page is hosted on GitHub.
+    // Fallback: if it cannot be loaded (e.g. standalone local preview), use the token logo.
+    try {
+      const exact = await loadCardLogo("assets/logo.png");
+      if (exact?.img) return exact;
+    } catch (e) {
+      console.warn("ASTY brand logo from assets/logo.png unavailable:", e);
+    }
+    try {
+      const fallback = await loadCardLogo(current?.imageUrl || "");
+      if (fallback?.img) return fallback;
+    } catch (e) {
+      console.warn("ASTY brand logo fallback unavailable:", e);
+    }
+    return null;
+  }
+
   async function loadCardLogo(url) {
     if (!url) return null;
 
@@ -2124,52 +2143,53 @@ body.embed-mode .passport-foot{padding:12px 16px}
       ctx.fillText("Market Cap uses FDV fallback",556,728);
     }
 
-    // Cleaner footer bar
-    ctx.save();
-    ctx.shadowColor = "rgba(0,0,0,.18)";
-    ctx.shadowBlur = 12;
-    ctx.shadowOffsetY = 5;
-    const footerGrad = ctx.createLinearGradient(72,914,1008,972);
-    footerGrad.addColorStop(0,"rgba(132,99,255,.12)");
-    footerGrad.addColorStop(.45,"rgba(64,47,120,.12)");
-    footerGrad.addColorStop(1,"rgba(61,212,235,.06)");
-    ctx.fillStyle = footerGrad;
-    roundedRect(ctx,72,906,936,68,22);
-    ctx.fill();
-    ctx.restore();
-
-    ctx.strokeStyle = "rgba(179,155,255,.14)";
-    ctx.lineWidth = 1.15;
-    roundedRect(ctx,72.75,906.75,934.5,66.5,22);
+    // Minimal brand signature footer
+    const lineGrad = ctx.createLinearGradient(72,0,1008,0);
+    lineGrad.addColorStop(0,"rgba(176,147,255,.30)");
+    lineGrad.addColorStop(.55,"rgba(255,255,255,.06)");
+    lineGrad.addColorStop(1,"rgba(103,232,249,.18)");
+    ctx.strokeStyle = lineGrad;
+    ctx.lineWidth = 1.2;
+    ctx.beginPath();
+    ctx.moveTo(72,905);
+    ctx.lineTo(1008,905);
     ctx.stroke();
 
-    const footerY = 949;
+    const brandLogo = await loadAstyBrandLogo();
+    const brandSize = 32;
+    const brandX = 72;
+    const brandY = 926;
+
+    if (brandLogo?.img) {
+      drawCircularImage(ctx, brandLogo.img, brandX, brandY, brandSize);
+    } else {
+      drawTokenLogoFallback(ctx, brandX, brandY, brandSize, "A");
+    }
+
+    const baseY = 950;
     const dotR = 5.5;
 
-    drawAstyFooterBadge(ctx, 96, 930, 26);
+    ctx.fillStyle = "#ece4ff";
+    ctx.font = "800 23px Inter, Arial, sans-serif";
+    ctx.fillText("$ASTY",116,baseY);
 
-    ctx.fillStyle = "#e4dbff";
+    ctx.fillStyle = "#ae93ff";
+    ctx.beginPath();
+    ctx.arc(198,baseY-7,dotR,0,Math.PI*2);
+    ctx.fill();
+
+    ctx.fillStyle = "#dcd2f7";
+    ctx.font = "700 21px Inter, Arial, sans-serif";
+    ctx.fillText("ArbStrategy.net",220,baseY);
+
+    ctx.textAlign = "right";
+    ctx.fillStyle = "#e2d8ff";
     ctx.font = "800 21px Inter, Arial, sans-serif";
-    ctx.fillText("$ASTY",132,footerY);
-
-    ctx.fillStyle = "#ae93ff";
-    ctx.beginPath();
-    ctx.arc(215,footerY-7,dotR,0,Math.PI*2);
-    ctx.fill();
-
-    ctx.fillStyle = "#e4dbff";
-    ctx.fillText("ArbStrategy.net",235,footerY);
-
-    ctx.fillStyle = "#ae93ff";
-    ctx.beginPath();
-    ctx.arc(439,footerY-7,dotR,0,Math.PI*2);
-    ctx.fill();
-
-    ctx.fillStyle = "#d7ccf2";
-    ctx.font = "700 18px Inter, Arial, sans-serif";
-    ctx.fillText("Create your own passport for free",460,footerY);
+    ctx.fillText("Create yours free →",1008,baseY);
+    ctx.textAlign = "left";
 
     if (loadedLogo?.objectUrl) URL.revokeObjectURL(loadedLogo.objectUrl);
+    if (brandLogo?.objectUrl) URL.revokeObjectURL(brandLogo.objectUrl);
 
     let blob = null;
     try {
@@ -2202,7 +2222,7 @@ body.embed-mode .passport-foot{padding:12px 16px}
         await navigator.share({
           files:[file],
           title:current.name + " Solana Project Passport",
-          text:"Live Solana Project Passport · $ASTY · ArbStrategy.net · Create your own passport for free"
+          text:"Live Solana Project Passport · $ASTY · ArbStrategy.net · Create yours free"
         });
         cardButton.disabled = false;
         cardButton.textContent = oldButtonText;
