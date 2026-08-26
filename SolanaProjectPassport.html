@@ -1603,18 +1603,40 @@ body.embed-mode .passport-foot{padding:12px 16px}
     els.address.title = data.token;
     els.fallback.textContent = (data.symbol || data.name || "?").slice(0,2).toUpperCase();
 
-    if (data.imageUrl) {
-      els.logo.src = data.imageUrl;
-      els.logo.alt = data.name + " logo";
-      els.logo.classList.remove("hidden");
-      els.fallback.classList.add("hidden");
-      els.logo.onerror = () => {
-        els.logo.classList.add("hidden");
-        els.fallback.classList.remove("hidden");
-      };
-    } else {
+    const logoCandidates = uniq([
+      ...(Array.isArray(data.imageCandidates) ? data.imageCandidates : []),
+      data.imageUrl
+    ]);
+
+    let logoIndex = 0;
+
+    const showLogoFallback = () => {
       els.logo.classList.add("hidden");
       els.fallback.classList.remove("hidden");
+    };
+
+    const tryNextLogo = () => {
+      if (logoIndex >= logoCandidates.length) {
+        showLogoFallback();
+        return;
+      }
+
+      const candidate = logoCandidates[logoIndex++];
+      els.logo.alt = data.name + " logo";
+      els.logo.onload = () => {
+        data.imageUrl = candidate;
+        current.imageUrl = candidate;
+        els.logo.classList.remove("hidden");
+        els.fallback.classList.add("hidden");
+      };
+      els.logo.onerror = tryNextLogo;
+      els.logo.src = candidate;
+    };
+
+    if (logoCandidates.length) {
+      tryNextLogo();
+    } else {
+      showLogoFallback();
     }
 
     els.price.textContent = priceMoney(data.price);
@@ -1807,12 +1829,17 @@ body.embed-mode .passport-foot{padding:12px 16px}
 
   function passportDataFromBirdeye(token, bird, dexInfo) {
     const meta = dexInfo?.tokenMeta || {};
+    const imageCandidates = uniq([
+      bird?.imageUrl,
+      meta?.imageUrl
+    ]);
 
     return {
       token,
       name: bird?.name || meta?.name || "Unknown Token",
       symbol: bird?.symbol || meta?.symbol || "TOKEN",
-      imageUrl: bird?.imageUrl || meta?.imageUrl || "",
+      imageUrl: imageCandidates[0] || "",
+      imageCandidates,
 
       // IMPORTANT:
       // These values come directly from Birdeye Token Overview.
@@ -1874,34 +1901,44 @@ body.embed-mode .passport-foot{padding:12px 16px}
 
       const data = passportDataFromBirdeye(token, bird, dexInfo);
 
-      // Only use a metadata fallback when Birdeye did not provide an image/name.
-      if (!data.imageUrl || data.name === "Unknown Token" || data.symbol === "TOKEN") {
-        try {
-          const fallbackPairs = await fetchDexScreener(token);
-          const relevant = fallbackPairs.filter(p => getTokenSide(p, token));
-          const identity =
-            relevant.find(p => p?.baseToken?.address === token) ||
-            relevant[0];
+      // Metadata is intentionally collected from several public sources.
+      // Birdeye remains authoritative for ALL numeric values, while token
+      // identity/logo can safely fall back to GeckoTerminal or DEX Screener.
+      try {
+        const fallbackPairs = await fetchDexScreener(token);
+        const relevant = fallbackPairs.filter(p => getTokenSide(p, token));
+        const identity =
+          relevant.find(p => p?.baseToken?.address === token) ||
+          relevant[0];
 
-          const side = identity ? getTokenSide(identity, token) : null;
-          const imagePair =
-            relevant.find(p => p?.info?.imageUrl) ||
-            identity;
+        const side = identity ? getTokenSide(identity, token) : null;
 
-          if (data.name === "Unknown Token" && side?.token?.name) {
-            data.name = side.token.name;
-          }
-
-          if (data.symbol === "TOKEN" && side?.token?.symbol) {
-            data.symbol = side.token.symbol;
-          }
-
-          if (!data.imageUrl && imagePair?.info?.imageUrl) {
-            data.imageUrl = imagePair.info.imageUrl;
-          }
-        } catch (metadataError) {
-          console.warn("Metadata fallback unavailable:", metadataError);
+        if (
+          (!data.name || data.name === "Unknown Token") &&
+          side?.token?.name
+        ) {
+          data.name = side.token.name;
         }
+
+        if (
+          (!data.symbol || data.symbol === "TOKEN") &&
+          side?.token?.symbol
+        ) {
+          data.symbol = side.token.symbol;
+        }
+
+        const dexImages = relevant
+          .map(p => p?.info?.imageUrl)
+          .filter(Boolean);
+
+        data.imageCandidates = uniq([
+          ...(Array.isArray(data.imageCandidates) ? data.imageCandidates : []),
+          ...dexImages
+        ]);
+
+        data.imageUrl = data.imageCandidates[0] || "";
+      } catch (metadataError) {
+        console.warn("DEX Screener metadata fallback unavailable:", metadataError);
       }
 
       render(data);
@@ -2095,6 +2132,25 @@ body.embed-mode .passport-foot{padding:12px 16px}
     return null;
   }
 
+  async function loadFirstCardLogo(urls) {
+    const candidates = uniq(Array.isArray(urls) ? urls : [urls]);
+
+    for (const url of candidates) {
+      try {
+        const loaded = await loadCardLogo(url);
+        if (loaded?.img) {
+          if (current) current.imageUrl = url;
+          return loaded;
+        }
+      } catch (e) {
+        console.warn("Card logo candidate unavailable:", url, e);
+      }
+    }
+
+    return null;
+  }
+
+
   function drawTokenLogoFallback(ctx,x,y,size,symbol) {
     const g = ctx.createLinearGradient(x,y,x+size,y+size);
     g.addColorStop(0,"#b69cff");
@@ -2272,7 +2328,10 @@ body.embed-mode .passport-foot{padding:12px 16px}
     roundedRect(ctx,72,146,936,178,30);
     ctx.fill();
 
-    const loadedLogo = await loadCardLogo(current.imageUrl);
+    const loadedLogo = await loadFirstCardLogo([
+      ...(Array.isArray(current.imageCandidates) ? current.imageCandidates : []),
+      current.imageUrl
+    ]);
     const logoSize = 108;
     const logoX = 98;
     const logoY = 181;
