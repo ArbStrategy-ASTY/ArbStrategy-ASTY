@@ -1075,6 +1075,7 @@ body.embed-mode .passport-foot{padding:12px 16px}
   // All Passport numbers come from Birdeye through the protected Worker.
   // Worker name: SolanaProjectPassport
   const BIRDEYE_GATEWAY = "https://solanaprojectpassport.mail-timothy.workers.dev/api/token";
+  const BIRDEYE_HISTORY_GATEWAY = "https://solanaprojectpassport.mail-timothy.workers.dev/api/history";
 
   // GeckoTerminal is used ONLY to discover which DEX names should be shown
   // as decorative/info bubbles. Its liquidity/price/volume values are ignored.
@@ -1789,6 +1790,50 @@ body.embed-mode .passport-foot{padding:12px 16px}
     }
   }
 
+  async function fetchBirdeyeHistory7d(token) {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 15000);
+
+    try {
+      const url =
+        BIRDEYE_HISTORY_GATEWAY +
+        "?address=" +
+        encodeURIComponent(token);
+
+      const res = await fetch(url, {
+        method: "GET",
+        headers: { "Accept": "application/json" },
+        signal: controller.signal
+      });
+
+      let payload = null;
+      try {
+        payload = await res.json();
+      } catch {
+        payload = null;
+      }
+
+      if (!res.ok || !payload?.success || !Array.isArray(payload?.data?.points)) {
+        throw new Error(
+          payload?.detail ||
+          payload?.error ||
+          "7D price history is unavailable."
+        );
+      }
+
+      return payload.data.points
+        .map(point => ({
+          unixTime: Number(point?.unixTime) || 0,
+          value: Number(point?.value) || 0
+        }))
+        .filter(point => point.unixTime > 0 && point.value > 0)
+        .sort((a,b) => a.unixTime - b.unixTime);
+    } finally {
+      clearTimeout(timeout);
+    }
+  }
+
+
   async function fetchDexBubbles(token) {
     try {
       const gecko = await fetchGeckoPools(token);
@@ -2218,12 +2263,151 @@ body.embed-mode .passport-foot{padding:12px 16px}
   }
 
 
+  function drawSevenDayPriceChart(ctx, points, x, y, w, h) {
+    const valid = (Array.isArray(points) ? points : [])
+      .map(p => ({
+        unixTime: Number(p?.unixTime) || 0,
+        value: Number(p?.value) || 0
+      }))
+      .filter(p => p.unixTime > 0 && p.value > 0)
+      .sort((a,b) => a.unixTime - b.unixTime);
+
+    const panelGrad = ctx.createLinearGradient(x,y,x+w,y+h);
+    panelGrad.addColorStop(0,"rgba(27,25,53,.66)");
+    panelGrad.addColorStop(1,"rgba(10,20,33,.64)");
+    ctx.fillStyle = panelGrad;
+    roundedRect(ctx,x,y,w,h,20);
+    ctx.fill();
+
+    ctx.strokeStyle = "rgba(176,147,255,.14)";
+    ctx.lineWidth = 1.2;
+    roundedRect(ctx,x+.6,y+.6,w-1.2,h-1.2,20);
+    ctx.stroke();
+
+    ctx.fillStyle = "#858ca6";
+    ctx.font = "700 15px Inter, Arial, sans-serif";
+    ctx.textAlign = "left";
+    ctx.fillText("7D PRICE",x+20,y+25);
+
+    if (valid.length < 2) {
+      ctx.fillStyle = "#777e98";
+      ctx.font = "600 15px Inter, Arial, sans-serif";
+      ctx.textAlign = "center";
+      ctx.fillText("7D price history unavailable",x+w/2,y+h/2+8);
+      ctx.textAlign = "left";
+      return;
+    }
+
+    const first = valid[0].value;
+    const last = valid[valid.length-1].value;
+    const change = first > 0 ? ((last / first) - 1) * 100 : 0;
+    const positive = change >= 0;
+
+    ctx.fillStyle = positive ? "#66e6a0" : "#ff8295";
+    ctx.font = "800 17px Inter, Arial, sans-serif";
+    ctx.textAlign = "right";
+    ctx.fillText(
+      (positive ? "+" : "") + change.toFixed(2) + "%",
+      x+w-20,
+      y+25
+    );
+    ctx.textAlign = "left";
+
+    const plotX = x + 20;
+    const plotY = y + 38;
+    const plotW = w - 40;
+    const plotH = h - 52;
+
+    const values = valid.map(p => p.value);
+    let min = Math.min(...values);
+    let max = Math.max(...values);
+
+    if (max <= min) {
+      const pad = Math.max(max * .01, 1e-12);
+      min -= pad;
+      max += pad;
+    } else {
+      const pad = (max - min) * .10;
+      min -= pad;
+      max += pad;
+    }
+
+    const coords = valid.map((p,i) => ({
+      x: plotX + (i / (valid.length - 1)) * plotW,
+      y: plotY + plotH - ((p.value - min) / (max - min)) * plotH
+    }));
+
+    ctx.strokeStyle = "rgba(255,255,255,.045)";
+    ctx.lineWidth = 1;
+    [0,.5,1].forEach(t => {
+      const gy = plotY + plotH * t;
+      ctx.beginPath();
+      ctx.moveTo(plotX,gy);
+      ctx.lineTo(plotX+plotW,gy);
+      ctx.stroke();
+    });
+
+    const area = ctx.createLinearGradient(0,plotY,0,plotY+plotH);
+    area.addColorStop(0, positive ? "rgba(102,230,160,.16)" : "rgba(255,130,149,.15)");
+    area.addColorStop(1,"rgba(126,103,255,0)");
+    ctx.fillStyle = area;
+    ctx.beginPath();
+    ctx.moveTo(coords[0].x,plotY+plotH);
+    coords.forEach(p => ctx.lineTo(p.x,p.y));
+    ctx.lineTo(coords[coords.length-1].x,plotY+plotH);
+    ctx.closePath();
+    ctx.fill();
+
+    const line = ctx.createLinearGradient(plotX,0,plotX+plotW,0);
+    line.addColorStop(0, positive ? "#a98aff" : "#ff9aaa");
+    line.addColorStop(1, positive ? "#67e8f9" : "#d88cff");
+    ctx.strokeStyle = line;
+    ctx.lineWidth = 3;
+    ctx.lineJoin = "round";
+    ctx.lineCap = "round";
+    ctx.beginPath();
+    coords.forEach((p,i) => {
+      if (i === 0) ctx.moveTo(p.x,p.y);
+      else ctx.lineTo(p.x,p.y);
+    });
+    ctx.stroke();
+
+    const end = coords[coords.length-1];
+    ctx.fillStyle = positive ? "#67e8f9" : "#ff8295";
+    ctx.beginPath();
+    ctx.arc(end.x,end.y,4.2,0,Math.PI*2);
+    ctx.fill();
+
+    ctx.textAlign = "left";
+  }
+
+
   async function makeShareCard() {
     if (!current) return;
     const cardButton = $("makeCard");
     const oldButtonText = cardButton.textContent;
     cardButton.disabled = true;
     cardButton.innerHTML = '<span class="loader"></span>Creating card';
+
+    let history7d = [];
+
+    try {
+      history7d = await fetchBirdeyeHistory7d(current.token);
+
+      if (Number(current.price) > 0) {
+        const now = Math.floor(Date.now() / 1000);
+        const lastPoint = history7d[history7d.length - 1];
+
+        if (!lastPoint || now - lastPoint.unixTime > 300) {
+          history7d.push({
+            unixTime: now,
+            value: Number(current.price)
+          });
+        }
+      }
+    } catch (historyError) {
+      console.warn("7D Share Card history unavailable:",historyError);
+    }
 
     const c = els.canvas;
     const ctx = c.getContext("2d");
@@ -2392,15 +2576,8 @@ body.embed-mode .passport-foot{padding:12px 16px}
     cardMetric(ctx,"24h Volume",compactMoney(current.volume24),72,600,452,142);
     cardMetric(ctx,"Market Cap",current.marketCap ? compactMoney(current.marketCap) : "$—",556,600,452,142);
 
-    ctx.fillStyle = "#858ca6";
-    ctx.font = "600 18px Inter, Arial, sans-serif";
-    ctx.textAlign = "center";
-    ctx.fillText(
-      "Updated " + new Date().toLocaleString([], {dateStyle:"medium",timeStyle:"short"}) +
-      "  ·  Public market data",
-      W / 2,808
-    );
-    ctx.textAlign = "left";
+    // 7D Birdeye price history replaces the old Updated line.
+    drawSevenDayPriceChart(ctx,history7d,72,764,936,118);
 
     if (current.marketCapEstimated) {
       ctx.fillStyle = "#797f98";
