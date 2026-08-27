@@ -2284,16 +2284,17 @@ body.embed-mode .passport-foot{padding:12px 16px}
     roundedRect(ctx,x+.6,y+.6,w-1.2,h-1.2,20);
     ctx.stroke();
 
-    ctx.fillStyle = "#858ca6";
-    ctx.font = "700 15px Inter, Arial, sans-serif";
+    // Match the typography of the other metric cards exactly.
+    ctx.fillStyle = "#8d93ad";
+    ctx.font = "700 18px Inter, Arial, sans-serif";
     ctx.textAlign = "left";
-    ctx.fillText("7D PRICE",x+20,y+25);
+    ctx.fillText("7D PRICE",x+22,y+36);
 
     if (valid.length < 2) {
       ctx.fillStyle = "#777e98";
-      ctx.font = "600 15px Inter, Arial, sans-serif";
+      ctx.font = "600 17px Inter, Arial, sans-serif";
       ctx.textAlign = "center";
-      ctx.fillText("7D price history unavailable",x+w/2,y+h/2+8);
+      ctx.fillText("7D price history unavailable",x+w/2,y+h/2+18);
       ctx.textAlign = "left";
       return;
     }
@@ -2303,20 +2304,20 @@ body.embed-mode .passport-foot{padding:12px 16px}
     const change = first > 0 ? ((last / first) - 1) * 100 : 0;
     const positive = change >= 0;
 
-    ctx.fillStyle = positive ? "#66e6a0" : "#ff8295";
-    ctx.font = "800 17px Inter, Arial, sans-serif";
+    ctx.fillStyle = positive ? "#71e6a1" : "#ff7b98";
+    ctx.font = "800 40px Inter, Arial, sans-serif";
     ctx.textAlign = "right";
     ctx.fillText(
       (positive ? "+" : "") + change.toFixed(2) + "%",
-      x+w-20,
-      y+25
+      x+w-22,
+      y+64
     );
     ctx.textAlign = "left";
 
-    const plotX = x + 20;
-    const plotY = y + 38;
-    const plotW = w - 40;
-    const plotH = h - 52;
+    const plotX = x + 22;
+    const plotY = y + 76;
+    const plotW = w - 44;
+    const plotH = h - 92;
 
     const values = valid.map(p => p.value);
     let min = Math.min(...values);
