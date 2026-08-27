@@ -2576,8 +2576,8 @@ body.embed-mode .passport-foot{padding:12px 16px}
     cardMetric(ctx,"24h Volume",compactMoney(current.volume24),72,600,452,142);
     cardMetric(ctx,"Market Cap",current.marketCap ? compactMoney(current.marketCap) : "$—",556,600,452,142);
 
-    // 7D Birdeye price history replaces the old Updated line.
-    drawSevenDayPriceChart(ctx,history7d,72,764,936,118);
+    // Larger 7D Birdeye price chart.
+    drawSevenDayPriceChart(ctx,history7d,72,754,936,176);
 
     if (current.marketCapEstimated) {
       ctx.fillStyle = "#797f98";
@@ -2585,7 +2585,7 @@ body.embed-mode .passport-foot{padding:12px 16px}
       ctx.fillText("Market Cap uses FDV fallback",556,728);
     }
 
-    // Clean two-line centered footer area with site below CTA
+    // Compact one-line ASTY footer to leave more room for the 7D chart.
     const lineGrad = ctx.createLinearGradient(72,0,1008,0);
     lineGrad.addColorStop(0,"rgba(176,147,255,.30)");
     lineGrad.addColorStop(.55,"rgba(255,255,255,.06)");
@@ -2593,57 +2593,62 @@ body.embed-mode .passport-foot{padding:12px 16px}
     ctx.strokeStyle = lineGrad;
     ctx.lineWidth = 1.2;
     ctx.beginPath();
-    ctx.moveTo(72,905);
-    ctx.lineTo(1008,905);
+    ctx.moveTo(72,950);
+    ctx.lineTo(1008,950);
     ctx.stroke();
 
     const brandLogo = await loadAstyBrandLogo();
     const brandSize = 24;
-    const row1Y = 942;
-    const row2Y = 972;
-    const row3Y = 999;
-    const row1Font = "800 22px Inter, Arial, sans-serif";
-    const row2Font = "700 18px Inter, Arial, sans-serif";
-    const row3Font = "800 18px Inter, Arial, sans-serif";
-    const row1Color = "#ece4ff";
-    const row2Color = "#ddd2f8";
-    const row3Color = "#bdafff";
+    const footerY = 989;
 
-    // Row 1: centered logo + $ASTY
-    const row1Text = "$ASTY";
-    ctx.font = row1Font;
-    const row1TextW = ctx.measureText(row1Text).width;
-    const row1Gap = 12;
-    const row1TotalW = brandSize + row1Gap + row1TextW;
-    let row1X = (W - row1TotalW) / 2;
-    const logoY2 = row1Y - 19;
+    const astyText = "$ASTY";
+    const ctaText = "Create your Token Passport for free.";
+    const siteText = "ArbStrategy.net";
+
+    const astyFont = "800 20px Inter, Arial, sans-serif";
+    const ctaFont = "700 17px Inter, Arial, sans-serif";
+    const siteFont = "800 17px Inter, Arial, sans-serif";
+
+    ctx.font = astyFont;
+    const astyW = ctx.measureText(astyText).width;
+
+    ctx.font = ctaFont;
+    const ctaW = ctx.measureText(ctaText).width;
+
+    ctx.font = siteFont;
+    const siteW = ctx.measureText(siteText).width;
+
+    const logoGap = 10;
+    const sectionGap = 28;
+    const totalFooterW =
+      brandSize + logoGap + astyW +
+      sectionGap + ctaW +
+      sectionGap + siteW;
+
+    let footerX = (W - totalFooterW) / 2;
+    const footerLogoY = footerY - 19;
 
     if (brandLogo?.img) {
-      drawCircularImage(ctx, brandLogo.img, row1X, logoY2, brandSize);
+      drawCircularImage(ctx, brandLogo.img, footerX, footerLogoY, brandSize);
     } else {
-      drawTokenLogoFallback(ctx, row1X, logoY2, brandSize, "A");
+      drawTokenLogoFallback(ctx, footerX, footerLogoY, brandSize, "A");
     }
-    row1X += brandSize + row1Gap;
 
-    ctx.fillStyle = row1Color;
-    ctx.font = row1Font;
-    ctx.fillText(row1Text, row1X, row1Y);
+    footerX += brandSize + logoGap;
 
-    // Row 2: CTA
-    const row2Text = "Create your Token Passport for free.";
-    ctx.font = row2Font;
-    const row2TextW = ctx.measureText(row2Text).width;
-    const row2X = (W - row2TextW) / 2;
-    ctx.fillStyle = row2Color;
-    ctx.fillText(row2Text, row2X, row2Y);
+    ctx.fillStyle = "#ece4ff";
+    ctx.font = astyFont;
+    ctx.fillText(astyText, footerX, footerY);
+    footerX += astyW + sectionGap;
 
-    // Row 3: site
-    const row3Text = "ArbStrategy.net";
-    ctx.font = row3Font;
-    const row3TextW = ctx.measureText(row3Text).width;
-    const row3X = (W - row3TextW) / 2;
-    ctx.fillStyle = row3Color;
-    ctx.fillText(row3Text, row3X, row3Y);
+    ctx.fillStyle = "#ddd2f8";
+    ctx.font = ctaFont;
+    ctx.fillText(ctaText, footerX, footerY);
+    footerX += ctaW + sectionGap;
+
+    ctx.fillStyle = "#bdafff";
+    ctx.font = siteFont;
+    ctx.fillText(siteText, footerX, footerY);
 
     if (loadedLogo?.objectUrl) URL.revokeObjectURL(loadedLogo.objectUrl);
     if (brandLogo?.objectUrl) URL.revokeObjectURL(brandLogo.objectUrl);
