@@ -396,53 +396,37 @@ button {
 /* HERO */
 
 .hero {
-  padding: 54px 0 34px;
+  padding: 34px 0 26px;
 }
 
 .hero-panel {
   position: relative;
-  min-height: 330px;
+  min-height: 235px;
   display: grid;
-  grid-template-columns: minmax(0, 1.28fr) minmax(220px, 0.72fr);
-  gap: 30px;
+  grid-template-columns: minmax(0, 1.42fr) minmax(190px, 0.58fr);
+  gap: 18px;
   align-items: center;
-  padding: clamp(32px, 6vw, 62px);
+  padding: clamp(24px, 4vw, 38px);
   overflow: hidden;
   border: 1px solid var(--line);
-  border-radius: var(--radius-hero);
+  border-radius: 24px;
   background:
-    linear-gradient(
-      135deg,
-      rgba(124, 58, 237, 0.11),
-      rgba(255, 255, 255, 0.025) 48%,
-      rgba(34, 211, 238, 0.045)
-    );
+    radial-gradient(circle at 84% 26%, rgba(103, 232, 249, 0.075), transparent 28%),
+    radial-gradient(circle at 22% 8%, rgba(167, 139, 250, 0.10), transparent 36%),
+    linear-gradient(145deg, rgba(18, 17, 29, 0.96), rgba(8, 8, 14, 0.97));
   box-shadow: var(--shadow-panel);
-}
-
-.hero-panel::before {
-  content: "";
-  position: absolute;
-  width: 340px;
-  height: 340px;
-  top: -180px;
-  right: -80px;
-  border-radius: 50%;
-  background: rgba(103, 232, 249, 0.11);
-  filter: blur(75px);
-  pointer-events: none;
 }
 
 .hero-panel::after {
   content: "";
   position: absolute;
-  width: 280px;
-  height: 280px;
-  left: -140px;
-  bottom: -180px;
+  width: 300px;
+  height: 300px;
+  right: -170px;
+  bottom: -190px;
   border-radius: 50%;
-  background: rgba(124, 58, 237, 0.18);
-  filter: blur(75px);
+  border: 1px solid rgba(103, 232, 249, 0.10);
+  box-shadow: 0 0 78px rgba(103, 232, 249, 0.035);
   pointer-events: none;
 }
 
@@ -456,51 +440,34 @@ button {
   display: inline-flex;
   align-items: center;
   gap: 9px;
-  margin-bottom: 20px;
-  padding: 8px 12px;
-  border: 1px solid rgba(167, 139, 250, 0.22);
-  border-radius: 999px;
-  background: rgba(124, 58, 237, 0.065);
-  color: var(--purple-light);
-  font-size: 12px;
-  font-weight: 800;
+  margin-bottom: 12px;
+  color: var(--purple);
+  font-size: 10px;
+  font-weight: 900;
   line-height: 1.3;
-  letter-spacing: 0.9px;
+  letter-spacing: 1.5px;
   text-transform: uppercase;
 }
 
 .hero-kicker-dot {
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: var(--purple);
-  box-shadow: 0 0 14px rgba(167, 139, 250, 0.88);
-  animation: statusPulse 2.2s ease-in-out infinite;
-}
-
-@keyframes statusPulse {
-  0%, 100% {
-    opacity: 0.72;
-    transform: scale(1);
-  }
-
-  50% {
-    opacity: 1;
-    transform: scale(1.25);
-  }
+  width: 24px;
+  height: 1px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--purple), var(--cyan));
+  box-shadow: 0 0 10px rgba(167, 139, 250, 0.26);
 }
 
 .hero-title {
-  max-width: 800px;
+  max-width: 760px;
   margin: 0;
-  padding-bottom: 0.11em;
-  font-size: clamp(54px, 8vw, 88px);
-  line-height: 1.05;
-  letter-spacing: -2.5px;
+  padding-bottom: 0.08em;
+  font-size: clamp(44px, 6.4vw, 70px);
+  line-height: 0.98;
+  letter-spacing: -2.6px;
   background: linear-gradient(
     90deg,
     #ffffff 0%,
-    var(--purple-light) 53%,
+    var(--purple-light) 55%,
     var(--cyan) 100%
   );
   -webkit-background-clip: text;
@@ -510,65 +477,49 @@ button {
 
 .hero-sub {
   max-width: 620px;
-  margin: 14px 0 0;
+  margin: 12px 0 0;
   color: var(--text-soft);
-  font-size: clamp(16px, 2vw, 19px);
-  font-weight: 650;
-  line-height: 1.55;
-}
-
-.hero-meta {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-top: 24px;
-}
-
-.hero-meta span {
-  display: inline-flex;
-  align-items: center;
-  min-height: 34px;
-  padding: 7px 11px;
-  border: 1px solid rgba(255, 255, 255, 0.085);
-  border-radius: 999px;
-  background: rgba(5, 7, 16, 0.35);
-  color: var(--text-soft);
-  font-size: 11px;
-  font-weight: 750;
-  letter-spacing: 0.35px;
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.6;
 }
 
 .hero-visual {
+  min-height: 180px;
   display: flex;
-  align-items: center;
+  align-items: flex-end;
   justify-content: center;
-  min-height: 250px;
+  overflow: hidden;
+  border: 1px solid rgba(167, 139, 250, 0.11);
+  border-radius: 20px;
+  background:
+    radial-gradient(circle at 50% 55%, rgba(167, 139, 250, 0.11), transparent 34%),
+    linear-gradient(180deg, rgba(255,255,255,0.012), rgba(103,232,249,0.02));
 }
 
 .hero-wolf-glow {
   position: absolute;
-  width: 245px;
-  height: 245px;
+  width: 145px;
+  height: 145px;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
   border-radius: 50%;
-  background:
-    radial-gradient(
-      circle,
-      rgba(124, 58, 237, 0.28),
-      rgba(124, 58, 237, 0.075) 45%,
-      transparent 72%
-    );
-  filter: blur(6px);
-  animation: wolfGlow 3.8s ease-in-out infinite;
+  border: 1px solid rgba(167, 139, 250, 0.15);
+  box-shadow:
+    0 0 48px rgba(124, 58, 237, 0.12),
+    inset 0 0 38px rgba(103, 232, 249, 0.035);
+  animation: wolfGlow 4s ease-in-out infinite;
 }
 
 @keyframes wolfGlow {
   0%, 100% {
-    transform: scale(0.94);
-    opacity: 0.70;
+    transform: translate(-50%, -50%) scale(0.96);
+    opacity: 0.72;
   }
 
   50% {
-    transform: scale(1.06);
+    transform: translate(-50%, -50%) scale(1.04);
     opacity: 1;
   }
 }
@@ -577,23 +528,13 @@ button {
   position: relative;
   z-index: 2;
   display: block;
-  width: min(100%, 230px);
-  max-height: 270px;
+  width: min(82%, 165px);
+  max-height: 178px;
   object-fit: contain;
+  transform: translateY(4px);
   filter:
-    drop-shadow(0 20px 28px rgba(0, 0, 0, 0.44))
-    drop-shadow(0 0 24px rgba(124, 58, 237, 0.26));
-  animation: wolfFloat 5s ease-in-out infinite;
-}
-
-@keyframes wolfFloat {
-  0%, 100% {
-    transform: translateY(0) rotate(-0.4deg);
-  }
-
-  50% {
-    transform: translateY(-8px) rotate(0.4deg);
-  }
+    drop-shadow(0 16px 24px rgba(0, 0, 0, 0.40))
+    drop-shadow(0 0 18px rgba(167, 139, 250, 0.16));
 }
 
 /* TOOL SECTION */
@@ -646,7 +587,7 @@ button {
 
 .tool-card {
   position: relative;
-  min-height: 255px;
+  min-height: 285px;
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -947,15 +888,37 @@ button {
   }
 
   .hero-panel {
-    grid-template-columns: 1fr;
+    display: block;
+    min-height: auto;
+  }
+
+  .hero-copy {
+    position: relative;
+    z-index: 3;
   }
 
   .hero-visual {
-    min-height: 190px;
+    position: absolute;
+    right: -22px;
+    bottom: -16px;
+    width: 145px;
+    height: 150px;
+    min-height: 0;
+    border: 0;
+    border-radius: 50%;
+    background: none;
+    opacity: 0.14;
+    pointer-events: none;
+  }
+
+  .hero-wolf-glow {
+    width: 125px;
+    height: 125px;
   }
 
   .hero-wolf {
-    width: min(42%, 190px);
+    width: 130px;
+    max-height: 135px;
   }
 }
 
@@ -1001,35 +964,41 @@ button {
   }
 
   .hero {
-    padding-top: 28px;
+    padding-top: 22px;
   }
 
   .hero-panel {
-    min-height: auto;
-    padding: 31px 21px 25px;
+    padding: 24px 20px 26px;
   }
 
   .hero-title {
-    font-size: clamp(42px, 13vw, 64px);
-    line-height: 1.08;
-    letter-spacing: -1.7px;
+    font-size: clamp(42px, 12vw, 58px);
+    line-height: 0.98;
+    letter-spacing: -2px;
   }
 
   .hero-sub {
+    max-width: calc(100% - 32px);
     font-size: 14px;
+    line-height: 1.62;
   }
 
   .hero-visual {
-    min-height: 155px;
-  }
-
-  .hero-wolf {
-    width: min(43%, 150px);
+    right: -28px;
+    bottom: -10px;
+    width: 124px;
+    height: 128px;
+    opacity: 0.11;
   }
 
   .hero-wolf-glow {
-    width: 170px;
-    height: 170px;
+    width: 108px;
+    height: 108px;
+  }
+
+  .hero-wolf {
+    width: 112px;
+    max-height: 118px;
   }
 
   .tools-section {
@@ -1041,7 +1010,7 @@ button {
   }
 
   .tool-card {
-    min-height: 320px;
+    min-height: 300px;
     padding: 23px;
   }
 
@@ -1276,10 +1245,10 @@ button {
 
         <h1
           class="hero-title"
-          data-en="ASTY Tools."
-          data-de="ASTY Tools."
+          data-en="ASTY Tools"
+          data-de="ASTY Tools"
         >
-          ASTY Tools.
+          ASTY Tools
         </h1>
 
         <p
@@ -1338,10 +1307,10 @@ button {
 
           <p
             class="tool-description"
-            data-en="Check your ASTY balance, value and share of the remaining supply. No wallet connection."
-            data-de="Checke deinen ASTY-Bestand, Wert und Anteil an der verbleibenden Supply. Ohne Wallet-Verbindung."
+            data-en="Check your ASTY balance, value and share of the remaining supply. No wallet connection. Just paste a wallet address and get your personal ASTY overview."
+            data-de="Checke deinen ASTY-Bestand, Wert und Anteil an der verbleibenden Supply. Ohne Wallet-Verbindung. Füge einfach eine Wallet-Adresse ein und erhalte deine persönliche ASTY-Übersicht."
           >
-            Check your ASTY balance, value and share of the remaining supply. No wallet connection.
+            Check your ASTY balance, value and share of the remaining supply. No wallet connection. Just paste a wallet address and get your personal ASTY overview.
           </p>
         </div>
 
@@ -1380,10 +1349,10 @@ button {
 
           <p
             class="tool-description"
-            data-en="Find empty token accounts and reclaim the SOL locked in them as rent."
-            data-de="Finde leere Tokenkonten und hole das darin gebundene Rent-SOL zurück."
+            data-en="Find empty token accounts and reclaim the SOL locked in them as rent. Only eligible empty accounts are closed, and Phantom keeps you in control of every transaction."
+            data-de="Finde leere Tokenkonten und hole das darin gebundene Rent-SOL zurück. Es werden nur geeignete leere Konten geschlossen und jede Transaktion bleibt über Phantom unter deiner Kontrolle."
           >
-            Find empty token accounts and reclaim the SOL locked in them as rent.
+            Find empty token accounts and reclaim the SOL locked in them as rent. Only eligible empty accounts are closed, and Phantom keeps you in control of every transaction.
           </p>
         </div>
 
@@ -1422,10 +1391,10 @@ button {
 
           <p
             class="tool-description"
-            data-en="Turn current ASTY pool performance into ready-to-post X content."
-            data-de="Mach aus aktueller ASTY-Pool-Performance direkt fertigen X-Content."
+            data-en="Turn current ASTY pool performance into ready-to-post X content. Live pool data is turned into concise updates without collecting the numbers manually."
+            data-de="Mach aus aktueller ASTY-Pool-Performance direkt fertigen X-Content. Live-Pooldaten werden zu kompakten Updates, ohne dass du die Zahlen selbst zusammensuchen musst."
           >
-            Turn current ASTY pool performance into ready-to-post X content.
+            Turn current ASTY pool performance into ready-to-post X content. Live pool data is turned into concise updates without collecting the numbers manually.
           </p>
         </div>
 
@@ -1464,10 +1433,10 @@ button {
 
           <p
             class="tool-description"
-            data-en="Enter a token address. Get liquidity, volume, markets and DEX activity in one clean snapshot."
-            data-de="Tokenadresse rein. Liquidität, Volumen, Märkte und DEX-Aktivität in einem klaren Snapshot raus."
+            data-en="Enter a token address. Get liquidity, volume, markets and DEX activity in one clean snapshot. It gives you a fast overview of a Solana project without jumping between multiple platforms."
+            data-de="Tokenadresse rein. Liquidität, Volumen, Märkte und DEX-Aktivität in einem klaren Snapshot raus. So bekommst du schnell einen Überblick über ein Solana-Projekt, ohne zwischen mehreren Plattformen zu springen."
           >
-            Enter a token address. Get liquidity, volume, markets and DEX activity in one clean snapshot.
+            Enter a token address. Get liquidity, volume, markets and DEX activity in one clean snapshot. It gives you a fast overview of a Solana project without jumping between multiple platforms.
           </p>
         </div>
 
