@@ -2599,16 +2599,16 @@ body.embed-mode .passport-foot{padding:12px 16px}
     ctx.stroke();
 
     const brandLogo = await loadAstyBrandLogo();
-    const brandSize = 32;
-    const footerY = 991;
+    const brandSize = 38;
+    const footerY = 1005;
 
     const astyText = "$ASTY";
     const ctaText = "Create your Token Passport for free.";
     const siteText = "ArbStrategy.net";
 
-    const astyFont = "850 24px Inter, Arial, sans-serif";
-    const ctaFont = "750 20px Inter, Arial, sans-serif";
-    const siteFont = "850 20px Inter, Arial, sans-serif";
+    const astyFont = "850 27px Inter, Arial, sans-serif";
+    const ctaFont = "750 22px Inter, Arial, sans-serif";
+    const siteFont = "850 22px Inter, Arial, sans-serif";
 
     ctx.font = astyFont;
     const astyW = ctx.measureText(astyText).width;
@@ -2620,15 +2620,15 @@ body.embed-mode .passport-foot{padding:12px 16px}
     const siteW = ctx.measureText(siteText).width;
 
     // Keep the complete ASTY CTA visually centered as one compact unit.
-    const logoGap = 12;
-    const sectionGap = 22;
+    const logoGap = 13;
+    const sectionGap = 20;
     const totalFooterW =
       brandSize + logoGap + astyW +
       sectionGap + ctaW +
       sectionGap + siteW;
 
     let footerX = (W - totalFooterW) / 2;
-    const footerLogoY = footerY - 25;
+    const footerLogoY = footerY - 29;
 
     if (brandLogo?.img) {
       drawCircularImage(ctx, brandLogo.img, footerX, footerLogoY, brandSize);
