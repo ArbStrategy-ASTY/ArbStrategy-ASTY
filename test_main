@@ -329,8 +329,9 @@ button { font-family: inherit; }
 .hero-actions { display: flex; flex-wrap: wrap; gap: 11px; margin-top: 26px; }
 .hero-btn { min-height: 46px; padding: 12px 18px; font-size: 14px; }
 .hero-btn.primary {
-  border-color: rgba(196,181,253,.50);
-  background: linear-gradient(135deg, rgba(124,58,237,.28), rgba(124,58,237,.12));
+  border-color: rgba(196,181,253,.62);
+  background: linear-gradient(135deg, rgba(124,58,237,.38), rgba(124,58,237,.17));
+  box-shadow: 0 0 0 1px rgba(167,139,250,.06), 0 0 26px rgba(124,58,237,.16);
 }
 .hero-btn.secondary { border-color: var(--line-cyan); color: var(--cyan); }
 
@@ -1116,33 +1117,33 @@ body.preloader-active { overflow: hidden; }
     <div class="hero-panel">
       <div class="hero-grid">
         <div class="hero-copy">
-<h1 class="hero-title" data-en="ASTY turns trading activity into continuous system growth." data-de="ASTY verwandelt Handelsaktivität in kontinuierliches Systemwachstum.">
-            ASTY turns trading activity into continuous system growth.
+<h1 class="hero-title" data-en="ASTY turns trading activity into burns, liquidity growth and reserves." data-de="ASTY verwandelt Handelsaktivität in Burns, Liquiditätswachstum und Reserven.">
+            ASTY turns trading activity into burns, liquidity growth and reserves.
           </h1>
 
-          <p class="hero-sub" data-en="ASTY provides liquidity across multiple Solana markets. Trading and arbitrage generate activity that feeds burns, liquidity growth and strategic reserves." data-de="ASTY stellt Liquidität in mehreren Solana-Märkten bereit. Trading und Arbitrage erzeugen Aktivität, die Burns, Liquiditätswachstum und strategische Reserven speist.">
-            ASTY provides liquidity across multiple Solana markets. Trading and arbitrage generate activity that feeds burns, liquidity growth and strategic reserves.
+          <p class="hero-sub" data-en="ASTY is paired with selected Solana assets. Price differences attract arbitrage bots, whose trades trigger the fixed 1% ASTY fee. That fee continuously feeds burns, liquidity growth and strategic reserves." data-de="ASTY wird mit ausgewählten Solana-Assets gepaart. Preisunterschiede ziehen Arbitrage-Bots an, deren Trades die feste 1%-ASTY-Gebühr auslösen. Diese Gebühr speist fortlaufend Burns, Liquiditätswachstum und strategische Reserven.">
+            ASTY is paired with selected Solana assets. Price differences attract arbitrage bots, whose trades trigger the fixed 1% ASTY fee. That fee continuously feeds burns, liquidity growth and strategic reserves.
           </p>
 
           <div class="hero-actions">
-            <a class="hero-btn primary" href="https://htmlpreview.github.io/?https://github.com/ArbStrategy-ASTY/ArbStrategy-ASTY/blob/main/Dashboard.html" target="_blank" rel="noopener noreferrer" data-en="See it live" data-de="Live ansehen">See it live</a>
-            <a class="hero-btn secondary" href="https://birdeye.so/solana/token/ASTYqeaoK83Zs1pTFEXZUB6BM8cG8YLTsN852NUkt7ZR" target="_blank" rel="noopener noreferrer" data-en="Buy $ASTY" data-de="$ASTY kaufen">Buy $ASTY</a>
+            <a class="hero-btn primary" href="https://birdeye.so/solana/token/ASTYqeaoK83Zs1pTFEXZUB6BM8cG8YLTsN852NUkt7ZR" target="_blank" rel="noopener noreferrer" data-en="Buy $ASTY" data-de="$ASTY kaufen">Buy $ASTY</a>
+            <a class="hero-btn secondary" href="https://htmlpreview.github.io/?https://github.com/ArbStrategy-ASTY/ArbStrategy-ASTY/blob/main/Dashboard.html" target="_blank" rel="noopener noreferrer" data-en="See it live" data-de="Live ansehen">See it live</a>
           </div>
         </div>
       </div>
 
       <div class="hero-principles">
         <div class="hero-principle">
-          <strong data-en="Liquidity" data-de="Liquidität">Liquidity</strong>
-          <span data-en="ASTY liquidity works across multiple Solana markets." data-de="ASTY-Liquidität arbeitet gleichzeitig in mehreren Solana-Märkten.">ASTY liquidity works across multiple Solana markets.</span>
+          <strong data-en="Create markets" data-de="Märkte schaffen">Create markets</strong>
+          <span data-en="ASTY liquidity connects selected assets across Solana." data-de="ASTY-Liquidität verbindet ausgewählte Assets auf Solana.">ASTY liquidity connects selected assets across Solana.</span>
         </div>
         <div class="hero-principle">
-          <strong data-en="Activity" data-de="Aktivität">Activity</strong>
-          <span data-en="Trading and arbitrage create continuous fee activity." data-de="Trading und Arbitrage erzeugen fortlaufende Gebührenaktivität.">Trading and arbitrage create continuous fee activity.</span>
+          <strong data-en="Generate activity" data-de="Aktivität erzeugen">Generate activity</strong>
+          <span data-en="Price differences bring traders and arbitrage bots into the pools." data-de="Preisunterschiede bringen Trader und Arbitrage-Bots in die Pools.">Price differences bring traders and arbitrage bots into the pools.</span>
         </div>
         <div class="hero-principle">
-          <strong data-en="Growth" data-de="Wachstum">Growth</strong>
-          <span data-en="Fees feed burns, liquidity growth and strategic reserves." data-de="Gebühren speisen Burns, Liquiditätswachstum und strategische Reserven.">Fees feed burns, liquidity growth and strategic reserves.</span>
+          <strong data-en="Feed the ASTY-Effect" data-de="ASTY-Effect speisen">Feed the ASTY-Effect</strong>
+          <span data-en="The 1% fee feeds Burn • Growth • Treasury." data-de="Die 1%-Gebühr speist Burn • Wachstum • Treasury.">The 1% fee feeds Burn • Growth • Treasury.</span>
         </div>
       </div>
     </div>
