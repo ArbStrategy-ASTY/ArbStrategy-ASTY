@@ -9,7 +9,7 @@
 
 <meta
   name="description"
-  content="Explore the ASTY utility ecosystem: My ASTY, ASTY Unlockr, ASTY X Signal Lab and the Solana Project Passport."
+  content="Explore the ASTY ecosystem: Live Dashboard, My ASTY, ASTY Unlockr, Solana Project Passport and ASTY X Signal Lab."
 />
 
 <style>
@@ -585,6 +585,23 @@ button {
   gap: 16px;
 }
 
+.tool-card.featured-card {
+  grid-column: 1 / -1;
+  min-height: 245px;
+  border-color: rgba(167, 139, 250, 0.22);
+  background:
+    linear-gradient(
+      125deg,
+      rgba(124, 58, 237, 0.12),
+      rgba(255, 255, 255, 0.035) 55%,
+      rgba(34, 211, 238, 0.055)
+    );
+}
+
+.tool-card.featured-card .tool-description {
+  max-width: 820px;
+}
+
 .tool-card {
   position: relative;
   min-height: 285px;
@@ -1123,7 +1140,7 @@ button {
         </a>
 
         <a
-          href="https://htmlpreview.github.io/?https://github.com/ArbStrategy-ASTY/ArbStrategy-ASTY/blob/main/Dashboard.html"
+          href="https://arbstrategy.net/Dashboard.html"
           target="_blank"
           rel="noopener noreferrer"
           class="nav-link"
@@ -1192,7 +1209,7 @@ button {
         </a>
 
         <a
-          href="https://htmlpreview.github.io/?https://github.com/ArbStrategy-ASTY/ArbStrategy-ASTY/blob/main/Dashboard.html"
+          href="https://arbstrategy.net/Dashboard.html"
           target="_blank"
           rel="noopener noreferrer"
           class="mobile-menu-link"
@@ -1280,11 +1297,52 @@ button {
 
     <div class="tools-grid">
 
+      <!-- LIVE DASHBOARD -->
+
+      <a
+        class="tool-card featured-card"
+        style="--delay: 0ms;"
+        href="https://arbstrategy.net/Dashboard.html"
+        target="_blank"
+        rel="noopener noreferrer"
+        aria-label="Open ASTY Live Dashboard"
+      >
+        <div class="tool-top">
+          <span class="tool-icon">◉</span>
+        </div>
+
+        <div class="tool-copy">
+          <span
+            class="tool-eyebrow"
+            data-en="See ASTY live."
+            data-de="Sieh ASTY live."
+          >
+            See ASTY live.
+          </span>
+
+          <h3 class="tool-title">ASTY Live Dashboard</h3>
+
+          <p
+            class="tool-description"
+            data-en="Track ASTY price, liquidity, market cap, supply and the full pool network in one place. Live market data gives you a transparent view of how the ASTY system is performing right now."
+            data-de="Verfolge ASTY-Preis, Liquidität, Market Cap, Supply und das gesamte Pool-Netzwerk an einem Ort. Live-Marktdaten zeigen dir transparent, wie das ASTY-System gerade performt."
+          >
+            Track ASTY price, liquidity, market cap, supply and the full pool network in one place. Live market data gives you a transparent view of how the ASTY system is performing right now.
+          </p>
+        </div>
+
+        <div class="tool-footer">
+          <span class="open-tool">
+            <span data-en="Open Live Dashboard" data-de="Live Dashboard öffnen">Open Live Dashboard</span>
+          </span>
+        </div>
+      </a>
+
       <!-- MY ASTY -->
 
       <a
         class="tool-card"
-        style="--delay: 0ms;"
+        style="--delay: 90ms;"
         href="https://arbstrategy.net/myASTY.html"
         target="_blank"
         rel="noopener noreferrer"
@@ -1315,7 +1373,6 @@ button {
         </div>
 
         <div class="tool-footer">
-
           <span class="open-tool">
             <span data-en="Open My ASTY" data-de="My ASTY öffnen">Open My ASTY</span>
           </span>
@@ -1326,7 +1383,7 @@ button {
 
       <a
         class="tool-card cyan-card"
-        style="--delay: 90ms;"
+        style="--delay: 180ms;"
         href="https://unlockr.arbstrategy.net/"
         target="_blank"
         rel="noopener noreferrer"
@@ -1357,51 +1414,8 @@ button {
         </div>
 
         <div class="tool-footer">
-
           <span class="open-tool">
             <span data-en="Open ASTY Unlockr" data-de="ASTY Unlockr öffnen">Open ASTY Unlockr</span>
-          </span>
-        </div>
-      </a>
-
-      <!-- X SIGNAL LAB -->
-
-      <a
-        class="tool-card cyan-card"
-        style="--delay: 180ms;"
-        href="https://arbstrategy.net/signals.html"
-        target="_blank"
-        rel="noopener noreferrer"
-        aria-label="Open ASTY X Signal Lab"
-      >
-        <div class="tool-top">
-          <span class="tool-icon">𝕏</span>
-        </div>
-
-        <div class="tool-copy">
-          <span
-            class="tool-eyebrow"
-            data-en="Live data. Ready to post."
-            data-de="Live-Daten. Direkt postbereit."
-          >
-            Live data. Ready to post.
-          </span>
-
-          <h3 class="tool-title">ASTY X Signal Lab</h3>
-
-          <p
-            class="tool-description"
-            data-en="Turn current ASTY pool performance into ready-to-post X content. Live pool data is turned into concise updates without collecting the numbers manually."
-            data-de="Mach aus aktueller ASTY-Pool-Performance direkt fertigen X-Content. Live-Pooldaten werden zu kompakten Updates, ohne dass du die Zahlen selbst zusammensuchen musst."
-          >
-            Turn current ASTY pool performance into ready-to-post X content. Live pool data is turned into concise updates without collecting the numbers manually.
-          </p>
-        </div>
-
-        <div class="tool-footer">
-
-          <span class="open-tool">
-            <span data-en="Open X Signal Lab" data-de="X Signal Lab öffnen">Open X Signal Lab</span>
           </span>
         </div>
       </a>
@@ -1441,9 +1455,49 @@ button {
         </div>
 
         <div class="tool-footer">
-
           <span class="open-tool">
             <span data-en="Open Project Passport" data-de="Project Passport öffnen">Open Project Passport</span>
+          </span>
+        </div>
+      </a>
+
+      <!-- X SIGNAL LAB -->
+
+      <a
+        class="tool-card cyan-card"
+        style="--delay: 360ms;"
+        href="https://arbstrategy.net/signals.html"
+        target="_blank"
+        rel="noopener noreferrer"
+        aria-label="Open ASTY X Signal Lab"
+      >
+        <div class="tool-top">
+          <span class="tool-icon">𝕏</span>
+        </div>
+
+        <div class="tool-copy">
+          <span
+            class="tool-eyebrow"
+            data-en="Live data. Ready to post."
+            data-de="Live-Daten. Direkt postbereit."
+          >
+            Live data. Ready to post.
+          </span>
+
+          <h3 class="tool-title">ASTY X Signal Lab</h3>
+
+          <p
+            class="tool-description"
+            data-en="Turn current ASTY pool performance into ready-to-post X content. Live pool data is turned into concise updates without collecting the numbers manually."
+            data-de="Mach aus aktueller ASTY-Pool-Performance direkt fertigen X-Content. Live-Pooldaten werden zu kompakten Updates, ohne dass du die Zahlen selbst zusammensuchen musst."
+          >
+            Turn current ASTY pool performance into ready-to-post X content. Live pool data is turned into concise updates without collecting the numbers manually.
+          </p>
+        </div>
+
+        <div class="tool-footer">
+          <span class="open-tool">
+            <span data-en="Open X Signal Lab" data-de="X Signal Lab öffnen">Open X Signal Lab</span>
           </span>
         </div>
       </a>
