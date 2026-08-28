@@ -401,9 +401,9 @@ button {
 
 .hero-panel {
   position: relative;
-  min-height: 395px;
+  min-height: 330px;
   display: grid;
-  grid-template-columns: minmax(0, 1.2fr) minmax(250px, 0.8fr);
+  grid-template-columns: minmax(0, 1.28fr) minmax(220px, 0.72fr);
   gap: 30px;
   align-items: center;
   padding: clamp(32px, 6vw, 62px);
@@ -494,7 +494,7 @@ button {
   max-width: 800px;
   margin: 0;
   padding-bottom: 0.11em;
-  font-size: clamp(45px, 7vw, 76px);
+  font-size: clamp(54px, 8vw, 88px);
   line-height: 1.05;
   letter-spacing: -2.5px;
   background: linear-gradient(
@@ -509,11 +509,12 @@ button {
 }
 
 .hero-sub {
-  max-width: 690px;
-  margin: 20px 0 0;
+  max-width: 620px;
+  margin: 14px 0 0;
   color: var(--text-soft);
-  font-size: 16px;
-  line-height: 1.78;
+  font-size: clamp(16px, 2vw, 19px);
+  font-weight: 650;
+  line-height: 1.55;
 }
 
 .hero-meta {
@@ -598,7 +599,7 @@ button {
 /* TOOL SECTION */
 
 .tools-section {
-  padding: 38px 0 64px;
+  padding: 24px 0 72px;
 }
 
 .section-head {
@@ -640,16 +641,16 @@ button {
 .tools-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 18px;
+  gap: 16px;
 }
 
 .tool-card {
   position: relative;
-  min-height: 340px;
+  min-height: 255px;
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  padding: 28px;
+  padding: 25px;
   border: 1px solid var(--line);
   border-radius: var(--radius-large);
   background:
@@ -746,9 +747,9 @@ button {
 .tool-top {
   display: flex;
   align-items: flex-start;
-  justify-content: space-between;
+  justify-content: flex-start;
   gap: 18px;
-  margin-bottom: 25px;
+  margin-bottom: 18px;
 }
 
 .tool-icon {
@@ -787,39 +788,13 @@ button {
     0 0 18px rgba(34, 211, 238, 0.09);
 }
 
-.tool-status {
-  display: inline-flex;
-  align-items: center;
-  gap: 7px;
-  min-height: 30px;
-  padding: 6px 9px;
-  border: 1px solid rgba(255, 255, 255, 0.085);
-  border-radius: 999px;
-  background: rgba(5, 7, 16, 0.35);
-  color: var(--text-muted);
-  font-size: 9px;
-  font-weight: 850;
-  line-height: 1.25;
-  letter-spacing: 0.75px;
-  text-transform: uppercase;
-  white-space: nowrap;
-}
-
-.tool-status::before {
-  content: "";
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: var(--green);
-  box-shadow: 0 0 10px rgba(134, 239, 172, 0.65);
-}
 
 .tool-eyebrow {
   display: block;
   margin-bottom: 8px;
   color: var(--purple-light);
-  font-size: 10px;
-  font-weight: 850;
+  font-size: 11px;
+  font-weight: 900;
   line-height: 1.35;
   letter-spacing: 0.9px;
   text-transform: uppercase;
@@ -839,190 +814,58 @@ button {
 }
 
 .tool-description {
-  margin: 12px 0 0;
+  margin: 10px 0 0;
+  max-width: 520px;
   color: var(--text-soft);
   font-size: 14px;
-  line-height: 1.72;
+  line-height: 1.58;
 }
 
 .tool-footer {
   margin-top: auto;
-  padding-top: 24px;
+  padding-top: 18px;
 }
 
-.tool-tags {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 7px;
-  margin-bottom: 18px;
-}
-
-.tool-tag {
-  display: inline-flex;
-  align-items: center;
-  min-height: 28px;
-  padding: 5px 9px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 999px;
-  background: rgba(5, 7, 16, 0.30);
-  color: var(--text-muted);
-  font-size: 10px;
-  font-weight: 750;
-  line-height: 1.3;
-}
 
 .open-tool {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 14px;
+  justify-content: center;
   min-height: 48px;
-  padding: 11px 14px 11px 17px;
-  border: 1px solid rgba(167, 139, 250, 0.27);
+  padding: 11px 17px;
+  border: 1px solid rgba(167, 139, 250, 0.34);
   border-radius: 14px;
-  background: rgba(124, 58, 237, 0.085);
+  background: linear-gradient(135deg, rgba(124, 58, 237, 0.18), rgba(124, 58, 237, 0.09));
   color: #ffffff;
   font-size: 13px;
-  font-weight: 800;
+  font-weight: 850;
+  letter-spacing: 0.15px;
+  text-align: center;
   transition:
     transform 0.2s ease,
     border-color 0.2s ease,
-    background 0.2s ease;
+    background 0.2s ease,
+    box-shadow 0.2s ease;
 }
 
 .cyan-card .open-tool {
-  border-color: rgba(103, 232, 249, 0.22);
-  background: rgba(34, 211, 238, 0.055);
+  border-color: rgba(103, 232, 249, 0.28);
+  background: linear-gradient(135deg, rgba(34, 211, 238, 0.12), rgba(34, 211, 238, 0.055));
 }
 
 .tool-card:hover .open-tool {
-  border-color: rgba(196, 181, 253, 0.52);
-  background: rgba(124, 58, 237, 0.14);
+  transform: translateY(-1px);
+  border-color: rgba(196, 181, 253, 0.62);
+  background: rgba(124, 58, 237, 0.22);
+  box-shadow: 0 0 22px rgba(124, 58, 237, 0.16);
 }
 
 .tool-card.cyan-card:hover .open-tool {
-  border-color: rgba(103, 232, 249, 0.42);
-  background: rgba(34, 211, 238, 0.09);
+  border-color: rgba(103, 232, 249, 0.52);
+  background: rgba(34, 211, 238, 0.13);
+  box-shadow: 0 0 22px rgba(34, 211, 238, 0.10);
 }
 
-.open-tool-arrow {
-  display: grid;
-  place-items: center;
-  width: 28px;
-  height: 28px;
-  flex: 0 0 auto;
-  border: 1px solid rgba(255, 255, 255, 0.09);
-  border-radius: 50%;
-  background: rgba(5, 7, 16, 0.32);
-  color: var(--purple-light);
-  transition: transform 0.22s ease;
-}
-
-.cyan-card .open-tool-arrow {
-  color: var(--cyan);
-}
-
-.tool-card:hover .open-tool-arrow {
-  transform: translateX(3px);
-}
-
-/* ECOSYSTEM STRIP */
-
-.ecosystem-wrap {
-  padding: 8px 0 80px;
-}
-
-.ecosystem-card {
-  position: relative;
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto;
-  gap: 18px;
-  align-items: center;
-  padding: 21px 22px;
-  overflow: hidden;
-  border: 1px solid rgba(167, 139, 250, 0.22);
-  border-radius: var(--radius-large);
-  background:
-    linear-gradient(
-      125deg,
-      rgba(124, 58, 237, 0.11),
-      rgba(255, 255, 255, 0.034) 52%,
-      rgba(34, 211, 238, 0.045)
-    );
-  box-shadow: var(--shadow-panel);
-}
-
-.ecosystem-mark {
-  display: grid;
-  place-items: center;
-  width: 48px;
-  height: 48px;
-  border: 1px solid rgba(167, 139, 250, 0.24);
-  border-radius: 50%;
-  background: rgba(124, 58, 237, 0.10);
-}
-
-.ecosystem-mark span {
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  background: var(--purple);
-  box-shadow:
-    0 0 0 5px rgba(124, 58, 237, 0.09),
-    0 0 18px rgba(167, 139, 250, 0.90);
-  animation: statusPulse 2.1s ease-in-out infinite;
-}
-
-.ecosystem-label {
-  display: block;
-  margin-bottom: 4px;
-  color: var(--purple-light);
-  font-size: 10px;
-  font-weight: 850;
-  letter-spacing: 0.9px;
-  text-transform: uppercase;
-}
-
-.ecosystem-title {
-  display: block;
-  margin-bottom: 4px;
-  color: #ffffff;
-  font-size: 18px;
-  font-weight: 800;
-  line-height: 1.4;
-}
-
-.ecosystem-description {
-  display: block;
-  color: var(--text-soft);
-  font-size: 13px;
-  line-height: 1.6;
-}
-
-.ecosystem-link {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 42px;
-  padding: 10px 15px;
-  border: 1px solid var(--line-cyan);
-  border-radius: 999px;
-  background: rgba(34, 211, 238, 0.045);
-  color: var(--cyan);
-  font-size: 12px;
-  font-weight: 800;
-  white-space: nowrap;
-  transition:
-    transform 0.2s ease,
-    background 0.2s ease,
-    border-color 0.2s ease;
-}
-
-.ecosystem-link:hover {
-  transform: translateY(-2px);
-  background: rgba(34, 211, 238, 0.09);
-  border-color: rgba(103, 232, 249, 0.44);
-}
 
 /* REVEAL */
 
@@ -1202,15 +1045,6 @@ button {
     padding: 23px;
   }
 
-  .ecosystem-card {
-    grid-template-columns: auto minmax(0, 1fr);
-  }
-
-  .ecosystem-link {
-    grid-column: 1 / -1;
-    width: 100%;
-  }
-
   #scrollTopBtn {
     right: 17px;
     bottom: 17px;
@@ -1257,12 +1091,6 @@ button {
 
   .tool-description {
     font-size: 13px;
-  }
-
-  .ecosystem-card {
-    grid-template-columns: 1fr;
-    text-align: center;
-    justify-items: center;
   }
 }
 
@@ -1448,18 +1276,18 @@ button {
 
         <h1
           class="hero-title"
-          data-en="ASTY Tools. One ecosystem."
-          data-de="ASTY Tools. Ein Ecosystem."
+          data-en="ASTY Tools."
+          data-de="ASTY Tools."
         >
-          ASTY Tools. One ecosystem.
+          ASTY Tools.
         </h1>
 
         <p
           class="hero-sub"
-          data-en="Useful Solana utilities built around ArbStrategy. Track your ASTY position, recover unused SOL, turn live pool data into X content or create a live passport for any Solana token."
-          data-de="Nützliche Solana-Tools rund um ArbStrategy. Verfolge deine ASTY-Position, hole ungenutztes SOL zurück, verwandle Live-Pooldaten in X-Content oder erstelle einen Live-Passport für jeden Solana-Token."
+          data-en="Real utility. Built for ASTY and Solana."
+          data-de="Echter Nutzen. Gebaut für ASTY und Solana."
         >
-          Useful Solana utilities built around ArbStrategy. Track your ASTY position, recover unused SOL, turn live pool data into X content or create a live passport for any Solana token.
+          Real utility. Built for ASTY and Solana.
         </p>
 
       </div>
@@ -1481,24 +1309,6 @@ button {
 
   <section class="tools-section reveal">
 
-    <div class="section-head">
-      <h2
-        class="section-title"
-        data-en="Explore the ASTY tools"
-        data-de="Entdecke die ASTY Tools"
-      >
-        Explore the ASTY tools
-      </h2>
-
-      <p
-        class="section-sub"
-        data-en="Four different utilities, one clear goal: make the ASTY ecosystem more useful, transparent and accessible."
-        data-de="Vier unterschiedliche Tools mit einem klaren Ziel: das ASTY-Ecosystem nützlicher, transparenter und zugänglicher zu machen."
-      >
-        Four different utilities, one clear goal: make the ASTY ecosystem more useful, transparent and accessible.
-      </p>
-    </div>
-
     <div class="tools-grid">
 
       <!-- MY ASTY -->
@@ -1513,39 +1323,32 @@ button {
       >
         <div class="tool-top">
           <span class="tool-icon">◎</span>
-          <span class="tool-status" data-en="Live tool" data-de="Live Tool">Live tool</span>
         </div>
 
         <div class="tool-copy">
           <span
             class="tool-eyebrow"
-            data-en="Personal ASTY overview"
-            data-de="Persönliche ASTY-Übersicht"
+            data-en="Your ASTY. One view."
+            data-de="Dein ASTY. Eine Übersicht."
           >
-            Personal ASTY overview
+            Your ASTY. One view.
           </span>
 
           <h3 class="tool-title">My ASTY</h3>
 
           <p
             class="tool-description"
-            data-en="A read-only view of your ASTY holdings. Enter one or multiple wallet addresses to see your combined ASTY balance, current value, share of the remaining supply and your personal ASTY-Effect."
-            data-de="Eine reine Leseansicht für deine ASTY-Bestände. Gib eine oder mehrere Wallet-Adressen ein und sieh deinen gesamten ASTY-Bestand, den aktuellen Wert, deinen Anteil an der verbleibenden Supply und deinen persönlichen ASTY-Effect."
+            data-en="Check your ASTY balance, value and share of the remaining supply. No wallet connection."
+            data-de="Checke deinen ASTY-Bestand, Wert und Anteil an der verbleibenden Supply. Ohne Wallet-Verbindung."
           >
-            A read-only view of your ASTY holdings. Enter one or multiple wallet addresses to see your combined ASTY balance, current value, share of the remaining supply and your personal ASTY-Effect.
+            Check your ASTY balance, value and share of the remaining supply. No wallet connection.
           </p>
         </div>
 
         <div class="tool-footer">
-          <div class="tool-tags">
-            <span class="tool-tag" data-en="Read only" data-de="Nur Lesen">Read only</span>
-            <span class="tool-tag" data-en="Multi-wallet" data-de="Multi-Wallet">Multi-wallet</span>
-            <span class="tool-tag" data-en="ASTY-Effect" data-de="ASTY-Effect">ASTY-Effect</span>
-          </div>
 
           <span class="open-tool">
             <span data-en="Open My ASTY" data-de="My ASTY öffnen">Open My ASTY</span>
-            <span class="open-tool-arrow">↗</span>
           </span>
         </div>
       </a>
@@ -1562,39 +1365,32 @@ button {
       >
         <div class="tool-top">
           <span class="tool-icon">↯</span>
-          <span class="tool-status" data-en="Live tool" data-de="Live Tool">Live tool</span>
         </div>
 
         <div class="tool-copy">
           <span
             class="tool-eyebrow"
-            data-en="Solana wallet utility"
-            data-de="Solana Wallet Utility"
+            data-en="Unlock hidden SOL."
+            data-de="Unlock hidden SOL."
           >
-            Solana wallet utility
+            Unlock hidden SOL.
           </span>
 
           <h3 class="tool-title">ASTY Unlockr</h3>
 
           <p
             class="tool-description"
-            data-en="Find unused Solana token accounts with an exact zero balance and recover the SOL still locked in them as rent. You choose which accounts are closed, and token accounts with a balance are never touched."
-            data-de="Finde ungenutzte Solana-Tokenkonten mit exakt 0 Tokenbestand und hole das dort noch als Rent gebundene SOL zurück. Du entscheidest selbst, welche Konten geschlossen werden. Tokenkonten mit Bestand werden niemals angetastet."
+            data-en="Find empty token accounts and reclaim the SOL locked in them as rent."
+            data-de="Finde leere Tokenkonten und hole das darin gebundene Rent-SOL zurück."
           >
-            Find unused Solana token accounts with an exact zero balance and recover the SOL still locked in them as rent. You choose which accounts are closed, and token accounts with a balance are never touched.
+            Find empty token accounts and reclaim the SOL locked in them as rent.
           </p>
         </div>
 
         <div class="tool-footer">
-          <div class="tool-tags">
-            <span class="tool-tag" data-en="Empty accounts only" data-de="Nur leere Konten">Empty accounts only</span>
-            <span class="tool-tag" data-en="Recover SOL" data-de="SOL zurückholen">Recover SOL</span>
-            <span class="tool-tag" data-en="2% Unlockr fee" data-de="2% Unlockr Fee">2% Unlockr fee</span>
-          </div>
 
           <span class="open-tool">
             <span data-en="Open ASTY Unlockr" data-de="ASTY Unlockr öffnen">Open ASTY Unlockr</span>
-            <span class="open-tool-arrow">↗</span>
           </span>
         </div>
       </a>
@@ -1611,39 +1407,32 @@ button {
       >
         <div class="tool-top">
           <span class="tool-icon">𝕏</span>
-          <span class="tool-status" data-en="Live tool" data-de="Live Tool">Live tool</span>
         </div>
 
         <div class="tool-copy">
           <span
             class="tool-eyebrow"
-            data-en="Live ASTY pool intelligence"
-            data-de="Live ASTY Pool Intelligence"
+            data-en="Live data. Ready to post."
+            data-de="Live-Daten. Direkt postbereit."
           >
-            Live ASTY pool intelligence
+            Live data. Ready to post.
           </span>
 
           <h3 class="tool-title">ASTY X Signal Lab</h3>
 
           <p
             class="tool-description"
-            data-en="Turn live ASTY pool performance into ready-to-post X content. Generate a compact version for standard X or a stronger long-form post using current pool and revenue data."
-            data-de="Verwandle die Live-Performance der ASTY-Pools in direkt nutzbaren X-Content. Erzeuge eine kompakte Version für Standard-X oder einen stärkeren Long-Form-Post auf Basis aktueller Pool- und Revenue-Daten."
+            data-en="Turn current ASTY pool performance into ready-to-post X content."
+            data-de="Mach aus aktueller ASTY-Pool-Performance direkt fertigen X-Content."
           >
-            Turn live ASTY pool performance into ready-to-post X content. Generate a compact version for standard X or a stronger long-form post using current pool and revenue data.
+            Turn current ASTY pool performance into ready-to-post X content.
           </p>
         </div>
 
         <div class="tool-footer">
-          <div class="tool-tags">
-            <span class="tool-tag" data-en="Live pool data" data-de="Live Pool-Daten">Live pool data</span>
-            <span class="tool-tag" data-en="X Standard" data-de="X Standard">X Standard</span>
-            <span class="tool-tag" data-en="X Premium" data-de="X Premium">X Premium</span>
-          </div>
 
           <span class="open-tool">
             <span data-en="Open X Signal Lab" data-de="X Signal Lab öffnen">Open X Signal Lab</span>
-            <span class="open-tool-arrow">↗</span>
           </span>
         </div>
       </a>
@@ -1660,90 +1449,36 @@ button {
       >
         <div class="tool-top">
           <span class="tool-icon">P</span>
-          <span class="tool-status" data-en="Live tool" data-de="Live Tool">Live tool</span>
         </div>
 
         <div class="tool-copy">
           <span
             class="tool-eyebrow"
-            data-en="Free Solana utility"
-            data-de="Kostenloses Solana Tool"
+            data-en="Scan any Solana project."
+            data-de="Scanne jedes Solana-Projekt."
           >
-            Free Solana utility
+            Scan any Solana project.
           </span>
 
           <h3 class="tool-title">Solana Project Passport</h3>
 
           <p
             class="tool-description"
-            data-en="Turn any Solana token address into a clean live project snapshot. See liquidity, volume, markets and DEX activity in one place and create a project overview that can be shared easily."
-            data-de="Verwandle jede Solana-Tokenadresse in einen übersichtlichen Live-Projekt-Snapshot. Sieh Liquidität, Volumen, Märkte und DEX-Aktivität an einem Ort und erstelle eine Projektübersicht, die sich einfach teilen lässt."
+            data-en="Enter a token address. Get liquidity, volume, markets and DEX activity in one clean snapshot."
+            data-de="Tokenadresse rein. Liquidität, Volumen, Märkte und DEX-Aktivität in einem klaren Snapshot raus."
           >
-            Turn any Solana token address into a clean live project snapshot. See liquidity, volume, markets and DEX activity in one place and create a project overview that can be shared easily.
+            Enter a token address. Get liquidity, volume, markets and DEX activity in one clean snapshot.
           </p>
         </div>
 
         <div class="tool-footer">
-          <div class="tool-tags">
-            <span class="tool-tag" data-en="Any Solana token" data-de="Jeder Solana Token">Any Solana token</span>
-            <span class="tool-tag" data-en="Live market data" data-de="Live Marktdaten">Live market data</span>
-            <span class="tool-tag" data-en="Shareable" data-de="Teilbar">Shareable</span>
-          </div>
 
           <span class="open-tool">
             <span data-en="Open Project Passport" data-de="Project Passport öffnen">Open Project Passport</span>
-            <span class="open-tool-arrow">↗</span>
           </span>
         </div>
       </a>
 
-    </div>
-  </section>
-
-  <!-- ECOSYSTEM -->
-
-  <section class="ecosystem-wrap reveal">
-    <div class="ecosystem-card">
-      <div class="ecosystem-mark" aria-hidden="true">
-        <span></span>
-      </div>
-
-      <div>
-        <span
-          class="ecosystem-label"
-          data-en="Built around ArbStrategy"
-          data-de="Rund um ArbStrategy entwickelt"
-        >
-          Built around ArbStrategy
-        </span>
-
-        <span
-          class="ecosystem-title"
-          data-en="ASTY is growing into a utility ecosystem."
-          data-de="ASTY wächst zu einem Utility-Ecosystem."
-        >
-          ASTY is growing into a utility ecosystem.
-        </span>
-
-        <span
-          class="ecosystem-description"
-          data-en="The tools extend ASTY beyond the token itself with practical utilities for holders, Solana users, content creation and project research."
-          data-de="Die Tools erweitern ASTY über den Token selbst hinaus mit praktischen Anwendungen für Holder, Solana-Nutzer, Content-Erstellung und Projektanalyse."
-        >
-          The tools extend ASTY beyond the token itself with practical utilities for holders, Solana users, content creation and project research.
-        </span>
-      </div>
-
-      <a
-        class="ecosystem-link"
-        href="https://arbstrategy.net/"
-        target="_blank"
-        rel="noopener noreferrer"
-        data-en="About ASTY ↗"
-        data-de="Mehr über ASTY ↗"
-      >
-        About ASTY ↗
-      </a>
     </div>
   </section>
 
