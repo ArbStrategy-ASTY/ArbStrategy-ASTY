@@ -1,0 +1,1876 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="color-scheme" content="dark" />
+
+<title>ASTY Tools · ArbStrategy</title>
+
+<meta
+  name="description"
+  content="Explore the ASTY utility ecosystem: My ASTY, ASTY Unlockr, ASTY X Signal Lab and the Solana Project Passport."
+/>
+
+<style>
+:root {
+  --bg-main: #050710;
+  --bg-soft: #070a13;
+  --bg-blue: #0b1020;
+
+  --panel: rgba(255, 255, 255, 0.045);
+  --panel-strong: rgba(255, 255, 255, 0.058);
+  --panel-hover: rgba(255, 255, 255, 0.07);
+
+  --line: rgba(255, 255, 255, 0.09);
+  --line-purple: rgba(167, 139, 250, 0.30);
+  --line-cyan: rgba(103, 232, 249, 0.24);
+
+  --text-main: #f7f5ff;
+  --text-soft: #c8c4d8;
+  --text-muted: #9791ad;
+
+  --purple: #a78bfa;
+  --purple-light: #c4b5fd;
+  --purple-dark: #7c3aed;
+  --cyan: #67e8f9;
+  --green: #86efac;
+
+  --radius-medium: 17px;
+  --radius-large: 22px;
+  --radius-hero: 26px;
+
+  --shadow-panel: 0 18px 48px rgba(0, 0, 0, 0.26);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  overflow-x: hidden;
+  font-family: Inter, Arial, sans-serif;
+  color: var(--text-main);
+  background:
+    radial-gradient(
+      circle at 14% 4%,
+      rgba(124, 58, 237, 0.19),
+      transparent 28%
+    ),
+    radial-gradient(
+      circle at 88% 18%,
+      rgba(34, 211, 238, 0.085),
+      transparent 26%
+    ),
+    linear-gradient(
+      180deg,
+      var(--bg-blue) 0%,
+      var(--bg-soft) 44%,
+      var(--bg-main) 100%
+    );
+}
+
+body.menu-open {
+  overflow: hidden;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button,
+a {
+  -webkit-tap-highlight-color: transparent;
+}
+
+button {
+  font-family: inherit;
+}
+
+.container {
+  width: min(1140px, calc(100% - 40px));
+  margin: 0 auto;
+  position: relative;
+  z-index: 2;
+}
+
+/* BACKGROUND */
+
+.blur-orb {
+  position: fixed;
+  width: 350px;
+  height: 350px;
+  border-radius: 50%;
+  filter: blur(110px);
+  opacity: 0.14;
+  pointer-events: none;
+  z-index: 0;
+  animation: floatOrb 15s ease-in-out infinite;
+}
+
+.orb-1 {
+  top: 80px;
+  left: -120px;
+  background: var(--purple-dark);
+}
+
+.orb-2 {
+  right: -130px;
+  bottom: 70px;
+  background: #22d3ee;
+  animation-delay: 4s;
+}
+
+@keyframes floatOrb {
+  0%, 100% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+
+  50% {
+    transform: translate3d(22px, -28px, 0) scale(1.05);
+  }
+}
+
+/* HEADER */
+
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: rgba(5, 7, 16, 0.80);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.075);
+  backdrop-filter: blur(17px);
+  -webkit-backdrop-filter: blur(17px);
+}
+
+.nav {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  min-height: 74px;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  flex: 0 0 auto;
+}
+
+.brand-logo {
+  width: 46px;
+  height: 46px;
+  display: block;
+  object-fit: cover;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(196, 181, 253, 0.18);
+  box-shadow:
+    0 0 0 4px rgba(124, 58, 237, 0.055),
+    0 0 25px rgba(124, 58, 237, 0.30);
+  animation: logoPulse 3.8s ease-in-out infinite;
+}
+
+@keyframes logoPulse {
+  0%, 100% {
+    box-shadow:
+      0 0 0 4px rgba(124, 58, 237, 0.045),
+      0 0 20px rgba(124, 58, 237, 0.24);
+  }
+
+  50% {
+    box-shadow:
+      0 0 0 5px rgba(124, 58, 237, 0.075),
+      0 0 32px rgba(167, 139, 250, 0.40);
+  }
+}
+
+.brand-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.brand-text strong {
+  font-size: 16px;
+  line-height: 1.35;
+  letter-spacing: 0.5px;
+  color: #ffffff;
+}
+
+.brand-text span {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 9px;
+}
+
+.desktop-nav {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 9px;
+}
+
+.nav-link,
+.lang-toggle,
+.menu-toggle {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 40px;
+  padding: 10px 14px;
+  overflow: hidden;
+  border: 1px solid var(--line-purple);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.025);
+  color: #f8f6ff;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.25;
+  cursor: pointer;
+  transition:
+    transform 0.2s ease,
+    border-color 0.2s ease,
+    background 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.nav-link::before,
+.lang-toggle::before,
+.menu-toggle::before {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  background: linear-gradient(
+    110deg,
+    transparent 20%,
+    rgba(196, 181, 253, 0.16) 42%,
+    rgba(103, 232, 249, 0.12) 52%,
+    transparent 72%
+  );
+  transform: translateX(-115%);
+  transition: transform 0.55s ease;
+  pointer-events: none;
+}
+
+.nav-link:hover,
+.lang-toggle:hover,
+.menu-toggle:hover {
+  transform: translateY(-1px);
+  border-color: rgba(196, 181, 253, 0.55);
+  background: rgba(124, 58, 237, 0.075);
+  box-shadow:
+    0 0 0 1px rgba(167, 139, 250, 0.05),
+    0 0 24px rgba(124, 58, 237, 0.18);
+}
+
+.nav-link:hover::before,
+.lang-toggle:hover::before,
+.menu-toggle:hover::before {
+  transform: translateX(115%);
+}
+
+.lang-toggle {
+  min-width: 48px;
+  border-color: var(--line-cyan);
+  color: var(--cyan);
+}
+
+.menu-toggle {
+  display: none;
+  width: 42px;
+  height: 40px;
+  padding: 0;
+}
+
+.menu-icon {
+  position: relative;
+  width: 17px;
+  height: 12px;
+}
+
+.menu-icon span {
+  position: absolute;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  border-radius: 999px;
+  background: var(--purple-light);
+  transition:
+    top 0.25s ease,
+    transform 0.25s ease,
+    opacity 0.2s ease;
+}
+
+.menu-icon span:nth-child(1) { top: 0; }
+.menu-icon span:nth-child(2) { top: 5px; }
+.menu-icon span:nth-child(3) { top: 10px; }
+
+.menu-toggle.active .menu-icon span:nth-child(1) {
+  top: 5px;
+  transform: rotate(45deg);
+}
+
+.menu-toggle.active .menu-icon span:nth-child(2) {
+  opacity: 0;
+}
+
+.menu-toggle.active .menu-icon span:nth-child(3) {
+  top: 5px;
+  transform: rotate(-45deg);
+}
+
+/* MOBILE MENU */
+
+.mobile-menu {
+  position: absolute;
+  top: calc(100% + 10px);
+  left: 0;
+  right: 0;
+  z-index: 110;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: rgba(7, 10, 19, 0.97);
+  box-shadow: 0 20px 46px rgba(0, 0, 0, 0.38);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-12px) scale(0.98);
+  transition:
+    opacity 0.25s ease,
+    visibility 0.25s ease,
+    transform 0.25s ease;
+}
+
+.mobile-menu.open {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0) scale(1);
+}
+
+.mobile-menu-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 9px;
+}
+
+.mobile-menu-link {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 53px;
+  padding: 13px 15px;
+  border: 1px solid rgba(255, 255, 255, 0.085);
+  border-radius: 13px;
+  background: rgba(255, 255, 255, 0.035);
+  color: #f7f5ff;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.3;
+  text-align: center;
+}
+
+.mobile-menu-link:hover {
+  border-color: var(--line-purple);
+  background: rgba(124, 58, 237, 0.08);
+}
+
+/* HERO */
+
+.hero {
+  padding: 54px 0 34px;
+}
+
+.hero-panel {
+  position: relative;
+  min-height: 395px;
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(250px, 0.8fr);
+  gap: 30px;
+  align-items: center;
+  padding: clamp(32px, 6vw, 62px);
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-hero);
+  background:
+    linear-gradient(
+      135deg,
+      rgba(124, 58, 237, 0.11),
+      rgba(255, 255, 255, 0.025) 48%,
+      rgba(34, 211, 238, 0.045)
+    );
+  box-shadow: var(--shadow-panel);
+}
+
+.hero-panel::before {
+  content: "";
+  position: absolute;
+  width: 340px;
+  height: 340px;
+  top: -180px;
+  right: -80px;
+  border-radius: 50%;
+  background: rgba(103, 232, 249, 0.11);
+  filter: blur(75px);
+  pointer-events: none;
+}
+
+.hero-panel::after {
+  content: "";
+  position: absolute;
+  width: 280px;
+  height: 280px;
+  left: -140px;
+  bottom: -180px;
+  border-radius: 50%;
+  background: rgba(124, 58, 237, 0.18);
+  filter: blur(75px);
+  pointer-events: none;
+}
+
+.hero-copy,
+.hero-visual {
+  position: relative;
+  z-index: 2;
+}
+
+.hero-kicker {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  margin-bottom: 20px;
+  padding: 8px 12px;
+  border: 1px solid rgba(167, 139, 250, 0.22);
+  border-radius: 999px;
+  background: rgba(124, 58, 237, 0.065);
+  color: var(--purple-light);
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 1.3;
+  letter-spacing: 0.9px;
+  text-transform: uppercase;
+}
+
+.hero-kicker-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--purple);
+  box-shadow: 0 0 14px rgba(167, 139, 250, 0.88);
+  animation: statusPulse 2.2s ease-in-out infinite;
+}
+
+@keyframes statusPulse {
+  0%, 100% {
+    opacity: 0.72;
+    transform: scale(1);
+  }
+
+  50% {
+    opacity: 1;
+    transform: scale(1.25);
+  }
+}
+
+.hero-title {
+  max-width: 800px;
+  margin: 0;
+  padding-bottom: 0.11em;
+  font-size: clamp(45px, 7vw, 76px);
+  line-height: 1.05;
+  letter-spacing: -2.5px;
+  background: linear-gradient(
+    90deg,
+    #ffffff 0%,
+    var(--purple-light) 53%,
+    var(--cyan) 100%
+  );
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.hero-sub {
+  max-width: 690px;
+  margin: 20px 0 0;
+  color: var(--text-soft);
+  font-size: 16px;
+  line-height: 1.78;
+}
+
+.hero-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 24px;
+}
+
+.hero-meta span {
+  display: inline-flex;
+  align-items: center;
+  min-height: 34px;
+  padding: 7px 11px;
+  border: 1px solid rgba(255, 255, 255, 0.085);
+  border-radius: 999px;
+  background: rgba(5, 7, 16, 0.35);
+  color: var(--text-soft);
+  font-size: 11px;
+  font-weight: 750;
+  letter-spacing: 0.35px;
+}
+
+.hero-visual {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 250px;
+}
+
+.hero-wolf-glow {
+  position: absolute;
+  width: 245px;
+  height: 245px;
+  border-radius: 50%;
+  background:
+    radial-gradient(
+      circle,
+      rgba(124, 58, 237, 0.28),
+      rgba(124, 58, 237, 0.075) 45%,
+      transparent 72%
+    );
+  filter: blur(6px);
+  animation: wolfGlow 3.8s ease-in-out infinite;
+}
+
+@keyframes wolfGlow {
+  0%, 100% {
+    transform: scale(0.94);
+    opacity: 0.70;
+  }
+
+  50% {
+    transform: scale(1.06);
+    opacity: 1;
+  }
+}
+
+.hero-wolf {
+  position: relative;
+  z-index: 2;
+  display: block;
+  width: min(100%, 230px);
+  max-height: 270px;
+  object-fit: contain;
+  filter:
+    drop-shadow(0 20px 28px rgba(0, 0, 0, 0.44))
+    drop-shadow(0 0 24px rgba(124, 58, 237, 0.26));
+  animation: wolfFloat 5s ease-in-out infinite;
+}
+
+@keyframes wolfFloat {
+  0%, 100% {
+    transform: translateY(0) rotate(-0.4deg);
+  }
+
+  50% {
+    transform: translateY(-8px) rotate(0.4deg);
+  }
+}
+
+/* TOOL SECTION */
+
+.tools-section {
+  padding: 38px 0 64px;
+}
+
+.section-head {
+  max-width: 840px;
+  margin-bottom: 28px;
+}
+
+.section-title {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 0 0 14px;
+  padding-bottom: 3px;
+  color: var(--purple-light);
+  font-size: clamp(28px, 4vw, 36px);
+  line-height: 1.28;
+  letter-spacing: -0.8px;
+}
+
+.section-title::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  background: var(--purple);
+  box-shadow:
+    0 0 0 4px rgba(124, 58, 237, 0.075),
+    0 0 16px rgba(167, 139, 250, 0.78);
+}
+
+.section-sub {
+  margin: 0;
+  color: var(--text-soft);
+  font-size: 16px;
+  line-height: 1.76;
+}
+
+.tools-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.tool-card {
+  position: relative;
+  min-height: 340px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  padding: 28px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-large);
+  background:
+    linear-gradient(
+      145deg,
+      rgba(255, 255, 255, 0.055),
+      rgba(255, 255, 255, 0.027)
+    );
+  box-shadow: var(--shadow-panel);
+  transition:
+    transform 0.28s ease,
+    border-color 0.28s ease,
+    background 0.28s ease,
+    box-shadow 0.28s ease;
+}
+
+.tool-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(
+      circle at 88% 0%,
+      rgba(167, 139, 250, 0.15),
+      transparent 31%
+    );
+  opacity: 0.8;
+  pointer-events: none;
+}
+
+.tool-card.cyan-card::before {
+  background:
+    radial-gradient(
+      circle at 88% 0%,
+      rgba(103, 232, 249, 0.12),
+      transparent 31%
+    );
+}
+
+.tool-card::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 12%;
+  right: 12%;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(196, 181, 253, 0.78),
+    transparent
+  );
+  box-shadow: 0 0 16px rgba(167, 139, 250, 0.34);
+}
+
+.tool-card.cyan-card::after {
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(103, 232, 249, 0.76),
+    transparent
+  );
+  box-shadow: 0 0 16px rgba(103, 232, 249, 0.24);
+}
+
+.tool-card:hover {
+  transform: translateY(-6px);
+  border-color: rgba(196, 181, 253, 0.42);
+  background:
+    linear-gradient(
+      145deg,
+      rgba(124, 58, 237, 0.09),
+      rgba(255, 255, 255, 0.035)
+    );
+  box-shadow:
+    0 24px 52px rgba(0, 0, 0, 0.32),
+    0 0 30px rgba(124, 58, 237, 0.11);
+}
+
+.tool-card.cyan-card:hover {
+  border-color: rgba(103, 232, 249, 0.35);
+  box-shadow:
+    0 24px 52px rgba(0, 0, 0, 0.32),
+    0 0 30px rgba(34, 211, 238, 0.08);
+}
+
+.tool-top,
+.tool-copy,
+.tool-footer {
+  position: relative;
+  z-index: 2;
+}
+
+.tool-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+  margin-bottom: 25px;
+}
+
+.tool-icon {
+  display: grid;
+  place-items: center;
+  width: 54px;
+  height: 54px;
+  flex: 0 0 auto;
+  border: 1px solid rgba(167, 139, 250, 0.27);
+  border-radius: 16px;
+  background:
+    linear-gradient(
+      145deg,
+      rgba(124, 58, 237, 0.18),
+      rgba(124, 58, 237, 0.055)
+    );
+  color: var(--purple-light);
+  font-size: 22px;
+  font-weight: 900;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.055),
+    0 0 18px rgba(124, 58, 237, 0.12);
+}
+
+.cyan-card .tool-icon {
+  border-color: rgba(103, 232, 249, 0.23);
+  background:
+    linear-gradient(
+      145deg,
+      rgba(34, 211, 238, 0.13),
+      rgba(34, 211, 238, 0.035)
+    );
+  color: var(--cyan);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.05),
+    0 0 18px rgba(34, 211, 238, 0.09);
+}
+
+.tool-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 30px;
+  padding: 6px 9px;
+  border: 1px solid rgba(255, 255, 255, 0.085);
+  border-radius: 999px;
+  background: rgba(5, 7, 16, 0.35);
+  color: var(--text-muted);
+  font-size: 9px;
+  font-weight: 850;
+  line-height: 1.25;
+  letter-spacing: 0.75px;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.tool-status::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--green);
+  box-shadow: 0 0 10px rgba(134, 239, 172, 0.65);
+}
+
+.tool-eyebrow {
+  display: block;
+  margin-bottom: 8px;
+  color: var(--purple-light);
+  font-size: 10px;
+  font-weight: 850;
+  line-height: 1.35;
+  letter-spacing: 0.9px;
+  text-transform: uppercase;
+}
+
+.cyan-card .tool-eyebrow {
+  color: var(--cyan);
+}
+
+.tool-title {
+  margin: 0;
+  padding-bottom: 2px;
+  color: #ffffff;
+  font-size: clamp(25px, 3vw, 31px);
+  line-height: 1.2;
+  letter-spacing: -0.7px;
+}
+
+.tool-description {
+  margin: 12px 0 0;
+  color: var(--text-soft);
+  font-size: 14px;
+  line-height: 1.72;
+}
+
+.tool-footer {
+  margin-top: auto;
+  padding-top: 24px;
+}
+
+.tool-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  margin-bottom: 18px;
+}
+
+.tool-tag {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  padding: 5px 9px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 999px;
+  background: rgba(5, 7, 16, 0.30);
+  color: var(--text-muted);
+  font-size: 10px;
+  font-weight: 750;
+  line-height: 1.3;
+}
+
+.open-tool {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  min-height: 48px;
+  padding: 11px 14px 11px 17px;
+  border: 1px solid rgba(167, 139, 250, 0.27);
+  border-radius: 14px;
+  background: rgba(124, 58, 237, 0.085);
+  color: #ffffff;
+  font-size: 13px;
+  font-weight: 800;
+  transition:
+    transform 0.2s ease,
+    border-color 0.2s ease,
+    background 0.2s ease;
+}
+
+.cyan-card .open-tool {
+  border-color: rgba(103, 232, 249, 0.22);
+  background: rgba(34, 211, 238, 0.055);
+}
+
+.tool-card:hover .open-tool {
+  border-color: rgba(196, 181, 253, 0.52);
+  background: rgba(124, 58, 237, 0.14);
+}
+
+.tool-card.cyan-card:hover .open-tool {
+  border-color: rgba(103, 232, 249, 0.42);
+  background: rgba(34, 211, 238, 0.09);
+}
+
+.open-tool-arrow {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  flex: 0 0 auto;
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 50%;
+  background: rgba(5, 7, 16, 0.32);
+  color: var(--purple-light);
+  transition: transform 0.22s ease;
+}
+
+.cyan-card .open-tool-arrow {
+  color: var(--cyan);
+}
+
+.tool-card:hover .open-tool-arrow {
+  transform: translateX(3px);
+}
+
+/* ECOSYSTEM STRIP */
+
+.ecosystem-wrap {
+  padding: 8px 0 80px;
+}
+
+.ecosystem-card {
+  position: relative;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 18px;
+  align-items: center;
+  padding: 21px 22px;
+  overflow: hidden;
+  border: 1px solid rgba(167, 139, 250, 0.22);
+  border-radius: var(--radius-large);
+  background:
+    linear-gradient(
+      125deg,
+      rgba(124, 58, 237, 0.11),
+      rgba(255, 255, 255, 0.034) 52%,
+      rgba(34, 211, 238, 0.045)
+    );
+  box-shadow: var(--shadow-panel);
+}
+
+.ecosystem-mark {
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  border: 1px solid rgba(167, 139, 250, 0.24);
+  border-radius: 50%;
+  background: rgba(124, 58, 237, 0.10);
+}
+
+.ecosystem-mark span {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--purple);
+  box-shadow:
+    0 0 0 5px rgba(124, 58, 237, 0.09),
+    0 0 18px rgba(167, 139, 250, 0.90);
+  animation: statusPulse 2.1s ease-in-out infinite;
+}
+
+.ecosystem-label {
+  display: block;
+  margin-bottom: 4px;
+  color: var(--purple-light);
+  font-size: 10px;
+  font-weight: 850;
+  letter-spacing: 0.9px;
+  text-transform: uppercase;
+}
+
+.ecosystem-title {
+  display: block;
+  margin-bottom: 4px;
+  color: #ffffff;
+  font-size: 18px;
+  font-weight: 800;
+  line-height: 1.4;
+}
+
+.ecosystem-description {
+  display: block;
+  color: var(--text-soft);
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.ecosystem-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 42px;
+  padding: 10px 15px;
+  border: 1px solid var(--line-cyan);
+  border-radius: 999px;
+  background: rgba(34, 211, 238, 0.045);
+  color: var(--cyan);
+  font-size: 12px;
+  font-weight: 800;
+  white-space: nowrap;
+  transition:
+    transform 0.2s ease,
+    background 0.2s ease,
+    border-color 0.2s ease;
+}
+
+.ecosystem-link:hover {
+  transform: translateY(-2px);
+  background: rgba(34, 211, 238, 0.09);
+  border-color: rgba(103, 232, 249, 0.44);
+}
+
+/* REVEAL */
+
+.reveal {
+  opacity: 0;
+  transform: translateY(34px) scale(0.99);
+  filter: blur(4px);
+  transition:
+    opacity 0.82s ease,
+    transform 0.82s cubic-bezier(0.2, 0.7, 0.25, 1),
+    filter 0.82s ease;
+}
+
+.reveal.visible {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  filter: blur(0);
+}
+
+.tool-card {
+  opacity: 0;
+  transform: translateY(24px);
+  filter: blur(3px);
+  transition:
+    opacity 0.68s ease,
+    transform 0.68s cubic-bezier(0.2, 0.7, 0.25, 1),
+    filter 0.68s ease,
+    border-color 0.28s ease,
+    background 0.28s ease,
+    box-shadow 0.28s ease;
+  transition-delay: var(--delay, 0ms);
+}
+
+.reveal.visible .tool-card {
+  opacity: 1;
+  transform: translateY(0);
+  filter: blur(0);
+}
+
+.reveal.visible .tool-card:hover {
+  transform: translateY(-6px);
+}
+
+/* SCROLL TOP */
+
+#scrollTopBtn {
+  position: fixed;
+  right: 26px;
+  bottom: 26px;
+  z-index: 100;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border: 1px solid var(--line-purple);
+  border-radius: 50%;
+  background: rgba(10, 12, 24, 0.88);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  color: var(--purple-light);
+  font-size: 21px;
+  font-weight: 800;
+  cursor: pointer;
+  box-shadow:
+    0 0 0 4px rgba(124, 58, 237, 0.045),
+    0 0 24px rgba(124, 58, 237, 0.22);
+}
+
+/* RESPONSIVE */
+
+@media (max-width: 900px) {
+  .desktop-nav {
+    display: none;
+  }
+
+  .menu-toggle {
+    display: inline-flex;
+  }
+
+  .hero-panel {
+    grid-template-columns: 1fr;
+  }
+
+  .hero-visual {
+    min-height: 190px;
+  }
+
+  .hero-wolf {
+    width: min(42%, 190px);
+  }
+}
+
+@media (max-width: 760px) {
+  .container {
+    width: min(100% - 28px, 1140px);
+  }
+
+  body.menu-open::after {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: 90;
+    background: rgba(2, 3, 9, 0.50);
+    backdrop-filter: blur(2px);
+    -webkit-backdrop-filter: blur(2px);
+  }
+
+  .topbar {
+    z-index: 120;
+  }
+
+  .nav {
+    min-height: 66px;
+  }
+
+  .brand-logo {
+    width: 42px;
+    height: 42px;
+  }
+
+  .header-actions {
+    gap: 7px;
+  }
+
+  .lang-toggle,
+  .menu-toggle {
+    min-height: 38px;
+  }
+
+  .mobile-menu {
+    top: calc(100% + 7px);
+  }
+
+  .hero {
+    padding-top: 28px;
+  }
+
+  .hero-panel {
+    min-height: auto;
+    padding: 31px 21px 25px;
+  }
+
+  .hero-title {
+    font-size: clamp(42px, 13vw, 64px);
+    line-height: 1.08;
+    letter-spacing: -1.7px;
+  }
+
+  .hero-sub {
+    font-size: 14px;
+  }
+
+  .hero-visual {
+    min-height: 155px;
+  }
+
+  .hero-wolf {
+    width: min(43%, 150px);
+  }
+
+  .hero-wolf-glow {
+    width: 170px;
+    height: 170px;
+  }
+
+  .tools-section {
+    padding-top: 30px;
+  }
+
+  .tools-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .tool-card {
+    min-height: 320px;
+    padding: 23px;
+  }
+
+  .ecosystem-card {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .ecosystem-link {
+    grid-column: 1 / -1;
+    width: 100%;
+  }
+
+  #scrollTopBtn {
+    right: 17px;
+    bottom: 17px;
+  }
+}
+
+@media (max-width: 460px) {
+  .brand-text span {
+    display: none;
+  }
+
+  .mobile-menu-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .mobile-menu-link {
+    min-height: 50px;
+    padding: 12px;
+    font-size: 12px;
+  }
+
+  .hero-meta {
+    gap: 6px;
+  }
+
+  .hero-meta span {
+    font-size: 10px;
+  }
+
+  .tool-top {
+    margin-bottom: 21px;
+  }
+
+  .tool-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 14px;
+    font-size: 19px;
+  }
+
+  .tool-status {
+    font-size: 8px;
+  }
+
+  .tool-description {
+    font-size: 13px;
+  }
+
+  .ecosystem-card {
+    grid-template-columns: 1fr;
+    text-align: center;
+    justify-items: center;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+
+  .reveal,
+  .tool-card {
+    opacity: 1 !important;
+    transform: none !important;
+    filter: none !important;
+  }
+}
+</style>
+</head>
+
+<body>
+
+<div class="blur-orb orb-1"></div>
+<div class="blur-orb orb-2"></div>
+
+<header class="topbar">
+  <div class="container nav">
+
+    <a class="brand" href="https://arbstrategy.net/" aria-label="ASTY Home">
+      <img
+        src="assets/logo.png"
+        onerror="this.onerror=null;this.src='https://raw.githubusercontent.com/ArbStrategy-ASTY/ArbStrategy-ASTY/main/assets/logo.png';"
+        alt="ASTY Logo"
+        class="brand-logo"
+      />
+
+      <div class="brand-text">
+        <strong>$ASTY</strong>
+        <span>Tools</span>
+      </div>
+    </a>
+
+    <div class="header-actions">
+
+      <nav class="desktop-nav" aria-label="Main navigation">
+        <a
+          href="https://arbstrategy.net/"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="nav-link"
+          data-en="ASTY Website"
+          data-de="ASTY Website"
+        >
+          ASTY Website
+        </a>
+
+        <a
+          href="https://htmlpreview.github.io/?https://github.com/ArbStrategy-ASTY/ArbStrategy-ASTY/blob/main/Dashboard.html"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="nav-link"
+          data-en="Live Dashboard"
+          data-de="Live Dashboard"
+        >
+          Live Dashboard
+        </a>
+
+        <a
+          href="https://t.me/ArbStrategyASTY"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="nav-link"
+        >
+          Telegram
+        </a>
+
+        <a
+          href="https://x.com/ArbStrategyASTY"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="nav-link"
+        >
+          X Twitter
+        </a>
+      </nav>
+
+      <button
+        id="langToggle"
+        class="lang-toggle"
+        type="button"
+        aria-label="Switch language"
+      >
+        DE
+      </button>
+
+      <button
+        id="menuToggle"
+        class="menu-toggle"
+        type="button"
+        aria-label="Open menu"
+        aria-expanded="false"
+        aria-controls="mobileMenu"
+      >
+        <span class="menu-icon" aria-hidden="true">
+          <span></span>
+          <span></span>
+          <span></span>
+        </span>
+      </button>
+
+    </div>
+
+    <div id="mobileMenu" class="mobile-menu" aria-hidden="true">
+      <nav class="mobile-menu-grid" aria-label="Mobile navigation">
+        <a
+          href="https://arbstrategy.net/"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="mobile-menu-link"
+          data-en="ASTY Website"
+          data-de="ASTY Website"
+        >
+          ASTY Website
+        </a>
+
+        <a
+          href="https://htmlpreview.github.io/?https://github.com/ArbStrategy-ASTY/ArbStrategy-ASTY/blob/main/Dashboard.html"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="mobile-menu-link"
+          data-en="Live Dashboard"
+          data-de="Live Dashboard"
+        >
+          Live Dashboard
+        </a>
+
+        <a
+          href="https://t.me/ArbStrategyASTY"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="mobile-menu-link"
+        >
+          Telegram
+        </a>
+
+        <a
+          href="https://x.com/ArbStrategyASTY"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="mobile-menu-link"
+        >
+          X Twitter
+        </a>
+      </nav>
+    </div>
+
+  </div>
+</header>
+
+<main class="container">
+
+  <!-- HERO -->
+
+  <section class="hero">
+    <div class="hero-panel">
+
+      <div class="hero-copy">
+        <div class="hero-kicker">
+          <span class="hero-kicker-dot"></span>
+          <span
+            data-en="ASTY Utility Ecosystem"
+            data-de="ASTY Utility Ecosystem"
+          >
+            ASTY Utility Ecosystem
+          </span>
+        </div>
+
+        <h1
+          class="hero-title"
+          data-en="ASTY Tools. One ecosystem."
+          data-de="ASTY Tools. Ein Ecosystem."
+        >
+          ASTY Tools. One ecosystem.
+        </h1>
+
+        <p
+          class="hero-sub"
+          data-en="Useful Solana utilities built around ArbStrategy. Track your ASTY position, recover unused SOL, turn live pool data into X content or create a live passport for any Solana token."
+          data-de="Nützliche Solana-Tools rund um ArbStrategy. Verfolge deine ASTY-Position, hole ungenutztes SOL zurück, verwandle Live-Pooldaten in X-Content oder erstelle einen Live-Passport für jeden Solana-Token."
+        >
+          Useful Solana utilities built around ArbStrategy. Track your ASTY position, recover unused SOL, turn live pool data into X content or create a live passport for any Solana token.
+        </p>
+
+      </div>
+
+      <div class="hero-visual" aria-hidden="true">
+        <div class="hero-wolf-glow"></div>
+        <img
+          src="assets/wolf.png"
+          onerror="this.onerror=null;this.src='https://raw.githubusercontent.com/ArbStrategy-ASTY/ArbStrategy-ASTY/main/assets/wolf.png';"
+          alt=""
+          class="hero-wolf"
+        />
+      </div>
+
+    </div>
+  </section>
+
+  <!-- TOOLS -->
+
+  <section class="tools-section reveal">
+
+    <div class="section-head">
+      <h2
+        class="section-title"
+        data-en="Explore the ASTY tools"
+        data-de="Entdecke die ASTY Tools"
+      >
+        Explore the ASTY tools
+      </h2>
+
+      <p
+        class="section-sub"
+        data-en="Four different utilities, one clear goal: make the ASTY ecosystem more useful, transparent and accessible."
+        data-de="Vier unterschiedliche Tools mit einem klaren Ziel: das ASTY-Ecosystem nützlicher, transparenter und zugänglicher zu machen."
+      >
+        Four different utilities, one clear goal: make the ASTY ecosystem more useful, transparent and accessible.
+      </p>
+    </div>
+
+    <div class="tools-grid">
+
+      <!-- MY ASTY -->
+
+      <a
+        class="tool-card"
+        style="--delay: 0ms;"
+        href="https://myasty.arbstrategy.net/"
+        target="_blank"
+        rel="noopener noreferrer"
+        aria-label="Open My ASTY"
+      >
+        <div class="tool-top">
+          <span class="tool-icon">◎</span>
+          <span class="tool-status" data-en="Live tool" data-de="Live Tool">Live tool</span>
+        </div>
+
+        <div class="tool-copy">
+          <span
+            class="tool-eyebrow"
+            data-en="Personal ASTY overview"
+            data-de="Persönliche ASTY-Übersicht"
+          >
+            Personal ASTY overview
+          </span>
+
+          <h3 class="tool-title">My ASTY</h3>
+
+          <p
+            class="tool-description"
+            data-en="A read-only view of your ASTY holdings. Enter one or multiple wallet addresses to see your combined ASTY balance, current value, share of the remaining supply and your personal ASTY-Effect."
+            data-de="Eine reine Leseansicht für deine ASTY-Bestände. Gib eine oder mehrere Wallet-Adressen ein und sieh deinen gesamten ASTY-Bestand, den aktuellen Wert, deinen Anteil an der verbleibenden Supply und deinen persönlichen ASTY-Effect."
+          >
+            A read-only view of your ASTY holdings. Enter one or multiple wallet addresses to see your combined ASTY balance, current value, share of the remaining supply and your personal ASTY-Effect.
+          </p>
+        </div>
+
+        <div class="tool-footer">
+          <div class="tool-tags">
+            <span class="tool-tag" data-en="Read only" data-de="Nur Lesen">Read only</span>
+            <span class="tool-tag" data-en="Multi-wallet" data-de="Multi-Wallet">Multi-wallet</span>
+            <span class="tool-tag" data-en="ASTY-Effect" data-de="ASTY-Effect">ASTY-Effect</span>
+          </div>
+
+          <span class="open-tool">
+            <span data-en="Open My ASTY" data-de="My ASTY öffnen">Open My ASTY</span>
+            <span class="open-tool-arrow">↗</span>
+          </span>
+        </div>
+      </a>
+
+      <!-- UNLOCKR -->
+
+      <a
+        class="tool-card cyan-card"
+        style="--delay: 90ms;"
+        href="https://unlockr.arbstrategy.net/"
+        target="_blank"
+        rel="noopener noreferrer"
+        aria-label="Open ASTY Unlockr"
+      >
+        <div class="tool-top">
+          <span class="tool-icon">↯</span>
+          <span class="tool-status" data-en="Live tool" data-de="Live Tool">Live tool</span>
+        </div>
+
+        <div class="tool-copy">
+          <span
+            class="tool-eyebrow"
+            data-en="Solana wallet utility"
+            data-de="Solana Wallet Utility"
+          >
+            Solana wallet utility
+          </span>
+
+          <h3 class="tool-title">ASTY Unlockr</h3>
+
+          <p
+            class="tool-description"
+            data-en="Find unused Solana token accounts with an exact zero balance and recover the SOL still locked in them as rent. You choose which accounts are closed, and token accounts with a balance are never touched."
+            data-de="Finde ungenutzte Solana-Tokenkonten mit exakt 0 Tokenbestand und hole das dort noch als Rent gebundene SOL zurück. Du entscheidest selbst, welche Konten geschlossen werden. Tokenkonten mit Bestand werden niemals angetastet."
+          >
+            Find unused Solana token accounts with an exact zero balance and recover the SOL still locked in them as rent. You choose which accounts are closed, and token accounts with a balance are never touched.
+          </p>
+        </div>
+
+        <div class="tool-footer">
+          <div class="tool-tags">
+            <span class="tool-tag" data-en="Empty accounts only" data-de="Nur leere Konten">Empty accounts only</span>
+            <span class="tool-tag" data-en="Recover SOL" data-de="SOL zurückholen">Recover SOL</span>
+            <span class="tool-tag" data-en="2% Unlockr fee" data-de="2% Unlockr Fee">2% Unlockr fee</span>
+          </div>
+
+          <span class="open-tool">
+            <span data-en="Open ASTY Unlockr" data-de="ASTY Unlockr öffnen">Open ASTY Unlockr</span>
+            <span class="open-tool-arrow">↗</span>
+          </span>
+        </div>
+      </a>
+
+      <!-- X SIGNAL LAB -->
+
+      <a
+        class="tool-card cyan-card"
+        style="--delay: 180ms;"
+        href="https://arbstrategy.net/signals.html"
+        target="_blank"
+        rel="noopener noreferrer"
+        aria-label="Open ASTY X Signal Lab"
+      >
+        <div class="tool-top">
+          <span class="tool-icon">𝕏</span>
+          <span class="tool-status" data-en="Live tool" data-de="Live Tool">Live tool</span>
+        </div>
+
+        <div class="tool-copy">
+          <span
+            class="tool-eyebrow"
+            data-en="Live ASTY pool intelligence"
+            data-de="Live ASTY Pool Intelligence"
+          >
+            Live ASTY pool intelligence
+          </span>
+
+          <h3 class="tool-title">ASTY X Signal Lab</h3>
+
+          <p
+            class="tool-description"
+            data-en="Turn live ASTY pool performance into ready-to-post X content. Generate a compact version for standard X or a stronger long-form post using current pool and revenue data."
+            data-de="Verwandle die Live-Performance der ASTY-Pools in direkt nutzbaren X-Content. Erzeuge eine kompakte Version für Standard-X oder einen stärkeren Long-Form-Post auf Basis aktueller Pool- und Revenue-Daten."
+          >
+            Turn live ASTY pool performance into ready-to-post X content. Generate a compact version for standard X or a stronger long-form post using current pool and revenue data.
+          </p>
+        </div>
+
+        <div class="tool-footer">
+          <div class="tool-tags">
+            <span class="tool-tag" data-en="Live pool data" data-de="Live Pool-Daten">Live pool data</span>
+            <span class="tool-tag" data-en="X Standard" data-de="X Standard">X Standard</span>
+            <span class="tool-tag" data-en="X Premium" data-de="X Premium">X Premium</span>
+          </div>
+
+          <span class="open-tool">
+            <span data-en="Open X Signal Lab" data-de="X Signal Lab öffnen">Open X Signal Lab</span>
+            <span class="open-tool-arrow">↗</span>
+          </span>
+        </div>
+      </a>
+
+      <!-- PROJECT PASSPORT -->
+
+      <a
+        class="tool-card"
+        style="--delay: 270ms;"
+        href="https://arbstrategy.net/SolanaProjectPassport.html"
+        target="_blank"
+        rel="noopener noreferrer"
+        aria-label="Open Solana Project Passport"
+      >
+        <div class="tool-top">
+          <span class="tool-icon">P</span>
+          <span class="tool-status" data-en="Live tool" data-de="Live Tool">Live tool</span>
+        </div>
+
+        <div class="tool-copy">
+          <span
+            class="tool-eyebrow"
+            data-en="Free Solana utility"
+            data-de="Kostenloses Solana Tool"
+          >
+            Free Solana utility
+          </span>
+
+          <h3 class="tool-title">Solana Project Passport</h3>
+
+          <p
+            class="tool-description"
+            data-en="Turn any Solana token address into a clean live project snapshot. See liquidity, volume, markets and DEX activity in one place and create a project overview that can be shared easily."
+            data-de="Verwandle jede Solana-Tokenadresse in einen übersichtlichen Live-Projekt-Snapshot. Sieh Liquidität, Volumen, Märkte und DEX-Aktivität an einem Ort und erstelle eine Projektübersicht, die sich einfach teilen lässt."
+          >
+            Turn any Solana token address into a clean live project snapshot. See liquidity, volume, markets and DEX activity in one place and create a project overview that can be shared easily.
+          </p>
+        </div>
+
+        <div class="tool-footer">
+          <div class="tool-tags">
+            <span class="tool-tag" data-en="Any Solana token" data-de="Jeder Solana Token">Any Solana token</span>
+            <span class="tool-tag" data-en="Live market data" data-de="Live Marktdaten">Live market data</span>
+            <span class="tool-tag" data-en="Shareable" data-de="Teilbar">Shareable</span>
+          </div>
+
+          <span class="open-tool">
+            <span data-en="Open Project Passport" data-de="Project Passport öffnen">Open Project Passport</span>
+            <span class="open-tool-arrow">↗</span>
+          </span>
+        </div>
+      </a>
+
+    </div>
+  </section>
+
+  <!-- ECOSYSTEM -->
+
+  <section class="ecosystem-wrap reveal">
+    <div class="ecosystem-card">
+      <div class="ecosystem-mark" aria-hidden="true">
+        <span></span>
+      </div>
+
+      <div>
+        <span
+          class="ecosystem-label"
+          data-en="Built around ArbStrategy"
+          data-de="Rund um ArbStrategy entwickelt"
+        >
+          Built around ArbStrategy
+        </span>
+
+        <span
+          class="ecosystem-title"
+          data-en="ASTY is growing into a utility ecosystem."
+          data-de="ASTY wächst zu einem Utility-Ecosystem."
+        >
+          ASTY is growing into a utility ecosystem.
+        </span>
+
+        <span
+          class="ecosystem-description"
+          data-en="The tools extend ASTY beyond the token itself with practical utilities for holders, Solana users, content creation and project research."
+          data-de="Die Tools erweitern ASTY über den Token selbst hinaus mit praktischen Anwendungen für Holder, Solana-Nutzer, Content-Erstellung und Projektanalyse."
+        >
+          The tools extend ASTY beyond the token itself with practical utilities for holders, Solana users, content creation and project research.
+        </span>
+      </div>
+
+      <a
+        class="ecosystem-link"
+        href="https://arbstrategy.net/"
+        target="_blank"
+        rel="noopener noreferrer"
+        data-en="About ASTY ↗"
+        data-de="Mehr über ASTY ↗"
+      >
+        About ASTY ↗
+      </a>
+    </div>
+  </section>
+
+</main>
+
+<button id="scrollTopBtn" type="button" aria-label="Back to top">↑</button>
+
+<script>
+/* PAGE REVEAL */
+
+document.addEventListener("DOMContentLoaded", () => {
+  const reveals = document.querySelectorAll(".reveal");
+
+  const revealObserver = new IntersectionObserver(
+    (entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add("visible");
+          revealObserver.unobserve(entry.target);
+        }
+      });
+    },
+    {
+      threshold: 0.10,
+      rootMargin: "0px 0px -6% 0px"
+    }
+  );
+
+  reveals.forEach((element) => revealObserver.observe(element));
+});
+
+/* MOBILE MENU */
+
+const menuToggle = document.getElementById("menuToggle");
+const mobileMenu = document.getElementById("mobileMenu");
+const mobileMenuLinks = mobileMenu.querySelectorAll("a");
+
+function openMobileMenu() {
+  menuToggle.classList.add("active");
+  mobileMenu.classList.add("open");
+  document.body.classList.add("menu-open");
+
+  menuToggle.setAttribute("aria-expanded", "true");
+  mobileMenu.setAttribute("aria-hidden", "false");
+}
+
+function closeMobileMenu() {
+  menuToggle.classList.remove("active");
+  mobileMenu.classList.remove("open");
+  document.body.classList.remove("menu-open");
+
+  menuToggle.setAttribute("aria-expanded", "false");
+  mobileMenu.setAttribute("aria-hidden", "true");
+}
+
+menuToggle.addEventListener("click", (event) => {
+  event.stopPropagation();
+
+  if (mobileMenu.classList.contains("open")) {
+    closeMobileMenu();
+  } else {
+    openMobileMenu();
+  }
+});
+
+mobileMenu.addEventListener("click", (event) => event.stopPropagation());
+
+mobileMenuLinks.forEach((link) => {
+  link.addEventListener("click", closeMobileMenu);
+});
+
+document.addEventListener("click", () => {
+  if (mobileMenu.classList.contains("open")) {
+    closeMobileMenu();
+  }
+});
+
+window.addEventListener("resize", () => {
+  if (window.innerWidth > 900) {
+    closeMobileMenu();
+  }
+});
+
+/* LANGUAGE */
+
+const langToggle = document.getElementById("langToggle");
+
+let currentLang = localStorage.getItem("astyLanguage") || "en";
+
+function setLanguage(language) {
+  currentLang = language;
+
+  document.querySelectorAll("[data-en][data-de]").forEach((element) => {
+    const translated = element.getAttribute(`data-${language}`);
+
+    if (translated !== null) {
+      element.textContent = translated;
+    }
+  });
+
+  document.documentElement.lang = language;
+  langToggle.textContent = language === "en" ? "DE" : "EN";
+
+  localStorage.setItem("astyLanguage", language);
+}
+
+langToggle.addEventListener("click", () => {
+  setLanguage(currentLang === "en" ? "de" : "en");
+});
+
+setLanguage(currentLang);
+
+/* BACK TO TOP */
+
+const scrollTopBtn = document.getElementById("scrollTopBtn");
+
+window.addEventListener("scroll", () => {
+  scrollTopBtn.style.display = window.scrollY > 350 ? "flex" : "none";
+});
+
+scrollTopBtn.addEventListener("click", () => {
+  window.scrollTo({
+    top: 0,
+    behavior: "smooth"
+  });
+});
+</script>
+
+</body>
+</html>
