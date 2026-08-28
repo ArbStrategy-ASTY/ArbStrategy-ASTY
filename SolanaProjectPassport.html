@@ -2599,16 +2599,16 @@ body.embed-mode .passport-foot{padding:12px 16px}
     ctx.stroke();
 
     const brandLogo = await loadAstyBrandLogo();
-    const brandSize = 24;
-    const footerY = 989;
+    const brandSize = 32;
+    const footerY = 991;
 
     const astyText = "$ASTY";
     const ctaText = "Create your Token Passport for free.";
     const siteText = "ArbStrategy.net";
 
-    const astyFont = "800 20px Inter, Arial, sans-serif";
-    const ctaFont = "700 17px Inter, Arial, sans-serif";
-    const siteFont = "800 17px Inter, Arial, sans-serif";
+    const astyFont = "850 24px Inter, Arial, sans-serif";
+    const ctaFont = "750 20px Inter, Arial, sans-serif";
+    const siteFont = "850 20px Inter, Arial, sans-serif";
 
     ctx.font = astyFont;
     const astyW = ctx.measureText(astyText).width;
@@ -2619,15 +2619,16 @@ body.embed-mode .passport-foot{padding:12px 16px}
     ctx.font = siteFont;
     const siteW = ctx.measureText(siteText).width;
 
-    const logoGap = 10;
-    const sectionGap = 28;
+    // Keep the complete ASTY CTA visually centered as one compact unit.
+    const logoGap = 12;
+    const sectionGap = 22;
     const totalFooterW =
       brandSize + logoGap + astyW +
       sectionGap + ctaW +
       sectionGap + siteW;
 
     let footerX = (W - totalFooterW) / 2;
-    const footerLogoY = footerY - 19;
+    const footerLogoY = footerY - 25;
 
     if (brandLogo?.img) {
       drawCircularImage(ctx, brandLogo.img, footerX, footerLogoY, brandSize);
@@ -2637,17 +2638,17 @@ body.embed-mode .passport-foot{padding:12px 16px}
 
     footerX += brandSize + logoGap;
 
-    ctx.fillStyle = "#ece4ff";
+    ctx.fillStyle = "#f0eaff";
     ctx.font = astyFont;
     ctx.fillText(astyText, footerX, footerY);
     footerX += astyW + sectionGap;
 
-    ctx.fillStyle = "#ddd2f8";
+    ctx.fillStyle = "#e8e0fb";
     ctx.font = ctaFont;
     ctx.fillText(ctaText, footerX, footerY);
     footerX += ctaW + sectionGap;
 
-    ctx.fillStyle = "#bdafff";
+    ctx.fillStyle = "#c8b7ff";
     ctx.font = siteFont;
     ctx.fillText(siteText, footerX, footerY);
 
