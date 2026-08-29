@@ -1900,6 +1900,7 @@ body.embed-mode .passport-foot{padding:12px 16px}
       buys24: num(bird?.buy24h),
       sells24: num(bird?.sell24h),
       marketCap: num(bird?.marketCap),
+      holders: num(bird?.holder),
       fdv: num(bird?.fdv),
 
       // Birdeye numberMarkets is preferred if supplied.
@@ -2394,6 +2395,7 @@ body.embed-mode .passport-foot{padding:12px 16px}
 
     try {
       history7d = await fetchBirdeyeHistory7d(current.token);
+      current.history7d = [...history7d];
 
       if (Number(current.price) > 0) {
         const now = Math.floor(Date.now() / 1000);
@@ -2728,12 +2730,63 @@ body.embed-mode .passport-foot{padding:12px 16px}
     setStatus("Share Card downloaded.","ok");
   }
 
-  function shareText() {
+  function formatHolderCount(value) {
+    const n = Number(value);
+    return Number.isFinite(n) && n >= 0
+      ? Math.round(n).toLocaleString("en-US")
+      : "—";
+  }
+
+  function calculateSevenDayChange(points) {
+    const valid = (Array.isArray(points) ? points : [])
+      .map(p => ({
+        unixTime: Number(p?.unixTime) || 0,
+        value: Number(p?.value) || 0
+      }))
+      .filter(p => p.unixTime > 0 && p.value > 0)
+      .sort((a,b) => a.unixTime - b.unixTime);
+
+    if (!valid.length) return null;
+
+    const first = valid[0].value;
+    const currentPrice = Number(current?.price);
+    const last =
+      Number.isFinite(currentPrice) && currentPrice > 0
+        ? currentPrice
+        : valid[valid.length - 1].value;
+
+    if (!(first > 0) || !(last > 0)) return null;
+    return ((last / first) - 1) * 100;
+  }
+
+  async function ensureShareHistory7d() {
+    if (Array.isArray(current?.history7d) && current.history7d.length >= 2) {
+      return current.history7d;
+    }
+
+    try {
+      const points = await fetchBirdeyeHistory7d(current.token);
+      current.history7d = points;
+      return points;
+    } catch (error) {
+      console.warn("7D share history unavailable:", error);
+      return [];
+    }
+  }
+
+  async function shareText({includeSite=true}={}) {
     if (!current) return "";
 
-    const change =
+    const change24 =
       Number.isFinite(Number(current.change24))
         ? pct(current.change24)
+        : "—";
+
+    const history7d = await ensureShareHistory7d();
+    const change7dNumber = calculateSevenDayChange(history7d);
+    const change7d =
+      Number.isFinite(change7dNumber)
+        ? pct(change7dNumber)
         : "—";
 
     const buys =
@@ -2746,17 +2799,30 @@ body.embed-mode .passport-foot{padding:12px 16px}
         ? Number(current.sells24).toLocaleString("en-US")
         : "—";
 
-    return `Solana Project Passport:
+    const holders = formatHolderCount(current.holders);
 
-${current.name} ($${current.symbol})
+    const lines = [
+      "Solana Project Passport 🟣",
+      "",
+      `${current.name} ($${current.symbol})`,
+      "",
+      `Price: ${priceMoney(current.price)}`,
+      `24h Change: ${change24}`,
+      `7d Change: ${change7d}`,
+      `Liquidity: ${compactMoney(current.liquidity)}`,
+      `24h Volume: ${compactMoney(current.volume24)}`,
+      `Market Cap: ${current.marketCap ? compactMoney(current.marketCap) : "$—"}`,
+      `Holders: ${holders}`,
+      `Buys / Sells: ${buys} / ${sells}`,
+      "",
+      "🟣 Create your own Solana Project Passport for free"
+    ];
 
-Price: ${priceMoney(current.price)}
-24h Change: ${change}
-Liquidity: ${compactMoney(current.liquidity)}
-24h Volume: ${compactMoney(current.volume24)}
-24h Buys / Sells: ${buys} / ${sells}
+    if (includeSite) {
+      lines.push("ArbStrategy.net");
+    }
 
-Powered by [ArbStrategy.net](https://arbstrategy.net/)`;
+    return lines.join("\\n");
   }
 
   els.scan.addEventListener("click",()=>loadToken(els.input.value));
@@ -2777,44 +2843,70 @@ const copyEmbedBtn = $("copyEmbed");
     });
   }
 
-  $("shareX").addEventListener("click",()=>{
+  $("shareX").addEventListener("click",async()=>{
     if (!current) return;
-    const text = shareText();
-    window.open("https://twitter.com/intent/tweet?text="+encodeURIComponent(text),"_blank","noopener");
+
+    // Open immediately so browsers do not block the window while 7D data loads.
+    const shareWindow = window.open("about:blank","_blank");
+
+    const text = await shareText();
+    const shareUrl =
+      "https://twitter.com/intent/tweet?text=" +
+      encodeURIComponent(text);
+
+    if (shareWindow) {
+      shareWindow.opener = null;
+      shareWindow.location.href = shareUrl;
+    } else {
+      window.location.href = shareUrl;
+    }
   });
 
-  $("shareTelegram").addEventListener("click",()=>{
+  $("shareTelegram").addEventListener("click",async()=>{
     if (!current) return;
 
-    const text = shareText();
+    const text = await shareText({includeSite:true});
 
-    // Prefer Telegram's native app deep link so mobile users go directly
-    // into Telegram with the prepared text.
+    // Prefer Telegram's native app deep link with the complete prepared text.
     const tgDeepLink =
-      "tg://msg_url?url=&text=" + encodeURIComponent(text);
+      "tg://msg_url?url=&text=" +
+      encodeURIComponent(text);
 
-    // Clean fallback for browsers/devices that do not accept an empty URL
-    // in the native Telegram scheme. This avoids the ugly htmlpreview link.
+    // Telegram's web share requires a URL. To avoid showing ArbStrategy.net
+    // twice, the fallback text intentionally omits the final site line.
+    const fallbackText =
+      await shareText({includeSite:false});
+
     const webFallback =
       "https://t.me/share/url?url=" +
       encodeURIComponent("https://arbstrategy.net/") +
       "&text=" +
-      encodeURIComponent(text);
+      encodeURIComponent(fallbackText);
 
     let leftPage = false;
+
     const onVisibility = () => {
       if (document.hidden) leftPage = true;
     };
 
-    document.addEventListener("visibilitychange", onVisibility, {once:true});
+    document.addEventListener(
+      "visibilitychange",
+      onVisibility,
+      {once:true}
+    );
+
     window.location.href = tgDeepLink;
 
     setTimeout(()=>{
-      document.removeEventListener("visibilitychange", onVisibility);
+      document.removeEventListener(
+        "visibilitychange",
+        onVisibility
+      );
+
       if (!leftPage && !document.hidden) {
         window.location.href = webFallback;
       }
-    }, 1200);
+    },1200);
   });
 
   window.addEventListener("resize",()=>{
