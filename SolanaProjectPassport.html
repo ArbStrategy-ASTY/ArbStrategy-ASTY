@@ -2815,14 +2815,14 @@ body.embed-mode .passport-foot{padding:12px 16px}
       `Holders: ${holders}`,
       `Buys / Sells: ${buys} / ${sells}`,
       "",
-      "🟣 Create your own Solana Project Passport for free"
+      "🟣 Create your own Solana Project Passport for free:"
     ];
 
     if (includeSite) {
-      lines.push("ArbStrategy.net");
+      lines.push("https://arbstrategy.net/SolanaProjectPassport.html");
     }
 
-    return lines.join("\\n");
+    return lines.join("\n");
   }
 
   els.scan.addEventListener("click",()=>loadToken(els.input.value));
@@ -2879,7 +2879,7 @@ const copyEmbedBtn = $("copyEmbed");
 
     const webFallback =
       "https://t.me/share/url?url=" +
-      encodeURIComponent("https://arbstrategy.net/") +
+      encodeURIComponent("https://arbstrategy.net/SolanaProjectPassport.html") +
       "&text=" +
       encodeURIComponent(fallbackText);
 
