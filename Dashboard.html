@@ -1387,7 +1387,7 @@
       <article class="mini-card">
         <div class="mini-label">Current Supply</div>
         <div class="mini-value" id="supplyValue">—</div>
-        <div class="mini-sub">On-chain supply</div>
+        <div class="mini-sub">Read from the Solana mint</div>
       </article>
 
       <article class="mini-card">
@@ -1605,7 +1605,7 @@
     const PRESALE_PRICE = 0.0025;
     const CHUNK_SIZE = 25;
     const REFRESH_MS = 60_000;
-    const CACHE_KEY = "asty-live-dashboard-v3";
+    const CACHE_KEY = "asty-live-dashboard-v6";
 
     // Optional secure server endpoint. It should return either:
     // { price, priceChange24h } or a BirdEye-like { data: { price, ... } } object.
@@ -1633,6 +1633,16 @@
 
     const LP_RESERVE_MAX_ATTEMPTS = 8;
     const LP_RESERVE_RETRY_DELAY_MS = 1_250;
+
+    // Exact SPL mint supply sources. These are used for Current Supply,
+    // Burned Tokens, Burn %, Market Cap and ASTY-Effect calculations.
+    const SUPPLY_RPC_ENDPOINTS = [
+      "https://rpc.nodeflare.app/solana/public",
+      "https://rpc.solanatracker.io/public",
+      "https://solana-rpc.publicnode.com",
+      "https://api.mainnet-beta.solana.com",
+      "https://solana.rpc.subquery.network/public"
+    ];
 
     // [pool address, display label, configured pool fee in percent]
     const POOLS = [
@@ -2033,85 +2043,68 @@
     }
 
     async function loadSupply() {
-      // Preferred source on the public website:
-      // GeckoTerminal already powers the pool data and exposes total_supply
-      // from its token endpoint. This avoids public Solana RPC browser blocks.
-      try {
-        const url =
-          `https://api.geckoterminal.com/api/v2/networks/solana/tokens/${ASTY_MINT}`;
-
-        const payload = await fetchJsonWithRetry(url, {
-          headers: {
-            Accept: "application/json;version=20230203"
-          },
+      const attempts = SUPPLY_RPC_ENDPOINTS.map(async endpoint => {
+        const payload = await fetchJson(endpoint, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            jsonrpc: "2.0",
+            id: 1,
+            method: "getTokenSupply",
+            params: [
+              ASTY_MINT,
+              { commitment: "confirmed" }
+            ]
+          }),
           cache: "no-store"
-        }, 1);
+        }, 8_000);
 
-        const attrs = payload?.data?.attributes || {};
-        let currentSupply = safeNumber(attrs.total_supply);
-        const decimals = Number.isInteger(attrs.decimals)
-          ? attrs.decimals
-          : safeNumber(attrs.decimals);
-
-        // GeckoTerminal normally returns total_supply in human-readable units.
-        // Keep a defensive fallback in case a raw base-unit value is returned.
-        if (
-          Number.isFinite(currentSupply) &&
-          Number.isFinite(decimals) &&
-          decimals > 0 &&
-          currentSupply > INITIAL_SUPPLY * 1000
-        ) {
-          currentSupply = currentSupply / (10 ** decimals);
+        if (payload?.error) {
+          throw new Error(
+            payload.error?.message ||
+            "getTokenSupply failed"
+          );
         }
+
+        const value = payload?.result?.value;
 
         if (
-          Number.isFinite(currentSupply) &&
-          currentSupply > 0 &&
-          currentSupply <= INITIAL_SUPPLY * 1.05
+          !value?.amount ||
+          !Number.isInteger(value?.decimals)
         ) {
-          return {
-            currentSupply,
-            decimals: Number.isFinite(decimals) ? decimals : 9,
-            source: "GeckoTerminal on-chain supply"
-          };
+          throw new Error("Unexpected supply response");
         }
 
-        throw new Error("GeckoTerminal returned no plausible ASTY supply");
-      } catch {}
+        const currentSupply = bigintAmountToNumber(
+          value.amount,
+          value.decimals
+        );
 
-      // Fallback: direct Solana RPC.
-      let lastError;
-
-      for (const endpoint of RPC_ENDPOINTS) {
-        try {
-          const payload = await fetchJsonWithRetry(endpoint, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              jsonrpc: "2.0",
-              id: 1,
-              method: "getTokenSupply",
-              params: [ASTY_MINT, { commitment: "confirmed" }]
-            }),
-            cache: "no-store"
-          }, 0);
-
-          const value = payload?.result?.value;
-          if (!value?.amount || !Number.isInteger(value?.decimals)) {
-            throw new Error("Unexpected RPC response");
-          }
-
-          return {
-            currentSupply: bigintAmountToNumber(value.amount, value.decimals),
-            decimals: value.decimals,
-            source: "Solana RPC"
-          };
-        } catch (error) {
-          lastError = error;
+        if (
+          !Number.isFinite(currentSupply) ||
+          currentSupply <= 0 ||
+          currentSupply > INITIAL_SUPPLY
+        ) {
+          throw new Error("Implausible ASTY supply");
         }
+
+        return {
+          currentSupply,
+          decimals: value.decimals,
+          source: "Solana on-chain"
+        };
+      });
+
+      try {
+        // First successful exact on-chain response wins.
+        return await Promise.any(attempts);
+      } catch {
+        // refreshDashboard already knows how to use currentSupply from
+        // lp-reserve.json when the browser RPC requests all fail.
+        throw new Error(
+          "Exact ASTY mint supply temporarily unavailable"
+        );
       }
-
-      throw lastError || new Error("Supply unavailable");
     }
 
 
