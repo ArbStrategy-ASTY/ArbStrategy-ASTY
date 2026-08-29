@@ -158,6 +158,27 @@ h1{
   box-shadow:var(--shadow);
 }
 .search-row{display:flex;gap:10px}
+.scan-actions{
+  display:flex;
+  align-items:stretch;
+  gap:8px;
+  flex:0 0 auto;
+}
+.scan-actions .btn.primary{
+  white-space:nowrap;
+}
+.clear-btn{
+  min-width:auto;
+  padding-left:13px;
+  padding-right:13px;
+  color:#9ba2bb;
+  background:rgba(255,255,255,.025);
+}
+.clear-btn:hover{
+  color:#eee9ff;
+  border-color:rgba(176,147,255,.30);
+  background:rgba(176,147,255,.07);
+}
 .input-wrap{
   flex:1;
   min-width:0;
@@ -372,7 +393,7 @@ td.num,th.num{text-align:right}
 .powered strong{color:#dfd6ff}
 
 .tools{
-  margin-top:18px;
+  margin:0 0 18px;
   display:grid;
   grid-template-columns:1fr;
   gap:18px;
@@ -382,6 +403,52 @@ td.num,th.num{text-align:right}
   border-radius:20px;
   padding:22px;
   background:rgba(15,19,38,.78);
+  transform-origin:center;
+}
+
+/* Re-runs after every successful token scan. */
+.tools.share-ready-pop .tool-card{
+  animation:shareReadyPop .62s cubic-bezier(.2,.9,.25,1.12) both,
+            shareReadyGlow 1.35s ease-out both;
+}
+
+@keyframes shareReadyPop{
+  0%{
+    opacity:0;
+    transform:translateY(18px) scale(.965);
+  }
+  60%{
+    opacity:1;
+    transform:translateY(-3px) scale(1.012);
+  }
+  100%{
+    opacity:1;
+    transform:translateY(0) scale(1);
+  }
+}
+
+@keyframes shareReadyGlow{
+  0%{
+    border-color:rgba(176,147,255,.16);
+    box-shadow:0 0 0 rgba(176,147,255,0);
+  }
+  35%{
+    border-color:rgba(176,147,255,.58);
+    box-shadow:
+      0 0 0 1px rgba(176,147,255,.12),
+      0 12px 42px rgba(126,94,255,.22),
+      0 0 46px rgba(103,232,249,.07);
+  }
+  100%{
+    border-color:var(--line);
+    box-shadow:0 0 0 rgba(176,147,255,0);
+  }
+}
+
+@media (prefers-reduced-motion:reduce){
+  .tools.share-ready-pop .tool-card{
+    animation:none;
+  }
 }
 .tool-card h3{margin:0 0 7px;font-size:18px}
 .tool-card p{margin:0;color:var(--muted);font-size:13px;line-height:1.55}
@@ -561,6 +628,13 @@ body.embed-mode .passport-foot{padding:12px 16px}
     gap:9px;
   }
 
+  .scan-actions{
+    width:100%;
+    display:grid;
+    grid-template-columns:minmax(0,1fr) auto;
+    gap:8px;
+  }
+
   .input-wrap{
     min-height:52px;
     padding:0 13px;
@@ -573,9 +647,19 @@ body.embed-mode .passport-foot{padding:12px 16px}
   }
 
   .search-row .btn{
-    width:100%;
     min-height:50px;
     font-size:15px;
+  }
+
+  .scan-actions .btn.primary{
+    width:100%;
+  }
+
+  .scan-actions .clear-btn{
+    width:auto;
+    min-width:72px;
+    padding-left:13px;
+    padding-right:13px;
   }
 
   .quickline{
@@ -977,7 +1061,10 @@ body.embed-mode .passport-foot{padding:12px 16px}
             <input id="tokenInput" type="text" autocomplete="off" spellcheck="false"
               placeholder="Paste a Solana token address">
           </div>
-          <button class="btn primary" id="scanBtn">Create Passport</button>
+          <div class="scan-actions">
+            <button class="btn primary" id="scanBtn">Create Passport</button>
+            <button class="btn clear-btn" id="clearBtn" type="button">Clear</button>
+          </div>
         </div>
         <div class="remember-row">
           <label class="remember-label">
@@ -990,6 +1077,19 @@ body.embed-mode .passport-foot{padding:12px 16px}
     </section>
 
     <section id="passportSection">
+      <div class="tools" id="shareTools">
+        <div class="tool-card">
+          <h3>Share your Passport</h3>
+          <p>Create a branded snapshot image and share the live Passport.</p>
+          <div class="tool-actions">
+            <button class="btn primary" id="makeCard">Create Share Card</button>
+            <button class="btn" id="shareX">Share on X</button>
+            <button class="btn" id="shareTelegram">Share on Telegram</button>
+          </div>
+          <canvas id="shareCanvas" class="hidden" width="1080" height="1080"></canvas>
+        </div>
+      </div>
+
       <article class="passport" id="passport">
         <div class="passport-head">
           <div class="token-id">
@@ -1045,18 +1145,7 @@ body.embed-mode .passport-foot{padding:12px 16px}
         </div>
       </article>
 
-      <div class="tools">
-        <div class="tool-card">
-          <h3>Share your Passport</h3>
-          <p>Create a branded snapshot image and share the live Passport.</p>
-          <div class="tool-actions">
-            <button class="btn primary" id="makeCard">Create Share Card</button>
-            <button class="btn" id="shareX">Share on X</button>
-            <button class="btn" id="shareTelegram">Share on Telegram</button>
-          </div>
-          <canvas id="shareCanvas" class="hidden" width="1080" height="1080"></canvas>
-        </div>
-      </div>
+
     </section>
   </main>
 
@@ -1086,6 +1175,7 @@ body.embed-mode .passport-foot{padding:12px 16px}
   const els = {
     input: $("tokenInput"),
     scan: $("scanBtn"),
+    clear: $("clearBtn"),
     status: $("status"),
     section: $("passportSection"),
     logo: $("tokenLogo"),
@@ -1732,6 +1822,18 @@ body.embed-mode .passport-foot{padding:12px 16px}
 
     history.replaceState(null,"",liveUrl);
     els.section.classList.add("show");
+
+    // Make the share action visibly arrive after every successful scan.
+    const shareTools = $("shareTools");
+    if (shareTools) {
+      shareTools.classList.remove("share-ready-pop");
+      void shareTools.offsetWidth;
+      shareTools.classList.add("share-ready-pop");
+
+      window.setTimeout(() => {
+        shareTools.classList.remove("share-ready-pop");
+      }, 1500);
+    }
   }
 
   function pageBase() {
@@ -2823,6 +2925,37 @@ body.embed-mode .passport-foot{padding:12px 16px}
     }
 
     return lines.join("\n");
+  }
+
+  if (els.clear) {
+    els.clear.addEventListener("click",()=>{
+      els.input.value = "";
+      current = null;
+
+      els.section.classList.remove("show");
+      els.status.textContent = "";
+      els.status.classList.remove("error","ok");
+
+      const shareTools = $("shareTools");
+      if (shareTools) {
+        shareTools.classList.remove("share-ready-pop");
+      }
+
+      try {
+        localStorage.removeItem(CONTRACT_KEY);
+      } catch (e) {
+        console.warn("Could not clear saved contract:", e);
+      }
+
+      try {
+        const cleanUrl = window.location.origin + window.location.pathname;
+        history.replaceState(null,"",cleanUrl);
+      } catch (e) {
+        console.warn("Could not reset URL:", e);
+      }
+
+      els.input.focus();
+    });
   }
 
   els.scan.addEventListener("click",()=>loadToken(els.input.value));
