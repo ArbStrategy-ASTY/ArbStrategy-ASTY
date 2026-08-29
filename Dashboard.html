@@ -2271,6 +2271,39 @@
       throw lastError || new Error("BirdEye reserve balance failed");
     }
 
+    async function runWithConcurrency(items, limit, worker) {
+      const results = new Array(items.length);
+      let nextIndex = 0;
+
+      async function runner() {
+        while (true) {
+          const index = nextIndex++;
+          if (index >= items.length) return;
+
+          try {
+            results[index] = {
+              status: "fulfilled",
+              value: await worker(items[index], index)
+            };
+          } catch (reason) {
+            results[index] = {
+              status: "rejected",
+              reason
+            };
+          }
+        }
+      }
+
+      await Promise.all(
+        Array.from(
+          { length: Math.min(limit, items.length) },
+          () => runner()
+        )
+      );
+
+      return results;
+    }
+
     async function loadBirdEyeLpReserve() {
       setReserveLoading("Loading reserve balances from BirdEye");
 
@@ -3389,6 +3422,8 @@
       updateStatus("", "Refreshing live data…");
       setReserveLoading("Loading reserve balances");
 
+      // Load the core dashboard independently. A failing supply or reserve
+      // request must never prevent pool metrics from being displayed.
       const [poolResult, supplyResult, birdEyeResult, reserveSnapshotResult] =
         await Promise.allSettled([
           loadPools(),
@@ -3396,16 +3431,6 @@
           loadBirdEyePrice(),
           loadGithubLpReserve()
         ]);
-
-      let reserveResult = reserveSnapshotResult;
-
-      if (reserveSnapshotResult.status !== "fulfilled") {
-        setReserveLoading("Trying BirdEye directly");
-
-        reserveResult = await Promise.allSettled([
-          loadBirdEyeLpReserve()
-        ]).then(results => results[0]);
-      }
 
       let hadSuccess = false;
 
@@ -3431,32 +3456,20 @@
         hadSuccess = true;
       }
 
-      // Previous price scheme remains unchanged.
       if (birdEyeResult.status === "fulfilled" && birdEyeResult.value) {
         state.birdEye = birdEyeResult.value;
         hadSuccess = true;
       }
 
-      // BirdEye API key is used only here for the LP Reserve.
-      if (reserveResult.status === "fulfilled" && reserveResult.value) {
-        state.lpReserve = reserveResult.value;
+      if (
+        reserveSnapshotResult.status === "fulfilled" &&
+        reserveSnapshotResult.value
+      ) {
+        state.lpReserve = reserveSnapshotResult.value;
         hadSuccess = true;
-      } else {
-        setReserveLoading("BirdEye unavailable, trying Solana RPC");
-
-        try {
-          state.lpReserve = await loadLpReserve();
-          hadSuccess = true;
-        } catch {
-          clearReserveLoading();
-
-          if (!state.lpReserve) {
-            el("lpReserveStatus").textContent =
-              "Reserve snapshot unavailable. Run the GitHub reserve workflow once.";
-          }
-        }
       }
 
+      // Render immediately from everything already available.
       if (state.rows.length) {
         state.summary = calculateSummary(
           state.rows,
@@ -3475,18 +3488,61 @@
 
         updateStatus(partialError ? "" : "live");
       } else {
-        updateStatus("error", "Live data could not be loaded.");
+        updateStatus("error", "Live pool data could not be loaded.");
+      }
+
+      state.refreshing = false;
+      el("refreshButton").classList.remove("spinning");
+
+      // Only the LP Reserve fallback continues in the background.
+      // It can no longer hold up the rest of the dashboard.
+      if (reserveSnapshotResult.status !== "fulfilled") {
+        (async () => {
+          try {
+            setReserveLoading("Trying BirdEye directly");
+
+            let reserve = null;
+
+            try {
+              reserve = await loadBirdEyeLpReserve();
+            } catch {}
+
+            if (!reserve) {
+              setReserveLoading("BirdEye unavailable, trying Solana RPC");
+              reserve = await loadLpReserve();
+            }
+
+            if (reserve) {
+              state.lpReserve = reserve;
+
+              if (state.rows.length) {
+                state.summary = calculateSummary(
+                  state.rows,
+                  state.supply,
+                  state.birdEye,
+                  state.lpReserve
+                );
+                renderSummary(state.summary);
+                persistCache();
+              }
+            }
+          } catch {
+            clearReserveLoading();
+
+            if (!state.lpReserve) {
+              el("lpReserveStatus").textContent =
+                "Reserve balance temporarily unavailable.";
+            }
+          }
+        })();
       }
 
       if (!hadSuccess && state.rows.length) {
         updateStatus(
           "",
-          "Live refresh failed. Showing the last successful data."
+          "Live refresh partially failed. Showing the last available values."
         );
       }
-
-      state.refreshing = false;
-      el("refreshButton").classList.remove("spinning");
     }
 
     function setActiveTab(tab) {
