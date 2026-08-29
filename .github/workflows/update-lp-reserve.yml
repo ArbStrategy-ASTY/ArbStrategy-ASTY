@@ -30,6 +30,12 @@ jobs:
           const ENDPOINT = "https://public-api.birdeye.so/wallet/v2/token-balance";
           const ASTY_MINT = "ASTYqeaoK83Zs1pTFEXZUB6BM8cG8YLTsN852NUkt7ZR";
 
+          const SOLANA_RPC_ENDPOINTS = [
+            "https://api.mainnet-beta.solana.com",
+            "https://solana-rpc.publicnode.com",
+            "https://solana.drpc.org"
+          ];
+
           const WALLETS = [
             "8KgDtknVhs88sMjRckCGzVDhaFBre3V3FAvhwxfANmfq",
             "9Hv3HPGSHS1vq1qjfumoER4TEhu2sgWUmL3S4EaUWrk6",
@@ -103,8 +109,66 @@ jobs:
             };
           }
 
+          async function queryCurrentSupply() {
+            let lastError;
+
+            for (const endpoint of SOLANA_RPC_ENDPOINTS) {
+              try {
+                const response = await fetch(endpoint, {
+                  method: "POST",
+                  headers: {
+                    "accept": "application/json",
+                    "content-type": "application/json"
+                  },
+                  body: JSON.stringify({
+                    jsonrpc: "2.0",
+                    id: 1,
+                    method: "getTokenSupply",
+                    params: [
+                      ASTY_MINT,
+                      { commitment: "confirmed" }
+                    ]
+                  })
+                });
+
+                const payload = await response.json().catch(() => null);
+
+                if (!response.ok || payload?.error) {
+                  throw new Error(
+                    payload?.error?.message ||
+                    `Solana RPC HTTP ${response.status}`
+                  );
+                }
+
+                const value = payload?.result?.value;
+
+                if (!value?.amount || !Number.isInteger(value?.decimals)) {
+                  throw new Error("Unexpected Solana supply response");
+                }
+
+                const raw = BigInt(value.amount);
+                const factor = 10n ** BigInt(value.decimals);
+                const whole = raw / factor;
+                const fraction = raw % factor;
+
+                return {
+                  currentSupply:
+                    Number(whole) +
+                    Number(fraction) / (10 ** value.decimals),
+                  supplyDecimals: value.decimals,
+                  supplySource: endpoint
+                };
+              } catch (error) {
+                lastError = error;
+              }
+            }
+
+            throw lastError || new Error("Current ASTY supply unavailable");
+          }
+
           async function main() {
             const balances = [];
+            const supply = await queryCurrentSupply();
 
             // Sequential requests are deliberately used to stay well below
             // the Wallet API rate limit.
@@ -139,6 +203,9 @@ jobs:
               total: WALLETS.length,
               balances,
               source: "BirdEye Wallet API",
+              currentSupply: supply.currentSupply,
+              supplyDecimals: supply.supplyDecimals,
+              supplySource: "Solana RPC",
               updatedAt: Date.now(),
               updatedAtIso: new Date().toISOString()
             };
@@ -151,6 +218,9 @@ jobs:
             console.log(
               `ASTY LP Reserve: ${amount.toLocaleString("en-US")} ASTY ` +
               `across ${resolved}/${WALLETS.length} wallets`
+            );
+            console.log(
+              `Current ASTY supply: ${supply.currentSupply.toLocaleString("en-US")}`
             );
           }
 
