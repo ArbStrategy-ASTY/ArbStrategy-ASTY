@@ -20,7 +20,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Query BirdEye and write lp-reserve.json
+      - name: Query BirdEye reserve and Solana supply
         shell: bash
         run: |
           node <<'NODE'
@@ -31,9 +31,10 @@ jobs:
           const ASTY_MINT = "ASTYqeaoK83Zs1pTFEXZUB6BM8cG8YLTsN852NUkt7ZR";
 
           const SOLANA_RPC_ENDPOINTS = [
-            "https://api.mainnet-beta.solana.com",
+            "https://rpc.nodeflare.app/solana/public",
+            "https://rpc.solanatracker.io/public",
             "https://solana-rpc.publicnode.com",
-            "https://solana.drpc.org"
+            "https://api.mainnet-beta.solana.com"
           ];
 
           const WALLETS = [
@@ -62,7 +63,8 @@ jobs:
                   body: JSON.stringify({
                     wallet,
                     token_addresses: [ASTY_MINT]
-                  })
+                  }),
+                  signal: AbortSignal.timeout(15000)
                 });
 
                 const payload = await response.json().catch(() => null);
@@ -75,7 +77,10 @@ jobs:
                   );
                 }
 
-                if (payload?.success !== true || !Array.isArray(payload?.data)) {
+                if (
+                  payload?.success !== true ||
+                  !Array.isArray(payload?.data)
+                ) {
                   throw new Error("Unexpected BirdEye response");
                 }
 
@@ -93,7 +98,6 @@ jobs:
                 };
               } catch (error) {
                 lastError = error;
-
                 if (attempt < 4) {
                   await sleep(attempt * 2000);
                 }
@@ -128,7 +132,8 @@ jobs:
                       ASTY_MINT,
                       { commitment: "confirmed" }
                     ]
-                  })
+                  }),
+                  signal: AbortSignal.timeout(10000)
                 });
 
                 const payload = await response.json().catch(() => null);
@@ -142,8 +147,13 @@ jobs:
 
                 const value = payload?.result?.value;
 
-                if (!value?.amount || !Number.isInteger(value?.decimals)) {
-                  throw new Error("Unexpected Solana supply response");
+                if (
+                  !value?.amount ||
+                  !Number.isInteger(value?.decimals)
+                ) {
+                  throw new Error(
+                    "Unexpected Solana supply response"
+                  );
                 }
 
                 const raw = BigInt(value.amount);
@@ -151,14 +161,32 @@ jobs:
                 const whole = raw / factor;
                 const fraction = raw % factor;
 
+                const currentSupply =
+                  Number(whole) +
+                  Number(fraction) / (10 ** value.decimals);
+
+                if (
+                  !Number.isFinite(currentSupply) ||
+                  currentSupply <= 0 ||
+                  currentSupply > 10_000_000
+                ) {
+                  throw new Error("Implausible ASTY supply");
+                }
+
+                console.log(
+                  `Supply loaded from ${endpoint}: ${currentSupply}`
+                );
+
                 return {
-                  currentSupply:
-                    Number(whole) +
-                    Number(fraction) / (10 ** value.decimals),
+                  currentSupply,
                   supplyDecimals: value.decimals
                 };
               } catch (error) {
                 lastError = error;
+                console.warn(
+                  `Supply RPC failed (${endpoint}):`,
+                  error?.message || error
+                );
               }
             }
 
@@ -166,6 +194,7 @@ jobs:
               "Supply could not be refreshed; reserve update will continue:",
               lastError?.message || lastError
             );
+
             return null;
           }
 
@@ -173,27 +202,34 @@ jobs:
             const balances = [];
             const supply = await queryCurrentSupply();
 
-            // Sequential requests are deliberately used to stay well below
-            // the Wallet API rate limit.
             for (const wallet of WALLETS) {
               balances.push(await queryWallet(wallet));
               await sleep(500);
             }
 
-            const resolved = balances.filter(item => item.resolved).length;
+            const resolved =
+              balances.filter(item => item.resolved).length;
+
             const amount = balances.reduce(
-              (sum, item) => sum + (Number.isFinite(item.amount) ? item.amount : 0),
+              (sum, item) =>
+                sum +
+                (Number.isFinite(item.amount) ? item.amount : 0),
               0
             );
+
             const value = balances.reduce(
-              (sum, item) => sum + (Number.isFinite(item.value) ? item.value : 0),
+              (sum, item) =>
+                sum +
+                (Number.isFinite(item.value) ? item.value : 0),
               0
             );
 
             if (resolved === 0) {
               throw new Error(
                 "BirdEye returned no successful reserve wallet response: " +
-                balances.map(item => item.error || "unknown").join(" | ")
+                balances
+                  .map(item => item.error || "unknown")
+                  .join(" | ")
               );
             }
 
@@ -223,6 +259,13 @@ jobs:
               `ASTY LP Reserve: ${amount.toLocaleString("en-US")} ASTY ` +
               `across ${resolved}/${WALLETS.length} wallets`
             );
+
+            if (supply) {
+              console.log(
+                `Current ASTY supply: ` +
+                `${supply.currentSupply.toLocaleString("en-US")}`
+              );
+            }
           }
 
           main().catch(error => {
@@ -231,11 +274,11 @@ jobs:
           });
           NODE
 
-      - name: Commit updated reserve data
+      - name: Commit updated data
         shell: bash
         run: |
           if git diff --quiet -- lp-reserve.json; then
-            echo "No reserve change."
+            echo "No data change."
             exit 0
           fi
 
