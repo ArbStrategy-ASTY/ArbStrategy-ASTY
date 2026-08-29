@@ -1387,7 +1387,7 @@
       <article class="mini-card">
         <div class="mini-label">Current Supply</div>
         <div class="mini-value" id="supplyValue">—</div>
-        <div class="mini-sub">Read directly from Solana</div>
+        <div class="mini-sub">On-chain supply</div>
       </article>
 
       <article class="mini-card">
@@ -1605,7 +1605,7 @@
     const PRESALE_PRICE = 0.0025;
     const CHUNK_SIZE = 25;
     const REFRESH_MS = 60_000;
-    const CACHE_KEY = "asty-live-dashboard-v2";
+    const CACHE_KEY = "asty-live-dashboard-v3";
 
     // Optional secure server endpoint. It should return either:
     // { price, priceChange24h } or a BirdEye-like { data: { price, ... } } object.
@@ -1700,6 +1700,7 @@
       ["DGuvY79xbLuJRb3CzwQL59z5zoit7KLnFwyL2t6EQCcj","ASTY/SERIOUS",1],
       ["5rwRQ4KprvvM1Z7h3QQ5WtUPUG5NMYEw1JtehSAxWeh3","ASTY/Chiikawa",1],
       ["2Gk1FWW4vKJ23pR42WnAfg7RG4UtMfEpKUKTsYMNCfax","ASTY/KMNO",1],
+      ["9cXtSR11UfZAj5qMUq7HNkEkt2JktEmkB9t29sTnUqHz","ASTY/ANSEM",1],
       ["9zrdaC8tHges3JLTfsRVuibQ2xhXivZx3keymkZV2PAa","ASTY/three",1]
     ];
 
@@ -2032,6 +2033,53 @@
     }
 
     async function loadSupply() {
+      // Preferred source on the public website:
+      // GeckoTerminal already powers the pool data and exposes total_supply
+      // from its token endpoint. This avoids public Solana RPC browser blocks.
+      try {
+        const url =
+          `https://api.geckoterminal.com/api/v2/networks/solana/tokens/${ASTY_MINT}`;
+
+        const payload = await fetchJsonWithRetry(url, {
+          headers: {
+            Accept: "application/json;version=20230203"
+          },
+          cache: "no-store"
+        }, 1);
+
+        const attrs = payload?.data?.attributes || {};
+        let currentSupply = safeNumber(attrs.total_supply);
+        const decimals = Number.isInteger(attrs.decimals)
+          ? attrs.decimals
+          : safeNumber(attrs.decimals);
+
+        // GeckoTerminal normally returns total_supply in human-readable units.
+        // Keep a defensive fallback in case a raw base-unit value is returned.
+        if (
+          Number.isFinite(currentSupply) &&
+          Number.isFinite(decimals) &&
+          decimals > 0 &&
+          currentSupply > INITIAL_SUPPLY * 1000
+        ) {
+          currentSupply = currentSupply / (10 ** decimals);
+        }
+
+        if (
+          Number.isFinite(currentSupply) &&
+          currentSupply > 0 &&
+          currentSupply <= INITIAL_SUPPLY * 1.05
+        ) {
+          return {
+            currentSupply,
+            decimals: Number.isFinite(decimals) ? decimals : 9,
+            source: "GeckoTerminal on-chain supply"
+          };
+        }
+
+        throw new Error("GeckoTerminal returned no plausible ASTY supply");
+      } catch {}
+
+      // Fallback: direct Solana RPC.
       let lastError;
 
       for (const endpoint of RPC_ENDPOINTS) {
@@ -2055,7 +2103,8 @@
 
           return {
             currentSupply: bigintAmountToNumber(value.amount, value.decimals),
-            decimals: value.decimals
+            decimals: value.decimals,
+            source: "Solana RPC"
           };
         } catch (error) {
           lastError = error;
@@ -3409,9 +3458,28 @@
 
     function renderAll() {
       if (!state.summary) return;
-      renderSummary(state.summary);
-      renderNetwork(state.summary.markets);
-      renderTable();
+
+      // Keep the core dashboard and pool list independent from the optional
+      // network visualization. One UI component must never blank another.
+      try {
+        renderSummary(state.summary);
+      } catch (error) {
+        console.error("ASTY summary render failed:", error);
+      }
+
+      try {
+        renderTable();
+      } catch (error) {
+        console.error("ASTY pool table render failed:", error);
+        const count = document.getElementById("tableCount");
+        if (count) count.textContent = "Pool list render error";
+      }
+
+      try {
+        renderNetwork(state.summary.markets);
+      } catch (error) {
+        console.error("ASTY network render failed:", error);
+      }
     }
 
     async function refreshDashboard() {
@@ -3437,6 +3505,14 @@
       if (poolResult.status === "fulfilled") {
         state.rows = poolResult.value;
         hadSuccess = true;
+
+        // The pool table does not depend on supply or reserve data.
+        // Render it immediately so those sources can never hide the pools.
+        try {
+          renderTable();
+        } catch (error) {
+          console.error("Immediate pool table render failed:", error);
+        }
       }
 
       if (supplyResult.status === "fulfilled") {
