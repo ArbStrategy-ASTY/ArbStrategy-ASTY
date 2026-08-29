@@ -155,15 +155,18 @@ jobs:
                   currentSupply:
                     Number(whole) +
                     Number(fraction) / (10 ** value.decimals),
-                  supplyDecimals: value.decimals,
-                  supplySource: endpoint
+                  supplyDecimals: value.decimals
                 };
               } catch (error) {
                 lastError = error;
               }
             }
 
-            throw lastError || new Error("Current ASTY supply unavailable");
+            console.warn(
+              "Supply could not be refreshed; reserve update will continue:",
+              lastError?.message || lastError
+            );
+            return null;
           }
 
           async function main() {
@@ -203,9 +206,10 @@ jobs:
               total: WALLETS.length,
               balances,
               source: "BirdEye Wallet API",
-              currentSupply: supply.currentSupply,
-              supplyDecimals: supply.supplyDecimals,
-              supplySource: "Solana RPC",
+              ...(supply ? {
+                currentSupply: supply.currentSupply,
+                supplyDecimals: supply.supplyDecimals
+              } : {}),
               updatedAt: Date.now(),
               updatedAtIso: new Date().toISOString()
             };
@@ -218,9 +222,6 @@ jobs:
             console.log(
               `ASTY LP Reserve: ${amount.toLocaleString("en-US")} ASTY ` +
               `across ${resolved}/${WALLETS.length} wallets`
-            );
-            console.log(
-              `Current ASTY supply: ${supply.currentSupply.toLocaleString("en-US")}`
             );
           }
 
