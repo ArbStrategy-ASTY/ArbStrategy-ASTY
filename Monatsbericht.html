@@ -604,487 +604,186 @@
 </head>
 <body>
 <main class="wrap">
-
   <div class="topbar">
-    <div class="brand">
-      <img class="logo" src="assets/logo.png" alt="ASTY Logo" onerror="this.style.display='none'">
-      <div class="brand-copy">
-        <div class="brand-name">ArbStrategy · ASTY</div>
-        <div class="brand-sub">Interne Performance-Auswertung</div>
-      </div>
+    <div class="brand"><img class="logo" src="assets/logo.png" alt="ASTY Logo" onerror="this.style.display='none'">
+      <div class="brand-copy"><div class="brand-name">ArbStrategy · ASTY</div><div class="brand-sub">Interne Performance-Auswertung</div></div>
     </div>
-    <div class="controls">
-      <button type="button" onclick="window.print()">Bericht drucken</button>
-    </div>
+    <div class="controls"><button type="button" onclick="window.print()">Bericht drucken</button></div>
   </div>
 
   <section class="hero">
     <div class="eyebrow"><span class="dot"></span> ASTY Team-Bericht</div>
     <h1 class="gradient">Performance & Kapitalallokation</h1>
-    <p class="hero-sub">
-      Aktueller Team-Snapshot zur Bewertung der Pool-Performance, der Entwicklung seit dem letzten Bericht,
-      möglicher Reinvests und potenzieller Kapitalreduktionen.
-    </p>
+    <p class="hero-sub">Aktueller Team-Snapshot auf Basis des Team-Dashboards vom 06.09.2026. Fokus: Entwicklung seit dem letzten Bericht, Kapitaleffizienz, Reinvest-Kandidaten, schwache Kapitalbindung und Anchor-Pools.</p>
     <div class="hero-meta">
-      <span class="pill">Stand: 17. August 2026</span>
-      <span class="pill">Vergleich: Bericht vom 12. August 2026</span>
+      <span class="pill">Stand: 06. September 2026</span>
+      <span class="pill">Vergleich: Team-Bericht 17. August 2026</span>
       <span class="pill">Rollierende 24h / 7T / 30T</span>
-      <span class="pill">Ausgeklammerte Pools nicht in der aktiven Bewertung</span>
+      <span class="pill">6 ausgeklammerte Pools nicht aktiv bewertet</span>
     </div>
   </section>
 
   <div class="metric-grid">
-    <article class="metric">
-      <div class="metric-label">Aktive Liquidität</div>
-      <div class="metric-value">$29.882</div>
-      <div class="metric-foot">42 aktive Pools mit TVL &gt; 0 · nahezu unverändert zum letzten Bericht</div>
-    </article>
-    <article class="metric">
-      <div class="metric-label">Einnahmen 30T</div>
-      <div class="metric-value">$68,41</div>
-      <div class="metric-foot">Letzter Bericht ca. $67,15 · rund +1,9 %</div>
-    </article>
-    <article class="metric">
-      <div class="metric-label">Score ≥ 80</div>
-      <div class="metric-value">10 Pools</div>
-      <div class="metric-foot">Vorher 9 Pools · weiterhin starke Konzentration der Effizienz</div>
-    </article>
-    <article class="metric">
-      <div class="metric-label">Top-Performer</div>
-      <div class="metric-value">CUPSEY</div>
-      <div class="metric-foot">Score 99 · Pair-Risiko vor weiterem Reinvest prüfen</div>
-    </article>
+    <article class="metric"><div class="metric-label">Aktive Liquidität</div><div class="metric-value">$48.503,08</div><div class="metric-foot">60 aktive Pools mit TVL · gegenüber $29.882,00 im letzten Bericht deutlich größer</div></article>
+    <article class="metric"><div class="metric-label">Einnahmen 30T</div><div class="metric-value">$139,27</div><div class="metric-foot">Letzter Bericht $68,41 · rund +104 %</div></article>
+    <article class="metric"><div class="metric-label">Score ≥ 80</div><div class="metric-value">14 Pools</div><div class="metric-foot">Vorher 10 Pools · mehr starke Kandidaten, aber breiter verteiltes Kapital</div></article>
+    <article class="metric"><div class="metric-label">Top-Score</div><div class="metric-value">Chiikawa · 99</div><div class="metric-foot">Hohe Effizienz, aber stark rückläufiger Trend → nicht automatisch reinvestieren</div></article>
   </div>
 
   <div class="spotlight">
     <article class="focus-card">
-      <div class="focus-title">Kapitaleffizienz im Netzwerk</div>
-      <div class="focus-number">7,2 % <span class="arr">→</span> 46,9 %</div>
-      <div class="focus-copy">
-        Die 10 Pools mit Score ≥ 80 halten nur rund 7,2 % der aktiven Liquidität,
-        erzeugen aber 46,9 % aller 30T-Einnahmen. Beim letzten Bericht waren es
-        6,9 % der Liquidität und 43,5 % der Einnahmen.
-      </div>
-      <div class="bar-block">
-        <div class="bar-row">
-          <span>Anteil TVL</span>
-          <div class="bar"><div class="fill" style="width:7.2%"></div></div>
-          <strong>7,2 %</strong>
-        </div>
-        <div class="bar-row">
-          <span>Anteil Einnahmen</span>
-          <div class="bar"><div class="fill" style="width:46.9%"></div></div>
-          <strong>46,9 %</strong>
-        </div>
-      </div>
+      <div class="focus-title">Kapitaleffizienz · Score ≥ 80</div>
+      <div class="focus-number">6,3 % <span class="arr">→</span> 37,4 %</div>
+      <div class="focus-copy">Die 14 stärksten Score-Pools halten nur 6,3 % der aktiven Liquidität und erzeugen 37,4 % der 30T-Einnahmen. Die Konzentration ist weiterhin klar, aber geringer als am 17.08. (7,2 % TVL → 46,9 % Einnahmen).</div>
+      <div class="bar-block"><div class="bar-row"><span>Anteil TVL</span><div class="bar"><div class="fill" style="width:6.259268041264243%"></div></div><strong>6,3 %</strong></div>
+      <div class="bar-row"><span>Anteil Einnahmen</span><div class="bar"><div class="fill" style="width:37.39378405490182%"></div></div><strong>37,4 %</strong></div></div>
     </article>
-
     <article class="compare-card">
-      <div class="focus-title">Schwache Kapitalbindung</div>
-      <div class="focus-number">40,5 % <span class="arr">→</span> 13,1 %</div>
-      <div class="focus-copy">
-        Pools mit Score unter 40 halten aktuell rund 40,5 % der aktiven Liquidität,
-        erzeugen jedoch nur 13,1 % der 30T-Einnahmen.
-      </div>
-      <div class="risk">🔎 Fokus: Schwäche über mehrere Berichte bestätigen, bevor Kapital reduziert wird.</div>
+      <div class="focus-title">Schwache Kapitalbindung · Score &lt; 40</div>
+      <div class="focus-number">40,0 % <span class="arr">→</span> 13,7 %</div>
+      <div class="focus-copy">Rund 40,0 % des aktiven TVL steckt in Pools unter Score 40, die nur 13,7 % der 30T-Einnahmen erzeugen. Das bleibt der größte Ansatzpunkt für eine kontrollierte Umschichtung.</div>
+      <div class="risk">🔎 Zwei-Zyklen-Regel beibehalten: kein Abbau nur wegen eines einzelnen schwachen Snapshots.</div>
     </article>
   </div>
 
   <section>
-    <div class="section-head">
-      <div class="section-title">🟣 Neue Entscheidungslogik</div>
-      <div class="section-sub">Score misst Performance. Eine Kapitalentscheidung berücksichtigt zusätzlich Bestätigung über mehrere Zyklen und das Risiko des gepaarten Tokens.</div>
-    </div>
-
+    <div class="section-head"><div><div class="section-kicker">Entwicklung</div><h2>Was sich seit 17. August verändert hat</h2></div><div class="section-sub">Nicht nur 24h betrachtet, sondern 7T/30T, Score und Trend gemeinsam.</div></div>
     <div class="decision-grid">
-      <article class="decision">
-        <h3>Reinvest: zwei Prüfungen</h3>
-        <p><strong>1. Performance:</strong> Der Pool muss seine Stärke über mindestens zwei Bewertungen bestätigen.<br><br>
-        <strong>2. Pair-Risiko:</strong> Vor einer weiteren Erhöhung wird geprüft, ob der gepaarte Token trotz guter Pool-Einnahmen noch ein vertretbares Risiko darstellt.</p>
-      </article>
-      <article class="decision">
-        <h3>Reduzierung: mindestens zwei schwache Zyklen</h3>
-        <p>Ein einzelner schlechter Bericht führt nicht automatisch zu einer Reduzierung.
-        Erst wenn die Schwäche im nächsten Bericht bestätigt wird, wird Kapital aktiv überprüft.</p>
-      </article>
-      <article class="decision">
-        <h3>Strategische / Core-Pools</h3>
-        <p>Auch WBTC, ETH oder andere strategische Assets sind nicht grundsätzlich von Reduzierungen ausgenommen.
-        Bei anhaltend schwacher Performance kann Kapital reduziert werden, jedoch mit einer definierten Mindestliquidität.</p>
-      </article>
-      <article class="decision">
-        <h3>Risk Guard statt Score-Manipulation</h3>
-        <p>Die Entwicklung des Pair-Tokens wird nicht in den Effizienz Score hineingerechnet.
-        Der Score bleibt ein reiner Performance-Wert; der Risk Guard begrenzt lediglich, wie viel zusätzliches Kapital eingesetzt werden darf.</p>
-      </article>
+      <article class="decision"><h3>🟢 UNI ist der klarste Aufsteiger</h3><p>Score 64 → 81. 30T-Volumen $382,39 → $1.156,90 und 30T-Einnahmen $3,10 → $9,43. Dazu aktuell <b>STARK STEIGEND</b>.</p></article>
+      <article class="decision"><h3>🟣 three bestätigt die Skalierung</h3><p>Score 89 → 93. Das 30T-Volumen stieg von $120,70 auf $325,40; Einnahmen von $0,99 auf $2,64. Kurzfristig rückläufig, strukturell aber klar stärker als im August.</p></article>
+      <article class="decision"><h3>🟡 CUPSEY bleibt stark – Momentum schwächer</h3><p>Score 99 → 92. 30T-Volumen $1.117,66 → $1.018,11; 30T-Einnahmen $9,06 → $8,23. Weiter sehr effizient, aber kein Grund für aggressives Nachlegen.</p></article>
+      <article class="decision"><h3>🟢 WBTC / ETH erholen sich</h3><p>WBTC Score 9 → 27 und ETH 17 → 25; beide Trends sind aktuell STEIGEND. Damit ist die frühere Schwäche nicht mehr so eindeutig. Eine Reduktion sollte deshalb nicht mechanisch erfolgen – weiter beobachten.</p></article>
     </div>
   </section>
 
   <section>
-    <div class="section-head">
-      <div class="section-title">🟢 Bestätigte Stärke</div>
-      <div class="section-sub">Pools, deren Performance auch im Vergleich zum letzten Bericht überzeugend bleibt. Ein Reinvest erfolgt trotzdem nur nach Pair-Risiko-Prüfung.</div>
-    </div>
-
+    <div class="section-head"><div><div class="section-kicker">Pool-Radar</div><h2>Starke und auffällige Pools</h2></div><div class="section-sub">Score ist das Ausgangssignal; Trend und Pair-Risiko entscheiden mit.</div></div>
     <div class="cards">
-      <article class="pool green">
-        <div class="pool-top">
-          <div><div class="pool-name">ASTY / GEOD</div><div class="pool-status">Sehr hoch · steigend</div></div>
-          <div class="score">82<small>Score</small></div>
-        </div>
-        <div class="delta up">↑ Score 81 → 82</div>
-        <div class="pool-stats">
-          <div class="stat"><span>TVL</span><strong>$964,50</strong></div>
-          <div class="stat"><span>Einnahmen 30T</span><strong>$7,75</strong></div>
-          <div class="stat"><span>7T Einnahmen</span><strong>$2,34</strong></div>
-          <div class="stat"><span>7T ggü. Bericht</span><strong class="good">+60,0 %</strong></div>
-        </div>
-        <div class="pool-note">Stärkste bestätigte Entwicklung. Mehr Leistung bei praktisch unverändertem TVL. Derzeit der sauberste Kandidat für eine kleine, kontrollierte Erhöhung.</div>
-        <div class="risk">🟢 Reinvest-Status: grundsätzlich freigegeben · Pair-Risiko vor Ausführung prüfen</div>
-      </article>
-
-      <article class="pool yellow">
-        <div class="pool-top">
-          <div><div class="pool-name">ASTY / CUPSEY</div><div class="pool-status">Sehr hoch · steigend</div></div>
-          <div class="score">99<small>Score</small></div>
-        </div>
-        <div class="delta flat">Score 99 → 99</div>
-        <div class="pool-stats">
-          <div class="stat"><span>TVL</span><strong>$217,99</strong></div>
-          <div class="stat"><span>Einnahmen 30T</span><strong>$9,06</strong></div>
-          <div class="stat"><span>7T Einnahmen</span><strong>$1,38</strong></div>
-          <div class="stat"><span>7T ggü. Bericht</span><strong class="bad">−34,9 %</strong></div>
-        </div>
-        <div class="pool-note">Langfristig weiterhin außergewöhnlich effizient. Die jüngere 7T-Performance ist jedoch deutlich schwächer, während die letzten 24h extrem stark sind.</div>
-        <div class="risk">🟡 Risk Guard: Pair-Token laut Teambeobachtung deutlich gefallen · aktuell keine automatische weitere Erhöhung</div>
-      </article>
-
-      <article class="pool yellow">
-        <div class="pool-top">
-          <div><div class="pool-name">ASTY / PsyopAnime</div><div class="pool-status">Sehr hoch · rückläufig</div></div>
-          <div class="score">89<small>Score</small></div>
-        </div>
-        <div class="delta flat">Score 89 → 89</div>
-        <div class="pool-stats">
-          <div class="stat"><span>TVL</span><strong>$161,50</strong></div>
-          <div class="stat"><span>Einnahmen 30T</span><strong>$3,62</strong></div>
-          <div class="stat"><span>7T Einnahmen</span><strong>$0,391</strong></div>
-          <div class="stat"><span>7T ggü. Bericht</span><strong class="good">+53,1 %</strong></div>
-        </div>
-        <div class="pool-note">Der vorherige kurzfristige Einbruch hat sich teilweise erholt. Wegen des weiterhin rückläufigen Trends vorerst halten.</div>
-      </article>
-
-      <article class="pool yellow">
-        <div class="pool-top">
-          <div><div class="pool-name">ASTY / three</div><div class="pool-status">Sehr hoch · steigend</div></div>
-          <div class="score">89<small>Score</small></div>
-        </div>
-        <div class="delta up">↑ Score 85 → 89</div>
-        <div class="pool-stats">
-          <div class="stat"><span>TVL</span><strong>$107,19</strong></div>
-          <div class="stat"><span>Einnahmen 30T</span><strong>$0,99</strong></div>
-          <div class="stat"><span>7T Einnahmen</span><strong>$0,435</strong></div>
-          <div class="stat"><span>30T ggü. Bericht</span><strong class="good">+67,4 %</strong></div>
-        </div>
-        <div class="pool-note">Langfristig klar verbessert, die 7T-Einnahmen liegen aber rund 24,6 % unter dem letzten Bericht. Noch keine weitere Erhöhung.</div>
-      </article>
-    </div>
+    <article class="pool">
+      <div class="pool-top"><div><div class="pool-name">ASTY/Chiikawa</div>
+      <div class="pool-status">STARK RÜCKLÄUFIG</div></div>
+      <span class="score green">99</span></div>
+      <div class="stats">
+        <div class="stat"><span>TVL</span><strong>$36,14</strong></div>
+        <div class="stat"><span>Volumen 7T</span><strong>$54,92</strong></div>
+        <div class="stat"><span>Einnahmen 30T</span><strong>$6,10</strong></div>
+        <div class="stat"><span>APR 30T</span><strong>205,2 %</strong></div>
+      </div>
+      <div class="pool-note">Extrem hohe Kapitaleffizienz, aber der aktuelle Trend ist stark rückläufig. Kein automatischer Reinvest nur wegen Score 99; Pair-Risiko und kurzfristige Aktivität zuerst prüfen.</div>
+    </article>
+    <article class="pool">
+      <div class="pool-top"><div><div class="pool-name">ASTY/testicle</div>
+      <div class="pool-status">RÜCKLÄUFIG</div></div>
+      <span class="score green">96</span></div>
+      <div class="stats">
+        <div class="stat"><span>TVL</span><strong>$99,18</strong></div>
+        <div class="stat"><span>Volumen 7T</span><strong>$90,44</strong></div>
+        <div class="stat"><span>Einnahmen 30T</span><strong>$3,93</strong></div>
+        <div class="stat"><span>APR 30T</span><strong>48,2 %</strong></div>
+      </div>
+      <div class="pool-note">Score 96 und weiterhin sehr hohe Effizienz. Gleichzeitig rückläufiger Trend: Bestand halten/überwachen, Reinvest nur bei erneuter Bestätigung.</div>
+    </article>
+    <article class="pool">
+      <div class="pool-top"><div><div class="pool-name">ASTY/three</div>
+      <div class="pool-status">RÜCKLÄUFIG</div></div>
+      <span class="score green">93</span></div>
+      <div class="stats">
+        <div class="stat"><span>TVL</span><strong>$94,89</strong></div>
+        <div class="stat"><span>Volumen 7T</span><strong>$66,39</strong></div>
+        <div class="stat"><span>Einnahmen 30T</span><strong>$2,64</strong></div>
+        <div class="stat"><span>APR 30T</span><strong>33,8 %</strong></div>
+      </div>
+      <div class="pool-note">Score steigt von 89 auf 93; 30T-Volumen hat sich gegenüber dem letzten Bericht deutlich erhöht. Trotz rückläufigem Kurztrend strukturell stark.</div>
+    </article>
+    <article class="pool">
+      <div class="pool-top"><div><div class="pool-name">ASTY/CUPSEY</div>
+      <div class="pool-status">RÜCKLÄUFIG</div></div>
+      <span class="score green">92</span></div>
+      <div class="stats">
+        <div class="stat"><span>TVL</span><strong>$222,52</strong></div>
+        <div class="stat"><span>Volumen 7T</span><strong>$135,17</strong></div>
+        <div class="stat"><span>Einnahmen 30T</span><strong>$8,23</strong></div>
+        <div class="stat"><span>APR 30T</span><strong>45,0 %</strong></div>
+      </div>
+      <div class="pool-note">Bleibt mit Score 92 sehr stark, aber 30T-Volumen und Einnahmen liegen unter dem letzten Bericht. Pair-Risk-Guard bleibt wichtig.</div>
+    </article>
+    <article class="pool">
+      <div class="pool-top"><div><div class="pool-name">ASTY/ANSEM</div>
+      <div class="pool-status">STARK STEIGEND</div></div>
+      <span class="score green">88</span></div>
+      <div class="stats">
+        <div class="stat"><span>TVL</span><strong>$156,43</strong></div>
+        <div class="stat"><span>Volumen 7T</span><strong>$77,07</strong></div>
+        <div class="stat"><span>Einnahmen 30T</span><strong>$2,13</strong></div>
+        <div class="stat"><span>APR 30T</span><strong>16,5 %</strong></div>
+      </div>
+      <div class="pool-note">Neuer starker Kandidat: Score 88, stark steigender Trend und gute Effizienz. Noch nicht blind übergewichten; einen weiteren Zyklus bestätigen.</div>
+    </article>
+    <article class="pool">
+      <div class="pool-top"><div><div class="pool-name">ASTY/UNI</div>
+      <div class="pool-status">STARK STEIGEND</div></div>
+      <span class="score green">81</span></div>
+      <div class="stats">
+        <div class="stat"><span>TVL</span><strong>$1.312,58</strong></div>
+        <div class="stat"><span>Volumen 7T</span><strong>$674,72</strong></div>
+        <div class="stat"><span>Einnahmen 30T</span><strong>$9,43</strong></div>
+        <div class="stat"><span>APR 30T</span><strong>8,7 %</strong></div>
+      </div>
+      <div class="pool-note">Einer der klarsten Aufsteiger: Score 64 → 81; 30T-Volumen und Einnahmen haben sich gegenüber dem letzten Bericht ungefähr verdreifacht.</div>
+    </article>
+    <article class="pool">
+      <div class="pool-top"><div><div class="pool-name">ASTY/WOJAK</div>
+      <div class="pool-status">STARK RÜCKLÄUFIG</div></div>
+      <span class="score green">83</span></div>
+      <div class="stats">
+        <div class="stat"><span>TVL</span><strong>$146,85</strong></div>
+        <div class="stat"><span>Volumen 7T</span><strong>$49,09</strong></div>
+        <div class="stat"><span>Einnahmen 30T</span><strong>$2,27</strong></div>
+        <div class="stat"><span>APR 30T</span><strong>18,8 %</strong></div>
+      </div>
+      <div class="pool-note">Hoher Score 83 und starke 30T-Effizienz, aber stark rückläufiger Trend. Nicht weiter hochskalieren, bis die jüngere Entwicklung wieder bestätigt.</div>
+    </article>
+    <article class="pool">
+      <div class="pool-top"><div><div class="pool-name">ASTY/BP</div>
+      <div class="pool-status">STARK STEIGEND</div></div>
+      <span class="score green">82</span></div>
+      <div class="stats">
+        <div class="stat"><span>TVL</span><strong>$197,01</strong></div>
+        <div class="stat"><span>Volumen 7T</span><strong>$67,36</strong></div>
+        <div class="stat"><span>Einnahmen 30T</span><strong>$2,09</strong></div>
+        <div class="stat"><span>APR 30T</span><strong>12,9 %</strong></div>
+      </div>
+      <div class="pool-note">Score 82 bei stark steigendem Trend. Positiver Kandidat für Beobachtung/Reinvest, sofern der gepaarte Token fundamental und marktseitig stabil bleibt.</div>
+    </article></div>
   </section>
 
   <section>
-    <div class="section-head">
-      <div class="section-title">🟣 Aufsteiger · Bestätigung abwarten</div>
-      <div class="section-sub">Aktuell auffällige Verbesserung, aber noch kein zweiter bestätigter starker Zyklus.</div>
+    <div class="section-head"><div><div class="section-kicker">Anchor Pools</div><h2>SOL & USDC nach der Liquiditätsbündelung</h2></div><div class="section-sub">Bewertung als Kerninfrastruktur – nicht nur nach Score.</div></div>
+    <div class="anchor-grid">
+      <article class="anchor"><div class="a-name">ASTY/SOL · Meteora</div><div class="a-fee">0,25 % Fee</div><div class="a-val"><span>TVL</span><b>$7.942,50</b></div><div class="a-val"><span>30T Volumen</span><b>$4.698,78</b></div><div class="a-val"><span>Trend</span><b>STEIGEND</b></div></article>
+      <article class="anchor"><div class="a-name">ASTY/SOL · gesamt</div><div class="a-fee">Meteora + Raydium</div><div class="a-val"><span>TVL</span><b>$9.176,54</b></div><div class="a-val"><span>7T Volumen</span><b>$1.060,20</b></div><div class="a-val"><span>30T Einnahmen</span><b>$11,03</b></div></article>
+      <article class="anchor"><div class="a-name">ASTY/USDC · gesamt</div><div class="a-fee">0,25 % + 1 % aktive Pools</div><div class="a-val"><span>TVL</span><b>$5.414,34</b></div><div class="a-val"><span>7T Volumen</span><b>$688,76</b></div><div class="a-val"><span>30T Einnahmen</span><b>$8,43</b></div></article>
+      <article class="anchor"><div class="a-name">Bewertung Bündelung</div><div class="a-fee">Aktueller Stand</div><div class="a-val"><span>SOL-Trend</span><b class="good">positiv</b></div><div class="a-val"><span>USDC-Trend</span><b class="good">positiv</b></div><div class="a-val"><span>Urteil</span><b class="warn">weiter bestätigen</b></div></article>
     </div>
-
-    <div class="cards">
-      <article class="pool purple">
-        <div class="pool-top">
-          <div><div class="pool-name">ASTY / WLFI</div><div class="pool-status">Mittel · steigend</div></div>
-          <div class="score">61<small>Score</small></div>
-        </div>
-        <div class="delta up">↑ Score 49 → 61</div>
-        <div class="pool-stats">
-          <div class="stat"><span>TVL</span><strong>$1.030,51</strong></div>
-          <div class="stat"><span>7T Volumen</span><strong>$86,45</strong></div>
-          <div class="stat"><span>7T Einnahmen</span><strong>$0,699</strong></div>
-          <div class="stat"><span>7T ggü. Bericht</span><strong class="good">+231,6 %</strong></div>
-        </div>
-        <div class="pool-note">Sehr deutliche Verbesserung ohne vergleichbaren TVL-Anstieg. Zweiten positiven Zyklus abwarten.</div>
-      </article>
-
-      <article class="pool purple">
-        <div class="pool-top">
-          <div><div class="pool-name">ASTY / TAO</div><div class="pool-status">Sehr hoch · stark steigend</div></div>
-          <div class="score">87<small>Score</small></div>
-        </div>
-        <div class="delta up">↑ Score 74 → 87</div>
-        <div class="pool-stats">
-          <div class="stat"><span>TVL</span><strong>$58,33</strong></div>
-          <div class="stat"><span>24h Volumen</span><strong>$8,73</strong></div>
-          <div class="stat"><span>30T Einnahmen</span><strong>$0,484</strong></div>
-          <div class="stat"><span>7T ggü. Bericht</span><strong class="bad">−38,0 %</strong></div>
-        </div>
-        <div class="pool-note">Score-Sprung wird aktuell stark von kurzfristiger Aktivität getragen. Noch kein bestätigter Reinvest-Kandidat.</div>
-      </article>
-
-      <article class="pool purple">
-        <div class="pool-top">
-          <div><div class="pool-name">ASTY / BOME</div><div class="pool-status">Hoch · steigend</div></div>
-          <div class="score">76<small>Score</small></div>
-        </div>
-        <div class="delta up">↑ Score 73 → 76</div>
-        <div class="pool-stats">
-          <div class="stat"><span>TVL</span><strong>$313,18</strong></div>
-          <div class="stat"><span>Einnahmen 30T</span><strong>$1,42</strong></div>
-          <div class="stat"><span>7T Einnahmen</span><strong>$0,455</strong></div>
-          <div class="stat"><span>30T ggü. Bericht</span><strong class="good">+36,7 %</strong></div>
-        </div>
-        <div class="pool-note">Solide Entwicklung. Für einen Ausbau sollte der nächste Bericht die Stärke erneut bestätigen.</div>
-      </article>
-
-      <article class="pool purple">
-        <div class="pool-top">
-          <div><div class="pool-name">ASTY / JTO</div><div class="pool-status">Mittel · steigend</div></div>
-          <div class="score">63<small>Score</small></div>
-        </div>
-        <div class="delta up">↑ Score 62 → 63</div>
-        <div class="pool-stats">
-          <div class="stat"><span>TVL</span><strong>$1.160,48</strong></div>
-          <div class="stat"><span>24h Einnahmen</span><strong>$0,142</strong></div>
-          <div class="stat"><span>7T Einnahmen</span><strong>$0,515</strong></div>
-          <div class="stat"><span>30T Einnahmen</span><strong>$2,60</strong></div>
-        </div>
-        <div class="pool-note">Stabil bis leicht verbessert. Halten; aktuell kein Grund für eine Kapitalreduktion.</div>
-      </article>
-    </div>
+    <div class="note"><b>Einordnung:</b> Die aktuellen Daten sprechen dafür, dass die Anchor-Pools inzwischen wieder Aktivität aufnehmen: beide aktiven SOL-Pools und beide aktiven USDC-Pools zeigen einen steigenden Trend. Für eine saubere Aussage „die Zusammenführung hat sich gelohnt“ fehlt in der aktuellen CSV jedoch weiterhin ein expliziter, gleich langer Vorher-/Nachher-Zeitraum rund um den exakten Zusammenführungstag. Deshalb wird die Bündelung hier positiv, aber noch nicht endgültig bewertet.</div>
   </section>
 
   <section>
-    <div class="section-head">
-      <div class="section-title">🟡 Gute Scores, aber Reinvest gestoppt</div>
-      <div class="section-sub">Der Score bleibt hoch, die jüngere Entwicklung hat sich jedoch abgeschwächt. Genau hier greift die neue Reinvest-Regel.</div>
-    </div>
-
-    <div class="cards">
-      <article class="pool yellow">
-        <div class="pool-top"><div><div class="pool-name">ASTY / WOJAK</div><div class="pool-status">Sehr hoch · rückläufig</div></div><div class="score">90<small>Score</small></div></div>
-        <div class="delta down">↓ Score 93 → 90 · 7T Einnahmen −50,2 %</div>
-        <div class="pool-note">Weiterhin hohe absolute Effizienz, aber klarer Rückgang gegenüber dem letzten Bericht. Halten, kein neuer Reinvest.</div>
-      </article>
-
-      <article class="pool yellow">
-        <div class="pool-top"><div><div class="pool-name">ASTY / BP</div><div class="pool-status">Sehr hoch · stark rückläufig</div></div><div class="score">83<small>Score</small></div></div>
-        <div class="delta down">↓ Score 89 → 83 · 7T Einnahmen −59,7 %</div>
-        <div class="pool-note">Der hohe 30T-Wert verdeckt aktuell eine deutliche jüngere Abschwächung. Keine Erhöhung.</div>
-      </article>
-
-      <article class="pool yellow">
-        <div class="pool-top"><div><div class="pool-name">ASTY / Punch</div><div class="pool-status">Sehr hoch · stark rückläufig</div></div><div class="score">89<small>Score</small></div></div>
-        <div class="delta down">7T Einnahmen −53,4 %</div>
-        <div class="pool-note">Score bleibt hoch, aber 7T fällt deutlich. Gutes Beispiel dafür, warum der Score allein keinen Reinvest auslösen sollte.</div>
-      </article>
-
-      <article class="pool yellow">
-        <div class="pool-top"><div><div class="pool-name">ASTY / testicle</div><div class="pool-status">Sehr hoch · stark rückläufig</div></div><div class="score">94<small>Score</small></div></div>
-        <div class="delta up">↑ Score 93 → 94 · 7T Einnahmen −27,0 %</div>
-        <div class="pool-note">Langfristig extrem effizient. Der Score steigt sogar, während die jüngere Einnahmenentwicklung fällt. Halten und beobachten.</div>
-      </article>
-
-      <article class="pool yellow">
-        <div class="pool-top"><div><div class="pool-name">ASTY / Buttcoin</div><div class="pool-status">Sehr hoch · steigend</div></div><div class="score">83<small>Score</small></div></div>
-        <div class="delta down">↓ Score 85 → 83 · 7T Einnahmen −14,3 %</div>
-        <div class="pool-note">24h aktuell stark, 7T aber noch unter dem letzten Bericht. Erst nächsten Zyklus abwarten.</div>
-      </article>
-
-      <article class="pool yellow">
-        <div class="pool-top"><div><div class="pool-name">ASTY / MET</div><div class="pool-status">Mittel · stark rückläufig</div></div><div class="score">51<small>Score</small></div></div>
-        <div class="delta down">↓ Score 65 → 51</div>
-        <div class="pool-note">Deutliche Verschlechterung, aktuell 0 Einnahmen über 24h. Noch kein zweiter klarer schwacher Score-Zyklus, daher zunächst beobachten.</div>
-      </article>
-    </div>
-  </section>
-
-  <section>
-    <div class="section-head">
-      <div class="section-title">🔴 Zweiter schwacher Zyklus · Kapitalprüfung</div>
-      <div class="section-sub">Diese Pools waren bereits im letzten Bericht schwach und bestätigen die niedrige Effizienz erneut. Reduzierung wird jetzt aktiv geprüft.</div>
-    </div>
-
-    <div class="cards">
-      <article class="pool red">
-        <div class="pool-top"><div><div class="pool-name">ASTY / WBTC</div><div class="pool-status">Sehr niedrig · stark rückläufig</div></div><div class="score">9<small>Score</small></div></div>
-        <div class="delta down">2. schwacher Zyklus · Score 11 → 9</div>
-        <div class="pool-stats">
-          <div class="stat"><span>TVL</span><strong>$1.405,05</strong></div>
-          <div class="stat"><span>7T Volumen</span><strong>$4,23</strong></div>
-          <div class="stat"><span>7T Einnahmen</span><strong>$0,035</strong></div>
-          <div class="stat"><span>7T ggü. Bericht</span><strong class="bad">−55,5 %</strong></div>
-        </div>
-        <div class="pool-note">Klar bestätigte Schwäche. Als strategischer BTC-Pool nicht automatisch schließen, aber Reduzierung bis zu einer definierten Mindestliquidität prüfen.</div>
-      </article>
-
-      <article class="pool red">
-        <div class="pool-top"><div><div class="pool-name">ASTY / ETH</div><div class="pool-status">Sehr niedrig · stark rückläufig</div></div><div class="score">17<small>Score</small></div></div>
-        <div class="delta down">2. schwacher Zyklus · Score 32 → 17</div>
-        <div class="pool-stats">
-          <div class="stat"><span>TVL</span><strong>$1.415,81</strong></div>
-          <div class="stat"><span>7T Volumen</span><strong>$10,66</strong></div>
-          <div class="stat"><span>7T Einnahmen</span><strong>$0,086</strong></div>
-          <div class="stat"><span>7T ggü. Bericht</span><strong class="bad">−67,6 %</strong></div>
-        </div>
-        <div class="pool-note">Sehr hohe Kapitalbindung bei deutlich weiter fallender Aktivität. Reduzierung mit strategischer Mindestliquidität prüfen.</div>
-      </article>
-
-      <article class="pool red">
-        <div class="pool-top"><div><div class="pool-name">ASTY / RENDER</div><div class="pool-status">Sehr niedrig · stark rückläufig</div></div><div class="score">22<small>Score</small></div></div>
-        <div class="delta down">2. schwacher Zyklus · Score 34 → 22</div>
-        <div class="pool-stats">
-          <div class="stat"><span>TVL</span><strong>$1.100,21</strong></div>
-          <div class="stat"><span>7T Volumen</span><strong>$13,98</strong></div>
-          <div class="stat"><span>7T Einnahmen</span><strong>$0,112</strong></div>
-          <div class="stat"><span>7T ggü. Bericht</span><strong class="bad">−54,5 %</strong></div>
-        </div>
-        <div class="pool-note">Schwäche bestätigt. Kapitalreduktion jetzt klar prüfenswert.</div>
-      </article>
-
-      <article class="pool red">
-        <div class="pool-top"><div><div class="pool-name">ASTY / Cake</div><div class="pool-status">Sehr niedrig · stark rückläufig</div></div><div class="score">12<small>Score</small></div></div>
-        <div class="delta down">2. schwacher Zyklus · Score 15 → 12</div>
-        <div class="pool-stats">
-          <div class="stat"><span>TVL</span><strong>$784,88</strong></div>
-          <div class="stat"><span>7T Einnahmen</span><strong>$0,033</strong></div>
-          <div class="stat"><span>24h Einnahmen</span><strong>$0</strong></div>
-          <div class="stat"><span>30T Einnahmen</span><strong>$0,432</strong></div>
-        </div>
-        <div class="pool-note">7T hat sich vom extrem niedrigen vorherigen Wert leicht erholt, bleibt absolut aber sehr schwach. Reduzierung weiterhin prüfen.</div>
-      </article>
-
-      <article class="pool red">
-        <div class="pool-top"><div><div class="pool-name">ASTY / RAY</div><div class="pool-status">Niedrig · stark rückläufig</div></div><div class="score">37<small>Score</small></div></div>
-        <div class="delta flat">2. schwacher Score-Zyklus · Score 37 → 37</div>
-        <div class="pool-stats">
-          <div class="stat"><span>TVL</span><strong>$1.474,44</strong></div>
-          <div class="stat"><span>7T Einnahmen</span><strong>$0,178</strong></div>
-          <div class="stat"><span>7T ggü. Bericht</span><strong class="good">+54,9 %</strong></div>
-          <div class="stat"><span>30T Einnahmen</span><strong class="bad">−24,0 %</strong></div>
-        </div>
-        <div class="pool-note">Der Score bleibt niedrig, aber 7T zeigt eine Erholung. Keine aggressive Reduzierung; noch einen kurzen Kontrollzyklus beobachten.</div>
-      </article>
-
-      <article class="pool yellow">
-        <div class="pool-top"><div><div class="pool-name">ASTY / WIF</div><div class="pool-status">Niedrig · stark rückläufig</div></div><div class="score">29<small>Score</small></div></div>
-        <div class="delta up">Score 22 → 29 · Aktivität kehrt leicht zurück</div>
-        <div class="pool-note">Formal weiterhin schwach, aber die Richtung verbessert sich. Deshalb aktuell noch keine Reduzierung auslösen.</div>
-      </article>
-    </div>
-  </section>
-
-  <section>
-    <div class="section-head">
-      <div class="section-title">🟣 Basis-Pools · Zusammenführung</div>
-      <div class="section-sub">Umstellung am 9. August 2026. Die Struktur ist umgesetzt; die wirtschaftliche Wirkung wird getrennt bewertet.</div>
-    </div>
-
-    <div class="spotlight">
-      <article class="focus-card">
-        <div class="focus-title">USDC · erster 7T-Nachher-Snapshot</div>
-        <div class="focus-number">$236,40 <span class="arr">Volumen 7T</span></div>
-        <div class="focus-copy">
-          Die beiden aktiven Zielpools halten zusammen rund $4.526,37 TVL und erzeugten
-          $236,40 7T-Volumen sowie $0,567 7T-Einnahmen.
-        </div>
-        <table class="compare-table">
-          <tr><th>Kennzahl</th><th>Vor Zusammenführung*</th><th>Aktuell</th><th>Veränderung</th></tr>
-          <tr><td>TVL</td><td>ca. $3.602</td><td>$4.526</td><td class="warn">+25,7 %</td></tr>
-          <tr><td>Volumen 7T</td><td>ca. $281</td><td>$236</td><td class="bad">−15,9 %</td></tr>
-          <tr><td>Einnahmen 7T</td><td>ca. $1,02</td><td>$0,57</td><td class="bad">−44,4 %</td></tr>
-          <tr><td>Volumen / TVL</td><td>ca. 7,8 %</td><td>5,22 %</td><td class="bad">schwächer</td></tr>
-          <tr><td>Einnahmen / TVL</td><td>ca. 0,028 %</td><td>0,0125 %</td><td class="bad">schwächer</td></tr>
-        </table>
-        <div class="risk">🟡 Zwischenfazit: strukturell sauber, wirtschaftlicher Vorteil bislang nicht bestätigt</div>
-      </article>
-
-      <article class="focus-card">
-        <div class="focus-title">SOL · aktueller Zielpool-Stand</div>
-        <div class="focus-number">$607,10 <span class="arr">Volumen 7T</span></div>
-        <div class="focus-copy">
-          Meteora 0,25 % und Raydium 0,25 % halten zusammen rund $6.494,58 TVL.
-          Aktuell erzeugen sie $607,10 7T-Volumen und $1,264 7T-Einnahmen.
-          Ein sauberer gleich langer Vorher-Vergleich aller damaligen SOL-Pools liegt im aktuellen Datensatz nicht vor.
-        </div>
-        <table class="compare-table">
-          <tr><th>Kennzahl</th><th>Aktueller Stand</th></tr>
-          <tr><td>TVL Zielpools</td><td>$6.494,58</td></tr>
-          <tr><td>Volumen 24h</td><td>$83,29</td></tr>
-          <tr><td>Volumen 7T</td><td>$607,10</td></tr>
-          <tr><td>Einnahmen 7T</td><td>$1,264</td></tr>
-          <tr><td>Volumen / TVL 7T</td><td>9,35 %</td></tr>
-          <tr><td>Einnahmen / TVL 7T</td><td>0,0195 %</td></tr>
-        </table>
-        <div class="risk">🟣 Bewertung offen: Vorher-Datensatz für denselben Zeitraum erforderlich</div>
-      </article>
-    </div>
-
-    <div class="note">
-      <strong>*Hinweis USDC:</strong> Die Vorher-Werte stammen aus dem letzten dokumentierten Stand vor der
-      Liquiditätskonzentration. Der aktuelle 7T-Wert ist der erste weitgehend nach der Umstellung liegende
-      Vergleichszeitraum. Für eine endgültige Aussage wird mindestens ein weiterer Zyklus und anschließend
-      der 30T-Vergleich abgewartet.
-    </div>
-  </section>
-
-  <section>
-    <div class="section-head">
-      <div class="section-title">⚠️ Pair-Risiko vor Reinvest</div>
-      <div class="section-sub">Hohe Pool-Einnahmen können gerade durch starke Volatilität entstehen. Deshalb darf ein guter Score nicht automatisch zu immer größerem Asset-Exposure führen.</div>
-    </div>
-
-    <div class="decision-grid">
-      <article class="decision">
-        <h3>🟢 Pair gesund</h3>
-        <p>Aktivität und externe Liquidität stabil, kein auffälliger struktureller Verfall. Reinvest nach bestätigter Pool-Performance möglich.</p>
-      </article>
-      <article class="decision">
-        <h3>🟡 Pair-Risiko erhöht</h3>
-        <p>Starker Kursrückgang, sinkende externe Liquidität oder nachlassende Marktaktivität. Pool kann weiterhin gute Fees erzeugen, aber zusätzliche Position wird begrenzt.</p>
-      </article>
-      <article class="decision">
-        <h3>🔴 Pair kritisch</h3>
-        <p>Liquidität oder Handel brechen strukturell weg. Kein Reinvest trotz hohem Effizienz Score; bestehendes Exposure wird überprüft.</p>
-      </article>
-      <article class="decision">
-        <h3>Aktueller Sonderfall</h3>
-        <p>CUPSEY bleibt der stärkste Pool, der gepaarte Token wurde vom Team zuletzt jedoch als deutlich fallend beobachtet. Deshalb: Score 99 ≠ automatische Kapitalerhöhung.</p>
-      </article>
-    </div>
-  </section>
-
-  <section>
-    <div class="section-head">
-      <div class="section-title">Nächste Maßnahmen</div>
-      <div class="section-sub">Keine automatische Reallokation. Die folgenden Punkte sind die Prioritäten bis zum nächsten Team-Bericht.</div>
-    </div>
+    <div class="section-head"><div><div class="section-kicker">Team-Entscheidungen</div><h2>Was wir aus dem Snapshot ableiten</h2></div></div>
     <div class="actions">
-      <div class="action"><b>01</b>GEOD als ersten kontrollierten Reinvest-Kandidaten prüfen.</div>
-      <div class="action"><b>02</b>WBTC, ETH und RENDER nach zwei schwachen Zyklen auf sinnvolle Mindestliquidität prüfen.</div>
-      <div class="action"><b>03</b>Bei CUPSEY vor weiterem Reinvest den Pair-Risikostatus festlegen.</div>
-      <div class="action"><b>04</b>WLFI und TAO im nächsten Bericht auf Bestätigung der Verbesserung prüfen.</div>
-      <div class="action"><b>05</b>USDC-Zusammenführung über einen weiteren 7T-Zyklus und später 30T erneut bewerten.</div>
+      <div class="action"><b>01</b><strong>UNI priorisieren</strong><br>Stärkster bestätigter Aufstieg über Score, 30T-Volumen, Einnahmen und Trend.</div>
+      <div class="action"><b>02</b><strong>ANSEM beobachten</strong><br>Score 88 + stark steigend. Erst einen weiteren Zyklus bestätigen, dann ggf. höher gewichten.</div>
+      <div class="action"><b>03</b><strong>High-Score ≠ Auto-Reinvest</strong><br>Chiikawa, CUPSEY, testicle und WOJAK zeigen, warum der Pair-Risk-Guard wichtig bleibt.</div>
+      <div class="action"><b>04</b><strong>Schwache Pools nicht hektisch abbauen</strong><br>WBTC und ETH zeigen bereits Erholung. Zwei-Zyklen-Regel verhindert falsche Reaktionen.</div>
+      <div class="action"><b>05</b><strong>Anchor-Pools weiter messen</strong><br>SOL/USDC entwickeln sich aktuell positiv. Für das Bündelungsurteil weiter 7T/30T statt 24h verfolgen.</div>
     </div>
   </section>
 
   <div class="note">
-    <strong>Methodischer Hinweis:</strong>
-    24h-, 7T- und 30T-Daten sind rollierende Zeitfenster. Veränderungen zwischen zwei Berichten sind daher
-    keine vollständig unabhängigen Perioden. Sie dienen zur Erkennung von Richtung und Bestätigung.
-    Kapitalentscheidungen sollten zusätzlich ab dem Zeitpunkt konkreter TVL-Änderungen separat gemessen werden.
+    <b>Team-Fazit:</b> Das Netzwerk ist seit dem letzten Bericht deutlich größer geworden: aktives TVL liegt bei $48.503,08, die rollierenden 30T-Einnahmen bei $139,27. Gleichzeitig ist die Effizienz breiter verteilt als im August. Besonders positiv fallen UNI, three, ANSEM und mehrere kleine High-Score-Pools auf. Die wichtigste Regel bleibt aber bestehen: Score und Fee-APR allein reichen nicht für Reinvests. Kurzfristiger Trend, Entwicklung des gepaarten Tokens und mindestens zwei Beobachtungszyklen gehören weiterhin in die Entscheidung.
   </div>
 
-  <footer>
-    <span>Interner ASTY Team-Bericht</span>
-    <span>Performance Snapshot · 17. August 2026</span>
-  </footer>
+  <footer><span>ASTY Team-Bericht · intern</span><span>Datenbasis: ASTY-Team-Dashboard-2026-09-06.csv</span></footer>
 </main>
 </body>
 </html>
