@@ -2,7 +2,7 @@
   "success": true,
   "token": "ASTYqeaoK83Zs1pTFEXZUB6BM8cG8YLTsN852NUkt7ZR",
   "amount": 919811.7090080361,
-  "value": 23906.445861684508,
+  "value": 23560.08729011291,
   "resolved": 5,
   "total": 5,
   "balances": [
@@ -10,46 +10,46 @@
       "wallet": "8KgDtknVhs88sMjRckCGzVDhaFBre3V3FAvhwxfANmfq",
       "resolved": true,
       "amount": 191916.898325996,
-      "value": 4988.0327624017555,
+      "value": 4915.765729797518,
       "decimals": 9,
-      "price": 0.0259905865815366
+      "price": 0.025614032806258916
     },
     {
       "wallet": "9Hv3HPGSHS1vq1qjfumoER4TEhu2sgWUmL3S4EaUWrk6",
       "resolved": true,
       "amount": 185000.700846128,
-      "value": 4808.276732986241,
+      "value": 4738.614020653614,
       "decimals": 9,
-      "price": 0.0259905865815366
+      "price": 0.025614032806258916
     },
     {
       "wallet": "4aGjJavF5fq15szkFTdDGQAz9mUUSZ1y1c74isQm2zYV",
       "resolved": true,
       "amount": 171894.074235912,
-      "value": 4467.627819281551,
+      "value": 4402.900456680156,
       "decimals": 9,
-      "price": 0.0259905865815366
+      "price": 0.025614032806258916
     },
     {
       "wallet": "8aYomPkFRaetda3672NfVLZ1xhrJRm9fro2gzNxCPbyf",
       "resolved": true,
       "amount": 185000.0178,
-      "value": 4808.258980216712,
+      "value": 4738.596525087683,
       "decimals": 9,
-      "price": 0.0259905865815366
+      "price": 0.025614032806258916
     },
     {
       "wallet": "9EDJ8RnqnVhwEZF8w3whGgCumDbeexPcHpzWRaWr6USt",
       "resolved": true,
       "amount": 186000.0178,
-      "value": 4834.249566798248,
+      "value": 4764.210557893943,
       "decimals": 9,
-      "price": 0.0259905865815366
+      "price": 0.025614032806258916
     }
   ],
   "source": "BirdEye Wallet API",
-  "currentSupply": 9252680.211482257,
+  "currentSupply": 9252680.211482255,
   "supplyDecimals": 9,
-  "updatedAt": 1789369930417,
-  "updatedAtIso": "2026-09-14T07:12:10.417Z"
+  "updatedAt": 1789394979151,
+  "updatedAtIso": "2026-09-14T14:09:39.151Z"
 }
