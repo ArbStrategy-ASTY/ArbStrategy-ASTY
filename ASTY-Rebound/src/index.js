@@ -1,4 +1,4 @@
-// ASTY Rebound API
+// ASTY Rebound API - Account Sync v1
 
 import { PrivyClient } from "@privy-io/node";
 
