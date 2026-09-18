@@ -8,9 +8,9 @@
     "deploy": "wrangler deploy"
   },
   "dependencies": {
-    "@privy-io/node": "^0.10.0"
+    "@privy-io/node": "^0.34.0"
   },
   "devDependencies": {
-    "wrangler": "^4.68.0"
+    "wrangler": "^4.135.0"
   }
 }
