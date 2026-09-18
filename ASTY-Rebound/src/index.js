@@ -1,4 +1,4 @@
-// ASTY Rebound API - Balance Debug v1
+// ASTY Rebound API - Helius Balance v1
 
 import { PrivyClient } from "@privy-io/node";
 
@@ -7,8 +7,8 @@ const ALLOWED_ORIGINS = new Set([
   "https://www.arbstrategy.net",
 ]);
 
-const SOLANA_RPC_URL =
-  "https://api.mainnet-beta.solana.com";
+const HELIUS_RPC_BASE =
+  "https://mainnet.helius-rpc.com/";
 
 const USDC_MINT =
   "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v";
@@ -113,141 +113,12 @@ function getBearerToken(request) {
 
 function isSolanaAddress(value) {
   return (
-    typeof value ===
-      "string" &&
-
+    typeof value === "string" &&
     /^[1-9A-HJ-NP-Za-km-z]{32,44}$/
       .test(value)
   );
 }
 
-
-/*
-====================================================
-PRIVY AUTH
-====================================================
-*/
-
-async function verifyPrivyRequest(
-  request,
-  env
-) {
-  const accessToken =
-    getBearerToken(request);
-
-  if (!accessToken) {
-    return {
-      ok: false,
-      status: 401,
-      message:
-        "Missing authentication token.",
-    };
-  }
-
-  const privy =
-    createPrivyClient(env);
-
-  try {
-    const claims =
-      await privy
-        .utils()
-        .auth()
-        .verifyAccessToken(
-          accessToken
-        );
-
-    const userId =
-      claims?.user_id;
-
-    if (!userId) {
-      return {
-        ok: false,
-        status: 401,
-        message:
-          "Privy user ID could not be verified.",
-      };
-    }
-
-    return {
-      ok: true,
-      userId,
-      claims,
-    };
-  } catch (error) {
-    console.error(
-      "Privy verification error:",
-      error
-    );
-
-    return {
-      ok: false,
-      status: 401,
-      message:
-        "Invalid or expired Privy session.",
-    };
-  }
-}
-
-
-/*
-====================================================
-SOLANA RPC
-====================================================
-*/
-
-async function solanaRpc(
-  method,
-  params
-) {
-  const response =
-    await fetch(
-      SOLANA_RPC_URL,
-      {
-        method: "POST",
-
-        headers: {
-          "Content-Type":
-            "application/json",
-        },
-
-        body:
-          JSON.stringify({
-            jsonrpc: "2.0",
-            id: 1,
-            method,
-            params,
-          }),
-      }
-    );
-
-  if (!response.ok) {
-    const text =
-      await response.text();
-
-    throw new Error(
-      `Solana RPC HTTP ${response.status}: ${text}`
-    );
-  }
-
-  const data =
-    await response.json();
-
-  if (data?.error) {
-    throw new Error(
-      data.error?.message ||
-      "Solana RPC returned an error."
-    );
-  }
-
-  return data?.result;
-}
-
-
-/*
-====================================================
-TOKEN / UNIT HELPERS
-====================================================
-*/
 
 function formatUnits(
   rawValue,
@@ -279,9 +150,7 @@ function formatUnits(
   let result =
     whole.toString();
 
-  if (
-    decimals > 0
-  ) {
+  if (decimals > 0) {
     result +=
       "." +
       fraction
@@ -300,15 +169,171 @@ function formatUnits(
 
 /*
 ====================================================
+PRIVY AUTH
+====================================================
+*/
+
+async function verifyPrivyRequest(
+  request,
+  env
+) {
+  const accessToken =
+    getBearerToken(request);
+
+  if (!accessToken) {
+    return {
+      ok: false,
+      status: 401,
+      message:
+        "Missing authentication token.",
+    };
+  }
+
+  try {
+    const privy =
+      createPrivyClient(env);
+
+    const claims =
+      await privy
+        .utils()
+        .auth()
+        .verifyAccessToken(
+          accessToken
+        );
+
+    const userId =
+      claims?.user_id;
+
+    if (!userId) {
+      return {
+        ok: false,
+        status: 401,
+        message:
+          "Privy user ID could not be verified.",
+      };
+    }
+
+    return {
+      ok: true,
+      userId,
+      claims,
+    };
+
+  } catch (error) {
+    console.error(
+      "Privy verification error:",
+      error
+    );
+
+    return {
+      ok: false,
+      status: 401,
+      message:
+        "Invalid or expired Privy session.",
+    };
+  }
+}
+
+
+/*
+====================================================
+HELIUS
+====================================================
+*/
+
+function getHeliusUrl(env) {
+  if (!env.HELIUS_API_KEY) {
+    throw new Error(
+      "HELIUS_API_KEY is not configured."
+    );
+  }
+
+  return (
+    HELIUS_RPC_BASE +
+    "?api-key=" +
+    encodeURIComponent(
+      env.HELIUS_API_KEY
+    )
+  );
+}
+
+
+async function heliusRpc(
+  env,
+  method,
+  params
+) {
+  const response =
+    await fetch(
+      getHeliusUrl(env),
+      {
+        method: "POST",
+
+        headers: {
+          "Content-Type":
+            "application/json",
+
+          "Accept":
+            "application/json",
+        },
+
+        body:
+          JSON.stringify({
+            jsonrpc: "2.0",
+            id: "asty-rebound",
+            method,
+            params,
+          }),
+      }
+    );
+
+  if (!response.ok) {
+    const body =
+      await response.text();
+
+    throw new Error(
+      `Helius HTTP ${response.status}: ${body.slice(0, 300)}`
+    );
+  }
+
+  const data =
+    await response.json();
+
+  if (data?.error) {
+    throw new Error(
+      data.error?.message ||
+      "Helius returned an RPC error."
+    );
+  }
+
+  /*
+   * Standard Solana RPC and Helius DAS
+   * normally return their payload in
+   * `result`.
+   *
+   * Keep the fallback for defensive
+   * compatibility.
+   */
+  return (
+    data?.result ??
+    data
+  );
+}
+
+
+/*
+====================================================
 SOL BALANCE
 ====================================================
 */
 
 async function getSolBalance(
+  env,
   walletAddress
 ) {
   const result =
-    await solanaRpc(
+    await heliusRpc(
+      env,
       "getBalance",
       [
         walletAddress,
@@ -339,15 +364,101 @@ async function getSolBalance(
 
 /*
 ====================================================
-USDC BALANCE
+USDC BALANCE - PRIMARY
+
+Helius DAS getTokenAccounts
+
+We only ask for the exact USDC mint.
 ====================================================
 */
 
-async function getUsdcBalance(
+async function getUsdcViaDas(
+  env,
   walletAddress
 ) {
   const result =
-    await solanaRpc(
+    await heliusRpc(
+      env,
+      "getTokenAccounts",
+      {
+        owner:
+          walletAddress,
+
+        mint:
+          USDC_MINT,
+
+        options: {
+          showZeroBalance:
+            true,
+        },
+      }
+    );
+
+  const accounts =
+    Array.isArray(
+      result?.token_accounts
+    )
+      ? result.token_accounts
+      : [];
+
+  let totalRaw =
+    0n;
+
+  for (
+    const account
+    of accounts
+  ) {
+    const amount =
+      account?.amount;
+
+    if (
+      amount !== undefined &&
+      amount !== null
+    ) {
+      totalRaw +=
+        BigInt(
+          String(amount)
+        );
+    }
+  }
+
+  return {
+    raw:
+      totalRaw.toString(),
+
+    ui:
+      formatUnits(
+        totalRaw,
+        USDC_DECIMALS
+      ),
+
+    accounts:
+      accounts.length,
+
+    method:
+      "helius-getTokenAccounts",
+  };
+}
+
+
+/*
+====================================================
+USDC BALANCE - FALLBACK
+
+Standard Solana getTokenAccountsByOwner
+through Helius.
+
+This is intentionally a second method.
+====================================================
+*/
+
+async function getUsdcViaStandardRpc(
+  env,
+  walletAddress
+) {
+  const result =
+    await heliusRpc(
+      env,
       "getTokenAccountsByOwner",
       [
         walletAddress,
@@ -367,25 +478,19 @@ async function getUsdcBalance(
       ]
     );
 
-  const tokenAccounts =
+  const accounts =
     Array.isArray(
       result?.value
     )
       ? result.value
       : [];
 
-  /*
-   * A wallet can own multiple
-   * token accounts for the same mint.
-   *
-   * Sum all USDC accounts.
-   */
   let totalRaw =
     0n;
 
   for (
     const tokenAccount
-    of tokenAccounts
+    of accounts
   ) {
     const amount =
       tokenAccount
@@ -398,7 +503,7 @@ async function getUsdcBalance(
 
     if (
       typeof amount ===
-        "string"
+      "string"
     ) {
       totalRaw +=
         BigInt(amount);
@@ -415,9 +520,45 @@ async function getUsdcBalance(
         USDC_DECIMALS
       ),
 
-    tokenAccounts:
-      tokenAccounts.length,
+    accounts:
+      accounts.length,
+
+    method:
+      "helius-getTokenAccountsByOwner",
   };
+}
+
+
+/*
+====================================================
+USDC BALANCE
+
+Try the targeted Helius DAS method first.
+If that fails, retry with standard RPC.
+====================================================
+*/
+
+async function getUsdcBalance(
+  env,
+  walletAddress
+) {
+  try {
+    return await getUsdcViaDas(
+      env,
+      walletAddress
+    );
+
+  } catch (error) {
+    console.error(
+      "Helius DAS USDC lookup failed, retrying with standard RPC:",
+      error
+    );
+
+    return await getUsdcViaStandardRpc(
+      env,
+      walletAddress
+    );
+  }
 }
 
 
@@ -432,9 +573,10 @@ export default {
     request,
     env
   ) {
+
     /*
     ==================================================
-    CORS PREFLIGHT
+    CORS
     ==================================================
     */
 
@@ -446,6 +588,7 @@ export default {
         null,
         {
           status: 204,
+
           headers:
             corsHeaders(
               request
@@ -462,16 +605,53 @@ export default {
 
     /*
     ==================================================
+    ROOT
+    ==================================================
+    */
+
+    if (
+      request.method === "GET" &&
+      url.pathname === "/"
+    ) {
+      return json(
+        request,
+        {
+          service:
+            "ASTY Rebound API",
+
+          status:
+            "online",
+
+          balanceSource:
+            "Helius",
+
+          endpoints: {
+            health:
+              "/health",
+
+            privyTest:
+              "/privy-test",
+
+            accountSync:
+              "POST /account/sync",
+
+            accountBalance:
+              "GET /account/balance",
+          },
+        }
+      );
+    }
+
+
+    /*
+    ==================================================
     HEALTH
     ==================================================
     */
 
     if (
-      request.method ===
-        "GET" &&
-
-      url.pathname ===
-        "/health"
+      request.method === "GET" &&
+      url.pathname === "/health"
     ) {
       try {
         const dbTest =
@@ -484,7 +664,8 @@ export default {
         return json(
           request,
           {
-            status: "ok",
+            status:
+              "ok",
 
             service:
               "ASTY Rebound API",
@@ -519,9 +700,15 @@ export default {
                 Boolean(
                   env.PRIVY_POLICY_ID
                 ),
+
+              heliusApiKey:
+                Boolean(
+                  env.HELIUS_API_KEY
+                ),
             },
           }
         );
+
       } catch (error) {
         console.error(
           "Health error:",
@@ -533,9 +720,6 @@ export default {
           {
             status:
               "error",
-
-            service:
-              "ASTY Rebound API",
 
             message:
               "Backend health check failed.",
@@ -553,11 +737,8 @@ export default {
     */
 
     if (
-      request.method ===
-        "GET" &&
-
-      url.pathname ===
-        "/privy-test"
+      request.method === "GET" &&
+      url.pathname === "/privy-test"
     ) {
       try {
         const privy =
@@ -568,7 +749,8 @@ export default {
         return json(
           request,
           {
-            status: "ok",
+            status:
+              "ok",
 
             service:
               "ASTY Rebound API",
@@ -592,6 +774,7 @@ export default {
             },
           }
         );
+
       } catch (error) {
         console.error(
           "Privy test error:",
@@ -603,9 +786,6 @@ export default {
           {
             status:
               "error",
-
-            service:
-              "ASTY Rebound API",
 
             message:
               "Privy SDK initialization failed.",
@@ -623,17 +803,10 @@ export default {
     */
 
     if (
-      request.method ===
-        "POST" &&
-
-      url.pathname ===
-        "/account/sync"
+      request.method === "POST" &&
+      url.pathname === "/account/sync"
     ) {
       try {
-        /*
-         * Verify user session.
-         */
-
         const auth =
           await verifyPrivyRequest(
             request,
@@ -657,23 +830,14 @@ export default {
         const privyUserId =
           auth.userId;
 
-
-        /*
-         * Read browser-provided
-         * wallet mapping.
-         */
-
         const body =
           await request.json();
-
 
         const phantomAddress =
           body?.phantomAddress;
 
-
         const reboundWalletAddress =
           body?.reboundWalletAddress;
-
 
         const reboundWalletId =
           body?.reboundWalletId ||
@@ -681,7 +845,7 @@ export default {
 
 
         /*
-         * Validate addresses.
+         * Validate Phantom address.
          */
 
         if (
@@ -703,6 +867,10 @@ export default {
         }
 
 
+        /*
+         * Validate Rebound address.
+         */
+
         if (
           !isSolanaAddress(
             reboundWalletAddress
@@ -721,6 +889,10 @@ export default {
           );
         }
 
+
+        /*
+         * They must not be identical.
+         */
 
         if (
           phantomAddress ===
@@ -741,7 +913,7 @@ export default {
 
 
         /*
-         * Check existing Privy mapping.
+         * Existing account by Privy user.
          */
 
         const existing =
@@ -766,12 +938,11 @@ export default {
             .first();
 
 
-        /*
-         * Existing account:
-         * mapping is permanent.
-         */
-
         if (existing) {
+
+          /*
+           * Phantom mapping may never change.
+           */
 
           if (
             existing
@@ -791,6 +962,10 @@ export default {
             );
           }
 
+
+          /*
+           * Rebound wallet may never change.
+           */
 
           if (
             existing
@@ -812,24 +987,50 @@ export default {
 
 
           /*
-           * Update last-seen time.
+           * Older test account may not yet
+           * have had the Privy wallet ID.
+           *
+           * Fill it once when available.
            */
 
-          await env.DB
-            .prepare(
-              `
-              UPDATE rebound_users
-              SET
-                updated_at =
-                  CURRENT_TIMESTAMP
-              WHERE
-                privy_user_id = ?
-              `
-            )
-            .bind(
-              privyUserId
-            )
-            .run();
+          if (
+            !existing
+              .rebound_wallet_id &&
+            reboundWalletId
+          ) {
+            await env.DB
+              .prepare(
+                `
+                UPDATE rebound_users
+                SET
+                  rebound_wallet_id = ?,
+                  updated_at = CURRENT_TIMESTAMP
+                WHERE
+                  privy_user_id = ?
+                `
+              )
+              .bind(
+                reboundWalletId,
+                privyUserId
+              )
+              .run();
+
+          } else {
+            await env.DB
+              .prepare(
+                `
+                UPDATE rebound_users
+                SET
+                  updated_at = CURRENT_TIMESTAMP
+                WHERE
+                  privy_user_id = ?
+                `
+              )
+              .bind(
+                privyUserId
+              )
+              .run();
+          }
 
 
           return json(
@@ -855,7 +1056,8 @@ export default {
 
                 reboundWalletId:
                   existing
-                    .rebound_wallet_id,
+                    .rebound_wallet_id ||
+                  reboundWalletId,
 
                 reboundWalletAddress:
                   existing
@@ -867,9 +1069,8 @@ export default {
 
 
         /*
-         * Prevent one Phantom wallet
-         * from being mapped to another
-         * Privy user.
+         * Phantom address may also only
+         * belong to one Rebound account.
          */
 
         const existingPhantom =
@@ -878,10 +1079,8 @@ export default {
               `
               SELECT
                 privy_user_id
-              FROM
-                rebound_users
-              WHERE
-                phantom_address = ?
+              FROM rebound_users
+              WHERE phantom_address = ?
               LIMIT 1
               `
             )
@@ -909,21 +1108,20 @@ export default {
 
 
         /*
-         * Insert permanent mapping.
+         * Create permanent mapping.
          */
 
         await env.DB
           .prepare(
             `
-            INSERT INTO
-              rebound_users (
-                phantom_address,
-                privy_user_id,
-                rebound_wallet_id,
-                rebound_wallet_address,
-                created_at,
-                updated_at
-              )
+            INSERT INTO rebound_users (
+              phantom_address,
+              privy_user_id,
+              rebound_wallet_id,
+              rebound_wallet_address,
+              created_at,
+              updated_at
+            )
             VALUES (
               ?, ?, ?, ?,
               CURRENT_TIMESTAMP,
@@ -963,12 +1161,10 @@ export default {
         );
 
       } catch (error) {
-
         console.error(
           "Account sync error:",
           error
         );
-
 
         return json(
           request,
@@ -992,16 +1188,13 @@ export default {
     */
 
     if (
-      request.method ===
-        "GET" &&
-
-      url.pathname ===
-        "/account/balance"
+      request.method === "GET" &&
+      url.pathname === "/account/balance"
     ) {
       try {
 
         /*
-         * 1. Verify logged-in Privy user.
+         * Verify logged-in Privy user.
          */
 
         const auth =
@@ -1027,8 +1220,11 @@ export default {
 
 
         /*
-         * 2. Load this user's permanent
-         * Rebound wallet from D1.
+         * IMPORTANT:
+         *
+         * Wallet comes from our permanent
+         * D1 mapping, never from a wallet
+         * address supplied by the browser.
          */
 
         const account =
@@ -1038,10 +1234,8 @@ export default {
               SELECT
                 phantom_address,
                 rebound_wallet_address
-              FROM
-                rebound_users
-              WHERE
-                privy_user_id = ?
+              FROM rebound_users
+              WHERE privy_user_id = ?
               LIMIT 1
               `
             )
@@ -1094,8 +1288,9 @@ export default {
 
 
         /*
-         * 3. Load SOL and USDC
-         * concurrently.
+         * Read both balances.
+         *
+         * Both values come from Helius.
          */
 
         const [
@@ -1104,18 +1299,16 @@ export default {
         ] =
           await Promise.all([
             getSolBalance(
+              env,
               walletAddress
             ),
 
             getUsdcBalance(
+              env,
               walletAddress
             ),
           ]);
 
-
-        /*
-         * 4. Return balances.
-         */
 
         return json(
           request,
@@ -1125,6 +1318,9 @@ export default {
 
             wallet:
               walletAddress,
+
+            source:
+              "helius",
 
             balances: {
 
@@ -1140,6 +1336,9 @@ export default {
 
                 ui:
                   usdcBalance.ui,
+
+                method:
+                  usdcBalance.method,
               },
 
 
@@ -1162,7 +1361,6 @@ export default {
         );
 
       } catch (error) {
-
         console.error(
           "Balance error:",
           error
@@ -1170,21 +1368,11 @@ export default {
 
 
         /*
-         * TEMPORARY DEBUG OUTPUT.
+         * IMPORTANT:
          *
-         * This lets us see the actual
-         * Solana RPC failure on the
-         * Rebound page.
-         *
-         * We will remove the detailed
-         * part after fixing the issue.
+         * Do not return fake zero balances
+         * when the blockchain lookup failed.
          */
-
-        const detail =
-          error?.message ||
-          String(error) ||
-          "Unknown balance error";
-
 
         return json(
           request,
@@ -1193,54 +1381,11 @@ export default {
               "error",
 
             message:
-              `Rebound balance unavailable: ${detail}`,
-
-            debug:
-              detail,
+              "Your Rebound Balance is temporarily unavailable.",
           },
           503
         );
       }
-    }
-
-
-    /*
-    ==================================================
-    ROOT
-    ==================================================
-    */
-
-    if (
-      request.method ===
-        "GET" &&
-
-      url.pathname ===
-        "/"
-    ) {
-      return json(
-        request,
-        {
-          service:
-            "ASTY Rebound API",
-
-          status:
-            "online",
-
-          endpoints: {
-            health:
-              "/health",
-
-            privyTest:
-              "/privy-test",
-
-            accountSync:
-              "POST /account/sync",
-
-            accountBalance:
-              "GET /account/balance",
-          },
-        }
-      );
     }
 
 
