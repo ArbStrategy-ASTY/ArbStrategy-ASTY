@@ -7,6 +7,9 @@
     "dev": "wrangler dev",
     "deploy": "wrangler deploy"
   },
+  "dependencies": {
+    "@privy-io/node": "^0.10.0"
+  },
   "devDependencies": {
     "wrangler": "^4.68.0"
   }
