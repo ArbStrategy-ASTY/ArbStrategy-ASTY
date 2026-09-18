@@ -1,5 +1,7 @@
 // ASTY Rebound API
 
+import { PrivyClient } from "@privy-io/node";
+
 const ALLOWED_ORIGINS = new Set([
   "https://arbstrategy.net",
   "https://www.arbstrategy.net",
@@ -31,6 +33,13 @@ function json(request, data, status = 200) {
   });
 }
 
+function createPrivyClient(env) {
+  return new PrivyClient({
+    appId: env.PRIVY_APP_ID,
+    appSecret: env.PRIVY_APP_SECRET,
+  });
+}
+
 export default {
   async fetch(request, env) {
     if (request.method === "OPTIONS") {
@@ -41,6 +50,10 @@ export default {
     }
 
     const url = new URL(request.url);
+
+    // --------------------------------------------------
+    // HEALTH CHECK
+    // --------------------------------------------------
 
     if (request.method === "GET" && url.pathname === "/health") {
       try {
@@ -78,11 +91,52 @@ export default {
       }
     }
 
+    // --------------------------------------------------
+    // PRIVY SDK TEST
+    // --------------------------------------------------
+
+    if (
+      request.method === "GET" &&
+      url.pathname === "/privy-test"
+    ) {
+      try {
+        const privy = createPrivyClient(env);
+
+        return json(request, {
+          status: "ok",
+          service: "ASTY Rebound API",
+          privy: {
+            sdkLoaded: true,
+            clientInitialized: Boolean(privy),
+            usersApiAvailable:
+              typeof privy.users === "function",
+            walletsApiAvailable:
+              typeof privy.wallets === "function",
+          },
+        });
+      } catch (error) {
+        return json(
+          request,
+          {
+            status: "error",
+            service: "ASTY Rebound API",
+            message: "Privy SDK initialization failed.",
+          },
+          500
+        );
+      }
+    }
+
+    // --------------------------------------------------
+    // ROOT
+    // --------------------------------------------------
+
     if (request.method === "GET" && url.pathname === "/") {
       return json(request, {
         service: "ASTY Rebound API",
         status: "online",
         health: "/health",
+        privyTest: "/privy-test",
       });
     }
 
