@@ -1,0 +1,1048 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#09070f" />
+
+  <title>ASTY Rebound</title>
+
+  <style>
+    :root {
+      --bg: #09070f;
+      --panel: #12101a;
+      --panel-2: #171321;
+      --border: #302640;
+      --text: #f4efff;
+      --muted: #a79db7;
+      --purple: #b18cff;
+      --purple-2: #7a4dff;
+      --green: #6ee7a8;
+      --red: #ff7b8b;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      margin: 0;
+      background:
+        radial-gradient(
+          circle at 50% -20%,
+          rgba(138, 91, 255, 0.20),
+          transparent 42%
+        ),
+        var(--bg);
+
+      color: var(--text);
+
+      font-family:
+        -apple-system,
+        BlinkMacSystemFont,
+        "Segoe UI",
+        Roboto,
+        Arial,
+        sans-serif;
+    }
+
+    body {
+      min-height: 100vh;
+    }
+
+    .wrap {
+      width: min(720px, 100%);
+      margin: 0 auto;
+
+      padding:
+        calc(22px + env(safe-area-inset-top))
+        18px
+        calc(34px + env(safe-area-inset-bottom));
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+
+      margin-bottom: 28px;
+    }
+
+    .mark {
+      width: 38px;
+      height: 38px;
+
+      border-radius: 12px;
+
+      background:
+        linear-gradient(
+          135deg,
+          var(--purple),
+          var(--purple-2)
+        );
+
+      box-shadow:
+        0 0 28px rgba(177, 140, 255, 0.28);
+    }
+
+    .brand strong {
+      font-size: 18px;
+      letter-spacing: 0.2px;
+    }
+
+    .brand span {
+      display: block;
+
+      color: var(--muted);
+
+      font-size: 12px;
+
+      margin-top: 2px;
+    }
+
+    .hero {
+      padding: 10px 2px 22px;
+    }
+
+    h1 {
+      font-size: clamp(32px, 9vw, 48px);
+      line-height: 1.02;
+
+      margin: 0 0 12px;
+
+      background:
+        linear-gradient(
+          90deg,
+          #ffffff,
+          var(--purple)
+        );
+
+      -webkit-background-clip: text;
+      background-clip: text;
+
+      color: transparent;
+    }
+
+    .lead {
+      margin: 0;
+
+      color: var(--muted);
+
+      font-size: 15px;
+      line-height: 1.55;
+    }
+
+    .card {
+      background:
+        linear-gradient(
+          180deg,
+          rgba(255,255,255,0.025),
+          rgba(255,255,255,0.012)
+        ),
+        var(--panel);
+
+      border: 1px solid var(--border);
+
+      border-radius: 22px;
+
+      padding: 18px;
+
+      box-shadow:
+        0 18px 60px rgba(0,0,0,0.22);
+    }
+
+    .status {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+
+      color: var(--muted);
+
+      font-size: 13px;
+
+      margin-bottom: 16px;
+    }
+
+    .dot {
+      width: 9px;
+      height: 9px;
+
+      border-radius: 50%;
+
+      background: #666;
+    }
+
+    .dot.ready {
+      background: var(--green);
+
+      box-shadow:
+        0 0 14px rgba(110,231,168,0.7);
+    }
+
+    button {
+      width: 100%;
+
+      appearance: none;
+
+      border: 0;
+
+      border-radius: 15px;
+
+      padding: 15px 18px;
+
+      font-weight: 700;
+      font-size: 16px;
+
+      cursor: pointer;
+    }
+
+    .primary {
+      color: #120a22;
+
+      background:
+        linear-gradient(
+          90deg,
+          #c29dff,
+          #9068ff
+        );
+
+      box-shadow:
+        0 8px 28px rgba(144,104,255,0.24);
+    }
+
+    .secondary {
+      margin-top: 10px;
+
+      color: var(--text);
+
+      background: transparent;
+
+      border: 1px solid var(--border);
+    }
+
+    button:disabled {
+      opacity: 0.55;
+      cursor: not-allowed;
+    }
+
+    .grid {
+      display: grid;
+
+      gap: 10px;
+
+      margin-top: 16px;
+    }
+
+    .row {
+      background: var(--panel-2);
+
+      border: 1px solid #292136;
+
+      border-radius: 15px;
+
+      padding: 13px 14px;
+    }
+
+    .label {
+      font-size: 11px;
+
+      text-transform: uppercase;
+
+      letter-spacing: 0.08em;
+
+      color: var(--muted);
+
+      margin-bottom: 6px;
+    }
+
+    .value {
+      font-size: 14px;
+
+      word-break: break-all;
+    }
+
+    .good {
+      color: var(--green);
+    }
+
+    .warn {
+      color: var(--red);
+    }
+
+    .small {
+      font-size: 12px;
+
+      color: var(--muted);
+
+      line-height: 1.5;
+
+      margin-top: 16px;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    .error {
+      margin-top: 12px;
+
+      padding: 12px 13px;
+
+      border-radius: 13px;
+
+      background:
+        rgba(255,123,139,0.08);
+
+      border:
+        1px solid rgba(255,123,139,0.25);
+
+      color: #ffc2c9;
+
+      font-size: 13px;
+
+      line-height: 1.45;
+    }
+  </style>
+
+  <script type="importmap">
+  {
+    "imports": {
+      "react": "https://esm.sh/react@18.3.1",
+      "react/jsx-runtime": "https://esm.sh/react@18.3.1/jsx-runtime",
+      "react-dom": "https://esm.sh/react-dom@18.3.1",
+      "react-dom/client": "https://esm.sh/react-dom@18.3.1/client"
+    }
+  }
+  </script>
+</head>
+
+<body>
+
+  <div id="root"></div>
+
+  <script type="module">
+
+    import React, {
+      useEffect,
+      useMemo,
+      useState
+    } from "react";
+
+
+    import {
+      createRoot
+    } from "react-dom/client";
+
+
+    import {
+      PrivyProvider,
+      usePrivy,
+      useLogin
+    } from "https://esm.sh/@privy-io/react-auth@3.43.0?external=react,react-dom";
+
+
+    import {
+      useWallets,
+      toSolanaWalletConnectors
+    } from "https://esm.sh/@privy-io/react-auth@3.43.0/solana?external=react,react-dom";
+
+
+    const APP_ID =
+      "cmu6qkw8h029x0cjtidese1il";
+
+
+    const e =
+      React.createElement;
+
+
+
+    function short(addr) {
+
+      if (!addr) {
+        return "—";
+      }
+
+      return addr.length > 18
+        ? `${addr.slice(0,8)}…${addr.slice(-8)}`
+        : addr;
+
+    }
+
+
+
+    function App() {
+
+      const {
+        ready,
+        authenticated,
+        user,
+        logout,
+        getAccessToken
+      } = usePrivy();
+
+
+      const {
+        ready: walletsReady,
+        wallets
+      } = useWallets();
+
+
+      const [
+        tokenReady,
+        setTokenReady
+      ] = useState(false);
+
+
+      const [
+        error,
+        setError
+      ] = useState("");
+
+
+
+      const {
+        login
+      } = useLogin({
+
+        onError: (err) => {
+
+          console.error(err);
+
+          setError(
+            err?.message ||
+            String(err) ||
+            "Login failed."
+          );
+
+        }
+
+      });
+
+
+
+      const phantom =
+        useMemo(() => {
+
+          return wallets.find((w) => {
+
+            const name =
+              String(
+                w?.standardWallet?.name || ""
+              ).toLowerCase();
+
+            return name.includes("phantom");
+
+          }) || null;
+
+        }, [wallets]);
+
+
+
+      const rebound =
+        useMemo(() => {
+
+          return wallets.find((w) => {
+
+            const name =
+              String(
+                w?.standardWallet?.name || ""
+              ).toLowerCase();
+
+            return (
+              name === "privy" ||
+              name.includes("privy")
+            );
+
+          }) || null;
+
+        }, [wallets]);
+
+
+
+      useEffect(() => {
+
+        let cancelled = false;
+
+
+        async function checkToken() {
+
+          if (
+            !ready ||
+            !authenticated
+          ) {
+
+            setTokenReady(false);
+
+            return;
+
+          }
+
+
+          try {
+
+            const token =
+              await getAccessToken();
+
+
+            if (!cancelled) {
+
+              setTokenReady(
+                Boolean(token)
+              );
+
+            }
+
+          }
+
+          catch (err) {
+
+            console.error(err);
+
+
+            if (!cancelled) {
+
+              setTokenReady(false);
+
+            }
+
+          }
+
+        }
+
+
+        checkToken();
+
+
+        return () => {
+
+          cancelled = true;
+
+        };
+
+      }, [
+        ready,
+        authenticated,
+        getAccessToken
+      ]);
+
+
+
+      const loading =
+        !ready ||
+        !walletsReady;
+
+
+
+      return e(
+
+        "main",
+
+        {
+          className: "wrap"
+        },
+
+
+        e(
+
+          "div",
+
+          {
+            className: "brand"
+          },
+
+
+          e(
+
+            "div",
+
+            {
+              className: "mark"
+            }
+
+          ),
+
+
+          e(
+
+            "div",
+
+            null,
+
+
+            e(
+
+              "strong",
+
+              null,
+
+              "ASTY Rebound"
+
+            ),
+
+
+            e(
+
+              "span",
+
+              null,
+
+              "Automated dip & rebound strategy"
+
+            )
+
+          )
+
+        ),
+
+
+
+        e(
+
+          "section",
+
+          {
+            className: "hero"
+          },
+
+
+          e(
+
+            "h1",
+
+            null,
+
+            "Rebound"
+
+          ),
+
+
+          e(
+
+            "p",
+
+            {
+              className: "lead"
+            },
+
+            "Connect Phantom to test the ASTY Rebound identity and wallet setup. No trading is enabled in this prototype."
+
+          )
+
+        ),
+
+
+
+        e(
+
+          "section",
+
+          {
+            className: "card"
+          },
+
+
+          e(
+
+            "div",
+
+            {
+              className: "status"
+            },
+
+
+            e(
+
+              "span",
+
+              {
+                className:
+                  `dot ${
+                    authenticated
+                      ? "ready"
+                      : ""
+                  }`
+              }
+
+            ),
+
+
+            loading
+              ? "Initializing Privy…"
+
+              : authenticated
+                ? "Authenticated"
+
+                : "Not connected"
+
+          ),
+
+
+
+          !authenticated
+
+          ?
+
+          e(
+
+            "button",
+
+            {
+
+              className:
+                "primary",
+
+              disabled:
+                loading,
+
+              onClick: () => {
+
+                setError("");
+
+                login();
+
+              }
+
+            },
+
+            loading
+              ? "Loading…"
+              : "Connect Phantom"
+
+          )
+
+
+          :
+
+
+          e(
+
+            React.Fragment,
+
+            null,
+
+
+            e(
+
+              "div",
+
+              {
+                className: "grid"
+              },
+
+
+              e(
+
+                "div",
+
+                {
+                  className: "row"
+                },
+
+
+                e(
+
+                  "div",
+
+                  {
+                    className: "label"
+                  },
+
+                  "Phantom Wallet"
+
+                ),
+
+
+                e(
+
+                  "div",
+
+                  {
+                    className: "value"
+                  },
+
+                  phantom
+                    ? phantom.address
+                    : "Waiting for Phantom wallet…"
+
+                )
+
+              ),
+
+
+
+              e(
+
+                "div",
+
+                {
+                  className: "row"
+                },
+
+
+                e(
+
+                  "div",
+
+                  {
+                    className: "label"
+                  },
+
+                  "Rebound Wallet"
+
+                ),
+
+
+                e(
+
+                  "div",
+
+                  {
+                    className: "value"
+                  },
+
+                  rebound
+                    ? rebound.address
+                    : "Creating / loading Privy Solana wallet…"
+
+                )
+
+              ),
+
+
+
+              e(
+
+                "div",
+
+                {
+                  className: "row"
+                },
+
+
+                e(
+
+                  "div",
+
+                  {
+                    className: "label"
+                  },
+
+                  "Privy User"
+
+                ),
+
+
+                e(
+
+                  "div",
+
+                  {
+                    className: "value"
+                  },
+
+                  user?.id || "—"
+
+                )
+
+              ),
+
+
+
+              e(
+
+                "div",
+
+                {
+                  className: "row"
+                },
+
+
+                e(
+
+                  "div",
+
+                  {
+                    className: "label"
+                  },
+
+                  "Access Token"
+
+                ),
+
+
+                e(
+
+                  "div",
+
+                  {
+                    className:
+                      `value ${
+                        tokenReady
+                          ? "good"
+                          : ""
+                      }`
+                  },
+
+                  tokenReady
+                    ? "Ready ✓"
+                    : "Waiting…"
+
+                )
+
+              )
+
+            ),
+
+
+
+            e(
+
+              "button",
+
+              {
+
+                className:
+                  "secondary",
+
+                onClick:
+                  async () => {
+
+                    setError("");
+
+                    await logout();
+
+                  }
+
+              },
+
+              "Log out"
+
+            )
+
+          ),
+
+
+
+          error
+
+          ?
+
+          e(
+
+            "div",
+
+            {
+              className: "error"
+            },
+
+            error
+
+          )
+
+          :
+
+          null,
+
+
+
+          e(
+
+            "p",
+
+            {
+              className: "small"
+            },
+
+            "Prototype only. ASTY checks, deposits, withdrawals and trading are not active yet."
+
+          )
+
+        )
+
+      );
+
+    }
+
+
+
+    const connectors =
+      toSolanaWalletConnectors();
+
+
+
+    createRoot(
+      document.getElementById("root")
+    ).render(
+
+      e(
+
+        PrivyProvider,
+
+        {
+
+          appId:
+            APP_ID,
+
+
+          config: {
+
+            loginMethods: [
+              "wallet"
+            ],
+
+
+            appearance: {
+
+              theme:
+                "dark",
+
+              showWalletLoginFirst:
+                true,
+
+              walletChainType:
+                "solana-only",
+
+              walletList: [
+                "phantom"
+              ]
+
+            },
+
+
+            externalWallets: {
+
+              solana: {
+
+                connectors
+
+              }
+
+            },
+
+
+            embeddedWallets: {
+
+              solana: {
+
+                createOnLogin:
+                  "all-users"
+
+              }
+
+            }
+
+          }
+
+        },
+
+        e(App)
+
+      )
+
+    );
+
+  </script>
+
+</body>
+</html>
