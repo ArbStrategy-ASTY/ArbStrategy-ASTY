@@ -1,3 +1,5 @@
+// ASTY Rebound API
+
 const ALLOWED_ORIGINS = new Set([
   "https://arbstrategy.net",
   "https://www.arbstrategy.net",
