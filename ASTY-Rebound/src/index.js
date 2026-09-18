@@ -1,4 +1,4 @@
-// ASTY Rebound API
+// ASTY Rebound API v2
 
 import { PrivyClient } from "@privy-io/node";
 
