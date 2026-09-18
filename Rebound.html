@@ -1,9 +1,14 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <meta name="theme-color" content="#09070f" />
+  <meta charset="utf-8">
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1, viewport-fit=cover"
+  >
+
+  <meta name="theme-color" content="#09070f">
 
   <title>ASTY Rebound</title>
 
@@ -11,14 +16,15 @@
     :root {
       --bg: #09070f;
       --panel: #12101a;
-      --panel-2: #171321;
+      --panel2: #171321;
       --border: #302640;
       --text: #f4efff;
       --muted: #a79db7;
       --purple: #b18cff;
-      --purple-2: #7a4dff;
+      --purple2: #7a4dff;
       --green: #6ee7a8;
       --red: #ff7b8b;
+      --yellow: #ffd479;
     }
 
     * {
@@ -28,6 +34,9 @@
     html,
     body {
       margin: 0;
+
+      min-height: 100%;
+
       background:
         radial-gradient(
           circle at 50% -20%,
@@ -53,6 +62,7 @@
 
     .wrap {
       width: min(720px, 100%);
+
       margin: 0 auto;
 
       padding:
@@ -64,14 +74,15 @@
     .brand {
       display: flex;
       align-items: center;
+
       gap: 12px;
 
-      margin-bottom: 28px;
+      margin-bottom: 30px;
     }
 
     .mark {
-      width: 38px;
-      height: 38px;
+      width: 40px;
+      height: 40px;
 
       border-radius: 12px;
 
@@ -79,37 +90,38 @@
         linear-gradient(
           135deg,
           var(--purple),
-          var(--purple-2)
+          var(--purple2)
         );
 
       box-shadow:
-        0 0 28px rgba(177, 140, 255, 0.28);
+        0 0 28px rgba(177, 140, 255, 0.30);
     }
 
     .brand strong {
+      display: block;
+
       font-size: 18px;
-      letter-spacing: 0.2px;
     }
 
     .brand span {
       display: block;
 
+      margin-top: 3px;
+
       color: var(--muted);
 
       font-size: 12px;
-
-      margin-top: 2px;
     }
 
     .hero {
-      padding: 10px 2px 22px;
+      padding: 8px 2px 24px;
     }
 
     h1 {
-      font-size: clamp(32px, 9vw, 48px);
-      line-height: 1.02;
-
       margin: 0 0 12px;
+
+      font-size: clamp(34px, 9vw, 50px);
+      line-height: 1;
 
       background:
         linear-gradient(
@@ -134,6 +146,12 @@
     }
 
     .card {
+      padding: 18px;
+
+      border: 1px solid var(--border);
+
+      border-radius: 22px;
+
       background:
         linear-gradient(
           180deg,
@@ -142,26 +160,21 @@
         ),
         var(--panel);
 
-      border: 1px solid var(--border);
-
-      border-radius: 22px;
-
-      padding: 18px;
-
       box-shadow:
-        0 18px 60px rgba(0,0,0,0.22);
+        0 18px 60px rgba(0,0,0,0.24);
     }
 
     .status {
       display: flex;
       align-items: center;
+
       gap: 9px;
+
+      margin-bottom: 18px;
 
       color: var(--muted);
 
       font-size: 13px;
-
-      margin-bottom: 16px;
     }
 
     .dot {
@@ -173,11 +186,71 @@
       background: #666;
     }
 
+    .dot.connected {
+      background: var(--yellow);
+
+      box-shadow:
+        0 0 14px rgba(255,212,121,0.65);
+    }
+
     .dot.ready {
       background: var(--green);
 
       box-shadow:
-        0 0 14px rgba(110,231,168,0.7);
+        0 0 14px rgba(110,231,168,0.70);
+    }
+
+    .step {
+      margin-bottom: 12px;
+
+      padding: 14px;
+
+      border: 1px solid #292136;
+
+      border-radius: 15px;
+
+      background: var(--panel2);
+    }
+
+    .step-top {
+      display: flex;
+      align-items: center;
+
+      gap: 10px;
+    }
+
+    .step-number {
+      width: 28px;
+      height: 28px;
+
+      display: flex;
+      align-items: center;
+      justify-content: center;
+
+      flex: 0 0 auto;
+
+      border-radius: 50%;
+
+      background: rgba(177,140,255,0.13);
+
+      color: var(--purple);
+
+      font-size: 13px;
+      font-weight: 800;
+    }
+
+    .step-title {
+      font-size: 14px;
+      font-weight: 700;
+    }
+
+    .step-text {
+      margin: 8px 0 0 38px;
+
+      color: var(--muted);
+
+      font-size: 12px;
+      line-height: 1.45;
     }
 
     button {
@@ -191,13 +264,21 @@
 
       padding: 15px 18px;
 
-      font-weight: 700;
       font-size: 16px;
+      font-weight: 750;
 
       cursor: pointer;
     }
 
+    button:disabled {
+      opacity: 0.48;
+
+      cursor: not-allowed;
+    }
+
     .primary {
+      margin-top: 8px;
+
       color: #120a22;
 
       background:
@@ -211,6 +292,22 @@
         0 8px 28px rgba(144,104,255,0.24);
     }
 
+    .verify {
+      margin-top: 10px;
+
+      color: #0a2015;
+
+      background:
+        linear-gradient(
+          90deg,
+          #98f1c1,
+          #5bdea0
+        );
+
+      box-shadow:
+        0 8px 28px rgba(91,222,160,0.16);
+    }
+
     .secondary {
       margin-top: 10px;
 
@@ -221,39 +318,35 @@
       border: 1px solid var(--border);
     }
 
-    button:disabled {
-      opacity: 0.55;
-      cursor: not-allowed;
-    }
-
     .grid {
       display: grid;
 
       gap: 10px;
 
-      margin-top: 16px;
+      margin-top: 18px;
     }
 
     .row {
-      background: var(--panel-2);
+      padding: 13px 14px;
 
       border: 1px solid #292136;
 
       border-radius: 15px;
 
-      padding: 13px 14px;
+      background: var(--panel2);
     }
 
     .label {
+      margin-bottom: 6px;
+
+      color: var(--muted);
+
       font-size: 11px;
+      font-weight: 600;
 
       text-transform: uppercase;
 
       letter-spacing: 0.08em;
-
-      color: var(--muted);
-
-      margin-bottom: 6px;
     }
 
     .value {
@@ -266,22 +359,8 @@
       color: var(--green);
     }
 
-    .warn {
-      color: var(--red);
-    }
-
-    .small {
-      font-size: 12px;
-
-      color: var(--muted);
-
-      line-height: 1.5;
-
-      margin-top: 16px;
-    }
-
-    .hidden {
-      display: none !important;
+    .waiting {
+      color: var(--yellow);
     }
 
     .error {
@@ -289,29 +368,63 @@
 
       padding: 12px 13px;
 
+      border:
+        1px solid rgba(255,123,139,0.25);
+
       border-radius: 13px;
 
       background:
         rgba(255,123,139,0.08);
 
-      border:
-        1px solid rgba(255,123,139,0.25);
-
       color: #ffc2c9;
 
       font-size: 13px;
-
       line-height: 1.45;
+    }
+
+    .info {
+      margin-top: 12px;
+
+      padding: 12px 13px;
+
+      border:
+        1px solid rgba(177,140,255,0.20);
+
+      border-radius: 13px;
+
+      background:
+        rgba(177,140,255,0.07);
+
+      color: #d8c9f7;
+
+      font-size: 12px;
+      line-height: 1.5;
+    }
+
+    .small {
+      margin: 17px 2px 0;
+
+      color: var(--muted);
+
+      font-size: 12px;
+      line-height: 1.5;
     }
   </style>
 
   <script type="importmap">
   {
     "imports": {
-      "react": "https://esm.sh/react@18.3.1",
-      "react/jsx-runtime": "https://esm.sh/react@18.3.1/jsx-runtime",
-      "react-dom": "https://esm.sh/react-dom@18.3.1",
-      "react-dom/client": "https://esm.sh/react-dom@18.3.1/client"
+      "react":
+        "https://esm.sh/react@18.3.1",
+
+      "react/jsx-runtime":
+        "https://esm.sh/react@18.3.1/jsx-runtime",
+
+      "react-dom":
+        "https://esm.sh/react-dom@18.3.1",
+
+      "react-dom/client":
+        "https://esm.sh/react-dom@18.3.1/client"
     }
   }
   </script>
@@ -319,228 +432,833 @@
 
 <body>
 
-  <div id="root"></div>
-
-  <script type="module">
-
-    import React, {
-      useEffect,
-      useMemo,
-      useState
-    } from "react";
+<div id="root"></div>
 
 
-    import {
-      createRoot
-    } from "react-dom/client";
+<script type="module">
+
+import React, {
+  useEffect,
+  useMemo,
+  useState
+} from "react";
 
 
-    import {
-      PrivyProvider,
-      usePrivy,
-      useLogin
-    } from "https://esm.sh/@privy-io/react-auth@3.43.0?external=react,react-dom";
+import {
+  createRoot
+} from "react-dom/client";
 
 
-    import {
-      useWallets,
-      toSolanaWalletConnectors
-    } from "https://esm.sh/@privy-io/react-auth@3.43.0/solana?external=react,react-dom";
+import {
+  PrivyProvider,
+  usePrivy,
+  useConnectWallet,
+  useLoginWithSiws
+} from "https://esm.sh/@privy-io/react-auth@3.43.0?external=react,react-dom";
 
 
-    const APP_ID =
-      "cmu6qkw8h029x0cjtidese1il";
+import {
+  useWallets,
+  toSolanaWalletConnectors
+} from "https://esm.sh/@privy-io/react-auth@3.43.0/solana?external=react,react-dom";
 
 
-    const e =
-      React.createElement;
+import {
+  base64
+} from "https://esm.sh/@scure/base@1.2.6";
+
+
+const APP_ID =
+  "cmu6qkw8h029x0cjtidese1il";
+
+
+const e =
+  React.createElement;
 
 
 
-    function short(addr) {
+function walletName(wallet) {
 
-      if (!addr) {
-        return "—";
+  return String(
+    wallet?.standardWallet?.name ||
+    wallet?.walletClientType ||
+    ""
+  ).toLowerCase();
+
+}
+
+
+
+function isPhantom(wallet) {
+
+  const name =
+    walletName(wallet);
+
+  return (
+    name.includes("phantom") ||
+    String(
+      wallet?.walletClientType || ""
+    )
+      .toLowerCase()
+      .includes("phantom")
+  );
+
+}
+
+
+
+function isPrivyWallet(wallet) {
+
+  const client =
+    String(
+      wallet?.walletClientType || ""
+    ).toLowerCase();
+
+  const connector =
+    String(
+      wallet?.connectorType || ""
+    ).toLowerCase();
+
+  const name =
+    walletName(wallet);
+
+  return (
+    client === "privy" ||
+    client.includes("privy") ||
+    connector.includes("embedded") ||
+    name.includes("privy")
+  );
+
+}
+
+
+
+function App() {
+
+  const {
+    ready,
+    authenticated,
+    user,
+    logout,
+    getAccessToken
+  } = usePrivy();
+
+
+  const {
+    ready: walletsReady,
+    wallets
+  } = useWallets();
+
+
+  const {
+    generateSiwsMessage,
+    loginWithSiws
+  } = useLoginWithSiws();
+
+
+  const [
+    connectedAddress,
+    setConnectedAddress
+  ] = useState("");
+
+
+  const [
+    busy,
+    setBusy
+  ] = useState("");
+
+
+  const [
+    error,
+    setError
+  ] = useState("");
+
+
+  const [
+    tokenReady,
+    setTokenReady
+  ] = useState(false);
+
+
+
+  const {
+    connectWallet
+  } = useConnectWallet({
+
+    onSuccess: ({
+      wallet
+    }) => {
+
+      if (wallet?.address) {
+
+        setConnectedAddress(
+          wallet.address
+        );
+
       }
 
-      return addr.length > 18
-        ? `${addr.slice(0,8)}…${addr.slice(-8)}`
-        : addr;
+      setBusy("");
+
+    },
+
+
+    onError: (err) => {
+
+      console.error(
+        "Wallet connection error:",
+        err
+      );
+
+      setBusy("");
+
+      setError(
+        err?.message ||
+        String(err) ||
+        "Could not connect Phantom."
+      );
 
     }
 
-
-
-    function App() {
-
-      const {
-        ready,
-        authenticated,
-        user,
-        logout,
-        getAccessToken
-      } = usePrivy();
-
-
-      const {
-        ready: walletsReady,
-        wallets
-      } = useWallets();
-
-
-      const [
-        tokenReady,
-        setTokenReady
-      ] = useState(false);
-
-
-      const [
-        error,
-        setError
-      ] = useState("");
+  });
 
 
 
-      const {
-        login
-      } = useLogin({
+  const phantomWallet =
+    useMemo(() => {
 
-        onError: (err) => {
+      if (connectedAddress) {
 
-          console.error(err);
+        const exact =
+          wallets.find(
+            wallet =>
+              wallet.address ===
+              connectedAddress
+          );
 
-          setError(
-            err?.message ||
-            String(err) ||
-            "Login failed."
+        if (exact) {
+          return exact;
+        }
+
+      }
+
+
+      return (
+        wallets.find(
+          wallet =>
+            isPhantom(wallet)
+        ) ||
+        null
+      );
+
+    }, [
+      wallets,
+      connectedAddress
+    ]);
+
+
+
+  const reboundWallet =
+    useMemo(() => {
+
+      if (!authenticated) {
+        return null;
+      }
+
+
+      const explicitPrivy =
+        wallets.find(
+          wallet =>
+            wallet.address !==
+              phantomWallet?.address &&
+            isPrivyWallet(wallet)
+        );
+
+
+      if (explicitPrivy) {
+        return explicitPrivy;
+      }
+
+
+      return (
+        wallets.find(
+          wallet =>
+            wallet.address !==
+              phantomWallet?.address &&
+            !isPhantom(wallet)
+        ) ||
+        null
+      );
+
+    }, [
+      wallets,
+      authenticated,
+      phantomWallet
+    ]);
+
+
+
+  const linkedPhantom =
+    useMemo(() => {
+
+      if (!user?.linkedAccounts) {
+        return null;
+      }
+
+
+      return (
+        user.linkedAccounts.find(
+          account => {
+
+            const client =
+              String(
+                account?.walletClientType ||
+                ""
+              ).toLowerCase();
+
+
+            return (
+              account?.type ===
+                "wallet" &&
+              client.includes(
+                "phantom"
+              )
+            );
+
+          }
+        ) ||
+        null
+      );
+
+    }, [user]);
+
+
+
+  const linkedRebound =
+    useMemo(() => {
+
+      if (!user?.linkedAccounts) {
+        return null;
+      }
+
+
+      return (
+        user.linkedAccounts.find(
+          account => {
+
+            const client =
+              String(
+                account?.walletClientType ||
+                ""
+              ).toLowerCase();
+
+            const connector =
+              String(
+                account?.connectorType ||
+                ""
+              ).toLowerCase();
+
+
+            return (
+              account?.type ===
+                "wallet" &&
+              (
+                client.includes("privy") ||
+                connector.includes("embedded")
+              )
+            );
+
+          }
+        ) ||
+        null
+      );
+
+    }, [user]);
+
+
+
+  const phantomAddress =
+    phantomWallet?.address ||
+    connectedAddress ||
+    linkedPhantom?.address ||
+    "";
+
+
+  const reboundAddress =
+    reboundWallet?.address ||
+    linkedRebound?.address ||
+    "";
+
+
+
+  useEffect(() => {
+
+    let cancelled =
+      false;
+
+
+    async function testToken() {
+
+      if (
+        !ready ||
+        !authenticated
+      ) {
+
+        if (!cancelled) {
+          setTokenReady(false);
+        }
+
+        return;
+
+      }
+
+
+      try {
+
+        const token =
+          await getAccessToken();
+
+
+        if (!cancelled) {
+
+          setTokenReady(
+            Boolean(token)
           );
 
         }
 
-      });
+      }
+
+      catch (err) {
+
+        console.error(
+          "Access token error:",
+          err
+        );
 
 
+        if (!cancelled) {
 
-      const phantom =
-        useMemo(() => {
-
-          return wallets.find((w) => {
-
-            const name =
-              String(
-                w?.standardWallet?.name || ""
-              ).toLowerCase();
-
-            return name.includes("phantom");
-
-          }) || null;
-
-        }, [wallets]);
-
-
-
-      const rebound =
-        useMemo(() => {
-
-          return wallets.find((w) => {
-
-            const name =
-              String(
-                w?.standardWallet?.name || ""
-              ).toLowerCase();
-
-            return (
-              name === "privy" ||
-              name.includes("privy")
-            );
-
-          }) || null;
-
-        }, [wallets]);
-
-
-
-      useEffect(() => {
-
-        let cancelled = false;
-
-
-        async function checkToken() {
-
-          if (
-            !ready ||
-            !authenticated
-          ) {
-
-            setTokenReady(false);
-
-            return;
-
-          }
-
-
-          try {
-
-            const token =
-              await getAccessToken();
-
-
-            if (!cancelled) {
-
-              setTokenReady(
-                Boolean(token)
-              );
-
-            }
-
-          }
-
-          catch (err) {
-
-            console.error(err);
-
-
-            if (!cancelled) {
-
-              setTokenReady(false);
-
-            }
-
-          }
+          setTokenReady(false);
 
         }
 
+      }
 
-        checkToken();
-
-
-        return () => {
-
-          cancelled = true;
-
-        };
-
-      }, [
-        ready,
-        authenticated,
-        getAccessToken
-      ]);
+    }
 
 
-
-      const loading =
-        !ready ||
-        !walletsReady;
+    testToken();
 
 
+    return () => {
 
-      return e(
+      cancelled =
+        true;
 
-        "main",
+    };
+
+  }, [
+    ready,
+    authenticated,
+    getAccessToken
+  ]);
+
+
+
+  async function handleConnect() {
+
+    setError("");
+
+    setBusy(
+      "connect"
+    );
+
+
+    try {
+
+      await connectWallet({
+
+        walletList: [
+          "phantom"
+        ],
+
+        walletChainType:
+          "solana-only"
+
+      });
+
+    }
+
+    catch (err) {
+
+      console.error(
+        err
+      );
+
+
+      setBusy("");
+
+      setError(
+        err?.message ||
+        String(err) ||
+        "Could not connect Phantom."
+      );
+
+    }
+
+  }
+
+
+
+  async function handleVerify() {
+
+    setError("");
+
+
+    if (!phantomWallet) {
+
+      setError(
+        "Phantom is not connected yet."
+      );
+
+      return;
+
+    }
+
+
+    setBusy(
+      "verify"
+    );
+
+
+    try {
+
+      /*
+       * STEP 1
+       * Privy generates the SIWS message.
+       */
+
+      const message =
+        await generateSiwsMessage({
+
+          address:
+            phantomWallet.address
+
+        });
+
+
+
+      /*
+       * STEP 2
+       * The user explicitly signs it
+       * inside Phantom.
+       */
+
+      const encodedMessage =
+        new TextEncoder()
+          .encode(message);
+
+
+      const {
+        signature
+      } =
+        await phantomWallet
+          .signMessage({
+
+            message:
+              encodedMessage
+
+          });
+
+
+
+      /*
+       * STEP 3
+       * Send the signed message
+       * back to Privy.
+       */
+
+      await loginWithSiws({
+
+        message,
+
+        signature:
+          base64.encode(
+            signature
+          ),
+
+        walletClientType:
+          "phantom",
+
+        connectorType:
+          "injected"
+
+      });
+
+
+      setBusy("");
+
+    }
+
+    catch (err) {
+
+      console.error(
+        "SIWS error:",
+        err
+      );
+
+
+      setBusy("");
+
+
+      setError(
+        err?.message ||
+        String(err) ||
+        "Phantom verification failed."
+      );
+
+    }
+
+  }
+
+
+
+  async function handleLogout() {
+
+    setError("");
+
+    setBusy(
+      "logout"
+    );
+
+
+    try {
+
+      await logout();
+
+      setTokenReady(false);
+
+      setBusy("");
+
+    }
+
+    catch (err) {
+
+      console.error(
+        err
+      );
+
+      setBusy("");
+
+      setError(
+        "Logout failed."
+      );
+
+    }
+
+  }
+
+
+
+  const loading =
+    !ready ||
+    !walletsReady;
+
+
+
+  let statusText =
+    "Not connected";
+
+
+  let dotClass =
+    "dot";
+
+
+  if (loading) {
+
+    statusText =
+      "Initializing Privy…";
+
+  }
+
+  else if (
+    authenticated
+  ) {
+
+    statusText =
+      "Authenticated";
+
+    dotClass =
+      "dot ready";
+
+  }
+
+  else if (
+    phantomWallet ||
+    connectedAddress
+  ) {
+
+    statusText =
+      "Phantom connected — verification required";
+
+    dotClass =
+      "dot connected";
+
+  }
+
+
+
+  return e(
+
+    "main",
+
+    {
+      className:
+        "wrap"
+    },
+
+
+    e(
+
+      "div",
+
+      {
+        className:
+          "brand"
+      },
+
+
+      e(
+
+        "div",
 
         {
-          className: "wrap"
+          className:
+            "mark"
+        }
+
+      ),
+
+
+      e(
+
+        "div",
+
+        null,
+
+
+        e(
+
+          "strong",
+
+          null,
+
+          "ASTY Rebound"
+
+        ),
+
+
+        e(
+
+          "span",
+
+          null,
+
+          "Automated dip & rebound strategy"
+
+        )
+
+      )
+
+    ),
+
+
+
+    e(
+
+      "section",
+
+      {
+        className:
+          "hero"
+      },
+
+
+      e(
+
+        "h1",
+
+        null,
+
+        "Rebound"
+
+      ),
+
+
+      e(
+
+        "p",
+
+        {
+          className:
+            "lead"
         },
+
+        "Connect your Phantom wallet and verify ownership to access ASTY Rebound."
+
+      )
+
+    ),
+
+
+
+    e(
+
+      "section",
+
+      {
+        className:
+          "card"
+      },
+
+
+      e(
+
+        "div",
+
+        {
+          className:
+            "status"
+        },
+
+
+        e(
+
+          "span",
+
+          {
+            className:
+              dotClass
+          }
+
+        ),
+
+
+        statusText
+
+      ),
+
+
+
+      !authenticated
+
+      ?
+
+      e(
+
+        React.Fragment,
+
+        null,
 
 
         e(
@@ -548,7 +1266,8 @@
           "div",
 
           {
-            className: "brand"
+            className:
+              "step"
           },
 
 
@@ -557,169 +1276,9 @@
             "div",
 
             {
-              className: "mark"
-            }
-
-          ),
-
-
-          e(
-
-            "div",
-
-            null,
-
-
-            e(
-
-              "strong",
-
-              null,
-
-              "ASTY Rebound"
-
-            ),
-
-
-            e(
-
-              "span",
-
-              null,
-
-              "Automated dip & rebound strategy"
-
-            )
-
-          )
-
-        ),
-
-
-
-        e(
-
-          "section",
-
-          {
-            className: "hero"
-          },
-
-
-          e(
-
-            "h1",
-
-            null,
-
-            "Rebound"
-
-          ),
-
-
-          e(
-
-            "p",
-
-            {
-              className: "lead"
-            },
-
-            "Connect Phantom to test the ASTY Rebound identity and wallet setup. No trading is enabled in this prototype."
-
-          )
-
-        ),
-
-
-
-        e(
-
-          "section",
-
-          {
-            className: "card"
-          },
-
-
-          e(
-
-            "div",
-
-            {
-              className: "status"
-            },
-
-
-            e(
-
-              "span",
-
-              {
-                className:
-                  `dot ${
-                    authenticated
-                      ? "ready"
-                      : ""
-                  }`
-              }
-
-            ),
-
-
-            loading
-              ? "Initializing Privy…"
-
-              : authenticated
-                ? "Authenticated"
-
-                : "Not connected"
-
-          ),
-
-
-
-          !authenticated
-
-          ?
-
-          e(
-
-            "button",
-
-            {
-
               className:
-                "primary",
-
-              disabled:
-                loading,
-
-              onClick: () => {
-
-                setError("");
-
-                login();
-
-              }
-
+                "step-top"
             },
-
-            loading
-              ? "Loading…"
-              : "Connect Phantom"
-
-          )
-
-
-          :
-
-
-          e(
-
-            React.Fragment,
-
-            null,
 
 
             e(
@@ -727,196 +1286,132 @@
               "div",
 
               {
-                className: "grid"
+                className:
+                  "step-number"
               },
 
-
-              e(
-
-                "div",
-
-                {
-                  className: "row"
-                },
-
-
-                e(
-
-                  "div",
-
-                  {
-                    className: "label"
-                  },
-
-                  "Phantom Wallet"
-
-                ),
-
-
-                e(
-
-                  "div",
-
-                  {
-                    className: "value"
-                  },
-
-                  phantom
-                    ? phantom.address
-                    : "Waiting for Phantom wallet…"
-
-                )
-
-              ),
-
-
-
-              e(
-
-                "div",
-
-                {
-                  className: "row"
-                },
-
-
-                e(
-
-                  "div",
-
-                  {
-                    className: "label"
-                  },
-
-                  "Rebound Wallet"
-
-                ),
-
-
-                e(
-
-                  "div",
-
-                  {
-                    className: "value"
-                  },
-
-                  rebound
-                    ? rebound.address
-                    : "Creating / loading Privy Solana wallet…"
-
-                )
-
-              ),
-
-
-
-              e(
-
-                "div",
-
-                {
-                  className: "row"
-                },
-
-
-                e(
-
-                  "div",
-
-                  {
-                    className: "label"
-                  },
-
-                  "Privy User"
-
-                ),
-
-
-                e(
-
-                  "div",
-
-                  {
-                    className: "value"
-                  },
-
-                  user?.id || "—"
-
-                )
-
-              ),
-
-
-
-              e(
-
-                "div",
-
-                {
-                  className: "row"
-                },
-
-
-                e(
-
-                  "div",
-
-                  {
-                    className: "label"
-                  },
-
-                  "Access Token"
-
-                ),
-
-
-                e(
-
-                  "div",
-
-                  {
-                    className:
-                      `value ${
-                        tokenReady
-                          ? "good"
-                          : ""
-                      }`
-                  },
-
-                  tokenReady
-                    ? "Ready ✓"
-                    : "Waiting…"
-
-                )
-
-              )
+              "1"
 
             ),
 
 
+            e(
+
+              "div",
+
+              {
+                className:
+                  "step-title"
+              },
+
+              "Connect Phantom"
+
+            )
+
+          ),
+
+
+          e(
+
+            "div",
+
+            {
+              className:
+                "step-text"
+            },
+
+            phantomAddress
+              ? "Phantom connected."
+              : "Connect the Phantom wallet you want to use for ASTY Rebound."
+
+          )
+
+        ),
+
+
+
+        !phantomAddress
+
+        ?
+
+        e(
+
+          "button",
+
+          {
+            className:
+              "primary",
+
+            disabled:
+              loading ||
+              busy === "connect",
+
+            onClick:
+              handleConnect
+          },
+
+          busy === "connect"
+            ? "Connecting…"
+            : "Connect Phantom"
+
+        )
+
+        :
+
+        null,
+
+
+
+        phantomAddress
+
+        ?
+
+        e(
+
+          React.Fragment,
+
+          null,
+
+
+          e(
+
+            "div",
+
+            {
+              className:
+                "row",
+
+              style: {
+                marginTop:
+                  "12px"
+              }
+            },
+
 
             e(
 
-              "button",
+              "div",
 
               {
-
                 className:
-                  "secondary",
-
-                onClick:
-                  async () => {
-
-                    setError("");
-
-                    await logout();
-
-                  }
-
+                  "label"
               },
 
-              "Log out"
+              "Connected Phantom"
+
+            ),
+
+
+            e(
+
+              "div",
+
+              {
+                className:
+                  "value waiting"
+              },
+
+              phantomAddress
 
             )
 
@@ -924,125 +1419,471 @@
 
 
 
-          error
+          e(
 
-          ?
+            "div",
+
+            {
+              className:
+                "step",
+
+              style: {
+                marginTop:
+                  "12px"
+              }
+            },
+
+
+            e(
+
+              "div",
+
+              {
+                className:
+                  "step-top"
+              },
+
+
+              e(
+
+                "div",
+
+                {
+                  className:
+                    "step-number"
+                },
+
+                "2"
+
+              ),
+
+
+              e(
+
+                "div",
+
+                {
+                  className:
+                    "step-title"
+                },
+
+                "Verify Phantom"
+
+              )
+
+            ),
+
+
+            e(
+
+              "div",
+
+              {
+                className:
+                  "step-text"
+              },
+
+              "Tap Verify Phantom. Phantom should then show a message-signing request."
+
+            )
+
+          ),
+
+
+
+          e(
+
+            "button",
+
+            {
+              className:
+                "verify",
+
+              disabled:
+                busy ===
+                  "verify",
+
+              onClick:
+                handleVerify
+            },
+
+            busy === "verify"
+              ? "Waiting for Phantom…"
+              : "Verify Phantom"
+
+          )
+
+        )
+
+        :
+
+        null
+
+      )
+
+
+      :
+
+
+      e(
+
+        React.Fragment,
+
+        null,
+
+
+        e(
+
+          "div",
+
+          {
+            className:
+              "grid"
+          },
+
 
           e(
 
             "div",
 
             {
-              className: "error"
+              className:
+                "row"
             },
 
-            error
 
-          )
+            e(
 
-          :
+              "div",
 
-          null,
+              {
+                className:
+                  "label"
+              },
+
+              "Phantom Wallet"
+
+            ),
+
+
+            e(
+
+              "div",
+
+              {
+                className:
+                  "value"
+              },
+
+              phantomAddress ||
+              "Authenticated"
+
+            )
+
+          ),
 
 
 
           e(
 
-            "p",
+            "div",
 
             {
-              className: "small"
+              className:
+                "row"
             },
 
-            "Prototype only. ASTY checks, deposits, withdrawals and trading are not active yet."
+
+            e(
+
+              "div",
+
+              {
+                className:
+                  "label"
+              },
+
+              "Rebound Wallet"
+
+            ),
+
+
+            e(
+
+              "div",
+
+              {
+                className:
+                  reboundAddress
+                    ? "value good"
+                    : "value waiting"
+              },
+
+              reboundAddress
+                ? reboundAddress
+                : "Creating / loading Rebound wallet…"
+
+            )
+
+          ),
+
+
+
+          e(
+
+            "div",
+
+            {
+              className:
+                "row"
+            },
+
+
+            e(
+
+              "div",
+
+              {
+                className:
+                  "label"
+              },
+
+              "Privy User"
+
+            ),
+
+
+            e(
+
+              "div",
+
+              {
+                className:
+                  "value"
+              },
+
+              user?.id ||
+              "—"
+
+            )
+
+          ),
+
+
+
+          e(
+
+            "div",
+
+            {
+              className:
+                "row"
+            },
+
+
+            e(
+
+              "div",
+
+              {
+                className:
+                  "label"
+              },
+
+              "Access Token"
+
+            ),
+
+
+            e(
+
+              "div",
+
+              {
+                className:
+                  tokenReady
+                    ? "value good"
+                    : "value waiting"
+              },
+
+              tokenReady
+                ? "Ready ✓"
+                : "Waiting…"
+
+            )
 
           )
 
+        ),
+
+
+
+        reboundAddress &&
+        tokenReady
+
+        ?
+
+        e(
+
+          "div",
+
+          {
+            className:
+              "info"
+          },
+
+          "Authentication test successful. Phantom and the Rebound wallet are ready for the next backend sync step."
+
         )
 
-      );
+        :
 
-    }
-
-
-
-    const connectors =
-      toSolanaWalletConnectors();
+        null,
 
 
 
-    createRoot(
-      document.getElementById("root")
-    ).render(
+        e(
+
+          "button",
+
+          {
+            className:
+              "secondary",
+
+            disabled:
+              busy ===
+                "logout",
+
+            onClick:
+              handleLogout
+          },
+
+          busy === "logout"
+            ? "Logging out…"
+            : "Log out"
+
+        )
+
+      ),
+
+
+
+      error
+
+      ?
 
       e(
 
-        PrivyProvider,
+        "div",
 
         {
+          className:
+            "error"
+        },
 
-          appId:
-            APP_ID,
+        error
 
+      )
 
-          config: {
+      :
 
-            loginMethods: [
-              "wallet"
-            ],
-
-
-            appearance: {
-
-              theme:
-                "dark",
-
-              showWalletLoginFirst:
-                true,
-
-              walletChainType:
-                "solana-only",
-
-              walletList: [
-                "phantom"
-              ]
-
-            },
+      null,
 
 
-            externalWallets: {
 
-              solana: {
+      e(
 
-                connectors
+        "p",
 
-              }
+        {
+          className:
+            "small"
+        },
 
-            },
+        "Prototype only. No ASTY check, deposit, withdrawal or trading action is active yet."
+
+      )
+
+    )
+
+  );
+
+}
 
 
-            embeddedWallets: {
 
-              solana: {
+const connectors =
+  toSolanaWalletConnectors();
 
-                createOnLogin:
-                  "all-users"
 
-              }
 
-            }
+createRoot(
+  document.getElementById(
+    "root"
+  )
+).render(
+
+  e(
+
+    PrivyProvider,
+
+    {
+      appId:
+        APP_ID,
+
+
+      config: {
+
+        loginMethods: [
+          "wallet"
+        ],
+
+
+        appearance: {
+
+          theme:
+            "dark",
+
+          walletList: [
+            "phantom"
+          ]
+
+        },
+
+
+        externalWallets: {
+
+          solana: {
+
+            connectors
 
           }
 
         },
 
-        e(App)
 
-      )
+        embeddedWallets: {
 
-    );
+          solana: {
 
-  </script>
+            createOnLogin:
+              "all-users"
+
+          }
+
+        }
+
+      }
+
+    },
+
+    e(App)
+
+  )
+
+);
+
+</script>
 
 </body>
 </html>
