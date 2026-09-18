@@ -1,4 +1,4 @@
-// ASTY Rebound API - Balance v1
+// ASTY Rebound API - Balance Debug v1
 
 import { PrivyClient } from "@privy-io/node";
 
@@ -148,11 +148,6 @@ async function verifyPrivyRequest(
     createPrivyClient(env);
 
   try {
-    /*
-     * Keep the same Privy verification
-     * flow already working for
-     * /account/sync.
-     */
     const claims =
       await privy
         .utils()
@@ -226,8 +221,11 @@ async function solanaRpc(
     );
 
   if (!response.ok) {
+    const text =
+      await response.text();
+
     throw new Error(
-      `Solana RPC HTTP ${response.status}`
+      `Solana RPC HTTP ${response.status}: ${text}`
     );
   }
 
@@ -300,6 +298,12 @@ function formatUnits(
 }
 
 
+/*
+====================================================
+SOL BALANCE
+====================================================
+*/
+
 async function getSolBalance(
   walletAddress
 ) {
@@ -333,6 +337,12 @@ async function getSolBalance(
 }
 
 
+/*
+====================================================
+USDC BALANCE
+====================================================
+*/
+
 async function getUsdcBalance(
   walletAddress
 ) {
@@ -365,11 +375,10 @@ async function getUsdcBalance(
       : [];
 
   /*
-   * A wallet can technically own
-   * more than one token account
-   * for the same mint.
+   * A wallet can own multiple
+   * token accounts for the same mint.
    *
-   * Sum all matching USDC accounts.
+   * Sum all USDC accounts.
    */
   let totalRaw =
     0n;
@@ -423,6 +432,12 @@ export default {
     request,
     env
   ) {
+    /*
+    ==================================================
+    CORS PREFLIGHT
+    ==================================================
+    */
+
     if (
       request.method ===
       "OPTIONS"
@@ -509,6 +524,7 @@ export default {
         );
       } catch (error) {
         console.error(
+          "Health error:",
           error
         );
 
@@ -578,6 +594,7 @@ export default {
         );
       } catch (error) {
         console.error(
+          "Privy test error:",
           error
         );
 
@@ -613,6 +630,10 @@ export default {
         "/account/sync"
     ) {
       try {
+        /*
+         * Verify user session.
+         */
+
         const auth =
           await verifyPrivyRequest(
             request,
@@ -636,19 +657,32 @@ export default {
         const privyUserId =
           auth.userId;
 
+
+        /*
+         * Read browser-provided
+         * wallet mapping.
+         */
+
         const body =
           await request.json();
+
 
         const phantomAddress =
           body?.phantomAddress;
 
+
         const reboundWalletAddress =
           body?.reboundWalletAddress;
+
 
         const reboundWalletId =
           body?.reboundWalletId ||
           null;
 
+
+        /*
+         * Validate addresses.
+         */
 
         if (
           !isSolanaAddress(
@@ -706,6 +740,10 @@ export default {
         }
 
 
+        /*
+         * Check existing Privy mapping.
+         */
+
         const existing =
           await env.DB
             .prepare(
@@ -728,7 +766,13 @@ export default {
             .first();
 
 
+        /*
+         * Existing account:
+         * mapping is permanent.
+         */
+
         if (existing) {
+
           if (
             existing
               .phantom_address !==
@@ -766,6 +810,10 @@ export default {
             );
           }
 
+
+          /*
+           * Update last-seen time.
+           */
 
           await env.DB
             .prepare(
@@ -818,6 +866,12 @@ export default {
         }
 
 
+        /*
+         * Prevent one Phantom wallet
+         * from being mapped to another
+         * Privy user.
+         */
+
         const existingPhantom =
           await env.DB
             .prepare(
@@ -853,6 +907,10 @@ export default {
           );
         }
 
+
+        /*
+         * Insert permanent mapping.
+         */
 
         await env.DB
           .prepare(
@@ -903,11 +961,14 @@ export default {
           },
           201
         );
+
       } catch (error) {
+
         console.error(
           "Account sync error:",
           error
         );
+
 
         return json(
           request,
@@ -938,9 +999,9 @@ export default {
         "/account/balance"
     ) {
       try {
+
         /*
-         * 1. Verify the logged-in
-         * Privy user.
+         * 1. Verify logged-in Privy user.
          */
 
         const auth =
@@ -966,11 +1027,8 @@ export default {
 
 
         /*
-         * 2. Get this user's permanent
+         * 2. Load this user's permanent
          * Rebound wallet from D1.
-         *
-         * We deliberately do NOT accept
-         * a wallet address from the browser.
          */
 
         const account =
@@ -1036,7 +1094,7 @@ export default {
 
 
         /*
-         * 3. Read SOL and USDC
+         * 3. Load SOL and USDC
          * concurrently.
          */
 
@@ -1056,8 +1114,7 @@ export default {
 
 
         /*
-         * 4. Return read-only
-         * on-chain balances.
+         * 4. Return balances.
          */
 
         return json(
@@ -1070,6 +1127,7 @@ export default {
               walletAddress,
 
             balances: {
+
               usdc: {
                 mint:
                   USDC_MINT,
@@ -1084,6 +1142,7 @@ export default {
                   usdcBalance.ui,
               },
 
+
               sol: {
                 decimals:
                   SOL_DECIMALS,
@@ -1094,17 +1153,38 @@ export default {
                 ui:
                   solBalance.ui,
               },
+
             },
 
             commitment:
               "confirmed",
           }
         );
+
       } catch (error) {
+
         console.error(
           "Balance error:",
           error
         );
+
+
+        /*
+         * TEMPORARY DEBUG OUTPUT.
+         *
+         * This lets us see the actual
+         * Solana RPC failure on the
+         * Rebound page.
+         *
+         * We will remove the detailed
+         * part after fixing the issue.
+         */
+
+        const detail =
+          error?.message ||
+          String(error) ||
+          "Unknown balance error";
+
 
         return json(
           request,
@@ -1113,7 +1193,10 @@ export default {
               "error",
 
             message:
-              "Rebound balance is currently unavailable.",
+              `Rebound balance unavailable: ${detail}`,
+
+            debug:
+              detail,
           },
           503
         );
