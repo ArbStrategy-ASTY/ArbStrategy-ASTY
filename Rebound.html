@@ -1,5 +1,6 @@
 <!doctype html>
 <html lang="en">
+
 <head>
   <meta charset="utf-8">
 
@@ -18,13 +19,16 @@
       --panel: #12101a;
       --panel2: #171321;
       --border: #302640;
-      --text: #f4efff;
-      --muted: #a79db7;
-      --purple: #b18cff;
-      --purple2: #7a4dff;
-      --green: #6ee7a8;
-      --yellow: #ffd479;
-      --red: #ff7b8b;
+
+      --text: #f5f0ff;
+      --muted: #aaa0bb;
+
+      --purple: #b590ff;
+      --purple2: #8257ff;
+
+      --green: #69e7a6;
+      --yellow: #ffd477;
+      --red: #ff7f91;
     }
 
     * {
@@ -38,9 +42,9 @@
 
       background:
         radial-gradient(
-          circle at 50% -20%,
-          rgba(138, 91, 255, 0.20),
-          transparent 42%
+          circle at 50% -16%,
+          rgba(139, 90, 255, 0.22),
+          transparent 38%
         ),
         var(--bg);
 
@@ -59,182 +63,293 @@
       min-height: 100vh;
     }
 
-    .wrap {
-      width: min(720px, 100%);
+    .page {
+      width: min(760px, 100%);
       margin: 0 auto;
 
       padding:
-        calc(22px + env(safe-area-inset-top))
+        calc(20px + env(safe-area-inset-top))
         18px
-        calc(34px + env(safe-area-inset-bottom));
+        calc(36px + env(safe-area-inset-bottom));
     }
+
+    /*
+    ==================================================
+    HEADER
+    ==================================================
+    */
 
     .brand {
       display: flex;
       align-items: center;
-      gap: 12px;
-      margin-bottom: 30px;
+      gap: 13px;
+
+      margin-bottom: 34px;
     }
 
-    .mark {
-      width: 40px;
-      height: 40px;
-      border-radius: 12px;
+    .brand-logo {
+      width: 46px;
+      height: 46px;
 
-      background:
-        linear-gradient(
-          135deg,
-          var(--purple),
-          var(--purple2)
+      flex: 0 0 auto;
+
+      object-fit: contain;
+
+      filter:
+        drop-shadow(
+          0 0 16px rgba(170, 120, 255, 0.30)
         );
-
-      box-shadow:
-        0 0 28px rgba(177,140,255,0.30);
     }
 
-    .brand strong {
-      display: block;
-      font-size: 18px;
+    .brand-title {
+      font-size: 19px;
+      font-weight: 800;
+      letter-spacing: -0.01em;
     }
 
-    .brand span {
-      display: block;
+    .brand-subtitle {
       margin-top: 3px;
+
       color: var(--muted);
+
       font-size: 12px;
     }
 
+    /*
+    ==================================================
+    HERO
+    ==================================================
+    */
+
     .hero {
-      padding: 8px 2px 24px;
+      position: relative;
+      overflow: hidden;
+
+      min-height: 205px;
+
+      padding: 14px 4px 26px;
+    }
+
+    .hero-content {
+      position: relative;
+      z-index: 2;
+
+      max-width: 560px;
+    }
+
+    .wolf {
+      position: absolute;
+
+      right: -22px;
+      top: -2px;
+
+      width: 175px;
+      max-height: 190px;
+
+      object-fit: contain;
+
+      opacity: 0.11;
+
+      pointer-events: none;
+
+      filter:
+        drop-shadow(
+          0 0 28px rgba(160, 105, 255, 0.20)
+        );
     }
 
     h1 {
-      margin: 0 0 12px;
+      margin: 0 0 14px;
 
-      font-size: clamp(34px, 9vw, 50px);
-      line-height: 1;
+      font-size:
+        clamp(42px, 11vw, 64px);
+
+      line-height: 0.98;
+
+      letter-spacing: -0.04em;
 
       background:
         linear-gradient(
           90deg,
           #ffffff,
+          #d7c6ff,
           var(--purple)
         );
 
       -webkit-background-clip: text;
       background-clip: text;
+
       color: transparent;
     }
 
     .lead {
+      max-width: 570px;
+
       margin: 0;
+
       color: var(--muted);
-      font-size: 15px;
-      line-height: 1.55;
+
+      font-size: 16px;
+      line-height: 1.6;
     }
+
+    /*
+    ==================================================
+    MAIN CARD
+    ==================================================
+    */
 
     .card {
       padding: 20px;
 
-      border: 1px solid var(--border);
-      border-radius: 22px;
+      border:
+        1px solid var(--border);
+
+      border-radius: 24px;
 
       background:
         linear-gradient(
           180deg,
-          rgba(255,255,255,0.025),
+          rgba(255,255,255,0.026),
           rgba(255,255,255,0.012)
         ),
         var(--panel);
 
       box-shadow:
-        0 18px 60px rgba(0,0,0,0.24);
+        0 22px 70px rgba(0,0,0,0.28);
     }
+
+    /*
+    ==================================================
+    CONNECTION STATUS
+    ==================================================
+    */
 
     .status {
       display: flex;
       align-items: center;
-      gap: 9px;
+      gap: 10px;
 
       margin-bottom: 18px;
 
       color: var(--muted);
+
       font-size: 13px;
     }
 
     .dot {
       width: 9px;
       height: 9px;
+
       flex: 0 0 auto;
 
       border-radius: 50%;
-      background: #666;
+
+      background: #707070;
     }
 
     .dot.loading {
       background: var(--yellow);
 
       box-shadow:
-        0 0 14px rgba(255,212,121,0.60);
+        0 0 15px
+        rgba(255,212,119,0.68);
     }
 
     .dot.ready {
       background: var(--green);
 
       box-shadow:
-        0 0 14px rgba(110,231,168,0.70);
+        0 0 15px
+        rgba(105,231,166,0.72);
     }
 
+    /*
+    ==================================================
+    BUTTONS
+    ==================================================
+    */
+
     button {
-      width: 100%;
       appearance: none;
+
       border: 0;
-      border-radius: 15px;
 
-      padding: 15px 18px;
-
-      font-size: 16px;
-      font-weight: 750;
+      font-family: inherit;
 
       cursor: pointer;
     }
 
     button:disabled {
-      opacity: 0.5;
+      opacity: 0.50;
       cursor: not-allowed;
     }
 
     .primary {
-      color: #120a22;
+      width: 100%;
+
+      padding: 16px 18px;
+
+      border-radius: 16px;
+
+      color: #130921;
 
       background:
         linear-gradient(
           90deg,
-          #c29dff,
-          #9068ff
+          #c49dff,
+          #8d63ff
         );
 
       box-shadow:
-        0 8px 28px rgba(144,104,255,0.24);
+        0 9px 30px
+        rgba(141,99,255,0.25);
+
+      font-size: 16px;
+      font-weight: 800;
     }
 
-    .secondary {
-      margin-top: 12px;
+    .primary:active {
+      transform: scale(0.99);
+    }
+
+    .logout {
+      width: 100%;
+
+      margin-top: 13px;
+
+      padding: 14px 18px;
+
+      border:
+        1px solid var(--border);
+
+      border-radius: 15px;
 
       color: var(--text);
+
       background: transparent;
 
-      border: 1px solid var(--border);
+      font-size: 14px;
+      font-weight: 700;
     }
+
+    /*
+    ==================================================
+    BALANCES
+    ==================================================
+    */
 
     .balance-box {
       margin-bottom: 14px;
+
       padding: 17px;
 
-      background: var(--panel2);
+      border:
+        1px solid #292137;
 
-      border: 1px solid #292136;
-      border-radius: 16px;
+      border-radius: 17px;
+
+      background: var(--panel2);
     }
 
     .section-label {
@@ -243,73 +358,116 @@
       color: var(--muted);
 
       font-size: 11px;
-      font-weight: 650;
+      font-weight: 700;
 
+      letter-spacing: 0.09em;
       text-transform: uppercase;
-      letter-spacing: 0.08em;
     }
 
     .balance-grid {
       display: grid;
-      grid-template-columns: 1fr 1fr;
+
+      grid-template-columns:
+        repeat(2, minmax(0, 1fr));
+
       gap: 10px;
     }
 
     .balance-item {
+      min-width: 0;
+
       padding: 14px;
 
-      background: rgba(255,255,255,0.025);
+      border:
+        1px solid rgba(255,255,255,0.05);
 
-      border: 1px solid #292136;
       border-radius: 14px;
+
+      background:
+        rgba(255,255,255,0.022);
     }
 
-    .balance-name {
+    .asset {
+      margin-bottom: 7px;
+
       color: var(--muted);
+
       font-size: 12px;
-      margin-bottom: 6px;
+      font-weight: 650;
     }
 
-    .balance-value {
-      font-size: 21px;
-      font-weight: 750;
-      letter-spacing: -0.02em;
+    .amount {
+      overflow: hidden;
+
+      color: var(--text);
+
+      font-size: 22px;
+      font-weight: 800;
+
+      letter-spacing: -0.03em;
+
+      text-overflow: ellipsis;
     }
 
-    .balance-loading {
+    .amount.loading {
       color: var(--muted);
     }
 
-    .wallet {
+    /*
+    ==================================================
+    WALLET
+    ==================================================
+    */
+
+    .wallet-box {
       padding: 16px;
 
-      background: var(--panel2);
+      border:
+        1px solid #292137;
 
-      border: 1px solid #292136;
-      border-radius: 16px;
+      border-radius: 17px;
+
+      background: var(--panel2);
     }
 
-    .wallet-label {
-      margin-bottom: 10px;
+    .wallet-head {
+      display: flex;
+      align-items: center;
+      gap: 8px;
 
+      margin-bottom: 11px;
+    }
+
+    .wallet-mini-logo {
+      width: 21px;
+      height: 21px;
+
+      object-fit: contain;
+    }
+
+    .wallet-title {
       color: var(--muted);
 
       font-size: 11px;
-      font-weight: 650;
+      font-weight: 700;
 
+      letter-spacing: 0.09em;
       text-transform: uppercase;
-      letter-spacing: 0.08em;
     }
 
-    .wallet-line {
+    .wallet-row {
       display: flex;
       align-items: center;
+
       gap: 10px;
     }
 
     .wallet-address {
-      min-width: 0;
       flex: 1;
+
+      min-width: 0;
+
+      overflow: hidden;
 
       font-family:
         ui-monospace,
@@ -321,44 +479,51 @@
 
       font-size: 13px;
 
-      overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
     }
 
     .copy {
-      width: auto;
       flex: 0 0 auto;
 
       padding: 8px 12px;
+
+      border:
+        1px solid
+        rgba(181,144,255,0.28);
 
       border-radius: 10px;
 
       color: var(--purple);
 
       background:
-        rgba(177,140,255,0.10);
-
-      border:
-        1px solid rgba(177,140,255,0.24);
+        rgba(181,144,255,0.10);
 
       font-size: 12px;
+      font-weight: 700;
     }
 
-    .message {
+    /*
+    ==================================================
+    INFO / ERROR
+    ==================================================
+    */
+
+    .info {
       margin-top: 14px;
 
       padding: 12px 13px;
 
+      border:
+        1px solid
+        rgba(181,144,255,0.18);
+
       border-radius: 13px;
 
       background:
-        rgba(177,140,255,0.07);
+        rgba(181,144,255,0.07);
 
-      border:
-        1px solid rgba(177,140,255,0.18);
-
-      color: #d8c9f7;
+      color: #d8caf6;
 
       font-size: 12px;
       line-height: 1.5;
@@ -369,33 +534,43 @@
 
       padding: 12px 13px;
 
+      border:
+        1px solid
+        rgba(255,127,145,0.28);
+
       border-radius: 13px;
 
       background:
-        rgba(255,123,139,0.08);
+        rgba(255,127,145,0.08);
 
-      border:
-        1px solid rgba(255,123,139,0.25);
-
-      color: #ffc2c9;
+      color: #ffc1ca;
 
       font-size: 13px;
-      line-height: 1.45;
-    }
-
-    .small {
-      margin: 17px 2px 0;
-
-      color: var(--muted);
-
-      font-size: 12px;
       line-height: 1.5;
     }
 
-    @media (max-width: 420px) {
-      .balance-value {
-        font-size: 18px;
+    .fineprint {
+      margin:
+        17px 3px 0;
+
+      color: var(--muted);
+
+      font-size: 11px;
+      line-height: 1.5;
+    }
+
+    @media (max-width: 430px) {
+
+      .wolf {
+        width: 145px;
+        right: -28px;
+        top: 8px;
       }
+
+      .amount {
+        font-size: 19px;
+      }
+
     }
   </style>
 
@@ -417,6 +592,7 @@
     }
   }
   </script>
+
 </head>
 
 
@@ -489,10 +665,12 @@ function bytesToBase64(bytes) {
     i < array.length;
     i++
   ) {
+
     binary +=
       String.fromCharCode(
         array[i]
       );
+
   }
 
 
@@ -500,7 +678,10 @@ function bytesToBase64(bytes) {
 }
 
 
-function isEmbeddedWallet(wallet) {
+
+function walletLooksLikePhantom(
+  wallet
+) {
 
   if (!wallet) {
     return false;
@@ -519,60 +700,121 @@ function isEmbeddedWallet(wallet) {
     ).toLowerCase();
 
 
-  const name =
+  const standardName =
     String(
       wallet.standardWallet?.name || ""
     ).toLowerCase();
 
 
   return (
-    client.includes("privy") ||
-    connector.includes("embedded") ||
-    name.includes("privy")
+
+    client.includes("phantom")
+
+    ||
+
+    connector.includes("phantom")
+
+    ||
+
+    standardName.includes("phantom")
+
   );
 }
 
 
-function formatUsdc(value) {
 
-  const number =
+function isEmbeddedWallet(
+  wallet
+) {
+
+  if (!wallet) {
+    return false;
+  }
+
+
+  const client =
+    String(
+      wallet.walletClientType || ""
+    ).toLowerCase();
+
+
+  const connector =
+    String(
+      wallet.connectorType || ""
+    ).toLowerCase();
+
+
+  const standardName =
+    String(
+      wallet.standardWallet?.name || ""
+    ).toLowerCase();
+
+
+  return (
+
+    client.includes("privy")
+
+    ||
+
+    connector.includes("embedded")
+
+    ||
+
+    standardName.includes("privy")
+
+  );
+}
+
+
+
+function formatUsdc(
+  value
+) {
+
+  const n =
     Number(value || 0);
 
 
-  if (!Number.isFinite(number)) {
+  if (!Number.isFinite(n)) {
     return "0.00";
   }
 
 
-  return number.toLocaleString(
+  return n.toLocaleString(
     "en-US",
     {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2
     }
   );
+
 }
 
 
-function formatSol(value) {
 
-  const number =
+function formatSol(
+  value
+) {
+
+  const n =
     Number(value || 0);
 
 
-  if (!Number.isFinite(number)) {
+  if (!Number.isFinite(n)) {
     return "0.0000";
   }
 
 
-  return number.toLocaleString(
+  return n.toLocaleString(
     "en-US",
     {
       minimumFractionDigits: 4,
       maximumFractionDigits: 6
     }
   );
+
 }
+
 
 
 /*
@@ -593,6 +835,16 @@ function App() {
   } = usePrivy();
 
 
+  /*
+   * IMPORTANT:
+   *
+   * These are the actual Privy Solana
+   * ConnectedStandardSolanaWallet objects.
+   *
+   * signMessage() must be called on one
+   * of these, not blindly on the object
+   * returned by useConnectWallet.
+   */
   const {
     ready: walletsReady,
     wallets
@@ -610,10 +862,18 @@ function App() {
   } = useCreateWallet();
 
 
+
+  /*
+  ==================================================
+  STATE
+  ==================================================
+  */
+
+
   const [
-    connectedWallet,
-    setConnectedWallet
-  ] = useState(null);
+    pendingWalletAddress,
+    setPendingWalletAddress
+  ] = useState("");
 
 
   const [
@@ -641,15 +901,15 @@ function App() {
 
 
   const [
-    error,
-    setError
-  ] = useState("");
-
-
-  const [
     syncState,
     setSyncState
   ] = useState("waiting");
+
+
+  const [
+    error,
+    setError
+  ] = useState("");
 
 
   const [
@@ -684,9 +944,14 @@ function App() {
     useRef("");
 
 
+  const authAttemptedFor =
+    useRef("");
+
+
+
   /*
   ==================================================
-  CONNECT WALLET
+  CONNECT PHANTOM
   ==================================================
   */
 
@@ -695,31 +960,59 @@ function App() {
     connectWallet
   } = useConnectWallet({
 
-    onSuccess: ({wallet}) => {
+    onSuccess: ({
+      wallet
+    }) => {
 
-      setConnectedWallet(wallet);
+      /*
+       * Do NOT call wallet.signMessage here.
+       *
+       * On mobile Safari this can be only
+       * the connector result and may not
+       * expose signMessage().
+       *
+       * Store the address and wait until
+       * the corresponding Solana wallet
+       * appears in useWallets().
+       */
+
+      const address =
+        wallet?.address || "";
+
+
+      if (address) {
+
+        setPendingWalletAddress(
+          address
+        );
+
+      }
+
 
       setConnecting(false);
-
-      authenticateWallet(wallet);
 
     },
 
 
-    onError: (err) => {
+    onError: (
+      err
+    ) => {
 
       console.error(
-        "Wallet connection error:",
+        "Connect error:",
         err
       );
+
 
       setConnecting(false);
 
 
       const message =
-        err?.message ||
-        String(err) ||
-        "";
+        String(
+          err?.message ||
+          err ||
+          ""
+        );
 
 
       if (
@@ -727,6 +1020,7 @@ function App() {
           .toLowerCase()
           .includes("cancel")
       ) {
+
         return;
       }
 
@@ -741,35 +1035,155 @@ function App() {
   });
 
 
+
+  async function handleConnect() {
+
+    setError("");
+
+    setConnecting(true);
+
+
+    try {
+
+      await connectWallet({
+
+        description:
+          "Connect Phantom to ASTY Rebound",
+
+        walletList: [
+          "phantom"
+        ],
+
+        walletChainType:
+          "solana-only"
+
+      });
+
+    }
+
+    catch (
+      err
+    ) {
+
+      console.error(
+        err
+      );
+
+
+      setConnecting(false);
+
+    }
+
+  }
+
+
+
   /*
   ==================================================
-  AUTHENTICATE
+  FIND ACTUAL CONNECTED SOLANA WALLET
   ==================================================
   */
 
 
-  async function authenticateWallet(wallet) {
+  const connectedPhantomWallet =
+    useMemo(
+      () => {
+
+        /*
+         * First choice:
+         * exact address returned by connect.
+         */
+        if (
+          pendingWalletAddress
+        ) {
+
+          const exact =
+            wallets.find(
+              wallet =>
+                wallet?.address ===
+                pendingWalletAddress
+            );
+
+
+          if (exact) {
+            return exact;
+          }
+
+        }
+
+
+        /*
+         * Fallback:
+         * detected Phantom Solana wallet.
+         */
+        return (
+
+          wallets.find(
+            wallet =>
+              walletLooksLikePhantom(
+                wallet
+              )
+          )
+
+          ||
+
+          null
+
+        );
+
+      },
+
+      [
+        wallets,
+        pendingWalletAddress
+      ]
+    );
+
+
+
+  /*
+  ==================================================
+  SIWS LOGIN
+  ==================================================
+  */
+
+
+  async function authenticateWallet(
+    wallet
+  ) {
 
     if (
       !wallet ||
       authenticated ||
       signingIn
     ) {
+
       return;
     }
 
 
-    setSigningIn(true);
+    if (
+      typeof wallet.signMessage
+      !== "function"
+    ) {
+
+      return;
+    }
+
 
     setError("");
+
+    setSigningIn(true);
 
 
     try {
 
       const message =
         await generateSiwsMessage({
+
           address:
             wallet.address
+
         });
 
 
@@ -778,19 +1192,25 @@ function App() {
           .encode(message);
 
 
+      /*
+       * This follows Privy's Solana
+       * ConnectedStandardSolanaWallet API.
+       */
+
       const signed =
         await wallet.signMessage({
+
           message:
             encodedMessage
+
         });
 
 
-      const signatureBytes =
-        signed?.signature ||
-        signed;
+      const signature =
+        signed?.signature;
 
 
-      if (!signatureBytes) {
+      if (!signature) {
 
         throw new Error(
           "Phantom did not return a login signature."
@@ -805,7 +1225,7 @@ function App() {
 
         signature:
           bytesToBase64(
-            signatureBytes
+            signature
           )
 
       });
@@ -815,10 +1235,12 @@ function App() {
 
     }
 
-    catch (err) {
+    catch (
+      err
+    ) {
 
       console.error(
-        "Phantom sign-in error:",
+        "SIWS login error:",
         err
       );
 
@@ -827,9 +1249,11 @@ function App() {
 
 
       const message =
-        err?.message ||
-        String(err) ||
-        "";
+        String(
+          err?.message ||
+          err ||
+          ""
+        );
 
 
       if (
@@ -858,52 +1282,70 @@ function App() {
   }
 
 
-  /*
-  ==================================================
-  CONNECT BUTTON
-  ==================================================
-  */
-
-
-  async function handleConnect() {
-
-    setError("");
-
-    setConnecting(true);
-
-
-    try {
-
-      await connectWallet({
-
-        description:
-          "Connect Phantom to ASTY Rebound",
-
-        walletList: [
-          "phantom"
-        ],
-
-        walletChainType:
-          "solana-only"
-
-      });
-
-    }
-
-    catch (err) {
-
-      console.error(err);
-
-      setConnecting(false);
-
-    }
-
-  }
-
 
   /*
+   * Automatically authenticate only after
+   * Privy has exposed the actual Solana
+   * wallet with signMessage().
+   */
+  useEffect(
+    () => {
+
+      if (
+        authenticated ||
+        signingIn ||
+        !connectedPhantomWallet
+      ) {
+
+        return;
+      }
+
+
+      if (
+        typeof connectedPhantomWallet
+          .signMessage !== "function"
+      ) {
+
+        return;
+      }
+
+
+      const key =
+        connectedPhantomWallet.address;
+
+
+      if (
+        !key ||
+        authAttemptedFor.current ===
+          key
+      ) {
+
+        return;
+      }
+
+
+      authAttemptedFor.current =
+        key;
+
+
+      authenticateWallet(
+        connectedPhantomWallet
+      );
+
+    },
+
+    [
+      authenticated,
+      signingIn,
+      connectedPhantomWallet
+    ]
+  );
+
+
+
+  /*
   ==================================================
-  PHANTOM ACCOUNT
+  PHANTOM ACCOUNT AFTER LOGIN
   ==================================================
   */
 
@@ -915,6 +1357,7 @@ function App() {
         if (
           !user?.linkedAccounts
         ) {
+
           return null;
         }
 
@@ -926,7 +1369,16 @@ function App() {
 
               const client =
                 String(
-                  account?.walletClientType ||
+                  account
+                    ?.walletClientType ||
+                  ""
+                ).toLowerCase();
+
+
+              const connector =
+                String(
+                  account
+                    ?.connectorType ||
                   ""
                 ).toLowerCase();
 
@@ -938,8 +1390,16 @@ function App() {
 
                 &&
 
-                client.includes(
-                  "phantom"
+                (
+                  client.includes(
+                    "phantom"
+                  )
+
+                  ||
+
+                  connector.includes(
+                    "phantom"
+                  )
                 )
 
               );
@@ -959,22 +1419,28 @@ function App() {
     );
 
 
+
   const phantomAddress =
 
     linkedPhantom?.address
 
     ||
 
-    connectedWallet?.address
+    connectedPhantomWallet?.address
+
+    ||
+
+    pendingWalletAddress
 
     ||
 
     "";
 
 
+
   /*
   ==================================================
-  REBOUND WALLET
+  EXISTING REBOUND WALLET
   ==================================================
   */
 
@@ -986,6 +1452,7 @@ function App() {
         if (
           !user?.linkedAccounts
         ) {
+
           return null;
         }
 
@@ -999,27 +1466,31 @@ function App() {
                 account?.type !==
                 "wallet"
               ) {
+
                 return false;
               }
 
 
               const chain =
                 String(
-                  account?.chainType ||
+                  account
+                    ?.chainType ||
                   ""
                 ).toLowerCase();
 
 
               const client =
                 String(
-                  account?.walletClientType ||
+                  account
+                    ?.walletClientType ||
                   ""
                 ).toLowerCase();
 
 
               const connector =
                 String(
-                  account?.connectorType ||
+                  account
+                    ?.connectorType ||
                   ""
                 ).toLowerCase();
 
@@ -1036,9 +1507,15 @@ function App() {
                 &&
 
                 (
-                  client.includes("privy")
+                  client.includes(
+                    "privy"
+                  )
+
                   ||
-                  connector.includes("embedded")
+
+                  connector.includes(
+                    "embedded"
+                  )
                 )
 
               );
@@ -1059,6 +1536,7 @@ function App() {
         phantomAddress
       ]
     );
+
 
 
   const embeddedFromWallets =
@@ -1101,6 +1579,7 @@ function App() {
     );
 
 
+
   const reboundWallet =
 
     linkedEmbedded
@@ -1118,19 +1597,19 @@ function App() {
     null;
 
 
+
   const reboundAddress =
-    reboundWallet?.address ||
-    "";
+    reboundWallet?.address || "";
 
 
   const reboundWalletId =
-    reboundWallet?.id ||
-    null;
+    reboundWallet?.id || null;
+
 
 
   /*
   ==================================================
-  CREATE REBOUND WALLET
+  ENSURE REBOUND WALLET EXISTS
   ==================================================
   */
 
@@ -1143,18 +1622,23 @@ function App() {
         !walletsReady ||
         !authenticated
       ) {
+
         return;
       }
 
 
-      if (reboundAddress) {
+      if (
+        reboundAddress
+      ) {
 
         creationAttempted.current =
           true;
 
+
         sessionStorage.removeItem(
           "asty_rebound_wallet_reload"
         );
+
 
         return;
       }
@@ -1163,10 +1647,15 @@ function App() {
       if (
         creationAttempted.current
       ) {
+
         return;
       }
 
 
+      /*
+       * Existing embedded wallets can take
+       * a moment to appear after SIWS.
+       */
       const timer =
         setTimeout(
           async () => {
@@ -1175,6 +1664,7 @@ function App() {
               reboundAddress ||
               creationAttempted.current
             ) {
+
               return;
             }
 
@@ -1212,10 +1702,12 @@ function App() {
 
             }
 
-            catch (err) {
+            catch (
+              err
+            ) {
 
               console.error(
-                "Rebound wallet:",
+                "Embedded wallet:",
                 err
               );
 
@@ -1231,6 +1723,11 @@ function App() {
                 );
 
 
+              /*
+               * Existing wallet is not an error.
+               * Reload once so Privy's user/wallet
+               * state can repopulate.
+               */
               if (
                 message
                   .toLowerCase()
@@ -1239,25 +1736,31 @@ function App() {
                   )
               ) {
 
-                const reloaded =
-                  sessionStorage.getItem(
-                    "asty_rebound_wallet_reload"
-                  );
+                const alreadyReloaded =
+                  sessionStorage
+                    .getItem(
+                      "asty_rebound_wallet_reload"
+                    );
 
 
-                if (!reloaded) {
+                if (
+                  !alreadyReloaded
+                ) {
 
-                  sessionStorage.setItem(
-                    "asty_rebound_wallet_reload",
-                    "1"
-                  );
+                  sessionStorage
+                    .setItem(
+                      "asty_rebound_wallet_reload",
+                      "1"
+                    );
 
 
                   setTimeout(
                     () => {
+
                       location.reload();
+
                     },
-                    400
+                    450
                   );
 
                 }
@@ -1268,7 +1771,7 @@ function App() {
 
 
               setError(
-                "Your Rebound Wallet could not be loaded. Please try again."
+                "Your Rebound Wallet could not be loaded."
               );
 
             }
@@ -1294,9 +1797,10 @@ function App() {
   );
 
 
+
   /*
   ==================================================
-  DATABASE SYNC
+  D1 ACCOUNT SYNC
   ==================================================
   */
 
@@ -1310,24 +1814,30 @@ function App() {
         !phantomAddress ||
         !reboundAddress
       ) {
+
         return;
       }
 
 
-      const syncKey =
-        `${user.id}:${phantomAddress}:${reboundAddress}`;
+      const key =
+        [
+          user.id,
+          phantomAddress,
+          reboundAddress
+        ].join(":");
 
 
       if (
         syncAttempted.current ===
-        syncKey
+        key
       ) {
+
         return;
       }
 
 
       syncAttempted.current =
-        syncKey;
+        key;
 
 
       let cancelled =
@@ -1415,10 +1925,12 @@ function App() {
 
         }
 
-        catch (err) {
+        catch (
+          err
+        ) {
 
           console.error(
-            "Account sync:",
+            "D1 sync:",
             err
           );
 
@@ -1431,7 +1943,7 @@ function App() {
 
 
             setError(
-              "Your Rebound account could not be synchronized. Please try again."
+              "Your Rebound account could not be synchronized."
             );
 
           }
@@ -1445,7 +1957,10 @@ function App() {
 
 
       return () => {
-        cancelled = true;
+
+        cancelled =
+          true;
+
       };
 
     },
@@ -1461,9 +1976,10 @@ function App() {
   );
 
 
+
   /*
   ==================================================
-  LOAD ON-CHAIN BALANCE
+  BALANCE
   ==================================================
   */
 
@@ -1475,6 +1991,7 @@ function App() {
         !authenticated ||
         syncState !== "ready"
       ) {
+
         return;
       }
 
@@ -1485,7 +2002,9 @@ function App() {
 
       async function loadBalance() {
 
-        setBalanceLoading(true);
+        setBalanceLoading(
+          true
+        );
 
 
         try {
@@ -1495,9 +2014,11 @@ function App() {
 
 
           if (!token) {
+
             throw new Error(
-              "No login session."
+              "No session."
             );
+
           }
 
 
@@ -1506,12 +2027,11 @@ function App() {
               `${API_BASE}/account/balance`,
               {
 
-                method:
-                  "GET",
-
                 headers: {
+
                   "Authorization":
                     `Bearer ${token}`
+
                 }
 
               }
@@ -1535,28 +2055,42 @@ function App() {
           if (!cancelled) {
 
             setUsdcBalance(
+
               result?.balances
                 ?.usdc
-                ?.ui ??
+                ?.ui
+
+              ??
+
               "0"
+
             );
 
 
             setSolBalance(
+
               result?.balances
                 ?.sol
-                ?.ui ??
+                ?.ui
+
+              ??
+
               "0"
+
             );
 
 
-            setBalanceLoading(false);
+            setBalanceLoading(
+              false
+            );
 
           }
 
         }
 
-        catch (err) {
+        catch (
+          err
+        ) {
 
           console.error(
             "Balance:",
@@ -1566,7 +2100,10 @@ function App() {
 
           if (!cancelled) {
 
-            setBalanceLoading(false);
+            setBalanceLoading(
+              false
+            );
+
 
             setError(
               "Your Rebound Balance is temporarily unavailable."
@@ -1591,7 +2128,9 @@ function App() {
 
       return () => {
 
-        cancelled = true;
+        cancelled =
+          true;
+
 
         clearInterval(
           interval
@@ -1609,16 +2148,20 @@ function App() {
   );
 
 
+
   /*
   ==================================================
-  COPY WALLET
+  COPY
   ==================================================
   */
 
 
   async function copyWallet() {
 
-    if (!reboundAddress) {
+    if (
+      !reboundAddress
+    ) {
+
       return;
     }
 
@@ -1635,9 +2178,8 @@ function App() {
 
 
       setTimeout(
-        () => {
-          setCopied(false);
-        },
+        () =>
+          setCopied(false),
         1400
       );
 
@@ -1652,6 +2194,7 @@ function App() {
   }
 
 
+
   /*
   ==================================================
   LOGOUT
@@ -1663,16 +2206,20 @@ function App() {
 
     setError("");
 
-    setSyncState(
-      "waiting"
-    );
-
     setUsdcBalance(null);
 
     setSolBalance(null);
 
+    setSyncState(
+      "waiting"
+    );
+
 
     syncAttempted.current =
+      "";
+
+
+    authAttemptedFor.current =
       "";
 
 
@@ -1680,7 +2227,7 @@ function App() {
       false;
 
 
-    setConnectedWallet(null);
+    setPendingWalletAddress("");
 
     setCreatedWallet(null);
 
@@ -1688,6 +2235,7 @@ function App() {
     await logout();
 
   }
+
 
 
   /*
@@ -1714,8 +2262,8 @@ function App() {
 
     &&
 
-    syncState ===
-      "ready";
+    syncState === "ready";
+
 
 
   let statusText =
@@ -1727,17 +2275,11 @@ function App() {
 
 
   if (
-    loading ||
-    connecting ||
-    signingIn ||
-    creatingWallet ||
-    syncState === "syncing"
+    loading
   ) {
 
     statusText =
-      authenticated
-        ? "Setting up Rebound…"
-        : "Connecting Phantom…";
+      "Loading Rebound…";
 
     dotClass =
       "dot loading";
@@ -1745,7 +2287,49 @@ function App() {
   }
 
 
-  if (accountReady) {
+  else if (
+    connecting
+  ) {
+
+    statusText =
+      "Connecting Phantom…";
+
+    dotClass =
+      "dot loading";
+
+  }
+
+
+  else if (
+    signingIn
+  ) {
+
+    statusText =
+      "Confirm login in Phantom…";
+
+    dotClass =
+      "dot loading";
+
+  }
+
+
+  else if (
+    authenticated &&
+    !accountReady
+  ) {
+
+    statusText =
+      "Preparing Rebound…";
+
+    dotClass =
+      "dot loading";
+
+  }
+
+
+  else if (
+    accountReady
+  ) {
 
     statusText =
       "Connected";
@@ -1754,6 +2338,7 @@ function App() {
       "dot ready";
 
   }
+
 
 
   /*
@@ -1769,8 +2354,13 @@ function App() {
 
     {
       className:
-        "wrap"
+        "page"
     },
+
+
+    /*
+    HEADER
+    */
 
 
     e(
@@ -1785,11 +2375,23 @@ function App() {
 
       e(
 
-        "div",
+        "img",
 
         {
           className:
-            "mark"
+            "brand-logo",
+
+          src:
+            "assets/logo.png",
+
+          alt:
+            "ASTY",
+
+          onError:
+            event => {
+              event.currentTarget.style.display =
+                "none";
+            }
         }
 
       ),
@@ -1803,21 +2405,41 @@ function App() {
 
 
         e(
-          "strong",
-          null,
+
+          "div",
+
+          {
+            className:
+              "brand-title"
+          },
+
           "ASTY Rebound"
+
         ),
 
 
         e(
-          "span",
-          null,
+
+          "div",
+
+          {
+            className:
+              "brand-subtitle"
+          },
+
           "Automated dip & rebound strategy"
+
         )
 
       )
 
     ),
+
+
+
+    /*
+    HERO
+    */
 
 
     e(
@@ -1831,26 +2453,72 @@ function App() {
 
 
       e(
-        "h1",
-        null,
-        "Rebound"
+
+        "img",
+
+        {
+          className:
+            "wolf",
+
+          src:
+            "assets/wolf.png",
+
+          alt:
+            "",
+
+          onError:
+            event => {
+              event.currentTarget.style.display =
+                "none";
+            }
+        }
+
       ),
 
 
       e(
 
-        "p",
+        "div",
 
         {
           className:
-            "lead"
+            "hero-content"
         },
 
-        "Connect Phantom and let ASTY Rebound watch the market for you."
+
+        e(
+
+          "h1",
+
+          null,
+
+          "Rebound"
+
+        ),
+
+
+        e(
+
+          "p",
+
+          {
+            className:
+              "lead"
+          },
+
+          "Connect Phantom and let ASTY Rebound watch the market for you."
+
+        )
 
       )
 
     ),
+
+
+
+    /*
+    ACCOUNT CARD
+    */
 
 
     e(
@@ -1890,6 +2558,12 @@ function App() {
       ),
 
 
+
+      /*
+      LOGGED OUT
+      */
+
+
       !authenticated
 
       ?
@@ -1899,6 +2573,7 @@ function App() {
         "button",
 
         {
+
           className:
             "primary",
 
@@ -1909,22 +2584,40 @@ function App() {
 
           onClick:
             handleConnect
+
         },
 
-        connecting ||
-        signingIn
-          ? "Connecting…"
-          : "Connect Phantom"
+        connecting
+          ? "Opening Phantom…"
+
+        : signingIn
+          ? "Confirm in Phantom…"
+
+        : "Connect Phantom"
 
       )
 
+
+
       :
+
+
+
+      /*
+      LOGGED IN
+      */
+
 
       e(
 
         React.Fragment,
 
         null,
+
+
+        /*
+        BALANCE
+        */
 
 
         accountReady
@@ -1981,7 +2674,7 @@ function App() {
 
                 {
                   className:
-                    "balance-name"
+                    "asset"
                 },
 
                 "USDC"
@@ -1995,7 +2688,7 @@ function App() {
 
                 {
                   className:
-                    "balance-value"
+                    "amount"
                 },
 
                 balanceLoading &&
@@ -2009,7 +2702,7 @@ function App() {
 
                   {
                     className:
-                      "balance-loading"
+                      "amount loading"
                   },
 
                   "—"
@@ -2025,6 +2718,7 @@ function App() {
               )
 
             ),
+
 
 
             e(
@@ -2043,7 +2737,7 @@ function App() {
 
                 {
                   className:
-                    "balance-name"
+                    "asset"
                 },
 
                 "SOL"
@@ -2057,7 +2751,7 @@ function App() {
 
                 {
                   className:
-                    "balance-value"
+                    "amount"
                 },
 
                 balanceLoading &&
@@ -2071,7 +2765,7 @@ function App() {
 
                   {
                     className:
-                      "balance-loading"
+                      "amount loading"
                   },
 
                   "—"
@@ -2100,12 +2794,18 @@ function App() {
 
           {
             className:
-              "message"
+              "info"
           },
 
           "Preparing your Rebound account…"
 
         ),
+
+
+
+        /*
+        WALLET
+        */
 
 
         reboundAddress
@@ -2118,7 +2818,7 @@ function App() {
 
           {
             className:
-              "wallet"
+              "wallet-box"
           },
 
 
@@ -2128,10 +2828,46 @@ function App() {
 
             {
               className:
-                "wallet-label"
+                "wallet-head"
             },
 
-            "Your Rebound Wallet"
+
+            e(
+
+              "img",
+
+              {
+                className:
+                  "wallet-mini-logo",
+
+                src:
+                  "assets/logo.png",
+
+                alt:
+                  "",
+
+                onError:
+                  event => {
+                    event.currentTarget.style.display =
+                      "none";
+                  }
+              }
+
+            ),
+
+
+            e(
+
+              "div",
+
+              {
+                className:
+                  "wallet-title"
+              },
+
+              "Your Rebound Wallet"
+
+            )
 
           ),
 
@@ -2142,7 +2878,7 @@ function App() {
 
             {
               className:
-                "wallet-line"
+                "wallet-row"
             },
 
 
@@ -2187,13 +2923,14 @@ function App() {
         null,
 
 
+
         e(
 
           "button",
 
           {
             className:
-              "secondary",
+              "logout",
 
             onClick:
               handleLogout
@@ -2206,34 +2943,10 @@ function App() {
       ),
 
 
-      !authenticated &&
-      connectedWallet &&
-      !signingIn
 
-      ?
-
-      e(
-
-        "button",
-
-        {
-          className:
-            "secondary",
-
-          onClick:
-            () =>
-              authenticateWallet(
-                connectedWallet
-              )
-        },
-
-        "Continue sign-in"
-
-      )
-
-      :
-
-      null,
+      /*
+      ERROR
+      */
 
 
       error
@@ -2258,13 +2971,14 @@ function App() {
       null,
 
 
+
       e(
 
-        "p",
+        "div",
 
         {
           className:
-            "small"
+            "fineprint"
         },
 
         "Prototype only. Deposits and automated trading are not active yet."
@@ -2278,15 +2992,17 @@ function App() {
 }
 
 
+
 /*
 ====================================================
-PRIVY CONFIG
+PRIVY
 ====================================================
 */
 
 
 const connectors =
   toSolanaWalletConnectors();
+
 
 
 createRoot(
@@ -2322,6 +3038,10 @@ createRoot(
           walletChainType:
             "solana-only",
 
+          /*
+           * Privy's modal will use Phantom's
+           * own wallet branding/icon here.
+           */
           walletList: [
             "phantom"
           ]
@@ -2341,8 +3061,10 @@ createRoot(
         embeddedWallets: {
 
           solana: {
+
             createOnLogin:
               "all-users"
+
           }
 
         }
