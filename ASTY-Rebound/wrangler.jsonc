@@ -1,0 +1,33 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+
+  "name": "asty-rebound-api",
+  "main": "src/index.js",
+  "compatibility_date": "2026-09-18",
+
+  "workers_dev": true,
+  "preview_urls": false,
+
+  "keep_vars": true,
+
+  "vars": {
+    "PRIVY_APP_ID": "cmu6qkw8h029x0cjtidese1il",
+    "PRIVY_AUTH_KEY_ID": "c1qsb2vj5rz0dmf1limrfwff",
+    "PRIVY_POLICY_ID": "t1i4tg1sysavg3cvqmxsjlk8"
+  },
+
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "asty-rebound-db",
+      "database_id": "5d9a6a17-9a89-4723-b222-a01f5e1936fa"
+    }
+  ],
+
+  "observability": {
+    "enabled": true,
+    "logs": {
+      "enabled": true
+    }
+  }
+}
