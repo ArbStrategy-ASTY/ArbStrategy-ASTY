@@ -136,9 +136,7 @@
     .card {
       padding: 18px;
 
-      border:
-        1px solid var(--border);
-
+      border: 1px solid var(--border);
       border-radius: 22px;
 
       background:
@@ -167,7 +165,6 @@
     .dot {
       width: 9px;
       height: 9px;
-
       border-radius: 50%;
       background: #666;
     }
@@ -225,18 +222,7 @@
       color: var(--text);
       background: transparent;
 
-      border:
-        1px solid var(--border);
-    }
-
-    .retry {
-      margin-top: 10px;
-
-      color: var(--text);
-      background: rgba(177,140,255,0.12);
-
-      border:
-        1px solid rgba(177,140,255,0.28);
+      border: 1px solid var(--border);
     }
 
     .grid {
@@ -248,13 +234,10 @@
     .row {
       padding: 13px 14px;
 
-      border:
-        1px solid #292136;
-
+      border: 1px solid #292136;
       border-radius: 15px;
 
-      background:
-        var(--panel2);
+      background: var(--panel2);
     }
 
     .label {
@@ -390,6 +373,10 @@ const APP_ID =
   "cmu6qkw8h029x0cjtidese1il";
 
 
+const API_BASE =
+  "https://asty-rebound-api.mail-timothy.workers.dev";
+
+
 const e =
   React.createElement;
 
@@ -454,7 +441,7 @@ function getPhantomProvider() {
 
 
 
-function isPrivySolanaWallet(wallet) {
+function isEmbeddedSolanaWallet(wallet) {
 
   if (!wallet) {
     return false;
@@ -475,7 +462,7 @@ function isPrivySolanaWallet(wallet) {
     ).toLowerCase();
 
 
-  const standardName =
+  const name =
     String(
       wallet.standardWallet?.name ||
       ""
@@ -485,21 +472,7 @@ function isPrivySolanaWallet(wallet) {
   return (
     client.includes("privy") ||
     connector.includes("embedded") ||
-    standardName.includes("privy")
-  );
-}
-
-
-
-function findPrivyWallet(wallets) {
-
-  return (
-    wallets.find(
-      wallet =>
-        isPrivySolanaWallet(wallet)
-    )
-    ||
-    null
+    name.includes("privy")
   );
 }
 
@@ -535,9 +508,6 @@ function App() {
   } = useLoginWithSiws();
 
 
-  /*
-   * Explicit Solana embedded-wallet creation.
-   */
   const {
     createWallet
   } = useCreateWallet();
@@ -553,6 +523,12 @@ function App() {
   const [
     createdWalletAddress,
     setCreatedWalletAddress
+  ] = useState("");
+
+
+  const [
+    createdWalletId,
+    setCreatedWalletId
   ] = useState("");
 
 
@@ -592,62 +568,30 @@ function App() {
   ] = useState(false);
 
 
-  /*
-   * Prevent the automatic wallet creator
-   * from firing repeatedly.
-   */
+  const [
+    syncStatus,
+    setSyncStatus
+  ] = useState("waiting");
+
+
+  const [
+    syncError,
+    setSyncError
+  ] = useState("");
+
+
   const walletCreationAttempted =
     useRef(false);
 
 
-
-  /*
-  ==================================================
-  REBOUND WALLET
-  ==================================================
-  */
-
-
-  const reboundWallet =
-    useMemo(
-      () => {
-
-        if (!authenticated) {
-          return null;
-        }
-
-
-        return findPrivyWallet(
-          wallets
-        );
-
-      },
-
-      [
-        wallets,
-        authenticated
-      ]
-    );
-
-
-
-  const reboundAddress =
-
-    reboundWallet?.address
-
-    ||
-
-    createdWalletAddress
-
-    ||
-
-    "";
+  const syncAttempted =
+    useRef("");
 
 
 
   /*
   ==================================================
-  PHANTOM ADDRESS FROM PRIVY SESSION
+  PHANTOM LINKED ACCOUNT
   ==================================================
   */
 
@@ -676,29 +620,23 @@ function App() {
                 ).toLowerCase();
 
 
-              const chain =
+              const connector =
                 String(
-                  account?.chainType ||
+                  account?.connectorType ||
                   ""
                 ).toLowerCase();
 
 
               return (
 
-                account?.type ===
-                  "wallet"
+                account?.type === "wallet"
 
                 &&
 
                 (
-                  client.includes(
-                    "phantom"
-                  )
-
+                  client.includes("phantom")
                   ||
-
-                  chain === "solana"
-
+                  connector.includes("phantom")
                 )
 
               );
@@ -734,165 +672,189 @@ function App() {
 
   /*
   ==================================================
-  CREATE REBOUND WALLET
+  EXISTING EMBEDDED WALLET FROM PRIVY USER
   ==================================================
   */
 
 
-  async function ensureReboundWallet() {
+  const linkedEmbeddedWallet =
+    useMemo(
+      () => {
 
-    if (
-      !authenticated ||
-      creatingWallet
-    ) {
+        if (
+          !user?.linkedAccounts
+        ) {
 
-      return;
-    }
-
-
-    /*
-     * Already exists.
-     */
-    if (
-      reboundWallet ||
-      createdWalletAddress
-    ) {
-
-      return;
-    }
+          return null;
+        }
 
 
-    setWalletError("");
+        return (
 
-    setCreatingWallet(true);
+          user.linkedAccounts.find(
+            account => {
 
+              if (
+                account?.type !== "wallet"
+              ) {
 
-    try {
-
-      /*
-       * createAdditional is intentionally
-       * NOT enabled.
-       *
-       * Privy should therefore return/use
-       * the user's normal Solana embedded
-       * wallet instead of intentionally
-       * creating extra wallets.
-       */
-
-      const result =
-        await createWallet();
+                return false;
+              }
 
 
-      /*
-       * Depending on SDK response shape,
-       * support either:
-       *
-       * result.address
-       * or
-       * result.wallet.address
-       */
-
-      const created =
-        result?.wallet ||
-        result;
+              const chain =
+                String(
+                  account?.chainType ||
+                  ""
+                ).toLowerCase();
 
 
-      if (
-        created?.address
-      ) {
+              const client =
+                String(
+                  account?.walletClientType ||
+                  ""
+                ).toLowerCase();
 
-        setCreatedWalletAddress(
-          created.address
+
+              const connector =
+                String(
+                  account?.connectorType ||
+                  ""
+                ).toLowerCase();
+
+
+              const address =
+                String(
+                  account?.address ||
+                  ""
+                );
+
+
+              return (
+
+                chain === "solana"
+
+                &&
+
+                address !==
+                  displayedPhantomAddress
+
+                &&
+
+                (
+                  client.includes("privy")
+                  ||
+                  connector.includes("embedded")
+                  ||
+                  Boolean(account?.id)
+                )
+
+              );
+
+            }
+          )
+
+          ||
+
+          null
         );
 
-      }
+      },
 
-
-      setCreatingWallet(false);
-
-    }
-
-    catch (err) {
-
-      console.error(
-        "Rebound wallet creation error:",
-        err
-      );
-
-
-      setCreatingWallet(false);
-
-
-      setWalletError(
-        err?.message ||
-        String(err) ||
-        "Could not create the Rebound wallet."
-      );
-
-    }
-
-  }
+      [
+        user,
+        displayedPhantomAddress
+      ]
+    );
 
 
 
   /*
-   * Once the user is authenticated,
-   * automatically ensure that exactly
-   * one Rebound wallet exists.
-   */
-  useEffect(
-    () => {
-
-      if (
-        !ready ||
-        !walletsReady ||
-        !authenticated
-      ) {
-
-        return;
-      }
+  ==================================================
+  WALLET FROM useWallets
+  ==================================================
+  */
 
 
-      /*
-       * Existing wallet found:
-       * nothing to create.
-       */
-      if (
-        reboundWallet ||
-        createdWalletAddress
-      ) {
+  const reboundWallet =
+    useMemo(
+      () => {
 
-        walletCreationAttempted.current =
-          true;
-
-        return;
-      }
+        if (!authenticated) {
+          return null;
+        }
 
 
-      if (
-        walletCreationAttempted.current
-      ) {
+        return (
 
-        return;
-      }
+          wallets.find(
+            wallet => {
+
+              return (
+
+                wallet?.address !==
+                  displayedPhantomAddress
+
+                &&
+
+                isEmbeddedSolanaWallet(
+                  wallet
+                )
+
+              );
+
+            }
+          )
+
+          ||
+
+          null
+        );
+
+      },
+
+      [
+        wallets,
+        authenticated,
+        displayedPhantomAddress
+      ]
+    );
 
 
-      walletCreationAttempted.current =
-        true;
+
+  const reboundAddress =
+
+    reboundWallet?.address
+
+    ||
+
+    linkedEmbeddedWallet?.address
+
+    ||
+
+    createdWalletAddress
+
+    ||
+
+    "";
 
 
-      ensureReboundWallet();
 
-    },
+  const reboundWalletId =
 
-    [
-      ready,
-      walletsReady,
-      authenticated,
-      reboundWallet,
-      createdWalletAddress
-    ]
-  );
+    reboundWallet?.id
+
+    ||
+
+    linkedEmbeddedWallet?.id
+
+    ||
+
+    createdWalletId
+
+    ||
+
+    null;
 
 
 
@@ -918,9 +880,7 @@ function App() {
         ) {
 
           if (!cancelled) {
-
             setTokenReady(false);
-
           }
 
           return;
@@ -952,9 +912,7 @@ function App() {
 
 
           if (!cancelled) {
-
             setTokenReady(false);
-
           }
 
         }
@@ -966,9 +924,7 @@ function App() {
 
 
       return () => {
-
         cancelled = true;
-
       };
 
     },
@@ -976,6 +932,367 @@ function App() {
     [
       ready,
       authenticated,
+      getAccessToken
+    ]
+  );
+
+
+
+  /*
+  ==================================================
+  ENSURE REBOUND WALLET
+  ==================================================
+  */
+
+
+  async function createReboundWallet() {
+
+    if (
+      !authenticated ||
+      creatingWallet ||
+      reboundAddress
+    ) {
+
+      return;
+    }
+
+
+    setCreatingWallet(true);
+    setWalletError("");
+
+
+    try {
+
+      const result =
+        await createWallet();
+
+
+      const created =
+        result?.wallet ||
+        result;
+
+
+      if (
+        created?.address
+      ) {
+
+        setCreatedWalletAddress(
+          created.address
+        );
+
+      }
+
+
+      if (
+        created?.id
+      ) {
+
+        setCreatedWalletId(
+          created.id
+        );
+
+      }
+
+
+      setCreatingWallet(false);
+
+    }
+
+    catch (err) {
+
+      console.error(
+        "Wallet creation:",
+        err
+      );
+
+
+      setCreatingWallet(false);
+
+
+      const message =
+        err?.message ||
+        String(err) ||
+        "";
+
+
+      /*
+       * This is not really an error.
+       * It means Privy already has the wallet.
+       */
+      if (
+        message
+          .toLowerCase()
+          .includes(
+            "already has an embedded wallet"
+          )
+      ) {
+
+        setWalletError("");
+
+        return;
+
+      }
+
+
+      setWalletError(
+        message ||
+        "Could not create Rebound wallet."
+      );
+
+    }
+
+  }
+
+
+
+  /*
+   * Give Privy time to load an existing
+   * embedded wallet before attempting creation.
+   */
+  useEffect(
+    () => {
+
+      if (
+        !ready ||
+        !walletsReady ||
+        !authenticated
+      ) {
+
+        return;
+      }
+
+
+      if (reboundAddress) {
+
+        walletCreationAttempted.current =
+          true;
+
+        return;
+      }
+
+
+      if (
+        walletCreationAttempted.current
+      ) {
+
+        return;
+      }
+
+
+      const timer =
+        setTimeout(
+          () => {
+
+            if (
+              !reboundAddress
+            ) {
+
+              walletCreationAttempted.current =
+                true;
+
+              createReboundWallet();
+
+            }
+
+          },
+
+          1800
+        );
+
+
+      return () =>
+        clearTimeout(timer);
+
+    },
+
+    [
+      ready,
+      walletsReady,
+      authenticated,
+      reboundAddress
+    ]
+  );
+
+
+
+  /*
+  ==================================================
+  ACCOUNT SYNC WITH CLOUDFLARE / D1
+  ==================================================
+  */
+
+
+  useEffect(
+    () => {
+
+      if (
+        !authenticated ||
+        !tokenReady ||
+        !user?.id ||
+        !displayedPhantomAddress ||
+        !reboundAddress
+      ) {
+
+        return;
+      }
+
+
+      const syncKey =
+        [
+          user.id,
+          displayedPhantomAddress,
+          reboundAddress
+        ].join(":");
+
+
+      if (
+        syncAttempted.current ===
+        syncKey
+      ) {
+
+        return;
+      }
+
+
+      syncAttempted.current =
+        syncKey;
+
+
+      let cancelled =
+        false;
+
+
+      async function syncAccount() {
+
+        setSyncStatus(
+          "syncing"
+        );
+
+        setSyncError("");
+
+
+        try {
+
+          const accessToken =
+            await getAccessToken();
+
+
+          if (!accessToken) {
+
+            throw new Error(
+              "No Privy access token available."
+            );
+
+          }
+
+
+          const response =
+            await fetch(
+              `${API_BASE}/account/sync`,
+              {
+
+                method:
+                  "POST",
+
+                headers: {
+
+                  "Content-Type":
+                    "application/json",
+
+                  "Authorization":
+                    `Bearer ${accessToken}`
+
+                },
+
+                body:
+                  JSON.stringify({
+
+                    phantomAddress:
+                      displayedPhantomAddress,
+
+                    reboundWalletAddress:
+                      reboundAddress,
+
+                    reboundWalletId:
+                      reboundWalletId
+
+                  })
+
+              }
+            );
+
+
+          const result =
+            await response.json();
+
+
+          if (!response.ok) {
+
+            throw new Error(
+              result?.message ||
+              `Account sync failed (${response.status}).`
+            );
+
+          }
+
+
+          if (!cancelled) {
+
+            setSyncStatus(
+              "synced"
+            );
+
+          }
+
+        }
+
+        catch (err) {
+
+          console.error(
+            "Account sync error:",
+            err
+          );
+
+
+          if (!cancelled) {
+
+            setSyncStatus(
+              "error"
+            );
+
+
+            setSyncError(
+              err?.message ||
+              String(err) ||
+              "Account sync failed."
+            );
+
+          }
+
+        }
+
+      }
+
+
+      syncAccount();
+
+
+      return () => {
+
+        cancelled =
+          true;
+
+      };
+
+    },
+
+    [
+      authenticated,
+      tokenReady,
+      user?.id,
+      displayedPhantomAddress,
+      reboundAddress,
+      reboundWalletId,
       getAccessToken
     ]
   );
@@ -992,9 +1309,7 @@ function App() {
   async function connectPhantom() {
 
     setError("");
-
     setWalletError("");
-
     setBusy(true);
 
     setProgress(
@@ -1011,20 +1326,14 @@ function App() {
       if (!provider) {
 
         throw new Error(
-          "Phantom was not detected. Mobile browser support will be added in the next Rebound step."
+          "Phantom was not detected. Mobile browser support will be added next."
         );
 
       }
 
 
-
-      /*
-       * 1. Connect Phantom
-       */
-
       const connection =
         await provider.connect();
-
 
 
       const address =
@@ -1038,7 +1347,6 @@ function App() {
           ?.toString();
 
 
-
       if (!address) {
 
         throw new Error(
@@ -1048,16 +1356,10 @@ function App() {
       }
 
 
-
       setPhantomAddress(
         address
       );
 
-
-
-      /*
-       * 2. Generate SIWS login message
-       */
 
       setProgress(
         "Preparing secure login…"
@@ -1070,11 +1372,6 @@ function App() {
         });
 
 
-
-      /*
-       * 3. Phantom signs login message
-       */
-
       setProgress(
         "Confirm the login in Phantom…"
       );
@@ -1085,16 +1382,11 @@ function App() {
           .encode(message);
 
 
-
       const signed =
         await provider.signMessage(
-
           encodedMessage,
-
           "utf8"
-
         );
-
 
 
       if (
@@ -1108,17 +1400,11 @@ function App() {
       }
 
 
-
       const signature =
         bytesToBase64(
           signed.signature
         );
 
-
-
-      /*
-       * 4. Privy verifies wallet ownership
-       */
 
       setProgress(
         "Signing in to ASTY Rebound…"
@@ -1129,7 +1415,6 @@ function App() {
         message,
         signature
       });
-
 
 
       setProgress(
@@ -1150,7 +1435,6 @@ function App() {
 
 
       setBusy(false);
-
       setProgress("");
 
 
@@ -1167,13 +1451,10 @@ function App() {
         "Phantom login failed.";
 
 
-
       if (
-        String(message)
+        message
           .toLowerCase()
-          .includes(
-            "user rejected"
-          )
+          .includes("user rejected")
       ) {
 
         message =
@@ -1182,40 +1463,11 @@ function App() {
       }
 
 
-
       setError(
         message
       );
 
     }
-
-  }
-
-
-
-  /*
-  ==================================================
-  MANUAL WALLET RETRY
-  ==================================================
-  */
-
-
-  async function retryWalletCreation() {
-
-    walletCreationAttempted.current =
-      false;
-
-
-    setWalletError("");
-
-    setCreatedWalletAddress("");
-
-
-    await ensureReboundWallet();
-
-
-    walletCreationAttempted.current =
-      true;
 
   }
 
@@ -1231,8 +1483,8 @@ function App() {
   async function handleLogout() {
 
     setError("");
-
     setWalletError("");
+    setSyncError("");
 
     setBusy(true);
 
@@ -1248,10 +1500,21 @@ function App() {
 
       setCreatedWalletAddress("");
 
+      setCreatedWalletId("");
+
       setProgress("");
+
+      setSyncStatus(
+        "waiting"
+      );
+
 
       walletCreationAttempted.current =
         false;
+
+
+      syncAttempted.current =
+        "";
 
 
       setBusy(false);
@@ -1260,13 +1523,9 @@ function App() {
 
     catch (err) {
 
-      console.error(
-        err
-      );
-
+      console.error(err);
 
       setBusy(false);
-
 
       setError(
         "Logout failed."
@@ -1286,13 +1545,8 @@ function App() {
 
 
   const loading =
-
-    !ready
-
-    ||
-
+    !ready ||
     !walletsReady;
-
 
 
   let statusText =
@@ -1301,7 +1555,6 @@ function App() {
 
   let dotClass =
     "dot";
-
 
 
   if (loading) {
@@ -1351,12 +1604,6 @@ function App() {
       className:
         "wrap"
     },
-
-
-
-    /*
-    BRAND
-    */
 
 
     e(
@@ -1415,11 +1662,6 @@ function App() {
 
 
 
-    /*
-    HERO
-    */
-
-
     e(
 
       "section",
@@ -1458,11 +1700,6 @@ function App() {
 
 
 
-    /*
-    MAIN CARD
-    */
-
-
     e(
 
       "section",
@@ -1472,11 +1709,6 @@ function App() {
           "card"
       },
 
-
-
-      /*
-      STATUS
-      */
 
 
       e(
@@ -1507,11 +1739,6 @@ function App() {
 
 
 
-      /*
-      LOGGED OUT
-      */
-
-
       !authenticated
 
       ?
@@ -1532,15 +1759,9 @@ function App() {
             className:
               "primary",
 
-
             disabled:
-
-              loading
-
-              ||
-
+              loading ||
               busy,
-
 
             onClick:
               connectPhantom
@@ -1549,17 +1770,10 @@ function App() {
 
 
           busy
-
-            ?
-
-            "Connecting…"
-
-            :
-
-            "Connect Phantom"
+            ? "Connecting…"
+            : "Connect Phantom"
 
         ),
-
 
 
         busy
@@ -1591,11 +1805,6 @@ function App() {
 
 
 
-      /*
-      LOGGED IN
-      */
-
-
       e(
 
         React.Fragment,
@@ -1612,11 +1821,6 @@ function App() {
               "grid"
           },
 
-
-
-          /*
-          PHANTOM WALLET
-          */
 
 
           e(
@@ -1653,20 +1857,13 @@ function App() {
               },
 
               displayedPhantomAddress
-
               ||
-
               "Connected"
 
             )
 
           ),
 
-
-
-          /*
-          REBOUND WALLET
-          */
 
 
           e(
@@ -1718,25 +1915,14 @@ function App() {
 
               (
                 creatingWallet
-
-                ?
-
-                "Creating Rebound wallet…"
-
-                :
-
-                "Loading Rebound wallet…"
+                  ? "Creating Rebound wallet…"
+                  : "Loading Rebound wallet…"
               )
 
             )
 
           ),
 
-
-
-          /*
-          PRIVY USER
-          */
 
 
           e(
@@ -1773,20 +1959,13 @@ function App() {
               },
 
               user?.id
-
               ||
-
               "—"
 
             )
 
           ),
 
-
-
-          /*
-          LOGIN SESSION
-          */
 
 
           e(
@@ -1833,14 +2012,76 @@ function App() {
 
 
               tokenReady
+                ? "Ready ✓"
+                : "Preparing…"
 
-              ?
+            )
 
-              "Ready ✓"
+          ),
 
-              :
 
-              "Preparing…"
+
+          e(
+
+            "div",
+
+            {
+              className:
+                "row"
+            },
+
+
+            e(
+
+              "div",
+
+              {
+                className:
+                  "label"
+              },
+
+              "Database Sync"
+
+            ),
+
+
+            e(
+
+              "div",
+
+              {
+                className:
+
+                  syncStatus === "synced"
+
+                  ?
+
+                  "value good"
+
+                  :
+
+                  syncStatus === "error"
+
+                  ?
+
+                  "value"
+
+                  :
+
+                  "value waiting"
+              },
+
+
+              syncStatus === "synced"
+                ? "Synced ✓"
+
+              : syncStatus === "syncing"
+                ? "Synchronizing…"
+
+              : syncStatus === "error"
+                ? "Sync failed"
+
+              : "Waiting…"
 
             )
 
@@ -1850,57 +2091,20 @@ function App() {
 
 
 
-        /*
-        WALLET ERROR
-        */
-
-
         walletError
 
         ?
 
         e(
 
-          React.Fragment,
+          "div",
 
-          null,
+          {
+            className:
+              "error"
+          },
 
-
-          e(
-
-            "div",
-
-            {
-              className:
-                "error"
-            },
-
-            walletError
-
-          ),
-
-
-          e(
-
-            "button",
-
-            {
-              className:
-                "retry",
-
-              disabled:
-                creatingWallet,
-
-              onClick:
-                retryWalletCreation
-
-            },
-
-            creatingWallet
-              ? "Creating…"
-              : "Retry Rebound Wallet"
-
-          )
+          walletError
 
         )
 
@@ -1910,16 +2114,36 @@ function App() {
 
 
 
-        /*
-        SUCCESS
-        */
+        syncError
+
+        ?
+
+        e(
+
+          "div",
+
+          {
+            className:
+              "error"
+          },
+
+          syncError
+
+        )
+
+        :
+
+        null,
+
 
 
         reboundAddress
 
         &&
-
         tokenReady
+
+        &&
+        syncStatus === "synced"
 
         ?
 
@@ -1932,7 +2156,7 @@ function App() {
               "info"
           },
 
-          "ASTY Rebound login successful. Phantom and your Rebound wallet are ready."
+          "ASTY Rebound account ready. Phantom, Rebound wallet and database mapping are synchronized."
 
         )
 
@@ -1940,11 +2164,6 @@ function App() {
 
         null,
 
-
-
-        /*
-        LOGOUT
-        */
 
 
         e(
@@ -1972,11 +2191,6 @@ function App() {
 
 
 
-      /*
-      GENERAL ERROR
-      */
-
-
       error
 
       ?
@@ -1998,11 +2212,6 @@ function App() {
 
       null,
 
-
-
-      /*
-      FOOTER
-      */
 
 
       e(
@@ -2028,7 +2237,7 @@ function App() {
 
 /*
 ====================================================
-PRIVY PROVIDER
+PRIVY
 ====================================================
 */
 
