@@ -1,4 +1,4 @@
-// ASTY Rebound API - Helius Balance v1
+// ASTY Rebound API - Deposit Foundation v1
 
 import { PrivyClient } from "@privy-io/node";
 
@@ -120,6 +120,44 @@ function isSolanaAddress(value) {
 }
 
 
+function isTransactionSignature(
+  value
+) {
+  return (
+    typeof value === "string" &&
+    /^[1-9A-HJ-NP-Za-km-z]{80,100}$/
+      .test(value)
+  );
+}
+
+
+function isPositiveAmount(value) {
+  if (
+    typeof value !== "string" &&
+    typeof value !== "number"
+  ) {
+    return false;
+  }
+
+  const text =
+    String(value).trim();
+
+  if (
+    !/^\d+(\.\d+)?$/.test(text)
+  ) {
+    return false;
+  }
+
+  const number =
+    Number(text);
+
+  return (
+    Number.isFinite(number) &&
+    number > 0
+  );
+}
+
+
 function formatUnits(
   rawValue,
   decimals
@@ -237,6 +275,38 @@ async function verifyPrivyRequest(
 
 /*
 ====================================================
+D1 ACCOUNT
+====================================================
+*/
+
+async function getReboundAccount(
+  env,
+  privyUserId
+) {
+  return await env.DB
+    .prepare(
+      `
+      SELECT
+        phantom_address,
+        privy_user_id,
+        rebound_wallet_id,
+        rebound_wallet_address,
+        created_at,
+        updated_at
+      FROM rebound_users
+      WHERE privy_user_id = ?
+      LIMIT 1
+      `
+    )
+    .bind(
+      privyUserId
+    )
+    .first();
+}
+
+
+/*
+====================================================
 HELIUS
 ====================================================
 */
@@ -306,14 +376,6 @@ async function heliusRpc(
     );
   }
 
-  /*
-   * Standard Solana RPC and Helius DAS
-   * normally return their payload in
-   * `result`.
-   *
-   * Keep the fallback for defensive
-   * compatibility.
-   */
   return (
     data?.result ??
     data
@@ -364,11 +426,7 @@ async function getSolBalance(
 
 /*
 ====================================================
-USDC BALANCE - PRIMARY
-
-Helius DAS getTokenAccounts
-
-We only ask for the exact USDC mint.
+USDC BALANCE - HELIUS DAS
 ====================================================
 */
 
@@ -432,9 +490,6 @@ async function getUsdcViaDas(
         USDC_DECIMALS
       ),
 
-    accounts:
-      accounts.length,
-
     method:
       "helius-getTokenAccounts",
   };
@@ -443,12 +498,7 @@ async function getUsdcViaDas(
 
 /*
 ====================================================
-USDC BALANCE - FALLBACK
-
-Standard Solana getTokenAccountsByOwner
-through Helius.
-
-This is intentionally a second method.
+USDC BALANCE - STANDARD RPC FALLBACK
 ====================================================
 */
 
@@ -502,8 +552,7 @@ async function getUsdcViaStandardRpc(
         ?.amount;
 
     if (
-      typeof amount ===
-      "string"
+      typeof amount === "string"
     ) {
       totalRaw +=
         BigInt(amount);
@@ -520,23 +569,11 @@ async function getUsdcViaStandardRpc(
         USDC_DECIMALS
       ),
 
-    accounts:
-      accounts.length,
-
     method:
       "helius-getTokenAccountsByOwner",
   };
 }
 
-
-/*
-====================================================
-USDC BALANCE
-
-Try the targeted Helius DAS method first.
-If that fails, retry with standard RPC.
-====================================================
-*/
 
 async function getUsdcBalance(
   env,
@@ -550,7 +587,7 @@ async function getUsdcBalance(
 
   } catch (error) {
     console.error(
-      "Helius DAS USDC lookup failed, retrying with standard RPC:",
+      "DAS USDC lookup failed; using standard RPC:",
       error
     );
 
@@ -559,6 +596,50 @@ async function getUsdcBalance(
       walletAddress
     );
   }
+}
+
+
+/*
+====================================================
+LATEST BLOCKHASH
+====================================================
+*/
+
+async function getLatestBlockhash(
+  env
+) {
+  const result =
+    await heliusRpc(
+      env,
+      "getLatestBlockhash",
+      [
+        {
+          commitment:
+            "confirmed",
+        },
+      ]
+    );
+
+  const blockhash =
+    result?.value?.blockhash;
+
+  const lastValidBlockHeight =
+    result?.value
+      ?.lastValidBlockHeight;
+
+  if (
+    !blockhash ||
+    !lastValidBlockHeight
+  ) {
+    throw new Error(
+      "Could not obtain a fresh Solana blockhash."
+    );
+  }
+
+  return {
+    blockhash,
+    lastValidBlockHeight,
+  };
 }
 
 
@@ -637,6 +718,12 @@ export default {
 
             accountBalance:
               "GET /account/balance",
+
+            depositContext:
+              "POST /deposit/context",
+
+            transactionStatus:
+              "GET /transaction/status?signature=...",
           },
         }
       );
@@ -763,14 +850,6 @@ export default {
                 Boolean(
                   privy
                 ),
-
-              usersApiAvailable:
-                typeof privy.users ===
-                "function",
-
-              walletsApiAvailable:
-                typeof privy.wallets ===
-                "function",
             },
           }
         );
@@ -844,10 +923,6 @@ export default {
           null;
 
 
-        /*
-         * Validate Phantom address.
-         */
-
         if (
           !isSolanaAddress(
             phantomAddress
@@ -866,10 +941,6 @@ export default {
           );
         }
 
-
-        /*
-         * Validate Rebound address.
-         */
 
         if (
           !isSolanaAddress(
@@ -890,10 +961,6 @@ export default {
         }
 
 
-        /*
-         * They must not be identical.
-         */
-
         if (
           phantomAddress ===
           reboundWalletAddress
@@ -912,37 +979,14 @@ export default {
         }
 
 
-        /*
-         * Existing account by Privy user.
-         */
-
         const existing =
-          await env.DB
-            .prepare(
-              `
-              SELECT
-                phantom_address,
-                privy_user_id,
-                rebound_wallet_id,
-                rebound_wallet_address,
-                created_at,
-                updated_at
-              FROM rebound_users
-              WHERE privy_user_id = ?
-              LIMIT 1
-              `
-            )
-            .bind(
-              privyUserId
-            )
-            .first();
+          await getReboundAccount(
+            env,
+            privyUserId
+          );
 
 
         if (existing) {
-
-          /*
-           * Phantom mapping may never change.
-           */
 
           if (
             existing
@@ -963,10 +1007,6 @@ export default {
           }
 
 
-          /*
-           * Rebound wallet may never change.
-           */
-
           if (
             existing
               .rebound_wallet_address !==
@@ -986,13 +1026,6 @@ export default {
           }
 
 
-          /*
-           * Older test account may not yet
-           * have had the Privy wallet ID.
-           *
-           * Fill it once when available.
-           */
-
           if (
             !existing
               .rebound_wallet_id &&
@@ -1005,8 +1038,7 @@ export default {
                 SET
                   rebound_wallet_id = ?,
                   updated_at = CURRENT_TIMESTAMP
-                WHERE
-                  privy_user_id = ?
+                WHERE privy_user_id = ?
                 `
               )
               .bind(
@@ -1022,8 +1054,7 @@ export default {
                 UPDATE rebound_users
                 SET
                   updated_at = CURRENT_TIMESTAMP
-                WHERE
-                  privy_user_id = ?
+                WHERE privy_user_id = ?
                 `
               )
               .bind(
@@ -1068,11 +1099,6 @@ export default {
         }
 
 
-        /*
-         * Phantom address may also only
-         * belong to one Rebound account.
-         */
-
         const existingPhantom =
           await env.DB
             .prepare(
@@ -1106,10 +1132,6 @@ export default {
           );
         }
 
-
-        /*
-         * Create permanent mapping.
-         */
 
         await env.DB
           .prepare(
@@ -1192,11 +1214,6 @@ export default {
       url.pathname === "/account/balance"
     ) {
       try {
-
-        /*
-         * Verify logged-in Privy user.
-         */
-
         const auth =
           await verifyPrivyRequest(
             request,
@@ -1219,30 +1236,11 @@ export default {
         }
 
 
-        /*
-         * IMPORTANT:
-         *
-         * Wallet comes from our permanent
-         * D1 mapping, never from a wallet
-         * address supplied by the browser.
-         */
-
         const account =
-          await env.DB
-            .prepare(
-              `
-              SELECT
-                phantom_address,
-                rebound_wallet_address
-              FROM rebound_users
-              WHERE privy_user_id = ?
-              LIMIT 1
-              `
-            )
-            .bind(
-              auth.userId
-            )
-            .first();
+          await getReboundAccount(
+            env,
+            auth.userId
+          );
 
 
         if (
@@ -1267,31 +1265,6 @@ export default {
           account
             .rebound_wallet_address;
 
-
-        if (
-          !isSolanaAddress(
-            walletAddress
-          )
-        ) {
-          return json(
-            request,
-            {
-              status:
-                "error",
-
-              message:
-                "Stored Rebound wallet is invalid.",
-            },
-            500
-          );
-        }
-
-
-        /*
-         * Read both balances.
-         *
-         * Both values come from Helius.
-         */
 
         const [
           solBalance,
@@ -1323,7 +1296,6 @@ export default {
               "helius",
 
             balances: {
-
               usdc: {
                 mint:
                   USDC_MINT,
@@ -1336,11 +1308,7 @@ export default {
 
                 ui:
                   usdcBalance.ui,
-
-                method:
-                  usdcBalance.method,
               },
-
 
               sol: {
                 decimals:
@@ -1352,7 +1320,6 @@ export default {
                 ui:
                   solBalance.ui,
               },
-
             },
 
             commitment:
@@ -1366,14 +1333,6 @@ export default {
           error
         );
 
-
-        /*
-         * IMPORTANT:
-         *
-         * Do not return fake zero balances
-         * when the blockchain lookup failed.
-         */
-
         return json(
           request,
           {
@@ -1382,6 +1341,403 @@ export default {
 
             message:
               "Your Rebound Balance is temporarily unavailable.",
+          },
+          503
+        );
+      }
+    }
+
+
+    /*
+    ==================================================
+    DEPOSIT CONTEXT
+    ==================================================
+
+    No transaction is sent here.
+
+    This gives the frontend the authoritative
+    Phantom sender, Rebound destination and a
+    fresh blockhash from Helius.
+    ==================================================
+    */
+
+    if (
+      request.method === "POST" &&
+      url.pathname === "/deposit/context"
+    ) {
+      try {
+        const auth =
+          await verifyPrivyRequest(
+            request,
+            env
+          );
+
+
+        if (!auth.ok) {
+          return json(
+            request,
+            {
+              status:
+                "error",
+
+              message:
+                auth.message,
+            },
+            auth.status
+          );
+        }
+
+
+        const account =
+          await getReboundAccount(
+            env,
+            auth.userId
+          );
+
+
+        if (
+          !account ||
+          !account.phantom_address ||
+          !account.rebound_wallet_address
+        ) {
+          return json(
+            request,
+            {
+              status:
+                "error",
+
+              message:
+                "Rebound account not found.",
+            },
+            404
+          );
+        }
+
+
+        const body =
+          await request.json();
+
+
+        const asset =
+          String(
+            body?.asset || ""
+          ).toUpperCase();
+
+
+        const amount =
+          String(
+            body?.amount || ""
+          ).trim();
+
+
+        if (
+          asset !== "SOL" &&
+          asset !== "USDC"
+        ) {
+          return json(
+            request,
+            {
+              status:
+                "error",
+
+              message:
+                "Unsupported deposit asset.",
+            },
+            400
+          );
+        }
+
+
+        if (
+          !isPositiveAmount(
+            amount
+          )
+        ) {
+          return json(
+            request,
+            {
+              status:
+                "error",
+
+              message:
+                "Enter a valid deposit amount.",
+            },
+            400
+          );
+        }
+
+
+        /*
+         * Prevent more decimal places
+         * than the asset supports.
+         */
+
+        const decimalPart =
+          amount.split(".")[1] || "";
+
+
+        const maxDecimals =
+          asset === "USDC"
+            ? USDC_DECIMALS
+            : SOL_DECIMALS;
+
+
+        if (
+          decimalPart.length >
+          maxDecimals
+        ) {
+          return json(
+            request,
+            {
+              status:
+                "error",
+
+              message:
+                `${asset} supports a maximum of ${maxDecimals} decimal places.`,
+            },
+            400
+          );
+        }
+
+
+        const latest =
+          await getLatestBlockhash(
+            env
+          );
+
+
+        return json(
+          request,
+          {
+            status:
+              "ok",
+
+            chain:
+              "solana:mainnet",
+
+            asset,
+
+            amount,
+
+            decimals:
+              maxDecimals,
+
+            from:
+              account
+                .phantom_address,
+
+            to:
+              account
+                .rebound_wallet_address,
+
+            usdcMint:
+              USDC_MINT,
+
+            blockhash:
+              latest.blockhash,
+
+            lastValidBlockHeight:
+              latest
+                .lastValidBlockHeight,
+          }
+        );
+
+      } catch (error) {
+        console.error(
+          "Deposit context error:",
+          error
+        );
+
+
+        return json(
+          request,
+          {
+            status:
+              "error",
+
+            message:
+              "Deposit preparation is temporarily unavailable.",
+          },
+          503
+        );
+      }
+    }
+
+
+    /*
+    ==================================================
+    TRANSACTION STATUS
+    ==================================================
+    */
+
+    if (
+      request.method === "GET" &&
+      url.pathname === "/transaction/status"
+    ) {
+      try {
+        const auth =
+          await verifyPrivyRequest(
+            request,
+            env
+          );
+
+
+        if (!auth.ok) {
+          return json(
+            request,
+            {
+              status:
+                "error",
+
+              message:
+                auth.message,
+            },
+            auth.status
+          );
+        }
+
+
+        const signature =
+          url.searchParams.get(
+            "signature"
+          );
+
+
+        if (
+          !isTransactionSignature(
+            signature
+          )
+        ) {
+          return json(
+            request,
+            {
+              status:
+                "error",
+
+              message:
+                "Invalid transaction signature.",
+            },
+            400
+          );
+        }
+
+
+        const result =
+          await heliusRpc(
+            env,
+            "getSignatureStatuses",
+            [
+              [
+                signature
+              ],
+
+              {
+                searchTransactionHistory:
+                  true,
+              },
+            ]
+          );
+
+
+        const transactionStatus =
+          result?.value?.[0] ||
+          null;
+
+
+        if (!transactionStatus) {
+          return json(
+            request,
+            {
+              status:
+                "ok",
+
+              found:
+                false,
+
+              confirmed:
+                false,
+
+              finalized:
+                false,
+
+              confirmationStatus:
+                null,
+
+              transactionError:
+                null,
+            }
+          );
+        }
+
+
+        const confirmationStatus =
+          transactionStatus
+            .confirmationStatus ||
+          null;
+
+
+        const transactionError =
+          transactionStatus
+            .err ||
+          null;
+
+
+        const confirmed =
+          !transactionError &&
+          (
+            confirmationStatus ===
+              "confirmed" ||
+
+            confirmationStatus ===
+              "finalized"
+          );
+
+
+        const finalized =
+          !transactionError &&
+          confirmationStatus ===
+            "finalized";
+
+
+        return json(
+          request,
+          {
+            status:
+              "ok",
+
+            found:
+              true,
+
+            confirmed,
+
+            finalized,
+
+            confirmationStatus,
+
+            transactionError,
+
+            slot:
+              transactionStatus
+                .slot ??
+              null,
+          }
+        );
+
+      } catch (error) {
+        console.error(
+          "Transaction status error:",
+          error
+        );
+
+
+        return json(
+          request,
+          {
+            status:
+              "error",
+
+            message:
+              "Transaction status is temporarily unavailable.",
           },
           503
         );
