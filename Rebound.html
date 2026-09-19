@@ -18,12 +18,15 @@ button{appearance:none;border:0;font-family:inherit;cursor:pointer}button:disabl
 .modal-backdrop{position:fixed;inset:0;z-index:100;display:flex;align-items:flex-end;justify-content:center;padding:18px;background:rgba(3,2,7,.78);backdrop-filter:blur(8px)}.modal{width:min(480px,100%);padding:20px;border:1px solid var(--border);border-radius:24px;background:#131019;box-shadow:0 24px 80px rgba(0,0,0,.55)}.modal-title{margin:0;font-size:22px;font-weight:800}.modal-description{margin:8px 0 18px;color:var(--muted);font-size:12px;line-height:1.5}.input-label{display:block;margin-bottom:8px;color:var(--muted);font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase}.amount-input-wrap{display:flex;align-items:center;gap:10px;padding:3px 13px;border:1px solid var(--border);border-radius:14px;background:rgba(255,255,255,.025)}.amount-input{flex:1;min-width:0;padding:13px 0;border:0;outline:0;color:var(--text);background:transparent;font:inherit;font-size:19px;font-weight:750}.input-asset{color:var(--purple);font-size:13px;font-weight:800}.modal-wallet{margin-top:13px;color:var(--muted);font-size:11px;line-height:1.5}.modal-wallet strong{color:var(--text)}.modal-buttons{display:grid;grid-template-columns:1fr 1.5fr;gap:10px;margin-top:18px}.modal-cancel,.modal-confirm{padding:14px;border-radius:13px;font-weight:800}.modal-cancel{border:1px solid var(--border);color:var(--text);background:transparent}.modal-confirm{color:#130921;background:linear-gradient(90deg,#c49dff,#8d63ff)}
 @media(max-width:540px){.hero{grid-template-columns:minmax(0,1fr) 105px;gap:8px;min-height:200px}.wolf{max-width:105px;max-height:145px}.balance-grid{grid-template-columns:1fr}}@media(min-width:541px){.modal-backdrop{align-items:center}}@media(max-width:370px){.hero{grid-template-columns:1fr}.wolf-wrap{display:none}}
 </style>
+
 <script type="importmap">
 {"imports":{"react":"https://esm.sh/react@18.3.1","react/jsx-runtime":"https://esm.sh/react@18.3.1/jsx-runtime","react-dom":"https://esm.sh/react-dom@18.3.1","react-dom/client":"https://esm.sh/react-dom@18.3.1/client"}}
 </script>
 </head>
+
 <body>
 <div id="root"></div>
+
 <script type="module">
 import React,{useEffect,useMemo,useRef,useState} from "react";
 import {createRoot} from "react-dom/client";
@@ -48,17 +51,72 @@ function formatSol(v){const n=Number(v);return Number.isFinite(n)?n.toLocaleStri
 function formatUsd(v){const n=Number(v);return v!=null&&Number.isFinite(n)?`≈ $${n.toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2})}`:"—"}
 function parseUnitsExact(v,d){const t=String(v).trim();if(!/^\d+(\.\d+)?$/.test(t))throw new Error("Enter a valid amount.");const [w,f=""]=t.split(".");if(f.length>d)throw new Error(`Maximum ${d} decimal places.`);return BigInt(w)*(10n**BigInt(d))+BigInt(f.padEnd(d,"0")||"0")}
 function sleep(ms){return new Promise(r=>setTimeout(r,ms))}
-function isIosDevice(){return /iPhone|iPad|iPod/i.test(navigator.userAgent||"")}
+function isMobileDevice(){return /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent||"")}
 function hasInjectedPhantom(){return Boolean(window.phantom?.solana?.isPhantom||window.solana?.isPhantom)}
-function openInPhantom(){const url=encodeURIComponent(window.location.href);const ref=encodeURIComponent(window.location.origin);window.location.href=`https://phantom.app/ul/browse/${url}?ref=${ref}`}
+function isInjectedPhantomConnected(){const p=window.phantom?.solana||window.solana;return Boolean(p?.isPhantom&&p?.isConnected)}
+
+const PHANTOM_HANDOFF_PARAM="rebound_phantom";
+
+function hasPhantomHandoff(){
+  try{
+    return new URL(window.location.href).searchParams.get(PHANTOM_HANDOFF_PARAM)==="1";
+  }catch{
+    return false;
+  }
+}
+
+function clearPhantomHandoff(){
+  try{
+    const u=new URL(window.location.href);
+    u.searchParams.delete(PHANTOM_HANDOFF_PARAM);
+    const next=u.pathname+(u.search||"")+(u.hash||"");
+    window.history.replaceState({},"",next);
+  }catch{}
+}
+
+function openInPhantom(){
+  const target=new URL(window.location.href);
+  target.searchParams.set(PHANTOM_HANDOFF_PARAM,"1");
+
+  const url=encodeURIComponent(target.toString());
+  const ref=encodeURIComponent(window.location.origin);
+
+  window.location.href=
+    `https://phantom.app/ul/browse/${url}?ref=${ref}`;
+}
 
 function App(){
-  const {ready,authenticated,user,logout,getAccessToken}=usePrivy();
-  const {ready:walletsReady,wallets}=useWallets();
-  const {generateSiwsMessage,loginWithSiws}=useLoginWithSiws();
-  const {createWallet}=useCreateWallet();
-  const {signAndSendTransaction}=useSignAndSendTransaction();
-  const {addSigners,removeSigners}=useSigners();
+
+  const {
+    ready,
+    authenticated,
+    user,
+    logout,
+    getAccessToken
+  }=usePrivy();
+
+  const {
+    ready:walletsReady,
+    wallets
+  }=useWallets();
+
+  const {
+    generateSiwsMessage,
+    loginWithSiws
+  }=useLoginWithSiws();
+
+  const {
+    createWallet
+  }=useCreateWallet();
+
+  const {
+    signAndSendTransaction
+  }=useSignAndSendTransaction();
+
+  const {
+    addSigners,
+    removeSigners
+  }=useSigners();
 
   const [pendingWalletAddress,setPendingWalletAddress]=useState("");
   const [createdWallet,setCreatedWallet]=useState(null);
@@ -67,27 +125,34 @@ function App(){
   const [syncState,setSyncState]=useState("waiting");
   const [error,setError]=useState("");
   const [copied,setCopied]=useState(false);
+
   const [balanceLoading,setBalanceLoading]=useState(false);
   const [balanceAvailable,setBalanceAvailable]=useState(false);
   const [usdcBalance,setUsdcBalance]=useState(null);
   const [solBalance,setSolBalance]=useState(null);
   const [usdcUsdValue,setUsdcUsdValue]=useState(null);
   const [solUsdValue,setSolUsdValue]=useState(null);
+
   const [solTradingReady,setSolTradingReady]=useState(null);
   const [solTradingBalance,setSolTradingBalance]=useState(null);
   const [prepareSolBusy,setPrepareSolBusy]=useState(false);
   const [prepareSolResult,setPrepareSolResult]=useState(null);
+
   const [phantomBrowserHint,setPhantomBrowserHint]=useState(false);
+
   const [depositAsset,setDepositAsset]=useState(null);
   const [depositAmount,setDepositAmount]=useState("");
   const [depositBusy,setDepositBusy]=useState(false);
   const [depositState,setDepositState]=useState(null);
   const [depositSignature,setDepositSignature]=useState("");
   const [depositMessage,setDepositMessage]=useState("");
+
   const [automationBusy,setAutomationBusy]=useState(false);
   const [automationOverride,setAutomationOverride]=useState(null);
+
   const [serverTestBusy,setServerTestBusy]=useState(false);
   const [serverTestResult,setServerTestResult]=useState(null);
+
   const [testSwapModalOpen,setTestSwapModalOpen]=useState(false);
   const [testSwapBusy,setTestSwapBusy]=useState(false);
   const [testSwapResult,setTestSwapResult]=useState(null);
@@ -96,221 +161,2472 @@ function App(){
   const creationAttempted=useRef(false);
   const syncAttempted=useRef("");
   const authAttemptedFor=useRef("");
+  const handoffConnectAttempted=useRef(false);
+
+  const [phantomHandoff,setPhantomHandoff]=useState(
+    ()=>hasPhantomHandoff()
+  );
 
   const {connectWallet}=useConnectWallet({
-    onSuccess:({wallet})=>{if(wallet?.address)setPendingWalletAddress(wallet.address);setPhantomBrowserHint(false);setConnecting(false)},
-    onError:(err)=>{console.error("Connect error:",err);setConnecting(false);const m=String(err?.message||err||"");if(m.toLowerCase().includes("generic_connect_wallet_error")){setPhantomBrowserHint(true);setError("");return}if(m.toLowerCase().includes("cancel"))return;setError(m||"Could not connect Phantom.")}
+
+    onSuccess:({wallet})=>{
+      if(wallet?.address){
+        setPendingWalletAddress(
+          wallet.address
+        );
+      }
+
+      clearPhantomHandoff();
+      setPhantomHandoff(false);
+      setPhantomBrowserHint(false);
+      setConnecting(false);
+    },
+
+    onError:(err)=>{
+      console.error(
+        "Connect error:",
+        err
+      );
+
+      setConnecting(false);
+
+      const m=String(
+        err?.message||
+        err||
+        ""
+      );
+
+      if(
+        m.toLowerCase()
+          .includes(
+            "generic_connect_wallet_error"
+          )
+      ){
+        setPhantomBrowserHint(true);
+        setError("");
+        return;
+      }
+
+      if(
+        m.toLowerCase()
+          .includes(
+            "cancel"
+          )
+      ){
+        return;
+      }
+
+      setError(
+        m||
+        "Could not connect Phantom."
+      );
+    }
   });
 
   async function handleConnect(){
+
     setError("");
-    if(isIosDevice()&&!hasInjectedPhantom()){setPhantomBrowserHint(true);return}
-    setPhantomBrowserHint(false);setConnecting(true);
-    try{await connectWallet({description:"Connect Phantom to ASTY Rebound",walletList:["phantom"],walletChainType:"solana-only"})}catch(err){console.error(err);setConnecting(false)}
-  }
 
-  const connectedPhantomWallet=useMemo(()=>{
-    if(pendingWalletAddress){const exact=wallets.find(w=>w?.address===pendingWalletAddress);if(exact)return exact}
-    return wallets.find(walletLooksLikePhantom)||null;
-  },[wallets,pendingWalletAddress]);
+    if(
+      isMobileDevice() &&
+      !hasInjectedPhantom()
+    ){
+      setPhantomBrowserHint(true);
+      return;
+    }
 
-  async function authenticateWallet(wallet){
-    if(!wallet||authenticated||signingIn||typeof wallet.signMessage!=="function")return;
-    setError("");setSigningIn(true);
+    setPhantomBrowserHint(false);
+    setConnecting(true);
+
     try{
-      const message=await generateSiwsMessage({address:wallet.address});
-      const signed=await wallet.signMessage({message:new TextEncoder().encode(message)});
-      if(!signed?.signature)throw new Error("Phantom did not return a login signature.");
-      await loginWithSiws({message,signature:bytesToBase64(signed.signature)});
+      await connectWallet({
+        description:
+          "Connect Phantom to ASTY Rebound",
+
+        walletList:[
+          "phantom"
+        ],
+
+        walletChainType:
+          "solana-only"
+      });
+    }
+    catch(err){
+      console.error(err);
+      setConnecting(false);
+    }
+  }
+
+  const connectedPhantomWallet=
+    useMemo(
+      ()=>{
+
+        if(
+          pendingWalletAddress
+        ){
+          const exact=
+            wallets.find(
+              w=>
+                w?.address===
+                pendingWalletAddress
+            );
+
+          if(exact){
+            return exact;
+          }
+        }
+
+        return (
+          wallets.find(
+            walletLooksLikePhantom
+          )
+          ||
+          null
+        );
+      },
+      [
+        wallets,
+        pendingWalletAddress
+      ]
+    );
+
+  /*
+   * Mobile browser -> Phantom handoff recovery.
+   *
+   * If Phantom opens a fresh browser tab while an older
+   * Privy web session is still active, the UI must not
+   * continue with that stale session and get stuck on
+   * "Preparing Rebound…".
+   *
+   * We only reset the web login session. The user's
+   * existing Rebound Wallet, D1 mapping and Additional
+   * Signer remain untouched.
+   */
+  useEffect(()=>{
+
+    if(
+      !phantomHandoff ||
+      !ready ||
+      !walletsReady ||
+      handoffConnectAttempted.current ||
+      !hasInjectedPhantom()
+    ){
+      return;
+    }
+
+    const livePhantom=
+      Boolean(
+        connectedPhantomWallet?.address &&
+        typeof connectedPhantomWallet
+          ?.signMessage==="function" &&
+        isInjectedPhantomConnected()
+      );
+
+    if(livePhantom){
+
+      clearPhantomHandoff();
+      setPhantomHandoff(false);
+
+      return;
+    }
+
+    handoffConnectAttempted.current=true;
+
+    let cancelled=false;
+
+    (async()=>{
+
+      setError("");
+      setPhantomBrowserHint(false);
+      setConnecting(true);
+
+      try{
+
+        if(authenticated){
+
+          await logout();
+
+          if(cancelled){
+            return;
+          }
+
+          authAttemptedFor.current="";
+          syncAttempted.current="";
+          creationAttempted.current=false;
+
+          setCreatedWallet(null);
+          setSyncState("waiting");
+
+          await sleep(200);
+        }
+
+        await connectWallet({
+          description:
+            "Connect Phantom to ASTY Rebound",
+
+          walletList:[
+            "phantom"
+          ],
+
+          walletChainType:
+            "solana-only"
+        });
+
+      }
+      catch(err){
+
+        console.error(
+          "Phantom handoff connect error:",
+          err
+        );
+
+        if(!cancelled){
+
+          setConnecting(false);
+
+          const m=String(
+            err?.message||
+            err||
+            ""
+          );
+
+          if(
+            !m.toLowerCase()
+              .includes(
+                "cancel"
+              )
+          ){
+            setError(
+              "Tap Connect Phantom to continue in Phantom."
+            );
+          }
+        }
+      }
+    })();
+
+    return()=>{
+      cancelled=true;
+    };
+
+  },[
+    phantomHandoff,
+    ready,
+    walletsReady,
+    connectedPhantomWallet,
+    authenticated,
+    logout,
+    connectWallet
+  ]);
+
+  async function authenticateWallet(
+    wallet
+  ){
+
+    if(
+      !wallet ||
+      authenticated ||
+      signingIn ||
+      typeof wallet.signMessage!=="function"
+    ){
+      return;
+    }
+
+    setError("");
+    setSigningIn(true);
+
+    try{
+
+      const message=
+        await generateSiwsMessage({
+          address:
+            wallet.address
+        });
+
+      const signed=
+        await wallet.signMessage({
+          message:
+            new TextEncoder()
+              .encode(
+                message
+              )
+        });
+
+      if(
+        !signed?.signature
+      ){
+        throw new Error(
+          "Phantom did not return a login signature."
+        );
+      }
+
+      await loginWithSiws({
+        message,
+
+        signature:
+          bytesToBase64(
+            signed.signature
+          )
+      });
+
       setSigningIn(false);
-    }catch(err){console.error("SIWS login error:",err);setSigningIn(false);const m=String(err?.message||err||"");if(m.toLowerCase().includes("user rejected")){setError("The Phantom login request was cancelled.");return}setError(m||"Could not complete the Phantom login.")}
+    }
+    catch(err){
+
+      console.error(
+        "SIWS login error:",
+        err
+      );
+
+      setSigningIn(false);
+
+      const m=String(
+        err?.message||
+        err||
+        ""
+      );
+
+      if(
+        m.toLowerCase()
+          .includes(
+            "user rejected"
+          )
+      ){
+        setError(
+          "The Phantom login request was cancelled."
+        );
+        return;
+      }
+
+      setError(
+        m||
+        "Could not complete the Phantom login."
+      );
+    }
   }
 
   useEffect(()=>{
-    if(authenticated||signingIn||!connectedPhantomWallet||typeof connectedPhantomWallet.signMessage!=="function")return;
-    const key=connectedPhantomWallet.address;if(!key||authAttemptedFor.current===key)return;authAttemptedFor.current=key;authenticateWallet(connectedPhantomWallet);
-  },[authenticated,signingIn,connectedPhantomWallet]);
 
-  const linkedPhantom=useMemo(()=>user?.linkedAccounts?.find(a=>a?.type==="wallet"&&[a?.walletClientType,a?.connectorType].some(v=>String(v||"").toLowerCase().includes("phantom")))||null,[user]);
-  const phantomAddress=linkedPhantom?.address||connectedPhantomWallet?.address||pendingWalletAddress||"";
+    if(
+      authenticated ||
+      signingIn ||
+      !connectedPhantomWallet ||
+      typeof connectedPhantomWallet
+        .signMessage!=="function"
+    ){
+      return;
+    }
 
-  const linkedEmbedded=useMemo(()=>user?.linkedAccounts?.find(a=>{
-    if(a?.type!=="wallet")return false;
-    const chain=String(a?.chainType||"").toLowerCase();
-    const marker=`${a?.walletClientType||""} ${a?.connectorType||""}`.toLowerCase();
-    return chain==="solana"&&a?.address!==phantomAddress&&(marker.includes("privy")||marker.includes("embedded"));
-  })||null,[user,phantomAddress]);
+    const key=
+      connectedPhantomWallet
+        .address;
 
-  const embeddedFromWallets=useMemo(()=>wallets.find(w=>w?.address!==phantomAddress&&isEmbeddedWallet(w))||null,[wallets,phantomAddress]);
-  const reboundWallet=linkedEmbedded||embeddedFromWallets||createdWallet||null;
-  const reboundAddress=reboundWallet?.address||"";
-  const reboundWalletId=reboundWallet?.id||null;
-  const reboundDelegatedByPrivy=useMemo(()=>Boolean(reboundAddress&&user?.linkedAccounts?.some(a=>a?.type==="wallet"&&a?.address===reboundAddress&&a?.delegated===true)),[user,reboundAddress]);
-  const automatedTradingEnabled=automationOverride!==null?automationOverride:reboundDelegatedByPrivy;
+    if(
+      !key ||
+      authAttemptedFor.current===
+        key
+    ){
+      return;
+    }
+
+    authAttemptedFor.current=
+      key;
+
+    authenticateWallet(
+      connectedPhantomWallet
+    );
+
+  },[
+    authenticated,
+    signingIn,
+    connectedPhantomWallet
+  ]);
+
+  const linkedPhantom=
+    useMemo(
+      ()=>
+        user?.linkedAccounts
+          ?.find(
+            a=>
+              a?.type==="wallet" &&
+              [
+                a?.walletClientType,
+                a?.connectorType
+              ].some(
+                v=>
+                  String(v||"")
+                    .toLowerCase()
+                    .includes(
+                      "phantom"
+                    )
+              )
+          )
+        ||
+        null,
+      [
+        user
+      ]
+    );
+
+  const phantomAddress=
+    linkedPhantom?.address
+    ||
+    connectedPhantomWallet?.address
+    ||
+    pendingWalletAddress
+    ||
+    "";
+
+  const linkedEmbedded=
+    useMemo(
+      ()=>
+        user?.linkedAccounts
+          ?.find(
+            a=>{
+
+              if(
+                a?.type!=="wallet"
+              ){
+                return false;
+              }
+
+              const chain=
+                String(
+                  a?.chainType||
+                  ""
+                ).toLowerCase();
+
+              const marker=
+                `${
+                  a?.walletClientType||
+                  ""
+                } ${
+                  a?.connectorType||
+                  ""
+                }`
+                  .toLowerCase();
+
+              return (
+                chain==="solana"
+                &&
+                a?.address!==
+                  phantomAddress
+                &&
+                (
+                  marker.includes(
+                    "privy"
+                  )
+                  ||
+                  marker.includes(
+                    "embedded"
+                  )
+                )
+              );
+            }
+          )
+        ||
+        null,
+      [
+        user,
+        phantomAddress
+      ]
+    );
+
+  const embeddedFromWallets=
+    useMemo(
+      ()=>
+        wallets.find(
+          w=>
+            w?.address!==
+              phantomAddress
+            &&
+            isEmbeddedWallet(
+              w
+            )
+        )
+        ||
+        null,
+      [
+        wallets,
+        phantomAddress
+      ]
+    );
+
+  const reboundWallet=
+    linkedEmbedded
+    ||
+    embeddedFromWallets
+    ||
+    createdWallet
+    ||
+    null;
+
+  const reboundAddress=
+    reboundWallet?.address
+    ||
+    "";
+
+  const reboundWalletId=
+    reboundWallet?.id
+    ||
+    null;
+
+  const reboundDelegatedByPrivy=
+    useMemo(
+      ()=>
+        Boolean(
+          reboundAddress
+          &&
+          user?.linkedAccounts
+            ?.some(
+              a=>
+                a?.type==="wallet"
+                &&
+                a?.address===
+                  reboundAddress
+                &&
+                a?.delegated===
+                  true
+            )
+        ),
+      [
+        user,
+        reboundAddress
+      ]
+    );
+
+  const automatedTradingEnabled=
+    automationOverride!==null
+      ? automationOverride
+      : reboundDelegatedByPrivy;
+
+  /*
+   * Rebound Wallet loading/creation.
+   *
+   * During a Phantom handoff we explicitly wait until
+   * the actual Phantom connection is resolved. This
+   * prevents the stale-session "Preparing" loop.
+   */
+  useEffect(()=>{
+
+    if(
+      !ready ||
+      !walletsReady ||
+      !authenticated
+    ){
+      return;
+    }
+
+    if(
+      phantomHandoff &&
+      (
+        !connectedPhantomWallet ||
+        connecting
+      )
+    ){
+      return;
+    }
+
+    if(
+      reboundAddress
+    ){
+      creationAttempted.current=
+        true;
+
+      sessionStorage.removeItem(
+        "asty_rebound_wallet_reload"
+      );
+
+      return;
+    }
+
+    if(
+      creationAttempted.current
+    ){
+      return;
+    }
+
+    const timer=
+      setTimeout(
+        async()=>{
+
+          if(
+            reboundAddress ||
+            creationAttempted.current
+          ){
+            return;
+          }
+
+          creationAttempted.current=
+            true;
+
+          try{
+
+            const result=
+              await createWallet();
+
+            const wallet=
+              result?.wallet
+              ||
+              result;
+
+            if(
+              wallet?.address
+            ){
+              setCreatedWallet(
+                wallet
+              );
+            }
+          }
+          catch(err){
+
+            console.error(
+              "Embedded wallet:",
+              err
+            );
+
+            const m=String(
+              err?.message||
+              err||
+              ""
+            );
+
+            if(
+              m.toLowerCase()
+                .includes(
+                  "already has an embedded wallet"
+                )
+            ){
+
+              if(
+                !sessionStorage
+                  .getItem(
+                    "asty_rebound_wallet_reload"
+                  )
+              ){
+
+                sessionStorage
+                  .setItem(
+                    "asty_rebound_wallet_reload",
+                    "1"
+                  );
+
+                setTimeout(
+                  ()=>
+                    location.reload(),
+                  450
+                );
+              }
+
+              return;
+            }
+
+            setError(
+              "Your Rebound Wallet could not be loaded."
+            );
+          }
+        },
+        2500
+      );
+
+    return()=>
+      clearTimeout(
+        timer
+      );
+
+  },[
+    ready,
+    walletsReady,
+    authenticated,
+    reboundAddress,
+    createWallet,
+    phantomHandoff,
+    connectedPhantomWallet,
+    connecting
+  ]);
 
   useEffect(()=>{
-    if(!ready||!walletsReady||!authenticated)return;
-    if(reboundAddress){creationAttempted.current=true;sessionStorage.removeItem("asty_rebound_wallet_reload");return}
-    if(creationAttempted.current)return;
-    const timer=setTimeout(async()=>{
-      if(reboundAddress||creationAttempted.current)return;
-      creationAttempted.current=true;
-      try{
-        const result=await createWallet();const wallet=result?.wallet||result;if(wallet?.address)setCreatedWallet(wallet);
-      }catch(err){
-        console.error("Embedded wallet:",err);const m=String(err?.message||err||"");
-        if(m.toLowerCase().includes("already has an embedded wallet")){if(!sessionStorage.getItem("asty_rebound_wallet_reload")){sessionStorage.setItem("asty_rebound_wallet_reload","1");setTimeout(()=>location.reload(),450)}return}
-        setError("Your Rebound Wallet could not be loaded.");
-      }
-    },2500);
-    return()=>clearTimeout(timer);
-  },[ready,walletsReady,authenticated,reboundAddress,createWallet]);
 
-  useEffect(()=>{
-    if(!authenticated||!user?.id||!phantomAddress||!reboundAddress)return;
-    const key=[user.id,phantomAddress,reboundAddress].join(":");if(syncAttempted.current===key)return;syncAttempted.current=key;let cancelled=false;
+    if(
+      !authenticated ||
+      !user?.id ||
+      !phantomAddress ||
+      !reboundAddress
+    ){
+      return;
+    }
+
+    const key=[
+      user.id,
+      phantomAddress,
+      reboundAddress
+    ].join(":");
+
+    if(
+      syncAttempted.current===
+        key
+    ){
+      return;
+    }
+
+    syncAttempted.current=
+      key;
+
+    let cancelled=false;
+
     (async()=>{
-      setSyncState("syncing");
+
+      setSyncState(
+        "syncing"
+      );
+
       try{
-        const token=await getAccessToken();if(!token)throw new Error("No login session.");
-        const response=await fetch(`${API_BASE}/account/sync`,{method:"POST",headers:{"Content-Type":"application/json","Authorization":`Bearer ${token}`},body:JSON.stringify({phantomAddress,reboundWalletAddress:reboundAddress,reboundWalletId})});
-        const result=await response.json();if(!response.ok)throw new Error(result?.message||"Account setup failed.");if(!cancelled)setSyncState("ready");
-      }catch(err){console.error("D1 sync:",err);if(!cancelled){setSyncState("error");setError(err?.message||"Your Rebound account could not be synchronized.")}}
+
+        const token=
+          await getAccessToken();
+
+        if(
+          !token
+        ){
+          throw new Error(
+            "No login session."
+          );
+        }
+
+        const response=
+          await fetch(
+            `${API_BASE}/account/sync`,
+            {
+              method:
+                "POST",
+
+              headers:{
+                "Content-Type":
+                  "application/json",
+
+                "Authorization":
+                  `Bearer ${token}`
+              },
+
+              body:
+                JSON.stringify({
+                  phantomAddress,
+
+                  reboundWalletAddress:
+                    reboundAddress,
+
+                  reboundWalletId
+                })
+            }
+          );
+
+        const result=
+          await response.json();
+
+        if(
+          !response.ok
+        ){
+          throw new Error(
+            result?.message
+            ||
+            "Account setup failed."
+          );
+        }
+
+        if(
+          !cancelled
+        ){
+          setSyncState(
+            "ready"
+          );
+        }
+      }
+      catch(err){
+
+        console.error(
+          "D1 sync:",
+          err
+        );
+
+        if(
+          !cancelled
+        ){
+          setSyncState(
+            "error"
+          );
+
+          setError(
+            err?.message
+            ||
+            "Your Rebound account could not be synchronized."
+          );
+        }
+      }
     })();
-    return()=>{cancelled=true};
-  },[authenticated,user?.id,phantomAddress,reboundAddress,reboundWalletId,getAccessToken]);
+
+    return()=>{
+      cancelled=true;
+    };
+
+  },[
+    authenticated,
+    user?.id,
+    phantomAddress,
+    reboundAddress,
+    reboundWalletId,
+    getAccessToken
+  ]);
 
   async function loadBalance(){
-    if(!authenticated||syncState!=="ready")return;setBalanceLoading(true);
+
+    if(
+      !authenticated ||
+      syncState!=="ready"
+    ){
+      return;
+    }
+
+    setBalanceLoading(
+      true
+    );
+
     try{
-      const token=await getAccessToken();if(!token)throw new Error("No session.");
-      const response=await fetch(`${API_BASE}/account/balance`,{headers:{"Authorization":`Bearer ${token}`}});const result=await response.json();if(!response.ok)throw new Error(result?.message||"Balance unavailable.");
-      setUsdcBalance(result?.balances?.usdc?.ui??"0");setSolBalance(result?.balances?.sol?.ui??"0");setUsdcUsdValue(result?.balances?.usdc?.usdValue??null);setSolUsdValue(result?.balances?.sol?.usdValue??null);setSolTradingReady(Boolean(result?.balances?.tradingSol?.ready));setSolTradingBalance(result?.balances?.tradingSol?.ui??null);setBalanceAvailable(true);
-    }catch(err){console.error("Balance:",err);setBalanceAvailable(false);setUsdcBalance(null);setSolBalance(null);setUsdcUsdValue(null);setSolUsdValue(null);setSolTradingReady(null);setSolTradingBalance(null)}finally{setBalanceLoading(false)}
+
+      const token=
+        await getAccessToken();
+
+      if(
+        !token
+      ){
+        throw new Error(
+          "No session."
+        );
+      }
+
+      const response=
+        await fetch(
+          `${API_BASE}/account/balance`,
+          {
+            headers:{
+              "Authorization":
+                `Bearer ${token}`
+            }
+          }
+        );
+
+      const result=
+        await response.json();
+
+      if(
+        !response.ok
+      ){
+        throw new Error(
+          result?.message
+          ||
+          "Balance unavailable."
+        );
+      }
+
+      setUsdcBalance(
+        result?.balances
+          ?.usdc
+          ?.ui
+        ??
+        "0"
+      );
+
+      setSolBalance(
+        result?.balances
+          ?.sol
+          ?.ui
+        ??
+        "0"
+      );
+
+      setUsdcUsdValue(
+        result?.balances
+          ?.usdc
+          ?.usdValue
+        ??
+        null
+      );
+
+      setSolUsdValue(
+        result?.balances
+          ?.sol
+          ?.usdValue
+        ??
+        null
+      );
+
+      setSolTradingReady(
+        Boolean(
+          result?.balances
+            ?.tradingSol
+            ?.ready
+        )
+      );
+
+      setSolTradingBalance(
+        result?.balances
+          ?.tradingSol
+          ?.ui
+        ??
+        null
+      );
+
+      setBalanceAvailable(
+        true
+      );
+    }
+    catch(err){
+
+      console.error(
+        "Balance:",
+        err
+      );
+
+      setBalanceAvailable(
+        false
+      );
+
+      setUsdcBalance(
+        null
+      );
+
+      setSolBalance(
+        null
+      );
+
+      setUsdcUsdValue(
+        null
+      );
+
+      setSolUsdValue(
+        null
+      );
+
+      setSolTradingReady(
+        null
+      );
+
+      setSolTradingBalance(
+        null
+      );
+    }
+    finally{
+      setBalanceLoading(
+        false
+      );
+    }
   }
 
-  useEffect(()=>{if(!authenticated||syncState!=="ready")return;loadBalance();const id=setInterval(loadBalance,60000);return()=>clearInterval(id)},[authenticated,syncState]);
+  useEffect(()=>{
 
-  function openDeposit(asset){setError("");setDepositAsset(asset);setDepositAmount(asset==="SOL"?"0.02":"")}
-  function closeDeposit(){if(!depositBusy){setDepositAsset(null);setDepositAmount("")}}
+    if(
+      !authenticated ||
+      syncState!=="ready"
+    ){
+      return;
+    }
 
-  function buildSolTransaction(context){const from=new PublicKey(context.from),to=new PublicKey(context.to);const tx=new Transaction();tx.feePayer=from;tx.recentBlockhash=context.blockhash;tx.add(SystemProgram.transfer({fromPubkey:from,toPubkey:to,lamports:parseUnitsExact(context.amount,9)}));return tx}
-  async function buildUsdcTransaction(context){const from=new PublicKey(context.from),to=new PublicKey(context.to),mint=new PublicKey(USDC_MINT);const sourceAta=await getAssociatedTokenAddress(mint,from,false,TOKEN_PROGRAM_ID,ASSOCIATED_TOKEN_PROGRAM_ID);const destAta=await getAssociatedTokenAddress(mint,to,false,TOKEN_PROGRAM_ID,ASSOCIATED_TOKEN_PROGRAM_ID);const tx=new Transaction();tx.feePayer=from;tx.recentBlockhash=context.blockhash;tx.add(createAssociatedTokenAccountIdempotentInstruction(from,destAta,to,mint,TOKEN_PROGRAM_ID,ASSOCIATED_TOKEN_PROGRAM_ID));tx.add(createTransferCheckedInstruction(sourceAta,mint,destAta,from,parseUnitsExact(context.amount,6),6,[],TOKEN_PROGRAM_ID));return tx}
+    loadBalance();
 
-  async function waitForConfirmation(signature){
-    for(let i=0;i<30;i++){await sleep(2000);try{const token=await getAccessToken();if(!token)continue;const response=await fetch(`${API_BASE}/transaction/status?signature=${encodeURIComponent(signature)}`,{headers:{"Authorization":`Bearer ${token}`}});if(!response.ok)continue;const result=await response.json();if(result?.transactionError)throw new Error("The Solana transaction failed.");if(result?.confirmed)return true}catch(err){if(err?.message==="The Solana transaction failed.")throw err}}
+    const id=
+      setInterval(
+        loadBalance,
+        60000
+      );
+
+    return()=>
+      clearInterval(
+        id
+      );
+
+  },[
+    authenticated,
+    syncState
+  ]);
+
+  function openDeposit(
+    asset
+  ){
+
+    setError("");
+
+    setDepositAsset(
+      asset
+    );
+
+    setDepositAmount(
+      asset==="SOL"
+        ? "0.02"
+        : ""
+    );
+  }
+
+  function closeDeposit(){
+
+    if(
+      !depositBusy
+    ){
+      setDepositAsset(
+        null
+      );
+
+      setDepositAmount(
+        ""
+      );
+    }
+  }
+
+  function buildSolTransaction(
+    context
+  ){
+
+    const from=
+      new PublicKey(
+        context.from
+      );
+
+    const to=
+      new PublicKey(
+        context.to
+      );
+
+    const tx=
+      new Transaction();
+
+    tx.feePayer=
+      from;
+
+    tx.recentBlockhash=
+      context.blockhash;
+
+    tx.add(
+      SystemProgram.transfer({
+        fromPubkey:
+          from,
+
+        toPubkey:
+          to,
+
+        lamports:
+          parseUnitsExact(
+            context.amount,
+            9
+          )
+      })
+    );
+
+    return tx;
+  }
+
+  async function buildUsdcTransaction(
+    context
+  ){
+
+    const from=
+      new PublicKey(
+        context.from
+      );
+
+    const to=
+      new PublicKey(
+        context.to
+      );
+
+    const mint=
+      new PublicKey(
+        USDC_MINT
+      );
+
+    const sourceAta=
+      await getAssociatedTokenAddress(
+        mint,
+        from,
+        false,
+        TOKEN_PROGRAM_ID,
+        ASSOCIATED_TOKEN_PROGRAM_ID
+      );
+
+    const destAta=
+      await getAssociatedTokenAddress(
+        mint,
+        to,
+        false,
+        TOKEN_PROGRAM_ID,
+        ASSOCIATED_TOKEN_PROGRAM_ID
+      );
+
+    const tx=
+      new Transaction();
+
+    tx.feePayer=
+      from;
+
+    tx.recentBlockhash=
+      context.blockhash;
+
+    tx.add(
+      createAssociatedTokenAccountIdempotentInstruction(
+        from,
+        destAta,
+        to,
+        mint,
+        TOKEN_PROGRAM_ID,
+        ASSOCIATED_TOKEN_PROGRAM_ID
+      )
+    );
+
+    tx.add(
+      createTransferCheckedInstruction(
+        sourceAta,
+        mint,
+        destAta,
+        from,
+        parseUnitsExact(
+          context.amount,
+          6
+        ),
+        6,
+        [],
+        TOKEN_PROGRAM_ID
+      )
+    );
+
+    return tx;
+  }
+
+  async function waitForConfirmation(
+    signature
+  ){
+
+    for(
+      let i=0;
+      i<30;
+      i++
+    ){
+
+      await sleep(
+        2000
+      );
+
+      try{
+
+        const token=
+          await getAccessToken();
+
+        if(
+          !token
+        ){
+          continue;
+        }
+
+        const response=
+          await fetch(
+            `${API_BASE}/transaction/status?signature=${encodeURIComponent(signature)}`,
+            {
+              headers:{
+                "Authorization":
+                  `Bearer ${token}`
+              }
+            }
+          );
+
+        if(
+          !response.ok
+        ){
+          continue;
+        }
+
+        const result=
+          await response.json();
+
+        if(
+          result?.transactionError
+        ){
+          throw new Error(
+            "The Solana transaction failed."
+          );
+        }
+
+        if(
+          result?.confirmed
+        ){
+          return true;
+        }
+      }
+      catch(err){
+
+        if(
+          err?.message===
+          "The Solana transaction failed."
+        ){
+          throw err;
+        }
+      }
+    }
+
     return false;
   }
 
   async function sendDeposit(){
-    if(!depositAsset||depositBusy)return;setError("");setDepositMessage("");setDepositState(null);const amount=String(depositAmount).trim();
-    if(!amount||Number(amount)<=0){setError("Enter a valid deposit amount.");return}
-    if(!connectedPhantomWallet?.address){setError("Phantom must be connected before making a deposit.");return}
-    setDepositBusy(true);
+
+    if(
+      !depositAsset ||
+      depositBusy
+    ){
+      return;
+    }
+
+    setError("");
+    setDepositMessage("");
+    setDepositState(null);
+
+    const amount=
+      String(
+        depositAmount
+      ).trim();
+
+    if(
+      !amount ||
+      Number(amount)<=0
+    ){
+      setError(
+        "Enter a valid deposit amount."
+      );
+      return;
+    }
+
+    if(
+      !connectedPhantomWallet
+        ?.address
+    ){
+      setError(
+        "Phantom must be connected before making a deposit."
+      );
+      return;
+    }
+
+    setDepositBusy(
+      true
+    );
+
     try{
-      const token=await getAccessToken();if(!token)throw new Error("Your login session has expired.");
-      const response=await fetch(`${API_BASE}/deposit/context`,{method:"POST",headers:{"Content-Type":"application/json","Authorization":`Bearer ${token}`},body:JSON.stringify({asset:depositAsset,amount})});const context=await response.json();if(!response.ok)throw new Error(context?.message||"Deposit could not be prepared.");
-      if(connectedPhantomWallet.address!==context.from)throw new Error("The connected Phantom wallet does not match your Rebound account.");
-      const tx=depositAsset==="SOL"?buildSolTransaction(context):await buildUsdcTransaction(context);const serialized=tx.serialize({requireAllSignatures:false,verifySignatures:false});
-      const result=await signAndSendTransaction({transaction:new Uint8Array(serialized),wallet:connectedPhantomWallet,options:{skipSimulation:false,uiOptions:{showWalletUIs:true}}});const signature=signatureToBase58(result.signature);
-      setDepositSignature(signature);setDepositState("pending");setDepositMessage(`${depositAsset} deposit sent. Waiting for Solana confirmation…`);setDepositAsset(null);setDepositAmount("");
-      const confirmed=await waitForConfirmation(signature);if(confirmed){setDepositState("success");setDepositMessage(`${depositAsset} deposit confirmed ✓`);await loadBalance()}else{setDepositMessage("Transaction sent. Confirmation is taking longer than expected; the balance will refresh automatically.")}
-    }catch(err){console.error("Deposit error:",err);const m=String(err?.message||err||"");setError(m.toLowerCase().includes("reject")||m.toLowerCase().includes("cancel")?"The deposit was cancelled in Phantom.":m||"The deposit could not be completed.")}finally{setDepositBusy(false)}
-  }
 
-  async function enableAutomatedTrading(){
-    if(!accountReady||!reboundAddress||automationBusy)return;setError("");setServerTestResult(null);setAutomationBusy(true);
-    try{
-      const token=await getAccessToken();if(!token)throw new Error("Your login session has expired.");const response=await fetch(`${API_BASE}/trading/authorization-config`,{headers:{"Authorization":`Bearer ${token}`}});const config=await response.json();if(!response.ok)throw new Error(config?.message||"Automated trading could not be enabled.");if(config?.wallet!==reboundAddress)throw new Error("Rebound Wallet verification failed.");if(!config?.signerId||!config?.policyId)throw new Error("Trading authorization configuration is incomplete.");await addSigners({address:reboundAddress,signers:[{signerId:config.signerId,policyIds:[config.policyId]}]});setAutomationOverride(true);
-    }catch(err){console.error("Enable automated trading:",err);const m=String(err?.message||err||"");setError(m.toLowerCase().includes("reject")||m.toLowerCase().includes("cancel")?"Automated trading authorization was cancelled.":m||"Automated trading could not be enabled.")}finally{setAutomationBusy(false)}
-  }
+      const token=
+        await getAccessToken();
 
-  async function disableAutomatedTrading(){
-    if(!reboundAddress||automationBusy)return;setError("");setServerTestResult(null);setAutomationBusy(true);
-    try{await removeSigners({address:reboundAddress});setAutomationOverride(false)}catch(err){console.error("Disable automated trading:",err);setError(err?.message||"Automated trading authorization could not be revoked.")}finally{setAutomationBusy(false)}
-  }
+      if(
+        !token
+      ){
+        throw new Error(
+          "Your login session has expired."
+        );
+      }
 
-  async function prepareSolTrading(){
-    if(!accountReady||!reboundAddress||prepareSolBusy||depositBusy||testSwapBusy)return;setError("");setPrepareSolResult(null);
-    if(!connectedPhantomWallet?.address){setError("Open ASTY Rebound in Phantom before preparing SOL trading.");return}
-    setPrepareSolBusy(true);
-    try{
-      const token=await getAccessToken();if(!token)throw new Error("Your login session has expired.");const response=await fetch(`${API_BASE}/trading/prepare-sol-context`,{method:"POST",headers:{"Authorization":`Bearer ${token}`}});const context=await response.json();if(!response.ok)throw new Error(context?.message||"SOL trading preparation could not be started.");
-      if(context?.alreadyReady){setSolTradingReady(true);setPrepareSolResult({state:"success",message:"SOL Trading Ready ✓"});await loadBalance();return}
-      if(context?.from!==connectedPhantomWallet.address||context?.owner!==reboundAddress||context?.wsolMint!==WSOL_MINT)throw new Error("SOL trading preparation verification failed.");
-      const payer=new PublicKey(context.from),owner=new PublicKey(context.owner),mint=new PublicKey(WSOL_MINT);const ata=await getAssociatedTokenAddress(mint,owner,false,TOKEN_PROGRAM_ID,ASSOCIATED_TOKEN_PROGRAM_ID);const tx=new Transaction();tx.feePayer=payer;tx.recentBlockhash=context.blockhash;tx.add(createAssociatedTokenAccountIdempotentInstruction(payer,ata,owner,mint,TOKEN_PROGRAM_ID,ASSOCIATED_TOKEN_PROGRAM_ID));const serialized=tx.serialize({requireAllSignatures:false,verifySignatures:false});
-      const result=await signAndSendTransaction({transaction:new Uint8Array(serialized),wallet:connectedPhantomWallet,options:{skipSimulation:false,uiOptions:{showWalletUIs:true}}});const signature=signatureToBase58(result.signature);setPrepareSolResult({state:"pending",message:"Preparing SOL trading account. Waiting for Solana confirmation…",signature});
-      const confirmed=await waitForConfirmation(signature);if(!confirmed){setPrepareSolResult({state:"pending",message:"Preparation was sent, but confirmation is taking longer than expected.",signature});return}
-      setSolTradingReady(true);setPrepareSolResult({state:"success",message:"SOL Trading Ready ✓",signature});await loadBalance();
-    }catch(err){console.error("Prepare SOL trading:",err);const m=String(err?.message||err||"");setPrepareSolResult({state:"error",message:m.toLowerCase().includes("reject")||m.toLowerCase().includes("cancel")?"SOL trading preparation was cancelled in Phantom.":m||"SOL trading preparation failed."})}finally{setPrepareSolBusy(false)}
-  }
+      const response=
+        await fetch(
+          `${API_BASE}/deposit/context`,
+          {
+            method:
+              "POST",
 
-  async function verifyServerAccess(){
-    if(!accountReady||!automatedTradingEnabled||serverTestBusy||automationBusy)return;setError("");setServerTestResult(null);setServerTestBusy(true);
-    try{const token=await getAccessToken();if(!token)throw new Error("Your login session has expired.");const response=await fetch(`${API_BASE}/trading/server-signer-test`,{method:"POST",headers:{"Authorization":`Bearer ${token}`}});let result;try{result=await response.json()}catch{result={status:"error",result:"invalid_response",message:"The server returned an invalid response."}}setServerTestResult(result)}catch(err){console.error("Verify server access:",err);setServerTestResult({status:"error",result:"request_failed",message:err?.message||"Server access could not be verified."})}finally{setServerTestBusy(false)}
-  }
+            headers:{
+              "Content-Type":
+                "application/json",
 
-  function openTestSwap(){if(accountReady&&automatedTradingEnabled&&!testSwapBusy&&!automationBusy&&!serverTestBusy){setError("");setTestSwapModalOpen(true)}}
-  function closeTestSwap(){if(!testSwapBusy)setTestSwapModalOpen(false)}
+              "Authorization":
+                `Bearer ${token}`
+            },
 
-  async function executeTestSwap(){
-    if(!accountReady||!automatedTradingEnabled||testSwapBusy)return;setError("");setTestSwapResult(null);setTestSwapSignature("");setTestSwapBusy(true);
-    try{
-      const token=await getAccessToken();if(!token)throw new Error("Your login session has expired.");const response=await fetch(`${API_BASE}/trading/test-swap`,{method:"POST",headers:{"Content-Type":"application/json","Authorization":`Bearer ${token}`},body:JSON.stringify({confirm:"TEST_SWAP_0_10_USDC_TO_SOL"})});let result;try{result=await response.json()}catch{result={status:"error",message:"The server returned an invalid response."}}
-      if(!response.ok){setTestSwapModalOpen(false);let m=result?.message||"The 0.10 USDC test swap could not be submitted.";if(result?.stage==="policy-preflight"&&Array.isArray(result?.unexpectedPrograms)&&result.unexpectedPrograms.length)m+=` Programs: ${result.unexpectedPrograms.join(", ")}`;if(result?.needsPreparation)setSolTradingReady(false);setTestSwapResult({state:"error",message:m,stage:result?.stage||null});return}
-      const signature=result?.signature||"";if(!signature)throw new Error("The server did not return a Solana transaction signature.");setTestSwapSignature(signature);setTestSwapModalOpen(false);setTestSwapResult({state:"pending",message:"0.10 USDC test swap submitted. Waiting for Solana confirmation…"});const confirmed=await waitForConfirmation(signature);if(confirmed){setTestSwapResult({state:"success",message:"Test Swap Confirmed ✓ 0.10 USDC was swapped to SOL through Jupiter using the Rebound backend signer."});await loadBalance()}else setTestSwapResult({state:"pending",message:"The test swap was submitted, but confirmation is taking longer than expected. Check the transaction on Solscan."});
-    }catch(err){console.error("Test swap error:",err);setTestSwapModalOpen(false);setTestSwapResult({state:"error",message:err?.message||"The 0.10 USDC test swap could not be completed."})}finally{setTestSwapBusy(false)}
-  }
+            body:
+              JSON.stringify({
+                asset:
+                  depositAsset,
 
-  async function copyWallet(){if(!reboundAddress)return;try{await navigator.clipboard.writeText(reboundAddress);setCopied(true);setTimeout(()=>setCopied(false),1400)}catch{setCopied(false)}}
+                amount
+              })
+          }
+        );
 
-  async function handleLogout(){
-    setError("");setUsdcBalance(null);setSolBalance(null);setUsdcUsdValue(null);setSolUsdValue(null);setSolTradingReady(null);setSolTradingBalance(null);setBalanceAvailable(false);setSyncState("waiting");setDepositAsset(null);setDepositState(null);setDepositSignature("");setDepositMessage("");setAutomationOverride(null);setServerTestResult(null);setPrepareSolResult(null);setTestSwapModalOpen(false);setTestSwapResult(null);setTestSwapSignature("");syncAttempted.current="";authAttemptedFor.current="";creationAttempted.current=false;setPendingWalletAddress("");setCreatedWallet(null);await logout()
-  }
+      const context=
+        await response.json();
 
-  const loading=!ready||!walletsReady;
-  const accountReady=authenticated&&Boolean(reboundAddress)&&syncState==="ready";
+      if(
+        !response.ok
+      ){
+        throw new Error(
+          context?.message
+          ||
+          "Deposit could not be prepared."
+        );
+      }
 
-  let statusText="Not connected",dotClass="dot";
-  if(loading){statusText="Loading Rebound…";dotClass="dot loading"}
-  else if(connecting){statusText="Connecting Phantom…";dotClass="dot loading"}
-  else if(signingIn){statusText="Confirm login in Phantom…";dotClass="dot loading"}
-  else if(authenticated&&!accountReady){statusText="Preparing Rebound…";dotClass="dot loading"}
-  else if(accountReady){statusText="Connected";dotClass="dot ready"}
+      if(
+        connectedPhantomWallet
+          .address!==
+        context.from
+      ){
+        throw new Error(
+          "The connected Phantom wallet does not match your Rebound account."
+        );
+      }
 
-  let gasClass="pill warn",gasText="Recommended: 0.02 SOL";
-  if(balanceAvailable&&solBalance!==null){
-    const gas=Number(solBalance);
-    if(gas>=.02){gasClass="pill good";gasText="Gas reserve ready ✓"}
-    else if(gas<.005){gasClass="pill bad";gasText="Gas reserve low"}
-    else gasText="Below recommended 0.02 SOL"
-  }
+      const tx=
+        depositAsset==="SOL"
+          ? buildSolTransaction(
+              context
+            )
+          : await buildUsdcTransaction(
+              context
+            );
 
-  const externalIosBrowser=isIosDevice()&&!hasInjectedPhantom();
+      const serialized=
+        tx.serialize({
+          requireAllSignatures:
+            false,
 
-  let serverClass="status-box failure",serverText="";
-  if(serverTestResult){
-    if(serverTestResult.result==="blocked_as_expected"){
-      serverClass="status-box success";
-      serverText="Server Access Verified ✓ The backend signer reached Privy and the trading policy blocked the non-trading test exactly as intended.";
-    }else if(serverTestResult.result==="unexpectedly_allowed"){
-      serverClass="status-box pending";
-      serverText="Security warning: signMessage was unexpectedly allowed. Do not enable real trading until the policy is reviewed.";
-    }else{
-      serverText=serverTestResult?.message||"Server access verification failed.";
+          verifySignatures:
+            false
+        });
+
+      const result=
+        await signAndSendTransaction({
+          transaction:
+            new Uint8Array(
+              serialized
+            ),
+
+          wallet:
+            connectedPhantomWallet,
+
+          options:{
+            skipSimulation:
+              false,
+
+            uiOptions:{
+              showWalletUIs:
+                true
+            }
+          }
+        });
+
+      const signature=
+        signatureToBase58(
+          result.signature
+        );
+
+      setDepositSignature(
+        signature
+      );
+
+      setDepositState(
+        "pending"
+      );
+
+      setDepositMessage(
+        `${depositAsset} deposit sent. Waiting for Solana confirmation…`
+      );
+
+      setDepositAsset(
+        null
+      );
+
+      setDepositAmount(
+        ""
+      );
+
+      const confirmed=
+        await waitForConfirmation(
+          signature
+        );
+
+      if(
+        confirmed
+      ){
+        setDepositState(
+          "success"
+        );
+
+        setDepositMessage(
+          `${depositAsset} deposit confirmed ✓`
+        );
+
+        await loadBalance();
+      }
+      else{
+        setDepositMessage(
+          "Transaction sent. Confirmation is taking longer than expected; the balance will refresh automatically."
+        );
+      }
+    }
+    catch(err){
+
+      console.error(
+        "Deposit error:",
+        err
+      );
+
+      const m=String(
+        err?.message||
+        err||
+        ""
+      );
+
+      setError(
+        m.toLowerCase()
+          .includes(
+            "reject"
+          )
+        ||
+        m.toLowerCase()
+          .includes(
+            "cancel"
+          )
+          ? "The deposit was cancelled in Phantom."
+          : m
+            ||
+            "The deposit could not be completed."
+      );
+    }
+    finally{
+      setDepositBusy(
+        false
+      );
     }
   }
 
-  const renderResult=(result)=>result
-    ? e(
-        "div",
-        {className:`status-box ${result.state==="success"?"success":result.state==="pending"?"pending":"failure"}`},
-        e("div",null,result.message),
-        result.signature
-          ? e("a",{className:"tx-link",href:`https://solscan.io/tx/${result.signature}`,target:"_blank",rel:"noopener noreferrer"},"View transaction")
-          : null
-      )
-    : null;
+  async function enableAutomatedTrading(){
+
+    if(
+      !accountReady ||
+      !reboundAddress ||
+      automationBusy
+    ){
+      return;
+    }
+
+    setError("");
+    setServerTestResult(null);
+    setAutomationBusy(true);
+
+    try{
+
+      const token=
+        await getAccessToken();
+
+      if(
+        !token
+      ){
+        throw new Error(
+          "Your login session has expired."
+        );
+      }
+
+      const response=
+        await fetch(
+          `${API_BASE}/trading/authorization-config`,
+          {
+            headers:{
+              "Authorization":
+                `Bearer ${token}`
+            }
+          }
+        );
+
+      const config=
+        await response.json();
+
+      if(
+        !response.ok
+      ){
+        throw new Error(
+          config?.message
+          ||
+          "Automated trading could not be enabled."
+        );
+      }
+
+      if(
+        config?.wallet!==
+        reboundAddress
+      ){
+        throw new Error(
+          "Rebound Wallet verification failed."
+        );
+      }
+
+      if(
+        !config?.signerId ||
+        !config?.policyId
+      ){
+        throw new Error(
+          "Trading authorization configuration is incomplete."
+        );
+      }
+
+      await addSigners({
+        address:
+          reboundAddress,
+
+        signers:[
+          {
+            signerId:
+              config.signerId,
+
+            policyIds:[
+              config.policyId
+            ]
+          }
+        ]
+      });
+
+      setAutomationOverride(
+        true
+      );
+    }
+    catch(err){
+
+      console.error(
+        "Enable automated trading:",
+        err
+      );
+
+      const m=String(
+        err?.message||
+        err||
+        ""
+      );
+
+      setError(
+        m.toLowerCase()
+          .includes(
+            "reject"
+          )
+        ||
+        m.toLowerCase()
+          .includes(
+            "cancel"
+          )
+          ? "Automated trading authorization was cancelled."
+          : m
+            ||
+            "Automated trading could not be enabled."
+      );
+    }
+    finally{
+      setAutomationBusy(
+        false
+      );
+    }
+  }
+
+  async function disableAutomatedTrading(){
+
+    if(
+      !reboundAddress ||
+      automationBusy
+    ){
+      return;
+    }
+
+    setError("");
+    setServerTestResult(null);
+    setAutomationBusy(true);
+
+    try{
+
+      await removeSigners({
+        address:
+          reboundAddress
+      });
+
+      setAutomationOverride(
+        false
+      );
+    }
+    catch(err){
+
+      console.error(
+        "Disable automated trading:",
+        err
+      );
+
+      setError(
+        err?.message
+        ||
+        "Automated trading authorization could not be revoked."
+      );
+    }
+    finally{
+      setAutomationBusy(
+        false
+      );
+    }
+  }
+
+  async function prepareSolTrading(){
+
+    if(
+      !accountReady ||
+      !reboundAddress ||
+      prepareSolBusy ||
+      depositBusy ||
+      testSwapBusy
+    ){
+      return;
+    }
+
+    setError("");
+    setPrepareSolResult(null);
+
+    if(
+      !connectedPhantomWallet
+        ?.address
+    ){
+      setError(
+        "Open ASTY Rebound in Phantom before preparing SOL trading."
+      );
+      return;
+    }
+
+    setPrepareSolBusy(
+      true
+    );
+
+    try{
+
+      const token=
+        await getAccessToken();
+
+      if(
+        !token
+      ){
+        throw new Error(
+          "Your login session has expired."
+        );
+      }
+
+      const response=
+        await fetch(
+          `${API_BASE}/trading/prepare-sol-context`,
+          {
+            method:
+              "POST",
+
+            headers:{
+              "Authorization":
+                `Bearer ${token}`
+            }
+          }
+        );
+
+      const context=
+        await response.json();
+
+      if(
+        !response.ok
+      ){
+        throw new Error(
+          context?.message
+          ||
+          "SOL trading preparation could not be started."
+        );
+      }
+
+      if(
+        context?.alreadyReady
+      ){
+        setSolTradingReady(
+          true
+        );
+
+        setPrepareSolResult({
+          state:
+            "success",
+
+          message:
+            "SOL Trading Ready ✓"
+        });
+
+        await loadBalance();
+
+        return;
+      }
+
+      if(
+        context?.from!==
+          connectedPhantomWallet
+            .address
+        ||
+        context?.owner!==
+          reboundAddress
+        ||
+        context?.wsolMint!==
+          WSOL_MINT
+      ){
+        throw new Error(
+          "SOL trading preparation verification failed."
+        );
+      }
+
+      const payer=
+        new PublicKey(
+          context.from
+        );
+
+      const owner=
+        new PublicKey(
+          context.owner
+        );
+
+      const mint=
+        new PublicKey(
+          WSOL_MINT
+        );
+
+      const ata=
+        await getAssociatedTokenAddress(
+          mint,
+          owner,
+          false,
+          TOKEN_PROGRAM_ID,
+          ASSOCIATED_TOKEN_PROGRAM_ID
+        );
+
+      const tx=
+        new Transaction();
+
+      tx.feePayer=
+        payer;
+
+      tx.recentBlockhash=
+        context.blockhash;
+
+      tx.add(
+        createAssociatedTokenAccountIdempotentInstruction(
+          payer,
+          ata,
+          owner,
+          mint,
+          TOKEN_PROGRAM_ID,
+          ASSOCIATED_TOKEN_PROGRAM_ID
+        )
+      );
+
+      const serialized=
+        tx.serialize({
+          requireAllSignatures:
+            false,
+
+          verifySignatures:
+            false
+        });
+
+      const result=
+        await signAndSendTransaction({
+          transaction:
+            new Uint8Array(
+              serialized
+            ),
+
+          wallet:
+            connectedPhantomWallet,
+
+          options:{
+            skipSimulation:
+              false,
+
+            uiOptions:{
+              showWalletUIs:
+                true
+            }
+          }
+        });
+
+      const signature=
+        signatureToBase58(
+          result.signature
+        );
+
+      setPrepareSolResult({
+        state:
+          "pending",
+
+        message:
+          "Preparing SOL trading account. Waiting for Solana confirmation…",
+
+        signature
+      });
+
+      const confirmed=
+        await waitForConfirmation(
+          signature
+        );
+
+      if(
+        !confirmed
+      ){
+        setPrepareSolResult({
+          state:
+            "pending",
+
+          message:
+            "Preparation was sent, but confirmation is taking longer than expected.",
+
+          signature
+        });
+
+        return;
+      }
+
+      setSolTradingReady(
+        true
+      );
+
+      setPrepareSolResult({
+        state:
+          "success",
+
+        message:
+          "SOL Trading Ready ✓",
+
+        signature
+      });
+
+      await loadBalance();
+    }
+    catch(err){
+
+      console.error(
+        "Prepare SOL trading:",
+        err
+      );
+
+      const m=String(
+        err?.message||
+        err||
+        ""
+      );
+
+      setPrepareSolResult({
+        state:
+          "error",
+
+        message:
+          m.toLowerCase()
+            .includes(
+              "reject"
+            )
+          ||
+          m.toLowerCase()
+            .includes(
+              "cancel"
+            )
+            ? "SOL trading preparation was cancelled in Phantom."
+            : m
+              ||
+              "SOL trading preparation failed."
+      });
+    }
+    finally{
+      setPrepareSolBusy(
+        false
+      );
+    }
+  }
+
+  async function verifyServerAccess(){
+
+    if(
+      !accountReady ||
+      !automatedTradingEnabled ||
+      serverTestBusy ||
+      automationBusy
+    ){
+      return;
+    }
+
+    setError("");
+    setServerTestResult(null);
+    setServerTestBusy(true);
+
+    try{
+
+      const token=
+        await getAccessToken();
+
+      if(
+        !token
+      ){
+        throw new Error(
+          "Your login session has expired."
+        );
+      }
+
+      const response=
+        await fetch(
+          `${API_BASE}/trading/server-signer-test`,
+          {
+            method:
+              "POST",
+
+            headers:{
+              "Authorization":
+                `Bearer ${token}`
+            }
+          }
+        );
+
+      let result;
+
+      try{
+        result=
+          await response.json();
+      }
+      catch{
+        result={
+          status:
+            "error",
+
+          result:
+            "invalid_response",
+
+          message:
+            "The server returned an invalid response."
+        };
+      }
+
+      setServerTestResult(
+        result
+      );
+    }
+    catch(err){
+
+      console.error(
+        "Verify server access:",
+        err
+      );
+
+      setServerTestResult({
+        status:
+          "error",
+
+        result:
+          "request_failed",
+
+        message:
+          err?.message
+          ||
+          "Server access could not be verified."
+      });
+    }
+    finally{
+      setServerTestBusy(
+        false
+      );
+    }
+  }
+
+  function openTestSwap(){
+
+    if(
+      accountReady &&
+      automatedTradingEnabled &&
+      !testSwapBusy &&
+      !automationBusy &&
+      !serverTestBusy
+    ){
+      setError("");
+      setTestSwapModalOpen(
+        true
+      );
+    }
+  }
+
+  function closeTestSwap(){
+
+    if(
+      !testSwapBusy
+    ){
+      setTestSwapModalOpen(
+        false
+      );
+    }
+  }
+
+  async function executeTestSwap(){
+
+    if(
+      !accountReady ||
+      !automatedTradingEnabled ||
+      testSwapBusy
+    ){
+      return;
+    }
+
+    setError("");
+    setTestSwapResult(null);
+    setTestSwapSignature("");
+    setTestSwapBusy(true);
+
+    try{
+
+      const token=
+        await getAccessToken();
+
+      if(
+        !token
+      ){
+        throw new Error(
+          "Your login session has expired."
+        );
+      }
+
+      const response=
+        await fetch(
+          `${API_BASE}/trading/test-swap`,
+          {
+            method:
+              "POST",
+
+            headers:{
+              "Content-Type":
+                "application/json",
+
+              "Authorization":
+                `Bearer ${token}`
+            },
+
+            body:
+              JSON.stringify({
+                confirm:
+                  "TEST_SWAP_0_10_USDC_TO_SOL"
+              })
+          }
+        );
+
+      let result;
+
+      try{
+        result=
+          await response.json();
+      }
+      catch{
+        result={
+          status:
+            "error",
+
+          message:
+            "The server returned an invalid response."
+        };
+      }
+
+      if(
+        !response.ok
+      ){
+
+        setTestSwapModalOpen(
+          false
+        );
+
+        let m=
+          result?.message
+          ||
+          "The 0.10 USDC test swap could not be submitted.";
+
+        if(
+          result?.stage===
+            "policy-preflight"
+          &&
+          Array.isArray(
+            result
+              ?.unexpectedPrograms
+          )
+          &&
+          result
+            .unexpectedPrograms
+            .length
+        ){
+          m+=
+            ` Programs: ${result.unexpectedPrograms.join(", ")}`;
+        }
+
+        if(
+          result?.needsPreparation
+        ){
+          setSolTradingReady(
+            false
+          );
+        }
+
+        setTestSwapResult({
+          state:
+            "error",
+
+          message:
+            m,
+
+          stage:
+            result?.stage
+            ||
+            null
+        });
+
+        return;
+      }
+
+      const signature=
+        result?.signature
+        ||
+        "";
+
+      if(
+        !signature
+      ){
+        throw new Error(
+          "The server did not return a Solana transaction signature."
+        );
+      }
+
+      setTestSwapSignature(
+        signature
+      );
+
+      setTestSwapModalOpen(
+        false
+      );
+
+      setTestSwapResult({
+        state:
+          "pending",
+
+        message:
+          "0.10 USDC test swap submitted. Waiting for Solana confirmation…"
+      });
+
+      const confirmed=
+        await waitForConfirmation(
+          signature
+        );
+
+      if(
+        confirmed
+      ){
+        setTestSwapResult({
+          state:
+            "success",
+
+          message:
+            "Test Swap Confirmed ✓ 0.10 USDC was swapped to SOL through Jupiter using the Rebound backend signer."
+        });
+
+        await loadBalance();
+      }
+      else{
+        setTestSwapResult({
+          state:
+            "pending",
+
+          message:
+            "The test swap was submitted, but confirmation is taking longer than expected. Check the transaction on Solscan."
+        });
+      }
+    }
+    catch(err){
+
+      console.error(
+        "Test swap error:",
+        err
+      );
+
+      setTestSwapModalOpen(
+        false
+      );
+
+      setTestSwapResult({
+        state:
+          "error",
+
+        message:
+          err?.message
+          ||
+          "The 0.10 USDC test swap could not be completed."
+      });
+    }
+    finally{
+      setTestSwapBusy(
+        false
+      );
+    }
+  }
+
+  async function copyWallet(){
+
+    if(
+      !reboundAddress
+    ){
+      return;
+    }
+
+    try{
+
+      await navigator.clipboard
+        .writeText(
+          reboundAddress
+        );
+
+      setCopied(
+        true
+      );
+
+      setTimeout(
+        ()=>
+          setCopied(
+            false
+          ),
+        1400
+      );
+    }
+    catch{
+      setCopied(
+        false
+      );
+    }
+  }
+
+  async function handleLogout(){
+
+    setError("");
+
+    setUsdcBalance(null);
+    setSolBalance(null);
+    setUsdcUsdValue(null);
+    setSolUsdValue(null);
+
+    setSolTradingReady(null);
+    setSolTradingBalance(null);
+
+    setBalanceAvailable(false);
+    setSyncState("waiting");
+
+    setDepositAsset(null);
+    setDepositState(null);
+    setDepositSignature("");
+    setDepositMessage("");
+
+    setAutomationOverride(null);
+
+    setServerTestResult(null);
+    setPrepareSolResult(null);
+
+    setTestSwapModalOpen(false);
+    setTestSwapResult(null);
+    setTestSwapSignature("");
+
+    syncAttempted.current="";
+    authAttemptedFor.current="";
+    creationAttempted.current=false;
+
+    setPendingWalletAddress("");
+    setCreatedWallet(null);
+
+    await logout();
+  }
+
+  const loading=
+    !ready||
+    !walletsReady;
+
+  const accountReady=
+    authenticated
+    &&
+    Boolean(
+      reboundAddress
+    )
+    &&
+    syncState==="ready";
+
+  let statusText=
+    "Not connected";
+
+  let dotClass=
+    "dot";
+
+  if(
+    loading
+  ){
+    statusText=
+      "Loading Rebound…";
+
+    dotClass=
+      "dot loading";
+  }
+  else if(
+    connecting
+  ){
+    statusText=
+      "Connecting Phantom…";
+
+    dotClass=
+      "dot loading";
+  }
+  else if(
+    signingIn
+  ){
+    statusText=
+      "Confirm login in Phantom…";
+
+    dotClass=
+      "dot loading";
+  }
+  else if(
+    authenticated &&
+    !accountReady
+  ){
+    statusText=
+      "Preparing Rebound…";
+
+    dotClass=
+      "dot loading";
+  }
+  else if(
+    accountReady
+  ){
+    statusText=
+      "Connected";
+
+    dotClass=
+      "dot ready";
+  }
+
+  let gasClass=
+    "pill warn";
+
+  let gasText=
+    "Recommended: 0.02 SOL";
+
+  if(
+    balanceAvailable &&
+    solBalance!==null
+  ){
+
+    const gas=
+      Number(
+        solBalance
+      );
+
+    if(
+      gas>=.02
+    ){
+      gasClass=
+        "pill good";
+
+      gasText=
+        "Gas reserve ready ✓";
+    }
+    else if(
+      gas<.005
+    ){
+      gasClass=
+        "pill bad";
+
+      gasText=
+        "Gas reserve low";
+    }
+    else{
+      gasText=
+        "Below recommended 0.02 SOL";
+    }
+  }
+
+  const externalMobileBrowser=
+    isMobileDevice()
+    &&
+    !hasInjectedPhantom();
+
+  let serverClass=
+    "status-box failure";
+
+  let serverText=
+    "";
+
+  if(
+    serverTestResult
+  ){
+
+    if(
+      serverTestResult.result===
+        "blocked_as_expected"
+    ){
+      serverClass=
+        "status-box success";
+
+      serverText=
+        "Server Access Verified ✓ The backend signer reached Privy and the trading policy blocked the non-trading test exactly as intended.";
+    }
+    else if(
+      serverTestResult.result===
+        "unexpectedly_allowed"
+    ){
+      serverClass=
+        "status-box pending";
+
+      serverText=
+        "Security warning: signMessage was unexpectedly allowed. Do not enable real trading until the policy is reviewed.";
+    }
+    else{
+      serverText=
+        serverTestResult?.message
+        ||
+        "Server access verification failed.";
+    }
+  }
+
+  const renderResult=
+    result=>
+      result
+        ? e(
+            "div",
+            {
+              className:
+                `status-box ${
+                  result.state==="success"
+                    ? "success"
+                    : result.state==="pending"
+                      ? "pending"
+                      : "failure"
+                }`
+            },
+
+            e(
+              "div",
+              null,
+              result.message
+            ),
+
+            result.signature
+              ? e(
+                  "a",
+                  {
+                    className:
+                      "tx-link",
+
+                    href:
+                      `https://solscan.io/tx/${result.signature}`,
+
+                    target:
+                      "_blank",
+
+                    rel:
+                      "noopener noreferrer"
+                  },
+                  "View transaction"
+                )
+              : null
+          )
+        : null;
 
   return e(
     React.Fragment,
@@ -318,51 +2634,143 @@ function App(){
 
     e(
       "main",
-      {className:"page"},
+      {
+        className:
+          "page"
+      },
 
       e(
         "div",
-        {className:"brand"},
-        e("img",{className:"brand-logo",src:"assets/logo.png",alt:"ASTY"}),
-        e(
-          "div",
-          null,
-          e("div",{className:"brand-title"},"ASTY Rebound"),
-          e("div",{className:"brand-project"},"ArbStrategy"),
-          e("div",{className:"brand-subtitle"},"Automated dip & rebound strategy")
-        )
-      ),
+        {
+          className:
+            "brand"
+        },
 
-      e(
-        "section",
-        {className:"hero"},
         e(
-          "div",
-          null,
-          e("h1",null,"Rebound"),
-          e("p",{className:"lead"},"Connect Phantom and let ASTY Rebound watch the market for you.")
+          "img",
+          {
+            className:
+              "brand-logo",
+
+            src:
+              "assets/logo.png",
+
+            alt:
+              "ASTY"
+          }
         ),
+
         e(
           "div",
-          {className:"wolf-wrap"},
-          e("img",{className:"wolf",src:"assets/wolf.png",alt:""})
+          null,
+
+          e(
+            "div",
+            {
+              className:
+                "brand-title"
+            },
+            "ASTY Rebound"
+          ),
+
+          e(
+            "div",
+            {
+              className:
+                "brand-project"
+            },
+            "ArbStrategy"
+          ),
+
+          e(
+            "div",
+            {
+              className:
+                "brand-subtitle"
+            },
+            "Automated dip & rebound strategy"
+          )
         )
       ),
 
       e(
         "section",
-        {className:"card"},
+        {
+          className:
+            "hero"
+        },
 
         e(
           "div",
-          {className:"status"},
-          e("span",{className:dotClass}),
+          null,
+
+          e(
+            "h1",
+            null,
+            "Rebound"
+          ),
+
+          e(
+            "p",
+            {
+              className:
+                "lead"
+            },
+            "Connect Phantom and let ASTY Rebound watch the market for you."
+          )
+        ),
+
+        e(
+          "div",
+          {
+            className:
+              "wolf-wrap"
+          },
+
+          e(
+            "img",
+            {
+              className:
+                "wolf",
+
+              src:
+                "assets/wolf.png",
+
+              alt:
+                ""
+            }
+          )
+        )
+      ),
+
+      e(
+        "section",
+        {
+          className:
+            "card"
+        },
+
+        e(
+          "div",
+          {
+            className:
+              "status"
+          },
+
+          e(
+            "span",
+            {
+              className:
+                dotClass
+            }
+          ),
+
           statusText
         ),
 
         !authenticated
           ? (
-              externalIosBrowser
+              externalMobileBrowser
                 ? e(
                     React.Fragment,
                     null,
@@ -370,37 +2778,46 @@ function App(){
                     e(
                       "div",
                       {
-                        className:"info",
+                        className:
+                          "info",
+
                         style:{
-                          marginTop:"0",
-                          marginBottom:"12px"
+                          marginTop:
+                            "0",
+
+                          marginBottom:
+                            "12px"
                         }
                       },
 
                       e(
                         "strong",
                         null,
-                        "Already using ASTY Rebound with Phantom?"
+                        "Continue in Phantom"
                       ),
 
                       e(
                         "div",
                         {
                           style:{
-                            marginTop:"5px"
+                            marginTop:
+                              "5px"
                           }
                         },
-                        "Open ASTY Rebound in Phantom to continue. If you connected before, your existing Rebound Wallet will load automatically."
+                        "On mobile, Phantom connects through the Phantom browser. If you have already used ASTY Rebound, your existing Rebound Wallet will load automatically after you continue."
                       )
                     ),
 
                     e(
                       "button",
                       {
-                        className:"primary",
-                        onClick:openInPhantom
+                        className:
+                          "primary",
+
+                        onClick:
+                          openInPhantom
                       },
-                      "Open in Phantom"
+                      "Open in Phantom & Continue"
                     )
                   )
 
@@ -411,13 +2828,20 @@ function App(){
                     e(
                       "button",
                       {
-                        className:"primary",
+                        className:
+                          "primary",
+
                         disabled:
-                          loading ||
-                          connecting ||
+                          loading
+                          ||
+                          connecting
+                          ||
                           signingIn,
-                        onClick:handleConnect
+
+                        onClick:
+                          handleConnect
                       },
+
                       connecting
                         ? "Opening Phantom…"
                         : signingIn
@@ -433,7 +2857,8 @@ function App(){
                           e(
                             "div",
                             {
-                              className:"info"
+                              className:
+                                "info"
                             },
                             "Continue in Phantom. If ASTY Rebound is already connected there, your existing Rebound Wallet will load automatically."
                           ),
@@ -441,8 +2866,11 @@ function App(){
                           e(
                             "button",
                             {
-                              className:"secondary-button",
-                              onClick:openInPhantom
+                              className:
+                                "secondary-button",
+
+                              onClick:
+                                openInPhantom
                             },
                             "Open in Phantom"
                           )
@@ -459,13 +2887,15 @@ function App(){
                 ? e(
                     "div",
                     {
-                      className:"box balance-box"
+                      className:
+                        "box balance-box"
                     },
 
                     e(
                       "div",
                       {
-                        className:"section-label"
+                        className:
+                          "section-label"
                       },
                       "Rebound Balance"
                     ),
@@ -473,19 +2903,22 @@ function App(){
                     e(
                       "div",
                       {
-                        className:"balance-grid"
+                        className:
+                          "balance-grid"
                       },
 
                       e(
                         "div",
                         {
-                          className:"balance-item"
+                          className:
+                            "balance-item"
                         },
 
                         e(
                           "div",
                           {
-                            className:"asset"
+                            className:
+                              "asset"
                           },
                           "USDC"
                         ),
@@ -493,32 +2926,48 @@ function App(){
                         e(
                           "div",
                           {
-                            className:"amount"
+                            className:
+                              "amount"
                           },
+
                           balanceLoading &&
                           usdcBalance===null
                             ? "—"
                             : balanceAvailable
-                              ? formatUsdc(usdcBalance)
+                              ? formatUsdc(
+                                  usdcBalance
+                                )
                               : "—"
                         ),
 
                         e(
                           "div",
                           {
-                            className:"usd-value"
+                            className:
+                              "usd-value"
                           },
+
                           balanceAvailable
-                            ? formatUsd(usdcUsdValue)
+                            ? formatUsd(
+                                usdcUsdValue
+                              )
                             : "—"
                         ),
 
                         e(
                           "button",
                           {
-                            className:"deposit-button",
-                            onClick:()=>openDeposit("USDC"),
-                            disabled:depositBusy
+                            className:
+                              "deposit-button",
+
+                            onClick:
+                              ()=>
+                                openDeposit(
+                                  "USDC"
+                                ),
+
+                            disabled:
+                              depositBusy
                           },
                           "Deposit USDC"
                         ),
@@ -526,7 +2975,8 @@ function App(){
                         e(
                           "div",
                           {
-                            className:"asset-info"
+                            className:
+                              "asset-info"
                           },
                           "USDC is your Rebound trading capital and is used to automatically buy dips."
                         )
@@ -535,13 +2985,15 @@ function App(){
                       e(
                         "div",
                         {
-                          className:"balance-item"
+                          className:
+                            "balance-item"
                         },
 
                         e(
                           "div",
                           {
-                            className:"asset"
+                            className:
+                              "asset"
                           },
                           "SOL"
                         ),
@@ -549,32 +3001,48 @@ function App(){
                         e(
                           "div",
                           {
-                            className:"amount"
+                            className:
+                              "amount"
                           },
+
                           balanceLoading &&
                           solBalance===null
                             ? "—"
                             : balanceAvailable
-                              ? formatSol(solBalance)
+                              ? formatSol(
+                                  solBalance
+                                )
                               : "—"
                         ),
 
                         e(
                           "div",
                           {
-                            className:"usd-value"
+                            className:
+                              "usd-value"
                           },
+
                           balanceAvailable
-                            ? formatUsd(solUsdValue)
+                            ? formatUsd(
+                                solUsdValue
+                              )
                             : "—"
                         ),
 
                         e(
                           "button",
                           {
-                            className:"deposit-button",
-                            onClick:()=>openDeposit("SOL"),
-                            disabled:depositBusy
+                            className:
+                              "deposit-button",
+
+                            onClick:
+                              ()=>
+                                openDeposit(
+                                  "SOL"
+                                ),
+
+                            disabled:
+                              depositBusy
                           },
                           "Deposit SOL"
                         ),
@@ -582,7 +3050,8 @@ function App(){
                         e(
                           "div",
                           {
-                            className:"asset-info"
+                            className:
+                              "asset-info"
                           },
                           "SOL covers Solana network fees. Recommended gas reserve: 0.02 SOL. Keep at least 0.005 SOL while strategies are active."
                         ),
@@ -590,7 +3059,8 @@ function App(){
                         e(
                           "div",
                           {
-                            className:gasClass
+                            className:
+                              gasClass
                           },
                           gasText
                         )
@@ -601,7 +3071,8 @@ function App(){
                 : e(
                     "div",
                     {
-                      className:"info"
+                      className:
+                        "info"
                     },
                     "Preparing your Rebound account…"
                   ),
@@ -610,19 +3081,22 @@ function App(){
                 ? e(
                     "div",
                     {
-                      className:"box"
+                      className:
+                        "box"
                     },
 
                     e(
                       "div",
                       {
-                        className:"row-head"
+                        className:
+                          "row-head"
                       },
 
                       e(
                         "div",
                         {
-                          className:"row-title"
+                          className:
+                            "row-title"
                         },
                         "Automated Trading"
                       ),
@@ -631,8 +3105,13 @@ function App(){
                         "div",
                         {
                           className:
-                            `state ${automatedTradingEnabled?"enabled":"disabled"}`
+                            `state ${
+                              automatedTradingEnabled
+                                ? "enabled"
+                                : "disabled"
+                            }`
                         },
+
                         automatedTradingEnabled
                           ? "Enabled"
                           : "Disabled"
@@ -642,8 +3121,10 @@ function App(){
                     e(
                       "div",
                       {
-                        className:"description"
+                        className:
+                          "description"
                       },
+
                       automatedTradingEnabled
                         ? "ASTY Rebound is authorized to execute policy-protected transactions from this Rebound Wallet while you are offline. No strategy runs until you explicitly create and start one."
                         : "Enable server-side access so ASTY Rebound can execute your strategy even when your browser or phone is closed."
@@ -652,7 +3133,8 @@ function App(){
                     e(
                       "div",
                       {
-                        className:"note"
+                        className:
+                          "note"
                       },
                       "The trading signer is restricted by the ASTY Rebound trading policy. Withdrawals are not part of this authorization."
                     ),
@@ -669,13 +3151,17 @@ function App(){
                           automatedTradingEnabled
                             ? {}
                             : {
-                                marginTop:"14px"
+                                marginTop:
+                                  "14px"
                               },
 
                         disabled:
-                          automationBusy ||
-                          serverTestBusy ||
-                          testSwapBusy ||
+                          automationBusy
+                          ||
+                          serverTestBusy
+                          ||
+                          testSwapBusy
+                          ||
                           prepareSolBusy,
 
                         onClick:
@@ -700,10 +3186,15 @@ function App(){
                             ? e(
                                 "div",
                                 {
-                                  className:"status-box success"
+                                  className:
+                                    "status-box success"
                                 },
-                                solTradingBalance!==null &&
-                                Number(solTradingBalance)>0
+
+                                solTradingBalance!==null
+                                &&
+                                Number(
+                                  solTradingBalance
+                                )>0
                                   ? `SOL Trading Ready ✓ · Trading SOL: ${formatSol(solTradingBalance)}`
                                   : "SOL Trading Ready ✓"
                               )
@@ -715,15 +3206,20 @@ function App(){
                                 e(
                                   "button",
                                   {
-                                    className:"secondary-button",
+                                    className:
+                                      "secondary-button",
 
                                     disabled:
-                                      prepareSolBusy ||
-                                      automationBusy ||
-                                      serverTestBusy ||
+                                      prepareSolBusy
+                                      ||
+                                      automationBusy
+                                      ||
+                                      serverTestBusy
+                                      ||
                                       testSwapBusy,
 
-                                    onClick:prepareSolTrading
+                                    onClick:
+                                      prepareSolTrading
                                   },
 
                                   prepareSolBusy
@@ -734,7 +3230,8 @@ function App(){
                                 e(
                                   "div",
                                   {
-                                    className:"note"
+                                    className:
+                                      "note"
                                   },
                                   "One-time setup. Phantom creates the Rebound Wallet’s SOL trading account. A small Solana account-rent and network fee is paid from Phantom."
                                 ),
@@ -747,15 +3244,20 @@ function App(){
                           e(
                             "button",
                             {
-                              className:"secondary-button",
+                              className:
+                                "secondary-button",
 
                               disabled:
-                                serverTestBusy ||
-                                automationBusy ||
-                                testSwapBusy ||
+                                serverTestBusy
+                                ||
+                                automationBusy
+                                ||
+                                testSwapBusy
+                                ||
                                 prepareSolBusy,
 
-                              onClick:verifyServerAccess
+                              onClick:
+                                verifyServerAccess
                             },
 
                             serverTestBusy
@@ -767,7 +3269,8 @@ function App(){
                             ? e(
                                 "div",
                                 {
-                                  className:serverClass
+                                  className:
+                                    serverClass
                                 },
                                 serverText
                               )
@@ -776,16 +3279,22 @@ function App(){
                           e(
                             "button",
                             {
-                              className:"test-swap-button",
+                              className:
+                                "test-swap-button",
 
                               disabled:
-                                solTradingReady!==true ||
-                                testSwapBusy ||
-                                automationBusy ||
-                                serverTestBusy ||
+                                solTradingReady!==true
+                                ||
+                                testSwapBusy
+                                ||
+                                automationBusy
+                                ||
+                                serverTestBusy
+                                ||
                                 prepareSolBusy,
 
-                              onClick:openTestSwap
+                              onClick:
+                                openTestSwap
                             },
 
                             testSwapBusy
@@ -819,10 +3328,17 @@ function App(){
                                   ? e(
                                       "a",
                                       {
-                                        className:"tx-link",
-                                        href:`https://solscan.io/tx/${testSwapSignature}`,
-                                        target:"_blank",
-                                        rel:"noopener noreferrer"
+                                        className:
+                                          "tx-link",
+
+                                        href:
+                                          `https://solscan.io/tx/${testSwapSignature}`,
+
+                                        target:
+                                          "_blank",
+
+                                        rel:
+                                          "noopener noreferrer"
                                       },
                                       "View test swap"
                                     )
@@ -830,7 +3346,6 @@ function App(){
                               )
                             : null
                         )
-
                       : null
                   )
 
@@ -858,44 +3373,58 @@ function App(){
                       ? e(
                           "a",
                           {
-                            className:"tx-link",
-                            href:`https://solscan.io/tx/${depositSignature}`,
-                            target:"_blank",
-                            rel:"noopener noreferrer"
+                            className:
+                              "tx-link",
+
+                            href:
+                              `https://solscan.io/tx/${depositSignature}`,
+
+                            target:
+                              "_blank",
+
+                            rel:
+                              "noopener noreferrer"
                           },
                           "View transaction"
                         )
                       : null
                   )
-
                 : null,
 
               reboundAddress
                 ? e(
                     "div",
                     {
-                      className:"box"
+                      className:
+                        "box"
                     },
 
                     e(
                       "div",
                       {
-                        className:"wallet-head"
+                        className:
+                          "wallet-head"
                       },
 
                       e(
                         "img",
                         {
-                          className:"wallet-mini-logo",
-                          src:"assets/logo.png",
-                          alt:""
+                          className:
+                            "wallet-mini-logo",
+
+                          src:
+                            "assets/logo.png",
+
+                          alt:
+                            ""
                         }
                       ),
 
                       e(
                         "div",
                         {
-                          className:"wallet-title"
+                          className:
+                            "wallet-title"
                         },
                         "Your Rebound Wallet"
                       )
@@ -904,13 +3433,15 @@ function App(){
                     e(
                       "div",
                       {
-                        className:"wallet-row"
+                        className:
+                          "wallet-row"
                       },
 
                       e(
                         "div",
                         {
-                          className:"wallet-address"
+                          className:
+                            "wallet-address"
                         },
                         reboundAddress
                       ),
@@ -918,29 +3449,39 @@ function App(){
                       e(
                         "button",
                         {
-                          className:"copy",
-                          onClick:copyWallet
+                          className:
+                            "copy",
+
+                          onClick:
+                            copyWallet
                         },
+
                         copied
                           ? "Copied ✓"
                           : "Copy"
                       )
                     )
                   )
-
                 : null,
 
               e(
                 "button",
                 {
-                  className:"logout",
-                  onClick:handleLogout,
+                  className:
+                    "logout",
+
+                  onClick:
+                    handleLogout,
 
                   disabled:
-                    depositBusy ||
-                    automationBusy ||
-                    serverTestBusy ||
-                    testSwapBusy ||
+                    depositBusy
+                    ||
+                    automationBusy
+                    ||
+                    serverTestBusy
+                    ||
+                    testSwapBusy
+                    ||
                     prepareSolBusy
                 },
                 "Log out"
@@ -951,7 +3492,8 @@ function App(){
           ? e(
               "div",
               {
-                className:"error"
+                className:
+                  "error"
               },
               error
             )
@@ -960,7 +3502,8 @@ function App(){
         e(
           "div",
           {
-            className:"fineprint"
+            className:
+              "fineprint"
           },
           "No strategy runs until you explicitly create and start one."
         )
@@ -971,28 +3514,32 @@ function App(){
       ? e(
           "div",
           {
-            className:"modal-backdrop",
+            className:
+              "modal-backdrop",
 
-            onClick:ev=>{
-              if(
-                ev.target===
-                ev.currentTarget
-              ){
-                closeDeposit();
+            onClick:
+              ev=>{
+                if(
+                  ev.target===
+                  ev.currentTarget
+                ){
+                  closeDeposit();
+                }
               }
-            }
           },
 
           e(
             "div",
             {
-              className:"modal"
+              className:
+                "modal"
             },
 
             e(
               "h2",
               {
-                className:"modal-title"
+                className:
+                  "modal-title"
               },
               `Deposit ${depositAsset}`
             ),
@@ -1000,8 +3547,10 @@ function App(){
             e(
               "p",
               {
-                className:"modal-description"
+                className:
+                  "modal-description"
               },
+
               depositAsset==="USDC"
                 ? "Add trading capital to your Rebound Wallet. Phantom will ask you to confirm the transfer."
                 : "Add SOL for network fees. A reserve of 0.02 SOL is recommended."
@@ -1010,7 +3559,8 @@ function App(){
             e(
               "label",
               {
-                className:"input-label"
+                className:
+                  "input-label"
               },
               "Amount"
             ),
@@ -1018,16 +3568,24 @@ function App(){
             e(
               "div",
               {
-                className:"amount-input-wrap"
+                className:
+                  "amount-input-wrap"
               },
 
               e(
                 "input",
                 {
-                  className:"amount-input",
-                  type:"text",
-                  inputMode:"decimal",
-                  autoComplete:"off",
+                  className:
+                    "amount-input",
+
+                  type:
+                    "text",
+
+                  inputMode:
+                    "decimal",
+
+                  autoComplete:
+                    "off",
 
                   placeholder:
                     depositAsset==="USDC"
@@ -1040,21 +3598,23 @@ function App(){
                   disabled:
                     depositBusy,
 
-                  onChange:ev=>
-                    setDepositAmount(
-                      ev.target.value
-                        .replace(
-                          ",",
-                          "."
-                        )
-                    )
+                  onChange:
+                    ev=>
+                      setDepositAmount(
+                        ev.target.value
+                          .replace(
+                            ",",
+                            "."
+                          )
+                      )
                 }
               ),
 
               e(
                 "span",
                 {
-                  className:"input-asset"
+                  className:
+                    "input-asset"
                 },
                 depositAsset
               )
@@ -1063,7 +3623,8 @@ function App(){
             e(
               "div",
               {
-                className:"modal-wallet"
+                className:
+                  "modal-wallet"
               },
 
               "Destination: ",
@@ -1081,15 +3642,21 @@ function App(){
             e(
               "div",
               {
-                className:"modal-buttons"
+                className:
+                  "modal-buttons"
               },
 
               e(
                 "button",
                 {
-                  className:"modal-cancel",
-                  disabled:depositBusy,
-                  onClick:closeDeposit
+                  className:
+                    "modal-cancel",
+
+                  disabled:
+                    depositBusy,
+
+                  onClick:
+                    closeDeposit
                 },
                 "Cancel"
               ),
@@ -1097,9 +3664,14 @@ function App(){
               e(
                 "button",
                 {
-                  className:"modal-confirm",
-                  disabled:depositBusy,
-                  onClick:sendDeposit
+                  className:
+                    "modal-confirm",
+
+                  disabled:
+                    depositBusy,
+
+                  onClick:
+                    sendDeposit
                 },
 
                 depositBusy
@@ -1109,35 +3681,38 @@ function App(){
             )
           )
         )
-
       : null,
 
     testSwapModalOpen
       ? e(
           "div",
           {
-            className:"modal-backdrop",
+            className:
+              "modal-backdrop",
 
-            onClick:ev=>{
-              if(
-                ev.target===
-                ev.currentTarget
-              ){
-                closeTestSwap();
+            onClick:
+              ev=>{
+                if(
+                  ev.target===
+                  ev.currentTarget
+                ){
+                  closeTestSwap();
+                }
               }
-            }
           },
 
           e(
             "div",
             {
-              className:"modal"
+              className:
+                "modal"
             },
 
             e(
               "h2",
               {
-                className:"modal-title"
+                className:
+                  "modal-title"
               },
               "Execute Real Test Swap?"
             ),
@@ -1145,7 +3720,8 @@ function App(){
             e(
               "p",
               {
-                className:"modal-description"
+                className:
+                  "modal-description"
               },
               "This is a real on-chain trade from your Rebound Wallet. The backend will swap exactly 0.10 USDC into SOL through Jupiter using the automated Privy signer. The received SOL stays in the dedicated trading account while native SOL remains your gas reserve."
             ),
@@ -1153,7 +3729,8 @@ function App(){
             e(
               "div",
               {
-                className:"status-box pending"
+                className:
+                  "status-box pending"
               },
               "Real funds will move. Maximum slippage is 0.5%. No Phantom confirmation will appear for the swap itself because this test verifies offline backend trading."
             ),
@@ -1161,7 +3738,8 @@ function App(){
             e(
               "div",
               {
-                className:"modal-wallet"
+                className:
+                  "modal-wallet"
               },
 
               "From Rebound Wallet: ",
@@ -1179,15 +3757,21 @@ function App(){
             e(
               "div",
               {
-                className:"modal-buttons"
+                className:
+                  "modal-buttons"
               },
 
               e(
                 "button",
                 {
-                  className:"modal-cancel",
-                  disabled:testSwapBusy,
-                  onClick:closeTestSwap
+                  className:
+                    "modal-cancel",
+
+                  disabled:
+                    testSwapBusy,
+
+                  onClick:
+                    closeTestSwap
                 },
                 "Cancel"
               ),
@@ -1195,9 +3779,14 @@ function App(){
               e(
                 "button",
                 {
-                  className:"modal-confirm",
-                  disabled:testSwapBusy,
-                  onClick:executeTestSwap
+                  className:
+                    "modal-confirm",
+
+                  disabled:
+                    testSwapBusy,
+
+                  onClick:
+                    executeTestSwap
                 },
 
                 testSwapBusy
@@ -1207,12 +3796,12 @@ function App(){
             )
           )
         )
-
       : null
   );
 }
 
-const connectors=toSolanaWalletConnectors();
+const connectors=
+  toSolanaWalletConnectors();
 
 createRoot(
   document.getElementById(
