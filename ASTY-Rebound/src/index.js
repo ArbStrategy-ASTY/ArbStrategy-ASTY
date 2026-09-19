@@ -32,6 +32,18 @@ const EXECUTION_SLIPPAGE_BPS = 50;
 const MIN_GAS_LAMPORTS = 5_000_000n;
 const RECOMMENDED_GAS_LAMPORTS = 20_000_000n;
 const MAX_ROUTE_REFERENCE_SHORTFALL_BPS = 200;
+const MAX_BUY_TRIGGER_OVERAGE_BPS = 50;
+const EXECUTION_LOCK_STALE_MINUTES = 5;
+const MAX_BUY_EXECUTIONS_PER_CRON = 3;
+
+// These statuses still hold their reserved strategy capital as USDC in the wallet.
+// BOUGHT / SELL_TRIGGERED are deployed into the asset and must not be subtracted
+// a second time when calculating free on-chain USDC.
+const USDC_HELD_STRATEGY_STATUSES = [
+  "WATCHING",
+  "BUY_TRIGGERED",
+  "PAUSED",
+];
 
 const PRESETS = Object.freeze({
   frequent: { dipBps: 300, takeProfitBps: 250 },
@@ -543,6 +555,17 @@ async function getReservedCapitalRaw(env, privyUserId) {
   return BigInt(String(row?.reserved_raw ?? 0));
 }
 
+async function getUsdcHeldReservedCapitalRaw(env, privyUserId) {
+  const placeholders = USDC_HELD_STRATEGY_STATUSES.map(() => "?").join(",");
+  const row = await env.DB.prepare(`
+    SELECT CAST(COALESCE(SUM(reserved_capital_usdc_raw), 0) AS TEXT) AS reserved_raw
+    FROM rebound_strategies
+    WHERE privy_user_id = ?
+      AND status IN (${placeholders})
+  `).bind(privyUserId, ...USDC_HELD_STRATEGY_STATUSES).first();
+  return BigInt(String(row?.reserved_raw ?? 0));
+}
+
 function resolveStrategyConfiguration(body) {
   const preset = String(body?.preset || "balanced").trim().toLowerCase();
   let dipBps;
@@ -752,11 +775,12 @@ async function handleExecutionCheck(request, env) {
       }, 409);
     }
 
-    const [usdc, nativeSol, tradingSol, totalReservedRaw] = await Promise.all([
+    const [usdc, nativeSol, tradingSol, totalReservedRaw, reservedInUsdcRaw] = await Promise.all([
       getUsdcBalance(env, walletAddress),
       getSolBalance(env, walletAddress),
       getWsolTokenAccount(env, walletAddress),
       getReservedCapitalRaw(env, auth.userId),
+      getUsdcHeldReservedCapitalRaw(env, auth.userId),
     ]);
 
     const walletUsdcRaw = BigInt(usdc.raw);
@@ -765,7 +789,7 @@ async function handleExecutionCheck(request, env) {
     const capitalReconciled =
       strategyReservedRaw >= cycleCapitalRaw &&
       walletUsdcRaw >= cycleCapitalRaw &&
-      walletUsdcRaw >= totalReservedRaw;
+      walletUsdcRaw >= reservedInUsdcRaw;
 
     const gasOk = gasRaw >= MIN_GAS_LAMPORTS;
     const wsolReady = Boolean(tradingSol.ready && tradingSol.address);
@@ -783,6 +807,7 @@ async function handleExecutionCheck(request, env) {
             strategyCapitalUsdc: formatUnits(cycleCapitalRaw, USDC_DECIMALS),
             strategyReservedUsdc: formatUnits(strategyReservedRaw, USDC_DECIMALS),
             totalReservedUsdc: formatUnits(totalReservedRaw, USDC_DECIMALS),
+            reservedInUsdc: formatUnits(reservedInUsdcRaw, USDC_DECIMALS),
             walletUsdc: formatUnits(walletUsdcRaw, USDC_DECIMALS),
           },
         },
@@ -888,10 +913,10 @@ async function handleExecutionCheck(request, env) {
       ready,
       mode: "preflight-only",
       noTradeExecuted: true,
-      liveExecutionImplemented: false,
+      liveExecutionImplemented: true,
       autoExecutionRequested: autoExecutionRequested(env),
       message: ready
-        ? "Execution check passed. The strategy is ready for the future BUY executor, but no trade was signed or sent."
+        ? "Execution check passed. The BUY executor is installed, but this check never signs or sends a trade."
         : "Execution check found a safety condition that must be resolved before live BUY execution.",
       strategy: {
         id: strategy.id,
@@ -964,6 +989,544 @@ async function handleExecutionCheck(request, env) {
   }
 }
 
+
+async function getSignatureState(env, signature) {
+  const result = await heliusRpc(env, "getSignatureStatuses", [[signature], { searchTransactionHistory: true }]);
+  const value = result?.value?.[0] || null;
+  if (!value) return { found: false, confirmed: false, failed: false, status: null, err: null };
+  const status = value.confirmationStatus || null;
+  const failed = value.err != null;
+  const confirmed = !failed && (status === "confirmed" || status === "finalized");
+  return { found: true, confirmed, failed, status, err: value.err ?? null };
+}
+
+function sumOwnerTokenBalanceRaw(balances, mint, owner) {
+  let total = 0n;
+  let matches = 0;
+  for (const item of balances || []) {
+    if (item?.mint !== mint || item?.owner !== owner) continue;
+    const amount = item?.uiTokenAmount?.amount;
+    if (typeof amount !== "string") continue;
+    total += BigInt(amount);
+    matches += 1;
+  }
+  return { total, matches };
+}
+
+async function getConfirmedSwapFill(env, signature, walletAddress) {
+  const tx = await heliusRpc(env, "getTransaction", [
+    signature,
+    {
+      commitment: "confirmed",
+      encoding: "jsonParsed",
+      maxSupportedTransactionVersion: 0,
+    },
+  ]);
+
+  if (!tx?.meta) return null;
+  if (tx.meta.err) return { failed: true, error: tx.meta.err };
+
+  const preUsdc = sumOwnerTokenBalanceRaw(tx.meta.preTokenBalances, USDC_MINT, walletAddress);
+  const postUsdc = sumOwnerTokenBalanceRaw(tx.meta.postTokenBalances, USDC_MINT, walletAddress);
+  const preWsol = sumOwnerTokenBalanceRaw(tx.meta.preTokenBalances, WSOL_MINT, walletAddress);
+  const postWsol = sumOwnerTokenBalanceRaw(tx.meta.postTokenBalances, WSOL_MINT, walletAddress);
+
+  if ((preUsdc.matches + postUsdc.matches) === 0 || (preWsol.matches + postWsol.matches) === 0) {
+    return null;
+  }
+
+  const spentUsdcRaw = preUsdc.total > postUsdc.total ? preUsdc.total - postUsdc.total : 0n;
+  const receivedWsolRaw = postWsol.total > preWsol.total ? postWsol.total - preWsol.total : 0n;
+  if (spentUsdcRaw <= 0n || receivedWsolRaw <= 0n) return null;
+
+  // micro-USDC per 1 SOL: spentRaw(1e6) * 1e9 / receivedRaw(1e9)
+  const fillPriceMicroUsdc = spentUsdcRaw * 1_000_000_000n / receivedWsolRaw;
+  return {
+    failed: false,
+    spentUsdcRaw,
+    receivedWsolRaw,
+    fillPriceMicroUsdc,
+    slot: tx.slot ?? null,
+    blockTime: tx.blockTime ?? null,
+  };
+}
+
+async function finalizeConfirmedBuy(env, strategy, signature) {
+  const fill = await getConfirmedSwapFill(env, signature, strategy.rebound_wallet_address);
+  if (!fill) {
+    return { ok: false, pending: true, strategyId: strategy.id, signature, message: "Confirmed transaction is not fully indexed yet." };
+  }
+  if (fill.failed) {
+    await env.DB.prepare(`
+      UPDATE rebound_strategies
+      SET pending_action = NULL,
+          pending_signature = NULL,
+          pending_action_started_at = NULL,
+          execution_lock = NULL,
+          execution_lock_at = NULL,
+          updated_at = CURRENT_TIMESTAMP
+      WHERE id = ? AND status = 'BUY_TRIGGERED' AND pending_signature = ?
+    `).bind(strategy.id, signature).run();
+    return { ok: false, failed: true, strategyId: strategy.id, signature, message: "BUY transaction failed on-chain and was released for a fresh retry." };
+  }
+
+  const takeProfitBps = BigInt(Number(strategy.take_profit_bps));
+  const takeProfitPrice = fill.fillPriceMicroUsdc * (10_000n + takeProfitBps) / 10_000n;
+  const stopLossPrice = Number(strategy.stop_loss_enabled) === 1 && strategy.stop_loss_bps != null
+    ? fill.fillPriceMicroUsdc * (10_000n - BigInt(Number(strategy.stop_loss_bps))) / 10_000n
+    : null;
+
+  const result = await env.DB.prepare(`
+    UPDATE rebound_strategies
+    SET status = 'BOUGHT',
+        buy_fill_price_micro_usdc = ?,
+        take_profit_price_micro_usdc = ?,
+        stop_loss_price_micro_usdc = ?,
+        entry_wsol_raw = ?,
+        bought_at = COALESCE(bought_at, CURRENT_TIMESTAMP),
+        pending_action = NULL,
+        pending_action_started_at = NULL,
+        execution_lock = NULL,
+        execution_lock_at = NULL,
+        updated_at = CURRENT_TIMESTAMP
+    WHERE id = ?
+      AND status = 'BUY_TRIGGERED'
+      AND pending_signature = ?
+  `).bind(
+    fill.fillPriceMicroUsdc.toString(),
+    takeProfitPrice.toString(),
+    stopLossPrice == null ? null : stopLossPrice.toString(),
+    fill.receivedWsolRaw.toString(),
+    strategy.id,
+    signature,
+  ).run();
+
+  const changed = Number(result?.meta?.changes ?? 0);
+  return {
+    ok: changed > 0,
+    finalized: changed > 0,
+    strategyId: strategy.id,
+    signature,
+    spentUsdcRaw: fill.spentUsdcRaw.toString(),
+    receivedWsolRaw: fill.receivedWsolRaw.toString(),
+    fillPriceUsd: formatMicroUsd(fill.fillPriceMicroUsdc),
+    takeProfitPriceUsd: formatMicroUsd(takeProfitPrice),
+    stopLossPriceUsd: stopLossPrice == null ? null : formatMicroUsd(stopLossPrice),
+  };
+}
+
+async function reconcilePendingBuys(env) {
+  const query = await env.DB.prepare(`
+    SELECT *
+    FROM rebound_strategies
+    WHERE status = 'BUY_TRIGGERED'
+      AND pending_signature IS NOT NULL
+    ORDER BY pending_action_started_at ASC
+    LIMIT 20
+  `).all();
+
+  const rows = Array.isArray(query?.results) ? query.results : [];
+  const results = [];
+  for (const strategy of rows) {
+    const signature = String(strategy.pending_signature || "");
+    if (!isTransactionSignature(signature)) continue;
+    const state = await getSignatureState(env, signature);
+    if (state.confirmed) {
+      results.push(await finalizeConfirmedBuy(env, strategy, signature));
+    } else if (state.failed) {
+      await env.DB.prepare(`
+        UPDATE rebound_strategies
+        SET pending_action = NULL,
+            pending_signature = NULL,
+            pending_action_started_at = NULL,
+            execution_lock = NULL,
+            execution_lock_at = NULL,
+            updated_at = CURRENT_TIMESTAMP
+        WHERE id = ? AND status = 'BUY_TRIGGERED' AND pending_signature = ?
+      `).bind(strategy.id, signature).run();
+      results.push({ ok: false, failed: true, strategyId: strategy.id, signature, error: state.err });
+    } else {
+      results.push({ ok: true, pending: true, strategyId: strategy.id, signature, confirmationStatus: state.status });
+    }
+  }
+  return results;
+}
+
+async function acquireBuyExecutionLock(env, strategyId) {
+  const lock = crypto.randomUUID();
+  const result = await env.DB.prepare(`
+    UPDATE rebound_strategies
+    SET execution_lock = ?,
+        execution_lock_at = CURRENT_TIMESTAMP,
+        pending_action = 'BUY_PREPARING',
+        pending_action_started_at = CURRENT_TIMESTAMP,
+        updated_at = CURRENT_TIMESTAMP
+    WHERE id = ?
+      AND status = 'BUY_TRIGGERED'
+      AND pending_signature IS NULL
+      AND (
+        execution_lock IS NULL
+        OR execution_lock_at IS NULL
+        OR execution_lock_at < datetime('now', '-' || ? || ' minutes')
+      )
+  `).bind(lock, strategyId, EXECUTION_LOCK_STALE_MINUTES).run();
+  return Number(result?.meta?.changes ?? 0) > 0 ? lock : null;
+}
+
+async function releaseBuyExecutionLock(env, strategyId, lock, { rearm = false } = {}) {
+  if (rearm) {
+    await env.DB.prepare(`
+      UPDATE rebound_strategies
+      SET status = 'WATCHING',
+          buy_triggered_at = NULL,
+          pending_action = NULL,
+          pending_action_started_at = NULL,
+          execution_lock = NULL,
+          execution_lock_at = NULL,
+          updated_at = CURRENT_TIMESTAMP
+      WHERE id = ? AND execution_lock = ? AND pending_signature IS NULL
+    `).bind(strategyId, lock).run();
+  } else {
+    await env.DB.prepare(`
+      UPDATE rebound_strategies
+      SET pending_action = NULL,
+          pending_action_started_at = NULL,
+          execution_lock = NULL,
+          execution_lock_at = NULL,
+          updated_at = CURRENT_TIMESTAMP
+      WHERE id = ? AND execution_lock = ? AND pending_signature IS NULL
+    `).bind(strategyId, lock).run();
+  }
+}
+
+async function pauseAmbiguousBuy(env, strategyId, lock, reason) {
+  await env.DB.prepare(`
+    UPDATE rebound_strategies
+    SET status = 'PAUSED',
+        pending_action = ?,
+        paused_at = COALESCE(paused_at, CURRENT_TIMESTAMP),
+        execution_lock = NULL,
+        execution_lock_at = NULL,
+        updated_at = CURRENT_TIMESTAMP
+    WHERE id = ? AND execution_lock = ? AND pending_signature IS NULL
+  `).bind(reason, strategyId, lock).run();
+}
+
+async function getJupiterV1BuyTransaction(env, { walletAddress, destinationTokenAccount, amountRaw }) {
+  const quoteParams = new URLSearchParams({
+    inputMint: USDC_MINT,
+    outputMint: WSOL_MINT,
+    amount: String(amountRaw),
+    slippageBps: String(EXECUTION_SLIPPAGE_BPS),
+    swapMode: "ExactIn",
+    restrictIntermediateTokens: "true",
+    instructionVersion: "V2",
+  });
+
+  const quote = await jupiterFetch(env, `/quote?${quoteParams.toString()}`);
+  if (!quote || quote.inputMint !== USDC_MINT || quote.outputMint !== WSOL_MINT || String(quote.inAmount) !== String(amountRaw)) {
+    throw new Error("Jupiter returned a BUY quote that does not match the requested strategy trade.");
+  }
+  if (!Array.isArray(quote.routePlan) || quote.routePlan.length === 0 || BigInt(String(quote.outAmount || 0)) <= 0n) {
+    throw new Error("Jupiter did not return a usable BUY route.");
+  }
+
+  const swapBuildBody = {
+    quoteResponse: quote,
+    userPublicKey: walletAddress,
+    wrapAndUnwrapSol: false,
+    destinationTokenAccount,
+    dynamicComputeUnitLimit: true,
+    prioritizationFeeLamports: {
+      priorityLevelWithMaxLamports: { maxLamports: 10000, priorityLevel: "medium" },
+    },
+  };
+
+  const plan = await jupiterFetch(env, "/swap-instructions", {
+    method: "POST",
+    body: JSON.stringify(swapBuildBody),
+  });
+  const programs = instructionProgramIds(plan);
+  const allowed = new Set([COMPUTE_BUDGET_PROGRAM_ID, JUPITER_PROGRAM_ID, ASSOCIATED_TOKEN_PROGRAM_ID]);
+  const unexpectedPrograms = programs.filter((id) => !allowed.has(id));
+  const hasTipInstruction = Boolean(plan?.tipInstruction);
+  if (!programs.includes(JUPITER_PROGRAM_ID) || unexpectedPrograms.length > 0 || hasTipInstruction) {
+    const error = new Error("Jupiter BUY route is not compatible with the ASTY Rebound trading policy.");
+    error.code = "POLICY_ROUTE_MISMATCH";
+    error.programs = programs;
+    error.unexpectedPrograms = unexpectedPrograms;
+    throw error;
+  }
+
+  const swapResponse = await jupiterFetch(env, "/swap", {
+    method: "POST",
+    body: JSON.stringify(swapBuildBody),
+  });
+  const swapTransaction = swapResponse?.swapTransaction;
+  if (typeof swapTransaction !== "string" || swapTransaction.length < 100) {
+    throw new Error("Jupiter did not return a valid BUY transaction.");
+  }
+
+  return { quote, plan, swapTransaction, programs };
+}
+
+async function executeTriggeredBuy(env, strategy) {
+  const lock = await acquireBuyExecutionLock(env, strategy.id);
+  if (!lock) return { ok: true, skipped: true, strategyId: strategy.id, reason: "locked-or-pending" };
+
+  try {
+    const fresh = await env.DB.prepare(`SELECT * FROM rebound_strategies WHERE id = ? LIMIT 1`).bind(strategy.id).first();
+    if (!fresh || fresh.status !== "BUY_TRIGGERED" || fresh.pending_signature) {
+      await releaseBuyExecutionLock(env, strategy.id, lock);
+      return { ok: true, skipped: true, strategyId: strategy.id, reason: "state-changed" };
+    }
+
+    const account = await getReboundAccount(env, fresh.privy_user_id);
+    if (!account?.rebound_wallet_address) throw new Error("Rebound account not found for BUY execution.");
+    const walletAddress = account.rebound_wallet_address;
+    const cycleCapitalRaw = BigInt(String(fresh.current_cycle_capital_usdc_raw || 0));
+    const triggerRaw = BigInt(String(fresh.buy_trigger_price_micro_usdc || 0));
+    if (cycleCapitalRaw <= 0n || triggerRaw <= 0n) throw new Error("Strategy BUY capital or trigger is invalid.");
+
+    const [referencePrice, usdc, nativeSol, tradingSol, reservedInUsdcRaw] = await Promise.all([
+      getJupiterSolPriceMicroUsdc(env),
+      getUsdcBalance(env, walletAddress),
+      getSolBalance(env, walletAddress),
+      getWsolTokenAccount(env, walletAddress),
+      getUsdcHeldReservedCapitalRaw(env, fresh.privy_user_id),
+    ]);
+
+    // Never chase a price that has already rebounded above the trigger before the BUY is sent.
+    if (referencePrice.micro > triggerRaw) {
+      await releaseBuyExecutionLock(env, strategy.id, lock, { rearm: true });
+      return {
+        ok: true,
+        rearmed: true,
+        strategyId: strategy.id,
+        currentPriceUsd: formatMicroUsd(referencePrice.micro),
+        triggerPriceUsd: formatMicroUsd(triggerRaw),
+        reason: "price-rebounded-before-execution",
+      };
+    }
+
+    const walletUsdcRaw = BigInt(usdc.raw);
+    const gasRaw = BigInt(nativeSol.raw);
+    if (walletUsdcRaw < cycleCapitalRaw || walletUsdcRaw < reservedInUsdcRaw) {
+      throw new Error("On-chain USDC no longer reconciles with reserved strategy capital.");
+    }
+    if (gasRaw < MIN_GAS_LAMPORTS) throw new Error("Gas reserve dropped below 0.005 SOL before BUY execution.");
+    if (!tradingSol.ready || !tradingSol.address) throw new Error("WSOL trading account is not ready.");
+
+    const privy = createPrivyClient(env);
+    const delegatedWallet = await getPrivyDelegatedWallet(privy, fresh.privy_user_id, walletAddress);
+    if (!delegatedWallet) throw new Error("Automated Trading is not enabled for this Rebound Wallet.");
+    const walletId = account.rebound_wallet_id || delegatedWallet?.id || null;
+    if (!walletId) throw new Error("Rebound Wallet ID is unavailable.");
+
+    // Keep the V2 /build safety gate immediately before the serialized execution transaction.
+    const build = await getJupiterV2Build(env, {
+      walletAddress,
+      destinationTokenAccount: tradingSol.address,
+      amountRaw: cycleCapitalRaw.toString(),
+    });
+    const buildPrograms = instructionProgramIds(build);
+    const allowedPrograms = new Set([COMPUTE_BUDGET_PROGRAM_ID, JUPITER_PROGRAM_ID, ASSOCIATED_TOKEN_PROGRAM_ID]);
+    const unexpectedBuildPrograms = buildPrograms.filter((id) => !allowedPrograms.has(id));
+    if (!buildPrograms.includes(JUPITER_PROGRAM_ID) || unexpectedBuildPrograms.length > 0 || build?.tipInstruction) {
+      throw new Error(`V2 safety gate rejected BUY route. Unexpected programs: ${unexpectedBuildPrograms.join(", ") || "none"}`);
+    }
+
+    const builtOutRaw = BigInt(String(build.outAmount || 0));
+    const expectedOutRaw = referencePrice.micro > 0n
+      ? cycleCapitalRaw * (10n ** BigInt(SOL_DECIMALS)) / referencePrice.micro
+      : 0n;
+    const buildShortfallBps = expectedOutRaw > 0n && builtOutRaw < expectedOutRaw
+      ? Number((expectedOutRaw - builtOutRaw) * 10_000n / expectedOutRaw)
+      : 0;
+    if (builtOutRaw <= 0n || buildShortfallBps > MAX_ROUTE_REFERENCE_SHORTFALL_BPS) {
+      throw new Error("V2 BUY route failed the reference-price sanity check.");
+    }
+
+    const executable = await getJupiterV1BuyTransaction(env, {
+      walletAddress,
+      destinationTokenAccount: tradingSol.address,
+      amountRaw: cycleCapitalRaw.toString(),
+    });
+
+    const quotedOutRaw = BigInt(String(executable.quote.outAmount || 0));
+    const quotePriceMicro = quotedOutRaw > 0n ? cycleCapitalRaw * 1_000_000_000n / quotedOutRaw : 0n;
+    const maxAllowedQuotePrice = triggerRaw * BigInt(10_000 + MAX_BUY_TRIGGER_OVERAGE_BPS) / 10_000n;
+    if (quotePriceMicro <= 0n || quotePriceMicro > maxAllowedQuotePrice) {
+      await releaseBuyExecutionLock(env, strategy.id, lock);
+      return {
+        ok: false,
+        skipped: true,
+        strategyId: strategy.id,
+        reason: "quote-price-above-trigger-safety-limit",
+        triggerPriceUsd: formatMicroUsd(triggerRaw),
+        quotePriceUsd: formatMicroUsd(quotePriceMicro),
+      };
+    }
+
+    await env.DB.prepare(`
+      UPDATE rebound_strategies
+      SET pending_action = 'BUY_SENDING',
+          pending_action_started_at = CURRENT_TIMESTAMP,
+          updated_at = CURRENT_TIMESTAMP
+      WHERE id = ? AND execution_lock = ? AND status = 'BUY_TRIGGERED' AND pending_signature IS NULL
+    `).bind(strategy.id, lock).run();
+
+    let sendResult;
+    try {
+      sendResult = await privy.wallets().solana().signAndSendTransaction(walletId, {
+        caip2: SOLANA_MAINNET_CAIP2,
+        transaction: executable.swapTransaction,
+        authorization_context: createAuthorizationContext(env),
+      });
+    } catch (error) {
+      const info = getSafePrivyError(error);
+      if (looksLikePolicyDenial(info)) {
+        await releaseBuyExecutionLock(env, strategy.id, lock);
+        return { ok: false, strategyId: strategy.id, policyDenied: true, error: info };
+      }
+
+      // A transport/provider error can be ambiguous: the transaction may have been broadcast
+      // even if the response was lost. Pause instead of risking a second BUY.
+      await pauseAmbiguousBuy(env, strategy.id, lock, "BUY_SEND_UNKNOWN");
+      return { ok: false, paused: true, ambiguous: true, strategyId: strategy.id, error: info };
+    }
+
+    const signature = extractPrivyTxHash(sendResult);
+    if (!signature || !isTransactionSignature(signature)) {
+      await pauseAmbiguousBuy(env, strategy.id, lock, "BUY_SIGNATURE_UNKNOWN");
+      return { ok: false, paused: true, ambiguous: true, strategyId: strategy.id, message: "Privy did not return a valid Solana signature." };
+    }
+
+    const stored = await env.DB.prepare(`
+      UPDATE rebound_strategies
+      SET pending_action = 'BUY_SUBMITTED',
+          pending_signature = ?,
+          pending_action_started_at = CURRENT_TIMESTAMP,
+          execution_lock = NULL,
+          execution_lock_at = NULL,
+          updated_at = CURRENT_TIMESTAMP
+      WHERE id = ? AND execution_lock = ? AND status = 'BUY_TRIGGERED' AND pending_signature IS NULL
+    `).bind(signature, strategy.id, lock).run();
+
+    if (Number(stored?.meta?.changes ?? 0) === 0) {
+      console.error("BUY signature was returned but D1 signature persistence did not update the strategy", strategy.id, signature);
+      return { ok: false, ambiguous: true, strategyId: strategy.id, signature, message: "BUY was submitted but D1 persistence needs reconciliation." };
+    }
+
+    // Fast-path confirmation. If indexing is not ready yet, the next cron safely reconciles it.
+    await sleep(1500);
+    const state = await getSignatureState(env, signature);
+    if (state.confirmed) {
+      const currentStrategy = await env.DB.prepare(`SELECT * FROM rebound_strategies WHERE id = ? LIMIT 1`).bind(strategy.id).first();
+      return await finalizeConfirmedBuy(env, currentStrategy, signature);
+    }
+
+    return { ok: true, submitted: true, pending: true, strategyId: strategy.id, signature, confirmationStatus: state.status };
+  } catch (error) {
+    console.error("BUY executor error:", strategy.id, error);
+    await releaseBuyExecutionLock(env, strategy.id, lock);
+    return {
+      ok: false,
+      strategyId: strategy.id,
+      code: error?.code || null,
+      message: error?.message || "BUY execution failed before submission.",
+      programs: error?.programs || undefined,
+      unexpectedPrograms: error?.unexpectedPrograms || undefined,
+    };
+  }
+}
+
+async function quarantineStaleAmbiguousBuys(env) {
+  const result = await env.DB.prepare(`
+    UPDATE rebound_strategies
+    SET status = 'PAUSED',
+        pending_action = 'BUY_SEND_UNKNOWN',
+        paused_at = COALESCE(paused_at, CURRENT_TIMESTAMP),
+        execution_lock = NULL,
+        execution_lock_at = NULL,
+        updated_at = CURRENT_TIMESTAMP
+    WHERE status = 'BUY_TRIGGERED'
+      AND pending_signature IS NULL
+      AND pending_action = 'BUY_SENDING'
+      AND pending_action_started_at IS NOT NULL
+      AND pending_action_started_at < datetime('now', '-' || ? || ' minutes')
+  `).bind(EXECUTION_LOCK_STALE_MINUTES).run();
+  return Number(result?.meta?.changes ?? 0);
+}
+
+async function runBuyExecutor(env, { source = "cron" } = {}) {
+  const quarantined = await quarantineStaleAmbiguousBuys(env);
+  const reconciled = await reconcilePendingBuys(env);
+
+  if (!autoExecutionRequested(env)) {
+    return {
+      ok: true,
+      source,
+      liveExecutionImplemented: true,
+      autoExecutionEnabled: false,
+      newBuysAttempted: 0,
+      quarantinedAmbiguousBuys: quarantined,
+      reconciled,
+      message: "BUY executor is installed but AUTO_EXECUTION_ENABLED is not true. No new BUY was sent.",
+    };
+  }
+
+  const query = await env.DB.prepare(`
+    SELECT *
+    FROM rebound_strategies
+    WHERE status = 'BUY_TRIGGERED'
+      AND pending_signature IS NULL
+      AND (pending_action IS NULL OR pending_action = 'BUY_PREPARING')
+    ORDER BY buy_triggered_at ASC, created_at ASC
+    LIMIT ?
+  `).bind(MAX_BUY_EXECUTIONS_PER_CRON).all();
+  const rows = Array.isArray(query?.results) ? query.results : [];
+
+  const executions = [];
+  for (const strategy of rows) {
+    executions.push(await executeTriggeredBuy(env, strategy));
+  }
+
+  return {
+    ok: true,
+    source,
+    liveExecutionImplemented: true,
+    autoExecutionEnabled: true,
+    newBuysAttempted: rows.length,
+    quarantinedAmbiguousBuys: quarantined,
+    reconciled,
+    executions,
+  };
+}
+
+async function handleExecutionStatus(request, env) {
+  try {
+    const rows = await env.DB.prepare(`
+      SELECT status, pending_action, COUNT(*) AS count
+      FROM rebound_strategies
+      WHERE status IN ('BUY_TRIGGERED', 'BOUGHT', 'PAUSED')
+      GROUP BY status, pending_action
+    `).all();
+    return json(request, {
+      status: "ok",
+      liveExecutionImplemented: true,
+      autoExecutionEnabled: autoExecutionRequested(env),
+      executionPath: "V2 safety gate + policy preflight; serialized BUY transaction uses the already-proven Jupiter Metis transaction path",
+      slippageBps: EXECUTION_SLIPPAGE_BPS,
+      maxTriggerOverageBps: MAX_BUY_TRIGGER_OVERAGE_BPS,
+      states: Array.isArray(rows?.results) ? rows.results : [],
+    });
+  } catch (error) {
+    console.error("Execution status error:", error);
+    return json(request, { status: "error", message: "Execution status is temporarily unavailable." }, 503);
+  }
+}
+
 async function handleRoot(request, env) {
   return json(request, {
     service: "ASTY Rebound API",
@@ -976,11 +1539,13 @@ async function handleRoot(request, env) {
       priceSource: "Jupiter Price API V3",
     },
     execution: {
-      mode: "preflight-only",
-      liveExecutionImplemented: false,
+      mode: autoExecutionRequested(env) ? "live-buy" : "installed-disabled",
+      liveExecutionImplemented: true,
       autoExecutionRequested: autoExecutionRequested(env),
-      routeSource: "Jupiter Swap API V2 /build",
+      routeSafetySource: "Jupiter Swap API V2 /build",
+      transactionPath: "proven serialized Jupiter Metis path",
       slippageBps: EXECUTION_SLIPPAGE_BPS,
+      maxTriggerOverageBps: MAX_BUY_TRIGGER_OVERAGE_BPS,
     },
     endpoints: {
       health: "/health",
@@ -994,6 +1559,7 @@ async function handleRoot(request, env) {
       watcherStatus: "GET /watcher/status",
       watcherRun: "POST /watcher/run",
       executionCheck: "POST /execution/check",
+      executionStatus: "GET /execution/status",
       tradingAuthorization: "GET /trading/authorization-config",
       prepareSolTrading: "POST /trading/prepare-sol-context",
       serverSignerTest: "POST /trading/server-signer-test",
@@ -1010,9 +1576,9 @@ async function handleHealth(request, env) {
       service: "ASTY Rebound API",
       database: dbTest?.ok === 1 ? "connected" : "error",
       watcherMode: "watch-only",
-      executionMode: "preflight-only",
-      executionEnabled: false,
-      liveExecutionImplemented: false,
+      executionMode: autoExecutionRequested(env) ? "live-buy" : "installed-disabled",
+      executionEnabled: autoExecutionRequested(env),
+      liveExecutionImplemented: true,
       config: {
         privyAppId: Boolean(env.PRIVY_APP_ID),
         privyAppSecret: Boolean(env.PRIVY_APP_SECRET),
@@ -1114,11 +1680,12 @@ async function handleBalance(request, env) {
     if (!account?.rebound_wallet_address) return json(request, { status: "error", message: "Rebound account not found." }, 404);
 
     const wallet = account.rebound_wallet_address;
-    const [sol, usdc, tradingSol, reservedRaw] = await Promise.all([
+    const [sol, usdc, tradingSol, reservedRaw, reservedInUsdcRaw] = await Promise.all([
       getSolBalance(env, wallet),
       getUsdcBalance(env, wallet),
       getWsolTokenAccount(env, wallet),
       getReservedCapitalRaw(env, auth.userId),
+      getUsdcHeldReservedCapitalRaw(env, auth.userId),
     ]);
 
     let solUsd = null;
@@ -1127,7 +1694,7 @@ async function handleBalance(request, env) {
     const solAmount = Number(sol.ui);
     const usdcAmount = Number(usdc.ui);
     const usdcRaw = BigInt(usdc.raw);
-    const freeUsdcRaw = usdcRaw > reservedRaw ? usdcRaw - reservedRaw : 0n;
+    const freeUsdcRaw = usdcRaw > reservedInUsdcRaw ? usdcRaw - reservedInUsdcRaw : 0n;
 
     return json(request, {
       status: "ok",
@@ -1142,6 +1709,8 @@ async function handleBalance(request, env) {
           usdValue: Number.isFinite(usdcAmount) ? usdcAmount : null,
           reservedRaw: reservedRaw.toString(),
           reservedUi: formatUnits(reservedRaw, USDC_DECIMALS),
+          reservedInUsdcRaw: reservedInUsdcRaw.toString(),
+          reservedInUsdcUi: formatUnits(reservedInUsdcRaw, USDC_DECIMALS),
           freeRaw: freeUsdcRaw.toString(),
           freeUi: formatUnits(freeUsdcRaw, USDC_DECIMALS),
         },
@@ -1235,14 +1804,15 @@ async function handleStrategyList(request, env) {
     const account = await getReboundAccount(env, auth.userId);
     if (!account?.rebound_wallet_address) return json(request, { status: "error", message: "Rebound account not found." }, 404);
 
-    const [queryResult, usdc, reservedRaw] = await Promise.all([
+    const [queryResult, usdc, reservedRaw, reservedInUsdcRaw] = await Promise.all([
       env.DB.prepare(`SELECT * FROM rebound_strategies WHERE privy_user_id = ? ORDER BY created_at DESC`).bind(auth.userId).all(),
       getUsdcBalance(env, account.rebound_wallet_address),
       getReservedCapitalRaw(env, auth.userId),
+      getUsdcHeldReservedCapitalRaw(env, auth.userId),
     ]);
 
     const walletUsdcRaw = BigInt(usdc.raw);
-    const freeUsdcRaw = walletUsdcRaw > reservedRaw ? walletUsdcRaw - reservedRaw : 0n;
+    const freeUsdcRaw = walletUsdcRaw > reservedInUsdcRaw ? walletUsdcRaw - reservedInUsdcRaw : 0n;
     const rows = Array.isArray(queryResult?.results) ? queryResult.results : [];
     return json(request, {
       status: "ok",
@@ -1252,6 +1822,8 @@ async function handleStrategyList(request, env) {
         walletUsdc: formatUnits(walletUsdcRaw, USDC_DECIMALS),
         reservedUsdcRaw: reservedRaw.toString(),
         reservedUsdc: formatUnits(reservedRaw, USDC_DECIMALS),
+        reservedInUsdcRaw: reservedInUsdcRaw.toString(),
+        reservedInUsdc: formatUnits(reservedInUsdcRaw, USDC_DECIMALS),
         freeUsdcRaw: freeUsdcRaw.toString(),
         freeUsdc: formatUnits(freeUsdcRaw, USDC_DECIMALS),
       },
@@ -1282,15 +1854,16 @@ async function handleStrategyCreate(request, env) {
 
     if (capitalRaw < MIN_STRATEGY_USDC_RAW) return json(request, { status: "error", message: "A new strategy requires at least 25 USDC." }, 400);
 
-    const [usdc, asty, reservedRaw] = await Promise.all([
+    const [usdc, asty, reservedRaw, reservedInUsdcRaw] = await Promise.all([
       getUsdcBalance(env, account.rebound_wallet_address),
       getAstyBalance(env, account.phantom_address),
       getReservedCapitalRaw(env, auth.userId),
+      getUsdcHeldReservedCapitalRaw(env, auth.userId),
     ]);
 
     const walletUsdcRaw = BigInt(usdc.raw);
     const astyRaw = BigInt(asty.raw);
-    const freeUsdcRaw = walletUsdcRaw > reservedRaw ? walletUsdcRaw - reservedRaw : 0n;
+    const freeUsdcRaw = walletUsdcRaw > reservedInUsdcRaw ? walletUsdcRaw - reservedInUsdcRaw : 0n;
 
     if (astyRaw < ASTY_GATE_RAW) {
       return json(request, {
@@ -1318,6 +1891,8 @@ async function handleStrategyCreate(request, env) {
           walletUsdc: formatUnits(walletUsdcRaw, USDC_DECIMALS),
           reservedUsdcRaw: reservedRaw.toString(),
           reservedUsdc: formatUnits(reservedRaw, USDC_DECIMALS),
+          reservedInUsdcRaw: reservedInUsdcRaw.toString(),
+          reservedInUsdc: formatUnits(reservedInUsdcRaw, USDC_DECIMALS),
           freeUsdcRaw: freeUsdcRaw.toString(),
           freeUsdc: formatUnits(freeUsdcRaw, USDC_DECIMALS),
         },
@@ -1568,15 +2143,15 @@ async function handleTestSwap(request, env) {
     if (!account?.rebound_wallet_address) return json(request, { status: "error", message: "Rebound account not found." }, 404);
     const walletAddress = account.rebound_wallet_address;
 
-    const [usdc, nativeSol, tradingSol, reservedRaw] = await Promise.all([
+    const [usdc, nativeSol, tradingSol, reservedInUsdcRaw] = await Promise.all([
       getUsdcBalance(env, walletAddress),
       getSolBalance(env, walletAddress),
       getWsolTokenAccount(env, walletAddress),
-      getReservedCapitalRaw(env, auth.userId),
+      getUsdcHeldReservedCapitalRaw(env, auth.userId),
     ]);
 
     const walletUsdcRaw = BigInt(usdc.raw);
-    const freeUsdcRaw = walletUsdcRaw > reservedRaw ? walletUsdcRaw - reservedRaw : 0n;
+    const freeUsdcRaw = walletUsdcRaw > reservedInUsdcRaw ? walletUsdcRaw - reservedInUsdcRaw : 0n;
     if (freeUsdcRaw < TEST_SWAP_USDC_RAW) {
       return json(request, { status: "error", message: "At least 0.10 free USDC is required for the test swap." }, 409);
     }
@@ -1719,6 +2294,7 @@ async function routeFetch(request, env) {
     case "GET /watcher/status": return handleWatcherStatus(request, env);
     case "POST /watcher/run": return handleWatcherRun(request, env);
     case "POST /execution/check": return handleExecutionCheck(request, env);
+    case "GET /execution/status": return handleExecutionStatus(request, env);
     case "GET /trading/authorization-config": return handleAuthorizationConfig(request, env);
     case "POST /trading/prepare-sol-context": return handlePrepareSolContext(request, env);
     case "POST /trading/server-signer-test": return handleServerSignerTest(request, env);
@@ -1733,7 +2309,13 @@ export default {
   },
 
   async scheduled(controller, env) {
-    const result = await runPriceWatcher(env, { source: `cron:${controller.cron || "scheduled"}` });
-    console.log("ASTY Rebound watcher result:", JSON.stringify(result));
+    const source = `cron:${controller.cron || "scheduled"}`;
+    const watcherResult = await runPriceWatcher(env, { source });
+    console.log("ASTY Rebound watcher result:", JSON.stringify(watcherResult));
+
+    // Reconcile already-submitted BUYs on every run. New BUYs are only possible
+    // when AUTO_EXECUTION_ENABLED is explicitly set to true.
+    const executionResult = await runBuyExecutor(env, { source });
+    console.log("ASTY Rebound BUY executor result:", JSON.stringify(executionResult));
   },
 };
