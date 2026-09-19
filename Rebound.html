@@ -73,31 +73,26 @@
         calc(36px + env(safe-area-inset-bottom));
     }
 
-    /*
-    ==================================================
-    HEADER
-    ==================================================
-    */
+    /* ==================================================
+       HEADER
+    ================================================== */
 
     .brand {
       display: flex;
       align-items: center;
       gap: 13px;
-
       margin-bottom: 28px;
     }
 
     .brand-logo {
       width: 48px;
       height: 48px;
-
       flex: 0 0 auto;
-
       object-fit: contain;
 
       filter:
         drop-shadow(
-          0 0 16px rgba(170, 120, 255, 0.30)
+          0 0 16px rgba(170,120,255,0.30)
         );
     }
 
@@ -108,7 +103,6 @@
     .brand-title {
       font-size: 20px;
       font-weight: 800;
-
       letter-spacing: -0.01em;
       line-height: 1.05;
     }
@@ -133,27 +127,25 @@
       font-size: 12px;
     }
 
-    /*
-    ==================================================
-    HERO
-    ==================================================
-    */
+    /* ==================================================
+       HERO
+    ================================================== */
 
     .hero {
       display: grid;
 
       grid-template-columns:
         minmax(0, 1fr)
-        150px;
+        145px;
 
       align-items: center;
 
       gap: 18px;
 
-      min-height: 215px;
+      min-height: 210px;
 
       padding:
-        18px 4px 34px;
+        16px 4px 30px;
     }
 
     .hero-content {
@@ -164,26 +156,24 @@
       display: flex;
       align-items: center;
       justify-content: center;
-
-      min-width: 0;
     }
 
     .wolf {
       display: block;
 
       width: 100%;
-      max-width: 145px;
-      max-height: 185px;
+      max-width: 140px;
+      max-height: 180px;
 
       object-fit: contain;
 
-      opacity: 0.26;
+      opacity: 0.28;
 
       pointer-events: none;
 
       filter:
         drop-shadow(
-          0 0 32px rgba(156, 103, 255, 0.22)
+          0 0 32px rgba(156,103,255,0.22)
         );
     }
 
@@ -212,7 +202,7 @@
     }
 
     .lead {
-      max-width: 520px;
+      max-width: 500px;
 
       margin: 0;
 
@@ -222,11 +212,9 @@
       line-height: 1.6;
     }
 
-    /*
-    ==================================================
-    MAIN CARD
-    ==================================================
-    */
+    /* ==================================================
+       CARD
+    ================================================== */
 
     .card {
       padding: 20px;
@@ -248,11 +236,9 @@
         0 22px 70px rgba(0,0,0,0.28);
     }
 
-    /*
-    ==================================================
-    CONNECTION STATUS
-    ==================================================
-    */
+    /* ==================================================
+       STATUS
+    ================================================== */
 
     .status {
       display: flex;
@@ -293,11 +279,9 @@
         rgba(105,231,166,0.72);
     }
 
-    /*
-    ==================================================
-    BUTTONS
-    ==================================================
-    */
+    /* ==================================================
+       BUTTONS
+    ================================================== */
 
     button {
       appearance: none;
@@ -310,7 +294,7 @@
     }
 
     button:disabled {
-      opacity: 0.50;
+      opacity: 0.48;
       cursor: not-allowed;
     }
 
@@ -342,10 +326,36 @@
       transform: scale(0.99);
     }
 
-    .logout {
+    .deposit-button {
       width: 100%;
 
       margin-top: 13px;
+
+      padding: 12px 14px;
+
+      border-radius: 12px;
+
+      color: var(--text);
+
+      background:
+        rgba(181,144,255,0.12);
+
+      border:
+        1px solid rgba(181,144,255,0.28);
+
+      font-size: 13px;
+      font-weight: 750;
+    }
+
+    .deposit-button:hover {
+      background:
+        rgba(181,144,255,0.17);
+    }
+
+    .logout {
+      width: 100%;
+
+      margin-top: 14px;
 
       padding: 14px 18px;
 
@@ -362,11 +372,9 @@
       font-weight: 700;
     }
 
-    /*
-    ==================================================
-    BALANCES
-    ==================================================
-    */
+    /* ==================================================
+       BALANCE
+    ================================================== */
 
     .balance-box {
       margin-bottom: 14px;
@@ -399,18 +407,18 @@
       grid-template-columns:
         repeat(2, minmax(0, 1fr));
 
-      gap: 10px;
+      gap: 11px;
     }
 
     .balance-item {
       min-width: 0;
 
-      padding: 14px;
+      padding: 15px;
 
       border:
-        1px solid rgba(255,255,255,0.05);
+        1px solid rgba(255,255,255,0.055);
 
-      border-radius: 14px;
+      border-radius: 15px;
 
       background:
         rgba(255,255,255,0.022);
@@ -442,11 +450,48 @@
       color: var(--muted);
     }
 
-    /*
-    ==================================================
-    WALLET
-    ==================================================
-    */
+    .asset-info {
+      min-height: 48px;
+
+      margin-top: 10px;
+
+      color: var(--muted);
+
+      font-size: 11px;
+      line-height: 1.45;
+    }
+
+    .gas-state {
+      display: inline-block;
+
+      margin-top: 8px;
+
+      padding: 5px 8px;
+
+      border-radius: 8px;
+
+      font-size: 10px;
+      font-weight: 700;
+    }
+
+    .gas-good {
+      color: var(--green);
+      background: rgba(105,231,166,0.08);
+    }
+
+    .gas-warn {
+      color: var(--yellow);
+      background: rgba(255,212,119,0.08);
+    }
+
+    .gas-low {
+      color: var(--red);
+      background: rgba(255,127,145,0.08);
+    }
+
+    /* ==================================================
+       WALLET
+    ================================================== */
 
     .wallet-box {
       padding: 16px;
@@ -532,11 +577,56 @@
       font-weight: 700;
     }
 
-    /*
-    ==================================================
-    INFO / ERROR
-    ==================================================
-    */
+    /* ==================================================
+       DEPOSIT STATUS
+    ================================================== */
+
+    .deposit-status {
+      margin-top: 14px;
+
+      padding: 13px;
+
+      border-radius: 13px;
+
+      font-size: 12px;
+      line-height: 1.5;
+    }
+
+    .deposit-pending {
+      border:
+        1px solid rgba(255,212,119,0.22);
+
+      background:
+        rgba(255,212,119,0.07);
+
+      color: #ffe4a5;
+    }
+
+    .deposit-success {
+      border:
+        1px solid rgba(105,231,166,0.22);
+
+      background:
+        rgba(105,231,166,0.07);
+
+      color: #baf6d5;
+    }
+
+    .tx-link {
+      display: inline-block;
+
+      margin-top: 6px;
+
+      color: var(--purple);
+
+      text-decoration: none;
+
+      font-weight: 700;
+    }
+
+    /* ==================================================
+       INFO / ERROR
+    ================================================== */
 
     .info {
       margin-top: 14px;
@@ -590,13 +680,183 @@
       line-height: 1.5;
     }
 
-    /*
-    ==================================================
-    MOBILE
-    ==================================================
-    */
+    /* ==================================================
+       MODAL
+    ================================================== */
 
-    @media (max-width: 520px) {
+    .modal-backdrop {
+      position: fixed;
+
+      inset: 0;
+
+      z-index: 100;
+
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+
+      padding: 18px;
+
+      background:
+        rgba(3,2,7,0.78);
+
+      backdrop-filter:
+        blur(8px);
+    }
+
+    .modal {
+      width: min(480px, 100%);
+
+      padding: 20px;
+
+      border:
+        1px solid var(--border);
+
+      border-radius: 24px;
+
+      background:
+        #131019;
+
+      box-shadow:
+        0 24px 80px
+        rgba(0,0,0,0.55);
+    }
+
+    .modal-title {
+      margin: 0;
+
+      font-size: 22px;
+      font-weight: 800;
+
+      letter-spacing: -0.02em;
+    }
+
+    .modal-description {
+      margin: 8px 0 18px;
+
+      color: var(--muted);
+
+      font-size: 12px;
+      line-height: 1.5;
+    }
+
+    .input-label {
+      display: block;
+
+      margin-bottom: 8px;
+
+      color: var(--muted);
+
+      font-size: 11px;
+      font-weight: 700;
+
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .amount-input-wrap {
+      display: flex;
+      align-items: center;
+
+      gap: 10px;
+
+      padding: 3px 13px;
+
+      border:
+        1px solid var(--border);
+
+      border-radius: 14px;
+
+      background:
+        rgba(255,255,255,0.025);
+    }
+
+    .amount-input {
+      min-width: 0;
+      flex: 1;
+
+      padding: 13px 0;
+
+      border: 0;
+      outline: 0;
+
+      color: var(--text);
+
+      background: transparent;
+
+      font: inherit;
+      font-size: 19px;
+      font-weight: 750;
+    }
+
+    .input-asset {
+      color: var(--purple);
+
+      font-size: 13px;
+      font-weight: 800;
+    }
+
+    .modal-wallet {
+      margin-top: 13px;
+
+      color: var(--muted);
+
+      font-size: 11px;
+      line-height: 1.5;
+    }
+
+    .modal-wallet strong {
+      color: var(--text);
+    }
+
+    .modal-buttons {
+      display: grid;
+
+      grid-template-columns:
+        1fr 1.5fr;
+
+      gap: 10px;
+
+      margin-top: 18px;
+    }
+
+    .modal-cancel {
+      padding: 14px;
+
+      border:
+        1px solid var(--border);
+
+      border-radius: 13px;
+
+      color: var(--text);
+
+      background: transparent;
+
+      font-weight: 700;
+    }
+
+    .modal-confirm {
+      padding: 14px;
+
+      border-radius: 13px;
+
+      color: #130921;
+
+      background:
+        linear-gradient(
+          90deg,
+          #c49dff,
+          #8d63ff
+        );
+
+      font-weight: 800;
+    }
+
+    /* ==================================================
+       MOBILE
+    ================================================== */
+
+    @media (max-width: 540px) {
 
       .hero {
         grid-template-columns:
@@ -605,22 +865,32 @@
 
         gap: 8px;
 
-        min-height: 205px;
+        min-height: 200px;
       }
 
       .wolf {
         max-width: 105px;
         max-height: 145px;
-
-        opacity: 0.30;
       }
 
-      .lead {
-        font-size: 15px;
+      .balance-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .asset-info {
+        min-height: 0;
       }
 
       .amount {
-        font-size: 19px;
+        font-size: 22px;
+      }
+
+    }
+
+    @media (min-width: 541px) {
+
+      .modal-backdrop {
+        align-items: center;
       }
 
     }
@@ -691,8 +961,29 @@ import {
 import {
   useWallets,
   useCreateWallet,
+  useSignAndSendTransaction,
   toSolanaWalletConnectors
 } from "https://esm.sh/@privy-io/react-auth@3.43.0/solana?external=react,react-dom";
+
+
+import {
+  PublicKey,
+  Transaction,
+  SystemProgram
+} from "https://esm.sh/@solana/web3.js@1.98.4";
+
+
+import {
+  getAssociatedTokenAddress,
+  createAssociatedTokenAccountIdempotentInstruction,
+  createTransferCheckedInstruction,
+  TOKEN_PROGRAM_ID,
+  ASSOCIATED_TOKEN_PROGRAM_ID
+} from "https://esm.sh/@solana/spl-token@0.4.14?deps=@solana/web3.js@1.98.4";
+
+
+import bs58
+from "https://esm.sh/bs58@6.0.0";
 
 
 const APP_ID =
@@ -703,15 +994,17 @@ const API_BASE =
   "https://asty-rebound-api.mail-timothy.workers.dev";
 
 
+const USDC_MINT =
+  "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v";
+
+
 const e =
   React.createElement;
 
 
-/*
-====================================================
-HELPERS
-====================================================
-*/
+/* ==================================================
+   HELPERS
+================================================== */
 
 
 function bytesToBase64(bytes) {
@@ -722,7 +1015,6 @@ function bytesToBase64(bytes) {
     bytes instanceof Uint8Array
       ? bytes
       : new Uint8Array(bytes);
-
 
   for (
     let i = 0;
@@ -737,10 +1029,26 @@ function bytesToBase64(bytes) {
 
   }
 
-
   return btoa(binary);
 }
 
+
+function signatureToBase58(
+  signature
+) {
+
+  if (
+    typeof signature === "string"
+  ) {
+    return signature;
+  }
+
+  return bs58.encode(
+    signature instanceof Uint8Array
+      ? signature
+      : new Uint8Array(signature)
+  );
+}
 
 
 function walletLooksLikePhantom(
@@ -751,40 +1059,27 @@ function walletLooksLikePhantom(
     return false;
   }
 
-
   const client =
     String(
       wallet.walletClientType || ""
     ).toLowerCase();
-
 
   const connector =
     String(
       wallet.connectorType || ""
     ).toLowerCase();
 
-
   const standardName =
     String(
       wallet.standardWallet?.name || ""
     ).toLowerCase();
 
-
   return (
-
-    client.includes("phantom")
-
-    ||
-
-    connector.includes("phantom")
-
-    ||
-
+    client.includes("phantom") ||
+    connector.includes("phantom") ||
     standardName.includes("phantom")
-
   );
 }
-
 
 
 function isEmbeddedWallet(
@@ -795,54 +1090,37 @@ function isEmbeddedWallet(
     return false;
   }
 
-
   const client =
     String(
       wallet.walletClientType || ""
     ).toLowerCase();
-
 
   const connector =
     String(
       wallet.connectorType || ""
     ).toLowerCase();
 
-
   const standardName =
     String(
       wallet.standardWallet?.name || ""
     ).toLowerCase();
 
-
   return (
-
-    client.includes("privy")
-
-    ||
-
-    connector.includes("embedded")
-
-    ||
-
+    client.includes("privy") ||
+    connector.includes("embedded") ||
     standardName.includes("privy")
-
   );
 }
 
 
-
-function formatUsdc(
-  value
-) {
+function formatUsdc(value) {
 
   const n =
-    Number(value || 0);
-
+    Number(value);
 
   if (!Number.isFinite(n)) {
-    return "0.00";
+    return "—";
   }
-
 
   return n.toLocaleString(
     "en-US",
@@ -851,23 +1129,17 @@ function formatUsdc(
       maximumFractionDigits: 2
     }
   );
-
 }
 
 
-
-function formatSol(
-  value
-) {
+function formatSol(value) {
 
   const n =
-    Number(value || 0);
-
+    Number(value);
 
   if (!Number.isFinite(n)) {
-    return "0.0000";
+    return "—";
   }
-
 
   return n.toLocaleString(
     "en-US",
@@ -876,16 +1148,76 @@ function formatSol(
       maximumFractionDigits: 6
     }
   );
-
 }
 
 
+function parseUnitsExact(
+  value,
+  decimals
+) {
 
-/*
-====================================================
-APP
-====================================================
-*/
+  const text =
+    String(value)
+      .trim();
+
+  if (
+    !/^\d+(\.\d+)?$/.test(text)
+  ) {
+    throw new Error(
+      "Enter a valid amount."
+    );
+  }
+
+  const [
+    whole,
+    fraction = ""
+  ] =
+    text.split(".");
+
+  if (
+    fraction.length >
+    decimals
+  ) {
+    throw new Error(
+      `Maximum ${decimals} decimal places.`
+    );
+  }
+
+  const padded =
+    fraction.padEnd(
+      decimals,
+      "0"
+    );
+
+  return (
+    BigInt(whole) *
+      (
+        10n **
+        BigInt(decimals)
+      )
+    +
+    BigInt(
+      padded || "0"
+    )
+  );
+}
+
+
+function sleep(ms) {
+
+  return new Promise(
+    resolve =>
+      setTimeout(
+        resolve,
+        ms
+      )
+  );
+}
+
+
+/* ==================================================
+   APP
+================================================== */
 
 
 function App() {
@@ -916,12 +1248,15 @@ function App() {
   } = useCreateWallet();
 
 
+  const {
+    signAndSendTransaction
+  } =
+    useSignAndSendTransaction();
 
-  /*
-  ==================================================
-  STATE
-  ==================================================
-  */
+
+  /* ==================================================
+     STATE
+  ================================================== */
 
 
   const [
@@ -979,6 +1314,12 @@ function App() {
 
 
   const [
+    balanceAvailable,
+    setBalanceAvailable
+  ] = useState(false);
+
+
+  const [
     usdcBalance,
     setUsdcBalance
   ] = useState(null);
@@ -988,6 +1329,42 @@ function App() {
     solBalance,
     setSolBalance
   ] = useState(null);
+
+
+  const [
+    depositAsset,
+    setDepositAsset
+  ] = useState(null);
+
+
+  const [
+    depositAmount,
+    setDepositAmount
+  ] = useState("");
+
+
+  const [
+    depositBusy,
+    setDepositBusy
+  ] = useState(false);
+
+
+  const [
+    depositState,
+    setDepositState
+  ] = useState(null);
+
+
+  const [
+    depositSignature,
+    setDepositSignature
+  ] = useState("");
+
+
+  const [
+    depositMessage,
+    setDepositMessage
+  ] = useState("");
 
 
   const creationAttempted =
@@ -1002,12 +1379,9 @@ function App() {
     useRef("");
 
 
-
-  /*
-  ==================================================
-  CONNECT PHANTOM
-  ==================================================
-  */
+  /* ==================================================
+     CONNECT PHANTOM
+  ================================================== */
 
 
   const {
@@ -1021,7 +1395,6 @@ function App() {
       const address =
         wallet?.address || "";
 
-
       if (address) {
 
         setPendingWalletAddress(
@@ -1029,7 +1402,6 @@ function App() {
         );
 
       }
-
 
       setConnecting(false);
 
@@ -1045,9 +1417,7 @@ function App() {
         err
       );
 
-
       setConnecting(false);
-
 
       const message =
         String(
@@ -1056,16 +1426,13 @@ function App() {
           ""
         );
 
-
       if (
         message
           .toLowerCase()
           .includes("cancel")
       ) {
-
         return;
       }
-
 
       setError(
         message ||
@@ -1077,13 +1444,11 @@ function App() {
   });
 
 
-
   async function handleConnect() {
 
     setError("");
 
     setConnecting(true);
-
 
     try {
 
@@ -1103,14 +1468,9 @@ function App() {
 
     }
 
-    catch (
-      err
-    ) {
+    catch (err) {
 
-      console.error(
-        err
-      );
-
+      console.error(err);
 
       setConnecting(false);
 
@@ -1119,12 +1479,9 @@ function App() {
   }
 
 
-
-  /*
-  ==================================================
-  FIND ACTUAL SOLANA WALLET
-  ==================================================
-  */
+  /* ==================================================
+     ACTUAL PHANTOM WALLET
+  ================================================== */
 
 
   const connectedPhantomWallet =
@@ -1142,13 +1499,11 @@ function App() {
                 pendingWalletAddress
             );
 
-
           if (exact) {
             return exact;
           }
 
         }
-
 
         return (
 
@@ -1174,12 +1529,9 @@ function App() {
     );
 
 
-
-  /*
-  ==================================================
-  SIWS LOGIN
-  ==================================================
-  */
+  /* ==================================================
+     LOGIN
+  ================================================== */
 
 
   async function authenticateWallet(
@@ -1191,7 +1543,6 @@ function App() {
       authenticated ||
       signingIn
     ) {
-
       return;
     }
 
@@ -1200,7 +1551,6 @@ function App() {
       typeof wallet.signMessage
       !== "function"
     ) {
-
       return;
     }
 
@@ -1264,9 +1614,7 @@ function App() {
 
     }
 
-    catch (
-      err
-    ) {
+    catch (err) {
 
       console.error(
         "SIWS login error:",
@@ -1311,7 +1659,6 @@ function App() {
   }
 
 
-
   useEffect(
     () => {
 
@@ -1320,16 +1667,15 @@ function App() {
         signingIn ||
         !connectedPhantomWallet
       ) {
-
         return;
       }
 
 
       if (
         typeof connectedPhantomWallet
-          .signMessage !== "function"
+          .signMessage !==
+        "function"
       ) {
-
         return;
       }
 
@@ -1343,7 +1689,6 @@ function App() {
         authAttemptedFor.current ===
           key
       ) {
-
         return;
       }
 
@@ -1366,12 +1711,9 @@ function App() {
   );
 
 
-
-  /*
-  ==================================================
-  PHANTOM ACCOUNT
-  ==================================================
-  */
+  /* ==================================================
+     PHANTOM ACCOUNT
+  ================================================== */
 
 
   const linkedPhantom =
@@ -1381,7 +1723,6 @@ function App() {
         if (
           !user?.linkedAccounts
         ) {
-
           return null;
         }
 
@@ -1443,7 +1784,6 @@ function App() {
     );
 
 
-
   const phantomAddress =
 
     linkedPhantom?.address
@@ -1461,12 +1801,9 @@ function App() {
     "";
 
 
-
-  /*
-  ==================================================
-  EXISTING REBOUND WALLET
-  ==================================================
-  */
+  /* ==================================================
+     REBOUND WALLET
+  ================================================== */
 
 
   const linkedEmbedded =
@@ -1476,7 +1813,6 @@ function App() {
         if (
           !user?.linkedAccounts
         ) {
-
           return null;
         }
 
@@ -1490,7 +1826,6 @@ function App() {
                 account?.type !==
                 "wallet"
               ) {
-
                 return false;
               }
 
@@ -1562,7 +1897,6 @@ function App() {
     );
 
 
-
   const embeddedFromWallets =
     useMemo(
       () => {
@@ -1603,7 +1937,6 @@ function App() {
     );
 
 
-
   const reboundWallet =
 
     linkedEmbedded
@@ -1621,7 +1954,6 @@ function App() {
     null;
 
 
-
   const reboundAddress =
     reboundWallet?.address || "";
 
@@ -1630,12 +1962,9 @@ function App() {
     reboundWallet?.id || null;
 
 
-
-  /*
-  ==================================================
-  ENSURE REBOUND WALLET
-  ==================================================
-  */
+  /* ==================================================
+     ENSURE REBOUND WALLET
+  ================================================== */
 
 
   useEffect(
@@ -1646,7 +1975,6 @@ function App() {
         !walletsReady ||
         !authenticated
       ) {
-
         return;
       }
 
@@ -1671,7 +1999,6 @@ function App() {
       if (
         creationAttempted.current
       ) {
-
         return;
       }
 
@@ -1684,7 +2011,6 @@ function App() {
               reboundAddress ||
               creationAttempted.current
             ) {
-
               return;
             }
 
@@ -1722,9 +2048,7 @@ function App() {
 
             }
 
-            catch (
-              err
-            ) {
+            catch (err) {
 
               console.error(
                 "Embedded wallet:",
@@ -1751,7 +2075,7 @@ function App() {
                   )
               ) {
 
-                const alreadyReloaded =
+                const reloaded =
                   sessionStorage
                     .getItem(
                       "asty_rebound_wallet_reload"
@@ -1759,7 +2083,7 @@ function App() {
 
 
                 if (
-                  !alreadyReloaded
+                  !reloaded
                 ) {
 
                   sessionStorage
@@ -1812,12 +2136,9 @@ function App() {
   );
 
 
-
-  /*
-  ==================================================
-  D1 ACCOUNT SYNC
-  ==================================================
-  */
+  /* ==================================================
+     DATABASE SYNC
+  ================================================== */
 
 
   useEffect(
@@ -1829,7 +2150,6 @@ function App() {
         !phantomAddress ||
         !reboundAddress
       ) {
-
         return;
       }
 
@@ -1846,7 +2166,6 @@ function App() {
         syncAttempted.current ===
         key
       ) {
-
         return;
       }
 
@@ -1940,9 +2259,7 @@ function App() {
 
         }
 
-        catch (
-          err
-        ) {
+        catch (err) {
 
           console.error(
             "D1 sync:",
@@ -1992,12 +2309,111 @@ function App() {
   );
 
 
+  /* ==================================================
+     BALANCE
+  ================================================== */
 
-  /*
-  ==================================================
-  BALANCE
-  ==================================================
-  */
+
+  async function loadBalance() {
+
+    if (
+      !authenticated ||
+      syncState !==
+        "ready"
+    ) {
+      return;
+    }
+
+
+    setBalanceLoading(true);
+
+
+    try {
+
+      const token =
+        await getAccessToken();
+
+
+      if (!token) {
+
+        throw new Error(
+          "No session."
+        );
+
+      }
+
+
+      const response =
+        await fetch(
+          `${API_BASE}/account/balance`,
+          {
+
+            headers: {
+
+              "Authorization":
+                `Bearer ${token}`
+
+            }
+
+          }
+        );
+
+
+      const result =
+        await response.json();
+
+
+      if (!response.ok) {
+
+        throw new Error(
+          result?.message ||
+          "Balance unavailable."
+        );
+
+      }
+
+
+      setUsdcBalance(
+        result?.balances
+          ?.usdc
+          ?.ui ??
+        "0"
+      );
+
+
+      setSolBalance(
+        result?.balances
+          ?.sol
+          ?.ui ??
+        "0"
+      );
+
+
+      setBalanceAvailable(true);
+
+      setBalanceLoading(false);
+
+    }
+
+    catch (err) {
+
+      console.error(
+        "Balance:",
+        err
+      );
+
+
+      setBalanceLoading(false);
+
+      setBalanceAvailable(false);
+
+      setUsdcBalance(null);
+
+      setSolBalance(null);
+
+    }
+
+  }
 
 
   useEffect(
@@ -2005,136 +2421,10 @@ function App() {
 
       if (
         !authenticated ||
-        syncState !== "ready"
+        syncState !==
+          "ready"
       ) {
-
         return;
-      }
-
-
-      let cancelled =
-        false;
-
-
-      async function loadBalance() {
-
-        setBalanceLoading(
-          true
-        );
-
-
-        try {
-
-          const token =
-            await getAccessToken();
-
-
-          if (!token) {
-
-            throw new Error(
-              "No session."
-            );
-
-          }
-
-
-          const response =
-            await fetch(
-              `${API_BASE}/account/balance`,
-              {
-
-                headers: {
-
-                  "Authorization":
-                    `Bearer ${token}`
-
-                }
-
-              }
-            );
-
-
-          const result =
-            await response.json();
-
-
-          if (!response.ok) {
-
-            throw new Error(
-              result?.message ||
-              result?.debug ||
-              "Balance unavailable."
-            );
-
-          }
-
-
-          if (!cancelled) {
-
-            setUsdcBalance(
-
-              result?.balances
-                ?.usdc
-                ?.ui
-
-              ??
-
-              "0"
-
-            );
-
-
-            setSolBalance(
-
-              result?.balances
-                ?.sol
-                ?.ui
-
-              ??
-
-              "0"
-
-            );
-
-
-            setBalanceLoading(
-              false
-            );
-
-
-            setError("");
-
-          }
-
-        }
-
-        catch (
-          err
-        ) {
-
-          console.error(
-            "Balance:",
-            err
-          );
-
-
-          if (!cancelled) {
-
-            setBalanceLoading(
-              false
-            );
-
-
-            setError(
-              err?.message ||
-              String(err) ||
-              "Your Rebound Balance is temporarily unavailable."
-            );
-
-          }
-
-        }
-
       }
 
 
@@ -2148,34 +2438,691 @@ function App() {
         );
 
 
-      return () => {
-
-        cancelled =
-          true;
-
-
+      return () =>
         clearInterval(
           interval
         );
-
-      };
 
     },
 
     [
       authenticated,
-      syncState,
-      getAccessToken
+      syncState
     ]
   );
 
 
+  /* ==================================================
+     DEPOSIT MODAL
+  ================================================== */
 
-  /*
-  ==================================================
-  COPY WALLET
-  ==================================================
-  */
+
+  function openDeposit(
+    asset
+  ) {
+
+    setError("");
+
+    setDepositAsset(
+      asset
+    );
+
+
+    setDepositAmount(
+      asset === "SOL"
+        ? "0.02"
+        : ""
+    );
+
+  }
+
+
+  function closeDeposit() {
+
+    if (
+      depositBusy
+    ) {
+      return;
+    }
+
+
+    setDepositAsset(null);
+
+    setDepositAmount("");
+
+  }
+
+
+  /* ==================================================
+     BUILD SOL DEPOSIT
+  ================================================== */
+
+
+  function buildSolTransaction(
+    context
+  ) {
+
+    const from =
+      new PublicKey(
+        context.from
+      );
+
+
+    const to =
+      new PublicKey(
+        context.to
+      );
+
+
+    const lamports =
+      parseUnitsExact(
+        context.amount,
+        9
+      );
+
+
+    const transaction =
+      new Transaction();
+
+
+    transaction.feePayer =
+      from;
+
+
+    transaction.recentBlockhash =
+      context.blockhash;
+
+
+    transaction.add(
+
+      SystemProgram.transfer({
+
+        fromPubkey:
+          from,
+
+        toPubkey:
+          to,
+
+        lamports
+
+      })
+
+    );
+
+
+    return transaction;
+
+  }
+
+
+  /* ==================================================
+     BUILD USDC DEPOSIT
+  ================================================== */
+
+
+  async function buildUsdcTransaction(
+    context
+  ) {
+
+    const from =
+      new PublicKey(
+        context.from
+      );
+
+
+    const to =
+      new PublicKey(
+        context.to
+      );
+
+
+    const mint =
+      new PublicKey(
+        USDC_MINT
+      );
+
+
+    const rawAmount =
+      parseUnitsExact(
+        context.amount,
+        6
+      );
+
+
+    const sourceAta =
+      await getAssociatedTokenAddress(
+
+        mint,
+        from,
+        false,
+        TOKEN_PROGRAM_ID,
+        ASSOCIATED_TOKEN_PROGRAM_ID
+
+      );
+
+
+    const destinationAta =
+      await getAssociatedTokenAddress(
+
+        mint,
+        to,
+        false,
+        TOKEN_PROGRAM_ID,
+        ASSOCIATED_TOKEN_PROGRAM_ID
+
+      );
+
+
+    const transaction =
+      new Transaction();
+
+
+    transaction.feePayer =
+      from;
+
+
+    transaction.recentBlockhash =
+      context.blockhash;
+
+
+    /*
+     * Safe to include every time.
+     *
+     * If the Rebound USDC ATA already
+     * exists, this is effectively a no-op.
+     */
+    transaction.add(
+
+      createAssociatedTokenAccountIdempotentInstruction(
+
+        from,
+        destinationAta,
+        to,
+        mint,
+        TOKEN_PROGRAM_ID,
+        ASSOCIATED_TOKEN_PROGRAM_ID
+
+      )
+
+    );
+
+
+    transaction.add(
+
+      createTransferCheckedInstruction(
+
+        sourceAta,
+        mint,
+        destinationAta,
+        from,
+        rawAmount,
+        6,
+        [],
+        TOKEN_PROGRAM_ID
+
+      )
+
+    );
+
+
+    return transaction;
+
+  }
+
+
+  /* ==================================================
+     CONFIRMATION POLLING
+  ================================================== */
+
+
+  async function waitForConfirmation(
+    signature
+  ) {
+
+    for (
+      let attempt = 0;
+      attempt < 30;
+      attempt++
+    ) {
+
+      await sleep(
+        2000
+      );
+
+
+      try {
+
+        const token =
+          await getAccessToken();
+
+
+        if (!token) {
+          continue;
+        }
+
+
+        const response =
+          await fetch(
+
+            `${API_BASE}/transaction/status?signature=${encodeURIComponent(signature)}`,
+
+            {
+              headers: {
+                "Authorization":
+                  `Bearer ${token}`
+              }
+            }
+
+          );
+
+
+        if (!response.ok) {
+          continue;
+        }
+
+
+        const result =
+          await response.json();
+
+
+        if (
+          result?.transactionError
+        ) {
+
+          throw new Error(
+            "The Solana transaction failed."
+          );
+
+        }
+
+
+        if (
+          result?.confirmed
+        ) {
+
+          return true;
+
+        }
+
+      }
+
+      catch (err) {
+
+        if (
+          err?.message ===
+          "The Solana transaction failed."
+        ) {
+          throw err;
+        }
+
+      }
+
+    }
+
+
+    return false;
+
+  }
+
+
+  /* ==================================================
+     SEND DEPOSIT
+  ================================================== */
+
+
+  async function sendDeposit() {
+
+    if (
+      !depositAsset ||
+      depositBusy
+    ) {
+      return;
+    }
+
+
+    setError("");
+
+    setDepositMessage("");
+
+    setDepositState(null);
+
+
+    const amount =
+      String(
+        depositAmount
+      ).trim();
+
+
+    if (
+      !amount ||
+      Number(amount) <= 0
+    ) {
+
+      setError(
+        "Enter a valid deposit amount."
+      );
+
+      return;
+    }
+
+
+    if (
+      !connectedPhantomWallet ||
+      !connectedPhantomWallet.address
+    ) {
+
+      setError(
+        "Phantom must be connected before making a deposit."
+      );
+
+      return;
+    }
+
+
+    setDepositBusy(true);
+
+
+    try {
+
+      /*
+       * Get authoritative sender,
+       * destination and fresh blockhash
+       * from the backend.
+       */
+
+      const token =
+        await getAccessToken();
+
+
+      if (!token) {
+
+        throw new Error(
+          "Your login session has expired."
+        );
+
+      }
+
+
+      const contextResponse =
+        await fetch(
+          `${API_BASE}/deposit/context`,
+          {
+
+            method:
+              "POST",
+
+            headers: {
+
+              "Content-Type":
+                "application/json",
+
+              "Authorization":
+                `Bearer ${token}`
+
+            },
+
+            body:
+              JSON.stringify({
+
+                asset:
+                  depositAsset,
+
+                amount
+
+              })
+
+          }
+        );
+
+
+      const context =
+        await contextResponse.json();
+
+
+      if (
+        !contextResponse.ok
+      ) {
+
+        throw new Error(
+          context?.message ||
+          "Deposit could not be prepared."
+        );
+
+      }
+
+
+      /*
+       * Make sure the wallet currently
+       * signing is exactly the wallet
+       * registered with Rebound.
+       */
+
+      if (
+        connectedPhantomWallet
+          .address !==
+        context.from
+      ) {
+
+        throw new Error(
+          "The connected Phantom wallet does not match your Rebound account."
+        );
+
+      }
+
+
+      let transaction;
+
+
+      if (
+        depositAsset ===
+        "SOL"
+      ) {
+
+        transaction =
+          buildSolTransaction(
+            context
+          );
+
+      }
+
+      else {
+
+        transaction =
+          await buildUsdcTransaction(
+            context
+          );
+
+      }
+
+
+      /*
+       * Privy expects the encoded
+       * unsigned transaction.
+       *
+       * Phantom then performs the actual
+       * signing and broadcasting.
+       */
+
+      const serialized =
+        transaction.serialize({
+
+          requireAllSignatures:
+            false,
+
+          verifySignatures:
+            false
+
+        });
+
+
+      const result =
+        await signAndSendTransaction({
+
+          transaction:
+            new Uint8Array(
+              serialized
+            ),
+
+          wallet:
+            connectedPhantomWallet,
+
+          options: {
+
+            skipSimulation:
+              false,
+
+            uiOptions: {
+              showWalletUIs:
+                true
+            }
+
+          }
+
+        });
+
+
+      const signature =
+        signatureToBase58(
+          result.signature
+        );
+
+
+      setDepositSignature(
+        signature
+      );
+
+
+      setDepositState(
+        "pending"
+      );
+
+
+      setDepositMessage(
+        `${depositAsset} deposit sent. Waiting for Solana confirmation…`
+      );
+
+
+      /*
+       * Close amount modal after the
+       * wallet successfully sent it.
+       */
+
+      setDepositAsset(null);
+
+      setDepositAmount("");
+
+
+      const confirmed =
+        await waitForConfirmation(
+          signature
+        );
+
+
+      if (
+        confirmed
+      ) {
+
+        setDepositState(
+          "success"
+        );
+
+
+        setDepositMessage(
+          `${depositAsset} deposit confirmed ✓`
+        );
+
+
+        /*
+         * Immediately refresh the
+         * on-chain balance.
+         */
+
+        await loadBalance();
+
+      }
+
+      else {
+
+        setDepositState(
+          "pending"
+        );
+
+
+        setDepositMessage(
+          "Transaction sent. Confirmation is taking longer than expected; the balance will refresh automatically."
+        );
+
+      }
+
+
+      setDepositBusy(false);
+
+    }
+
+    catch (err) {
+
+      console.error(
+        "Deposit error:",
+        err
+      );
+
+
+      setDepositBusy(false);
+
+
+      const message =
+        String(
+          err?.message ||
+          err ||
+          ""
+        );
+
+
+      if (
+        message
+          .toLowerCase()
+          .includes(
+            "user rejected"
+          )
+
+        ||
+
+        message
+          .toLowerCase()
+          .includes(
+            "cancelled"
+          )
+
+        ||
+
+        message
+          .toLowerCase()
+          .includes(
+            "canceled"
+          )
+      ) {
+
+        setError(
+          "The deposit was cancelled in Phantom."
+        );
+
+        return;
+      }
+
+
+      setError(
+        message ||
+        "The deposit could not be completed."
+      );
+
+    }
+
+  }
+
+
+  /* ==================================================
+     COPY WALLET
+  ================================================== */
 
 
   async function copyWallet() {
@@ -2183,7 +3130,6 @@ function App() {
     if (
       !reboundAddress
     ) {
-
       return;
     }
 
@@ -2216,12 +3162,9 @@ function App() {
   }
 
 
-
-  /*
-  ==================================================
-  LOGOUT
-  ==================================================
-  */
+  /* ==================================================
+     LOGOUT
+  ================================================== */
 
 
   async function handleLogout() {
@@ -2232,9 +3175,20 @@ function App() {
 
     setSolBalance(null);
 
+    setBalanceAvailable(false);
+
     setSyncState(
       "waiting"
     );
+
+
+    setDepositAsset(null);
+
+    setDepositState(null);
+
+    setDepositSignature("");
+
+    setDepositMessage("");
 
 
     syncAttempted.current =
@@ -2259,12 +3213,9 @@ function App() {
   }
 
 
-
-  /*
-  ==================================================
-  STATUS
-  ==================================================
-  */
+  /* ==================================================
+     STATUS
+  ================================================== */
 
 
   const loading =
@@ -2284,8 +3235,8 @@ function App() {
 
     &&
 
-    syncState === "ready";
-
+    syncState ===
+      "ready";
 
 
   let statusText =
@@ -2362,63 +3313,93 @@ function App() {
   }
 
 
+  /* ==================================================
+     GAS STATUS
+  ================================================== */
 
-  /*
-  ==================================================
-  UI
-  ==================================================
-  */
+
+  let gasClass =
+    "gas-state gas-warn";
+
+
+  let gasText =
+    "Recommended: 0.02 SOL";
+
+
+  if (
+    balanceAvailable &&
+    solBalance !== null
+  ) {
+
+    const gas =
+      Number(
+        solBalance
+      );
+
+
+    if (
+      gas >= 0.02
+    ) {
+
+      gasClass =
+        "gas-state gas-good";
+
+
+      gasText =
+        "Gas reserve ready ✓";
+
+    }
+
+    else if (
+      gas < 0.005
+    ) {
+
+      gasClass =
+        "gas-state gas-low";
+
+
+      gasText =
+        "Gas reserve low";
+
+    }
+
+    else {
+
+      gasClass =
+        "gas-state gas-warn";
+
+
+      gasText =
+        "Below recommended 0.02 SOL";
+
+    }
+
+  }
+
+
+  /* ==================================================
+     UI
+  ================================================== */
 
 
   return e(
 
-    "main",
+    React.Fragment,
 
-    {
-      className:
-        "page"
-    },
-
-
-
-    /*
-    HEADER
-    */
+    null,
 
 
     e(
 
-      "div",
+      "main",
 
       {
         className:
-          "brand"
+          "page"
       },
 
 
-      e(
-
-        "img",
-
-        {
-          className:
-            "brand-logo",
-
-          src:
-            "assets/logo.png",
-
-          alt:
-            "ASTY",
-
-          onError:
-            event => {
-              event.currentTarget.style.display =
-                "none";
-            }
-        }
-
-      ),
-
+      /* HEADER */
 
       e(
 
@@ -2426,7 +3407,93 @@ function App() {
 
         {
           className:
-            "brand-copy"
+            "brand"
+        },
+
+
+        e(
+
+          "img",
+
+          {
+            className:
+              "brand-logo",
+
+            src:
+              "assets/logo.png",
+
+            alt:
+              "ASTY"
+          }
+
+        ),
+
+
+        e(
+
+          "div",
+
+          {
+            className:
+              "brand-copy"
+          },
+
+
+          e(
+
+            "div",
+
+            {
+              className:
+                "brand-title"
+            },
+
+            "ASTY Rebound"
+
+          ),
+
+
+          e(
+
+            "div",
+
+            {
+              className:
+                "brand-project"
+            },
+
+            "ArbStrategy"
+
+          ),
+
+
+          e(
+
+            "div",
+
+            {
+              className:
+                "brand-subtitle"
+            },
+
+            "Automated dip & rebound strategy"
+
+          )
+
+        )
+
+      ),
+
+
+      /* HERO */
+
+      e(
+
+        "section",
+
+        {
+          className:
+            "hero"
         },
 
 
@@ -2436,10 +3503,33 @@ function App() {
 
           {
             className:
-              "brand-title"
+              "hero-content"
           },
 
-          "ASTY Rebound"
+
+          e(
+
+            "h1",
+
+            null,
+
+            "Rebound"
+
+          ),
+
+
+          e(
+
+            "p",
+
+            {
+              className:
+                "lead"
+            },
+
+            "Connect Phantom and let ASTY Rebound watch the market for you."
+
+          )
 
         ),
 
@@ -2450,12 +3540,42 @@ function App() {
 
           {
             className:
-              "brand-project"
+              "wolf-wrap"
           },
 
-          "ArbStrategy"
 
-        ),
+          e(
+
+            "img",
+
+            {
+              className:
+                "wolf",
+
+              src:
+                "assets/wolf.png",
+
+              alt:
+                ""
+            }
+
+          )
+
+        )
+
+      ),
+
+
+      /* MAIN CARD */
+
+      e(
+
+        "section",
+
+        {
+          className:
+            "card"
+        },
 
 
         e(
@@ -2464,10 +3584,584 @@ function App() {
 
           {
             className:
-              "brand-subtitle"
+              "status"
           },
 
-          "Automated dip & rebound strategy"
+
+          e(
+
+            "span",
+
+            {
+              className:
+                dotClass
+            }
+
+          ),
+
+
+          statusText
+
+        ),
+
+
+        !authenticated
+
+        ?
+
+        e(
+
+          "button",
+
+          {
+
+            className:
+              "primary",
+
+            disabled:
+              loading ||
+              connecting ||
+              signingIn,
+
+            onClick:
+              handleConnect
+
+          },
+
+          connecting
+            ? "Opening Phantom…"
+
+          : signingIn
+            ? "Confirm in Phantom…"
+
+          : "Connect Phantom"
+
+        )
+
+
+        :
+
+
+        e(
+
+          React.Fragment,
+
+          null,
+
+
+          accountReady
+
+          ?
+
+          e(
+
+            "div",
+
+            {
+              className:
+                "balance-box"
+            },
+
+
+            e(
+
+              "div",
+
+              {
+                className:
+                  "section-label"
+              },
+
+              "Rebound Balance"
+
+            ),
+
+
+            e(
+
+              "div",
+
+              {
+                className:
+                  "balance-grid"
+              },
+
+
+              /* USDC */
+
+              e(
+
+                "div",
+
+                {
+                  className:
+                    "balance-item"
+                },
+
+
+                e(
+
+                  "div",
+
+                  {
+                    className:
+                      "asset"
+                  },
+
+                  "USDC"
+
+                ),
+
+
+                e(
+
+                  "div",
+
+                  {
+                    className:
+                      "amount"
+                  },
+
+                  balanceLoading &&
+                  usdcBalance === null
+
+                  ?
+
+                  "—"
+
+                  :
+
+                  balanceAvailable
+
+                  ?
+
+                  formatUsdc(
+                    usdcBalance
+                  )
+
+                  :
+
+                  "—"
+
+                ),
+
+
+                e(
+
+                  "button",
+
+                  {
+                    className:
+                      "deposit-button",
+
+                    onClick:
+                      () =>
+                        openDeposit(
+                          "USDC"
+                        ),
+
+                    disabled:
+                      depositBusy
+                  },
+
+                  "Deposit USDC"
+
+                ),
+
+
+                e(
+
+                  "div",
+
+                  {
+                    className:
+                      "asset-info"
+                  },
+
+                  "USDC is your Rebound trading capital and is used to automatically buy dips."
+
+                )
+
+              ),
+
+
+              /* SOL */
+
+              e(
+
+                "div",
+
+                {
+                  className:
+                    "balance-item"
+                },
+
+
+                e(
+
+                  "div",
+
+                  {
+                    className:
+                      "asset"
+                  },
+
+                  "SOL"
+
+                ),
+
+
+                e(
+
+                  "div",
+
+                  {
+                    className:
+                      "amount"
+                  },
+
+                  balanceLoading &&
+                  solBalance === null
+
+                  ?
+
+                  "—"
+
+                  :
+
+                  balanceAvailable
+
+                  ?
+
+                  formatSol(
+                    solBalance
+                  )
+
+                  :
+
+                  "—"
+
+                ),
+
+
+                e(
+
+                  "button",
+
+                  {
+                    className:
+                      "deposit-button",
+
+                    onClick:
+                      () =>
+                        openDeposit(
+                          "SOL"
+                        ),
+
+                    disabled:
+                      depositBusy
+                  },
+
+                  "Deposit SOL"
+
+                ),
+
+
+                e(
+
+                  "div",
+
+                  {
+                    className:
+                      "asset-info"
+                  },
+
+                  "SOL covers Solana network fees. Recommended gas reserve: 0.02 SOL. Keep at least 0.005 SOL while strategies are active."
+
+                ),
+
+
+                e(
+
+                  "div",
+
+                  {
+                    className:
+                      gasClass
+                  },
+
+                  gasText
+
+                )
+
+              )
+
+            )
+
+          )
+
+
+          :
+
+
+          e(
+
+            "div",
+
+            {
+              className:
+                "info"
+            },
+
+            "Preparing your Rebound account…"
+
+          ),
+
+
+          /* DEPOSIT STATUS */
+
+          depositState
+
+          ?
+
+          e(
+
+            "div",
+
+            {
+              className:
+
+                depositState ===
+                  "success"
+
+                ?
+
+                "deposit-status deposit-success"
+
+                :
+
+                "deposit-status deposit-pending"
+            },
+
+
+            e(
+
+              "div",
+
+              null,
+
+              depositMessage
+
+            ),
+
+
+            depositSignature
+
+            ?
+
+            e(
+
+              "a",
+
+              {
+                className:
+                  "tx-link",
+
+                href:
+                  `https://solscan.io/tx/${depositSignature}`,
+
+                target:
+                  "_blank",
+
+                rel:
+                  "noopener noreferrer"
+              },
+
+              "View transaction"
+
+            )
+
+            :
+
+            null
+
+          )
+
+          :
+
+          null,
+
+
+          /* WALLET */
+
+          reboundAddress
+
+          ?
+
+          e(
+
+            "div",
+
+            {
+              className:
+                "wallet-box",
+
+              style: {
+                marginTop:
+                  "14px"
+              }
+            },
+
+
+            e(
+
+              "div",
+
+              {
+                className:
+                  "wallet-head"
+              },
+
+
+              e(
+
+                "img",
+
+                {
+                  className:
+                    "wallet-mini-logo",
+
+                  src:
+                    "assets/logo.png",
+
+                  alt:
+                    ""
+                }
+
+              ),
+
+
+              e(
+
+                "div",
+
+                {
+                  className:
+                    "wallet-title"
+                },
+
+                "Your Rebound Wallet"
+
+              )
+
+            ),
+
+
+            e(
+
+              "div",
+
+              {
+                className:
+                  "wallet-row"
+              },
+
+
+              e(
+
+                "div",
+
+                {
+                  className:
+                    "wallet-address"
+                },
+
+                reboundAddress
+
+              ),
+
+
+              e(
+
+                "button",
+
+                {
+                  className:
+                    "copy",
+
+                  onClick:
+                    copyWallet
+                },
+
+                copied
+                  ? "Copied ✓"
+                  : "Copy"
+
+              )
+
+            )
+
+          )
+
+          :
+
+          null,
+
+
+          e(
+
+            "button",
+
+            {
+              className:
+                "logout",
+
+              onClick:
+                handleLogout,
+
+              disabled:
+                depositBusy
+            },
+
+            "Log out"
+
+          )
+
+        ),
+
+
+        error
+
+        ?
+
+        e(
+
+          "div",
+
+          {
+            className:
+              "error"
+          },
+
+          error
+
+        )
+
+        :
+
+        null,
+
+
+        e(
+
+          "div",
+
+          {
+            className:
+              "fineprint"
+          },
+
+          "Prototype. Automated trading is not active yet."
 
         )
 
@@ -2476,19 +4170,36 @@ function App() {
     ),
 
 
+    /* ==================================================
+       DEPOSIT MODAL
+    ================================================== */
 
-    /*
-    HERO
-    */
 
+    depositAsset
+
+    ?
 
     e(
 
-      "section",
+      "div",
 
       {
         className:
-          "hero"
+          "modal-backdrop",
+
+        onClick:
+          event => {
+
+            if (
+              event.target ===
+              event.currentTarget
+            ) {
+
+              closeDeposit();
+
+            }
+
+          }
       },
 
 
@@ -2498,17 +4209,20 @@ function App() {
 
         {
           className:
-            "hero-content"
+            "modal"
         },
 
 
         e(
 
-          "h1",
+          "h2",
 
-          null,
+          {
+            className:
+              "modal-title"
+          },
 
-          "Rebound"
+          `Deposit ${depositAsset}`
 
         ),
 
@@ -2519,162 +4233,36 @@ function App() {
 
           {
             className:
-              "lead"
+              "modal-description"
           },
 
-          "Connect Phantom and let ASTY Rebound watch the market for you."
+          depositAsset ===
+            "USDC"
 
-        )
+          ?
 
-      ),
+          "Add trading capital to your Rebound Wallet. Phantom will ask you to confirm the transfer."
 
+          :
 
-      e(
-
-        "div",
-
-        {
-          className:
-            "wolf-wrap"
-        },
-
-
-        e(
-
-          "img",
-
-          {
-            className:
-              "wolf",
-
-            src:
-              "assets/wolf.png",
-
-            alt:
-              "",
-
-            onError:
-              event => {
-                event.currentTarget.style.display =
-                  "none";
-              }
-          }
-
-        )
-
-      )
-
-    ),
-
-
-
-    /*
-    ACCOUNT CARD
-    */
-
-
-    e(
-
-      "section",
-
-      {
-        className:
-          "card"
-      },
-
-
-      e(
-
-        "div",
-
-        {
-          className:
-            "status"
-        },
-
-
-        e(
-
-          "span",
-
-          {
-            className:
-              dotClass
-          }
+          "Add SOL for network fees. A reserve of 0.02 SOL is recommended."
 
         ),
 
 
-        statusText
+        e(
 
-      ),
+          "label",
 
+          {
+            className:
+              "input-label"
+          },
 
+          "Amount"
 
-      /*
-      LOGGED OUT
-      */
+        ),
 
-
-      !authenticated
-
-      ?
-
-      e(
-
-        "button",
-
-        {
-
-          className:
-            "primary",
-
-          disabled:
-            loading ||
-            connecting ||
-            signingIn,
-
-          onClick:
-            handleConnect
-
-        },
-
-        connecting
-          ? "Opening Phantom…"
-
-        : signingIn
-          ? "Confirm in Phantom…"
-
-        : "Connect Phantom"
-
-      )
-
-
-
-      :
-
-
-
-      /*
-      LOGGED IN
-      */
-
-
-      e(
-
-        React.Fragment,
-
-        null,
-
-
-        /*
-        BALANCE
-        */
-
-
-        accountReady
-
-        ?
 
         e(
 
@@ -2682,187 +4270,97 @@ function App() {
 
           {
             className:
-              "balance-box"
+              "amount-input-wrap"
           },
 
 
           e(
 
-            "div",
+            "input",
 
             {
               className:
-                "section-label"
-            },
+                "amount-input",
 
-            "Rebound Balance"
+              type:
+                "text",
+
+              inputMode:
+                "decimal",
+
+              autocomplete:
+                "off",
+
+              placeholder:
+                depositAsset ===
+                  "USDC"
+                  ? "25.00"
+                  : "0.02",
+
+              value:
+                depositAmount,
+
+              disabled:
+                depositBusy,
+
+              onChange:
+                event => {
+
+                  setDepositAmount(
+                    event.target.value
+                      .replace(
+                        ",",
+                        "."
+                      )
+                  );
+
+                }
+            }
 
           ),
 
 
           e(
 
-            "div",
+            "span",
 
             {
               className:
-                "balance-grid"
+                "input-asset"
             },
 
-
-            e(
-
-              "div",
-
-              {
-                className:
-                  "balance-item"
-              },
-
-
-              e(
-
-                "div",
-
-                {
-                  className:
-                    "asset"
-                },
-
-                "USDC"
-
-              ),
-
-
-              e(
-
-                "div",
-
-                {
-                  className:
-                    "amount"
-                },
-
-                balanceLoading &&
-                usdcBalance === null
-
-                ?
-
-                e(
-
-                  "span",
-
-                  {
-                    className:
-                      "amount loading"
-                  },
-
-                  "—"
-
-                )
-
-                :
-
-                formatUsdc(
-                  usdcBalance
-                )
-
-              )
-
-            ),
-
-
-
-            e(
-
-              "div",
-
-              {
-                className:
-                  "balance-item"
-              },
-
-
-              e(
-
-                "div",
-
-                {
-                  className:
-                    "asset"
-                },
-
-                "SOL"
-
-              ),
-
-
-              e(
-
-                "div",
-
-                {
-                  className:
-                    "amount"
-                },
-
-                balanceLoading &&
-                solBalance === null
-
-                ?
-
-                e(
-
-                  "span",
-
-                  {
-                    className:
-                      "amount loading"
-                  },
-
-                  "—"
-
-                )
-
-                :
-
-                formatSol(
-                  solBalance
-                )
-
-              )
-
-            )
+            depositAsset
 
           )
-
-        )
-
-        :
-
-        e(
-
-          "div",
-
-          {
-            className:
-              "info"
-          },
-
-          "Preparing your Rebound account…"
 
         ),
 
 
+        e(
 
-        /*
-        WALLET
-        */
+          "div",
 
+          {
+            className:
+              "modal-wallet"
+          },
 
-        reboundAddress
+          "Destination: ",
 
-        ?
+          e(
+
+            "strong",
+
+            null,
+
+            reboundAddress
+              ? `${reboundAddress.slice(0,8)}…${reboundAddress.slice(-8)}`
+              : "Rebound Wallet"
+
+          )
+
+        ),
+
 
         e(
 
@@ -2870,191 +4368,73 @@ function App() {
 
           {
             className:
-              "wallet-box"
+              "modal-buttons"
           },
 
 
           e(
 
-            "div",
+            "button",
 
             {
               className:
-                "wallet-head"
+                "modal-cancel",
+
+              disabled:
+                depositBusy,
+
+              onClick:
+                closeDeposit
             },
 
-
-            e(
-
-              "img",
-
-              {
-                className:
-                  "wallet-mini-logo",
-
-                src:
-                  "assets/logo.png",
-
-                alt:
-                  "",
-
-                onError:
-                  event => {
-                    event.currentTarget.style.display =
-                      "none";
-                  }
-              }
-
-            ),
-
-
-            e(
-
-              "div",
-
-              {
-                className:
-                  "wallet-title"
-              },
-
-              "Your Rebound Wallet"
-
-            )
+            "Cancel"
 
           ),
 
 
           e(
 
-            "div",
+            "button",
 
             {
               className:
-                "wallet-row"
+                "modal-confirm",
+
+              disabled:
+                depositBusy,
+
+              onClick:
+                sendDeposit
             },
 
-
-            e(
-
-              "div",
-
-              {
-                className:
-                  "wallet-address"
-              },
-
-              reboundAddress
-
-            ),
-
-
-            e(
-
-              "button",
-
-              {
-                className:
-                  "copy",
-
-                onClick:
-                  copyWallet
-              },
-
-              copied
-                ? "Copied ✓"
-                : "Copy"
-
-            )
+            depositBusy
+              ? "Open Phantom…"
+              : `Deposit ${depositAsset}`
 
           )
 
         )
-
-        :
-
-        null,
-
-
-
-        e(
-
-          "button",
-
-          {
-            className:
-              "logout",
-
-            onClick:
-              handleLogout
-          },
-
-          "Log out"
-
-        )
-
-      ),
-
-
-
-      /*
-      ERROR
-      */
-
-
-      error
-
-      ?
-
-      e(
-
-        "div",
-
-        {
-          className:
-            "error"
-        },
-
-        error
-
-      )
-
-      :
-
-      null,
-
-
-
-      e(
-
-        "div",
-
-        {
-          className:
-            "fineprint"
-        },
-
-        "Prototype only. Deposits and automated trading are not active yet."
 
       )
 
     )
+
+    :
+
+    null
 
   );
 
 }
 
 
-
-/*
-====================================================
-PRIVY
-====================================================
-*/
+/* ==================================================
+   PRIVY
+================================================== */
 
 
 const connectors =
   toSolanaWalletConnectors();
-
 
 
 createRoot(
