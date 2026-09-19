@@ -1,4 +1,12 @@
 import { PrivyClient } from "@privy-io/node";
+import {
+  AddressLookupTableAccount,
+  ComputeBudgetProgram,
+  PublicKey,
+  TransactionInstruction,
+  TransactionMessage,
+  VersionedTransaction,
+} from "@solana/web3.js";
 
 const ALLOWED_ORIGINS = new Set([
   "https://arbstrategy.net",
@@ -35,6 +43,7 @@ const MAX_ROUTE_REFERENCE_SHORTFALL_BPS = 200;
 const MAX_BUY_TRIGGER_OVERAGE_BPS = 50;
 const EXECUTION_LOCK_STALE_MINUTES = 5;
 const MAX_BUY_EXECUTIONS_PER_CRON = 3;
+const MAX_COMPUTE_UNIT_LIMIT = 1_400_000;
 
 // These statuses still hold their reserved strategy capital as USDC in the wallet.
 // BOUGHT / SELL_TRIGGERED are deployed into the asset and must not be subtracted
@@ -492,6 +501,188 @@ async function getJupiterV2Build(env, {
   throw lastError || new Error("Jupiter V2 /build request failed.");
 }
 
+
+function base64ToBytes(value) {
+  const binary = atob(String(value || ""));
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+  return bytes;
+}
+
+function bytesToBase64(bytes) {
+  const view = bytes instanceof Uint8Array ? bytes : new Uint8Array(bytes);
+  let binary = "";
+  const CHUNK = 0x8000;
+  for (let i = 0; i < view.length; i += CHUNK) {
+    binary += String.fromCharCode(...view.subarray(i, Math.min(i + CHUNK, view.length)));
+  }
+  return btoa(binary);
+}
+
+function apiInstructionToWeb3(ix) {
+  if (!ix?.programId || !Array.isArray(ix?.accounts) || typeof ix?.data !== "string") {
+    throw new Error("Jupiter V2 returned an invalid instruction.");
+  }
+
+  return new TransactionInstruction({
+    programId: new PublicKey(ix.programId),
+    keys: ix.accounts.map((account) => ({
+      pubkey: new PublicKey(account.pubkey),
+      isSigner: Boolean(account.isSigner),
+      isWritable: Boolean(account.isWritable),
+    })),
+    data: base64ToBytes(ix.data),
+  });
+}
+
+function transformV2LookupTables(raw) {
+  if (!raw || typeof raw !== "object") return [];
+
+  return Object.entries(raw).map(([key, addresses]) => {
+    if (!Array.isArray(addresses)) {
+      throw new Error("Jupiter V2 returned an invalid address lookup table.");
+    }
+
+    return new AddressLookupTableAccount({
+      key: new PublicKey(key),
+      state: {
+        deactivationSlot: BigInt("18446744073709551615"),
+        lastExtendedSlot: 0,
+        lastExtendedSlotStartIndex: 0,
+        authority: undefined,
+        addresses: addresses.map((address) => new PublicKey(address)),
+      },
+    });
+  });
+}
+
+function getV2RecentBlockhash(build) {
+  const raw = build?.blockhashWithMetadata?.blockhash;
+
+  if (typeof raw === "string" && raw.length >= 32) {
+    return raw;
+  }
+
+  if (Array.isArray(raw) && raw.length === 32) {
+    // A Solana blockhash is 32 bytes and uses the same base58 encoding as a PublicKey.
+    return new PublicKey(Uint8Array.from(raw)).toBase58();
+  }
+
+  throw new Error("Jupiter V2 did not return a valid recent blockhash.");
+}
+
+function getV2CoreInstructions(build) {
+  const instructions = [];
+
+  for (const ix of build?.setupInstructions || []) {
+    instructions.push(apiInstructionToWeb3(ix));
+  }
+
+  if (!build?.swapInstruction) {
+    throw new Error("Jupiter V2 swap instruction is missing.");
+  }
+  instructions.push(apiInstructionToWeb3(build.swapInstruction));
+
+  if (build?.cleanupInstruction) {
+    instructions.push(apiInstructionToWeb3(build.cleanupInstruction));
+  }
+
+  for (const ix of build?.otherInstructions || []) {
+    instructions.push(apiInstructionToWeb3(ix));
+  }
+
+  if (build?.tipInstruction) {
+    throw new Error("Jupiter V2 returned a tip instruction, but ASTY Rebound does not allow automatic tips.");
+  }
+
+  return instructions;
+}
+
+function buildUnsignedV2TransactionBase64(build, walletAddress, instructions) {
+  const lookupTables = transformV2LookupTables(build?.addressesByLookupTableAddress);
+  const recentBlockhash = getV2RecentBlockhash(build);
+
+  const message = new TransactionMessage({
+    payerKey: new PublicKey(walletAddress),
+    recentBlockhash,
+    instructions,
+  }).compileToV0Message(lookupTables);
+
+  const transaction = new VersionedTransaction(message);
+
+  return {
+    transactionBase64: bytesToBase64(transaction.serialize()),
+    recentBlockhash,
+    lastValidBlockHeight: Number(build?.blockhashWithMetadata?.lastValidBlockHeight || 0),
+    lookupTableCount: lookupTables.length,
+  };
+}
+
+async function buildJupiterV2BuyTransaction(env, {
+  build,
+  walletAddress,
+}) {
+  const coreInstructions = getV2CoreInstructions(build);
+
+  // Jupiter /build deliberately omits the CU limit. Simulate with the Solana
+  // maximum first, then rebuild at 1.2x measured usage as recommended by Jupiter.
+  const simulationInstructions = [
+    ComputeBudgetProgram.setComputeUnitLimit({ units: MAX_COMPUTE_UNIT_LIMIT }),
+    ...coreInstructions,
+  ];
+
+  const simulationTx = buildUnsignedV2TransactionBase64(
+    build,
+    walletAddress,
+    simulationInstructions,
+  );
+
+  const simulation = await heliusRpc(env, "simulateTransaction", [
+    simulationTx.transactionBase64,
+    {
+      encoding: "base64",
+      commitment: "confirmed",
+      sigVerify: false,
+      replaceRecentBlockhash: true,
+    },
+  ]);
+
+  if (simulation?.value?.err) {
+    const error = new Error("Jupiter V2 BUY transaction simulation failed.");
+    error.code = "V2_SIMULATION_FAILED";
+    error.simulationError = simulation.value.err;
+    error.logs = Array.isArray(simulation.value.logs) ? simulation.value.logs.slice(-12) : [];
+    throw error;
+  }
+
+  const unitsConsumed = Number(simulation?.value?.unitsConsumed || 0);
+  const estimatedComputeUnits = unitsConsumed > 0
+    ? Math.min(Math.ceil(unitsConsumed * 1.2), MAX_COMPUTE_UNIT_LIMIT)
+    : MAX_COMPUTE_UNIT_LIMIT;
+
+  const finalInstructions = [
+    ComputeBudgetProgram.setComputeUnitLimit({ units: estimatedComputeUnits }),
+    ...(build?.computeBudgetInstructions || []).map(apiInstructionToWeb3),
+    ...coreInstructions,
+  ];
+
+  const finalTx = buildUnsignedV2TransactionBase64(
+    build,
+    walletAddress,
+    finalInstructions,
+  );
+
+  return {
+    swapTransaction: finalTx.transactionBase64,
+    recentBlockhash: finalTx.recentBlockhash,
+    lastValidBlockHeight: finalTx.lastValidBlockHeight,
+    lookupTableCount: finalTx.lookupTableCount,
+    unitsConsumed: unitsConsumed || null,
+    computeUnitLimit: estimatedComputeUnits,
+    instructionCount: finalInstructions.length,
+  };
+}
+
 function extractPrivyTxHash(result) {
   return result?.hash || result?.data?.hash || result?.signature || result?.result?.signature || null;
 }
@@ -906,7 +1097,49 @@ async function handleExecutionCheck(request, env) {
     }
     const routeSanityOk = outRaw > 0n && referenceShortfallBps <= MAX_ROUTE_REFERENCE_SHORTFALL_BPS;
 
-    const ready = capitalReconciled && gasOk && wsolReady && policyCompatible && routeSanityOk;
+    let transactionBuild = {
+      ok: false,
+      computeUnitLimit: null,
+      unitsConsumed: null,
+      lookupTableCount: null,
+      instructionCount: null,
+      error: null,
+    };
+
+    if (policyCompatible && routeSanityOk) {
+      try {
+        const builtTransaction = await buildJupiterV2BuyTransaction(env, {
+          build,
+          walletAddress,
+        });
+
+        transactionBuild = {
+          ok: true,
+          computeUnitLimit: builtTransaction.computeUnitLimit,
+          unitsConsumed: builtTransaction.unitsConsumed,
+          lookupTableCount: builtTransaction.lookupTableCount,
+          instructionCount: builtTransaction.instructionCount,
+          error: null,
+        };
+      } catch (error) {
+        transactionBuild = {
+          ok: false,
+          computeUnitLimit: null,
+          unitsConsumed: null,
+          lookupTableCount: null,
+          instructionCount: null,
+          error: error?.message || "V2 transaction build failed.",
+        };
+      }
+    }
+
+    const ready =
+      capitalReconciled &&
+      gasOk &&
+      wsolReady &&
+      policyCompatible &&
+      routeSanityOk &&
+      transactionBuild.ok;
 
     return json(request, {
       status: ready ? "ok" : "error",
@@ -974,6 +1207,16 @@ async function handleExecutionCheck(request, env) {
           referencePriceUsd: referencePrice.usdPrice,
           referenceShortfallBps,
           maxReferenceShortfallBps: MAX_ROUTE_REFERENCE_SHORTFALL_BPS,
+        },
+        transactionBuild: {
+          ok: transactionBuild.ok,
+          version: 0,
+          simulation: "Helius",
+          unitsConsumed: transactionBuild.unitsConsumed,
+          computeUnitLimit: transactionBuild.computeUnitLimit,
+          lookupTableCount: transactionBuild.lookupTableCount,
+          instructionCount: transactionBuild.instructionCount,
+          error: transactionBuild.error,
         },
       },
       checkedAt: new Date().toISOString(),
@@ -1212,64 +1455,6 @@ async function pauseAmbiguousBuy(env, strategyId, lock, reason) {
   `).bind(reason, strategyId, lock).run();
 }
 
-async function getJupiterV1BuyTransaction(env, { walletAddress, destinationTokenAccount, amountRaw }) {
-  const quoteParams = new URLSearchParams({
-    inputMint: USDC_MINT,
-    outputMint: WSOL_MINT,
-    amount: String(amountRaw),
-    slippageBps: String(EXECUTION_SLIPPAGE_BPS),
-    swapMode: "ExactIn",
-    restrictIntermediateTokens: "true",
-    instructionVersion: "V2",
-  });
-
-  const quote = await jupiterFetch(env, `/quote?${quoteParams.toString()}`);
-  if (!quote || quote.inputMint !== USDC_MINT || quote.outputMint !== WSOL_MINT || String(quote.inAmount) !== String(amountRaw)) {
-    throw new Error("Jupiter returned a BUY quote that does not match the requested strategy trade.");
-  }
-  if (!Array.isArray(quote.routePlan) || quote.routePlan.length === 0 || BigInt(String(quote.outAmount || 0)) <= 0n) {
-    throw new Error("Jupiter did not return a usable BUY route.");
-  }
-
-  const swapBuildBody = {
-    quoteResponse: quote,
-    userPublicKey: walletAddress,
-    wrapAndUnwrapSol: false,
-    destinationTokenAccount,
-    dynamicComputeUnitLimit: true,
-    prioritizationFeeLamports: {
-      priorityLevelWithMaxLamports: { maxLamports: 10000, priorityLevel: "medium" },
-    },
-  };
-
-  const plan = await jupiterFetch(env, "/swap-instructions", {
-    method: "POST",
-    body: JSON.stringify(swapBuildBody),
-  });
-  const programs = instructionProgramIds(plan);
-  const allowed = new Set([COMPUTE_BUDGET_PROGRAM_ID, JUPITER_PROGRAM_ID, ASSOCIATED_TOKEN_PROGRAM_ID]);
-  const unexpectedPrograms = programs.filter((id) => !allowed.has(id));
-  const hasTipInstruction = Boolean(plan?.tipInstruction);
-  if (!programs.includes(JUPITER_PROGRAM_ID) || unexpectedPrograms.length > 0 || hasTipInstruction) {
-    const error = new Error("Jupiter BUY route is not compatible with the ASTY Rebound trading policy.");
-    error.code = "POLICY_ROUTE_MISMATCH";
-    error.programs = programs;
-    error.unexpectedPrograms = unexpectedPrograms;
-    throw error;
-  }
-
-  const swapResponse = await jupiterFetch(env, "/swap", {
-    method: "POST",
-    body: JSON.stringify(swapBuildBody),
-  });
-  const swapTransaction = swapResponse?.swapTransaction;
-  if (typeof swapTransaction !== "string" || swapTransaction.length < 100) {
-    throw new Error("Jupiter did not return a valid BUY transaction.");
-  }
-
-  return { quote, plan, swapTransaction, programs };
-}
-
 async function executeTriggeredBuy(env, strategy) {
   const lock = await acquireBuyExecutionLock(env, strategy.id);
   if (!lock) return { ok: true, skipped: true, strategyId: strategy.id, reason: "locked-or-pending" };
@@ -1323,17 +1508,34 @@ async function executeTriggeredBuy(env, strategy) {
     const walletId = account.rebound_wallet_id || delegatedWallet?.id || null;
     if (!walletId) throw new Error("Rebound Wallet ID is unavailable.");
 
-    // Keep the V2 /build safety gate immediately before the serialized execution transaction.
+    // Build the actual executable v0 transaction directly from Jupiter Swap API V2.
     const build = await getJupiterV2Build(env, {
       walletAddress,
       destinationTokenAccount: tradingSol.address,
       amountRaw: cycleCapitalRaw.toString(),
     });
+
+    if (
+      build.inputMint !== USDC_MINT ||
+      build.outputMint !== WSOL_MINT ||
+      String(build.inAmount) !== cycleCapitalRaw.toString()
+    ) {
+      throw new Error("Jupiter V2 returned a BUY route that does not match the requested strategy trade.");
+    }
+
     const buildPrograms = instructionProgramIds(build);
-    const allowedPrograms = new Set([COMPUTE_BUDGET_PROGRAM_ID, JUPITER_PROGRAM_ID, ASSOCIATED_TOKEN_PROGRAM_ID]);
+    const allowedPrograms = new Set([
+      COMPUTE_BUDGET_PROGRAM_ID,
+      JUPITER_PROGRAM_ID,
+      ASSOCIATED_TOKEN_PROGRAM_ID,
+    ]);
     const unexpectedBuildPrograms = buildPrograms.filter((id) => !allowedPrograms.has(id));
     if (!buildPrograms.includes(JUPITER_PROGRAM_ID) || unexpectedBuildPrograms.length > 0 || build?.tipInstruction) {
-      throw new Error(`V2 safety gate rejected BUY route. Unexpected programs: ${unexpectedBuildPrograms.join(", ") || "none"}`);
+      const error = new Error(`V2 safety gate rejected BUY route. Unexpected programs: ${unexpectedBuildPrograms.join(", ") || "none"}`);
+      error.code = "POLICY_ROUTE_MISMATCH";
+      error.programs = buildPrograms;
+      error.unexpectedPrograms = unexpectedBuildPrograms;
+      throw error;
     }
 
     const builtOutRaw = BigInt(String(build.outAmount || 0));
@@ -1347,14 +1549,9 @@ async function executeTriggeredBuy(env, strategy) {
       throw new Error("V2 BUY route failed the reference-price sanity check.");
     }
 
-    const executable = await getJupiterV1BuyTransaction(env, {
-      walletAddress,
-      destinationTokenAccount: tradingSol.address,
-      amountRaw: cycleCapitalRaw.toString(),
-    });
-
-    const quotedOutRaw = BigInt(String(executable.quote.outAmount || 0));
-    const quotePriceMicro = quotedOutRaw > 0n ? cycleCapitalRaw * 1_000_000_000n / quotedOutRaw : 0n;
+    const quotePriceMicro = builtOutRaw > 0n
+      ? cycleCapitalRaw * 1_000_000_000n / builtOutRaw
+      : 0n;
     const maxAllowedQuotePrice = triggerRaw * BigInt(10_000 + MAX_BUY_TRIGGER_OVERAGE_BPS) / 10_000n;
     if (quotePriceMicro <= 0n || quotePriceMicro > maxAllowedQuotePrice) {
       await releaseBuyExecutionLock(env, strategy.id, lock);
@@ -1367,6 +1564,11 @@ async function executeTriggeredBuy(env, strategy) {
         quotePriceUsd: formatMicroUsd(quotePriceMicro),
       };
     }
+
+    const executable = await buildJupiterV2BuyTransaction(env, {
+      build,
+      walletAddress,
+    });
 
     await env.DB.prepare(`
       UPDATE rebound_strategies
@@ -1516,7 +1718,7 @@ async function handleExecutionStatus(request, env) {
       status: "ok",
       liveExecutionImplemented: true,
       autoExecutionEnabled: autoExecutionRequested(env),
-      executionPath: "V2 safety gate + policy preflight; serialized BUY transaction uses the already-proven Jupiter Metis transaction path",
+      executionPath: "Jupiter Swap API V2 /build → simulated v0 transaction → Privy signAndSendTransaction",
       slippageBps: EXECUTION_SLIPPAGE_BPS,
       maxTriggerOverageBps: MAX_BUY_TRIGGER_OVERAGE_BPS,
       states: Array.isArray(rows?.results) ? rows.results : [],
@@ -1543,7 +1745,7 @@ async function handleRoot(request, env) {
       liveExecutionImplemented: true,
       autoExecutionRequested: autoExecutionRequested(env),
       routeSafetySource: "Jupiter Swap API V2 /build",
-      transactionPath: "proven serialized Jupiter Metis path",
+      transactionPath: "Jupiter Swap API V2 /build (v0)",
       slippageBps: EXECUTION_SLIPPAGE_BPS,
       maxTriggerOverageBps: MAX_BUY_TRIGGER_OVERAGE_BPS,
     },
@@ -2313,7 +2515,7 @@ export default {
     const watcherResult = await runPriceWatcher(env, { source });
     console.log("ASTY Rebound watcher result:", JSON.stringify(watcherResult));
 
-    // Reconcile already-submitted BUYs on every run. New BUYs are only possible
+    // Reconcile already-submitted BUYs on every run. New V2 BUYs are only possible
     // when AUTO_EXECUTION_ENABLED is explicitly set to true.
     const executionResult = await runBuyExecutor(env, { source });
     console.log("ASTY Rebound BUY executor result:", JSON.stringify(executionResult));
