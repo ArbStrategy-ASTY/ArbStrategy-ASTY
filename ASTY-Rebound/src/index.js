@@ -1,6 +1,3 @@
-// ASTY Rebound API
-// Helius balances + deposits + Privy Additional Signer + controlled Jupiter test swap
-
 import { PrivyClient } from "@privy-io/node";
 
 const ALLOWED_ORIGINS = new Set([
@@ -9,7 +6,10 @@ const ALLOWED_ORIGINS = new Set([
 ]);
 
 const HELIUS_RPC_BASE = "https://mainnet.helius-rpc.com/";
-const JUPITER_SWAP_BASE = "https://api.jup.ag/swap/v1"; // diagnostic test only
+const JUPITER_SWAP_BASE = "https://api.jup.ag/swap/v1";
+
+const ASTY_MINT =
+  "ASTYqeaoK83Zs1pTFEXZUB6BM8cG8YLTsN852NUkt7ZR";
 
 const USDC_MINT =
   "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v";
@@ -26,11 +26,48 @@ const COMPUTE_BUDGET_PROGRAM_ID =
 const SOLANA_MAINNET_CAIP2 =
   "solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp";
 
+const ASTY_DECIMALS = 9;
 const USDC_DECIMALS = 6;
 const SOL_DECIMALS = 9;
 
-const TEST_SWAP_USDC_RAW = 100000n; // 0.10 USDC
-const TEST_SWAP_SLIPPAGE_BPS = 50; // 0.5%
+const MIN_STRATEGY_USDC_RAW =
+  25_000_000n;
+
+const ASTY_GATE_RAW =
+  2_500n *
+  10n ** 9n;
+
+const TEST_SWAP_USDC_RAW =
+  100000n;
+
+const TEST_SWAP_SLIPPAGE_BPS =
+  50;
+
+const PRESETS =
+  Object.freeze({
+    frequent: {
+      dipBps: 300,
+      takeProfitBps: 250,
+    },
+
+    balanced: {
+      dipBps: 500,
+      takeProfitBps: 400,
+    },
+
+    deep_dip: {
+      dipBps: 800,
+      takeProfitBps: 600,
+    },
+  });
+
+const ACTIVE_STRATEGY_STATUSES = [
+  "WATCHING",
+  "BUY_TRIGGERED",
+  "BOUGHT",
+  "SELL_TRIGGERED",
+  "PAUSED",
+];
 
 let solPriceCache = {
   price: null,
@@ -43,8 +80,11 @@ let solPriceCache = {
 ================================================== */
 
 function corsHeaders(request) {
+
   const origin =
-    request.headers.get("Origin");
+    request.headers.get(
+      "Origin"
+    );
 
   const headers = {
     "Content-Type":
@@ -56,15 +96,20 @@ function corsHeaders(request) {
 
   if (
     origin &&
-    ALLOWED_ORIGINS.has(origin)
+    ALLOWED_ORIGINS.has(
+      origin
+    )
   ) {
+
     headers[
       "Access-Control-Allow-Origin"
-    ] = origin;
+    ] =
+      origin;
 
     headers[
       "Vary"
-    ] = "Origin";
+    ] =
+      "Origin";
 
     headers[
       "Access-Control-Allow-Methods"
@@ -86,6 +131,7 @@ function json(
   data,
   status = 200
 ) {
+
   return new Response(
     JSON.stringify(
       data,
@@ -95,13 +141,16 @@ function json(
     {
       status,
       headers:
-        corsHeaders(request),
+        corsHeaders(
+          request
+        ),
     }
   );
 }
 
 
 function createPrivyClient(env) {
+
   return new PrivyClient({
     appId:
       env.PRIVY_APP_ID,
@@ -112,10 +161,14 @@ function createPrivyClient(env) {
 }
 
 
-function createAuthorizationContext(env) {
+function createAuthorizationContext(
+  env
+) {
+
   if (
     !env.PRIVY_AUTH_PRIVATE_KEY
   ) {
+
     throw new Error(
       "PRIVY_AUTH_PRIVATE_KEY is not configured."
     );
@@ -129,7 +182,10 @@ function createAuthorizationContext(env) {
 }
 
 
-function getBearerToken(request) {
+function getBearerToken(
+  request
+) {
+
   const auth =
     request.headers.get(
       "Authorization"
@@ -138,16 +194,25 @@ function getBearerToken(request) {
   return auth.startsWith(
     "Bearer "
   )
-    ? auth.slice(7).trim()
+    ? auth
+        .slice(7)
+        .trim()
     : null;
 }
 
 
-function isSolanaAddress(value) {
+function isSolanaAddress(
+  value
+) {
+
   return (
-    typeof value === "string" &&
+    typeof value ===
+      "string"
+    &&
     /^[1-9A-HJ-NP-Za-km-z]{32,44}$/
-      .test(value)
+      .test(
+        value
+      )
   );
 }
 
@@ -155,28 +220,106 @@ function isSolanaAddress(value) {
 function isTransactionSignature(
   value
 ) {
+
   return (
-    typeof value === "string" &&
+    typeof value ===
+      "string"
+    &&
     /^[1-9A-HJ-NP-Za-km-z]{80,100}$/
-      .test(value)
+      .test(
+        value
+      )
   );
 }
 
 
-function isPositiveAmount(value) {
+function isPositiveAmount(
+  value
+) {
+
   const text =
     String(
       value ?? ""
     ).trim();
 
   return (
-    /^\d+(\.\d+)?$/.test(
-      text
-    ) &&
+    /^\d+(\.\d+)?$/
+      .test(
+        text
+      )
+    &&
     Number.isFinite(
-      Number(text)
-    ) &&
-    Number(text) > 0
+      Number(
+        text
+      )
+    )
+    &&
+    Number(
+      text
+    ) > 0
+  );
+}
+
+
+function parseDecimalToRaw(
+  value,
+  decimals
+) {
+
+  const text =
+    String(
+      value ?? ""
+    ).trim();
+
+  if (
+    !/^\d+(\.\d+)?$/
+      .test(
+        text
+      )
+  ) {
+
+    throw new Error(
+      "Invalid decimal amount."
+    );
+  }
+
+  const [
+    whole,
+    fraction = ""
+  ] =
+    text.split(
+      "."
+    );
+
+  if (
+    fraction.length >
+    decimals
+  ) {
+
+    throw new Error(
+      `Maximum ${decimals} decimal places.`
+    );
+  }
+
+  return (
+    BigInt(
+      whole
+    )
+    *
+    10n **
+    BigInt(
+      decimals
+    )
+    +
+    BigInt(
+      fraction
+        .padEnd(
+          decimals,
+          "0"
+        )
+      ||
+      "0"
+    )
   );
 }
 
@@ -185,11 +328,14 @@ function formatUnits(
   rawValue,
   decimals
 ) {
+
   const raw =
     typeof rawValue ===
       "bigint"
       ? rawValue
-      : BigInt(rawValue);
+      : BigInt(
+          rawValue
+        );
 
   const negative =
     raw < 0n;
@@ -201,13 +347,17 @@ function formatUnits(
 
   const base =
     10n **
-    BigInt(decimals);
+    BigInt(
+      decimals
+    );
 
   const whole =
-    absolute / base;
+    absolute /
+    base;
 
   const fraction =
-    absolute % base;
+    absolute %
+    base;
 
   let result =
     whole.toString();
@@ -215,6 +365,7 @@ function formatUnits(
   if (
     decimals > 0
   ) {
+
     result +=
       "." +
       fraction
@@ -231,11 +382,16 @@ function formatUnits(
 }
 
 
-function utf8ToBase64(value) {
+function utf8ToBase64(
+  value
+) {
+
   const bytes =
     new TextEncoder()
       .encode(
-        String(value)
+        String(
+          value
+        )
       );
 
   let binary =
@@ -245,17 +401,21 @@ function utf8ToBase64(value) {
     const byte
     of bytes
   ) {
+
     binary +=
       String.fromCharCode(
         byte
       );
   }
 
-  return btoa(binary);
+  return btoa(
+    binary
+  );
 }
 
 
 function sleep(ms) {
+
   return new Promise(
     resolve =>
       setTimeout(
@@ -269,6 +429,7 @@ function sleep(ms) {
 function getSafePrivyError(
   error
 ) {
+
   const status =
     Number.isFinite(
       Number(
@@ -281,9 +442,12 @@ function getSafePrivyError(
       : null;
 
   const code =
-    error?.code ??
-    error?.error?.code ??
-    error?.body?.error?.code ??
+    error?.code
+    ??
+    error?.error?.code
+    ??
+    error?.body?.error?.code
+    ??
     null;
 
   return {
@@ -298,7 +462,9 @@ function getSafePrivyError(
     code:
       code == null
         ? null
-        : String(code),
+        : String(
+            code
+          ),
 
     message:
       typeof error?.message ===
@@ -316,33 +482,135 @@ function getSafePrivyError(
 function looksLikePolicyDenial(
   info
 ) {
+
   const text =
     [
       info?.name,
       info?.code,
       info?.message,
     ]
-      .filter(Boolean)
-      .join(" ")
+      .filter(
+        Boolean
+      )
+      .join(
+        " "
+      )
       .toLowerCase();
 
   return (
     text.includes(
       "policy"
-    ) ||
+    )
+    ||
     text.includes(
       "denied"
-    ) ||
+    )
+    ||
     text.includes(
       "not allowed"
-    ) ||
+    )
+    ||
     text.includes(
       "not permitted"
-    ) ||
+    )
+    ||
     text.includes(
       "forbidden"
     )
   );
+}
+
+
+function normalizeBoolean(
+  value,
+  defaultValue = false
+) {
+
+  if (
+    value === undefined
+    ||
+    value === null
+    ||
+    value === ""
+  ) {
+
+    return defaultValue;
+  }
+
+  if (
+    value === true
+    ||
+    value === 1
+    ||
+    value === "1"
+    ||
+    value === "true"
+  ) {
+
+    return true;
+  }
+
+  if (
+    value === false
+    ||
+    value === 0
+    ||
+    value === "0"
+    ||
+    value === "false"
+  ) {
+
+    return false;
+  }
+
+  throw new Error(
+    "Invalid boolean value."
+  );
+}
+
+
+function normalizeBps(
+  value,
+  fieldName,
+  {
+    min = 1,
+    max = 10000
+  } = {}
+) {
+
+  const number =
+    Number(
+      value
+    );
+
+  if (
+    !Number.isInteger(
+      number
+    )
+    ||
+    number < min
+    ||
+    number > max
+  ) {
+
+    throw new Error(
+      `${fieldName} must be an integer between ${min} and ${max} basis points.`
+    );
+  }
+
+  return number;
+}
+
+
+function activeStatusSqlPlaceholders() {
+
+  return ACTIVE_STRATEGY_STATUSES
+    .map(
+      () => "?"
+    )
+    .join(
+      ","
+    );
 }
 
 
@@ -354,6 +622,7 @@ async function verifyPrivyRequest(
   request,
   env
 ) {
+
   const accessToken =
     getBearerToken(
       request
@@ -362,6 +631,7 @@ async function verifyPrivyRequest(
   if (
     !accessToken
   ) {
+
     return {
       ok: false,
       status: 401,
@@ -371,6 +641,7 @@ async function verifyPrivyRequest(
   }
 
   try {
+
     const claims =
       await createPrivyClient(
         env
@@ -384,6 +655,7 @@ async function verifyPrivyRequest(
     if (
       !claims?.user_id
     ) {
+
       return {
         ok: false,
         status: 401,
@@ -399,7 +671,9 @@ async function verifyPrivyRequest(
       claims,
     };
 
-  } catch (error) {
+  }
+  catch(error) {
+
     console.error(
       "Privy verification error:",
       error
@@ -416,13 +690,14 @@ async function verifyPrivyRequest(
 
 
 /* ==================================================
-   D1
+   D1 ACCOUNT
 ================================================== */
 
 async function getReboundAccount(
   env,
   privyUserId
 ) {
+
   return env.DB
     .prepare(
       `
@@ -449,18 +724,24 @@ async function getReboundAccount(
    HELIUS
 ================================================== */
 
-function getHeliusUrl(env) {
+function getHeliusUrl(
+  env
+) {
+
   if (
     !env.HELIUS_API_KEY
   ) {
+
     throw new Error(
       "HELIUS_API_KEY is not configured."
     );
   }
 
   return (
-    HELIUS_RPC_BASE +
-    "?api-key=" +
+    HELIUS_RPC_BASE
+    +
+    "?api-key="
+    +
     encodeURIComponent(
       env.HELIUS_API_KEY
     )
@@ -473,9 +754,12 @@ async function heliusRpc(
   method,
   params
 ) {
+
   const response =
     await fetch(
-      getHeliusUrl(env),
+      getHeliusUrl(
+        env
+      ),
       {
         method:
           "POST",
@@ -506,11 +790,12 @@ async function heliusRpc(
   if (
     !response.ok
   ) {
+
     const body =
       await response.text();
 
     throw new Error(
-      `Helius HTTP ${response.status}: ${body.slice(0, 300)}`
+      `Helius HTTP ${response.status}: ${body.slice(0,300)}`
     );
   }
 
@@ -520,14 +805,17 @@ async function heliusRpc(
   if (
     data?.error
   ) {
+
     throw new Error(
-      data.error?.message ||
+      data.error?.message
+      ||
       "Helius returned an RPC error."
     );
   }
 
   return (
-    data?.result ??
+    data?.result
+    ??
     data
   );
 }
@@ -541,6 +829,7 @@ async function getSolBalance(
   env,
   walletAddress
 ) {
+
   const result =
     await heliusRpc(
       env,
@@ -556,14 +845,14 @@ async function getSolBalance(
 
   const lamports =
     BigInt(
-      result?.value ??
+      result?.value
+      ??
       0
     );
 
   return {
     raw:
-      lamports
-        .toString(),
+      lamports.toString(),
 
     ui:
       formatUnits(
@@ -575,13 +864,16 @@ async function getSolBalance(
 
 
 /* ==================================================
-   USDC
+   GENERIC SPL TOKEN BALANCE
 ================================================== */
 
-async function getUsdcViaDas(
+async function getTokenBalanceViaDas(
   env,
-  walletAddress
+  walletAddress,
+  mint,
+  decimals
 ) {
+
   const result =
     await heliusRpc(
       env,
@@ -590,8 +882,7 @@ async function getUsdcViaDas(
         owner:
           walletAddress,
 
-        mint:
-          USDC_MINT,
+        mint,
 
         options: {
           showZeroBalance:
@@ -614,10 +905,13 @@ async function getUsdcViaDas(
     const account
     of accounts
   ) {
+
     if (
-      account?.amount !=
+      account?.amount
+      !=
       null
     ) {
+
       totalRaw +=
         BigInt(
           String(
@@ -634,7 +928,7 @@ async function getUsdcViaDas(
     ui:
       formatUnits(
         totalRaw,
-        USDC_DECIMALS
+        decimals
       ),
 
     method:
@@ -643,10 +937,13 @@ async function getUsdcViaDas(
 }
 
 
-async function getUsdcViaStandardRpc(
+async function getTokenBalanceViaStandardRpc(
   env,
-  walletAddress
+  walletAddress,
+  mint,
+  decimals
 ) {
+
   const result =
     await heliusRpc(
       env,
@@ -655,8 +952,7 @@ async function getUsdcViaStandardRpc(
         walletAddress,
 
         {
-          mint:
-            USDC_MINT,
+          mint,
         },
 
         {
@@ -683,6 +979,7 @@ async function getUsdcViaStandardRpc(
     const tokenAccount
     of accounts
   ) {
+
     const amount =
       tokenAccount
         ?.account
@@ -696,6 +993,7 @@ async function getUsdcViaStandardRpc(
       typeof amount ===
         "string"
     ) {
+
       totalRaw +=
         BigInt(
           amount
@@ -710,7 +1008,7 @@ async function getUsdcViaStandardRpc(
     ui:
       formatUnits(
         totalRaw,
-        USDC_DECIMALS
+        decimals
       ),
 
     method:
@@ -719,42 +1017,79 @@ async function getUsdcViaStandardRpc(
 }
 
 
-async function getUsdcBalance(
+async function getTokenBalance(
   env,
-  walletAddress
+  walletAddress,
+  mint,
+  decimals
 ) {
+
   try {
-    return await getUsdcViaDas(
+
+    return await getTokenBalanceViaDas(
       env,
-      walletAddress
+      walletAddress,
+      mint,
+      decimals
     );
 
-  } catch (error) {
+  }
+  catch(error) {
+
     console.error(
-      "DAS USDC lookup failed; using standard RPC:",
+      `DAS token lookup failed for ${mint}; using standard RPC:`,
       error
     );
 
-    return getUsdcViaStandardRpc(
+    return getTokenBalanceViaStandardRpc(
       env,
-      walletAddress
+      walletAddress,
+      mint,
+      decimals
     );
   }
 }
 
 
-/* ==================================================
-   SOL TRADING ACCOUNT / WSOL
+async function getUsdcBalance(
+  env,
+  walletAddress
+) {
 
-   This is deliberately separated from native SOL.
-   Native SOL remains the network-fee reserve.
+  return getTokenBalance(
+    env,
+    walletAddress,
+    USDC_MINT,
+    USDC_DECIMALS
+  );
+}
+
+
+async function getAstyBalance(
+  env,
+  walletAddress
+) {
+
+  return getTokenBalance(
+    env,
+    walletAddress,
+    ASTY_MINT,
+    ASTY_DECIMALS
+  );
+}
+
+
+/* ==================================================
+   WSOL TRADING ACCOUNT
 ================================================== */
 
 async function getWsolTokenAccount(
   env,
   walletAddress
 ) {
+
   try {
+
     const result =
       await heliusRpc(
         env,
@@ -784,24 +1119,29 @@ async function getWsolTokenAccount(
       accounts.find(
         item =>
           typeof item?.address ===
-            "string" &&
+            "string"
+          &&
           item?.owner ===
             walletAddress
-      ) ||
+      )
+      ||
       accounts.find(
         item =>
           typeof item?.address ===
             "string"
-      ) ||
+      )
+      ||
       null;
 
     if (
       account
     ) {
+
       const raw =
         BigInt(
           String(
-            account?.amount ??
+            account?.amount
+            ??
             "0"
           )
         );
@@ -826,8 +1166,9 @@ async function getWsolTokenAccount(
           "helius-getTokenAccounts",
       };
     }
+  }
+  catch(error) {
 
-  } catch (error) {
     console.error(
       "DAS WSOL lookup failed; using standard RPC:",
       error
@@ -867,20 +1208,24 @@ async function getWsolTokenAccount(
     accounts.find(
       item =>
         typeof item?.pubkey ===
-          "string" &&
+          "string"
+        &&
         item?.account
           ?.data
           ?.parsed
           ?.info
           ?.owner ===
           walletAddress
-    ) ||
-    accounts[0] ||
+    )
+    ||
+    accounts[0]
+    ||
     null;
 
   if (
     !tokenAccount
   ) {
+
     return {
       ready:
         false,
@@ -908,7 +1253,8 @@ async function getWsolTokenAccount(
           ?.parsed
           ?.info
           ?.tokenAmount
-          ?.amount ??
+          ?.amount
+        ??
         "0"
       )
     );
@@ -936,21 +1282,25 @@ async function getWsolTokenAccount(
 
 
 /* ==================================================
-   DISPLAY PRICE
+   SOL DISPLAY PRICE
 ================================================== */
 
 async function getSolUsdPrice(
   env
 ) {
+
   const now =
     Date.now();
 
   if (
-    solPriceCache.price !=
-      null &&
+    solPriceCache.price
+      !=
+      null
+    &&
     now <
       solPriceCache.expiresAt
   ) {
+
     return solPriceCache.price;
   }
 
@@ -980,9 +1330,11 @@ async function getSolUsdPrice(
   if (
     !Number.isFinite(
       price
-    ) ||
+    )
+    ||
     price <= 0
   ) {
+
     throw new Error(
       "SOL USD price unavailable."
     );
@@ -1007,6 +1359,7 @@ async function getSolUsdPrice(
 async function getLatestBlockhash(
   env
 ) {
+
   const result =
     await heliusRpc(
       env,
@@ -1028,9 +1381,11 @@ async function getLatestBlockhash(
       ?.lastValidBlockHeight;
 
   if (
-    !blockhash ||
+    !blockhash
+    ||
     !lastValidBlockHeight
   ) {
+
     throw new Error(
       "Could not obtain a fresh Solana blockhash."
     );
@@ -1052,6 +1407,7 @@ async function getPrivyDelegatedWallet(
   userId,
   reboundWalletAddress
 ) {
+
   const privyUser =
     await privy
       .users()
@@ -1061,29 +1417,28 @@ async function getPrivyDelegatedWallet(
 
   const linkedAccounts =
     Array.isArray(
-      privyUser
-        ?.linked_accounts
+      privyUser?.linked_accounts
     )
-      ? privyUser
-          .linked_accounts
+      ? privyUser.linked_accounts
       : Array.isArray(
-          privyUser
-            ?.linkedAccounts
+          privyUser?.linkedAccounts
         )
-        ? privyUser
-            .linkedAccounts
+        ? privyUser.linkedAccounts
         : [];
 
   return (
     linkedAccounts.find(
       item =>
         item?.type ===
-          "wallet" &&
+          "wallet"
+        &&
         item?.address ===
-          reboundWalletAddress &&
+          reboundWalletAddress
+        &&
         item?.delegated ===
           true
-    ) ||
+    )
+    ||
     null
   );
 }
@@ -1098,6 +1453,7 @@ async function jupiterFetch(
   path,
   options = {}
 ) {
+
   let lastError =
     null;
 
@@ -1106,11 +1462,14 @@ async function jupiterFetch(
     attempt < 3;
     attempt++
   ) {
+
     try {
+
       const response =
         await fetch(
-          JUPITER_SWAP_BASE +
-            path,
+          JUPITER_SWAP_BASE
+          +
+          path,
           {
             ...options,
 
@@ -1118,24 +1477,29 @@ async function jupiterFetch(
               Accept:
                 "application/json",
 
-              ...(options.body
-                ? {
-                    "Content-Type":
-                      "application/json",
-                  }
-                : {}),
+              ...(
+                options.body
+                  ? {
+                      "Content-Type":
+                        "application/json",
+                    }
+                  : {}
+              ),
 
-              ...(env
-                .JUPITER_API_KEY
-                ? {
-                    "x-api-key":
-                      env
-                        .JUPITER_API_KEY,
-                  }
-                : {}),
+              ...(
+                env.JUPITER_API_KEY
+                  ? {
+                      "x-api-key":
+                        env.JUPITER_API_KEY,
+                    }
+                  : {}
+              ),
 
-              ...(options.headers ||
-                {}),
+              ...(
+                options.headers
+                ||
+                {}
+              ),
             },
           }
         );
@@ -1147,6 +1511,7 @@ async function jupiterFetch(
         null;
 
       try {
+
         data =
           text
             ? JSON.parse(
@@ -1154,7 +1519,9 @@ async function jupiterFetch(
               )
             : null;
 
-      } catch {
+      }
+      catch {
+
         data =
           null;
       }
@@ -1162,10 +1529,13 @@ async function jupiterFetch(
       if (
         !response.ok
       ) {
+
         const message =
-          data?.error ||
-          data?.message ||
-          `Jupiter HTTP ${response.status}: ${text.slice(0, 240)}`;
+          data?.error
+          ||
+          data?.message
+          ||
+          `Jupiter HTTP ${response.status}: ${text.slice(0,240)}`;
 
         lastError =
           new Error(
@@ -1174,12 +1544,16 @@ async function jupiterFetch(
 
         if (
           response.status ===
-            429 &&
+            429
+          &&
           attempt < 2
         ) {
+
           await sleep(
             2200 *
-              (attempt + 1)
+            (
+              attempt + 1
+            )
           );
 
           continue;
@@ -1190,16 +1564,21 @@ async function jupiterFetch(
 
       return data;
 
-    } catch (error) {
+    }
+    catch(error) {
+
       lastError =
         error;
 
       if (
         attempt < 2
       ) {
+
         await sleep(
           700 *
-            (attempt + 1)
+          (
+            attempt + 1
+          )
         );
 
         continue;
@@ -1208,7 +1587,8 @@ async function jupiterFetch(
   }
 
   throw (
-    lastError ||
+    lastError
+    ||
     new Error(
       "Jupiter request failed."
     )
@@ -1219,18 +1599,22 @@ async function jupiterFetch(
 function instructionProgramIds(
   plan
 ) {
+
   const ids =
     [];
 
   for (
     const item
     of plan
-      ?.computeBudgetInstructions ||
-    []
+      ?.computeBudgetInstructions
+      ||
+      []
   ) {
+
     if (
       item?.programId
     ) {
+
       ids.push(
         item.programId
       );
@@ -1240,12 +1624,15 @@ function instructionProgramIds(
   for (
     const item
     of plan
-      ?.setupInstructions ||
-    []
+      ?.setupInstructions
+      ||
+      []
   ) {
+
     if (
       item?.programId
     ) {
+
       ids.push(
         item.programId
       );
@@ -1257,6 +1644,7 @@ function instructionProgramIds(
       ?.tokenLedgerInstruction
       ?.programId
   ) {
+
     ids.push(
       plan
         .tokenLedgerInstruction
@@ -1269,6 +1657,7 @@ function instructionProgramIds(
       ?.swapInstruction
       ?.programId
   ) {
+
     ids.push(
       plan
         .swapInstruction
@@ -1281,6 +1670,7 @@ function instructionProgramIds(
       ?.cleanupInstruction
       ?.programId
   ) {
+
     ids.push(
       plan
         .cleanupInstruction
@@ -1291,12 +1681,15 @@ function instructionProgramIds(
   for (
     const item
     of plan
-      ?.otherInstructions ||
-    []
+      ?.otherInstructions
+      ||
+      []
   ) {
+
     if (
       item?.programId
     ) {
+
       ids.push(
         item.programId
       );
@@ -1304,7 +1697,9 @@ function instructionProgramIds(
   }
 
   return [
-    ...new Set(ids),
+    ...new Set(
+      ids
+    ),
   ];
 }
 
@@ -1312,14 +1707,418 @@ function instructionProgramIds(
 function extractPrivyTxHash(
   result
 ) {
+
   return (
-    result?.hash ||
-    result?.data?.hash ||
-    result?.signature ||
-    result?.result
-      ?.signature ||
+    result?.hash
+    ||
+    result?.data?.hash
+    ||
+    result?.signature
+    ||
+    result?.result?.signature
+    ||
     null
   );
+}
+
+
+/* ==================================================
+   STRATEGY HELPERS
+================================================== */
+
+function normalizeStrategyRow(
+  row
+) {
+
+  if (
+    !row
+  ) {
+
+    return null;
+  }
+
+  return {
+    id:
+      row.id,
+
+    assetSymbol:
+      row.asset_symbol,
+
+    status:
+      row.status,
+
+    preset:
+      row.preset,
+
+    dipBps:
+      Number(
+        row.dip_bps
+      ),
+
+    takeProfitBps:
+      Number(
+        row.take_profit_bps
+      ),
+
+    stopLossEnabled:
+      Boolean(
+        row.stop_loss_enabled
+      ),
+
+    stopLossBps:
+      row.stop_loss_bps == null
+        ? null
+        : Number(
+            row.stop_loss_bps
+          ),
+
+    autoRepeat:
+      Boolean(
+        row.auto_repeat
+      ),
+
+    compound:
+      Boolean(
+        row.compound
+      ),
+
+    initialCapitalUsdcRaw:
+      String(
+        row.initial_capital_usdc_raw
+      ),
+
+    reservedCapitalUsdcRaw:
+      String(
+        row.reserved_capital_usdc_raw
+      ),
+
+    currentCycleCapitalUsdcRaw:
+      String(
+        row.current_cycle_capital_usdc_raw
+      ),
+
+    freeProfitUsdcRaw:
+      String(
+        row.free_profit_usdc_raw
+        ??
+        0
+      ),
+
+    initialCapitalUsdc:
+      formatUnits(
+        BigInt(
+          row.initial_capital_usdc_raw
+        ),
+        USDC_DECIMALS
+      ),
+
+    reservedCapitalUsdc:
+      formatUnits(
+        BigInt(
+          row.reserved_capital_usdc_raw
+        ),
+        USDC_DECIMALS
+      ),
+
+    currentCycleCapitalUsdc:
+      formatUnits(
+        BigInt(
+          row.current_cycle_capital_usdc_raw
+        ),
+        USDC_DECIMALS
+      ),
+
+    freeProfitUsdc:
+      formatUnits(
+        BigInt(
+          row.free_profit_usdc_raw
+          ??
+          0
+        ),
+        USDC_DECIMALS
+      ),
+
+    hwmPriceMicroUsdc:
+      row.hwm_price_micro_usdc
+        ==
+        null
+        ? null
+        : String(
+            row.hwm_price_micro_usdc
+          ),
+
+    currentPriceMicroUsdc:
+      row.current_price_micro_usdc
+        ==
+        null
+        ? null
+        : String(
+            row.current_price_micro_usdc
+          ),
+
+    buyTriggerPriceMicroUsdc:
+      row.buy_trigger_price_micro_usdc
+        ==
+        null
+        ? null
+        : String(
+            row.buy_trigger_price_micro_usdc
+          ),
+
+    buyFillPriceMicroUsdc:
+      row.buy_fill_price_micro_usdc
+        ==
+        null
+        ? null
+        : String(
+            row.buy_fill_price_micro_usdc
+          ),
+
+    takeProfitPriceMicroUsdc:
+      row.take_profit_price_micro_usdc
+        ==
+        null
+        ? null
+        : String(
+            row.take_profit_price_micro_usdc
+          ),
+
+    stopLossPriceMicroUsdc:
+      row.stop_loss_price_micro_usdc
+        ==
+        null
+        ? null
+        : String(
+            row.stop_loss_price_micro_usdc
+          ),
+
+    entryWsolRaw:
+      row.entry_wsol_raw
+        ==
+        null
+        ? null
+        : String(
+            row.entry_wsol_raw
+          ),
+
+    cycleNumber:
+      Number(
+        row.cycle_number
+        ??
+        1
+      ),
+
+    astyGateCheckedAt:
+      row.asty_gate_checked_at
+      ??
+      null,
+
+    astyBalanceRawAtCreation:
+      row.asty_balance_raw_at_creation
+      ??
+      null,
+
+    buyTriggeredAt:
+      row.buy_triggered_at
+      ??
+      null,
+
+    boughtAt:
+      row.bought_at
+      ??
+      null,
+
+    sellTriggeredAt:
+      row.sell_triggered_at
+      ??
+      null,
+
+    soldAt:
+      row.sold_at
+      ??
+      null,
+
+    pausedAt:
+      row.paused_at
+      ??
+      null,
+
+    stoppedAt:
+      row.stopped_at
+      ??
+      null,
+
+    lastPriceAt:
+      row.last_price_at
+      ??
+      null,
+
+    pendingAction:
+      row.pending_action
+      ??
+      null,
+
+    pendingSignature:
+      row.pending_signature
+      ??
+      null,
+
+    pendingActionStartedAt:
+      row.pending_action_started_at
+      ??
+      null,
+
+    createdAt:
+      row.created_at,
+
+    updatedAt:
+      row.updated_at,
+  };
+}
+
+
+async function getReservedCapitalRaw(
+  env,
+  privyUserId
+) {
+
+  const row =
+    await env.DB
+      .prepare(
+        `
+        SELECT
+          COALESCE(
+            SUM(reserved_capital_usdc_raw),
+            0
+          ) AS reserved_raw
+        FROM rebound_strategies
+        WHERE privy_user_id = ?
+          AND status IN (
+            ${activeStatusSqlPlaceholders()}
+          )
+        `
+      )
+      .bind(
+        privyUserId,
+        ...ACTIVE_STRATEGY_STATUSES
+      )
+      .first();
+
+  return BigInt(
+    String(
+      row?.reserved_raw
+      ??
+      0
+    )
+  );
+}
+
+
+function resolveStrategyConfiguration(
+  body
+) {
+
+  const preset =
+    String(
+      body?.preset
+      ||
+      "balanced"
+    )
+      .trim()
+      .toLowerCase();
+
+  let dipBps;
+  let takeProfitBps;
+
+  if (
+    PRESETS[
+      preset
+    ]
+  ) {
+
+    dipBps =
+      PRESETS[
+        preset
+      ].dipBps;
+
+    takeProfitBps =
+      PRESETS[
+        preset
+      ].takeProfitBps;
+
+  }
+  else if (
+    preset ===
+    "custom"
+  ) {
+
+    dipBps =
+      normalizeBps(
+        body?.dipBps,
+        "dipBps",
+        {
+          min: 50,
+          max: 5000,
+        }
+      );
+
+    takeProfitBps =
+      normalizeBps(
+        body?.takeProfitBps,
+        "takeProfitBps",
+        {
+          min: 50,
+          max: 10000,
+        }
+      );
+
+  }
+  else {
+
+    throw new Error(
+      "Unsupported strategy preset."
+    );
+  }
+
+  const stopLossEnabled =
+    normalizeBoolean(
+      body?.stopLossEnabled,
+      false
+    );
+
+  const stopLossBps =
+    stopLossEnabled
+      ? normalizeBps(
+          body?.stopLossBps,
+          "stopLossBps",
+          {
+            min: 50,
+            max: 5000,
+          }
+        )
+      : null;
+
+  const autoRepeat =
+    normalizeBoolean(
+      body?.autoRepeat,
+      false
+    );
+
+  const compound =
+    normalizeBoolean(
+      body?.compound,
+      false
+    );
+
+  return {
+    preset,
+    dipBps,
+    takeProfitBps,
+    stopLossEnabled,
+    stopLossBps,
+    autoRepeat,
+    compound,
+  };
 }
 
 
@@ -1330,6 +2129,7 @@ function extractPrivyTxHash(
 async function handleRoot(
   request
 ) {
+
   return json(
     request,
     {
@@ -1346,6 +2146,7 @@ async function handleRoot(
         "Helius DAS",
 
       endpoints: {
+
         health:
           "/health",
 
@@ -1363,6 +2164,12 @@ async function handleRoot(
 
         transactionStatus:
           "GET /transaction/status?signature=...",
+
+        strategyList:
+          "GET /strategies",
+
+        strategyCreate:
+          "POST /strategies",
 
         tradingAuthorization:
           "GET /trading/authorization-config",
@@ -1389,7 +2196,9 @@ async function handleHealth(
   request,
   env
 ) {
+
   try {
+
     const dbTest =
       await env.DB
         .prepare(
@@ -1407,11 +2216,13 @@ async function handleHealth(
           "ASTY Rebound API",
 
         database:
-          dbTest?.ok === 1
+          dbTest?.ok ===
+            1
             ? "connected"
             : "error",
 
         config: {
+
           privyAppId:
             Boolean(
               env.PRIVY_APP_ID
@@ -1450,7 +2261,9 @@ async function handleHealth(
       }
     );
 
-  } catch (error) {
+  }
+  catch(error) {
+
     console.error(
       "Health error:",
       error
@@ -1479,7 +2292,9 @@ async function handlePrivyTest(
   request,
   env
 ) {
+
   try {
+
     const privy =
       createPrivyClient(
         env
@@ -1506,7 +2321,9 @@ async function handlePrivyTest(
       }
     );
 
-  } catch (error) {
+  }
+  catch(error) {
+
     console.error(
       "Privy test error:",
       error
@@ -1535,7 +2352,9 @@ async function handleAccountSync(
   request,
   env
 ) {
+
   try {
+
     const auth =
       await verifyPrivyRequest(
         request,
@@ -1545,6 +2364,7 @@ async function handleAccountSync(
     if (
       !auth.ok
     ) {
+
       return json(
         request,
         {
@@ -1569,7 +2389,8 @@ async function handleAccountSync(
         ?.reboundWalletAddress;
 
     const reboundWalletId =
-      body?.reboundWalletId ||
+      body?.reboundWalletId
+      ||
       null;
 
     if (
@@ -1577,6 +2398,7 @@ async function handleAccountSync(
         phantomAddress
       )
     ) {
+
       return json(
         request,
         {
@@ -1595,6 +2417,7 @@ async function handleAccountSync(
         reboundWalletAddress
       )
     ) {
+
       return json(
         request,
         {
@@ -1612,6 +2435,7 @@ async function handleAccountSync(
       phantomAddress ===
       reboundWalletAddress
     ) {
+
       return json(
         request,
         {
@@ -1634,11 +2458,13 @@ async function handleAccountSync(
     if (
       existing
     ) {
+
       if (
         existing
           .phantom_address !==
         phantomAddress
       ) {
+
         return json(
           request,
           {
@@ -1657,6 +2483,7 @@ async function handleAccountSync(
           .rebound_wallet_address !==
         reboundWalletAddress
       ) {
+
         return json(
           request,
           {
@@ -1672,9 +2499,11 @@ async function handleAccountSync(
 
       if (
         !existing
-          .rebound_wallet_id &&
+          .rebound_wallet_id
+        &&
         reboundWalletId
       ) {
+
         await env.DB
           .prepare(
             `
@@ -1691,7 +2520,9 @@ async function handleAccountSync(
           )
           .run();
 
-      } else {
+      }
+      else {
+
         await env.DB
           .prepare(
             `
@@ -1720,6 +2551,7 @@ async function handleAccountSync(
             true,
 
           account: {
+
             phantomAddress:
               existing
                 .phantom_address,
@@ -1730,7 +2562,8 @@ async function handleAccountSync(
 
             reboundWalletId:
               existing
-                .rebound_wallet_id ||
+                .rebound_wallet_id
+              ||
               reboundWalletId,
 
             reboundWalletAddress:
@@ -1760,6 +2593,7 @@ async function handleAccountSync(
     if (
       existingPhantom
     ) {
+
       return json(
         request,
         {
@@ -1813,19 +2647,18 @@ async function handleAccountSync(
 
         account: {
           phantomAddress,
-
           privyUserId:
             auth.userId,
-
           reboundWalletId,
-
           reboundWalletAddress,
         },
       },
       201
     );
 
-  } catch (error) {
+  }
+  catch(error) {
+
     console.error(
       "Account sync error:",
       error
@@ -1854,7 +2687,9 @@ async function handleBalance(
   request,
   env
 ) {
+
   try {
+
     const auth =
       await verifyPrivyRequest(
         request,
@@ -1864,6 +2699,7 @@ async function handleBalance(
     if (
       !auth.ok
     ) {
+
       return json(
         request,
         {
@@ -1887,6 +2723,7 @@ async function handleBalance(
       !account
         ?.rebound_wallet_address
     ) {
+
       return json(
         request,
         {
@@ -1907,7 +2744,8 @@ async function handleBalance(
     const [
       sol,
       usdc,
-      tradingSol
+      tradingSol,
+      reservedRaw
     ] =
       await Promise.all([
         getSolBalance(
@@ -1924,18 +2762,26 @@ async function handleBalance(
           env,
           wallet
         ),
+
+        getReservedCapitalRaw(
+          env,
+          auth.userId
+        ),
       ]);
 
     let solUsd =
       null;
 
     try {
+
       solUsd =
         await getSolUsdPrice(
           env
         );
 
-    } catch (error) {
+    }
+    catch(error) {
+
       console.error(
         "SOL display price unavailable:",
         error
@@ -1952,6 +2798,18 @@ async function handleBalance(
         usdc.ui
       );
 
+    const usdcRaw =
+      BigInt(
+        usdc.raw
+      );
+
+    const freeUsdcRaw =
+      usdcRaw >
+      reservedRaw
+        ? usdcRaw -
+          reservedRaw
+        : 0n;
+
     return json(
       request,
       {
@@ -1964,6 +2822,7 @@ async function handleBalance(
           "helius",
 
         balances: {
+
           usdc: {
             mint:
               USDC_MINT,
@@ -1983,6 +2842,26 @@ async function handleBalance(
               )
                 ? usdcAmount
                 : null,
+
+            reservedRaw:
+              reservedRaw
+                .toString(),
+
+            reservedUi:
+              formatUnits(
+                reservedRaw,
+                USDC_DECIMALS
+              ),
+
+            freeRaw:
+              freeUsdcRaw
+                .toString(),
+
+            freeUi:
+              formatUnits(
+                freeUsdcRaw,
+                USDC_DECIMALS
+              ),
           },
 
           sol: {
@@ -1998,7 +2877,8 @@ async function handleBalance(
             usdValue:
               Number.isFinite(
                 solAmount
-              ) &&
+              )
+              &&
               Number.isFinite(
                 solUsd
               )
@@ -2045,7 +2925,9 @@ async function handleBalance(
       }
     );
 
-  } catch (error) {
+  }
+  catch(error) {
+
     console.error(
       "Balance error:",
       error
@@ -2074,7 +2956,9 @@ async function handleDepositContext(
   request,
   env
 ) {
+
   try {
+
     const auth =
       await verifyPrivyRequest(
         request,
@@ -2084,6 +2968,7 @@ async function handleDepositContext(
     if (
       !auth.ok
     ) {
+
       return json(
         request,
         {
@@ -2105,10 +2990,12 @@ async function handleDepositContext(
 
     if (
       !account
-        ?.phantom_address ||
+        ?.phantom_address
+      ||
       !account
         ?.rebound_wallet_address
     ) {
+
       return json(
         request,
         {
@@ -2127,20 +3014,26 @@ async function handleDepositContext(
 
     const asset =
       String(
-        body?.asset ||
+        body?.asset
+        ||
         ""
-      ).toUpperCase();
+      )
+        .toUpperCase();
 
     const amount =
       String(
-        body?.amount ||
+        body?.amount
+        ||
         ""
-      ).trim();
+      )
+        .trim();
 
     if (
-      asset !== "SOL" &&
+      asset !== "SOL"
+      &&
       asset !== "USDC"
     ) {
+
       return json(
         request,
         {
@@ -2159,6 +3052,7 @@ async function handleDepositContext(
         amount
       )
     ) {
+
       return json(
         request,
         {
@@ -2179,13 +3073,17 @@ async function handleDepositContext(
 
     const decimalPart =
       amount
-        .split(".")[1] ||
+        .split(
+          "."
+        )[1]
+      ||
       "";
 
     if (
       decimalPart.length >
       maxDecimals
     ) {
+
       return json(
         request,
         {
@@ -2240,7 +3138,9 @@ async function handleDepositContext(
       }
     );
 
-  } catch (error) {
+  }
+  catch(error) {
+
     console.error(
       "Deposit context error:",
       error
@@ -2270,7 +3170,9 @@ async function handleTransactionStatus(
   env,
   url
 ) {
+
   try {
+
     const auth =
       await verifyPrivyRequest(
         request,
@@ -2280,6 +3182,7 @@ async function handleTransactionStatus(
     if (
       !auth.ok
     ) {
+
       return json(
         request,
         {
@@ -2304,6 +3207,7 @@ async function handleTransactionStatus(
         signature
       )
     ) {
+
       return json(
         request,
         {
@@ -2335,12 +3239,14 @@ async function handleTransactionStatus(
 
     const status =
       result
-        ?.value?.[0] ||
+        ?.value?.[0]
+      ||
       null;
 
     if (
       !status
     ) {
+
       return json(
         request,
         {
@@ -2367,24 +3273,29 @@ async function handleTransactionStatus(
 
     const confirmationStatus =
       status
-        .confirmationStatus ||
+        .confirmationStatus
+      ||
       null;
 
     const transactionError =
-      status.err ||
+      status.err
+      ||
       null;
 
     const confirmed =
-      !transactionError &&
+      !transactionError
+      &&
       (
         confirmationStatus ===
-          "confirmed" ||
+          "confirmed"
+        ||
         confirmationStatus ===
           "finalized"
       );
 
     const finalized =
-      !transactionError &&
+      !transactionError
+      &&
       confirmationStatus ===
         "finalized";
 
@@ -2406,12 +3317,15 @@ async function handleTransactionStatus(
         transactionError,
 
         slot:
-          status.slot ??
+          status.slot
+          ??
           null,
       }
     );
 
-  } catch (error) {
+  }
+  catch(error) {
+
     console.error(
       "Transaction status error:",
       error
@@ -2433,14 +3347,16 @@ async function handleTransactionStatus(
 
 
 /* ==================================================
-   ADDITIONAL SIGNER CONFIG
+   GET STRATEGIES
 ================================================== */
 
-async function handleAuthorizationConfig(
+async function handleStrategyList(
   request,
   env
 ) {
+
   try {
+
     const auth =
       await verifyPrivyRequest(
         request,
@@ -2450,6 +3366,7 @@ async function handleAuthorizationConfig(
     if (
       !auth.ok
     ) {
+
       return json(
         request,
         {
@@ -2473,6 +3390,620 @@ async function handleAuthorizationConfig(
       !account
         ?.rebound_wallet_address
     ) {
+
+      return json(
+        request,
+        {
+          status:
+            "error",
+
+          message:
+            "Rebound account not found.",
+        },
+        404
+      );
+    }
+
+    const [
+      queryResult,
+      usdc,
+      reservedRaw
+    ] =
+      await Promise.all([
+
+        env.DB
+          .prepare(
+            `
+            SELECT *
+            FROM rebound_strategies
+            WHERE privy_user_id = ?
+            ORDER BY created_at DESC
+            `
+          )
+          .bind(
+            auth.userId
+          )
+          .all(),
+
+        getUsdcBalance(
+          env,
+          account
+            .rebound_wallet_address
+        ),
+
+        getReservedCapitalRaw(
+          env,
+          auth.userId
+        ),
+      ]);
+
+    const walletUsdcRaw =
+      BigInt(
+        usdc.raw
+      );
+
+    const freeUsdcRaw =
+      walletUsdcRaw >
+      reservedRaw
+        ? walletUsdcRaw -
+          reservedRaw
+        : 0n;
+
+    const rows =
+      Array.isArray(
+        queryResult?.results
+      )
+        ? queryResult.results
+        : [];
+
+    return json(
+      request,
+      {
+        status:
+          "ok",
+
+        strategies:
+          rows.map(
+            normalizeStrategyRow
+          ),
+
+        capital: {
+
+          walletUsdcRaw:
+            walletUsdcRaw
+              .toString(),
+
+          walletUsdc:
+            formatUnits(
+              walletUsdcRaw,
+              USDC_DECIMALS
+            ),
+
+          reservedUsdcRaw:
+            reservedRaw
+              .toString(),
+
+          reservedUsdc:
+            formatUnits(
+              reservedRaw,
+              USDC_DECIMALS
+            ),
+
+          freeUsdcRaw:
+            freeUsdcRaw
+              .toString(),
+
+          freeUsdc:
+            formatUnits(
+              freeUsdcRaw,
+              USDC_DECIMALS
+            ),
+        },
+      }
+    );
+
+  }
+  catch(error) {
+
+    console.error(
+      "Strategy list error:",
+      error
+    );
+
+    return json(
+      request,
+      {
+        status:
+          "error",
+
+        message:
+          "Strategies are temporarily unavailable.",
+      },
+      503
+    );
+  }
+}
+
+
+/* ==================================================
+   CREATE STRATEGY
+================================================== */
+
+async function handleStrategyCreate(
+  request,
+  env
+) {
+
+  try {
+
+    const auth =
+      await verifyPrivyRequest(
+        request,
+        env
+      );
+
+    if (
+      !auth.ok
+    ) {
+
+      return json(
+        request,
+        {
+          status:
+            "error",
+
+          message:
+            auth.message,
+        },
+        auth.status
+      );
+    }
+
+    const account =
+      await getReboundAccount(
+        env,
+        auth.userId
+      );
+
+    if (
+      !account
+        ?.phantom_address
+      ||
+      !account
+        ?.rebound_wallet_address
+    ) {
+
+      return json(
+        request,
+        {
+          status:
+            "error",
+
+          message:
+            "Rebound account not found.",
+        },
+        404
+      );
+    }
+
+    let body;
+
+    try {
+
+      body =
+        await request.json();
+
+    }
+    catch {
+
+      body =
+        {};
+    }
+
+    let capitalRaw;
+    let config;
+
+    try {
+
+      capitalRaw =
+        parseDecimalToRaw(
+          body?.capitalUsdc,
+          USDC_DECIMALS
+        );
+
+      config =
+        resolveStrategyConfiguration(
+          body
+        );
+
+    }
+    catch(error) {
+
+      return json(
+        request,
+        {
+          status:
+            "error",
+
+          message:
+            error.message,
+        },
+        400
+      );
+    }
+
+    if (
+      capitalRaw <
+      MIN_STRATEGY_USDC_RAW
+    ) {
+
+      return json(
+        request,
+        {
+          status:
+            "error",
+
+          message:
+            "A new strategy requires at least 25 USDC.",
+        },
+        400
+      );
+    }
+
+    const [
+      usdc,
+      asty,
+      reservedRaw
+    ] =
+      await Promise.all([
+
+        getUsdcBalance(
+          env,
+          account
+            .rebound_wallet_address
+        ),
+
+        getAstyBalance(
+          env,
+          account
+            .phantom_address
+        ),
+
+        getReservedCapitalRaw(
+          env,
+          auth.userId
+        ),
+      ]);
+
+    const walletUsdcRaw =
+      BigInt(
+        usdc.raw
+      );
+
+    const astyRaw =
+      BigInt(
+        asty.raw
+      );
+
+    const freeUsdcRaw =
+      walletUsdcRaw >
+      reservedRaw
+        ? walletUsdcRaw -
+          reservedRaw
+        : 0n;
+
+    if (
+      astyRaw <
+      ASTY_GATE_RAW
+    ) {
+
+      return json(
+        request,
+        {
+          status:
+            "error",
+
+          code:
+            "ASTY_GATE_NOT_MET",
+
+          message:
+            "At least 2,500 ASTY must be held in the linked Phantom wallet when creating a new strategy.",
+
+          gate: {
+
+            requiredAstyRaw:
+              ASTY_GATE_RAW
+                .toString(),
+
+            requiredAsty:
+              formatUnits(
+                ASTY_GATE_RAW,
+                ASTY_DECIMALS
+              ),
+
+            currentAstyRaw:
+              astyRaw
+                .toString(),
+
+            currentAsty:
+              formatUnits(
+                astyRaw,
+                ASTY_DECIMALS
+              ),
+          },
+        },
+        409
+      );
+    }
+
+    if (
+      freeUsdcRaw <
+      capitalRaw
+    ) {
+
+      return json(
+        request,
+        {
+          status:
+            "error",
+
+          code:
+            "INSUFFICIENT_FREE_USDC",
+
+          message:
+            "Not enough free USDC is available for this strategy.",
+
+          capital: {
+
+            requestedUsdcRaw:
+              capitalRaw
+                .toString(),
+
+            requestedUsdc:
+              formatUnits(
+                capitalRaw,
+                USDC_DECIMALS
+              ),
+
+            walletUsdcRaw:
+              walletUsdcRaw
+                .toString(),
+
+            walletUsdc:
+              formatUnits(
+                walletUsdcRaw,
+                USDC_DECIMALS
+              ),
+
+            reservedUsdcRaw:
+              reservedRaw
+                .toString(),
+
+            reservedUsdc:
+              formatUnits(
+                reservedRaw,
+                USDC_DECIMALS
+              ),
+
+            freeUsdcRaw:
+              freeUsdcRaw
+                .toString(),
+
+            freeUsdc:
+              formatUnits(
+                freeUsdcRaw,
+                USDC_DECIMALS
+              ),
+          },
+        },
+        409
+      );
+    }
+
+    const id =
+      crypto.randomUUID();
+
+    await env.DB
+      .prepare(
+        `
+        INSERT INTO rebound_strategies (
+          id,
+          privy_user_id,
+          phantom_address,
+          rebound_wallet_address,
+          asset_symbol,
+          status,
+          preset,
+          dip_bps,
+          take_profit_bps,
+          stop_loss_enabled,
+          stop_loss_bps,
+          auto_repeat,
+          compound,
+          initial_capital_usdc_raw,
+          reserved_capital_usdc_raw,
+          current_cycle_capital_usdc_raw,
+          free_profit_usdc_raw,
+          cycle_number,
+          asty_gate_checked_at,
+          asty_balance_raw_at_creation,
+          created_at,
+          updated_at
+        )
+        VALUES (
+          ?, ?, ?, ?,
+          'SOL',
+          'WATCHING',
+          ?, ?, ?, ?, ?, ?, ?,
+          ?, ?, ?,
+          0,
+          1,
+          CURRENT_TIMESTAMP,
+          ?,
+          CURRENT_TIMESTAMP,
+          CURRENT_TIMESTAMP
+        )
+        `
+      )
+      .bind(
+        id,
+        auth.userId,
+        account.phantom_address,
+        account.rebound_wallet_address,
+
+        config.preset,
+        config.dipBps,
+        config.takeProfitBps,
+
+        config.stopLossEnabled
+          ? 1
+          : 0,
+
+        config.stopLossBps,
+
+        config.autoRepeat
+          ? 1
+          : 0,
+
+        config.compound
+          ? 1
+          : 0,
+
+        capitalRaw
+          .toString(),
+
+        capitalRaw
+          .toString(),
+
+        capitalRaw
+          .toString(),
+
+        astyRaw
+          .toString()
+      )
+      .run();
+
+    const row =
+      await env.DB
+        .prepare(
+          `
+          SELECT *
+          FROM rebound_strategies
+          WHERE id = ?
+            AND privy_user_id = ?
+          LIMIT 1
+          `
+        )
+        .bind(
+          id,
+          auth.userId
+        )
+        .first();
+
+    return json(
+      request,
+      {
+        status:
+          "ok",
+
+        created:
+          true,
+
+        tradingActive:
+          false,
+
+        message:
+          "Strategy created in WATCHING mode. Automatic execution is not enabled yet.",
+
+        strategy:
+          normalizeStrategyRow(
+            row
+          ),
+
+        gate: {
+          checked:
+            true,
+
+          requiredAstyRaw:
+            ASTY_GATE_RAW
+              .toString(),
+
+          currentAstyRaw:
+            astyRaw
+              .toString(),
+        },
+      },
+      201
+    );
+
+  }
+  catch(error) {
+
+    console.error(
+      "Strategy create error:",
+      error
+    );
+
+    return json(
+      request,
+      {
+        status:
+          "error",
+
+        message:
+          "The strategy could not be created.",
+      },
+      503
+    );
+  }
+}
+
+
+/* ==================================================
+   TRADING AUTH CONFIG
+================================================== */
+
+async function handleAuthorizationConfig(
+  request,
+  env
+) {
+
+  try {
+
+    const auth =
+      await verifyPrivyRequest(
+        request,
+        env
+      );
+
+    if (
+      !auth.ok
+    ) {
+
+      return json(
+        request,
+        {
+          status:
+            "error",
+
+          message:
+            auth.message,
+        },
+        auth.status
+      );
+    }
+
+    const account =
+      await getReboundAccount(
+        env,
+        auth.userId
+      );
+
+    if (
+      !account
+        ?.rebound_wallet_address
+    ) {
+
       return json(
         request,
         {
@@ -2487,13 +4018,13 @@ async function handleAuthorizationConfig(
     }
 
     if (
-      !env
-        .PRIVY_AUTH_KEY_ID ||
-      !env
-        .PRIVY_AUTH_PRIVATE_KEY ||
-      !env
-        .PRIVY_POLICY_ID
+      !env.PRIVY_AUTH_KEY_ID
+      ||
+      !env.PRIVY_AUTH_PRIVATE_KEY
+      ||
+      !env.PRIVY_POLICY_ID
     ) {
+
       return json(
         request,
         {
@@ -2518,19 +4049,19 @@ async function handleAuthorizationConfig(
             .rebound_wallet_address,
 
         signerId:
-          env
-            .PRIVY_AUTH_KEY_ID,
+          env.PRIVY_AUTH_KEY_ID,
 
         policyId:
-          env
-            .PRIVY_POLICY_ID,
+          env.PRIVY_POLICY_ID,
 
         policyProtected:
           true,
       }
     );
 
-  } catch (error) {
+  }
+  catch(error) {
+
     console.error(
       "Trading authorization config error:",
       error
@@ -2553,17 +4084,15 @@ async function handleAuthorizationConfig(
 
 /* ==================================================
    PREPARE SOL TRADING
-
-   Creates only the context.
-   The actual ATA creation is signed by Phantom
-   from the frontend.
 ================================================== */
 
 async function handlePrepareSolContext(
   request,
   env
 ) {
+
   try {
+
     const auth =
       await verifyPrivyRequest(
         request,
@@ -2573,6 +4102,7 @@ async function handlePrepareSolContext(
     if (
       !auth.ok
     ) {
+
       return json(
         request,
         {
@@ -2594,10 +4124,12 @@ async function handlePrepareSolContext(
 
     if (
       !account
-        ?.phantom_address ||
+        ?.phantom_address
+      ||
       !account
         ?.rebound_wallet_address
     ) {
+
       return json(
         request,
         {
@@ -2621,6 +4153,7 @@ async function handlePrepareSolContext(
     if (
       wsol.ready
     ) {
+
       return json(
         request,
         {
@@ -2681,7 +4214,9 @@ async function handlePrepareSolContext(
       }
     );
 
-  } catch (error) {
+  }
+  catch(error) {
+
     console.error(
       "Prepare SOL trading context error:",
       error
@@ -2703,14 +4238,16 @@ async function handlePrepareSolContext(
 
 
 /* ==================================================
-   SERVER SIGNER SECURITY TEST
+   SERVER SIGNER TEST
 ================================================== */
 
 async function handleServerSignerTest(
   request,
   env
 ) {
+
   try {
+
     const auth =
       await verifyPrivyRequest(
         request,
@@ -2720,6 +4257,7 @@ async function handleServerSignerTest(
     if (
       !auth.ok
     ) {
+
       return json(
         request,
         {
@@ -2743,6 +4281,7 @@ async function handleServerSignerTest(
       !account
         ?.rebound_wallet_address
     ) {
+
       return json(
         request,
         {
@@ -2772,6 +4311,7 @@ async function handleServerSignerTest(
     if (
       !delegatedWallet
     ) {
+
       return json(
         request,
         {
@@ -2793,13 +4333,16 @@ async function handleServerSignerTest(
 
     const walletId =
       account
-        .rebound_wallet_id ||
-      delegatedWallet?.id ||
+        .rebound_wallet_id
+      ||
+      delegatedWallet?.id
+      ||
       null;
 
     if (
       !walletId
     ) {
+
       return json(
         request,
         {
@@ -2835,6 +4378,7 @@ async function handleServerSignerTest(
       );
 
     try {
+
       await privy
         .wallets()
         .solana()
@@ -2874,7 +4418,9 @@ async function handleServerSignerTest(
         409
       );
 
-    } catch (error) {
+    }
+    catch(error) {
+
       const info =
         getSafePrivyError(
           error
@@ -2885,6 +4431,7 @@ async function handleServerSignerTest(
           info
         )
       ) {
+
         return json(
           request,
           {
@@ -2946,7 +4493,9 @@ async function handleServerSignerTest(
       );
     }
 
-  } catch (error) {
+  }
+  catch(error) {
+
     console.error(
       "Server signer test error:",
       error
@@ -2977,18 +4526,15 @@ async function handleServerSignerTest(
 
 /* ==================================================
    TEST SWAP
-
-   Exactly 0.10 USDC -> WSOL.
-
-   Before Privy receives the transaction,
-   Jupiter's instruction plan is inspected.
 ================================================== */
 
 async function handleTestSwap(
   request,
   env
 ) {
+
   try {
+
     const auth =
       await verifyPrivyRequest(
         request,
@@ -2998,6 +4544,7 @@ async function handleTestSwap(
     if (
       !auth.ok
     ) {
+
       return json(
         request,
         {
@@ -3015,10 +4562,13 @@ async function handleTestSwap(
       {};
 
     try {
+
       body =
         await request.json();
 
-    } catch {
+    }
+    catch {
+
       body =
         {};
     }
@@ -3027,6 +4577,7 @@ async function handleTestSwap(
       body?.confirm !==
       "TEST_SWAP_0_10_USDC_TO_SOL"
     ) {
+
       return json(
         request,
         {
@@ -3050,6 +4601,7 @@ async function handleTestSwap(
       !account
         ?.rebound_wallet_address
     ) {
+
       return json(
         request,
         {
@@ -3073,6 +4625,7 @@ async function handleTestSwap(
       tradingSol
     ] =
       await Promise.all([
+
         getUsdcBalance(
           env,
           walletAddress
@@ -3092,9 +4645,11 @@ async function handleTestSwap(
     if (
       BigInt(
         usdc.raw
-      ) <
+      )
+      <
       TEST_SWAP_USDC_RAW
     ) {
+
       return json(
         request,
         {
@@ -3111,9 +4666,11 @@ async function handleTestSwap(
     if (
       BigInt(
         nativeSol.raw
-      ) <
+      )
+      <
       100000n
     ) {
+
       return json(
         request,
         {
@@ -3128,9 +4685,11 @@ async function handleTestSwap(
     }
 
     if (
-      !tradingSol.ready ||
+      !tradingSol.ready
+      ||
       !tradingSol.address
     ) {
+
       return json(
         request,
         {
@@ -3165,6 +4724,7 @@ async function handleTestSwap(
     if (
       !delegatedWallet
     ) {
+
       return json(
         request,
         {
@@ -3180,13 +4740,16 @@ async function handleTestSwap(
 
     const walletId =
       account
-        .rebound_wallet_id ||
-      delegatedWallet?.id ||
+        .rebound_wallet_id
+      ||
+      delegatedWallet?.id
+      ||
       null;
 
     if (
       !walletId
     ) {
+
       return json(
         request,
         {
@@ -3234,22 +4797,28 @@ async function handleTestSwap(
       );
 
     if (
-      !quote ||
+      !quote
+      ||
       quote.inputMint !==
-        USDC_MINT ||
+        USDC_MINT
+      ||
       quote.outputMint !==
-        WSOL_MINT ||
+        WSOL_MINT
+      ||
       String(
         quote.inAmount
       ) !==
         TEST_SWAP_USDC_RAW
-          .toString() ||
+          .toString()
+      ||
       !Array.isArray(
         quote.routePlan
-      ) ||
+      )
+      ||
       quote.routePlan.length ===
         0
     ) {
+
       return json(
         request,
         {
@@ -3274,10 +4843,12 @@ async function handleTestSwap(
     if (
       Number.isFinite(
         priceImpactPct
-      ) &&
+      )
+      &&
       priceImpactPct >
         0.01
     ) {
+
       return json(
         request,
         {
@@ -3297,6 +4868,7 @@ async function handleTestSwap(
     }
 
     const swapBuildBody = {
+
       quoteResponse:
         quote,
 
@@ -3313,7 +4885,9 @@ async function handleTestSwap(
         true,
 
       prioritizationFeeLamports: {
+
         priorityLevelWithMaxLamports: {
+
           maxLamports:
             10000,
 
@@ -3323,24 +4897,15 @@ async function handleTestSwap(
       },
     };
 
-    /*
-     * Keyless Jupiter is deliberately
-     * rate-limited. Avoid back-to-back
-     * requests if no API key is present.
-     */
     if (
-      !env
-        .JUPITER_API_KEY
+      !env.JUPITER_API_KEY
     ) {
+
       await sleep(
         2100
       );
     }
 
-    /*
-     * Ask Jupiter for the exact instruction
-     * plan BEFORE asking Privy to sign.
-     */
     const plan =
       await jupiterFetch(
         env,
@@ -3377,12 +4942,13 @@ async function handleTestSwap(
 
     const hasSetup =
       Array.isArray(
-        plan
-          ?.setupInstructions
-      ) &&
+        plan?.setupInstructions
+      )
+      &&
       plan
         .setupInstructions
-        .length > 0;
+        .length >
+        0;
 
     const hasCleanup =
       Boolean(
@@ -3392,12 +4958,13 @@ async function handleTestSwap(
 
     const hasOther =
       Array.isArray(
-        plan
-          ?.otherInstructions
-      ) &&
+        plan?.otherInstructions
+      )
+      &&
       plan
         .otherInstructions
-        .length > 0;
+        .length >
+        0;
 
     const hasTokenLedger =
       Boolean(
@@ -3406,15 +4973,21 @@ async function handleTestSwap(
       );
 
     if (
-      unexpectedPrograms.length ||
-      hasSetup ||
-      hasCleanup ||
-      hasOther ||
-      hasTokenLedger ||
+      unexpectedPrograms.length
+      ||
+      hasSetup
+      ||
+      hasCleanup
+      ||
+      hasOther
+      ||
+      hasTokenLedger
+      ||
       !programs.includes(
         JUPITER_PROGRAM_ID
       )
     ) {
+
       return json(
         request,
         {
@@ -3448,9 +5021,9 @@ async function handleTestSwap(
     }
 
     if (
-      !env
-        .JUPITER_API_KEY
+      !env.JUPITER_API_KEY
     ) {
+
       await sleep(
         2100
       );
@@ -3477,10 +5050,12 @@ async function handleTestSwap(
 
     if (
       typeof swapTransaction !==
-        "string" ||
+        "string"
+      ||
       swapTransaction.length <
         100
     ) {
+
       return json(
         request,
         {
@@ -3500,6 +5075,7 @@ async function handleTestSwap(
     let sendResult;
 
     try {
+
       sendResult =
         await privy
           .wallets()
@@ -3520,7 +5096,9 @@ async function handleTestSwap(
             }
           );
 
-    } catch (error) {
+    }
+    catch(error) {
+
       const info =
         getSafePrivyError(
           error
@@ -3556,11 +5134,13 @@ async function handleTestSwap(
       );
 
     if (
-      !signature ||
+      !signature
+      ||
       !isTransactionSignature(
         signature
       )
     ) {
+
       return json(
         request,
         {
@@ -3600,7 +5180,8 @@ async function handleTestSwap(
 
         quotedOutRaw:
           String(
-            quote.outAmount ||
+            quote.outAmount
+            ||
             ""
           ),
 
@@ -3608,15 +5189,17 @@ async function handleTestSwap(
           TEST_SWAP_SLIPPAGE_BPS,
 
         priceImpactPct:
-          quote
-            .priceImpactPct ??
+          quote.priceImpactPct
+          ??
           null,
 
         signature,
       }
     );
 
-  } catch (error) {
+  }
+  catch(error) {
+
     console.error(
       "Test swap error:",
       error
@@ -3629,7 +5212,8 @@ async function handleTestSwap(
           "error",
 
         message:
-          error?.message ||
+          error?.message
+          ||
           "The test swap could not be completed.",
       },
       503
@@ -3643,14 +5227,17 @@ async function handleTestSwap(
 ================================================== */
 
 export default {
+
   async fetch(
     request,
     env
   ) {
+
     if (
       request.method ===
       "OPTIONS"
     ) {
+
       return new Response(
         null,
         {
@@ -3673,76 +5260,116 @@ export default {
     const key =
       `${request.method} ${url.pathname}`;
 
-    switch (
+    switch(
       key
     ) {
+
       case "GET /":
+
         return handleRoot(
           request
         );
 
+
       case "GET /health":
+
         return handleHealth(
           request,
           env
         );
 
+
       case "GET /privy-test":
+
         return handlePrivyTest(
           request,
           env
         );
 
+
       case "POST /account/sync":
+
         return handleAccountSync(
           request,
           env
         );
 
+
       case "GET /account/balance":
+
         return handleBalance(
           request,
           env
         );
 
+
       case "POST /deposit/context":
+
         return handleDepositContext(
           request,
           env
         );
 
+
       case "GET /transaction/status":
+
         return handleTransactionStatus(
           request,
           env,
           url
         );
 
+
+      case "GET /strategies":
+
+        return handleStrategyList(
+          request,
+          env
+        );
+
+
+      case "POST /strategies":
+
+        return handleStrategyCreate(
+          request,
+          env
+        );
+
+
       case "GET /trading/authorization-config":
+
         return handleAuthorizationConfig(
           request,
           env
         );
 
+
       case "POST /trading/prepare-sol-context":
+
         return handlePrepareSolContext(
           request,
           env
         );
 
+
       case "POST /trading/server-signer-test":
+
         return handleServerSignerTest(
           request,
           env
         );
 
+
       case "POST /trading/test-swap":
+
         return handleTestSwap(
           request,
           env
         );
 
+
       default:
+
         return json(
           request,
           {
