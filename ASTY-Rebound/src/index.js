@@ -1,4 +1,5 @@
-// ASTY Rebound API - Balance + USD + Automated Trading Authorization v2
+// ASTY Rebound API - Balance + USD + Automated Trading Authorization
+// + Server Signer Test + Controlled Jupiter Test Swap
 
 import { PrivyClient } from "@privy-io/node";
 
@@ -7,10 +8,14 @@ const ALLOWED_ORIGINS = new Set([
   "https://www.arbstrategy.net",
 ]);
 
-const HELIUS_RPC_BASE = "https://mainnet.helius-rpc.com/";
+const HELIUS_RPC_BASE =
+  "https://mainnet.helius-rpc.com/";
 
-const USDC_MINT = "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v";
-const WSOL_MINT = "So11111111111111111111111111111111111111112";
+const USDC_MINT =
+  "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v";
+
+const WSOL_MINT =
+  "So11111111111111111111111111111111111111112";
 
 const USDC_DECIMALS = 6;
 const SOL_DECIMALS = 9;
@@ -18,84 +23,152 @@ const SOL_DECIMALS = 9;
 const SOLANA_MAINNET_CAIP2 =
   "solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp";
 
-// Jupiter Metis V1 is used only for this controlled signer test.
-// Production strategy execution will move to Swap API V2.
-const JUPITER_SWAP_BASE = "https://api.jup.ag/swap/v1";
+const JUPITER_SWAP_BASE =
+  "https://api.jup.ag/swap/v1";
 
-const TEST_SWAP_USDC_RAW = 100000n; // 0.10 USDC
-const TEST_SWAP_SLIPPAGE_BPS = 50; // 0.5%
+const TEST_SWAP_USDC_RAW =
+  100000n; // 0.10 USDC
 
-/* ==================================================
-   SHORT-LIVED PRICE CACHE
-   Display only. Never use for trading decisions.
-================================================== */
+const TEST_SWAP_SLIPPAGE_BPS =
+  50; // 0.5%
 
 let solPriceCache = {
   price: null,
   expiresAt: 0,
 };
 
+
 /* ==================================================
    BASIC HELPERS
 ================================================== */
 
 function corsHeaders(request) {
-  const origin = request.headers.get("Origin");
+
+  const origin =
+    request.headers.get("Origin");
 
   const headers = {
-    "Content-Type": "application/json; charset=utf-8",
-    "Cache-Control": "no-store",
+    "Content-Type":
+      "application/json; charset=utf-8",
+
+    "Cache-Control":
+      "no-store",
   };
 
-  if (origin && ALLOWED_ORIGINS.has(origin)) {
-    headers["Access-Control-Allow-Origin"] = origin;
-    headers["Vary"] = "Origin";
-    headers["Access-Control-Allow-Methods"] = "GET,POST,OPTIONS";
-    headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization";
+  if (
+    origin &&
+    ALLOWED_ORIGINS.has(origin)
+  ) {
+
+    headers[
+      "Access-Control-Allow-Origin"
+    ] = origin;
+
+    headers[
+      "Vary"
+    ] = "Origin";
+
+    headers[
+      "Access-Control-Allow-Methods"
+    ] =
+      "GET,POST,OPTIONS";
+
+    headers[
+      "Access-Control-Allow-Headers"
+    ] =
+      "Content-Type, Authorization";
   }
 
   return headers;
 }
 
-function json(request, data, status = 200) {
-  return new Response(JSON.stringify(data, null, 2), {
-    status,
-    headers: corsHeaders(request),
-  });
+
+function json(
+  request,
+  data,
+  status = 200
+) {
+
+  return new Response(
+    JSON.stringify(
+      data,
+      null,
+      2
+    ),
+    {
+      status,
+      headers:
+        corsHeaders(request),
+    }
+  );
 }
+
 
 function createPrivyClient(env) {
+
   return new PrivyClient({
-    appId: env.PRIVY_APP_ID,
-    appSecret: env.PRIVY_APP_SECRET,
+    appId:
+      env.PRIVY_APP_ID,
+
+    appSecret:
+      env.PRIVY_APP_SECRET,
   });
 }
 
+
 function createAuthorizationContext(env) {
-  if (!env.PRIVY_AUTH_PRIVATE_KEY) {
-    throw new Error("PRIVY_AUTH_PRIVATE_KEY is not configured.");
+
+  if (
+    !env.PRIVY_AUTH_PRIVATE_KEY
+  ) {
+
+    throw new Error(
+      "PRIVY_AUTH_PRIVATE_KEY is not configured."
+    );
   }
 
   return {
-    authorization_private_keys: [env.PRIVY_AUTH_PRIVATE_KEY],
+    authorization_private_keys: [
+      env.PRIVY_AUTH_PRIVATE_KEY,
+    ],
   };
 }
 
-function utf8ToBase64(value) {
-  const bytes = new TextEncoder().encode(String(value));
-  let binary = "";
 
-  for (let i = 0; i < bytes.length; i++) {
-    binary += String.fromCharCode(bytes[i]);
+function utf8ToBase64(value) {
+
+  const bytes =
+    new TextEncoder().encode(
+      String(value)
+    );
+
+  let binary =
+    "";
+
+  for (
+    let i = 0;
+    i < bytes.length;
+    i++
+  ) {
+
+    binary +=
+      String.fromCharCode(
+        bytes[i]
+      );
   }
 
   return btoa(binary);
 }
 
+
 function getSafePrivyError(error) {
-  const status = Number.isFinite(Number(error?.status))
-    ? Number(error.status)
-    : null;
+
+  const status =
+    Number.isFinite(
+      Number(error?.status)
+    )
+      ? Number(error.status)
+      : null;
 
   const code =
     error?.code ??
@@ -105,17 +178,39 @@ function getSafePrivyError(error) {
 
   return {
     status,
-    name: typeof error?.name === "string" ? error.name : null,
-    code: code == null ? null : String(code),
+
+    name:
+      typeof error?.name ===
+        "string"
+        ? error.name
+        : null,
+
+    code:
+      code == null
+        ? null
+        : String(code),
+
     message:
-      typeof error?.message === "string"
-        ? error.message.slice(0, 300)
+      typeof error?.message ===
+        "string"
+        ? error.message.slice(
+            0,
+            500
+          )
         : "Privy request failed.",
   };
 }
 
-function looksLikePolicyDenial(info) {
-  const text = [info?.name, info?.code, info?.message]
+
+function looksLikePolicyDenial(
+  info
+) {
+
+  const text = [
+    info?.name,
+    info?.code,
+    info?.message,
+  ]
     .filter(Boolean)
     .join(" ")
     .toLowerCase();
@@ -129,48 +224,103 @@ function looksLikePolicyDenial(info) {
   );
 }
 
+
 function sleep(ms) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
+
+  return new Promise(
+    resolve =>
+      setTimeout(
+        resolve,
+        ms
+      )
+  );
 }
 
-async function jupiterFetch(env, path, options = {}) {
-  let lastError = null;
 
-  for (let attempt = 0; attempt < 3; attempt++) {
+async function jupiterFetch(
+  env,
+  path,
+  options = {}
+) {
+
+  let lastError =
+    null;
+
+  for (
+    let attempt = 0;
+    attempt < 3;
+    attempt++
+  ) {
+
     try {
+
       const headers = {
-        Accept: "application/json",
-        ...(options.body ? { "Content-Type": "application/json" } : {}),
-        ...(env.JUPITER_API_KEY
-          ? { "x-api-key": env.JUPITER_API_KEY }
+        Accept:
+          "application/json",
+
+        ...(options.body
+          ? {
+              "Content-Type":
+                "application/json",
+            }
           : {}),
+
+        ...(env.JUPITER_API_KEY
+          ? {
+              "x-api-key":
+                env.JUPITER_API_KEY,
+            }
+          : {}),
+
         ...(options.headers || {}),
       };
 
-      const response = await fetch(JUPITER_SWAP_BASE + path, {
-        ...options,
-        headers,
-      });
+      const response =
+        await fetch(
+          JUPITER_SWAP_BASE +
+            path,
+          {
+            ...options,
+            headers,
+          }
+        );
 
-      const text = await response.text();
-      let data = null;
+      const text =
+        await response.text();
+
+      let data =
+        null;
 
       try {
-        data = text ? JSON.parse(text) : null;
+        data =
+          text
+            ? JSON.parse(text)
+            : null;
       } catch {
-        data = null;
+        data =
+          null;
       }
 
       if (!response.ok) {
+
         const message =
           data?.error ||
           data?.message ||
           `Jupiter HTTP ${response.status}: ${text.slice(0, 240)}`;
 
-        lastError = new Error(message);
+        lastError =
+          new Error(message);
 
-        if (response.status === 429 && attempt < 2) {
-          await sleep(2200 * (attempt + 1));
+        if (
+          response.status === 429 &&
+          attempt < 2
+        ) {
+
+          await sleep(
+            2200 *
+              (attempt + 1)
+          );
+
           continue;
         }
 
@@ -178,141 +328,277 @@ async function jupiterFetch(env, path, options = {}) {
       }
 
       return data;
-    } catch (error) {
-      lastError = error;
 
-      if (attempt < 2) {
-        await sleep(700 * (attempt + 1));
+    }
+
+    catch (error) {
+
+      lastError =
+        error;
+
+      if (
+        attempt < 2
+      ) {
+
+        await sleep(
+          700 *
+            (attempt + 1)
+        );
+
         continue;
       }
     }
   }
 
-  throw lastError || new Error("Jupiter request failed.");
+  throw (
+    lastError ||
+    new Error(
+      "Jupiter request failed."
+    )
+  );
 }
+
 
 async function getPrivyDelegatedWallet(
   privy,
   userId,
   reboundWalletAddress
 ) {
-  // Same server-side lookup that already passed
-  // the successful Verify Server Access test.
-  const privyUser = await privy.users()._get(userId);
 
-  const linkedAccounts = Array.isArray(privyUser?.linked_accounts)
-    ? privyUser.linked_accounts
-    : Array.isArray(privyUser?.linkedAccounts)
-      ? privyUser.linkedAccounts
-      : [];
+  const privyUser =
+    await privy
+      .users()
+      ._get(
+        userId
+      );
+
+  const linkedAccounts =
+    Array.isArray(
+      privyUser?.linked_accounts
+    )
+      ? privyUser.linked_accounts
+      : Array.isArray(
+          privyUser?.linkedAccounts
+        )
+        ? privyUser.linkedAccounts
+        : [];
 
   return (
     linkedAccounts.find(
-      (item) =>
-        item?.type === "wallet" &&
-        item?.address === reboundWalletAddress &&
-        item?.delegated === true
-    ) || null
+      item =>
+        item?.type ===
+          "wallet" &&
+        item?.address ===
+          reboundWalletAddress &&
+        item?.delegated ===
+          true
+    )
+    ||
+    null
   );
 }
 
-function extractPrivyTxHash(result) {
+
+function extractPrivyTxHash(
+  result
+) {
+
   return (
-    result?.data?.hash ||
     result?.hash ||
+    result?.data?.hash ||
     result?.signature ||
     result?.result?.signature ||
     null
   );
 }
 
-function getBearerToken(request) {
-  const auth = request.headers.get("Authorization") || "";
 
-  if (!auth.startsWith("Bearer ")) {
+function getBearerToken(request) {
+
+  const auth =
+    request.headers.get(
+      "Authorization"
+    ) || "";
+
+  if (
+    !auth.startsWith(
+      "Bearer "
+    )
+  ) {
+
     return null;
   }
 
-  return auth.slice(7).trim();
+  return auth
+    .slice(7)
+    .trim();
 }
+
 
 function isSolanaAddress(value) {
+
   return (
-    typeof value === "string" &&
-    /^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(value)
+    typeof value ===
+      "string" &&
+    /^[1-9A-HJ-NP-Za-km-z]{32,44}$/
+      .test(value)
   );
 }
 
-function isTransactionSignature(value) {
+
+function isTransactionSignature(
+  value
+) {
+
   return (
-    typeof value === "string" &&
-    /^[1-9A-HJ-NP-Za-km-z]{80,100}$/.test(value)
+    typeof value ===
+      "string" &&
+    /^[1-9A-HJ-NP-Za-km-z]{80,100}$/
+      .test(value)
   );
 }
+
 
 function isPositiveAmount(value) {
-  if (typeof value !== "string" && typeof value !== "number") {
+
+  if (
+    typeof value !==
+      "string" &&
+    typeof value !==
+      "number"
+  ) {
+
     return false;
   }
 
-  const text = String(value).trim();
+  const text =
+    String(value).trim();
 
-  if (!/^\d+(\.\d+)?$/.test(text)) {
+  if (
+    !/^\d+(\.\d+)?$/
+      .test(text)
+  ) {
+
     return false;
   }
 
-  const number = Number(text);
+  const number =
+    Number(text);
 
-  return Number.isFinite(number) && number > 0;
+  return (
+    Number.isFinite(number) &&
+    number > 0
+  );
 }
 
-function formatUnits(rawValue, decimals) {
-  const raw = typeof rawValue === "bigint" ? rawValue : BigInt(rawValue);
-  const negative = raw < 0n;
-  const absolute = negative ? -raw : raw;
-  const base = 10n ** BigInt(decimals);
-  const whole = absolute / base;
-  const fraction = absolute % base;
 
-  let result = whole.toString();
+function formatUnits(
+  rawValue,
+  decimals
+) {
 
-  if (decimals > 0) {
-    result += "." + fraction.toString().padStart(decimals, "0");
+  const raw =
+    typeof rawValue ===
+      "bigint"
+      ? rawValue
+      : BigInt(rawValue);
+
+  const negative =
+    raw < 0n;
+
+  const absolute =
+    negative
+      ? -raw
+      : raw;
+
+  const base =
+    10n **
+    BigInt(decimals);
+
+  const whole =
+    absolute /
+    base;
+
+  const fraction =
+    absolute %
+    base;
+
+  let result =
+    whole.toString();
+
+  if (
+    decimals > 0
+  ) {
+
+    result +=
+      "." +
+      fraction
+        .toString()
+        .padStart(
+          decimals,
+          "0"
+        );
   }
 
-  return negative ? `-${result}` : result;
+  return negative
+    ? `-${result}`
+    : result;
 }
+
 
 /* ==================================================
    PRIVY AUTH
 ================================================== */
 
-async function verifyPrivyRequest(request, env) {
-  const accessToken = getBearerToken(request);
+async function verifyPrivyRequest(
+  request,
+  env
+) {
 
-  if (!accessToken) {
+  const accessToken =
+    getBearerToken(
+      request
+    );
+
+  if (
+    !accessToken
+  ) {
+
     return {
       ok: false,
       status: 401,
-      message: "Missing authentication token.",
+      message:
+        "Missing authentication token.",
     };
   }
 
   try {
-    const privy = createPrivyClient(env);
 
-    const claims = await privy
-      .utils()
-      .auth()
-      .verifyAccessToken(accessToken);
+    const privy =
+      createPrivyClient(
+        env
+      );
 
-    const userId = claims?.user_id;
+    const claims =
+      await privy
+        .utils()
+        .auth()
+        .verifyAccessToken(
+          accessToken
+        );
 
-    if (!userId) {
+    const userId =
+      claims?.user_id;
+
+    if (
+      !userId
+    ) {
+
       return {
         ok: false,
         status: 401,
-        message: "Privy user ID could not be verified.",
+        message:
+          "Privy user ID could not be verified.",
       };
     }
 
@@ -321,22 +607,35 @@ async function verifyPrivyRequest(request, env) {
       userId,
       claims,
     };
-  } catch (error) {
-    console.error("Privy verification error:", error);
+
+  }
+
+  catch (error) {
+
+    console.error(
+      "Privy verification error:",
+      error
+    );
 
     return {
       ok: false,
       status: 401,
-      message: "Invalid or expired Privy session.",
+      message:
+        "Invalid or expired Privy session.",
     };
   }
 }
+
 
 /* ==================================================
    D1 ACCOUNT
 ================================================== */
 
-async function getReboundAccount(env, privyUserId) {
+async function getReboundAccount(
+  env,
+  privyUserId
+) {
+
   return await env.DB
     .prepare(
       `
@@ -352,167 +651,258 @@ async function getReboundAccount(env, privyUserId) {
       LIMIT 1
       `
     )
-    .bind(privyUserId)
+    .bind(
+      privyUserId
+    )
     .first();
 }
+
 
 /* ==================================================
    HELIUS
 ================================================== */
 
 function getHeliusUrl(env) {
-  if (!env.HELIUS_API_KEY) {
-    throw new Error("HELIUS_API_KEY is not configured.");
+
+  if (
+    !env.HELIUS_API_KEY
+  ) {
+
+    throw new Error(
+      "HELIUS_API_KEY is not configured."
+    );
   }
 
   return (
     HELIUS_RPC_BASE +
     "?api-key=" +
-    encodeURIComponent(env.HELIUS_API_KEY)
+    encodeURIComponent(
+      env.HELIUS_API_KEY
+    )
   );
 }
 
-async function heliusRpc(env, method, params) {
-  const response = await fetch(getHeliusUrl(env), {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Accept: "application/json",
-    },
-    body: JSON.stringify({
-      jsonrpc: "2.0",
-      id: "asty-rebound",
-      method,
-      params,
-    }),
-  });
 
-  if (!response.ok) {
-    const body = await response.text();
+async function heliusRpc(
+  env,
+  method,
+  params
+) {
+
+  const response =
+    await fetch(
+      getHeliusUrl(env),
+      {
+        method:
+          "POST",
+
+        headers: {
+          "Content-Type":
+            "application/json",
+
+          Accept:
+            "application/json",
+        },
+
+        body:
+          JSON.stringify({
+            jsonrpc:
+              "2.0",
+
+            id:
+              "asty-rebound",
+
+            method,
+
+            params,
+          }),
+      }
+    );
+
+  if (
+    !response.ok
+  ) {
+
+    const body =
+      await response.text();
 
     throw new Error(
       `Helius HTTP ${response.status}: ${body.slice(0, 300)}`
     );
   }
 
-  const data = await response.json();
+  const data =
+    await response.json();
 
-  if (data?.error) {
+  if (
+    data?.error
+  ) {
+
     throw new Error(
       data.error?.message ||
       "Helius returned an RPC error."
     );
   }
 
-  return data?.result ?? data;
+  return (
+    data?.result ??
+    data
+  );
 }
 
+
 /* ==================================================
-   SOL BALANCE
+   BALANCES
 ================================================== */
 
-async function getSolBalance(env, walletAddress) {
-  const result = await heliusRpc(env, "getBalance", [
-    walletAddress,
-    {
-      commitment: "confirmed",
-    },
-  ]);
+async function getSolBalance(
+  env,
+  walletAddress
+) {
 
-  const lamports = BigInt(
-    result?.value ?? 0
-  );
+  const result =
+    await heliusRpc(
+      env,
+      "getBalance",
+      [
+        walletAddress,
+        {
+          commitment:
+            "confirmed",
+        },
+      ]
+    );
+
+  const lamports =
+    BigInt(
+      result?.value ??
+      0
+    );
 
   return {
-    raw: lamports.toString(),
-    ui: formatUnits(
-      lamports,
-      SOL_DECIMALS
-    ),
+    raw:
+      lamports.toString(),
+
+    ui:
+      formatUnits(
+        lamports,
+        SOL_DECIMALS
+      ),
   };
 }
 
-/* ==================================================
-   USDC BALANCE - HELIUS DAS
-================================================== */
 
-async function getUsdcViaDas(env, walletAddress) {
-  const result = await heliusRpc(
-    env,
-    "getTokenAccounts",
-    {
-      owner: walletAddress,
-      mint: USDC_MINT,
-      options: {
-        showZeroBalance: true,
-      },
-    }
-  );
+async function getUsdcViaDas(
+  env,
+  walletAddress
+) {
 
-  const accounts = Array.isArray(
-    result?.token_accounts
-  )
-    ? result.token_accounts
-    : [];
+  const result =
+    await heliusRpc(
+      env,
+      "getTokenAccounts",
+      {
+        owner:
+          walletAddress,
 
-  let totalRaw = 0n;
+        mint:
+          USDC_MINT,
 
-  for (const account of accounts) {
-    const amount = account?.amount;
+        options: {
+          showZeroBalance:
+            true,
+        },
+      }
+    );
+
+  const accounts =
+    Array.isArray(
+      result?.token_accounts
+    )
+      ? result.token_accounts
+      : [];
+
+  let totalRaw =
+    0n;
+
+  for (
+    const account
+    of accounts
+  ) {
+
+    const amount =
+      account?.amount;
 
     if (
       amount !== undefined &&
       amount !== null
     ) {
-      totalRaw += BigInt(
-        String(amount)
-      );
+
+      totalRaw +=
+        BigInt(
+          String(amount)
+        );
     }
   }
 
   return {
-    raw: totalRaw.toString(),
-    ui: formatUnits(
-      totalRaw,
-      USDC_DECIMALS
-    ),
+    raw:
+      totalRaw.toString(),
+
+    ui:
+      formatUnits(
+        totalRaw,
+        USDC_DECIMALS
+      ),
+
     method:
       "helius-getTokenAccounts",
   };
 }
 
-/* ==================================================
-   USDC BALANCE - STANDARD RPC FALLBACK
-================================================== */
 
 async function getUsdcViaStandardRpc(
   env,
   walletAddress
 ) {
-  const result = await heliusRpc(
-    env,
-    "getTokenAccountsByOwner",
-    [
-      walletAddress,
-      {
-        mint: USDC_MINT,
-      },
-      {
-        commitment: "confirmed",
-        encoding: "jsonParsed",
-      },
-    ]
-  );
 
-  const accounts = Array.isArray(
-    result?.value
-  )
-    ? result.value
-    : [];
+  const result =
+    await heliusRpc(
+      env,
+      "getTokenAccountsByOwner",
+      [
+        walletAddress,
 
-  let totalRaw = 0n;
+        {
+          mint:
+            USDC_MINT,
+        },
 
-  for (const tokenAccount of accounts) {
+        {
+          commitment:
+            "confirmed",
+
+          encoding:
+            "jsonParsed",
+        },
+      ]
+    );
+
+  const accounts =
+    Array.isArray(
+      result?.value
+    )
+      ? result.value
+      : [];
+
+  let totalRaw =
+    0n;
+
+  for (
+    const tokenAccount
+    of accounts
+  ) {
+
     const amount =
       tokenAccount
         ?.account
@@ -522,32 +912,48 @@ async function getUsdcViaStandardRpc(
         ?.tokenAmount
         ?.amount;
 
-    if (typeof amount === "string") {
-      totalRaw += BigInt(amount);
+    if (
+      typeof amount ===
+        "string"
+    ) {
+
+      totalRaw +=
+        BigInt(amount);
     }
   }
 
   return {
-    raw: totalRaw.toString(),
-    ui: formatUnits(
-      totalRaw,
-      USDC_DECIMALS
-    ),
+    raw:
+      totalRaw.toString(),
+
+    ui:
+      formatUnits(
+        totalRaw,
+        USDC_DECIMALS
+      ),
+
     method:
       "helius-getTokenAccountsByOwner",
   };
 }
 
+
 async function getUsdcBalance(
   env,
   walletAddress
 ) {
+
   try {
+
     return await getUsdcViaDas(
       env,
       walletAddress
     );
-  } catch (error) {
+
+  }
+
+  catch (error) {
+
     console.error(
       "DAS USDC lookup failed; using standard RPC:",
       error
@@ -560,45 +966,56 @@ async function getUsdcBalance(
   }
 }
 
-/* ==================================================
-   SOL USD PRICE
 
-   Display only.
-   Never use this value for strategy triggers or execution.
+/* ==================================================
+   SOL USD DISPLAY PRICE
 ================================================== */
 
-async function getSolUsdPrice(env) {
-  const now = Date.now();
+async function getSolUsdPrice(
+  env
+) {
+
+  const now =
+    Date.now();
 
   if (
-    solPriceCache.price !== null &&
-    now < solPriceCache.expiresAt
+    solPriceCache.price !==
+      null &&
+    now <
+      solPriceCache.expiresAt
   ) {
+
     return solPriceCache.price;
   }
 
-  const result = await heliusRpc(
-    env,
-    "getAsset",
-    {
-      id: WSOL_MINT,
-      displayOptions: {
-        showFungible: true,
-      },
-    }
-  );
+  const result =
+    await heliusRpc(
+      env,
+      "getAsset",
+      {
+        id:
+          WSOL_MINT,
 
-  const price = Number(
-    result
-      ?.token_info
-      ?.price_info
-      ?.price_per_token
-  );
+        displayOptions: {
+          showFungible:
+            true,
+        },
+      }
+    );
+
+  const price =
+    Number(
+      result
+        ?.token_info
+        ?.price_info
+        ?.price_per_token
+    );
 
   if (
     !Number.isFinite(price) ||
     price <= 0
   ) {
+
     throw new Error(
       "SOL USD price unavailable."
     );
@@ -606,30 +1023,39 @@ async function getSolUsdPrice(env) {
 
   solPriceCache = {
     price,
+
     expiresAt:
-      now + 60 * 1000,
+      now +
+      60 * 1000,
   };
 
   return price;
 }
 
+
 /* ==================================================
-   LATEST BLOCKHASH
+   BLOCKHASH
 ================================================== */
 
-async function getLatestBlockhash(env) {
-  const result = await heliusRpc(
-    env,
-    "getLatestBlockhash",
-    [
-      {
-        commitment: "confirmed",
-      },
-    ]
-  );
+async function getLatestBlockhash(
+  env
+) {
+
+  const result =
+    await heliusRpc(
+      env,
+      "getLatestBlockhash",
+      [
+        {
+          commitment:
+            "confirmed",
+        },
+      ]
+    );
 
   const blockhash =
-    result?.value?.blockhash;
+    result?.value
+      ?.blockhash;
 
   const lastValidBlockHeight =
     result?.value
@@ -639,6 +1065,7 @@ async function getLatestBlockhash(env) {
     !blockhash ||
     !lastValidBlockHeight
   ) {
+
     throw new Error(
       "Could not obtain a fresh Solana blockhash."
     );
@@ -650,39 +1077,54 @@ async function getLatestBlockhash(env) {
   };
 }
 
+
 /* ==================================================
    WORKER
 ================================================== */
 
 export default {
-  async fetch(request, env) {
 
-    /* ================================================
-       CORS
-    ================================================ */
+  async fetch(
+    request,
+    env
+  ) {
 
-    if (request.method === "OPTIONS") {
+    if (
+      request.method ===
+      "OPTIONS"
+    ) {
+
       return new Response(
         null,
         {
-          status: 204,
+          status:
+            204,
+
           headers:
-            corsHeaders(request),
+            corsHeaders(
+              request
+            ),
         }
       );
     }
 
     const url =
-      new URL(request.url);
+      new URL(
+        request.url
+      );
 
-    /* ================================================
+
+    /* ==================================================
        ROOT
-    ================================================ */
+    ================================================== */
 
     if (
-      request.method === "GET" &&
-      url.pathname === "/"
+      request.method ===
+        "GET" &&
+      url.pathname ===
+        "/"
     ) {
+
       return json(
         request,
         {
@@ -730,15 +1172,20 @@ export default {
       );
     }
 
-    /* ================================================
+
+    /* ==================================================
        HEALTH
-    ================================================ */
+    ================================================== */
 
     if (
-      request.method === "GET" &&
-      url.pathname === "/health"
+      request.method ===
+        "GET" &&
+      url.pathname ===
+        "/health"
     ) {
+
       try {
+
         const dbTest =
           await env.DB
             .prepare(
@@ -798,7 +1245,11 @@ export default {
             },
           }
         );
-      } catch (error) {
+
+      }
+
+      catch (error) {
+
         console.error(
           "Health error:",
           error
@@ -818,17 +1269,24 @@ export default {
       }
     }
 
-    /* ================================================
+
+    /* ==================================================
        PRIVY TEST
-    ================================================ */
+    ================================================== */
 
     if (
-      request.method === "GET" &&
-      url.pathname === "/privy-test"
+      request.method ===
+        "GET" &&
+      url.pathname ===
+        "/privy-test"
     ) {
+
       try {
+
         const privy =
-          createPrivyClient(env);
+          createPrivyClient(
+            env
+          );
 
         return json(
           request,
@@ -848,7 +1306,11 @@ export default {
             },
           }
         );
-      } catch (error) {
+
+      }
+
+      catch (error) {
+
         console.error(
           "Privy test error:",
           error
@@ -868,15 +1330,20 @@ export default {
       }
     }
 
-    /* ================================================
+
+    /* ==================================================
        ACCOUNT SYNC
-    ================================================ */
+    ================================================== */
 
     if (
-      request.method === "POST" &&
-      url.pathname === "/account/sync"
+      request.method ===
+        "POST" &&
+      url.pathname ===
+        "/account/sync"
     ) {
+
       try {
+
         const auth =
           await verifyPrivyRequest(
             request,
@@ -884,6 +1351,7 @@ export default {
           );
 
         if (!auth.ok) {
+
           return json(
             request,
             {
@@ -918,6 +1386,7 @@ export default {
             phantomAddress
           )
         ) {
+
           return json(
             request,
             {
@@ -936,6 +1405,7 @@ export default {
             reboundWalletAddress
           )
         ) {
+
           return json(
             request,
             {
@@ -953,6 +1423,7 @@ export default {
           phantomAddress ===
           reboundWalletAddress
         ) {
+
           return json(
             request,
             {
@@ -979,6 +1450,7 @@ export default {
               .phantom_address !==
             phantomAddress
           ) {
+
             return json(
               request,
               {
@@ -997,6 +1469,7 @@ export default {
               .rebound_wallet_address !==
             reboundWalletAddress
           ) {
+
             return json(
               request,
               {
@@ -1015,6 +1488,7 @@ export default {
               .rebound_wallet_id &&
             reboundWalletId
           ) {
+
             await env.DB
               .prepare(
                 `
@@ -1030,7 +1504,9 @@ export default {
                 privyUserId
               )
               .run();
+
           } else {
+
             await env.DB
               .prepare(
                 `
@@ -1096,7 +1572,10 @@ export default {
             )
             .first();
 
-        if (existingPhantom) {
+        if (
+          existingPhantom
+        ) {
+
           return json(
             request,
             {
@@ -1157,7 +1636,11 @@ export default {
           },
           201
         );
-      } catch (error) {
+
+      }
+
+      catch (error) {
+
         console.error(
           "Account sync error:",
           error
@@ -1177,15 +1660,20 @@ export default {
       }
     }
 
-    /* ================================================
-       REBOUND BALANCE
-    ================================================ */
+
+    /* ==================================================
+       BALANCE
+    ================================================== */
 
     if (
-      request.method === "GET" &&
-      url.pathname === "/account/balance"
+      request.method ===
+        "GET" &&
+      url.pathname ===
+        "/account/balance"
     ) {
+
       try {
+
         const auth =
           await verifyPrivyRequest(
             request,
@@ -1193,6 +1681,7 @@ export default {
           );
 
         if (!auth.ok) {
+
           return json(
             request,
             {
@@ -1216,6 +1705,7 @@ export default {
           !account
             ?.rebound_wallet_address
         ) {
+
           return json(
             request,
             {
@@ -1242,6 +1732,7 @@ export default {
               env,
               walletAddress
             ),
+
             getUsdcBalance(
               env,
               walletAddress
@@ -1252,11 +1743,16 @@ export default {
           null;
 
         try {
+
           solUsdPrice =
             await getSolUsdPrice(
               env
             );
-        } catch (priceError) {
+
+        }
+
+        catch (priceError) {
+
           console.error(
             "SOL display price unavailable:",
             priceError
@@ -1304,6 +1800,7 @@ export default {
               "helius",
 
             balances: {
+
               usdc: {
                 mint:
                   USDC_MINT,
@@ -1351,7 +1848,11 @@ export default {
               "confirmed",
           }
         );
-      } catch (error) {
+
+      }
+
+      catch (error) {
+
         console.error(
           "Balance error:",
           error
@@ -1371,15 +1872,20 @@ export default {
       }
     }
 
-    /* ================================================
+
+    /* ==================================================
        DEPOSIT CONTEXT
-    ================================================ */
+    ================================================== */
 
     if (
-      request.method === "POST" &&
-      url.pathname === "/deposit/context"
+      request.method ===
+        "POST" &&
+      url.pathname ===
+        "/deposit/context"
     ) {
+
       try {
+
         const auth =
           await verifyPrivyRequest(
             request,
@@ -1387,6 +1893,7 @@ export default {
           );
 
         if (!auth.ok) {
+
           return json(
             request,
             {
@@ -1408,9 +1915,12 @@ export default {
 
         if (
           !account ||
-          !account.phantom_address ||
-          !account.rebound_wallet_address
+          !account
+            .phantom_address ||
+          !account
+            .rebound_wallet_address
         ) {
+
           return json(
             request,
             {
@@ -1429,18 +1939,21 @@ export default {
 
         const asset =
           String(
-            body?.asset || ""
+            body?.asset ||
+            ""
           ).toUpperCase();
 
         const amount =
           String(
-            body?.amount || ""
+            body?.amount ||
+            ""
           ).trim();
 
         if (
           asset !== "SOL" &&
           asset !== "USDC"
         ) {
+
           return json(
             request,
             {
@@ -1459,6 +1972,7 @@ export default {
             amount
           )
         ) {
+
           return json(
             request,
             {
@@ -1473,7 +1987,8 @@ export default {
         }
 
         const decimalPart =
-          amount.split(".")[1] ||
+          amount
+            .split(".")[1] ||
           "";
 
         const maxDecimals =
@@ -1485,6 +2000,7 @@ export default {
           decimalPart.length >
           maxDecimals
         ) {
+
           return json(
             request,
             {
@@ -1538,7 +2054,11 @@ export default {
                 .lastValidBlockHeight,
           }
         );
-      } catch (error) {
+
+      }
+
+      catch (error) {
+
         console.error(
           "Deposit context error:",
           error
@@ -1558,15 +2078,20 @@ export default {
       }
     }
 
-    /* ================================================
+
+    /* ==================================================
        TRANSACTION STATUS
-    ================================================ */
+    ================================================== */
 
     if (
-      request.method === "GET" &&
-      url.pathname === "/transaction/status"
+      request.method ===
+        "GET" &&
+      url.pathname ===
+        "/transaction/status"
     ) {
+
       try {
+
         const auth =
           await verifyPrivyRequest(
             request,
@@ -1574,6 +2099,7 @@ export default {
           );
 
         if (!auth.ok) {
+
           return json(
             request,
             {
@@ -1597,6 +2123,7 @@ export default {
             signature
           )
         ) {
+
           return json(
             request,
             {
@@ -1629,7 +2156,10 @@ export default {
           result?.value?.[0] ||
           null;
 
-        if (!transactionStatus) {
+        if (
+          !transactionStatus
+        ) {
+
           return json(
             request,
             {
@@ -1660,7 +2190,8 @@ export default {
           null;
 
         const transactionError =
-          transactionStatus.err ||
+          transactionStatus
+            .err ||
           null;
 
         const confirmed =
@@ -1700,7 +2231,11 @@ export default {
               null,
           }
         );
-      } catch (error) {
+
+      }
+
+      catch (error) {
+
         console.error(
           "Transaction status error:",
           error
@@ -1720,16 +2255,20 @@ export default {
       }
     }
 
-    /* ================================================
-       AUTOMATED TRADING AUTHORIZATION CONFIG
-    ================================================ */
+
+    /* ==================================================
+       TRADING AUTHORIZATION
+    ================================================== */
 
     if (
-      request.method === "GET" &&
+      request.method ===
+        "GET" &&
       url.pathname ===
         "/trading/authorization-config"
     ) {
+
       try {
+
         const auth =
           await verifyPrivyRequest(
             request,
@@ -1737,6 +2276,7 @@ export default {
           );
 
         if (!auth.ok) {
+
           return json(
             request,
             {
@@ -1760,6 +2300,7 @@ export default {
           !account
             ?.rebound_wallet_address
         ) {
+
           return json(
             request,
             {
@@ -1778,6 +2319,7 @@ export default {
           !env.PRIVY_AUTH_PRIVATE_KEY ||
           !env.PRIVY_POLICY_ID
         ) {
+
           return json(
             request,
             {
@@ -1811,7 +2353,11 @@ export default {
               true,
           }
         );
-      } catch (error) {
+
+      }
+
+      catch (error) {
+
         console.error(
           "Trading authorization config error:",
           error
@@ -1831,19 +2377,20 @@ export default {
       }
     }
 
-    /* ================================================
-       SERVER SIGNER SECURITY TEST
 
-       No blockchain transaction is sent.
-       Expected result: policy blocks signMessage.
-    ================================================ */
+    /* ==================================================
+       SERVER SIGNER TEST
+    ================================================== */
 
     if (
-      request.method === "POST" &&
+      request.method ===
+        "POST" &&
       url.pathname ===
         "/trading/server-signer-test"
     ) {
+
       try {
+
         const auth =
           await verifyPrivyRequest(
             request,
@@ -1851,6 +2398,7 @@ export default {
           );
 
         if (!auth.ok) {
+
           return json(
             request,
             {
@@ -1874,6 +2422,7 @@ export default {
           !account
             ?.rebound_wallet_address
         ) {
+
           return json(
             request,
             {
@@ -1887,26 +2436,10 @@ export default {
           );
         }
 
-        if (
-          !env.PRIVY_AUTH_KEY_ID ||
-          !env.PRIVY_AUTH_PRIVATE_KEY ||
-          !env.PRIVY_POLICY_ID
-        ) {
-          return json(
-            request,
-            {
-              status:
-                "error",
-
-              message:
-                "Automated trading is not fully configured.",
-            },
-            503
-          );
-        }
-
         const privy =
-          createPrivyClient(env);
+          createPrivyClient(
+            env
+          );
 
         const delegatedWallet =
           await getPrivyDelegatedWallet(
@@ -1916,7 +2449,10 @@ export default {
               .rebound_wallet_address
           );
 
-        if (!delegatedWallet) {
+        if (
+          !delegatedWallet
+        ) {
+
           return json(
             request,
             {
@@ -1942,7 +2478,10 @@ export default {
           delegatedWallet?.id ||
           null;
 
-        if (!walletId) {
+        if (
+          !walletId
+        ) {
+
           return json(
             request,
             {
@@ -1970,10 +2509,13 @@ export default {
                 .rebound_wallet_address,
               new Date()
                 .toISOString(),
-            ].join(" | ")
+            ].join(
+              " | "
+            )
           );
 
         try {
+
           await privy
             .wallets()
             .solana()
@@ -2002,21 +2544,19 @@ export default {
               delegated:
                 true,
 
-              authorizationRequestReachedPrivy:
-                true,
-
-              policyProtected:
-                false,
-
               result:
                 "unexpectedly_allowed",
 
               message:
-                "Server signing works, but signMessage was unexpectedly allowed. Review the ASTY Rebound Trading Policy before enabling real trading.",
+                "Server signing works, but signMessage was unexpectedly allowed.",
             },
             409
           );
-        } catch (signError) {
+
+        }
+
+        catch (signError) {
+
           const info =
             getSafePrivyError(
               signError
@@ -2027,6 +2567,7 @@ export default {
               info
             )
           ) {
+
             return json(
               request,
               {
@@ -2037,9 +2578,6 @@ export default {
                   true,
 
                 delegated:
-                  true,
-
-                authorizationRequestReachedPrivy:
                   true,
 
                 policyProtected:
@@ -2069,12 +2607,6 @@ export default {
               delegated:
                 true,
 
-              authorizationRequestReachedPrivy:
-                true,
-
-              policyProtected:
-                null,
-
               result:
                 "blocked_unclassified",
 
@@ -2087,7 +2619,11 @@ export default {
             502
           );
         }
-      } catch (error) {
+
+      }
+
+      catch (error) {
+
         console.error(
           "Server signer test error:",
           error
@@ -2115,23 +2651,22 @@ export default {
       }
     }
 
-    /* ================================================
+
+    /* ==================================================
        REAL TEST SWAP
-
-       Fixed and deliberately non-configurable:
-       0.10 USDC -> native SOL
-       Slippage: 0.5%
-
-       This proves:
-       Jupiter -> Privy Additional Signer -> Policy -> Solana.
-    ================================================ */
+       FIXED:
+       0.10 USDC -> SOL
+    ================================================== */
 
     if (
-      request.method === "POST" &&
+      request.method ===
+        "POST" &&
       url.pathname ===
         "/trading/test-swap"
     ) {
+
       try {
+
         const auth =
           await verifyPrivyRequest(
             request,
@@ -2139,6 +2674,7 @@ export default {
           );
 
         if (!auth.ok) {
+
           return json(
             request,
             {
@@ -2155,8 +2691,10 @@ export default {
         let body = {};
 
         try {
+
           body =
             await request.json();
+
         } catch {
           body = {};
         }
@@ -2165,6 +2703,7 @@ export default {
           body?.confirm !==
           "TEST_SWAP_0_10_USDC_TO_SOL"
         ) {
+
           return json(
             request,
             {
@@ -2188,6 +2727,7 @@ export default {
           !account
             ?.rebound_wallet_address
         ) {
+
           return json(
             request,
             {
@@ -2198,24 +2738,6 @@ export default {
                 "Rebound account not found.",
             },
             404
-          );
-        }
-
-        if (
-          !env.PRIVY_AUTH_KEY_ID ||
-          !env.PRIVY_AUTH_PRIVATE_KEY ||
-          !env.PRIVY_POLICY_ID
-        ) {
-          return json(
-            request,
-            {
-              status:
-                "error",
-
-              message:
-                "Automated trading is not fully configured.",
-            },
-            503
           );
         }
 
@@ -2232,6 +2754,7 @@ export default {
               env,
               walletAddress
             ),
+
             getSolBalance(
               env,
               walletAddress
@@ -2244,6 +2767,7 @@ export default {
           ) <
           TEST_SWAP_USDC_RAW
         ) {
+
           return json(
             request,
             {
@@ -2257,13 +2781,13 @@ export default {
           );
         }
 
-        // Minimum guard only for this tiny test.
         if (
           BigInt(
             solBalance.raw
           ) <
           100000n
         ) {
+
           return json(
             request,
             {
@@ -2278,7 +2802,9 @@ export default {
         }
 
         const privy =
-          createPrivyClient(env);
+          createPrivyClient(
+            env
+          );
 
         const delegatedWallet =
           await getPrivyDelegatedWallet(
@@ -2287,7 +2813,10 @@ export default {
             walletAddress
           );
 
-        if (!delegatedWallet) {
+        if (
+          !delegatedWallet
+        ) {
+
           return json(
             request,
             {
@@ -2307,7 +2836,10 @@ export default {
           delegatedWallet?.id ||
           null;
 
-        if (!walletId) {
+        if (
+          !walletId
+        ) {
+
           return json(
             request,
             {
@@ -2320,6 +2852,11 @@ export default {
             409
           );
         }
+
+
+        /* -------------------------
+           JUPITER QUOTE
+        ------------------------- */
 
         const quoteParams =
           new URLSearchParams({
@@ -2348,11 +2885,13 @@ export default {
               "V2",
           });
 
+
         const quote =
           await jupiterFetch(
             env,
             `/quote?${quoteParams.toString()}`
           );
+
 
         if (
           !quote ||
@@ -2371,6 +2910,7 @@ export default {
           quote.routePlan.length ===
             0
         ) {
+
           return json(
             request,
             {
@@ -2387,23 +2927,21 @@ export default {
           );
         }
 
-        /*
-         * Jupiter returns this as a decimal fraction.
-         *
-         * 0.01 = 1%
-         * 1.00 = 100%
-         */
+
         const priceImpactPct =
           Number(
             quote.priceImpactPct
           );
 
+
         if (
           Number.isFinite(
             priceImpactPct
           ) &&
-          priceImpactPct > 0.01
+          priceImpactPct >
+            0.01
         ) {
+
           return json(
             request,
             {
@@ -2422,15 +2960,20 @@ export default {
           );
         }
 
-        /*
-         * Keyless Jupiter access currently
-         * runs at 0.5 requests per second.
-         */
-        if (!env.JUPITER_API_KEY) {
+
+        if (
+          !env.JUPITER_API_KEY
+        ) {
+
           await sleep(
             2100
           );
         }
+
+
+        /* -------------------------
+           JUPITER BUILD
+        ------------------------- */
 
         const swapResponse =
           await jupiterFetch(
@@ -2467,9 +3010,11 @@ export default {
             }
           );
 
+
         const swapTransaction =
           swapResponse
             ?.swapTransaction;
+
 
         if (
           typeof swapTransaction !==
@@ -2477,6 +3022,7 @@ export default {
           swapTransaction.length <
             100
         ) {
+
           return json(
             request,
             {
@@ -2493,28 +3039,31 @@ export default {
           );
         }
 
+
+        /* ==================================================
+           PRIVY SIGN + SEND
+
+           IMPORTANT:
+           This now uses Privy's current Solana-specific
+           Node SDK method instead of the generic rpc method.
+        ================================================== */
+
         let sendResult;
 
         try {
+
           sendResult =
             await privy
               .wallets()
-              .rpc(
+              .solana()
+              .signAndSendTransaction(
                 walletId,
                 {
-                  method:
-                    "signAndSendTransaction",
-
                   caip2:
                     SOLANA_MAINNET_CAIP2,
 
-                  params: {
-                    transaction:
-                      swapTransaction,
-
-                    encoding:
-                      "base64",
-                  },
+                  transaction:
+                    swapTransaction,
 
                   authorization_context:
                     createAuthorizationContext(
@@ -2522,11 +3071,20 @@ export default {
                     ),
                 }
               );
-        } catch (privyError) {
+
+        }
+
+        catch (privyError) {
+
           const info =
             getSafePrivyError(
               privyError
             );
+
+          console.error(
+            "Privy Jupiter test swap error:",
+            info
+          );
 
           return json(
             request,
@@ -2543,7 +3101,7 @@ export default {
                 ),
 
               message:
-                "Privy did not authorize or send the Jupiter test swap.",
+                `Privy rejected the test swap: ${info.message}`,
 
               privy:
                 info,
@@ -2552,10 +3110,12 @@ export default {
           );
         }
 
+
         const signature =
           extractPrivyTxHash(
             sendResult
           );
+
 
         if (
           !signature ||
@@ -2563,6 +3123,7 @@ export default {
             signature
           )
         ) {
+
           return json(
             request,
             {
@@ -2574,10 +3135,23 @@ export default {
 
               message:
                 "Privy accepted the test swap but did not return a valid Solana transaction signature.",
+
+              privyResponseShape: {
+                hasHash:
+                  Boolean(
+                    sendResult?.hash
+                  ),
+
+                hasSignature:
+                  Boolean(
+                    sendResult?.signature
+                  ),
+              },
             },
             502
           );
         }
+
 
         return json(
           request,
@@ -2616,7 +3190,11 @@ export default {
               `/transaction/status?signature=${encodeURIComponent(signature)}`,
           }
         );
-      } catch (error) {
+
+      }
+
+      catch (error) {
+
         console.error(
           "Test swap error:",
           error
@@ -2637,9 +3215,10 @@ export default {
       }
     }
 
-    /* ================================================
+
+    /* ==================================================
        404
-    ================================================ */
+    ================================================== */
 
     return json(
       request,
