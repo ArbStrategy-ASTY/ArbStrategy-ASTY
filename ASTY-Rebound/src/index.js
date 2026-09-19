@@ -1,4 +1,4 @@
-// ASTY Rebound API - Balance + USD v1
+// ASTY Rebound API - Balance + USD + Automated Trading Authorization v2
 
 import { PrivyClient } from "@privy-io/node";
 
@@ -66,7 +66,8 @@ function corsHeaders(request) {
 
     headers[
       "Access-Control-Allow-Methods"
-    ] = "GET,POST,OPTIONS";
+    ] =
+      "GET,POST,OPTIONS";
 
     headers[
       "Access-Control-Allow-Headers"
@@ -276,6 +277,7 @@ async function verifyPrivyRequest(
     };
 
   } catch (error) {
+
     console.error(
       "Privy verification error:",
       error
@@ -598,12 +600,14 @@ async function getUsdcBalance(
   walletAddress
 ) {
   try {
+
     return await getUsdcViaDas(
       env,
       walletAddress
     );
 
   } catch (error) {
+
     console.error(
       "DAS USDC lookup failed; using standard RPC:",
       error
@@ -623,10 +627,7 @@ SOL USD PRICE
 
 Display only.
 
-Helius provides fungible token price info
-through DAS getAsset.
-
-The value is deliberately NOT used for
+Never use this value for
 strategy triggers or trade execution.
 ====================================================
 */
@@ -636,7 +637,6 @@ async function getSolUsdPrice(
 ) {
   const now =
     Date.now();
-
 
   if (
     solPriceCache.price !== null &&
@@ -683,17 +683,16 @@ async function getSolUsdPrice(
 
 
   /*
-   * 5 minute Worker-side cache.
+   * 60 second Worker-side cache.
    *
-   * Helius itself may cache the
-   * underlying price for longer.
+   * Display only.
    */
   solPriceCache = {
     price,
 
     expiresAt:
       now +
-      5 * 60 * 1000,
+      60 * 1000,
   };
 
 
@@ -834,6 +833,9 @@ export default {
 
             transactionStatus:
               "GET /transaction/status?signature=...",
+
+            tradingAuthorization:
+              "GET /trading/authorization-config",
 
           },
         }
@@ -1410,11 +1412,11 @@ export default {
 
 
         /*
-         * Balance reads are authoritative.
+         * Actual balances are authoritative.
          *
-         * Price read is optional and must
-         * never cause the actual balance
-         * endpoint to fail.
+         * Display price is optional.
+         * A price failure must never make
+         * the balance endpoint fail.
          */
 
         const [
@@ -1491,12 +1493,6 @@ export default {
           null;
 
 
-        /*
-         * UI approximation only.
-         *
-         * No trading/accounting decision
-         * should depend on this value.
-         */
         const usdcUsdValue =
 
           Number.isFinite(
@@ -1570,9 +1566,6 @@ export default {
               solUsd:
                 solUsdPrice,
 
-              /*
-               * USDC display approximation.
-               */
               usdcUsd:
                 1,
 
@@ -2005,6 +1998,144 @@ export default {
 
             message:
               "Transaction status is temporarily unavailable.",
+          },
+          503
+        );
+      }
+    }
+
+
+    /*
+    ==================================================
+    AUTOMATED TRADING AUTHORIZATION CONFIG
+
+    Returns only public/non-secret configuration
+    needed by the frontend for Privy Additional Signers.
+
+    The private authorization key never leaves
+    the Cloudflare Worker.
+    ==================================================
+    */
+
+    if (
+      request.method === "GET" &&
+      url.pathname ===
+        "/trading/authorization-config"
+    ) {
+      try {
+
+        const auth =
+          await verifyPrivyRequest(
+            request,
+            env
+          );
+
+
+        if (!auth.ok) {
+          return json(
+            request,
+            {
+              status:
+                "error",
+
+              message:
+                auth.message,
+            },
+            auth.status
+          );
+        }
+
+
+        const account =
+          await getReboundAccount(
+            env,
+            auth.userId
+          );
+
+
+        if (
+          !account
+            ?.rebound_wallet_address
+        ) {
+          return json(
+            request,
+            {
+              status:
+                "error",
+
+              message:
+                "Rebound account not found.",
+            },
+            404
+          );
+        }
+
+
+        /*
+         * We only enable the frontend flow
+         * if all required Privy configuration
+         * is present.
+         *
+         * PRIVY_AUTH_PRIVATE_KEY is checked
+         * but NEVER returned.
+         */
+
+        if (
+          !env.PRIVY_AUTH_KEY_ID ||
+          !env.PRIVY_AUTH_PRIVATE_KEY ||
+          !env.PRIVY_POLICY_ID
+        ) {
+          return json(
+            request,
+            {
+              status:
+                "error",
+
+              message:
+                "Automated trading is not configured yet.",
+            },
+            503
+          );
+        }
+
+
+        return json(
+          request,
+          {
+            status:
+              "ok",
+
+            wallet:
+              account
+                .rebound_wallet_address,
+
+            signerId:
+              env.PRIVY_AUTH_KEY_ID,
+
+            policyId:
+              env.PRIVY_POLICY_ID,
+
+            policyProtected:
+              true,
+          }
+        );
+
+      } catch (error) {
+
+        console.error(
+          "Trading authorization config error:",
+          error
+        );
+
+
+        return json(
+          request,
+          {
+            status:
+              "error",
+
+            message:
+              "Automated trading authorization is temporarily unavailable.",
           },
           503
         );
