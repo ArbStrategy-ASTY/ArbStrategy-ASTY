@@ -9,6 +9,7 @@
   },
   "dependencies": {
     "@privy-io/node": "^0.34.0"
+    "@solana/web3.js": "1.99.0"
   },
   "devDependencies": {
     "wrangler": "^4.135.0"
