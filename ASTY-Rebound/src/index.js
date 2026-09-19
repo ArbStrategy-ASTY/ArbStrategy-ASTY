@@ -1,4 +1,4 @@
-// ASTY Rebound API - Deposit Foundation v1
+// ASTY Rebound API - Balance + USD v1
 
 import { PrivyClient } from "@privy-io/node";
 
@@ -13,8 +13,26 @@ const HELIUS_RPC_BASE =
 const USDC_MINT =
   "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v";
 
+const WSOL_MINT =
+  "So11111111111111111111111111111111111111112";
+
 const USDC_DECIMALS = 6;
 const SOL_DECIMALS = 9;
+
+
+/*
+====================================================
+SHORT-LIVED PRICE CACHE
+
+Only used for UI dollar estimates.
+Never for trading decisions.
+====================================================
+*/
+
+let solPriceCache = {
+  price: null,
+  expiresAt: 0,
+};
 
 
 /*
@@ -601,6 +619,90 @@ async function getUsdcBalance(
 
 /*
 ====================================================
+SOL USD PRICE
+
+Display only.
+
+Helius provides fungible token price info
+through DAS getAsset.
+
+The value is deliberately NOT used for
+strategy triggers or trade execution.
+====================================================
+*/
+
+async function getSolUsdPrice(
+  env
+) {
+  const now =
+    Date.now();
+
+
+  if (
+    solPriceCache.price !== null &&
+    now <
+      solPriceCache.expiresAt
+  ) {
+    return solPriceCache.price;
+  }
+
+
+  const result =
+    await heliusRpc(
+      env,
+      "getAsset",
+      {
+        id:
+          WSOL_MINT,
+
+        displayOptions: {
+          showFungible:
+            true,
+        },
+      }
+    );
+
+
+  const price =
+    Number(
+      result
+        ?.token_info
+        ?.price_info
+        ?.price_per_token
+    );
+
+
+  if (
+    !Number.isFinite(price) ||
+    price <= 0
+  ) {
+    throw new Error(
+      "SOL USD price unavailable."
+    );
+  }
+
+
+  /*
+   * 5 minute Worker-side cache.
+   *
+   * Helius itself may cache the
+   * underlying price for longer.
+   */
+  solPriceCache = {
+    price,
+
+    expiresAt:
+      now +
+      5 * 60 * 1000,
+  };
+
+
+  return price;
+}
+
+
+/*
+====================================================
 LATEST BLOCKHASH
 ====================================================
 */
@@ -627,6 +729,7 @@ async function getLatestBlockhash(
     result?.value
       ?.lastValidBlockHeight;
 
+
   if (
     !blockhash ||
     !lastValidBlockHeight
@@ -635,6 +738,7 @@ async function getLatestBlockhash(
       "Could not obtain a fresh Solana blockhash."
     );
   }
+
 
   return {
     blockhash,
@@ -650,6 +754,7 @@ WORKER
 */
 
 export default {
+
   async fetch(
     request,
     env
@@ -677,6 +782,7 @@ export default {
         }
       );
     }
+
 
     const url =
       new URL(
@@ -706,7 +812,11 @@ export default {
           balanceSource:
             "Helius",
 
+          displayPriceSource:
+            "Helius DAS",
+
           endpoints: {
+
             health:
               "/health",
 
@@ -724,6 +834,7 @@ export default {
 
             transactionStatus:
               "GET /transaction/status?signature=...",
+
           },
         }
       );
@@ -741,12 +852,14 @@ export default {
       url.pathname === "/health"
     ) {
       try {
+
         const dbTest =
           await env.DB
             .prepare(
               "SELECT 1 AS ok"
             )
             .first();
+
 
         return json(
           request,
@@ -763,6 +876,7 @@ export default {
                 : "error",
 
             config: {
+
               privyAppId:
                 Boolean(
                   env.PRIVY_APP_ID
@@ -792,15 +906,18 @@ export default {
                 Boolean(
                   env.HELIUS_API_KEY
                 ),
+
             },
           }
         );
 
       } catch (error) {
+
         console.error(
           "Health error:",
           error
         );
+
 
         return json(
           request,
@@ -828,10 +945,12 @@ export default {
       url.pathname === "/privy-test"
     ) {
       try {
+
         const privy =
           createPrivyClient(
             env
           );
+
 
         return json(
           request,
@@ -843,6 +962,7 @@ export default {
               "ASTY Rebound API",
 
             privy: {
+
               sdkLoaded:
                 true,
 
@@ -850,15 +970,18 @@ export default {
                 Boolean(
                   privy
                 ),
+
             },
           }
         );
 
       } catch (error) {
+
         console.error(
           "Privy test error:",
           error
         );
+
 
         return json(
           request,
@@ -886,11 +1009,13 @@ export default {
       url.pathname === "/account/sync"
     ) {
       try {
+
         const auth =
           await verifyPrivyRequest(
             request,
             env
           );
+
 
         if (!auth.ok) {
           return json(
@@ -906,17 +1031,22 @@ export default {
           );
         }
 
+
         const privyUserId =
           auth.userId;
+
 
         const body =
           await request.json();
 
+
         const phantomAddress =
           body?.phantomAddress;
 
+
         const reboundWalletAddress =
           body?.reboundWalletAddress;
+
 
         const reboundWalletId =
           body?.reboundWalletId ||
@@ -1031,6 +1161,7 @@ export default {
               .rebound_wallet_id &&
             reboundWalletId
           ) {
+
             await env.DB
               .prepare(
                 `
@@ -1048,6 +1179,7 @@ export default {
               .run();
 
           } else {
+
             await env.DB
               .prepare(
                 `
@@ -1061,6 +1193,7 @@ export default {
                 privyUserId
               )
               .run();
+
           }
 
 
@@ -1077,6 +1210,7 @@ export default {
                 true,
 
               account: {
+
                 phantomAddress:
                   existing
                     .phantom_address,
@@ -1093,6 +1227,7 @@ export default {
                 reboundWalletAddress:
                   existing
                     .rebound_wallet_address,
+
               },
             }
           );
@@ -1173,20 +1308,27 @@ export default {
               false,
 
             account: {
+
               phantomAddress,
+
               privyUserId,
+
               reboundWalletId,
+
               reboundWalletAddress,
+
             },
           },
           201
         );
 
       } catch (error) {
+
         console.error(
           "Account sync error:",
           error
         );
+
 
         return json(
           request,
@@ -1214,6 +1356,7 @@ export default {
       url.pathname === "/account/balance"
     ) {
       try {
+
         const auth =
           await verifyPrivyRequest(
             request,
@@ -1266,11 +1409,20 @@ export default {
             .rebound_wallet_address;
 
 
+        /*
+         * Balance reads are authoritative.
+         *
+         * Price read is optional and must
+         * never cause the actual balance
+         * endpoint to fail.
+         */
+
         const [
           solBalance,
           usdcBalance
         ] =
           await Promise.all([
+
             getSolBalance(
               env,
               walletAddress
@@ -1280,7 +1432,84 @@ export default {
               env,
               walletAddress
             ),
+
           ]);
+
+
+        let solUsdPrice =
+          null;
+
+
+        try {
+
+          solUsdPrice =
+            await getSolUsdPrice(
+              env
+            );
+
+        } catch (priceError) {
+
+          console.error(
+            "SOL display price unavailable:",
+            priceError
+          );
+
+        }
+
+
+        const solAmount =
+          Number(
+            solBalance.ui
+          );
+
+
+        const usdcAmount =
+          Number(
+            usdcBalance.ui
+          );
+
+
+        const solUsdValue =
+
+          Number.isFinite(
+            solAmount
+          )
+
+          &&
+
+          Number.isFinite(
+            solUsdPrice
+          )
+
+          ?
+
+          solAmount *
+          solUsdPrice
+
+          :
+
+          null;
+
+
+        /*
+         * UI approximation only.
+         *
+         * No trading/accounting decision
+         * should depend on this value.
+         */
+        const usdcUsdValue =
+
+          Number.isFinite(
+            usdcAmount
+          )
+
+          ?
+
+          usdcAmount
+
+          :
+
+          null;
 
 
         return json(
@@ -1296,7 +1525,9 @@ export default {
               "helius",
 
             balances: {
+
               usdc: {
+
                 mint:
                   USDC_MINT,
 
@@ -1308,9 +1539,15 @@ export default {
 
                 ui:
                   usdcBalance.ui,
+
+                usdValue:
+                  usdcUsdValue,
+
               },
 
+
               sol: {
+
                 decimals:
                   SOL_DECIMALS,
 
@@ -1319,8 +1556,31 @@ export default {
 
                 ui:
                   solBalance.ui,
+
+                usdValue:
+                  solUsdValue,
+
               },
+
             },
+
+
+            prices: {
+
+              solUsd:
+                solUsdPrice,
+
+              /*
+               * USDC display approximation.
+               */
+              usdcUsd:
+                1,
+
+            },
+
+
+            priceUse:
+              "display-only",
 
             commitment:
               "confirmed",
@@ -1328,10 +1588,12 @@ export default {
         );
 
       } catch (error) {
+
         console.error(
           "Balance error:",
           error
         );
+
 
         return json(
           request,
@@ -1352,13 +1614,6 @@ export default {
     ==================================================
     DEPOSIT CONTEXT
     ==================================================
-
-    No transaction is sent here.
-
-    This gives the frontend the authoritative
-    Phantom sender, Rebound destination and a
-    fresh blockhash from Helius.
-    ==================================================
     */
 
     if (
@@ -1366,6 +1621,7 @@ export default {
       url.pathname === "/deposit/context"
     ) {
       try {
+
         const auth =
           await verifyPrivyRequest(
             request,
@@ -1467,13 +1723,9 @@ export default {
         }
 
 
-        /*
-         * Prevent more decimal places
-         * than the asset supports.
-         */
-
         const decimalPart =
-          amount.split(".")[1] || "";
+          amount.split(".")[1] ||
+          "";
 
 
         const maxDecimals =
@@ -1543,6 +1795,7 @@ export default {
         );
 
       } catch (error) {
+
         console.error(
           "Deposit context error:",
           error
@@ -1575,6 +1828,7 @@ export default {
       url.pathname === "/transaction/status"
     ) {
       try {
+
         const auth =
           await verifyPrivyRequest(
             request,
@@ -1645,6 +1899,7 @@ export default {
 
 
         if (!transactionStatus) {
+
           return json(
             request,
             {
@@ -1667,6 +1922,7 @@ export default {
                 null,
             }
           );
+
         }
 
 
@@ -1683,10 +1939,16 @@ export default {
 
 
         const confirmed =
-          !transactionError &&
+
+          !transactionError
+
+          &&
+
           (
             confirmationStatus ===
-              "confirmed" ||
+              "confirmed"
+
+            ||
 
             confirmationStatus ===
               "finalized"
@@ -1694,7 +1956,11 @@ export default {
 
 
         const finalized =
-          !transactionError &&
+
+          !transactionError
+
+          &&
+
           confirmationStatus ===
             "finalized";
 
@@ -1724,6 +1990,7 @@ export default {
         );
 
       } catch (error) {
+
         console.error(
           "Transaction status error:",
           error
