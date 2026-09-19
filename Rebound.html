@@ -5,904 +5,96 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#09070f">
 <title>ASTY Rebound</title>
-
 <style>
-:root{
-  --bg:#09070f;
-  --panel:#12101a;
-  --panel2:#171321;
-  --border:#302640;
-  --text:#f5f0ff;
-  --muted:#aaa0bb;
-  --purple:#b590ff;
-  --green:#69e7a6;
-  --yellow:#ffd477;
-  --red:#ff7f91;
-}
-
-*{box-sizing:border-box}
-
-html,body{
-  margin:0;
-  min-height:100%;
-  background:
-    radial-gradient(
-      circle at 50% -16%,
-      rgba(139,90,255,.22),
-      transparent 38%
-    ),
-    var(--bg);
-  color:var(--text);
-  font-family:
-    -apple-system,
-    BlinkMacSystemFont,
-    "Segoe UI",
-    Roboto,
-    Arial,
-    sans-serif;
-}
-
-body{
-  min-height:100vh;
-}
-
-.page{
-  width:min(760px,100%);
-  margin:0 auto;
-  padding:
-    calc(20px + env(safe-area-inset-top))
-    18px
-    calc(36px + env(safe-area-inset-bottom));
-}
-
-.brand{
-  display:flex;
-  align-items:center;
-  gap:13px;
-  margin-bottom:28px;
-}
-
-.brand-logo{
-  width:48px;
-  height:48px;
-  object-fit:contain;
-  filter:
-    drop-shadow(
-      0 0 16px rgba(170,120,255,.3)
-    );
-}
-
-.brand-title{
-  font-size:20px;
-  font-weight:800;
-}
-
-.brand-project{
-  margin-top:5px;
-  color:var(--purple);
-  font-size:11px;
-  font-weight:700;
-  letter-spacing:.12em;
-  text-transform:uppercase;
-}
-
-.brand-subtitle{
-  margin-top:4px;
-  color:var(--muted);
-  font-size:12px;
-}
-
-.hero{
-  display:grid;
-  grid-template-columns:
-    minmax(0,1fr)
-    145px;
-  align-items:center;
-  gap:18px;
-  min-height:210px;
-  padding:16px 4px 30px;
-}
-
-.wolf-wrap{
-  display:flex;
-  align-items:center;
-  justify-content:center;
-}
-
-.wolf{
-  width:100%;
-  max-width:140px;
-  max-height:180px;
-  object-fit:contain;
-  opacity:.28;
-  filter:
-    drop-shadow(
-      0 0 32px rgba(156,103,255,.22)
-    );
-  pointer-events:none;
-}
-
-h1{
-  margin:0 0 14px;
-  font-size:
-    clamp(42px,11vw,64px);
-  line-height:.98;
-  letter-spacing:-.04em;
-  background:
-    linear-gradient(
-      90deg,
-      #fff,
-      #d7c6ff,
-      var(--purple)
-    );
-  -webkit-background-clip:text;
-  background-clip:text;
-  color:transparent;
-}
-
-.lead{
-  max-width:500px;
-  margin:0;
-  color:var(--muted);
-  font-size:16px;
-  line-height:1.6;
-}
-
-.card{
-  padding:20px;
-  border:1px solid var(--border);
-  border-radius:24px;
-  background:
-    linear-gradient(
-      180deg,
-      rgba(255,255,255,.026),
-      rgba(255,255,255,.012)
-    ),
-    var(--panel);
-  box-shadow:
-    0 22px 70px rgba(0,0,0,.28);
-}
-
-.status{
-  display:flex;
-  align-items:center;
-  gap:10px;
-  margin-bottom:18px;
-  color:var(--muted);
-  font-size:13px;
-}
-
-.dot{
-  width:9px;
-  height:9px;
-  border-radius:50%;
-  background:#707070;
-}
-
-.dot.loading{
-  background:var(--yellow);
-  box-shadow:
-    0 0 15px rgba(255,212,119,.68);
-}
-
-.dot.ready{
-  background:var(--green);
-  box-shadow:
-    0 0 15px rgba(105,231,166,.72);
-}
-
-button{
-  appearance:none;
-  border:0;
-  font-family:inherit;
-  cursor:pointer;
-}
-
-button:disabled{
-  opacity:.48;
-  cursor:not-allowed;
-}
-
-.primary{
-  width:100%;
-  padding:16px 18px;
-  border-radius:16px;
-  color:#130921;
-  background:
-    linear-gradient(
-      90deg,
-      #c49dff,
-      #8d63ff
-    );
-  box-shadow:
-    0 9px 30px rgba(141,99,255,.25);
-  font-size:16px;
-  font-weight:800;
-}
-
-.deposit-button,
-.secondary-button,
-.test-swap-button{
-  width:100%;
-  margin-top:12px;
-  padding:12px 14px;
-  border-radius:13px;
-  font-size:12px;
-  font-weight:800;
-}
-
-.deposit-button,
-.secondary-button{
-  color:var(--purple);
-  background:rgba(181,144,255,.08);
-  border:
-    1px solid rgba(181,144,255,.28);
-}
-
-.test-swap-button{
-  color:#ffe4a5;
-  background:rgba(255,212,119,.07);
-  border:
-    1px solid rgba(255,212,119,.3);
-}
-
-.danger-button{
-  width:100%;
-  margin-top:14px;
-  padding:13px 14px;
-  border-radius:13px;
-  color:var(--red);
-  background:rgba(255,127,145,.07);
-  border:
-    1px solid rgba(255,127,145,.28);
-  font-size:13px;
-  font-weight:800;
-}
-
-.logout{
-  width:100%;
-  margin-top:14px;
-  padding:14px 18px;
-  border:
-    1px solid var(--border);
-  border-radius:15px;
-  color:var(--text);
-  background:transparent;
-  font-size:14px;
-  font-weight:700;
-}
-
-.box{
-  margin-top:14px;
-  padding:17px;
-  border:
-    1px solid #292137;
-  border-radius:17px;
-  background:var(--panel2);
-}
-
-.balance-box{
-  margin-top:0;
-}
-
-.section-label{
-  margin-bottom:14px;
-  color:var(--muted);
-  font-size:11px;
-  font-weight:700;
-  letter-spacing:.09em;
-  text-transform:uppercase;
-}
-
-.balance-grid{
-  display:grid;
-  grid-template-columns:
-    repeat(2,minmax(0,1fr));
-  gap:11px;
-}
-
-.balance-item{
-  padding:15px;
-  border:
-    1px solid rgba(255,255,255,.055);
-  border-radius:15px;
-  background:rgba(255,255,255,.022);
-}
-
-.asset{
-  margin-bottom:7px;
-  color:var(--muted);
-  font-size:12px;
-  font-weight:650;
-}
-
-.amount{
-  font-size:22px;
-  font-weight:800;
-  letter-spacing:-.03em;
-}
-
-.usd-value{
-  min-height:18px;
-  margin-top:4px;
-  color:var(--muted);
-  font-size:12px;
-  font-weight:600;
-}
-
-.asset-info{
-  margin-top:10px;
-  color:var(--muted);
-  font-size:11px;
-  line-height:1.45;
-}
-
-.gas-state,
-.pill{
-  display:inline-block;
-  margin-top:8px;
-  padding:5px 8px;
-  border-radius:8px;
-  font-size:10px;
-  font-weight:700;
-}
-
-.good{
-  color:var(--green);
-  background:rgba(105,231,166,.08);
-}
-
-.warn{
-  color:var(--yellow);
-  background:rgba(255,212,119,.08);
-}
-
-.bad{
-  color:var(--red);
-  background:rgba(255,127,145,.08);
-}
-
-.row-head{
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap:12px;
-  margin-bottom:11px;
-}
-
-.row-title{
-  font-size:14px;
-  font-weight:800;
-}
-
-.state{
-  padding:5px 9px;
-  border-radius:9px;
-  font-size:10px;
-  font-weight:800;
-  text-transform:uppercase;
-  letter-spacing:.05em;
-}
-
-.state.enabled{
-  color:var(--green);
-  background:rgba(105,231,166,.09);
-}
-
-.state.disabled{
-  color:var(--muted);
-  background:rgba(255,255,255,.05);
-}
-
-.description{
-  color:var(--muted);
-  font-size:12px;
-  line-height:1.55;
-}
-
-.note{
-  margin-top:10px;
-  color:#d8caf6;
-  font-size:11px;
-  line-height:1.5;
-}
-
-.status-box{
-  margin-top:10px;
-  padding:11px 12px;
-  border-radius:11px;
-  font-size:11px;
-  line-height:1.5;
-}
-
-.success{
-  color:#baf6d5;
-  border:
-    1px solid rgba(105,231,166,.22);
-  background:rgba(105,231,166,.07);
-}
-
-.pending{
-  color:#ffe4a5;
-  border:
-    1px solid rgba(255,212,119,.24);
-  background:rgba(255,212,119,.07);
-}
-
-.failure{
-  color:#ffc1ca;
-  border:
-    1px solid rgba(255,127,145,.24);
-  background:rgba(255,127,145,.07);
-}
-
-.wallet-head{
-  display:flex;
-  align-items:center;
-  gap:8px;
-  margin-bottom:11px;
-}
-
-.wallet-mini-logo{
-  width:21px;
-  height:21px;
-  object-fit:contain;
-}
-
-.wallet-title{
-  color:var(--muted);
-  font-size:11px;
-  font-weight:700;
-  letter-spacing:.09em;
-  text-transform:uppercase;
-}
-
-.wallet-row{
-  display:flex;
-  align-items:center;
-  gap:10px;
-}
-
-.wallet-address{
-  flex:1;
-  min-width:0;
-  overflow:hidden;
-  text-overflow:ellipsis;
-  white-space:nowrap;
-  font-family:
-    ui-monospace,
-    SFMono-Regular,
-    Menlo,
-    Monaco,
-    Consolas,
-    monospace;
-  font-size:13px;
-}
-
-.copy{
-  padding:8px 12px;
-  border:
-    1px solid rgba(181,144,255,.28);
-  border-radius:10px;
-  color:var(--purple);
-  background:rgba(181,144,255,.1);
-  font-size:12px;
-  font-weight:700;
-}
-
-.info,
-.error{
-  margin-top:14px;
-  padding:12px 13px;
-  border-radius:13px;
-  font-size:12px;
-  line-height:1.5;
-}
-
-.info{
-  border:
-    1px solid rgba(181,144,255,.18);
-  background:rgba(181,144,255,.07);
-  color:#d8caf6;
-}
-
-.error{
-  border:
-    1px solid rgba(255,127,145,.28);
-  background:rgba(255,127,145,.08);
-  color:#ffc1ca;
-  word-break:break-word;
-}
-
-.fineprint{
-  margin:17px 3px 0;
-  color:var(--muted);
-  font-size:11px;
-  line-height:1.5;
-}
-
-.tx-link{
-  display:inline-block;
-  margin-top:6px;
-  color:var(--purple);
-  text-decoration:none;
-  font-weight:700;
-}
-
-.modal-backdrop{
-  position:fixed;
-  inset:0;
-  z-index:100;
-  display:flex;
-  align-items:flex-end;
-  justify-content:center;
-  padding:18px;
-  background:rgba(3,2,7,.78);
-  backdrop-filter:blur(8px);
-}
-
-.modal{
-  width:min(480px,100%);
-  padding:20px;
-  border:
-    1px solid var(--border);
-  border-radius:24px;
-  background:#131019;
-  box-shadow:
-    0 24px 80px rgba(0,0,0,.55);
-}
-
-.modal-title{
-  margin:0;
-  font-size:22px;
-  font-weight:800;
-}
-
-.modal-description{
-  margin:8px 0 18px;
-  color:var(--muted);
-  font-size:12px;
-  line-height:1.5;
-}
-
-.input-label{
-  display:block;
-  margin-bottom:8px;
-  color:var(--muted);
-  font-size:11px;
-  font-weight:700;
-  letter-spacing:.08em;
-  text-transform:uppercase;
-}
-
-.amount-input-wrap{
-  display:flex;
-  align-items:center;
-  gap:10px;
-  padding:3px 13px;
-  border:
-    1px solid var(--border);
-  border-radius:14px;
-  background:rgba(255,255,255,.025);
-}
-
-.amount-input{
-  flex:1;
-  min-width:0;
-  padding:13px 0;
-  border:0;
-  outline:0;
-  color:var(--text);
-  background:transparent;
-  font:inherit;
-  font-size:19px;
-  font-weight:750;
-}
-
-.input-asset{
-  color:var(--purple);
-  font-size:13px;
-  font-weight:800;
-}
-
-.modal-wallet{
-  margin-top:13px;
-  color:var(--muted);
-  font-size:11px;
-  line-height:1.5;
-}
-
-.modal-wallet strong{
-  color:var(--text);
-}
-
-.modal-buttons{
-  display:grid;
-  grid-template-columns:
-    1fr
-    1.5fr;
-  gap:10px;
-  margin-top:18px;
-}
-
-.modal-cancel,
-.modal-confirm{
-  padding:14px;
-  border-radius:13px;
-  font-weight:800;
-}
-
-.modal-cancel{
-  border:
-    1px solid var(--border);
-  color:var(--text);
-  background:transparent;
-}
-
-.modal-confirm{
-  color:#130921;
-  background:
-    linear-gradient(
-      90deg,
-      #c49dff,
-      #8d63ff
-    );
-}
-
-@media(max-width:540px){
-  .hero{
-    grid-template-columns:
-      minmax(0,1fr)
-      105px;
-    gap:8px;
-    min-height:200px;
-  }
-
-  .wolf{
-    max-width:105px;
-    max-height:145px;
-  }
-
-  .balance-grid{
-    grid-template-columns:1fr;
-  }
-}
-
-@media(min-width:541px){
-  .modal-backdrop{
-    align-items:center;
-  }
-}
-
-@media(max-width:370px){
-  .hero{
-    grid-template-columns:1fr;
-  }
-
-  .wolf-wrap{
-    display:none;
-  }
-}
+:root{--bg:#09070f;--panel:#12101a;--panel2:#171321;--border:#302640;--text:#f5f0ff;--muted:#aaa0bb;--purple:#b590ff;--green:#69e7a6;--yellow:#ffd477;--red:#ff7f91}
+*{box-sizing:border-box}html,body{margin:0;min-height:100%;background:radial-gradient(circle at 50% -16%,rgba(139,90,255,.22),transparent 38%),var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif}body{min-height:100vh}.page{width:min(760px,100%);margin:0 auto;padding:calc(20px + env(safe-area-inset-top)) 18px calc(36px + env(safe-area-inset-bottom))}
+.brand{display:flex;align-items:center;gap:13px;margin-bottom:28px}.brand-logo{width:48px;height:48px;object-fit:contain;filter:drop-shadow(0 0 16px rgba(170,120,255,.3))}.brand-title{font-size:20px;font-weight:800}.brand-project{margin-top:5px;color:var(--purple);font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase}.brand-subtitle{margin-top:4px;color:var(--muted);font-size:12px}
+.hero{display:grid;grid-template-columns:minmax(0,1fr) 145px;align-items:center;gap:18px;min-height:210px;padding:16px 4px 30px}.wolf-wrap{display:flex;align-items:center;justify-content:center}.wolf{width:100%;max-width:140px;max-height:180px;object-fit:contain;opacity:.28;filter:drop-shadow(0 0 32px rgba(156,103,255,.22));pointer-events:none}h1{margin:0 0 14px;font-size:clamp(42px,11vw,64px);line-height:.98;letter-spacing:-.04em;background:linear-gradient(90deg,#fff,#d7c6ff,var(--purple));-webkit-background-clip:text;background-clip:text;color:transparent}.lead{max-width:500px;margin:0;color:var(--muted);font-size:16px;line-height:1.6}
+.card{padding:20px;border:1px solid var(--border);border-radius:24px;background:linear-gradient(180deg,rgba(255,255,255,.026),rgba(255,255,255,.012)),var(--panel);box-shadow:0 22px 70px rgba(0,0,0,.28)}.status{display:flex;align-items:center;gap:10px;margin-bottom:18px;color:var(--muted);font-size:13px}.dot{width:9px;height:9px;border-radius:50%;background:#707070}.dot.loading{background:var(--yellow);box-shadow:0 0 15px rgba(255,212,119,.68)}.dot.ready{background:var(--green);box-shadow:0 0 15px rgba(105,231,166,.72)}
+button{appearance:none;border:0;font-family:inherit;cursor:pointer}button:disabled{opacity:.48;cursor:not-allowed}.primary{width:100%;padding:16px 18px;border-radius:16px;color:#130921;background:linear-gradient(90deg,#c49dff,#8d63ff);box-shadow:0 9px 30px rgba(141,99,255,.25);font-size:16px;font-weight:800}.deposit-button,.secondary-button,.test-swap-button{width:100%;margin-top:12px;padding:12px 14px;border-radius:13px;font-size:12px;font-weight:800}.deposit-button,.secondary-button{color:var(--purple);background:rgba(181,144,255,.08);border:1px solid rgba(181,144,255,.28)}.test-swap-button{color:#ffe4a5;background:rgba(255,212,119,.07);border:1px solid rgba(255,212,119,.3)}.danger-button{width:100%;margin-top:14px;padding:13px 14px;border-radius:13px;color:var(--red);background:rgba(255,127,145,.07);border:1px solid rgba(255,127,145,.28);font-size:13px;font-weight:800}.logout{width:100%;margin-top:14px;padding:14px 18px;border:1px solid var(--border);border-radius:15px;color:var(--text);background:transparent;font-size:14px;font-weight:700}
+.box{margin-top:14px;padding:17px;border:1px solid #292137;border-radius:17px;background:var(--panel2)}.balance-box{margin-top:0}.section-label{margin-bottom:14px;color:var(--muted);font-size:11px;font-weight:700;letter-spacing:.09em;text-transform:uppercase}.balance-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:11px}.balance-item{padding:15px;border:1px solid rgba(255,255,255,.055);border-radius:15px;background:rgba(255,255,255,.022)}.asset{margin-bottom:7px;color:var(--muted);font-size:12px;font-weight:650}.amount{font-size:22px;font-weight:800;letter-spacing:-.03em}.usd-value{min-height:18px;margin-top:4px;color:var(--muted);font-size:12px;font-weight:600}.asset-info{margin-top:10px;color:var(--muted);font-size:11px;line-height:1.45}.gas-state,.pill{display:inline-block;margin-top:8px;padding:5px 8px;border-radius:8px;font-size:10px;font-weight:700}.good{color:var(--green);background:rgba(105,231,166,.08)}.warn{color:var(--yellow);background:rgba(255,212,119,.08)}.bad{color:var(--red);background:rgba(255,127,145,.08)}
+.row-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:11px}.row-title{font-size:14px;font-weight:800}.state{padding:5px 9px;border-radius:9px;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.05em}.state.enabled{color:var(--green);background:rgba(105,231,166,.09)}.state.disabled{color:var(--muted);background:rgba(255,255,255,.05)}.description{color:var(--muted);font-size:12px;line-height:1.55}.note{margin-top:10px;color:#d8caf6;font-size:11px;line-height:1.5}.status-box{margin-top:10px;padding:11px 12px;border-radius:11px;font-size:11px;line-height:1.5}.success{color:#baf6d5;border:1px solid rgba(105,231,166,.22);background:rgba(105,231,166,.07)}.pending{color:#ffe4a5;border:1px solid rgba(255,212,119,.24);background:rgba(255,212,119,.07)}.failure{color:#ffc1ca;border:1px solid rgba(255,127,145,.24);background:rgba(255,127,145,.07)}
+.wallet-head{display:flex;align-items:center;gap:8px;margin-bottom:11px}.wallet-mini-logo{width:21px;height:21px;object-fit:contain}.wallet-title{color:var(--muted);font-size:11px;font-weight:700;letter-spacing:.09em;text-transform:uppercase}.wallet-row{display:flex;align-items:center;gap:10px}.wallet-address{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;font-size:13px}.copy{padding:8px 12px;border:1px solid rgba(181,144,255,.28);border-radius:10px;color:var(--purple);background:rgba(181,144,255,.1);font-size:12px;font-weight:700}.info,.error{margin-top:14px;padding:12px 13px;border-radius:13px;font-size:12px;line-height:1.5}.info{border:1px solid rgba(181,144,255,.18);background:rgba(181,144,255,.07);color:#d8caf6}.error{border:1px solid rgba(255,127,145,.28);background:rgba(255,127,145,.08);color:#ffc1ca;word-break:break-word}.fineprint{margin:17px 3px 0;color:var(--muted);font-size:11px;line-height:1.5}.tx-link{display:inline-block;margin-top:6px;color:var(--purple);text-decoration:none;font-weight:700}
+.modal-backdrop{position:fixed;inset:0;z-index:100;display:flex;align-items:flex-end;justify-content:center;padding:18px;background:rgba(3,2,7,.78);backdrop-filter:blur(8px)}.modal{width:min(480px,100%);padding:20px;border:1px solid var(--border);border-radius:24px;background:#131019;box-shadow:0 24px 80px rgba(0,0,0,.55)}.modal-title{margin:0;font-size:22px;font-weight:800}.modal-description{margin:8px 0 18px;color:var(--muted);font-size:12px;line-height:1.5}.input-label{display:block;margin-bottom:8px;color:var(--muted);font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase}.amount-input-wrap{display:flex;align-items:center;gap:10px;padding:3px 13px;border:1px solid var(--border);border-radius:14px;background:rgba(255,255,255,.025)}.amount-input{flex:1;min-width:0;padding:13px 0;border:0;outline:0;color:var(--text);background:transparent;font:inherit;font-size:19px;font-weight:750}.input-asset{color:var(--purple);font-size:13px;font-weight:800}.modal-wallet{margin-top:13px;color:var(--muted);font-size:11px;line-height:1.5}.modal-wallet strong{color:var(--text)}.modal-buttons{display:grid;grid-template-columns:1fr 1.5fr;gap:10px;margin-top:18px}.modal-cancel,.modal-confirm{padding:14px;border-radius:13px;font-weight:800}.modal-cancel{border:1px solid var(--border);color:var(--text);background:transparent}.modal-confirm{color:#130921;background:linear-gradient(90deg,#c49dff,#8d63ff)}
+@media(max-width:540px){.hero{grid-template-columns:minmax(0,1fr) 105px;gap:8px;min-height:200px}.wolf{max-width:105px;max-height:145px}.balance-grid{grid-template-columns:1fr}}@media(min-width:541px){.modal-backdrop{align-items:center}}@media(max-width:370px){.hero{grid-template-columns:1fr}.wolf-wrap{display:none}}
 </style>
-
 <script type="importmap">
-{
-  "imports":{
-    "react":"https://esm.sh/react@18.3.1",
-    "react/jsx-runtime":"https://esm.sh/react@18.3.1/jsx-runtime",
-    "react-dom":"https://esm.sh/react-dom@18.3.1",
-    "react-dom/client":"https://esm.sh/react-dom@18.3.1/client"
-  }
-}
+{"imports":{"react":"https://esm.sh/react@18.3.1","react/jsx-runtime":"https://esm.sh/react@18.3.1/jsx-runtime","react-dom":"https://esm.sh/react-dom@18.3.1","react-dom/client":"https://esm.sh/react-dom@18.3.1/client"}}
 </script>
 </head>
-
 <body>
-
 <div id="root"></div>
-
 <script type="module">
+import React,{useEffect,useMemo,useRef,useState} from "react";
+import {createRoot} from "react-dom/client";
+import {PrivyProvider,usePrivy,useConnectWallet,useLoginWithSiws,useSigners} from "https://esm.sh/@privy-io/react-auth@3.43.0?external=react,react-dom";
+import {useWallets,useCreateWallet,useSignAndSendTransaction,toSolanaWalletConnectors} from "https://esm.sh/@privy-io/react-auth@3.43.0/solana?external=react,react-dom";
+import {PublicKey,Transaction,SystemProgram} from "https://esm.sh/@solana/web3.js@1.98.4";
+import {getAssociatedTokenAddress,createAssociatedTokenAccountIdempotentInstruction,createTransferCheckedInstruction,TOKEN_PROGRAM_ID,ASSOCIATED_TOKEN_PROGRAM_ID} from "https://esm.sh/@solana/spl-token@0.4.14?deps=@solana/web3.js@1.98.4";
+import bs58 from "https://esm.sh/bs58@6.0.0";
 
-import React,{
-  useEffect,
-  useMemo,
-  useRef,
-  useState
-} from "react";
+const APP_ID="cmu6qkw8h029x0cjtidese1il";
+const API_BASE="https://asty-rebound-api.mail-timothy.workers.dev";
+const USDC_MINT="EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v";
+const WSOL_MINT="So11111111111111111111111111111111111111112";
+const e=React.createElement;
 
-import {
-  createRoot
-} from "react-dom/client";
+function bytesToBase64(bytes){let s="";const a=bytes instanceof Uint8Array?bytes:new Uint8Array(bytes);for(const b of a)s+=String.fromCharCode(b);return btoa(s)}
+function signatureToBase58(sig){return typeof sig==="string"?sig:bs58.encode(sig instanceof Uint8Array?sig:new Uint8Array(sig))}
+function walletLooksLikePhantom(w){if(!w)return false;const x=[w.walletClientType,w.connectorType,w.standardWallet?.name].map(v=>String(v||"").toLowerCase());return x.some(v=>v.includes("phantom"))}
+function isEmbeddedWallet(w){if(!w)return false;const x=[w.walletClientType,w.connectorType,w.standardWallet?.name].map(v=>String(v||"").toLowerCase());return x.some(v=>v.includes("privy")||v.includes("embedded"))}
+function formatUsdc(v){const n=Number(v);return Number.isFinite(n)?n.toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2}):"—"}
+function formatSol(v){const n=Number(v);return Number.isFinite(n)?n.toLocaleString("en-US",{minimumFractionDigits:4,maximumFractionDigits:6}):"—"}
+function formatUsd(v){const n=Number(v);return v!=null&&Number.isFinite(n)?`≈ $${n.toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2})}`:"—"}
+function parseUnitsExact(v,d){const t=String(v).trim();if(!/^\d+(\.\d+)?$/.test(t))throw new Error("Enter a valid amount.");const [w,f=""]=t.split(".");if(f.length>d)throw new Error(`Maximum ${d} decimal places.`);return BigInt(w)*(10n**BigInt(d))+BigInt(f.padEnd(d,"0")||"0")}
+function sleep(ms){return new Promise(r=>setTimeout(r,ms))}
+function isMobileDevice(){return /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent||"")}
+function hasInjectedPhantom(){return Boolean(window.phantom?.solana?.isPhantom||window.solana?.isPhantom)}
+function isInjectedPhantomConnected(){const p=window.phantom?.solana||window.solana;return Boolean(p?.isPhantom&&p?.isConnected)}
 
-import {
-  PrivyProvider,
-  usePrivy,
-  useConnectWallet,
-  useLoginWithSiws,
-  useSigners
-} from "https://esm.sh/@privy-io/react-auth@3.43.0?external=react,react-dom";
-
-import {
-  useWallets,
-  useCreateWallet,
-  useSignAndSendTransaction,
-  toSolanaWalletConnectors
-} from "https://esm.sh/@privy-io/react-auth@3.43.0/solana?external=react,react-dom";
-
-import {
-  PublicKey,
-  Transaction,
-  SystemProgram
-} from "https://esm.sh/@solana/web3.js@1.98.4";
-
-import {
-  getAssociatedTokenAddress,
-  createAssociatedTokenAccountIdempotentInstruction,
-  createTransferCheckedInstruction,
-  TOKEN_PROGRAM_ID,
-  ASSOCIATED_TOKEN_PROGRAM_ID
-} from "https://esm.sh/@solana/spl-token@0.4.14?deps=@solana/web3.js@1.98.4";
-
-import bs58
-from "https://esm.sh/bs58@6.0.0";
-
-
-const APP_ID=
-  "cmu6qkw8h029x0cjtidese1il";
-
-const API_BASE=
-  "https://asty-rebound-api.mail-timothy.workers.dev";
-
-const USDC_MINT=
-  "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v";
-
-const WSOL_MINT=
-  "So11111111111111111111111111111111111111112";
-
-const e=
-  React.createElement;
-
-
-/* ==================================================
-   MOBILE / PHANTOM HANDOFF
-================================================== */
-
-const PHANTOM_HANDOFF_PARAM=
-  "rebound_phantom";
-
-const PHANTOM_RELOAD_KEY=
-  "asty_rebound_phantom_provider_reload";
-
-const PHANTOM_PROVIDER_WAIT_MS=
-  3500;
-
-const PHANTOM_PROVIDER_POLL_MS=
-  150;
-
-
-function isMobileDevice(){
-  return /Android|iPhone|iPad|iPod|Mobile/i
-    .test(
-      navigator.userAgent || ""
-    );
-}
-
-
-function hasInjectedPhantom(){
-  return Boolean(
-    window.phantom
-      ?.solana
-      ?.isPhantom
-    ||
-    window.solana
-      ?.isPhantom
-  );
-}
-
-
-function isInjectedPhantomConnected(){
-
-  const provider=
-    window.phantom?.solana
-    ||
-    window.solana;
-
-  return Boolean(
-    provider?.isPhantom
-    &&
-    provider?.isConnected
-  );
-}
-
+const PHANTOM_HANDOFF_PARAM="rebound_phantom";
+const PHANTOM_BOOT_PARAM="boot";
 
 function hasPhantomHandoff(){
-
   try{
-
-    return new URL(
-      window.location.href
-    )
-      .searchParams
-      .get(
-        PHANTOM_HANDOFF_PARAM
-      ) === "1";
-
-  }
-  catch{
+    return new URL(window.location.href).searchParams.get(PHANTOM_HANDOFF_PARAM)==="1";
+  }catch{
     return false;
   }
 }
 
-
-function clearPhantomHandoff(){
-
+function getPhantomBootStage(){
   try{
-
-    const url=
-      new URL(
-        window.location.href
-      );
-
-    url.searchParams.delete(
-      PHANTOM_HANDOFF_PARAM
-    );
-
-    const next=
-      url.pathname
-      +
-      (
-        url.search || ""
-      )
-      +
-      (
-        url.hash || ""
-      );
-
-    window.history.replaceState(
-      {},
-      "",
-      next
-    );
-
+    return new URL(window.location.href).searchParams.get(PHANTOM_BOOT_PARAM)||"";
+  }catch{
+    return "";
   }
-  catch{}
-
-
-  try{
-
-    sessionStorage.removeItem(
-      PHANTOM_RELOAD_KEY
-    );
-
-  }
-  catch{}
 }
 
+function clearPhantomHandoff(){
+  try{
+    const u=new URL(window.location.href);
+    u.searchParams.delete(PHANTOM_HANDOFF_PARAM);
+    u.searchParams.delete(PHANTOM_BOOT_PARAM);
+    const next=u.pathname+(u.search||"")+(u.hash||"");
+    window.history.replaceState({},"",next);
+  }catch{}
+}
 
 function openInPhantom(){
-
-  const target=
-    new URL(
-      window.location.href
-    );
+  const target=new URL(window.location.href);
 
   target.searchParams.set(
     PHANTOM_HANDOFF_PARAM,
     "1"
   );
 
+  target.searchParams.set(
+    PHANTOM_BOOT_PARAM,
+    "1"
+  );
 
-  try{
-
-    sessionStorage.removeItem(
-      PHANTOM_RELOAD_KEY
-    );
-
-  }
-  catch{}
-
-
-  const encodedUrl=
+  const url=
     encodeURIComponent(
       target.toString()
     );
@@ -912,270 +104,63 @@ function openInPhantom(){
       window.location.origin
     );
 
-
   window.location.href=
-    `https://phantom.app/ul/browse/${encodedUrl}?ref=${ref}`;
+    `https://phantom.app/ul/browse/${url}?ref=${ref}`;
 }
 
+async function waitForInjectedPhantom(maxMs){
+  const started=Date.now();
 
-/* ==================================================
-   GENERAL HELPERS
-================================================== */
-
-function bytesToBase64(bytes){
-
-  let binary="";
-
-  const array=
-    bytes instanceof Uint8Array
-      ? bytes
-      : new Uint8Array(bytes);
-
-  for(
-    const byte
-    of array
+  while(
+    Date.now()-started<maxMs
   ){
-    binary+=
-      String.fromCharCode(
-        byte
-      );
+    if(
+      hasInjectedPhantom()
+    ){
+      return true;
+    }
+
+    await sleep(120);
   }
 
-  return btoa(
-    binary
-  );
+  return hasInjectedPhantom();
 }
 
-
-function signatureToBase58(
-  signature
-){
-
-  return typeof signature==="string"
-    ? signature
-    : bs58.encode(
-        signature instanceof Uint8Array
-          ? signature
-          : new Uint8Array(
-              signature
-            )
-      );
-}
-
-
-function walletLooksLikePhantom(
-  wallet
-){
-
-  if(
-    !wallet
-  ){
-    return false;
-  }
-
-  const values=[
-    wallet.walletClientType,
-    wallet.connectorType,
-    wallet.standardWallet?.name
-  ]
-    .map(
-      value=>
-        String(
-          value || ""
-        ).toLowerCase()
-    );
-
-  return values.some(
-    value=>
-      value.includes(
-        "phantom"
-      )
-  );
-}
-
-
-function isEmbeddedWallet(
-  wallet
-){
-
-  if(
-    !wallet
-  ){
-    return false;
-  }
-
-  const values=[
-    wallet.walletClientType,
-    wallet.connectorType,
-    wallet.standardWallet?.name
-  ]
-    .map(
-      value=>
-        String(
-          value || ""
-        ).toLowerCase()
-    );
-
-  return values.some(
-    value=>
-      value.includes(
-        "privy"
-      )
-      ||
-      value.includes(
-        "embedded"
-      )
-  );
-}
-
-
-function formatUsdc(value){
-
-  const number=
-    Number(
-      value
-    );
-
-  return Number.isFinite(
-    number
-  )
-    ? number.toLocaleString(
-        "en-US",
-        {
-          minimumFractionDigits:2,
-          maximumFractionDigits:2
-        }
-      )
-    : "—";
-}
-
-
-function formatSol(value){
-
-  const number=
-    Number(
-      value
-    );
-
-  return Number.isFinite(
-    number
-  )
-    ? number.toLocaleString(
-        "en-US",
-        {
-          minimumFractionDigits:4,
-          maximumFractionDigits:6
-        }
-      )
-    : "—";
-}
-
-
-function formatUsd(value){
-
-  const number=
-    Number(
-      value
-    );
-
-  return (
-    value!==null
-    &&
-    value!==undefined
-    &&
-    Number.isFinite(
-      number
-    )
-  )
-    ? `≈ $${number.toLocaleString(
-        "en-US",
-        {
-          minimumFractionDigits:2,
-          maximumFractionDigits:2
-        }
-      )}`
-    : "—";
-}
-
-
-function parseUnitsExact(
-  value,
-  decimals
-){
-
-  const text=
-    String(
-      value
-    ).trim();
-
-  if(
-    !/^\d+(\.\d+)?$/
-      .test(
-        text
-      )
-  ){
-    throw new Error(
-      "Enter a valid amount."
-    );
-  }
-
-  const [
-    whole,
-    fraction=""
-  ]=
-    text.split(
-      "."
+function showPhantomBootScreen(message){
+  const root=
+    document.getElementById(
+      "root"
     );
 
   if(
-    fraction.length>
-    decimals
+    !root
   ){
-    throw new Error(
-      `Maximum ${decimals} decimal places.`
-    );
+    return;
   }
 
-  return (
-    BigInt(
-      whole
-    )
-    *
-    (
-      10n **
-      BigInt(
-        decimals
-      )
-    )
-    +
-    BigInt(
-      fraction
-        .padEnd(
-          decimals,
-          "0"
-        )
-      ||
-      "0"
-    )
-  );
+  root.innerHTML=
+    `<main class="page">
+      <div class="brand">
+        <img class="brand-logo" src="assets/logo.png" alt="ASTY">
+        <div>
+          <div class="brand-title">ASTY Rebound</div>
+          <div class="brand-project">ArbStrategy</div>
+          <div class="brand-subtitle">Automated dip & rebound strategy</div>
+        </div>
+      </div>
+
+      <section class="card">
+        <div class="status">
+          <span class="dot loading"></span>
+          ${message}
+        </div>
+
+        <div class="info" style="margin-top:0">
+          Preparing the Phantom connection…
+        </div>
+      </section>
+    </main>`;
 }
-
-
-function sleep(ms){
-
-  return new Promise(
-    resolve=>
-      setTimeout(
-        resolve,
-        ms
-      )
-  );
-}
-
-
-/* ==================================================
-   APP
-================================================== */
 
 function App(){
 
@@ -1185,566 +170,157 @@ function App(){
     user,
     logout,
     getAccessToken
-  }=
-    usePrivy();
-
+  }=usePrivy();
 
   const {
     ready:walletsReady,
     wallets
-  }=
-    useWallets();
-
+  }=useWallets();
 
   const {
     generateSiwsMessage,
     loginWithSiws
-  }=
-    useLoginWithSiws();
-
+  }=useLoginWithSiws();
 
   const {
     createWallet
-  }=
-    useCreateWallet();
-
+  }=useCreateWallet();
 
   const {
     signAndSendTransaction
-  }=
-    useSignAndSendTransaction();
-
+  }=useSignAndSendTransaction();
 
   const {
     addSigners,
     removeSigners
-  }=
-    useSigners();
+  }=useSigners();
 
+  const [pendingWalletAddress,setPendingWalletAddress]=useState("");
+  const [createdWallet,setCreatedWallet]=useState(null);
+  const [connecting,setConnecting]=useState(false);
+  const [signingIn,setSigningIn]=useState(false);
+  const [syncState,setSyncState]=useState("waiting");
+  const [error,setError]=useState("");
+  const [copied,setCopied]=useState(false);
+  const [balanceLoading,setBalanceLoading]=useState(false);
+  const [balanceAvailable,setBalanceAvailable]=useState(false);
+  const [usdcBalance,setUsdcBalance]=useState(null);
+  const [solBalance,setSolBalance]=useState(null);
+  const [usdcUsdValue,setUsdcUsdValue]=useState(null);
+  const [solUsdValue,setSolUsdValue]=useState(null);
+  const [solTradingReady,setSolTradingReady]=useState(null);
+  const [solTradingBalance,setSolTradingBalance]=useState(null);
+  const [prepareSolBusy,setPrepareSolBusy]=useState(false);
+  const [prepareSolResult,setPrepareSolResult]=useState(null);
+  const [phantomBrowserHint,setPhantomBrowserHint]=useState(false);
+  const [depositAsset,setDepositAsset]=useState(null);
+  const [depositAmount,setDepositAmount]=useState("");
+  const [depositBusy,setDepositBusy]=useState(false);
+  const [depositState,setDepositState]=useState(null);
+  const [depositSignature,setDepositSignature]=useState("");
+  const [depositMessage,setDepositMessage]=useState("");
+  const [automationBusy,setAutomationBusy]=useState(false);
+  const [automationOverride,setAutomationOverride]=useState(null);
+  const [serverTestBusy,setServerTestBusy]=useState(false);
+  const [serverTestResult,setServerTestResult]=useState(null);
+  const [testSwapModalOpen,setTestSwapModalOpen]=useState(false);
+  const [testSwapBusy,setTestSwapBusy]=useState(false);
+  const [testSwapResult,setTestSwapResult]=useState(null);
+  const [testSwapSignature,setTestSwapSignature]=useState("");
 
-  const [
-    pendingWalletAddress,
-    setPendingWalletAddress
-  ]=
-    useState("");
+  const creationAttempted=useRef(false);
+  const syncAttempted=useRef("");
+  const authAttemptedFor=useRef("");
+  const handoffConnectAttempted=useRef(false);
 
-
-  const [
-    createdWallet,
-    setCreatedWallet
-  ]=
-    useState(null);
-
-
-  const [
-    connecting,
-    setConnecting
-  ]=
-    useState(false);
-
-
-  const [
-    signingIn,
-    setSigningIn
-  ]=
-    useState(false);
-
-
-  const [
-    syncState,
-    setSyncState
-  ]=
+  const [phantomHandoff,setPhantomHandoff]=
     useState(
-      "waiting"
+      ()=>hasPhantomHandoff()
     );
-
-
-  const [
-    error,
-    setError
-  ]=
-    useState("");
-
-
-  const [
-    copied,
-    setCopied
-  ]=
-    useState(false);
-
-
-  const [
-    balanceLoading,
-    setBalanceLoading
-  ]=
-    useState(false);
-
-
-  const [
-    balanceAvailable,
-    setBalanceAvailable
-  ]=
-    useState(false);
-
-
-  const [
-    usdcBalance,
-    setUsdcBalance
-  ]=
-    useState(null);
-
-
-  const [
-    solBalance,
-    setSolBalance
-  ]=
-    useState(null);
-
-
-  const [
-    usdcUsdValue,
-    setUsdcUsdValue
-  ]=
-    useState(null);
-
-
-  const [
-    solUsdValue,
-    setSolUsdValue
-  ]=
-    useState(null);
-
-
-  const [
-    solTradingReady,
-    setSolTradingReady
-  ]=
-    useState(null);
-
-
-  const [
-    solTradingBalance,
-    setSolTradingBalance
-  ]=
-    useState(null);
-
-
-  const [
-    prepareSolBusy,
-    setPrepareSolBusy
-  ]=
-    useState(false);
-
-
-  const [
-    prepareSolResult,
-    setPrepareSolResult
-  ]=
-    useState(null);
-
-
-  const [
-    phantomBrowserHint,
-    setPhantomBrowserHint
-  ]=
-    useState(false);
-
-
-  const [
-    phantomHandoff,
-    setPhantomHandoff
-  ]=
-    useState(
-      ()=>
-        hasPhantomHandoff()
-    );
-
-
-  const [
-    phantomProviderReady,
-    setPhantomProviderReady
-  ]=
-    useState(
-      ()=>
-        hasInjectedPhantom()
-    );
-
-
-  const [
-    phantomProviderTimedOut,
-    setPhantomProviderTimedOut
-  ]=
-    useState(false);
-
-
-  const [
-    depositAsset,
-    setDepositAsset
-  ]=
-    useState(null);
-
-
-  const [
-    depositAmount,
-    setDepositAmount
-  ]=
-    useState("");
-
-
-  const [
-    depositBusy,
-    setDepositBusy
-  ]=
-    useState(false);
-
-
-  const [
-    depositState,
-    setDepositState
-  ]=
-    useState(null);
-
-
-  const [
-    depositSignature,
-    setDepositSignature
-  ]=
-    useState("");
-
-
-  const [
-    depositMessage,
-    setDepositMessage
-  ]=
-    useState("");
-
-
-  const [
-    automationBusy,
-    setAutomationBusy
-  ]=
-    useState(false);
-
-
-  const [
-    automationOverride,
-    setAutomationOverride
-  ]=
-    useState(null);
-
-
-  const [
-    serverTestBusy,
-    setServerTestBusy
-  ]=
-    useState(false);
-
-
-  const [
-    serverTestResult,
-    setServerTestResult
-  ]=
-    useState(null);
-
-
-  const [
-    testSwapModalOpen,
-    setTestSwapModalOpen
-  ]=
-    useState(false);
-
-
-  const [
-    testSwapBusy,
-    setTestSwapBusy
-  ]=
-    useState(false);
-
-
-  const [
-    testSwapResult,
-    setTestSwapResult
-  ]=
-    useState(null);
-
-
-  const [
-    testSwapSignature,
-    setTestSwapSignature
-  ]=
-    useState("");
-
-
-  const creationAttempted=
-    useRef(false);
-
-
-  const syncAttempted=
-    useRef("");
-
-
-  const authAttemptedFor=
-    useRef("");
-
-
-  const handoffConnectAttempted=
-    useRef(false);
-
-
-  /* ==================================================
-     PHANTOM PROVIDER WAIT
-
-     Phantom's mobile browser may inject its provider
-     shortly after the page itself has loaded.
-
-     We actively wait for it.
-
-     If this is a browser -> Phantom handoff and the
-     provider still has not appeared after the wait
-     window, we automatically reload exactly once.
-  ================================================== */
-
-  useEffect(()=>{
-
-    let stopped=
-      false;
-
-    let timer=
-      null;
-
-    const started=
-      Date.now();
-
-
-    function checkProvider(){
-
-      if(
-        stopped
-      ){
-        return;
-      }
-
-
-      if(
-        hasInjectedPhantom()
-      ){
-
-        setPhantomProviderReady(
-          true
-        );
-
-        setPhantomProviderTimedOut(
-          false
-        );
-
-        return;
-      }
-
-
-      setPhantomProviderReady(
-        false
-      );
-
-
-      const elapsed=
-        Date.now()
-        -
-        started;
-
-
-      if(
-        elapsed>=
-        PHANTOM_PROVIDER_WAIT_MS
-      ){
-
-        if(
-          phantomHandoff
-        ){
-
-          let alreadyReloaded=
-            false;
-
-
-          try{
-
-            alreadyReloaded=
-              sessionStorage.getItem(
-                PHANTOM_RELOAD_KEY
-              ) === "1";
-
-          }
-          catch{}
-
-
-          if(
-            !alreadyReloaded
-          ){
-
-            try{
-
-              sessionStorage.setItem(
-                PHANTOM_RELOAD_KEY,
-                "1"
-              );
-
-            }
-            catch{}
-
-
-            window.location.reload();
-
-            return;
-          }
-        }
-
-
-        setPhantomProviderTimedOut(
-          true
-        );
-
-        return;
-      }
-
-
-      timer=
-        setTimeout(
-          checkProvider,
-          PHANTOM_PROVIDER_POLL_MS
-        );
-    }
-
-
-    checkProvider();
-
-
-    return()=>{
-
-      stopped=
-        true;
-
-      if(
-        timer
-      ){
-        clearTimeout(
-          timer
-        );
-      }
-    };
-
-  },[
-    phantomHandoff
-  ]);
-
-
-  /* ==================================================
-     CONNECT PHANTOM
-  ================================================== */
 
   const {
     connectWallet
-  }=
-    useConnectWallet({
+  }=useConnectWallet({
 
-      onSuccess:({
-        wallet
-      })=>{
+    onSuccess:({
+      wallet
+    })=>{
 
-        if(
-          wallet?.address
-        ){
+      if(
+        wallet?.address
+      ){
+        setPendingWalletAddress(
+          wallet.address
+        );
+      }
 
-          setPendingWalletAddress(
-            wallet.address
-          );
-        }
+      clearPhantomHandoff();
 
+      setPhantomHandoff(
+        false
+      );
 
-        clearPhantomHandoff();
+      setPhantomBrowserHint(
+        false
+      );
 
-        setPhantomHandoff(
-          false
+      setConnecting(
+        false
+      );
+    },
+
+    onError:(err)=>{
+
+      console.error(
+        "Connect error:",
+        err
+      );
+
+      setConnecting(
+        false
+      );
+
+      const message=
+        String(
+          err?.message||
+          err||
+          ""
         );
 
-        setPhantomProviderReady(
+      if(
+        message
+          .toLowerCase()
+          .includes(
+            "generic_connect_wallet_error"
+          )
+      ){
+        setPhantomBrowserHint(
           true
         );
 
-        setPhantomProviderTimedOut(
-          false
-        );
-
-        setPhantomBrowserHint(
-          false
-        );
-
-        setConnecting(
-          false
-        );
-      },
-
-
-      onError:(err)=>{
-
-        console.error(
-          "Connect error:",
-          err
-        );
-
-
-        setConnecting(
-          false
-        );
-
-
-        const message=
-          String(
-            err?.message
-            ||
-            err
-            ||
-            ""
-          );
-
-
-        if(
-          message
-            .toLowerCase()
-            .includes(
-              "generic_connect_wallet_error"
-            )
-        ){
-
-          setPhantomBrowserHint(
-            true
-          );
-
-          setError(
-            ""
-          );
-
-          return;
-        }
-
-
-        if(
-          message
-            .toLowerCase()
-            .includes(
-              "cancel"
-            )
-        ){
-          return;
-        }
-
-
         setError(
-          message
-          ||
-          "Could not connect Phantom."
+          ""
         );
-      }
-    });
 
+        return;
+      }
+
+      if(
+        message
+          .toLowerCase()
+          .includes(
+            "cancel"
+          )
+      ){
+        return;
+      }
+
+      setError(
+        message||
+        "Could not connect Phantom."
+      );
+    }
+  });
 
   async function handleConnect(){
 
@@ -1752,26 +328,17 @@ function App(){
       ""
     );
 
-
-    const providerAvailable=
-      hasInjectedPhantom()
-      ||
-      phantomProviderReady;
-
-
     if(
       isMobileDevice()
       &&
-      !providerAvailable
+      !hasInjectedPhantom()
     ){
-
       setPhantomBrowserHint(
         true
       );
 
       return;
     }
-
 
     setPhantomBrowserHint(
       false
@@ -1781,11 +348,9 @@ function App(){
       true
     );
 
-
     try{
 
       await connectWallet({
-
         description:
           "Connect Phantom to ASTY Rebound",
 
@@ -1797,8 +362,7 @@ function App(){
           "solana-only"
       });
 
-    }
-    catch(err){
+    }catch(err){
 
       console.error(
         err
@@ -1810,11 +374,6 @@ function App(){
     }
   }
 
-
-  /* ==================================================
-     ACTUAL PHANTOM WALLET
-  ================================================== */
-
   const connectedPhantomWallet=
     useMemo(
       ()=>{
@@ -1822,7 +381,6 @@ function App(){
         if(
           pendingWalletAddress
         ){
-
           const exact=
             wallets.find(
               wallet=>
@@ -1836,7 +394,6 @@ function App(){
             return exact;
           }
         }
-
 
         return (
           wallets.find(
@@ -1853,18 +410,11 @@ function App(){
       ]
     );
 
-
-  /* ==================================================
-     MOBILE BROWSER -> PHANTOM HANDOFF
-
-     When the provider becomes available, continue
-     automatically.
-
-     A stale Privy web session is logged out first,
-     but the user's embedded Rebound Wallet and D1
-     mapping remain unchanged.
-  ================================================== */
-
+  /*
+   * This runs only after the automatic boot=1 -> boot=2 reload.
+   * At this point Phantom's injected provider should already have
+   * existed before Privy's Solana connectors were created.
+   */
   useEffect(()=>{
 
     if(
@@ -1874,25 +424,22 @@ function App(){
       ||
       !walletsReady
       ||
-      !phantomProviderReady
-      ||
       handoffConnectAttempted.current
+      ||
+      !hasInjectedPhantom()
     ){
       return;
     }
-
 
     const livePhantom=
       Boolean(
         connectedPhantomWallet?.address
         &&
         typeof connectedPhantomWallet
-          ?.signMessage ===
-          "function"
+          ?.signMessage==="function"
         &&
         isInjectedPhantomConnected()
       );
-
 
     if(
       livePhantom
@@ -1904,21 +451,14 @@ function App(){
         false
       );
 
-      setPhantomProviderTimedOut(
-        false
-      );
-
       return;
     }
-
 
     handoffConnectAttempted.current=
       true;
 
-
     let cancelled=
       false;
-
 
     (async()=>{
 
@@ -1934,7 +474,6 @@ function App(){
         true
       );
 
-
       try{
 
         if(
@@ -1943,13 +482,11 @@ function App(){
 
           await logout();
 
-
           if(
             cancelled
           ){
             return;
           }
-
 
           authAttemptedFor.current=
             "";
@@ -1960,7 +497,6 @@ function App(){
           creationAttempted.current=
             false;
 
-
           setCreatedWallet(
             null
           );
@@ -1969,15 +505,12 @@ function App(){
             "waiting"
           );
 
-
           await sleep(
-            250
+            200
           );
         }
 
-
         await connectWallet({
-
           description:
             "Connect Phantom to ASTY Rebound",
 
@@ -1989,54 +522,42 @@ function App(){
             "solana-only"
         });
 
-      }
-      catch(err){
+      }catch(err){
 
         console.error(
           "Phantom handoff connect error:",
           err
         );
 
-
         if(
-          cancelled
+          !cancelled
         ){
-          return;
-        }
 
-
-        setConnecting(
-          false
-        );
-
-
-        const message=
-          String(
-            err?.message
-            ||
-            err
-            ||
-            ""
+          setConnecting(
+            false
           );
 
+          const message=
+            String(
+              err?.message||
+              err||
+              ""
+            );
 
-        if(
-          message
-            .toLowerCase()
-            .includes(
-              "cancel"
-            )
-        ){
-          return;
+          if(
+            !message
+              .toLowerCase()
+              .includes(
+                "cancel"
+              )
+          ){
+            setError(
+              "Tap Connect Phantom to continue in Phantom."
+            );
+          }
         }
-
-
-        setError(
-          "Tap Connect Phantom to continue in Phantom."
-        );
       }
     })();
-
 
     return()=>{
       cancelled=
@@ -2047,17 +568,11 @@ function App(){
     phantomHandoff,
     ready,
     walletsReady,
-    phantomProviderReady,
     connectedPhantomWallet,
     authenticated,
     logout,
     connectWallet
   ]);
-
-
-  /* ==================================================
-     LOGIN / SIWS
-  ================================================== */
 
   async function authenticateWallet(
     wallet
@@ -2075,7 +590,6 @@ function App(){
       return;
     }
 
-
     setError(
       ""
     );
@@ -2083,7 +597,6 @@ function App(){
     setSigningIn(
       true
     );
-
 
     try{
 
@@ -2093,17 +606,14 @@ function App(){
             wallet.address
         });
 
-
       const signed=
         await wallet.signMessage({
-
           message:
             new TextEncoder()
               .encode(
                 message
               )
         });
-
 
       if(
         !signed?.signature
@@ -2113,9 +623,7 @@ function App(){
         );
       }
 
-
       await loginWithSiws({
-
         message,
 
         signature:
@@ -2124,34 +632,27 @@ function App(){
           )
       });
 
-
       setSigningIn(
         false
       );
 
-    }
-    catch(err){
+    }catch(err){
 
       console.error(
         "SIWS login error:",
         err
       );
 
-
       setSigningIn(
         false
       );
 
-
       const message=
         String(
-          err?.message
-          ||
-          err
-          ||
+          err?.message||
+          err||
           ""
         );
-
 
       if(
         message
@@ -2160,7 +661,6 @@ function App(){
             "user rejected"
           )
       ){
-
         setError(
           "The Phantom login request was cancelled."
         );
@@ -2168,15 +668,12 @@ function App(){
         return;
       }
 
-
       setError(
-        message
-        ||
+        message||
         "Could not complete the Phantom login."
       );
     }
   }
-
 
   useEffect(()=>{
 
@@ -2193,11 +690,9 @@ function App(){
       return;
     }
 
-
     const key=
       connectedPhantomWallet
         .address;
-
 
     if(
       !key
@@ -2208,10 +703,8 @@ function App(){
       return;
     }
 
-
     authAttemptedFor.current=
       key;
-
 
     authenticateWallet(
       connectedPhantomWallet
@@ -2223,46 +716,35 @@ function App(){
     connectedPhantomWallet
   ]);
 
-
-  /* ==================================================
-     LINKED PHANTOM
-  ================================================== */
-
   const linkedPhantom=
     useMemo(
-      ()=>{
-
-        return (
-          user?.linkedAccounts
-            ?.find(
-              account=>
-                account?.type==="wallet"
-                &&
-                [
-                  account?.walletClientType,
-                  account?.connectorType
-                ]
-                  .some(
-                    value=>
-                      String(
-                        value || ""
+      ()=>
+        user?.linkedAccounts
+          ?.find(
+            account=>
+              account?.type==="wallet"
+              &&
+              [
+                account?.walletClientType,
+                account?.connectorType
+              ]
+                .some(
+                  value=>
+                    String(
+                      value||""
+                    )
+                      .toLowerCase()
+                      .includes(
+                        "phantom"
                       )
-                        .toLowerCase()
-                        .includes(
-                          "phantom"
-                        )
-                  )
-            )
-          ||
-          null
-        );
-      },
-
+                )
+          )
+        ||
+        null,
       [
         user
       ]
     );
-
 
   const phantomAddress=
     linkedPhantom?.address
@@ -2273,104 +755,81 @@ function App(){
     ||
     "";
 
-
-  /* ==================================================
-     REBOUND WALLET
-  ================================================== */
-
   const linkedEmbedded=
     useMemo(
-      ()=>{
+      ()=>
+        user?.linkedAccounts
+          ?.find(
+            account=>{
 
-        return (
-          user?.linkedAccounts
-            ?.find(
-              account=>{
-
-                if(
-                  account?.type!=="wallet"
-                ){
-                  return false;
-                }
-
-
-                const chain=
-                  String(
-                    account?.chainType
-                    ||
-                    ""
-                  )
-                    .toLowerCase();
-
-
-                const marker=
-                  `${
-                    account?.walletClientType
-                    ||
-                    ""
-                  } ${
-                    account?.connectorType
-                    ||
-                    ""
-                  }`
-                    .toLowerCase();
-
-
-                return (
-                  chain==="solana"
-                  &&
-                  account?.address!==
-                    phantomAddress
-                  &&
-                  (
-                    marker.includes(
-                      "privy"
-                    )
-                    ||
-                    marker.includes(
-                      "embedded"
-                    )
-                  )
-                );
+              if(
+                account?.type!=="wallet"
+              ){
+                return false;
               }
-            )
-          ||
-          null
-        );
-      },
 
+              const chain=
+                String(
+                  account?.chainType||
+                  ""
+                )
+                  .toLowerCase();
+
+              const marker=
+                `${
+                  account?.walletClientType||
+                  ""
+                } ${
+                  account?.connectorType||
+                  ""
+                }`
+                  .toLowerCase();
+
+              return (
+                chain==="solana"
+                &&
+                account?.address!==
+                  phantomAddress
+                &&
+                (
+                  marker.includes(
+                    "privy"
+                  )
+                  ||
+                  marker.includes(
+                    "embedded"
+                  )
+                )
+              );
+            }
+          )
+        ||
+        null,
       [
         user,
         phantomAddress
       ]
     );
 
-
   const embeddedFromWallets=
     useMemo(
-      ()=>{
-
-        return (
-          wallets.find(
-            wallet=>
-              wallet?.address!==
-                phantomAddress
-              &&
-              isEmbeddedWallet(
-                wallet
-              )
-          )
-          ||
-          null
-        );
-      },
-
+      ()=>
+        wallets.find(
+          wallet=>
+            wallet?.address!==
+              phantomAddress
+            &&
+            isEmbeddedWallet(
+              wallet
+            )
+        )
+        ||
+        null,
       [
         wallets,
         phantomAddress
       ]
     );
-
 
   const reboundWallet=
     linkedEmbedded
@@ -2381,24 +840,20 @@ function App(){
     ||
     null;
 
-
   const reboundAddress=
     reboundWallet?.address
     ||
     "";
-
 
   const reboundWalletId=
     reboundWallet?.id
     ||
     null;
 
-
   const reboundDelegatedByPrivy=
     useMemo(
-      ()=>{
-
-        return Boolean(
+      ()=>
+        Boolean(
           reboundAddress
           &&
           user?.linkedAccounts
@@ -2412,25 +867,17 @@ function App(){
                 account?.delegated===
                   true
             )
-        );
-      },
-
+        ),
       [
         user,
         reboundAddress
       ]
     );
 
-
   const automatedTradingEnabled=
     automationOverride!==null
       ? automationOverride
       : reboundDelegatedByPrivy;
-
-
-  /* ==================================================
-     ENSURE REBOUND WALLET
-  ================================================== */
 
   useEffect(()=>{
 
@@ -2444,17 +891,10 @@ function App(){
       return;
     }
 
-
-    /*
-     * During a mobile handoff we wait until
-     * Phantom itself has actually loaded.
-     */
     if(
       phantomHandoff
       &&
       (
-        !phantomProviderReady
-        ||
         !connectedPhantomWallet
         ||
         connecting
@@ -2463,7 +903,6 @@ function App(){
       return;
     }
 
-
     if(
       reboundAddress
     ){
@@ -2471,22 +910,18 @@ function App(){
       creationAttempted.current=
         true;
 
-
       sessionStorage.removeItem(
         "asty_rebound_wallet_reload"
       );
 
-
       return;
     }
-
 
     if(
       creationAttempted.current
     ){
       return;
     }
-
 
     const timer=
       setTimeout(
@@ -2500,50 +935,40 @@ function App(){
             return;
           }
 
-
           creationAttempted.current=
             true;
-
 
           try{
 
             const result=
               await createWallet();
 
-
             const wallet=
               result?.wallet
               ||
               result;
 
-
             if(
               wallet?.address
             ){
-
               setCreatedWallet(
                 wallet
               );
             }
 
-          }
-          catch(err){
+          }catch(err){
 
             console.error(
               "Embedded wallet:",
               err
             );
 
-
             const message=
               String(
-                err?.message
-                ||
-                err
-                ||
+                err?.message||
+                err||
                 ""
               );
-
 
             if(
               message
@@ -2566,28 +991,24 @@ function App(){
                     "1"
                   );
 
-
                 setTimeout(
-                  ()=>
-                    location.reload(),
+                  ()=>{
+                    location.reload();
+                  },
                   450
                 );
               }
 
-
               return;
             }
-
 
             setError(
               "Your Rebound Wallet could not be loaded."
             );
           }
-
         },
         2500
       );
-
 
     return()=>
       clearTimeout(
@@ -2601,15 +1022,9 @@ function App(){
     reboundAddress,
     createWallet,
     phantomHandoff,
-    phantomProviderReady,
     connectedPhantomWallet,
     connecting
   ]);
-
-
-  /* ==================================================
-     DATABASE SYNC
-  ================================================== */
 
   useEffect(()=>{
 
@@ -2625,15 +1040,11 @@ function App(){
       return;
     }
 
-
     const key=[
       user.id,
       phantomAddress,
       reboundAddress
-    ].join(
-      ":"
-    );
-
+    ].join(":");
 
     if(
       syncAttempted.current===
@@ -2642,14 +1053,11 @@ function App(){
       return;
     }
 
-
     syncAttempted.current=
       key;
 
-
     let cancelled=
       false;
-
 
     (async()=>{
 
@@ -2657,12 +1065,10 @@ function App(){
         "syncing"
       );
 
-
       try{
 
         const token=
           await getAccessToken();
-
 
         if(
           !token
@@ -2671,7 +1077,6 @@ function App(){
             "No login session."
           );
         }
-
 
         const response=
           await fetch(
@@ -2700,10 +1105,8 @@ function App(){
             }
           );
 
-
         const result=
           await response.json();
-
 
         if(
           !response.ok
@@ -2715,7 +1118,6 @@ function App(){
           );
         }
 
-
         if(
           !cancelled
         ){
@@ -2724,23 +1126,19 @@ function App(){
           );
         }
 
-      }
-      catch(err){
+      }catch(err){
 
         console.error(
           "D1 sync:",
           err
         );
 
-
         if(
           !cancelled
         ){
-
           setSyncState(
             "error"
           );
-
 
           setError(
             err?.message
@@ -2749,12 +1147,9 @@ function App(){
           );
         }
       }
-
     })();
 
-
     return()=>{
-
       cancelled=
         true;
     };
@@ -2768,11 +1163,6 @@ function App(){
     getAccessToken
   ]);
 
-
-  /* ==================================================
-     BALANCE
-  ================================================== */
-
   async function loadBalance(){
 
     if(
@@ -2783,17 +1173,14 @@ function App(){
       return;
     }
 
-
     setBalanceLoading(
       true
     );
-
 
     try{
 
       const token=
         await getAccessToken();
-
 
       if(
         !token
@@ -2802,7 +1189,6 @@ function App(){
           "No session."
         );
       }
-
 
       const response=
         await fetch(
@@ -2815,10 +1201,8 @@ function App(){
           }
         );
 
-
       const result=
         await response.json();
-
 
       if(
         !response.ok
@@ -2830,7 +1214,6 @@ function App(){
         );
       }
 
-
       setUsdcBalance(
         result?.balances
           ?.usdc
@@ -2838,7 +1221,6 @@ function App(){
         ??
         "0"
       );
-
 
       setSolBalance(
         result?.balances
@@ -2848,7 +1230,6 @@ function App(){
         "0"
       );
 
-
       setUsdcUsdValue(
         result?.balances
           ?.usdc
@@ -2857,7 +1238,6 @@ function App(){
         null
       );
 
-
       setSolUsdValue(
         result?.balances
           ?.sol
@@ -2865,7 +1245,6 @@ function App(){
         ??
         null
       );
-
 
       setSolTradingReady(
         Boolean(
@@ -2875,7 +1254,6 @@ function App(){
         )
       );
 
-
       setSolTradingBalance(
         result?.balances
           ?.tradingSol
@@ -2884,19 +1262,16 @@ function App(){
         null
       );
 
-
       setBalanceAvailable(
         true
       );
 
-    }
-    catch(err){
+    }catch(err){
 
       console.error(
         "Balance:",
         err
       );
-
 
       setBalanceAvailable(
         false
@@ -2926,15 +1301,13 @@ function App(){
         null
       );
 
-    }
-    finally{
+    }finally{
 
       setBalanceLoading(
         false
       );
     }
   }
-
 
   useEffect(()=>{
 
@@ -2946,31 +1319,23 @@ function App(){
       return;
     }
 
-
     loadBalance();
 
-
-    const interval=
+    const id=
       setInterval(
         loadBalance,
         60000
       );
 
-
     return()=>
       clearInterval(
-        interval
+        id
       );
 
   },[
     authenticated,
     syncState
   ]);
-
-
-  /* ==================================================
-     DEPOSIT
-  ================================================== */
 
   function openDeposit(
     asset
@@ -2991,25 +1356,20 @@ function App(){
     );
   }
 
-
   function closeDeposit(){
 
     if(
-      depositBusy
+      !depositBusy
     ){
-      return;
+      setDepositAsset(
+        null
+      );
+
+      setDepositAmount(
+        ""
+      );
     }
-
-
-    setDepositAsset(
-      null
-    );
-
-    setDepositAmount(
-      ""
-    );
   }
-
 
   function buildSolTransaction(
     context
@@ -3025,18 +1385,14 @@ function App(){
         context.to
       );
 
-
     const transaction=
       new Transaction();
-
 
     transaction.feePayer=
       from;
 
-
     transaction.recentBlockhash=
       context.blockhash;
-
 
     transaction.add(
       SystemProgram.transfer({
@@ -3054,10 +1410,8 @@ function App(){
       })
     );
 
-
     return transaction;
   }
-
 
   async function buildUsdcTransaction(
     context
@@ -3078,7 +1432,6 @@ function App(){
         USDC_MINT
       );
 
-
     const sourceAta=
       await getAssociatedTokenAddress(
         mint,
@@ -3087,7 +1440,6 @@ function App(){
         TOKEN_PROGRAM_ID,
         ASSOCIATED_TOKEN_PROGRAM_ID
       );
-
 
     const destinationAta=
       await getAssociatedTokenAddress(
@@ -3098,18 +1450,14 @@ function App(){
         ASSOCIATED_TOKEN_PROGRAM_ID
       );
 
-
     const transaction=
       new Transaction();
-
 
     transaction.feePayer=
       from;
 
-
     transaction.recentBlockhash=
       context.blockhash;
-
 
     transaction.add(
       createAssociatedTokenAccountIdempotentInstruction(
@@ -3121,7 +1469,6 @@ function App(){
         ASSOCIATED_TOKEN_PROGRAM_ID
       )
     );
-
 
     transaction.add(
       createTransferCheckedInstruction(
@@ -3139,10 +1486,8 @@ function App(){
       )
     );
 
-
     return transaction;
   }
-
 
   async function waitForConfirmation(
     signature
@@ -3158,19 +1503,16 @@ function App(){
         2000
       );
 
-
       try{
 
         const token=
           await getAccessToken();
-
 
         if(
           !token
         ){
           continue;
         }
-
 
         const response=
           await fetch(
@@ -3183,17 +1525,14 @@ function App(){
             }
           );
 
-
         if(
           !response.ok
         ){
           continue;
         }
 
-
         const result=
           await response.json();
-
 
         if(
           result?.transactionError
@@ -3203,15 +1542,13 @@ function App(){
           );
         }
 
-
         if(
           result?.confirmed
         ){
           return true;
         }
 
-      }
-      catch(err){
+      }catch(err){
 
         if(
           err?.message===
@@ -3222,10 +1559,8 @@ function App(){
       }
     }
 
-
     return false;
   }
-
 
   async function sendDeposit(){
 
@@ -3236,7 +1571,6 @@ function App(){
     ){
       return;
     }
-
 
     setError(
       ""
@@ -3250,12 +1584,10 @@ function App(){
       null
     );
 
-
     const amount=
       String(
         depositAmount
       ).trim();
-
 
     if(
       !amount
@@ -3264,7 +1596,6 @@ function App(){
         amount
       )<=0
     ){
-
       setError(
         "Enter a valid deposit amount."
       );
@@ -3272,12 +1603,10 @@ function App(){
       return;
     }
 
-
     if(
       !connectedPhantomWallet
         ?.address
     ){
-
       setError(
         "Phantom must be connected before making a deposit."
       );
@@ -3285,17 +1614,14 @@ function App(){
       return;
     }
 
-
     setDepositBusy(
       true
     );
-
 
     try{
 
       const token=
         await getAccessToken();
-
 
       if(
         !token
@@ -3304,7 +1630,6 @@ function App(){
           "Your login session has expired."
         );
       }
-
 
       const response=
         await fetch(
@@ -3331,10 +1656,8 @@ function App(){
           }
         );
 
-
       const context=
         await response.json();
-
 
       if(
         !response.ok
@@ -3345,7 +1668,6 @@ function App(){
           "Deposit could not be prepared."
         );
       }
-
 
       if(
         connectedPhantomWallet
@@ -3358,7 +1680,6 @@ function App(){
         );
       }
 
-
       const transaction=
         depositAsset==="SOL"
           ? buildSolTransaction(
@@ -3367,7 +1688,6 @@ function App(){
           : await buildUsdcTransaction(
               context
             );
-
 
       const serialized=
         transaction.serialize({
@@ -3378,10 +1698,8 @@ function App(){
             false
         });
 
-
       const result=
         await signAndSendTransaction({
-
           transaction:
             new Uint8Array(
               serialized
@@ -3401,43 +1719,35 @@ function App(){
           }
         });
 
-
       const signature=
         signatureToBase58(
           result.signature
         );
 
-
       setDepositSignature(
         signature
       );
-
 
       setDepositState(
         "pending"
       );
 
-
       setDepositMessage(
         `${depositAsset} deposit sent. Waiting for Solana confirmation…`
       );
-
 
       setDepositAsset(
         null
       );
 
-
       setDepositAmount(
         ""
       );
-
 
       const confirmed=
         await waitForConfirmation(
           signature
         );
-
 
       if(
         confirmed
@@ -3447,40 +1757,32 @@ function App(){
           "success"
         );
 
-
         setDepositMessage(
           `${depositAsset} deposit confirmed ✓`
         );
 
-
         await loadBalance();
 
-      }
-      else{
+      }else{
 
         setDepositMessage(
           "Transaction sent. Confirmation is taking longer than expected; the balance will refresh automatically."
         );
       }
 
-    }
-    catch(err){
+    }catch(err){
 
       console.error(
         "Deposit error:",
         err
       );
 
-
       const message=
         String(
-          err?.message
-          ||
-          err
-          ||
+          err?.message||
+          err||
           ""
         );
-
 
       setError(
         message
@@ -3500,19 +1802,13 @@ function App(){
             "The deposit could not be completed."
       );
 
-    }
-    finally{
+    }finally{
 
       setDepositBusy(
         false
       );
     }
   }
-
-
-  /* ==================================================
-     AUTOMATED TRADING
-  ================================================== */
 
   async function enableAutomatedTrading(){
 
@@ -3526,7 +1822,6 @@ function App(){
       return;
     }
 
-
     setError(
       ""
     );
@@ -3539,12 +1834,10 @@ function App(){
       true
     );
 
-
     try{
 
       const token=
         await getAccessToken();
-
 
       if(
         !token
@@ -3553,7 +1846,6 @@ function App(){
           "Your login session has expired."
         );
       }
-
 
       const response=
         await fetch(
@@ -3566,10 +1858,8 @@ function App(){
           }
         );
 
-
       const config=
         await response.json();
-
 
       if(
         !response.ok
@@ -3581,7 +1871,6 @@ function App(){
         );
       }
 
-
       if(
         config?.wallet
         !==
@@ -3591,7 +1880,6 @@ function App(){
           "Rebound Wallet verification failed."
         );
       }
-
 
       if(
         !config?.signerId
@@ -3603,9 +1891,7 @@ function App(){
         );
       }
 
-
       await addSigners({
-
         address:
           reboundAddress,
 
@@ -3621,29 +1907,23 @@ function App(){
         ]
       });
 
-
       setAutomationOverride(
         true
       );
 
-    }
-    catch(err){
+    }catch(err){
 
       console.error(
         "Enable automated trading:",
         err
       );
 
-
       const message=
         String(
-          err?.message
-          ||
-          err
-          ||
+          err?.message||
+          err||
           ""
         );
-
 
       setError(
         message
@@ -3663,15 +1943,13 @@ function App(){
             "Automated trading could not be enabled."
       );
 
-    }
-    finally{
+    }finally{
 
       setAutomationBusy(
         false
       );
     }
   }
-
 
   async function disableAutomatedTrading(){
 
@@ -3682,7 +1960,6 @@ function App(){
     ){
       return;
     }
-
 
     setError(
       ""
@@ -3696,7 +1973,6 @@ function App(){
       true
     );
 
-
     try{
 
       await removeSigners({
@@ -3704,19 +1980,16 @@ function App(){
           reboundAddress
       });
 
-
       setAutomationOverride(
         false
       );
 
-    }
-    catch(err){
+    }catch(err){
 
       console.error(
         "Disable automated trading:",
         err
       );
-
 
       setError(
         err?.message
@@ -3724,19 +1997,13 @@ function App(){
         "Automated trading authorization could not be revoked."
       );
 
-    }
-    finally{
+    }finally{
 
       setAutomationBusy(
         false
       );
     }
   }
-
-
-  /* ==================================================
-     PREPARE SOL TRADING
-  ================================================== */
 
   async function prepareSolTrading(){
 
@@ -3754,7 +2021,6 @@ function App(){
       return;
     }
 
-
     setError(
       ""
     );
@@ -3763,12 +2029,10 @@ function App(){
       null
     );
 
-
     if(
       !connectedPhantomWallet
         ?.address
     ){
-
       setError(
         "Open ASTY Rebound in Phantom before preparing SOL trading."
       );
@@ -3776,17 +2040,14 @@ function App(){
       return;
     }
 
-
     setPrepareSolBusy(
       true
     );
-
 
     try{
 
       const token=
         await getAccessToken();
-
 
       if(
         !token
@@ -3795,7 +2056,6 @@ function App(){
           "Your login session has expired."
         );
       }
-
 
       const response=
         await fetch(
@@ -3811,10 +2071,8 @@ function App(){
           }
         );
 
-
       const context=
         await response.json();
-
 
       if(
         !response.ok
@@ -3826,7 +2084,6 @@ function App(){
         );
       }
 
-
       if(
         context?.alreadyReady
       ){
@@ -3834,7 +2091,6 @@ function App(){
         setSolTradingReady(
           true
         );
-
 
         setPrepareSolResult({
           state:
@@ -3844,12 +2100,10 @@ function App(){
             "SOL Trading Ready ✓"
         });
 
-
         await loadBalance();
 
         return;
       }
-
 
       if(
         context?.from
@@ -3870,24 +2124,20 @@ function App(){
         );
       }
 
-
       const payer=
         new PublicKey(
           context.from
         );
-
 
       const owner=
         new PublicKey(
           context.owner
         );
 
-
       const mint=
         new PublicKey(
           WSOL_MINT
         );
-
 
       const ata=
         await getAssociatedTokenAddress(
@@ -3898,18 +2148,14 @@ function App(){
           ASSOCIATED_TOKEN_PROGRAM_ID
         );
 
-
       const transaction=
         new Transaction();
-
 
       transaction.feePayer=
         payer;
 
-
       transaction.recentBlockhash=
         context.blockhash;
-
 
       transaction.add(
         createAssociatedTokenAccountIdempotentInstruction(
@@ -3922,7 +2168,6 @@ function App(){
         )
       );
 
-
       const serialized=
         transaction.serialize({
           requireAllSignatures:
@@ -3932,10 +2177,8 @@ function App(){
             false
         });
 
-
       const result=
         await signAndSendTransaction({
-
           transaction:
             new Uint8Array(
               serialized
@@ -3955,12 +2198,10 @@ function App(){
           }
         });
 
-
       const signature=
         signatureToBase58(
           result.signature
         );
-
 
       setPrepareSolResult({
         state:
@@ -3972,12 +2213,10 @@ function App(){
         signature
       });
 
-
       const confirmed=
         await waitForConfirmation(
           signature
         );
-
 
       if(
         !confirmed
@@ -3996,11 +2235,9 @@ function App(){
         return;
       }
 
-
       setSolTradingReady(
         true
       );
-
 
       setPrepareSolResult({
         state:
@@ -4012,27 +2249,21 @@ function App(){
         signature
       });
 
-
       await loadBalance();
 
-    }
-    catch(err){
+    }catch(err){
 
       console.error(
         "Prepare SOL trading:",
         err
       );
 
-
       const message=
         String(
-          err?.message
-          ||
-          err
-          ||
+          err?.message||
+          err||
           ""
         );
-
 
       setPrepareSolResult({
         state:
@@ -4044,31 +2275,25 @@ function App(){
             .includes(
               "reject"
             )
-          ||
+        ||
           message
             .toLowerCase()
             .includes(
               "cancel"
             )
-            ? "SOL trading preparation was cancelled in Phantom."
-            : message
-              ||
-              "SOL trading preparation failed."
+          ? "SOL trading preparation was cancelled in Phantom."
+          : message
+            ||
+            "SOL trading preparation failed."
       });
 
-    }
-    finally{
+    }finally{
 
       setPrepareSolBusy(
         false
       );
     }
   }
-
-
-  /* ==================================================
-     VERIFY SERVER ACCESS
-  ================================================== */
 
   async function verifyServerAccess(){
 
@@ -4084,7 +2309,6 @@ function App(){
       return;
     }
 
-
     setError(
       ""
     );
@@ -4097,12 +2321,10 @@ function App(){
       true
     );
 
-
     try{
 
       const token=
         await getAccessToken();
-
 
       if(
         !token
@@ -4111,7 +2333,6 @@ function App(){
           "Your login session has expired."
         );
       }
-
 
       const response=
         await fetch(
@@ -4127,17 +2348,14 @@ function App(){
           }
         );
 
-
       let result;
-
 
       try{
 
         result=
           await response.json();
 
-      }
-      catch{
+      }catch{
 
         result={
           status:
@@ -4151,19 +2369,16 @@ function App(){
         };
       }
 
-
       setServerTestResult(
         result
       );
 
-    }
-    catch(err){
+    }catch(err){
 
       console.error(
         "Verify server access:",
         err
       );
-
 
       setServerTestResult({
         status:
@@ -4178,19 +2393,13 @@ function App(){
           "Server access could not be verified."
       });
 
-    }
-    finally{
+    }finally{
 
       setServerTestBusy(
         false
       );
     }
   }
-
-
-  /* ==================================================
-     TEST SWAP
-  ================================================== */
 
   function openTestSwap(){
 
@@ -4205,7 +2414,6 @@ function App(){
       &&
       !serverTestBusy
     ){
-
       setError(
         ""
       );
@@ -4216,19 +2424,16 @@ function App(){
     }
   }
 
-
   function closeTestSwap(){
 
     if(
       !testSwapBusy
     ){
-
       setTestSwapModalOpen(
         false
       );
     }
   }
-
 
   async function executeTestSwap(){
 
@@ -4241,7 +2446,6 @@ function App(){
     ){
       return;
     }
-
 
     setError(
       ""
@@ -4259,12 +2463,10 @@ function App(){
       true
     );
 
-
     try{
 
       const token=
         await getAccessToken();
-
 
       if(
         !token
@@ -4273,7 +2475,6 @@ function App(){
           "Your login session has expired."
         );
       }
-
 
       const response=
         await fetch(
@@ -4298,17 +2499,14 @@ function App(){
           }
         );
 
-
       let result;
-
 
       try{
 
         result=
           await response.json();
 
-      }
-      catch{
+      }catch{
 
         result={
           status:
@@ -4319,7 +2517,6 @@ function App(){
         };
       }
 
-
       if(
         !response.ok
       ){
@@ -4328,12 +2525,10 @@ function App(){
           false
         );
 
-
         let message=
           result?.message
           ||
           "The 0.10 USDC test swap could not be submitted.";
-
 
         if(
           result?.stage===
@@ -4348,21 +2543,17 @@ function App(){
             .unexpectedPrograms
             .length
         ){
-
           message+=
             ` Programs: ${result.unexpectedPrograms.join(", ")}`;
         }
 
-
         if(
           result?.needsPreparation
         ){
-
           setSolTradingReady(
             false
           );
         }
-
 
         setTestSwapResult({
           state:
@@ -4376,16 +2567,13 @@ function App(){
             null
         });
 
-
         return;
       }
-
 
       const signature=
         result?.signature
         ||
         "";
-
 
       if(
         !signature
@@ -4395,16 +2583,13 @@ function App(){
         );
       }
 
-
       setTestSwapSignature(
         signature
       );
 
-
       setTestSwapModalOpen(
         false
       );
-
 
       setTestSwapResult({
         state:
@@ -4414,12 +2599,10 @@ function App(){
           "0.10 USDC test swap submitted. Waiting for Solana confirmation…"
       });
 
-
       const confirmed=
         await waitForConfirmation(
           signature
         );
-
 
       if(
         confirmed
@@ -4433,11 +2616,9 @@ function App(){
             "Test Swap Confirmed ✓ 0.10 USDC was swapped to SOL through Jupiter using the Rebound backend signer."
         });
 
-
         await loadBalance();
 
-      }
-      else{
+      }else{
 
         setTestSwapResult({
           state:
@@ -4448,19 +2629,16 @@ function App(){
         });
       }
 
-    }
-    catch(err){
+    }catch(err){
 
       console.error(
         "Test swap error:",
         err
       );
 
-
       setTestSwapModalOpen(
         false
       );
-
 
       setTestSwapResult({
         state:
@@ -4472,19 +2650,13 @@ function App(){
           "The 0.10 USDC test swap could not be completed."
       });
 
-    }
-    finally{
+    }finally{
 
       setTestSwapBusy(
         false
       );
     }
   }
-
-
-  /* ==================================================
-     COPY / LOGOUT
-  ================================================== */
 
   async function copyWallet(){
 
@@ -4494,7 +2666,6 @@ function App(){
       return;
     }
 
-
     try{
 
       await navigator.clipboard
@@ -4502,11 +2673,9 @@ function App(){
           reboundAddress
         );
 
-
       setCopied(
         true
       );
-
 
       setTimeout(
         ()=>
@@ -4516,15 +2685,13 @@ function App(){
         1400
       );
 
-    }
-    catch{
+    }catch{
 
       setCopied(
         false
       );
     }
   }
-
 
   async function handleLogout(){
 
@@ -4613,9 +2780,6 @@ function App(){
     creationAttempted.current=
       false;
 
-    handoffConnectAttempted.current=
-      false;
-
     setPendingWalletAddress(
       ""
     );
@@ -4624,20 +2788,13 @@ function App(){
       null
     );
 
-
     await logout();
   }
-
-
-  /* ==================================================
-     STATUS
-  ================================================== */
 
   const loading=
     !ready
     ||
     !walletsReady;
-
 
   const accountReady=
     authenticated
@@ -4648,80 +2805,53 @@ function App(){
     &&
     syncState==="ready";
 
-
   let statusText=
     "Not connected";
-
 
   let dotClass=
     "dot";
 
-
   if(
     loading
   ){
-
     statusText=
       "Loading Rebound…";
 
     dotClass=
       "dot loading";
 
-  }
-  else if(
-    phantomHandoff
-    &&
-    !phantomProviderReady
-  ){
-
-    statusText=
-      phantomProviderTimedOut
-        ? "Waiting for Phantom…"
-        : "Opening Phantom connection…";
-
-    dotClass=
-      "dot loading";
-
-  }
-  else if(
+  }else if(
     connecting
   ){
-
     statusText=
       "Connecting Phantom…";
 
     dotClass=
       "dot loading";
 
-  }
-  else if(
+  }else if(
     signingIn
   ){
-
     statusText=
       "Confirm login in Phantom…";
 
     dotClass=
       "dot loading";
 
-  }
-  else if(
+  }else if(
     authenticated
     &&
     !accountReady
   ){
-
     statusText=
       "Preparing Rebound…";
 
     dotClass=
       "dot loading";
 
-  }
-  else if(
+  }else if(
     accountReady
   ){
-
     statusText=
       "Connected";
 
@@ -4729,78 +2859,56 @@ function App(){
       "dot ready";
   }
 
-
-  /* ==================================================
-     GAS
-  ================================================== */
-
   let gasClass=
     "pill warn";
 
-
   let gasText=
     "Recommended: 0.02 SOL";
-
 
   if(
     balanceAvailable
     &&
     solBalance!==null
   ){
-
     const gas=
       Number(
         solBalance
       );
 
-
     if(
       gas>=.02
     ){
-
       gasClass=
         "pill good";
 
       gasText=
         "Gas reserve ready ✓";
 
-    }
-    else if(
+    }else if(
       gas<.005
     ){
-
       gasClass=
         "pill bad";
 
       gasText=
         "Gas reserve low";
 
-    }
-    else{
-
+    }else{
       gasText=
         "Below recommended 0.02 SOL";
     }
   }
 
-
   const externalMobileBrowser=
     isMobileDevice()
     &&
-    !phantomProviderReady;
-
-
-  /* ==================================================
-     SERVER TEST DISPLAY
-  ================================================== */
+    !hasInjectedPhantom();
 
   let serverClass=
     "status-box failure";
 
-
   let serverText=
     "";
-
 
   if(
     serverTestResult
@@ -4810,37 +2918,29 @@ function App(){
       serverTestResult.result===
         "blocked_as_expected"
     ){
-
       serverClass=
         "status-box success";
-
 
       serverText=
         "Server Access Verified ✓ The backend signer reached Privy and the trading policy blocked the non-trading test exactly as intended.";
 
-    }
-    else if(
+    }else if(
       serverTestResult.result===
         "unexpectedly_allowed"
     ){
-
       serverClass=
         "status-box pending";
-
 
       serverText=
         "Security warning: signMessage was unexpectedly allowed. Do not enable real trading until the policy is reviewed.";
 
-    }
-    else{
-
+    }else{
       serverText=
         serverTestResult?.message
         ||
         "Server access verification failed.";
     }
   }
-
 
   const renderResult=
     result=>
@@ -4886,15 +2986,9 @@ function App(){
           )
         : null;
 
-
-  /* ==================================================
-     UI
-  ================================================== */
-
   return e(
     React.Fragment,
     null,
-
 
     e(
       "main",
@@ -4903,14 +2997,12 @@ function App(){
           "page"
       },
 
-
       e(
         "div",
         {
           className:
             "brand"
         },
-
 
         e(
           "img",
@@ -4926,11 +3018,9 @@ function App(){
           }
         ),
 
-
         e(
           "div",
           null,
-
 
           e(
             "div",
@@ -4941,7 +3031,6 @@ function App(){
             "ASTY Rebound"
           ),
 
-
           e(
             "div",
             {
@@ -4950,7 +3039,6 @@ function App(){
             },
             "ArbStrategy"
           ),
-
 
           e(
             "div",
@@ -4963,7 +3051,6 @@ function App(){
         )
       ),
 
-
       e(
         "section",
         {
@@ -4971,18 +3058,15 @@ function App(){
             "hero"
         },
 
-
         e(
           "div",
           null,
-
 
           e(
             "h1",
             null,
             "Rebound"
           ),
-
 
           e(
             "p",
@@ -4994,14 +3078,12 @@ function App(){
           )
         ),
 
-
         e(
           "div",
           {
             className:
               "wolf-wrap"
           },
-
 
           e(
             "img",
@@ -5019,7 +3101,6 @@ function App(){
         )
       ),
 
-
       e(
         "section",
         {
@@ -5027,14 +3108,12 @@ function App(){
             "card"
         },
 
-
         e(
           "div",
           {
             className:
               "status"
           },
-
 
           e(
             "span",
@@ -5044,20 +3123,15 @@ function App(){
             }
           ),
 
-
           statusText
         ),
 
-
         !authenticated
-
           ? (
               externalMobileBrowser
-
                 ? e(
                     React.Fragment,
                     null,
-
 
                     e(
                       "div",
@@ -5074,13 +3148,11 @@ function App(){
                         }
                       },
 
-
                       e(
                         "strong",
                         null,
                         "Continue in Phantom"
                       ),
-
 
                       e(
                         "div",
@@ -5093,7 +3165,6 @@ function App(){
                         "On mobile, Phantom connects through the Phantom browser. If you have already used ASTY Rebound, your existing Rebound Wallet will load automatically after you continue."
                       )
                     ),
-
 
                     e(
                       "button",
@@ -5111,7 +3182,6 @@ function App(){
                 : e(
                     React.Fragment,
                     null,
-
 
                     e(
                       "button",
@@ -5137,12 +3207,10 @@ function App(){
                           : "Connect Phantom"
                     ),
 
-
                     phantomBrowserHint
                       ? e(
                           React.Fragment,
                           null,
-
 
                           e(
                             "div",
@@ -5152,7 +3220,6 @@ function App(){
                             },
                             "Continue in Phantom. If ASTY Rebound is already connected there, your existing Rebound Wallet will load automatically."
                           ),
-
 
                           e(
                             "button",
@@ -5174,7 +3241,6 @@ function App(){
               React.Fragment,
               null,
 
-
               accountReady
                 ? e(
                     "div",
@@ -5182,7 +3248,6 @@ function App(){
                       className:
                         "box balance-box"
                     },
-
 
                     e(
                       "div",
@@ -5193,7 +3258,6 @@ function App(){
                       "Rebound Balance"
                     ),
 
-
                     e(
                       "div",
                       {
@@ -5201,14 +3265,12 @@ function App(){
                           "balance-grid"
                       },
 
-
                       e(
                         "div",
                         {
                           className:
                             "balance-item"
                         },
-
 
                         e(
                           "div",
@@ -5218,7 +3280,6 @@ function App(){
                           },
                           "USDC"
                         ),
-
 
                         e(
                           "div",
@@ -5238,7 +3299,6 @@ function App(){
                               : "—"
                         ),
 
-
                         e(
                           "div",
                           {
@@ -5252,7 +3312,6 @@ function App(){
                               )
                             : "—"
                         ),
-
 
                         e(
                           "button",
@@ -5272,7 +3331,6 @@ function App(){
                           "Deposit USDC"
                         ),
 
-
                         e(
                           "div",
                           {
@@ -5283,14 +3341,12 @@ function App(){
                         )
                       ),
 
-
                       e(
                         "div",
                         {
                           className:
                             "balance-item"
                         },
-
 
                         e(
                           "div",
@@ -5300,7 +3356,6 @@ function App(){
                           },
                           "SOL"
                         ),
-
 
                         e(
                           "div",
@@ -5320,7 +3375,6 @@ function App(){
                               : "—"
                         ),
 
-
                         e(
                           "div",
                           {
@@ -5334,7 +3388,6 @@ function App(){
                               )
                             : "—"
                         ),
-
 
                         e(
                           "button",
@@ -5354,7 +3407,6 @@ function App(){
                           "Deposit SOL"
                         ),
 
-
                         e(
                           "div",
                           {
@@ -5363,7 +3415,6 @@ function App(){
                           },
                           "SOL covers Solana network fees. Recommended gas reserve: 0.02 SOL. Keep at least 0.005 SOL while strategies are active."
                         ),
-
 
                         e(
                           "div",
@@ -5383,14 +3434,8 @@ function App(){
                       className:
                         "info"
                     },
-
-                    phantomHandoff
-                    &&
-                    !phantomProviderReady
-                      ? "Waiting for Phantom to finish loading…"
-                      : "Preparing your Rebound account…"
+                    "Preparing your Rebound account…"
                   ),
-
 
               accountReady
                 ? e(
@@ -5400,14 +3445,12 @@ function App(){
                         "box"
                     },
 
-
                     e(
                       "div",
                       {
                         className:
                           "row-head"
                       },
-
 
                       e(
                         "div",
@@ -5417,7 +3460,6 @@ function App(){
                         },
                         "Automated Trading"
                       ),
-
 
                       e(
                         "div",
@@ -5436,7 +3478,6 @@ function App(){
                       )
                     ),
 
-
                     e(
                       "div",
                       {
@@ -5449,7 +3490,6 @@ function App(){
                         : "Enable server-side access so ASTY Rebound can execute your strategy even when your browser or phone is closed."
                     ),
 
-
                     e(
                       "div",
                       {
@@ -5458,7 +3498,6 @@ function App(){
                       },
                       "The trading signer is restricted by the ASTY Rebound trading policy. Withdrawals are not part of this authorization."
                     ),
-
 
                     e(
                       "button",
@@ -5498,15 +3537,12 @@ function App(){
                           : "Enable Automated Trading"
                     ),
 
-
                     automatedTradingEnabled
                       ? e(
                           React.Fragment,
                           null,
 
-
                           solTradingReady===true
-
                             ? e(
                                 "div",
                                 {
@@ -5526,7 +3562,6 @@ function App(){
                             : e(
                                 React.Fragment,
                                 null,
-
 
                                 e(
                                   "button",
@@ -5552,7 +3587,6 @@ function App(){
                                     : "Prepare SOL Trading"
                                 ),
 
-
                                 e(
                                   "div",
                                   {
@@ -5562,12 +3596,10 @@ function App(){
                                   "One-time setup. Phantom creates the Rebound Wallet’s SOL trading account. A small Solana account-rent and network fee is paid from Phantom."
                                 ),
 
-
                                 renderResult(
                                   prepareSolResult
                                 )
                               ),
-
 
                           e(
                             "button",
@@ -5593,7 +3625,6 @@ function App(){
                               : "Verify Server Access"
                           ),
 
-
                           serverTestResult
                             ? e(
                                 "div",
@@ -5604,7 +3635,6 @@ function App(){
                                 serverText
                               )
                             : null,
-
 
                           e(
                             "button",
@@ -5634,7 +3664,6 @@ function App(){
                                 : "Prepare SOL Trading First"
                           ),
 
-
                           testSwapResult
                             ? e(
                                 "div",
@@ -5649,13 +3678,11 @@ function App(){
                                     }`
                                 },
 
-
                                 e(
                                   "div",
                                   null,
                                   testSwapResult.message
                                 ),
-
 
                                 testSwapSignature
                                   ? e(
@@ -5681,8 +3708,8 @@ function App(){
                         )
                       : null
                   )
-                : null,
 
+                : null,
 
               depositState
                 ? e(
@@ -5696,13 +3723,11 @@ function App(){
                         }`
                     },
 
-
                     e(
                       "div",
                       null,
                       depositMessage
                     ),
-
 
                     depositSignature
                       ? e(
@@ -5724,8 +3749,8 @@ function App(){
                         )
                       : null
                   )
-                : null,
 
+                : null,
 
               reboundAddress
                 ? e(
@@ -5735,14 +3760,12 @@ function App(){
                         "box"
                     },
 
-
                     e(
                       "div",
                       {
                         className:
                           "wallet-head"
                       },
-
 
                       e(
                         "img",
@@ -5758,7 +3781,6 @@ function App(){
                         }
                       ),
 
-
                       e(
                         "div",
                         {
@@ -5769,14 +3791,12 @@ function App(){
                       )
                     ),
 
-
                     e(
                       "div",
                       {
                         className:
                           "wallet-row"
                       },
-
 
                       e(
                         "div",
@@ -5786,7 +3806,6 @@ function App(){
                         },
                         reboundAddress
                       ),
-
 
                       e(
                         "button",
@@ -5804,8 +3823,8 @@ function App(){
                       )
                     )
                   )
-                : null,
 
+                : null,
 
               e(
                 "button",
@@ -5831,7 +3850,6 @@ function App(){
               )
             ),
 
-
         error
           ? e(
               "div",
@@ -5842,7 +3860,6 @@ function App(){
               error
             )
           : null,
-
 
         e(
           "div",
@@ -5855,11 +3872,6 @@ function App(){
       )
     ),
 
-
-    /* ==================================================
-       DEPOSIT MODAL
-    ================================================== */
-
     depositAsset
       ? e(
           "div",
@@ -5869,7 +3881,6 @@ function App(){
 
             onClick:
               event=>{
-
                 if(
                   event.target===
                   event.currentTarget
@@ -5879,14 +3890,12 @@ function App(){
               }
           },
 
-
           e(
             "div",
             {
               className:
                 "modal"
             },
-
 
             e(
               "h2",
@@ -5896,7 +3905,6 @@ function App(){
               },
               `Deposit ${depositAsset}`
             ),
-
 
             e(
               "p",
@@ -5910,7 +3918,6 @@ function App(){
                 : "Add SOL for network fees. A reserve of 0.02 SOL is recommended."
             ),
 
-
             e(
               "label",
               {
@@ -5920,14 +3927,12 @@ function App(){
               "Amount"
             ),
 
-
             e(
               "div",
               {
                 className:
                   "amount-input-wrap"
               },
-
 
               e(
                 "input",
@@ -5967,7 +3972,6 @@ function App(){
                 }
               ),
 
-
               e(
                 "span",
                 {
@@ -5978,7 +3982,6 @@ function App(){
               )
             ),
 
-
             e(
               "div",
               {
@@ -5987,7 +3990,6 @@ function App(){
               },
 
               "Destination: ",
-
 
               e(
                 "strong",
@@ -5999,14 +4001,12 @@ function App(){
               )
             ),
 
-
             e(
               "div",
               {
                 className:
                   "modal-buttons"
               },
-
 
               e(
                 "button",
@@ -6022,7 +4022,6 @@ function App(){
                 },
                 "Cancel"
               ),
-
 
               e(
                 "button",
@@ -6044,12 +4043,8 @@ function App(){
             )
           )
         )
+
       : null,
-
-
-    /* ==================================================
-       TEST SWAP MODAL
-    ================================================== */
 
     testSwapModalOpen
       ? e(
@@ -6060,7 +4055,6 @@ function App(){
 
             onClick:
               event=>{
-
                 if(
                   event.target===
                   event.currentTarget
@@ -6070,14 +4064,12 @@ function App(){
               }
           },
 
-
           e(
             "div",
             {
               className:
                 "modal"
             },
-
 
             e(
               "h2",
@@ -6088,7 +4080,6 @@ function App(){
               "Execute Real Test Swap?"
             ),
 
-
             e(
               "p",
               {
@@ -6097,7 +4088,6 @@ function App(){
               },
               "This is a real on-chain trade from your Rebound Wallet. The backend will swap exactly 0.10 USDC into SOL through Jupiter using the automated Privy signer. The received SOL stays in the dedicated trading account while native SOL remains your gas reserve."
             ),
-
 
             e(
               "div",
@@ -6108,7 +4098,6 @@ function App(){
               "Real funds will move. Maximum slippage is 0.5%. No Phantom confirmation will appear for the swap itself because this test verifies offline backend trading."
             ),
 
-
             e(
               "div",
               {
@@ -6117,7 +4106,6 @@ function App(){
               },
 
               "From Rebound Wallet: ",
-
 
               e(
                 "strong",
@@ -6129,14 +4117,12 @@ function App(){
               )
             ),
 
-
             e(
               "div",
               {
                 className:
                   "modal-buttons"
               },
-
 
               e(
                 "button",
@@ -6152,7 +4138,6 @@ function App(){
                 },
                 "Cancel"
               ),
-
 
               e(
                 "button",
@@ -6174,69 +4159,166 @@ function App(){
             )
           )
         )
+
       : null
   );
 }
 
 
 /* ==================================================
-   PRIVY
+   TWO-STAGE PHANTOM BOOT
 ================================================== */
 
-const connectors=
-  toSolanaWalletConnectors();
+async function startReboundApp(){
+
+  const handoff=
+    hasPhantomHandoff();
+
+  const bootStage=
+    getPhantomBootStage();
 
 
-createRoot(
-  document.getElementById(
-    "root"
-  )
-).render(
+  /*
+   * Stage 1:
+   *
+   * The normal mobile browser opened this URL
+   * inside Phantom.
+   *
+   * Do not mount Privy yet.
+   *
+   * Wait for Phantom's injected provider and
+   * then do exactly one full page reload.
+   *
+   * This reproduces automatically the manual
+   * refresh that was previously required.
+   */
 
-  e(
-    PrivyProvider,
-    {
-      appId:
-        APP_ID,
+  if(
+    handoff
+    &&
+    bootStage==="1"
+  ){
 
-      config:{
+    showPhantomBootScreen(
+      "Opening Phantom connection…"
+    );
 
-        loginMethods:[
-          "wallet"
-        ],
 
-        appearance:{
-          theme:
-            "dark",
+    await waitForInjectedPhantom(
+      4500
+    );
 
-          walletChainType:
-            "solana-only",
 
-          walletList:[
-            "phantom"
-          ]
-        },
+    const next=
+      new URL(
+        window.location.href
+      );
 
-        externalWallets:{
-          solana:{
-            connectors
-          }
-        },
 
-        embeddedWallets:{
-          solana:{
-            createOnLogin:
-              "all-users"
-          }
-        }
-      }
-    },
+    next.searchParams.set(
+      PHANTOM_BOOT_PARAM,
+      "2"
+    );
+
+
+    window.location.replace(
+      next.toString()
+    );
+
+
+    return;
+  }
+
+
+  /*
+   * Stage 2:
+   *
+   * The single automatic restart already happened.
+   *
+   * Give Phantom one last short window to expose
+   * its provider BEFORE the Solana connectors and
+   * PrivyProvider are created.
+   *
+   * There is deliberately no second reload.
+   */
+
+  if(
+    handoff
+    &&
+    bootStage==="2"
+    &&
+    !hasInjectedPhantom()
+  ){
+
+    showPhantomBootScreen(
+      "Finishing Phantom connection…"
+    );
+
+
+    await waitForInjectedPhantom(
+      2500
+    );
+  }
+
+
+  const connectors=
+    toSolanaWalletConnectors();
+
+
+  createRoot(
+    document.getElementById(
+      "root"
+    )
+  ).render(
 
     e(
-      App
+      PrivyProvider,
+      {
+        appId:
+          APP_ID,
+
+        config:{
+
+          loginMethods:[
+            "wallet"
+          ],
+
+          appearance:{
+            theme:
+              "dark",
+
+            walletChainType:
+              "solana-only",
+
+            walletList:[
+              "phantom"
+            ]
+          },
+
+          externalWallets:{
+            solana:{
+              connectors
+            }
+          },
+
+          embeddedWallets:{
+            solana:{
+              createOnLogin:
+                "all-users"
+            }
+          }
+        }
+      },
+
+      e(
+        App
+      )
     )
-  )
-);
+  );
+}
+
+
+startReboundApp();
 
 </script>
 </body>
