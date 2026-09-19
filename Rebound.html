@@ -426,6 +426,42 @@ function App(){
   }
 
   async function copyWallet(){if(!reboundAddress)return;try{await navigator.clipboard.writeText(reboundAddress);setCopied(true);setTimeout(()=>setCopied(false),1400)}catch{setCopied(false)}}
+  function executionCheckMessage(result){
+    if(!result)return "Execution check failed.";
+    if(result.ready)return "Ready for BUY executor ✓";
+    if(result.code){
+      const labels={
+        CAPITAL_RECONCILIATION_FAILED:"Capital check failed",
+        GAS_RESERVE_LOW:"Gas reserve is too low",
+        WSOL_ACCOUNT_NOT_READY:"SOL trading account is not ready",
+        AUTOMATION_NOT_CONFIGURED:"Automated Trading is not fully configured",
+        AUTOMATION_NOT_ENABLED:"Automated Trading is not enabled",
+        JUPITER_ROUTE_MISMATCH:"Jupiter route does not match the strategy"
+      };
+      if(labels[result.code])return `${labels[result.code]}. ${result.message||""}`.trim();
+    }
+    const c=result.checks||{};
+    if(c.capital&&c.capital.ok===false)return "Capital check failed.";
+    if(c.gas&&c.gas.ok===false)return `Gas check failed. Current: ${c.gas.currentSol||"—"} SOL.`;
+    if(c.automatedTrading&&c.automatedTrading.ok===false)return "Automated Trading check failed.";
+    if(c.tradingSol&&c.tradingSol.ok===false)return "SOL trading account check failed.";
+    if(c.jupiterV2&&c.jupiterV2.ok===false)return "Jupiter V2 route build failed.";
+    if(c.policyCompatibility&&c.policyCompatibility.ok===false){
+      const unexpected=Array.isArray(c.policyCompatibility.unexpectedPrograms)?c.policyCompatibility.unexpectedPrograms:[];
+      return unexpected.length
+        ? `Jupiter route is not compatible with the current trading policy. Unexpected program: ${unexpected.join(", ")}`
+        : "Jupiter route is not compatible with the current trading policy.";
+    }
+    if(c.routeSanity&&c.routeSanity.ok===false){
+      const bps=Number(c.routeSanity.referenceShortfallBps);
+      const max=Number(c.routeSanity.maxReferenceShortfallBps);
+      return Number.isFinite(bps)&&Number.isFinite(max)
+        ? `Route price safety check failed: ${bps} bps reference difference (maximum ${max} bps).`
+        : "Route price safety check failed.";
+    }
+    return result.message||"Execution check failed.";
+  }
+
   async function runExecutionCheck(strategyId){
     if(!strategyId||executionCheckBusyId)return;
     setExecutionCheckBusyId(strategyId);
@@ -434,6 +470,7 @@ function App(){
       const token=await getAccessToken();if(!token)throw new Error("Your login session has expired.");
       const response=await fetch(`${API_BASE}/execution/check`,{method:"POST",headers:{"Content-Type":"application/json","Authorization":`Bearer ${token}`},body:JSON.stringify({strategyId})});
       let result;try{result=await response.json()}catch{result={status:"error",ready:false,message:"The server returned an invalid response."}}
+      result={...result,message:executionCheckMessage(result)};
       setExecutionCheckResults(prev=>({...prev,[strategyId]:result}));
     }catch(err){
       console.error("Execution check:",err);
