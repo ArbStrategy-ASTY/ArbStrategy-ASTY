@@ -1732,6 +1732,7 @@ async function handleExecutionStatus(request, env) {
 async function handleRoot(request, env) {
   return json(request, {
     service: "ASTY Rebound API",
+    buildVersion: "2026-09-19-v2-buy-v1",
     status: "online",
     balanceSource: "Helius",
     displayPriceSource: "Helius DAS",
