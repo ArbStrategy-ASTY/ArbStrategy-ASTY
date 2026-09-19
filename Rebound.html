@@ -450,6 +450,17 @@
       color: var(--muted);
     }
 
+    .usd-value {
+      min-height: 17px;
+
+      margin-top: 4px;
+
+      color: var(--muted);
+
+      font-size: 12px;
+      font-weight: 600;
+    }
+
     .asset-info {
       min-height: 48px;
 
@@ -487,6 +498,117 @@
     .gas-low {
       color: var(--red);
       background: rgba(255,127,145,0.08);
+    }
+
+    /* ==================================================
+       AUTOMATED TRADING
+    ================================================== */
+
+    .automation-box {
+      margin-bottom: 14px;
+
+      padding: 17px;
+
+      border:
+        1px solid #292137;
+
+      border-radius: 17px;
+
+      background: var(--panel2);
+    }
+
+    .automation-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+
+      gap: 12px;
+
+      margin-bottom: 11px;
+    }
+
+    .automation-title {
+      font-size: 14px;
+      font-weight: 800;
+    }
+
+    .automation-state {
+      flex: 0 0 auto;
+
+      padding: 5px 9px;
+
+      border-radius: 9px;
+
+      font-size: 10px;
+      font-weight: 800;
+
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+    }
+
+    .automation-enabled {
+      color: var(--green);
+
+      background:
+        rgba(105,231,166,0.09);
+    }
+
+    .automation-disabled {
+      color: var(--muted);
+
+      background:
+        rgba(255,255,255,0.05);
+    }
+
+    .automation-description {
+      color: var(--muted);
+
+      font-size: 12px;
+      line-height: 1.55;
+    }
+
+    .automation-note {
+      margin-top: 10px;
+
+      color: #d3c2f6;
+
+      font-size: 11px;
+      line-height: 1.5;
+    }
+
+    .automation-button {
+      width: 100%;
+
+      margin-top: 14px;
+
+      padding: 13px 14px;
+
+      border-radius: 13px;
+
+      font-size: 13px;
+      font-weight: 800;
+    }
+
+    .automation-button-enable {
+      color: #130921;
+
+      background:
+        linear-gradient(
+          90deg,
+          #c49dff,
+          #8d63ff
+        );
+    }
+
+    .automation-button-disable {
+      color: var(--red);
+
+      border:
+        1px solid
+        rgba(255,127,145,0.28);
+
+      background:
+        rgba(255,127,145,0.07);
     }
 
     /* ==================================================
@@ -582,7 +704,7 @@
     ================================================== */
 
     .deposit-status {
-      margin-top: 14px;
+      margin-bottom: 14px;
 
       padding: 13px;
 
@@ -954,7 +1076,8 @@ import {
   PrivyProvider,
   usePrivy,
   useConnectWallet,
-  useLoginWithSiws
+  useLoginWithSiws,
+  useSigners
 } from "https://esm.sh/@privy-io/react-auth@3.43.0?external=react,react-dom";
 
 
@@ -1151,6 +1274,28 @@ function formatSol(value) {
 }
 
 
+function formatUsdApprox(value) {
+
+  const n =
+    Number(value);
+
+  if (!Number.isFinite(n)) {
+    return "—";
+  }
+
+  return (
+    "≈ $" +
+    n.toLocaleString(
+      "en-US",
+      {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+      }
+    )
+  );
+}
+
+
 function parseUnitsExact(
   value,
   decimals
@@ -1254,6 +1399,13 @@ function App() {
     useSignAndSendTransaction();
 
 
+  const {
+    addSigners,
+    removeSigners
+  } =
+    useSigners();
+
+
   /* ==================================================
      STATE
   ================================================== */
@@ -1332,6 +1484,18 @@ function App() {
 
 
   const [
+    usdcUsdValue,
+    setUsdcUsdValue
+  ] = useState(null);
+
+
+  const [
+    solUsdValue,
+    setSolUsdValue
+  ] = useState(null);
+
+
+  const [
     depositAsset,
     setDepositAsset
   ] = useState(null);
@@ -1365,6 +1529,18 @@ function App() {
     depositMessage,
     setDepositMessage
   ] = useState("");
+
+
+  const [
+    automationBusy,
+    setAutomationBusy
+  ] = useState(false);
+
+
+  const [
+    automationOverride,
+    setAutomationOverride
+  ] = useState(null);
 
 
   const creationAttempted =
@@ -1962,6 +2138,72 @@ function App() {
     reboundWallet?.id || null;
 
 
+  /*
+   * Privy marks wallets with
+   * additional signers as delegated.
+   *
+   * We only look at the actual
+   * Rebound Wallet address.
+   */
+  const reboundDelegatedByPrivy =
+    useMemo(
+      () => {
+
+        if (
+          !reboundAddress ||
+          !user?.linkedAccounts
+        ) {
+          return false;
+        }
+
+
+        return user
+          .linkedAccounts
+          .some(
+            account => {
+
+              return (
+
+                account?.type ===
+                  "wallet"
+
+                &&
+
+                account?.address ===
+                  reboundAddress
+
+                &&
+
+                account?.delegated ===
+                  true
+
+              );
+
+            }
+          );
+
+      },
+
+      [
+        user,
+        reboundAddress
+      ]
+    );
+
+
+  const automatedTradingEnabled =
+
+    automationOverride !== null
+
+    ?
+
+    automationOverride
+
+    :
+
+    reboundDelegatedByPrivy;
+
+
   /* ==================================================
      ENSURE REBOUND WALLET
   ================================================== */
@@ -2389,6 +2631,22 @@ function App() {
       );
 
 
+      setUsdcUsdValue(
+        result?.balances
+          ?.usdc
+          ?.usdValue ??
+        null
+      );
+
+
+      setSolUsdValue(
+        result?.balances
+          ?.sol
+          ?.usdValue ??
+        null
+      );
+
+
       setBalanceAvailable(true);
 
       setBalanceLoading(false);
@@ -2410,6 +2668,10 @@ function App() {
       setUsdcBalance(null);
 
       setSolBalance(null);
+
+      setUsdcUsdValue(null);
+
+      setSolUsdValue(null);
 
     }
 
@@ -3121,6 +3383,267 @@ function App() {
 
 
   /* ==================================================
+     AUTOMATED TRADING AUTHORIZATION
+  ================================================== */
+
+
+  async function enableAutomatedTrading() {
+
+    if (
+      !accountReady ||
+      !reboundAddress ||
+      automationBusy
+    ) {
+      return;
+    }
+
+
+    setError("");
+
+    setAutomationBusy(true);
+
+
+    try {
+
+      const token =
+        await getAccessToken();
+
+
+      if (!token) {
+
+        throw new Error(
+          "Your login session has expired."
+        );
+
+      }
+
+
+      /*
+       * Retrieve only the public signer ID
+       * and policy ID from our backend.
+       *
+       * The authorization private key
+       * never reaches this browser.
+       */
+
+      const response =
+        await fetch(
+          `${API_BASE}/trading/authorization-config`,
+          {
+
+            headers: {
+
+              "Authorization":
+                `Bearer ${token}`
+
+            }
+
+          }
+        );
+
+
+      const config =
+        await response.json();
+
+
+      if (!response.ok) {
+
+        throw new Error(
+          config?.message ||
+          "Automated trading could not be enabled."
+        );
+
+      }
+
+
+      /*
+       * Critical wallet check:
+       * backend and frontend must refer
+       * to exactly the same Rebound Wallet.
+       */
+
+      if (
+        config?.wallet !==
+        reboundAddress
+      ) {
+
+        throw new Error(
+          "Rebound Wallet verification failed."
+        );
+
+      }
+
+
+      if (
+        !config?.signerId ||
+        !config?.policyId
+      ) {
+
+        throw new Error(
+          "Trading authorization configuration is incomplete."
+        );
+
+      }
+
+
+      /*
+       * Add ASTY_Rebound Key Quorum as an
+       * Additional Signer.
+       *
+       * The attached Privy policy limits
+       * what this signer can execute.
+       */
+
+      await addSigners({
+
+        address:
+          reboundAddress,
+
+        signers: [
+          {
+
+            signerId:
+              config.signerId,
+
+            policyIds: [
+              config.policyId
+            ]
+
+          }
+        ]
+
+      });
+
+
+      setAutomationOverride(
+        true
+      );
+
+
+      setAutomationBusy(
+        false
+      );
+
+    }
+
+    catch (err) {
+
+      console.error(
+        "Enable automated trading:",
+        err
+      );
+
+
+      setAutomationBusy(
+        false
+      );
+
+
+      const message =
+        String(
+          err?.message ||
+          err ||
+          ""
+        );
+
+
+      if (
+        message
+          .toLowerCase()
+          .includes("reject")
+
+        ||
+
+        message
+          .toLowerCase()
+          .includes("cancel")
+      ) {
+
+        setError(
+          "Automated trading authorization was cancelled."
+        );
+
+        return;
+      }
+
+
+      setError(
+        message ||
+        "Automated trading could not be enabled."
+      );
+
+    }
+
+  }
+
+
+  async function disableAutomatedTrading() {
+
+    if (
+      !reboundAddress ||
+      automationBusy
+    ) {
+      return;
+    }
+
+
+    setError("");
+
+    setAutomationBusy(true);
+
+
+    try {
+
+      /*
+       * Removes all Additional Signers
+       * from this Rebound Wallet.
+       *
+       * The user remains owner.
+       */
+
+      await removeSigners({
+
+        address:
+          reboundAddress
+
+      });
+
+
+      setAutomationOverride(
+        false
+      );
+
+
+      setAutomationBusy(
+        false
+      );
+
+    }
+
+    catch (err) {
+
+      console.error(
+        "Disable automated trading:",
+        err
+      );
+
+
+      setAutomationBusy(
+        false
+      );
+
+
+      setError(
+        err?.message ||
+        "Automated trading authorization could not be revoked."
+      );
+
+    }
+
+  }
+
+
+  /* ==================================================
      COPY WALLET
   ================================================== */
 
@@ -3175,6 +3698,10 @@ function App() {
 
     setSolBalance(null);
 
+    setUsdcUsdValue(null);
+
+    setSolUsdValue(null);
+
     setBalanceAvailable(false);
 
     setSyncState(
@@ -3189,6 +3716,9 @@ function App() {
     setDepositSignature("");
 
     setDepositMessage("");
+
+
+    setAutomationOverride(null);
 
 
     syncAttempted.current =
@@ -3748,6 +4278,30 @@ function App() {
 
                 e(
 
+                  "div",
+
+                  {
+                    className:
+                      "usd-value"
+                  },
+
+                  balanceAvailable
+
+                  ?
+
+                  formatUsdApprox(
+                    usdcUsdValue
+                  )
+
+                  :
+
+                  "—"
+
+                ),
+
+
+                e(
+
                   "button",
 
                   {
@@ -3846,6 +4400,30 @@ function App() {
 
                 e(
 
+                  "div",
+
+                  {
+                    className:
+                      "usd-value"
+                  },
+
+                  balanceAvailable
+
+                  ?
+
+                  formatUsdApprox(
+                    solUsdValue
+                  )
+
+                  :
+
+                  "—"
+
+                ),
+
+
+                e(
+
                   "button",
 
                   {
@@ -3916,6 +4494,179 @@ function App() {
             "Preparing your Rebound account…"
 
           ),
+
+
+          /* AUTOMATED TRADING */
+
+          accountReady
+
+          ?
+
+          e(
+
+            "div",
+
+            {
+              className:
+                "automation-box"
+            },
+
+
+            e(
+
+              "div",
+
+              {
+                className:
+                  "automation-head"
+              },
+
+
+              e(
+
+                "div",
+
+                {
+                  className:
+                    "automation-title"
+                },
+
+                "Automated Trading"
+
+              ),
+
+
+              e(
+
+                "div",
+
+                {
+                  className:
+
+                    automatedTradingEnabled
+
+                    ?
+
+                    "automation-state automation-enabled"
+
+                    :
+
+                    "automation-state automation-disabled"
+                },
+
+                automatedTradingEnabled
+                  ? "Enabled"
+                  : "Disabled"
+
+              )
+
+            ),
+
+
+            e(
+
+              "div",
+
+              {
+                className:
+                  "automation-description"
+              },
+
+              automatedTradingEnabled
+
+              ?
+
+              "ASTY Rebound is authorized to execute policy-protected trading transactions from this Rebound Wallet while you are offline."
+
+              :
+
+              "Enable automated access so ASTY Rebound can execute your strategy even when your browser or phone is closed."
+
+            ),
+
+
+            e(
+
+              "div",
+
+              {
+                className:
+                  "automation-note"
+              },
+
+              automatedTradingEnabled
+
+              ?
+
+              "No strategy runs until you explicitly create and start one. Withdrawals are not part of this trading authorization."
+
+              :
+
+              "Trading access is restricted by the ASTY Rebound Trading Policy. Withdrawals are handled separately."
+
+            ),
+
+
+            e(
+
+              "button",
+
+              {
+                className:
+
+                  automatedTradingEnabled
+
+                  ?
+
+                  "automation-button automation-button-disable"
+
+                  :
+
+                  "automation-button automation-button-enable",
+
+
+                disabled:
+                  automationBusy,
+
+
+                onClick:
+
+                  automatedTradingEnabled
+
+                  ?
+
+                  disableAutomatedTrading
+
+                  :
+
+                  enableAutomatedTrading
+              },
+
+              automationBusy
+
+              ?
+
+              "Updating permission…"
+
+              :
+
+              automatedTradingEnabled
+
+              ?
+
+              "Disable Automated Trading"
+
+              :
+
+              "Enable Automated Trading"
+
+            )
+
+          )
+
+          :
+
+          null,
 
 
           /* DEPOSIT STATUS */
@@ -4004,12 +4755,7 @@ function App() {
 
             {
               className:
-                "wallet-box",
-
-              style: {
-                marginTop:
-                  "14px"
-              }
+                "wallet-box"
             },
 
 
@@ -4120,7 +4866,8 @@ function App() {
                 handleLogout,
 
               disabled:
-                depositBusy
+                depositBusy ||
+                automationBusy
             },
 
             "Log out"
@@ -4161,7 +4908,7 @@ function App() {
               "fineprint"
           },
 
-          "Prototype. Automated trading is not active yet."
+          "No strategy runs until you explicitly create and start one."
 
         )
 
@@ -4288,7 +5035,7 @@ function App() {
               inputMode:
                 "decimal",
 
-              autocomplete:
+              autoComplete:
                 "off",
 
               placeholder:
