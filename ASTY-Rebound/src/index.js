@@ -7,15 +7,11 @@ const ALLOWED_ORIGINS = new Set([
 
 const HELIUS_RPC_BASE = "https://mainnet.helius-rpc.com/";
 const JUPITER_SWAP_BASE = "https://api.jup.ag/swap/v1";
+const JUPITER_PRICE_URL = "https://api.jup.ag/price/v3";
 
-const ASTY_MINT =
-  "ASTYqeaoK83Zs1pTFEXZUB6BM8cG8YLTsN852NUkt7ZR";
-
-const USDC_MINT =
-  "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v";
-
-const WSOL_MINT =
-  "So11111111111111111111111111111111111111112";
+const ASTY_MINT = "ASTYqeaoK83Zs1pTFEXZUB6BM8cG8YLTsN852NUkt7ZR";
+const USDC_MINT = "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v";
+const WSOL_MINT = "So11111111111111111111111111111111111111112";
 
 const JUPITER_PROGRAM_ID =
   "JUP6LkbZbjS1jKKwapdHNy74zcZ3tLUZoi5QNyVTaV4";
@@ -29,37 +25,29 @@ const SOLANA_MAINNET_CAIP2 =
 const ASTY_DECIMALS = 9;
 const USDC_DECIMALS = 6;
 const SOL_DECIMALS = 9;
+const PRICE_MICRO_DECIMALS = 6;
 
-const MIN_STRATEGY_USDC_RAW =
-  25_000_000n;
+const MIN_STRATEGY_USDC_RAW = 25_000_000n;
+const ASTY_GATE_RAW = 2_500n * 10n ** 9n;
+const TEST_SWAP_USDC_RAW = 100_000n;
+const TEST_SWAP_SLIPPAGE_BPS = 50;
 
-const ASTY_GATE_RAW =
-  2_500n *
-  10n ** 9n;
+const PRESETS = Object.freeze({
+  frequent: {
+    dipBps: 300,
+    takeProfitBps: 250,
+  },
 
-const TEST_SWAP_USDC_RAW =
-  100000n;
+  balanced: {
+    dipBps: 500,
+    takeProfitBps: 400,
+  },
 
-const TEST_SWAP_SLIPPAGE_BPS =
-  50;
-
-const PRESETS =
-  Object.freeze({
-    frequent: {
-      dipBps: 300,
-      takeProfitBps: 250,
-    },
-
-    balanced: {
-      dipBps: 500,
-      takeProfitBps: 400,
-    },
-
-    deep_dip: {
-      dipBps: 800,
-      takeProfitBps: 600,
-    },
-  });
+  deep_dip: {
+    dipBps: 800,
+    takeProfitBps: 600,
+  },
+});
 
 const ACTIVE_STRATEGY_STATUSES = [
   "WATCHING",
@@ -80,11 +68,8 @@ let solPriceCache = {
 ================================================== */
 
 function corsHeaders(request) {
-
   const origin =
-    request.headers.get(
-      "Origin"
-    );
+    request.headers.get("Origin");
 
   const headers = {
     "Content-Type":
@@ -96,30 +81,22 @@ function corsHeaders(request) {
 
   if (
     origin &&
-    ALLOWED_ORIGINS.has(
-      origin
-    )
+    ALLOWED_ORIGINS.has(origin)
   ) {
-
     headers[
       "Access-Control-Allow-Origin"
-    ] =
-      origin;
+    ] = origin;
 
-    headers[
-      "Vary"
-    ] =
+    headers.Vary =
       "Origin";
 
     headers[
       "Access-Control-Allow-Methods"
-    ] =
-      "GET,POST,OPTIONS";
+    ] = "GET,POST,OPTIONS";
 
     headers[
       "Access-Control-Allow-Headers"
-    ] =
-      "Content-Type, Authorization";
+    ] = "Content-Type, Authorization";
   }
 
   return headers;
@@ -131,7 +108,6 @@ function json(
   data,
   status = 200
 ) {
-
   return new Response(
     JSON.stringify(
       data,
@@ -141,16 +117,13 @@ function json(
     {
       status,
       headers:
-        corsHeaders(
-          request
-        ),
+        corsHeaders(request),
     }
   );
 }
 
 
 function createPrivyClient(env) {
-
   return new PrivyClient({
     appId:
       env.PRIVY_APP_ID,
@@ -161,14 +134,10 @@ function createPrivyClient(env) {
 }
 
 
-function createAuthorizationContext(
-  env
-) {
-
+function createAuthorizationContext(env) {
   if (
     !env.PRIVY_AUTH_PRIVATE_KEY
   ) {
-
     throw new Error(
       "PRIVY_AUTH_PRIVATE_KEY is not configured."
     );
@@ -182,10 +151,7 @@ function createAuthorizationContext(
 }
 
 
-function getBearerToken(
-  request
-) {
-
+function getBearerToken(request) {
   const auth =
     request.headers.get(
       "Authorization"
@@ -201,42 +167,25 @@ function getBearerToken(
 }
 
 
-function isSolanaAddress(
-  value
-) {
-
+function isSolanaAddress(value) {
   return (
-    typeof value ===
-      "string"
-    &&
+    typeof value === "string" &&
     /^[1-9A-HJ-NP-Za-km-z]{32,44}$/
-      .test(
-        value
-      )
+      .test(value)
   );
 }
 
 
-function isTransactionSignature(
-  value
-) {
-
+function isTransactionSignature(value) {
   return (
-    typeof value ===
-      "string"
-    &&
+    typeof value === "string" &&
     /^[1-9A-HJ-NP-Za-km-z]{80,100}$/
-      .test(
-        value
-      )
+      .test(value)
   );
 }
 
 
-function isPositiveAmount(
-  value
-) {
-
+function isPositiveAmount(value) {
   const text =
     String(
       value ?? ""
@@ -244,19 +193,11 @@ function isPositiveAmount(
 
   return (
     /^\d+(\.\d+)?$/
-      .test(
-        text
-      )
-    &&
+      .test(text) &&
     Number.isFinite(
-      Number(
-        text
-      )
-    )
-    &&
-    Number(
-      text
-    ) > 0
+      Number(text)
+    ) &&
+    Number(text) > 0
   );
 }
 
@@ -265,7 +206,6 @@ function parseDecimalToRaw(
   value,
   decimals
 ) {
-
   const text =
     String(
       value ?? ""
@@ -273,11 +213,8 @@ function parseDecimalToRaw(
 
   if (
     !/^\d+(\.\d+)?$/
-      .test(
-        text
-      )
+      .test(text)
   ) {
-
     throw new Error(
       "Invalid decimal amount."
     );
@@ -287,29 +224,21 @@ function parseDecimalToRaw(
     whole,
     fraction = ""
   ] =
-    text.split(
-      "."
-    );
+    text.split(".");
 
   if (
     fraction.length >
     decimals
   ) {
-
     throw new Error(
       `Maximum ${decimals} decimal places.`
     );
   }
 
   return (
-    BigInt(
-      whole
-    )
-    *
-    10n **
-    BigInt(
-      decimals
-    )
+    BigInt(whole) *
+      10n **
+      BigInt(decimals)
     +
     BigInt(
       fraction
@@ -328,14 +257,11 @@ function formatUnits(
   rawValue,
   decimals
 ) {
-
   const raw =
     typeof rawValue ===
       "bigint"
       ? rawValue
-      : BigInt(
-          rawValue
-        );
+      : BigInt(rawValue);
 
   const negative =
     raw < 0n;
@@ -347,9 +273,7 @@ function formatUnits(
 
   const base =
     10n **
-    BigInt(
-      decimals
-    );
+    BigInt(decimals);
 
   const whole =
     absolute /
@@ -365,7 +289,6 @@ function formatUnits(
   if (
     decimals > 0
   ) {
-
     result +=
       "." +
       fraction
@@ -382,16 +305,42 @@ function formatUnits(
 }
 
 
-function utf8ToBase64(
-  value
-) {
+function formatMicroUsd(rawValue) {
+  if (
+    rawValue == null
+  ) {
+    return null;
+  }
 
+  const text =
+    formatUnits(
+      BigInt(
+        String(rawValue)
+      ),
+      PRICE_MICRO_DECIMALS
+    );
+
+  return (
+    text
+      .replace(
+        /0+$/,
+        ""
+      )
+      .replace(
+        /\.$/,
+        ""
+      )
+    ||
+    "0"
+  );
+}
+
+
+function utf8ToBase64(value) {
   const bytes =
     new TextEncoder()
       .encode(
-        String(
-          value
-        )
+        String(value)
       );
 
   let binary =
@@ -401,21 +350,17 @@ function utf8ToBase64(
     const byte
     of bytes
   ) {
-
     binary +=
       String.fromCharCode(
         byte
       );
   }
 
-  return btoa(
-    binary
-  );
+  return btoa(binary);
 }
 
 
 function sleep(ms) {
-
   return new Promise(
     resolve =>
       setTimeout(
@@ -426,10 +371,7 @@ function sleep(ms) {
 }
 
 
-function getSafePrivyError(
-  error
-) {
-
+function getSafePrivyError(error) {
   const status =
     Number.isFinite(
       Number(
@@ -462,9 +404,7 @@ function getSafePrivyError(
     code:
       code == null
         ? null
-        : String(
-            code
-          ),
+        : String(code),
 
     message:
       typeof error?.message ===
@@ -479,22 +419,15 @@ function getSafePrivyError(
 }
 
 
-function looksLikePolicyDenial(
-  info
-) {
-
+function looksLikePolicyDenial(info) {
   const text =
     [
       info?.name,
       info?.code,
       info?.message,
     ]
-      .filter(
-        Boolean
-      )
-      .join(
-        " "
-      )
+      .filter(Boolean)
+      .join(" ")
       .toLowerCase();
 
   return (
@@ -525,41 +458,29 @@ function normalizeBoolean(
   value,
   defaultValue = false
 ) {
-
   if (
-    value === undefined
-    ||
-    value === null
-    ||
+    value === undefined ||
+    value === null ||
     value === ""
   ) {
-
     return defaultValue;
   }
 
   if (
-    value === true
-    ||
-    value === 1
-    ||
-    value === "1"
-    ||
+    value === true ||
+    value === 1 ||
+    value === "1" ||
     value === "true"
   ) {
-
     return true;
   }
 
   if (
-    value === false
-    ||
-    value === 0
-    ||
-    value === "0"
-    ||
+    value === false ||
+    value === 0 ||
+    value === "0" ||
     value === "false"
   ) {
-
     return false;
   }
 
@@ -574,25 +495,19 @@ function normalizeBps(
   fieldName,
   {
     min = 1,
-    max = 10000
+    max = 10000,
   } = {}
 ) {
-
   const number =
-    Number(
-      value
-    );
+    Number(value);
 
   if (
     !Number.isInteger(
       number
-    )
-    ||
-    number < min
-    ||
+    ) ||
+    number < min ||
     number > max
   ) {
-
     throw new Error(
       `${fieldName} must be an integer between ${min} and ${max} basis points.`
     );
@@ -603,14 +518,11 @@ function normalizeBps(
 
 
 function activeStatusSqlPlaceholders() {
-
   return ACTIVE_STRATEGY_STATUSES
     .map(
       () => "?"
     )
-    .join(
-      ","
-    );
+    .join(",");
 }
 
 
@@ -622,7 +534,6 @@ async function verifyPrivyRequest(
   request,
   env
 ) {
-
   const accessToken =
     getBearerToken(
       request
@@ -631,7 +542,6 @@ async function verifyPrivyRequest(
   if (
     !accessToken
   ) {
-
     return {
       ok: false,
       status: 401,
@@ -641,7 +551,6 @@ async function verifyPrivyRequest(
   }
 
   try {
-
     const claims =
       await createPrivyClient(
         env
@@ -655,7 +564,6 @@ async function verifyPrivyRequest(
     if (
       !claims?.user_id
     ) {
-
       return {
         ok: false,
         status: 401,
@@ -673,7 +581,6 @@ async function verifyPrivyRequest(
 
   }
   catch(error) {
-
     console.error(
       "Privy verification error:",
       error
@@ -697,7 +604,6 @@ async function getReboundAccount(
   env,
   privyUserId
 ) {
-
   return env.DB
     .prepare(
       `
@@ -724,14 +630,10 @@ async function getReboundAccount(
    HELIUS
 ================================================== */
 
-function getHeliusUrl(
-  env
-) {
-
+function getHeliusUrl(env) {
   if (
     !env.HELIUS_API_KEY
   ) {
-
     throw new Error(
       "HELIUS_API_KEY is not configured."
     );
@@ -754,12 +656,9 @@ async function heliusRpc(
   method,
   params
 ) {
-
   const response =
     await fetch(
-      getHeliusUrl(
-        env
-      ),
+      getHeliusUrl(env),
       {
         method:
           "POST",
@@ -790,7 +689,6 @@ async function heliusRpc(
   if (
     !response.ok
   ) {
-
     const body =
       await response.text();
 
@@ -805,7 +703,6 @@ async function heliusRpc(
   if (
     data?.error
   ) {
-
     throw new Error(
       data.error?.message
       ||
@@ -829,7 +726,6 @@ async function getSolBalance(
   env,
   walletAddress
 ) {
-
   const result =
     await heliusRpc(
       env,
@@ -864,7 +760,7 @@ async function getSolBalance(
 
 
 /* ==================================================
-   GENERIC SPL TOKEN BALANCE
+   TOKEN BALANCE
 ================================================== */
 
 async function getTokenBalanceViaDas(
@@ -873,7 +769,6 @@ async function getTokenBalanceViaDas(
   mint,
   decimals
 ) {
-
   const result =
     await heliusRpc(
       env,
@@ -905,13 +800,11 @@ async function getTokenBalanceViaDas(
     const account
     of accounts
   ) {
-
     if (
       account?.amount
       !=
       null
     ) {
-
       totalRaw +=
         BigInt(
           String(
@@ -943,7 +836,6 @@ async function getTokenBalanceViaStandardRpc(
   mint,
   decimals
 ) {
-
   const result =
     await heliusRpc(
       env,
@@ -979,7 +871,6 @@ async function getTokenBalanceViaStandardRpc(
     const tokenAccount
     of accounts
   ) {
-
     const amount =
       tokenAccount
         ?.account
@@ -991,13 +882,10 @@ async function getTokenBalanceViaStandardRpc(
 
     if (
       typeof amount ===
-        "string"
+      "string"
     ) {
-
       totalRaw +=
-        BigInt(
-          amount
-        );
+        BigInt(amount);
     }
   }
 
@@ -1023,19 +911,15 @@ async function getTokenBalance(
   mint,
   decimals
 ) {
-
   try {
-
     return await getTokenBalanceViaDas(
       env,
       walletAddress,
       mint,
       decimals
     );
-
   }
   catch(error) {
-
     console.error(
       `DAS token lookup failed for ${mint}; using standard RPC:`,
       error
@@ -1055,7 +939,6 @@ async function getUsdcBalance(
   env,
   walletAddress
 ) {
-
   return getTokenBalance(
     env,
     walletAddress,
@@ -1069,7 +952,6 @@ async function getAstyBalance(
   env,
   walletAddress
 ) {
-
   return getTokenBalance(
     env,
     walletAddress,
@@ -1087,9 +969,7 @@ async function getWsolTokenAccount(
   env,
   walletAddress
 ) {
-
   try {
-
     const result =
       await heliusRpc(
         env,
@@ -1136,7 +1016,6 @@ async function getWsolTokenAccount(
     if (
       account
     ) {
-
       const raw =
         BigInt(
           String(
@@ -1168,7 +1047,6 @@ async function getWsolTokenAccount(
     }
   }
   catch(error) {
-
     console.error(
       "DAS WSOL lookup failed; using standard RPC:",
       error
@@ -1225,7 +1103,6 @@ async function getWsolTokenAccount(
   if (
     !tokenAccount
   ) {
-
     return {
       ready:
         false,
@@ -1285,22 +1162,15 @@ async function getWsolTokenAccount(
    SOL DISPLAY PRICE
 ================================================== */
 
-async function getSolUsdPrice(
-  env
-) {
-
+async function getSolUsdPrice(env) {
   const now =
     Date.now();
 
   if (
-    solPriceCache.price
-      !=
-      null
-    &&
+    solPriceCache.price != null &&
     now <
       solPriceCache.expiresAt
   ) {
-
     return solPriceCache.price;
   }
 
@@ -1334,7 +1204,6 @@ async function getSolUsdPrice(
     ||
     price <= 0
   ) {
-
     throw new Error(
       "SOL USD price unavailable."
     );
@@ -1356,10 +1225,7 @@ async function getSolUsdPrice(
    BLOCKHASH
 ================================================== */
 
-async function getLatestBlockhash(
-  env
-) {
-
+async function getLatestBlockhash(env) {
   const result =
     await heliusRpc(
       env,
@@ -1385,7 +1251,6 @@ async function getLatestBlockhash(
     ||
     !lastValidBlockHeight
   ) {
-
     throw new Error(
       "Could not obtain a fresh Solana blockhash."
     );
@@ -1407,13 +1272,10 @@ async function getPrivyDelegatedWallet(
   userId,
   reboundWalletAddress
 ) {
-
   const privyUser =
     await privy
       .users()
-      ._get(
-        userId
-      );
+      ._get(userId);
 
   const linkedAccounts =
     Array.isArray(
@@ -1445,7 +1307,7 @@ async function getPrivyDelegatedWallet(
 
 
 /* ==================================================
-   JUPITER
+   JUPITER SWAP
 ================================================== */
 
 async function jupiterFetch(
@@ -1453,7 +1315,6 @@ async function jupiterFetch(
   path,
   options = {}
 ) {
-
   let lastError =
     null;
 
@@ -1462,9 +1323,7 @@ async function jupiterFetch(
     attempt < 3;
     attempt++
   ) {
-
     try {
-
       const response =
         await fetch(
           JUPITER_SWAP_BASE
@@ -1511,17 +1370,12 @@ async function jupiterFetch(
         null;
 
       try {
-
         data =
           text
-            ? JSON.parse(
-                text
-              )
+            ? JSON.parse(text)
             : null;
-
       }
       catch {
-
         data =
           null;
       }
@@ -1529,7 +1383,6 @@ async function jupiterFetch(
       if (
         !response.ok
       ) {
-
         const message =
           data?.error
           ||
@@ -1538,9 +1391,7 @@ async function jupiterFetch(
           `Jupiter HTTP ${response.status}: ${text.slice(0,240)}`;
 
         lastError =
-          new Error(
-            message
-          );
+          new Error(message);
 
         if (
           response.status ===
@@ -1548,7 +1399,6 @@ async function jupiterFetch(
           &&
           attempt < 2
         ) {
-
           await sleep(
             2200 *
             (
@@ -1563,17 +1413,14 @@ async function jupiterFetch(
       }
 
       return data;
-
     }
     catch(error) {
-
       lastError =
         error;
 
       if (
         attempt < 2
       ) {
-
         await sleep(
           700 *
           (
@@ -1596,10 +1443,119 @@ async function jupiterFetch(
 }
 
 
-function instructionProgramIds(
-  plan
-) {
+/* ==================================================
+   JUPITER PRICE WATCHER PRICE
+================================================== */
 
+async function getJupiterSolPriceMicroUsdc(env) {
+  const url =
+    new URL(
+      JUPITER_PRICE_URL
+    );
+
+  url.searchParams.set(
+    "ids",
+    WSOL_MINT
+  );
+
+  const response =
+    await fetch(
+      url.toString(),
+      {
+        headers: {
+          Accept:
+            "application/json",
+
+          ...(
+            env.JUPITER_API_KEY
+              ? {
+                  "x-api-key":
+                    env.JUPITER_API_KEY,
+                }
+              : {}
+          ),
+        },
+      }
+    );
+
+  const text =
+    await response.text();
+
+  let data =
+    null;
+
+  try {
+    data =
+      text
+        ? JSON.parse(text)
+        : null;
+  }
+  catch {
+    data =
+      null;
+  }
+
+  if (
+    !response.ok
+  ) {
+    throw new Error(
+      data?.message
+      ||
+      data?.error
+      ||
+      `Jupiter Price HTTP ${response.status}: ${text.slice(0,240)}`
+    );
+  }
+
+  const usdPrice =
+    Number(
+      data
+        ?.[WSOL_MINT]
+        ?.usdPrice
+    );
+
+  if (
+    !Number.isFinite(
+      usdPrice
+    )
+    ||
+    usdPrice <= 0
+  ) {
+    throw new Error(
+      "Jupiter Price API did not return a valid SOL price."
+    );
+  }
+
+  const micro =
+    BigInt(
+      Math.round(
+        usdPrice *
+        1_000_000
+      )
+    );
+
+  return {
+    micro,
+    usdPrice,
+
+    blockId:
+      data
+        ?.[WSOL_MINT]
+        ?.blockId
+      ??
+      null,
+
+    priceChange24h:
+      data
+        ?.[WSOL_MINT]
+        ?.priceChange24h
+      ??
+      null,
+  };
+}
+
+
+function instructionProgramIds(plan) {
   const ids =
     [];
 
@@ -1610,11 +1566,9 @@ function instructionProgramIds(
       ||
       []
   ) {
-
     if (
       item?.programId
     ) {
-
       ids.push(
         item.programId
       );
@@ -1628,11 +1582,9 @@ function instructionProgramIds(
       ||
       []
   ) {
-
     if (
       item?.programId
     ) {
-
       ids.push(
         item.programId
       );
@@ -1644,7 +1596,6 @@ function instructionProgramIds(
       ?.tokenLedgerInstruction
       ?.programId
   ) {
-
     ids.push(
       plan
         .tokenLedgerInstruction
@@ -1657,7 +1608,6 @@ function instructionProgramIds(
       ?.swapInstruction
       ?.programId
   ) {
-
     ids.push(
       plan
         .swapInstruction
@@ -1670,7 +1620,6 @@ function instructionProgramIds(
       ?.cleanupInstruction
       ?.programId
   ) {
-
     ids.push(
       plan
         .cleanupInstruction
@@ -1685,11 +1634,9 @@ function instructionProgramIds(
       ||
       []
   ) {
-
     if (
       item?.programId
     ) {
-
       ids.push(
         item.programId
       );
@@ -1697,17 +1644,12 @@ function instructionProgramIds(
   }
 
   return [
-    ...new Set(
-      ids
-    ),
+    ...new Set(ids),
   ];
 }
 
 
-function extractPrivyTxHash(
-  result
-) {
-
+function extractPrivyTxHash(result) {
   return (
     result?.hash
     ||
@@ -1726,14 +1668,10 @@ function extractPrivyTxHash(
    STRATEGY HELPERS
 ================================================== */
 
-function normalizeStrategyRow(
-  row
-) {
-
+function normalizeStrategyRow(row) {
   if (
     !row
   ) {
-
     return null;
   }
 
@@ -1839,63 +1777,64 @@ function normalizeStrategyRow(
       ),
 
     hwmPriceMicroUsdc:
-      row.hwm_price_micro_usdc
-        ==
-        null
+      row.hwm_price_micro_usdc == null
         ? null
         : String(
             row.hwm_price_micro_usdc
           ),
 
     currentPriceMicroUsdc:
-      row.current_price_micro_usdc
-        ==
-        null
+      row.current_price_micro_usdc == null
         ? null
         : String(
             row.current_price_micro_usdc
           ),
 
     buyTriggerPriceMicroUsdc:
-      row.buy_trigger_price_micro_usdc
-        ==
-        null
+      row.buy_trigger_price_micro_usdc == null
         ? null
         : String(
             row.buy_trigger_price_micro_usdc
           ),
 
+    hwmPriceUsd:
+      formatMicroUsd(
+        row.hwm_price_micro_usdc
+      ),
+
+    currentPriceUsd:
+      formatMicroUsd(
+        row.current_price_micro_usdc
+      ),
+
+    buyTriggerPriceUsd:
+      formatMicroUsd(
+        row.buy_trigger_price_micro_usdc
+      ),
+
     buyFillPriceMicroUsdc:
-      row.buy_fill_price_micro_usdc
-        ==
-        null
+      row.buy_fill_price_micro_usdc == null
         ? null
         : String(
             row.buy_fill_price_micro_usdc
           ),
 
     takeProfitPriceMicroUsdc:
-      row.take_profit_price_micro_usdc
-        ==
-        null
+      row.take_profit_price_micro_usdc == null
         ? null
         : String(
             row.take_profit_price_micro_usdc
           ),
 
     stopLossPriceMicroUsdc:
-      row.stop_loss_price_micro_usdc
-        ==
-        null
+      row.stop_loss_price_micro_usdc == null
         ? null
         : String(
             row.stop_loss_price_micro_usdc
           ),
 
     entryWsolRaw:
-      row.entry_wsol_raw
-        ==
-        null
+      row.entry_wsol_raw == null
         ? null
         : String(
             row.entry_wsol_raw
@@ -1981,15 +1920,17 @@ async function getReservedCapitalRaw(
   env,
   privyUserId
 ) {
-
   const row =
     await env.DB
       .prepare(
         `
         SELECT
-          COALESCE(
-            SUM(reserved_capital_usdc_raw),
-            0
+          CAST(
+            COALESCE(
+              SUM(reserved_capital_usdc_raw),
+              0
+            )
+            AS TEXT
           ) AS reserved_raw
         FROM rebound_strategies
         WHERE privy_user_id = ?
@@ -2014,10 +1955,7 @@ async function getReservedCapitalRaw(
 }
 
 
-function resolveStrategyConfiguration(
-  body
-) {
-
+function resolveStrategyConfiguration(body) {
   const preset =
     String(
       body?.preset
@@ -2031,11 +1969,8 @@ function resolveStrategyConfiguration(
   let takeProfitBps;
 
   if (
-    PRESETS[
-      preset
-    ]
+    PRESETS[preset]
   ) {
-
     dipBps =
       PRESETS[
         preset
@@ -2045,13 +1980,11 @@ function resolveStrategyConfiguration(
       PRESETS[
         preset
       ].takeProfitBps;
-
   }
   else if (
     preset ===
     "custom"
   ) {
-
     dipBps =
       normalizeBps(
         body?.dipBps,
@@ -2071,10 +2004,8 @@ function resolveStrategyConfiguration(
           max: 10000,
         }
       );
-
   }
   else {
-
     throw new Error(
       "Unsupported strategy preset."
     );
@@ -2098,26 +2029,404 @@ function resolveStrategyConfiguration(
         )
       : null;
 
-  const autoRepeat =
-    normalizeBoolean(
-      body?.autoRepeat,
-      false
-    );
-
-  const compound =
-    normalizeBoolean(
-      body?.compound,
-      false
-    );
-
   return {
     preset,
     dipBps,
     takeProfitBps,
     stopLossEnabled,
     stopLossBps,
-    autoRepeat,
-    compound,
+
+    autoRepeat:
+      normalizeBoolean(
+        body?.autoRepeat,
+        false
+      ),
+
+    compound:
+      normalizeBoolean(
+        body?.compound,
+        false
+      ),
+  };
+}
+
+
+/* ==================================================
+   WATCHER
+================================================== */
+
+async function loadWatchingStrategies(
+  env,
+  privyUserId = null
+) {
+  const sql =
+    privyUserId
+      ? `
+        SELECT *
+        FROM rebound_strategies
+        WHERE status = 'WATCHING'
+          AND asset_symbol = 'SOL'
+          AND privy_user_id = ?
+        ORDER BY created_at ASC
+        `
+      : `
+        SELECT *
+        FROM rebound_strategies
+        WHERE status = 'WATCHING'
+          AND asset_symbol = 'SOL'
+        ORDER BY created_at ASC
+        `;
+
+  const result =
+    privyUserId
+      ? await env.DB
+          .prepare(sql)
+          .bind(
+            privyUserId
+          )
+          .all()
+
+      : await env.DB
+          .prepare(sql)
+          .all();
+
+  return Array.isArray(
+    result?.results
+  )
+    ? result.results
+    : [];
+}
+
+
+function priceMoveFraction(
+  previousRaw,
+  nextRaw
+) {
+  const previous =
+    Number(
+      previousRaw
+    );
+
+  const next =
+    Number(
+      nextRaw
+    );
+
+  if (
+    !Number.isFinite(
+      previous
+    )
+    ||
+    previous <= 0
+    ||
+    !Number.isFinite(
+      next
+    )
+    ||
+    next <= 0
+  ) {
+    return 0;
+  }
+
+  return (
+    Math.abs(
+      next -
+      previous
+    )
+    /
+    previous
+  );
+}
+
+
+async function runPriceWatcher(
+  env,
+  {
+    source = "cron",
+    privyUserId = null,
+  } = {}
+) {
+  const strategies =
+    await loadWatchingStrategies(
+      env,
+      privyUserId
+    );
+
+  if (
+    strategies.length === 0
+  ) {
+    return {
+      ok: true,
+
+      mode:
+        "watch-only",
+
+      executionEnabled:
+        false,
+
+      source,
+
+      checked:
+        0,
+
+      updated:
+        0,
+
+      triggered:
+        0,
+
+      message:
+        "No WATCHING SOL strategies found.",
+    };
+  }
+
+  let priceInfo =
+    await getJupiterSolPriceMicroUsdc(
+      env
+    );
+
+  let needsConfirmation =
+    false;
+
+  for (
+    const strategy
+    of strategies
+  ) {
+    if (
+      strategy
+        .current_price_micro_usdc
+      !=
+      null
+      &&
+      priceMoveFraction(
+        strategy
+          .current_price_micro_usdc,
+        priceInfo.micro
+      ) > 0.20
+    ) {
+      needsConfirmation =
+        true;
+
+      break;
+    }
+  }
+
+  let safetyConfirmation =
+    null;
+
+  if (
+    needsConfirmation
+  ) {
+    await sleep(
+      1200
+    );
+
+    const second =
+      await getJupiterSolPriceMicroUsdc(
+        env
+      );
+
+    const betweenChecks =
+      priceMoveFraction(
+        priceInfo.micro,
+        second.micro
+      );
+
+    if (
+      betweenChecks >
+      0.02
+    ) {
+      throw new Error(
+        "Watcher safety check rejected an unstable >20% price move. No strategy state was changed."
+      );
+    }
+
+    priceInfo =
+      second;
+
+    safetyConfirmation =
+      "confirmed";
+  }
+
+  let updated =
+    0;
+
+  let triggered =
+    0;
+
+  const current =
+    priceInfo.micro;
+
+  for (
+    const strategy
+    of strategies
+  ) {
+    const oldHwm =
+      strategy
+        .hwm_price_micro_usdc
+      ==
+      null
+        ? null
+        : BigInt(
+            String(
+              strategy
+                .hwm_price_micro_usdc
+            )
+          );
+
+    const hwm =
+      oldHwm == null
+      ||
+      current >
+      oldHwm
+        ? current
+        : oldHwm;
+
+    const dipBps =
+      BigInt(
+        Number(
+          strategy.dip_bps
+        )
+      );
+
+    const trigger =
+      hwm *
+      (
+        10_000n -
+        dipBps
+      )
+      /
+      10_000n;
+
+    const shouldTrigger =
+      current <=
+      trigger;
+
+    let result;
+
+    if (
+      shouldTrigger
+    ) {
+      result =
+        await env.DB
+          .prepare(
+            `
+            UPDATE rebound_strategies
+            SET
+              status = 'BUY_TRIGGERED',
+              current_price_micro_usdc = ?,
+              hwm_price_micro_usdc = ?,
+              buy_trigger_price_micro_usdc = ?,
+              buy_triggered_at =
+                COALESCE(
+                  buy_triggered_at,
+                  CURRENT_TIMESTAMP
+                ),
+              last_price_at =
+                CURRENT_TIMESTAMP,
+              updated_at =
+                CURRENT_TIMESTAMP
+            WHERE id = ?
+              AND status = 'WATCHING'
+            `
+          )
+          .bind(
+            current.toString(),
+            hwm.toString(),
+            trigger.toString(),
+            strategy.id
+          )
+          .run();
+    }
+    else {
+      result =
+        await env.DB
+          .prepare(
+            `
+            UPDATE rebound_strategies
+            SET
+              current_price_micro_usdc = ?,
+              hwm_price_micro_usdc = ?,
+              buy_trigger_price_micro_usdc = ?,
+              last_price_at =
+                CURRENT_TIMESTAMP,
+              updated_at =
+                CURRENT_TIMESTAMP
+            WHERE id = ?
+              AND status = 'WATCHING'
+            `
+          )
+          .bind(
+            current.toString(),
+            hwm.toString(),
+            trigger.toString(),
+            strategy.id
+          )
+          .run();
+    }
+
+    const changed =
+      Number(
+        result?.meta?.changes
+        ??
+        0
+      );
+
+    if (
+      changed > 0
+    ) {
+      updated +=
+        changed;
+
+      if (
+        shouldTrigger
+      ) {
+        triggered +=
+          changed;
+      }
+    }
+  }
+
+  return {
+    ok: true,
+
+    mode:
+      "watch-only",
+
+    executionEnabled:
+      false,
+
+    source,
+
+    checked:
+      strategies.length,
+
+    updated,
+
+    triggered,
+
+    currentPriceMicroUsdc:
+      current.toString(),
+
+    currentPriceUsd:
+      formatMicroUsd(
+        current
+      ),
+
+    priceSource:
+      "Jupiter Price API V3",
+
+    priceBlockId:
+      priceInfo.blockId,
+
+    priceChange24h:
+      priceInfo.priceChange24h,
+
+    safetyConfirmation,
+
+    checkedAt:
+      new Date()
+        .toISOString(),
   };
 }
 
@@ -2126,10 +2435,7 @@ function resolveStrategyConfiguration(
    ROOT
 ================================================== */
 
-async function handleRoot(
-  request
-) {
-
+async function handleRoot(request) {
   return json(
     request,
     {
@@ -2145,8 +2451,18 @@ async function handleRoot(
       displayPriceSource:
         "Helius DAS",
 
-      endpoints: {
+      watcher: {
+        mode:
+          "watch-only",
 
+        executionEnabled:
+          false,
+
+        priceSource:
+          "Jupiter Price API V3",
+      },
+
+      endpoints: {
         health:
           "/health",
 
@@ -2170,6 +2486,12 @@ async function handleRoot(
 
         strategyCreate:
           "POST /strategies",
+
+        watcherStatus:
+          "GET /watcher/status",
+
+        watcherRun:
+          "POST /watcher/run",
 
         tradingAuthorization:
           "GET /trading/authorization-config",
@@ -2196,9 +2518,7 @@ async function handleHealth(
   request,
   env
 ) {
-
   try {
-
     const dbTest =
       await env.DB
         .prepare(
@@ -2216,13 +2536,17 @@ async function handleHealth(
           "ASTY Rebound API",
 
         database:
-          dbTest?.ok ===
-            1
+          dbTest?.ok === 1
             ? "connected"
             : "error",
 
-        config: {
+        watcherMode:
+          "watch-only",
 
+        executionEnabled:
+          false,
+
+        config: {
           privyAppId:
             Boolean(
               env.PRIVY_APP_ID
@@ -2260,10 +2584,8 @@ async function handleHealth(
         },
       }
     );
-
   }
   catch(error) {
-
     console.error(
       "Health error:",
       error
@@ -2292,9 +2614,7 @@ async function handlePrivyTest(
   request,
   env
 ) {
-
   try {
-
     const privy =
       createPrivyClient(
         env
@@ -2314,16 +2634,12 @@ async function handlePrivyTest(
             true,
 
           clientInitialized:
-            Boolean(
-              privy
-            ),
+            Boolean(privy),
         },
       }
     );
-
   }
   catch(error) {
-
     console.error(
       "Privy test error:",
       error
@@ -2352,9 +2668,7 @@ async function handleAccountSync(
   request,
   env
 ) {
-
   try {
-
     const auth =
       await verifyPrivyRequest(
         request,
@@ -2364,7 +2678,6 @@ async function handleAccountSync(
     if (
       !auth.ok
     ) {
-
       return json(
         request,
         {
@@ -2398,7 +2711,6 @@ async function handleAccountSync(
         phantomAddress
       )
     ) {
-
       return json(
         request,
         {
@@ -2417,7 +2729,6 @@ async function handleAccountSync(
         reboundWalletAddress
       )
     ) {
-
       return json(
         request,
         {
@@ -2435,7 +2746,6 @@ async function handleAccountSync(
       phantomAddress ===
       reboundWalletAddress
     ) {
-
       return json(
         request,
         {
@@ -2458,13 +2768,11 @@ async function handleAccountSync(
     if (
       existing
     ) {
-
       if (
         existing
           .phantom_address !==
         phantomAddress
       ) {
-
         return json(
           request,
           {
@@ -2483,7 +2791,6 @@ async function handleAccountSync(
           .rebound_wallet_address !==
         reboundWalletAddress
       ) {
-
         return json(
           request,
           {
@@ -2503,7 +2810,6 @@ async function handleAccountSync(
         &&
         reboundWalletId
       ) {
-
         await env.DB
           .prepare(
             `
@@ -2519,10 +2825,8 @@ async function handleAccountSync(
             auth.userId
           )
           .run();
-
       }
       else {
-
         await env.DB
           .prepare(
             `
@@ -2551,7 +2855,6 @@ async function handleAccountSync(
             true,
 
           account: {
-
             phantomAddress:
               existing
                 .phantom_address,
@@ -2593,7 +2896,6 @@ async function handleAccountSync(
     if (
       existingPhantom
     ) {
-
       return json(
         request,
         {
@@ -2647,18 +2949,19 @@ async function handleAccountSync(
 
         account: {
           phantomAddress,
+
           privyUserId:
             auth.userId,
+
           reboundWalletId,
+
           reboundWalletAddress,
         },
       },
       201
     );
-
   }
   catch(error) {
-
     console.error(
       "Account sync error:",
       error
@@ -2687,9 +2990,7 @@ async function handleBalance(
   request,
   env
 ) {
-
   try {
-
     const auth =
       await verifyPrivyRequest(
         request,
@@ -2699,7 +3000,6 @@ async function handleBalance(
     if (
       !auth.ok
     ) {
-
       return json(
         request,
         {
@@ -2723,7 +3023,6 @@ async function handleBalance(
       !account
         ?.rebound_wallet_address
     ) {
-
       return json(
         request,
         {
@@ -2773,15 +3072,12 @@ async function handleBalance(
       null;
 
     try {
-
       solUsd =
         await getSolUsdPrice(
           env
         );
-
     }
     catch(error) {
-
       console.error(
         "SOL display price unavailable:",
         error
@@ -2822,7 +3118,6 @@ async function handleBalance(
           "helius",
 
         balances: {
-
           usdc: {
             mint:
               USDC_MINT,
@@ -2924,10 +3219,8 @@ async function handleBalance(
           "confirmed",
       }
     );
-
   }
   catch(error) {
-
     console.error(
       "Balance error:",
       error
@@ -2956,9 +3249,7 @@ async function handleDepositContext(
   request,
   env
 ) {
-
   try {
-
     const auth =
       await verifyPrivyRequest(
         request,
@@ -2968,7 +3259,6 @@ async function handleDepositContext(
     if (
       !auth.ok
     ) {
-
       return json(
         request,
         {
@@ -2995,7 +3285,6 @@ async function handleDepositContext(
       !account
         ?.rebound_wallet_address
     ) {
-
       return json(
         request,
         {
@@ -3033,7 +3322,6 @@ async function handleDepositContext(
       &&
       asset !== "USDC"
     ) {
-
       return json(
         request,
         {
@@ -3052,7 +3340,6 @@ async function handleDepositContext(
         amount
       )
     ) {
-
       return json(
         request,
         {
@@ -3073,9 +3360,7 @@ async function handleDepositContext(
 
     const decimalPart =
       amount
-        .split(
-          "."
-        )[1]
+        .split(".")[1]
       ||
       "";
 
@@ -3083,7 +3368,6 @@ async function handleDepositContext(
       decimalPart.length >
       maxDecimals
     ) {
-
       return json(
         request,
         {
@@ -3137,10 +3421,8 @@ async function handleDepositContext(
             .lastValidBlockHeight,
       }
     );
-
   }
   catch(error) {
-
     console.error(
       "Deposit context error:",
       error
@@ -3170,9 +3452,7 @@ async function handleTransactionStatus(
   env,
   url
 ) {
-
   try {
-
     const auth =
       await verifyPrivyRequest(
         request,
@@ -3182,7 +3462,6 @@ async function handleTransactionStatus(
     if (
       !auth.ok
     ) {
-
       return json(
         request,
         {
@@ -3198,16 +3477,13 @@ async function handleTransactionStatus(
 
     const signature =
       url.searchParams
-        .get(
-          "signature"
-        );
+        .get("signature");
 
     if (
       !isTransactionSignature(
         signature
       )
     ) {
-
       return json(
         request,
         {
@@ -3246,7 +3522,6 @@ async function handleTransactionStatus(
     if (
       !status
     ) {
-
       return json(
         request,
         {
@@ -3272,8 +3547,7 @@ async function handleTransactionStatus(
     }
 
     const confirmationStatus =
-      status
-        .confirmationStatus
+      status.confirmationStatus
       ||
       null;
 
@@ -3322,10 +3596,8 @@ async function handleTransactionStatus(
           null,
       }
     );
-
   }
   catch(error) {
-
     console.error(
       "Transaction status error:",
       error
@@ -3354,9 +3626,7 @@ async function handleStrategyList(
   request,
   env
 ) {
-
   try {
-
     const auth =
       await verifyPrivyRequest(
         request,
@@ -3366,7 +3636,6 @@ async function handleStrategyList(
     if (
       !auth.ok
     ) {
-
       return json(
         request,
         {
@@ -3390,7 +3659,6 @@ async function handleStrategyList(
       !account
         ?.rebound_wallet_address
     ) {
-
       return json(
         request,
         {
@@ -3410,7 +3678,6 @@ async function handleStrategyList(
       reservedRaw
     ] =
       await Promise.all([
-
         env.DB
           .prepare(
             `
@@ -3468,7 +3735,6 @@ async function handleStrategyList(
           ),
 
         capital: {
-
           walletUsdcRaw:
             walletUsdcRaw
               .toString(),
@@ -3501,10 +3767,8 @@ async function handleStrategyList(
         },
       }
     );
-
   }
   catch(error) {
-
     console.error(
       "Strategy list error:",
       error
@@ -3533,9 +3797,7 @@ async function handleStrategyCreate(
   request,
   env
 ) {
-
   try {
-
     const auth =
       await verifyPrivyRequest(
         request,
@@ -3545,7 +3807,6 @@ async function handleStrategyCreate(
     if (
       !auth.ok
     ) {
-
       return json(
         request,
         {
@@ -3572,7 +3833,6 @@ async function handleStrategyCreate(
       !account
         ?.rebound_wallet_address
     ) {
-
       return json(
         request,
         {
@@ -3586,25 +3846,19 @@ async function handleStrategyCreate(
       );
     }
 
-    let body;
+    let body =
+      {};
 
     try {
-
       body =
         await request.json();
-
     }
-    catch {
-
-      body =
-        {};
-    }
+    catch {}
 
     let capitalRaw;
     let config;
 
     try {
-
       capitalRaw =
         parseDecimalToRaw(
           body?.capitalUsdc,
@@ -3615,10 +3869,8 @@ async function handleStrategyCreate(
         resolveStrategyConfiguration(
           body
         );
-
     }
     catch(error) {
-
       return json(
         request,
         {
@@ -3636,7 +3888,6 @@ async function handleStrategyCreate(
       capitalRaw <
       MIN_STRATEGY_USDC_RAW
     ) {
-
       return json(
         request,
         {
@@ -3656,7 +3907,6 @@ async function handleStrategyCreate(
       reservedRaw
     ] =
       await Promise.all([
-
         getUsdcBalance(
           env,
           account
@@ -3696,7 +3946,6 @@ async function handleStrategyCreate(
       astyRaw <
       ASTY_GATE_RAW
     ) {
-
       return json(
         request,
         {
@@ -3710,7 +3959,6 @@ async function handleStrategyCreate(
             "At least 2,500 ASTY must be held in the linked Phantom wallet when creating a new strategy.",
 
           gate: {
-
             requiredAstyRaw:
               ASTY_GATE_RAW
                 .toString(),
@@ -3740,7 +3988,6 @@ async function handleStrategyCreate(
       freeUsdcRaw <
       capitalRaw
     ) {
-
       return json(
         request,
         {
@@ -3754,7 +4001,6 @@ async function handleStrategyCreate(
             "Not enough free USDC is available for this strategy.",
 
           capital: {
-
             requestedUsdcRaw:
               capitalRaw
                 .toString(),
@@ -3850,34 +4096,25 @@ async function handleStrategyCreate(
         auth.userId,
         account.phantom_address,
         account.rebound_wallet_address,
-
         config.preset,
         config.dipBps,
         config.takeProfitBps,
-
         config.stopLossEnabled
           ? 1
           : 0,
-
         config.stopLossBps,
-
         config.autoRepeat
           ? 1
           : 0,
-
         config.compound
           ? 1
           : 0,
-
         capitalRaw
           .toString(),
-
         capitalRaw
           .toString(),
-
         capitalRaw
           .toString(),
-
         astyRaw
           .toString()
       )
@@ -3935,10 +4172,8 @@ async function handleStrategyCreate(
       },
       201
     );
-
   }
   catch(error) {
-
     console.error(
       "Strategy create error:",
       error
@@ -3960,16 +4195,182 @@ async function handleStrategyCreate(
 
 
 /* ==================================================
-   TRADING AUTH CONFIG
+   WATCHER STATUS
 ================================================== */
 
-async function handleAuthorizationConfig(
+async function handleWatcherStatus(
   request,
   env
 ) {
-
   try {
+    const counts =
+      await env.DB
+        .prepare(
+          `
+          SELECT
+            status,
+            COUNT(*) AS count
+          FROM rebound_strategies
+          WHERE asset_symbol = 'SOL'
+          GROUP BY status
+          `
+        )
+        .all();
 
+    const latest =
+      await env.DB
+        .prepare(
+          `
+          SELECT
+            current_price_micro_usdc,
+            hwm_price_micro_usdc,
+            buy_trigger_price_micro_usdc,
+            last_price_at
+          FROM rebound_strategies
+          WHERE asset_symbol = 'SOL'
+            AND last_price_at IS NOT NULL
+          ORDER BY last_price_at DESC
+          LIMIT 1
+          `
+        )
+        .first();
+
+    const byStatus =
+      {};
+
+    for (
+      const row
+      of counts?.results
+      ||
+      []
+    ) {
+      byStatus[
+        row.status
+      ] =
+        Number(
+          row.count
+          ||
+          0
+        );
+    }
+
+    return json(
+      request,
+      {
+        status:
+          "ok",
+
+        mode:
+          "watch-only",
+
+        executionEnabled:
+          false,
+
+        priceSource:
+          "Jupiter Price API V3",
+
+        strategies: {
+          watching:
+            byStatus.WATCHING
+            ||
+            0,
+
+          buyTriggered:
+            byStatus.BUY_TRIGGERED
+            ||
+            0,
+
+          bought:
+            byStatus.BOUGHT
+            ||
+            0,
+
+          sellTriggered:
+            byStatus.SELL_TRIGGERED
+            ||
+            0,
+
+          paused:
+            byStatus.PAUSED
+            ||
+            0,
+
+          stopped:
+            byStatus.STOPPED
+            ||
+            0,
+        },
+
+        latest:
+          latest
+            ? {
+                currentPriceMicroUsdc:
+                  latest
+                    .current_price_micro_usdc
+                  ==
+                  null
+                    ? null
+                    : String(
+                        latest
+                          .current_price_micro_usdc
+                      ),
+
+                currentPriceUsd:
+                  formatMicroUsd(
+                    latest
+                      .current_price_micro_usdc
+                  ),
+
+                hwmPriceUsd:
+                  formatMicroUsd(
+                    latest
+                      .hwm_price_micro_usdc
+                  ),
+
+                buyTriggerPriceUsd:
+                  formatMicroUsd(
+                    latest
+                      .buy_trigger_price_micro_usdc
+                  ),
+
+                lastPriceAt:
+                  latest
+                    .last_price_at,
+              }
+            : null,
+      }
+    );
+  }
+  catch(error) {
+    console.error(
+      "Watcher status error:",
+      error
+    );
+
+    return json(
+      request,
+      {
+        status:
+          "error",
+
+        message:
+          "Watcher status is temporarily unavailable.",
+      },
+      503
+    );
+  }
+}
+
+
+/* ==================================================
+   MANUAL WATCHER RUN
+================================================== */
+
+async function handleWatcherRun(
+  request,
+  env
+) {
+  try {
     const auth =
       await verifyPrivyRequest(
         request,
@@ -3979,7 +4380,82 @@ async function handleAuthorizationConfig(
     if (
       !auth.ok
     ) {
+      return json(
+        request,
+        {
+          status:
+            "error",
 
+          message:
+            auth.message,
+        },
+        auth.status
+      );
+    }
+
+    const result =
+      await runPriceWatcher(
+        env,
+        {
+          source:
+            "manual",
+
+          privyUserId:
+            auth.userId,
+        }
+      );
+
+    return json(
+      request,
+      {
+        status:
+          "ok",
+
+        ...result,
+      }
+    );
+  }
+  catch(error) {
+    console.error(
+      "Manual watcher run error:",
+      error
+    );
+
+    return json(
+      request,
+      {
+        status:
+          "error",
+
+        message:
+          error?.message
+          ||
+          "Watcher run failed.",
+      },
+      503
+    );
+  }
+}
+
+
+/* ==================================================
+   TRADING AUTH CONFIG
+================================================== */
+
+async function handleAuthorizationConfig(
+  request,
+  env
+) {
+  try {
+    const auth =
+      await verifyPrivyRequest(
+        request,
+        env
+      );
+
+    if (
+      !auth.ok
+    ) {
       return json(
         request,
         {
@@ -4003,7 +4479,6 @@ async function handleAuthorizationConfig(
       !account
         ?.rebound_wallet_address
     ) {
-
       return json(
         request,
         {
@@ -4024,7 +4499,6 @@ async function handleAuthorizationConfig(
       ||
       !env.PRIVY_POLICY_ID
     ) {
-
       return json(
         request,
         {
@@ -4058,10 +4532,8 @@ async function handleAuthorizationConfig(
           true,
       }
     );
-
   }
   catch(error) {
-
     console.error(
       "Trading authorization config error:",
       error
@@ -4090,9 +4562,7 @@ async function handlePrepareSolContext(
   request,
   env
 ) {
-
   try {
-
     const auth =
       await verifyPrivyRequest(
         request,
@@ -4102,7 +4572,6 @@ async function handlePrepareSolContext(
     if (
       !auth.ok
     ) {
-
       return json(
         request,
         {
@@ -4129,7 +4598,6 @@ async function handlePrepareSolContext(
       !account
         ?.rebound_wallet_address
     ) {
-
       return json(
         request,
         {
@@ -4153,7 +4621,6 @@ async function handlePrepareSolContext(
     if (
       wsol.ready
     ) {
-
       return json(
         request,
         {
@@ -4213,10 +4680,8 @@ async function handlePrepareSolContext(
             .lastValidBlockHeight,
       }
     );
-
   }
   catch(error) {
-
     console.error(
       "Prepare SOL trading context error:",
       error
@@ -4245,9 +4710,7 @@ async function handleServerSignerTest(
   request,
   env
 ) {
-
   try {
-
     const auth =
       await verifyPrivyRequest(
         request,
@@ -4257,7 +4720,6 @@ async function handleServerSignerTest(
     if (
       !auth.ok
     ) {
-
       return json(
         request,
         {
@@ -4281,7 +4743,6 @@ async function handleServerSignerTest(
       !account
         ?.rebound_wallet_address
     ) {
-
       return json(
         request,
         {
@@ -4311,7 +4772,6 @@ async function handleServerSignerTest(
     if (
       !delegatedWallet
     ) {
-
       return json(
         request,
         {
@@ -4342,7 +4802,6 @@ async function handleServerSignerTest(
     if (
       !walletId
     ) {
-
       return json(
         request,
         {
@@ -4378,7 +4837,6 @@ async function handleServerSignerTest(
       );
 
     try {
-
       await privy
         .wallets()
         .solana()
@@ -4417,10 +4875,8 @@ async function handleServerSignerTest(
         },
         409
       );
-
     }
     catch(error) {
-
       const info =
         getSafePrivyError(
           error
@@ -4431,7 +4887,6 @@ async function handleServerSignerTest(
           info
         )
       ) {
-
         return json(
           request,
           {
@@ -4492,10 +4947,8 @@ async function handleServerSignerTest(
         502
       );
     }
-
   }
   catch(error) {
-
     console.error(
       "Server signer test error:",
       error
@@ -4525,16 +4978,14 @@ async function handleServerSignerTest(
 
 
 /* ==================================================
-   TEST SWAP
+   REAL TEST SWAP
 ================================================== */
 
 async function handleTestSwap(
   request,
   env
 ) {
-
   try {
-
     const auth =
       await verifyPrivyRequest(
         request,
@@ -4544,7 +4995,6 @@ async function handleTestSwap(
     if (
       !auth.ok
     ) {
-
       return json(
         request,
         {
@@ -4562,22 +5012,15 @@ async function handleTestSwap(
       {};
 
     try {
-
       body =
         await request.json();
-
     }
-    catch {
-
-      body =
-        {};
-    }
+    catch {}
 
     if (
       body?.confirm !==
       "TEST_SWAP_0_10_USDC_TO_SOL"
     ) {
-
       return json(
         request,
         {
@@ -4601,7 +5044,6 @@ async function handleTestSwap(
       !account
         ?.rebound_wallet_address
     ) {
-
       return json(
         request,
         {
@@ -4622,10 +5064,10 @@ async function handleTestSwap(
     const [
       usdc,
       nativeSol,
-      tradingSol
+      tradingSol,
+      reservedRaw
     ] =
       await Promise.all([
-
         getUsdcBalance(
           env,
           walletAddress
@@ -4640,16 +5082,29 @@ async function handleTestSwap(
           env,
           walletAddress
         ),
+
+        getReservedCapitalRaw(
+          env,
+          auth.userId
+        ),
       ]);
 
-    if (
+    const walletUsdcRaw =
       BigInt(
         usdc.raw
-      )
-      <
+      );
+
+    const freeUsdcRaw =
+      walletUsdcRaw >
+      reservedRaw
+        ? walletUsdcRaw -
+          reservedRaw
+        : 0n;
+
+    if (
+      freeUsdcRaw <
       TEST_SWAP_USDC_RAW
     ) {
-
       return json(
         request,
         {
@@ -4657,7 +5112,7 @@ async function handleTestSwap(
             "error",
 
           message:
-            "At least 0.10 USDC is required for the test swap.",
+            "At least 0.10 free USDC is required for the test swap.",
         },
         409
       );
@@ -4668,9 +5123,8 @@ async function handleTestSwap(
         nativeSol.raw
       )
       <
-      100000n
+      100_000n
     ) {
-
       return json(
         request,
         {
@@ -4689,7 +5143,6 @@ async function handleTestSwap(
       ||
       !tradingSol.address
     ) {
-
       return json(
         request,
         {
@@ -4724,7 +5177,6 @@ async function handleTestSwap(
     if (
       !delegatedWallet
     ) {
-
       return json(
         request,
         {
@@ -4749,7 +5201,6 @@ async function handleTestSwap(
     if (
       !walletId
     ) {
-
       return json(
         request,
         {
@@ -4818,7 +5269,6 @@ async function handleTestSwap(
       quote.routePlan.length ===
         0
     ) {
-
       return json(
         request,
         {
@@ -4848,7 +5298,6 @@ async function handleTestSwap(
       priceImpactPct >
         0.01
     ) {
-
       return json(
         request,
         {
@@ -4868,7 +5317,6 @@ async function handleTestSwap(
     }
 
     const swapBuildBody = {
-
       quoteResponse:
         quote,
 
@@ -4885,9 +5333,7 @@ async function handleTestSwap(
         true,
 
       prioritizationFeeLamports: {
-
         priorityLevelWithMaxLamports: {
-
           maxLamports:
             10000,
 
@@ -4900,7 +5346,6 @@ async function handleTestSwap(
     if (
       !env.JUPITER_API_KEY
     ) {
-
       await sleep(
         2100
       );
@@ -4935,9 +5380,7 @@ async function handleTestSwap(
     const unexpectedPrograms =
       programs.filter(
         id =>
-          !allowed.has(
-            id
-          )
+          !allowed.has(id)
       );
 
     const hasSetup =
@@ -4987,7 +5430,6 @@ async function handleTestSwap(
         JUPITER_PROGRAM_ID
       )
     ) {
-
       return json(
         request,
         {
@@ -5023,7 +5465,6 @@ async function handleTestSwap(
     if (
       !env.JUPITER_API_KEY
     ) {
-
       await sleep(
         2100
       );
@@ -5055,7 +5496,6 @@ async function handleTestSwap(
       swapTransaction.length <
         100
     ) {
-
       return json(
         request,
         {
@@ -5075,7 +5515,6 @@ async function handleTestSwap(
     let sendResult;
 
     try {
-
       sendResult =
         await privy
           .wallets()
@@ -5095,10 +5534,8 @@ async function handleTestSwap(
                 ),
             }
           );
-
     }
     catch(error) {
-
       const info =
         getSafePrivyError(
           error
@@ -5140,7 +5577,6 @@ async function handleTestSwap(
         signature
       )
     ) {
-
       return json(
         request,
         {
@@ -5196,10 +5632,8 @@ async function handleTestSwap(
         signature,
       }
     );
-
   }
   catch(error) {
-
     console.error(
       "Test swap error:",
       error
@@ -5226,161 +5660,178 @@ async function handleTestSwap(
    ROUTER
 ================================================== */
 
+async function routeFetch(
+  request,
+  env
+) {
+  if (
+    request.method ===
+    "OPTIONS"
+  ) {
+    return new Response(
+      null,
+      {
+        status:
+          204,
+
+        headers:
+          corsHeaders(
+            request
+          ),
+      }
+    );
+  }
+
+  const url =
+    new URL(
+      request.url
+    );
+
+  const key =
+    `${request.method} ${url.pathname}`;
+
+  switch(key) {
+    case "GET /":
+      return handleRoot(
+        request
+      );
+
+    case "GET /health":
+      return handleHealth(
+        request,
+        env
+      );
+
+    case "GET /privy-test":
+      return handlePrivyTest(
+        request,
+        env
+      );
+
+    case "POST /account/sync":
+      return handleAccountSync(
+        request,
+        env
+      );
+
+    case "GET /account/balance":
+      return handleBalance(
+        request,
+        env
+      );
+
+    case "POST /deposit/context":
+      return handleDepositContext(
+        request,
+        env
+      );
+
+    case "GET /transaction/status":
+      return handleTransactionStatus(
+        request,
+        env,
+        url
+      );
+
+    case "GET /strategies":
+      return handleStrategyList(
+        request,
+        env
+      );
+
+    case "POST /strategies":
+      return handleStrategyCreate(
+        request,
+        env
+      );
+
+    case "GET /watcher/status":
+      return handleWatcherStatus(
+        request,
+        env
+      );
+
+    case "POST /watcher/run":
+      return handleWatcherRun(
+        request,
+        env
+      );
+
+    case "GET /trading/authorization-config":
+      return handleAuthorizationConfig(
+        request,
+        env
+      );
+
+    case "POST /trading/prepare-sol-context":
+      return handlePrepareSolContext(
+        request,
+        env
+      );
+
+    case "POST /trading/server-signer-test":
+      return handleServerSignerTest(
+        request,
+        env
+      );
+
+    case "POST /trading/test-swap":
+      return handleTestSwap(
+        request,
+        env
+      );
+
+    default:
+      return json(
+        request,
+        {
+          status:
+            "error",
+
+          message:
+            "Not found",
+        },
+        404
+      );
+  }
+}
+
+
+/* ==================================================
+   WORKER
+================================================== */
+
 export default {
 
   async fetch(
     request,
     env
   ) {
+    return routeFetch(
+      request,
+      env
+    );
+  },
 
-    if (
-      request.method ===
-      "OPTIONS"
-    ) {
 
-      return new Response(
-        null,
+  async scheduled(
+    controller,
+    env
+  ) {
+    const result =
+      await runPriceWatcher(
+        env,
         {
-          status:
-            204,
-
-          headers:
-            corsHeaders(
-              request
-            ),
+          source:
+            `cron:${controller.cron || "scheduled"}`,
         }
       );
-    }
 
-    const url =
-      new URL(
-        request.url
-      );
-
-    const key =
-      `${request.method} ${url.pathname}`;
-
-    switch(
-      key
-    ) {
-
-      case "GET /":
-
-        return handleRoot(
-          request
-        );
-
-
-      case "GET /health":
-
-        return handleHealth(
-          request,
-          env
-        );
-
-
-      case "GET /privy-test":
-
-        return handlePrivyTest(
-          request,
-          env
-        );
-
-
-      case "POST /account/sync":
-
-        return handleAccountSync(
-          request,
-          env
-        );
-
-
-      case "GET /account/balance":
-
-        return handleBalance(
-          request,
-          env
-        );
-
-
-      case "POST /deposit/context":
-
-        return handleDepositContext(
-          request,
-          env
-        );
-
-
-      case "GET /transaction/status":
-
-        return handleTransactionStatus(
-          request,
-          env,
-          url
-        );
-
-
-      case "GET /strategies":
-
-        return handleStrategyList(
-          request,
-          env
-        );
-
-
-      case "POST /strategies":
-
-        return handleStrategyCreate(
-          request,
-          env
-        );
-
-
-      case "GET /trading/authorization-config":
-
-        return handleAuthorizationConfig(
-          request,
-          env
-        );
-
-
-      case "POST /trading/prepare-sol-context":
-
-        return handlePrepareSolContext(
-          request,
-          env
-        );
-
-
-      case "POST /trading/server-signer-test":
-
-        return handleServerSignerTest(
-          request,
-          env
-        );
-
-
-      case "POST /trading/test-swap":
-
-        return handleTestSwap(
-          request,
-          env
-        );
-
-
-      default:
-
-        return json(
-          request,
-          {
-            status:
-              "error",
-
-            message:
-              "Not found",
-          },
-          404
-        );
-    }
+    console.log(
+      "ASTY Rebound watcher result:",
+      JSON.stringify(
+        result
+      )
+    );
   },
 };
