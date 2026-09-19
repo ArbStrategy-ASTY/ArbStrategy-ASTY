@@ -16,6 +16,7 @@ const WSOL_MINT = "So11111111111111111111111111111111111111112";
 
 const JUPITER_PROGRAM_ID = "JUP6LkbZbjS1jKKwapdHNy74zcZ3tLUZoi5QNyVTaV4";
 const COMPUTE_BUDGET_PROGRAM_ID = "ComputeBudget111111111111111111111111111111";
+const ASSOCIATED_TOKEN_PROGRAM_ID = "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL";
 const SOLANA_MAINNET_CAIP2 = "solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp";
 
 const ASTY_DECIMALS = 9;
@@ -858,7 +859,11 @@ async function handleExecutionCheck(request, env) {
     }
 
     const programs = instructionProgramIds(build);
-    const allowedPrograms = new Set([COMPUTE_BUDGET_PROGRAM_ID, JUPITER_PROGRAM_ID]);
+    const allowedPrograms = new Set([
+      COMPUTE_BUDGET_PROGRAM_ID,
+      JUPITER_PROGRAM_ID,
+      ASSOCIATED_TOKEN_PROGRAM_ID,
+    ]);
     const unexpectedPrograms = programs.filter((programId) => !allowedPrograms.has(programId));
     const hasJupiterSwap = programs.includes(JUPITER_PROGRAM_ID);
     const hasTipInstruction = Boolean(build?.tipInstruction);
@@ -930,7 +935,11 @@ async function handleExecutionCheck(request, env) {
         },
         policyCompatibility: {
           ok: policyCompatible,
-          expectedPrograms: [COMPUTE_BUDGET_PROGRAM_ID, JUPITER_PROGRAM_ID],
+          expectedPrograms: [
+            COMPUTE_BUDGET_PROGRAM_ID,
+            JUPITER_PROGRAM_ID,
+            ASSOCIATED_TOKEN_PROGRAM_ID,
+          ],
           returnedPrograms: programs,
           unexpectedPrograms,
           hasTipInstruction,
