@@ -2753,7 +2753,7 @@ async function handleExecutionStatus(request, env) {
 async function handleRoot(request, env) {
   return json(request, {
     service: "ASTY Rebound API",
-    buildVersion: "2026-09-19-cycle-v2-controls",
+    buildVersion: "2026-09-20-cycle-v3-history",
     status: "online",
     balanceSource: "Helius",
     displayPriceSource: "Helius DAS",
@@ -3053,6 +3053,7 @@ async function handleStrategyList(request, env) {
     return json(request, {
       status: "ok",
       strategies: rows.map((row) => ({ ...normalizeStrategyRow(row), lastCycle: lastCycleByStrategy.get(row.id) || null })),
+      cycles: cycleRows.map(normalizeCycleRow),
       capital: {
         walletUsdcRaw: walletUsdcRaw.toString(),
         walletUsdc: formatUnits(walletUsdcRaw, USDC_DECIMALS),
