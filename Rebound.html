@@ -31,8 +31,8 @@ button{appearance:none;border:0;font-family:inherit;cursor:pointer}button:disabl
 import React,{useEffect,useMemo,useRef,useState} from "react";
 import {createRoot} from "react-dom/client";
 import {PrivyProvider,usePrivy,useConnectWallet,useLoginWithSiws,useSigners} from "https://esm.sh/@privy-io/react-auth@3.43.0?external=react,react-dom";
-import {useWallets,useCreateWallet,useSignAndSendTransaction,toSolanaWalletConnectors} from "https://esm.sh/@privy-io/react-auth@3.43.0/solana?external=react,react-dom";
-import {PublicKey,Transaction,SystemProgram} from "https://esm.sh/@solana/web3.js@1.98.4";
+import {useWallets,useCreateWallet,useSignAndSendTransaction,useSignTransaction,toSolanaWalletConnectors} from "https://esm.sh/@privy-io/react-auth@3.43.0/solana?external=react,react-dom";
+import {PublicKey,Transaction,SystemProgram,TransactionInstruction} from "https://esm.sh/@solana/web3.js@1.98.4";
 import {getAssociatedTokenAddress,createAssociatedTokenAccountIdempotentInstruction,createTransferCheckedInstruction,TOKEN_PROGRAM_ID,ASSOCIATED_TOKEN_PROGRAM_ID} from "https://esm.sh/@solana/spl-token@0.4.14?deps=@solana/web3.js@1.98.4";
 import bs58 from "https://esm.sh/bs58@6.0.0";
 
@@ -87,6 +87,7 @@ function App(){
   const {generateSiwsMessage,loginWithSiws}=useLoginWithSiws();
   const {createWallet}=useCreateWallet();
   const {signAndSendTransaction}=useSignAndSendTransaction();
+  const {signTransaction}=useSignTransaction();
   const {addSigners,removeSigners}=useSigners();
 
   const [pendingWalletAddress,setPendingWalletAddress]=useState("");
@@ -460,16 +461,25 @@ function App(){
   function closeWithdraw(){if(!withdrawBusy){setWithdrawAsset(null);setWithdrawAmount("")}}
   function useMaxWithdrawal(){if(!withdrawBusy)setWithdrawAmount("MAX")}
 
-  function buildSolWithdrawalTransaction(context){const from=new PublicKey(context.from),to=new PublicKey(context.to);const tx=new Transaction();tx.feePayer=from;tx.recentBlockhash=context.blockhash;tx.add(SystemProgram.transfer({fromPubkey:from,toPubkey:to,lamports:parseUnitsExact(context.amount,9)}));return tx}
-  async function buildUsdcWithdrawalTransaction(context){const from=new PublicKey(context.from),to=new PublicKey(context.to),mint=new PublicKey(USDC_MINT);const sourceAta=await getAssociatedTokenAddress(mint,from,false,TOKEN_PROGRAM_ID,ASSOCIATED_TOKEN_PROGRAM_ID);const destAta=await getAssociatedTokenAddress(mint,to,false,TOKEN_PROGRAM_ID,ASSOCIATED_TOKEN_PROGRAM_ID);const tx=new Transaction();tx.feePayer=from;tx.recentBlockhash=context.blockhash;tx.add(createAssociatedTokenAccountIdempotentInstruction(from,destAta,to,mint,TOKEN_PROGRAM_ID,ASSOCIATED_TOKEN_PROGRAM_ID));tx.add(createTransferCheckedInstruction(sourceAta,mint,destAta,from,parseUnitsExact(context.amount,6),6,[],TOKEN_PROGRAM_ID));return tx}
+  function addPhantomApprovalInstruction(tx,phantom){
+    const memoProgram=new PublicKey("MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr");
+    tx.add(new TransactionInstruction({
+      programId:memoProgram,
+      keys:[{pubkey:new PublicKey(phantom),isSigner:true,isWritable:false}],
+      data:new TextEncoder().encode("ASTY Rebound withdrawal approval")
+    }));
+    return tx;
+  }
+  function buildSolWithdrawalTransaction(context){const from=new PublicKey(context.from),to=new PublicKey(context.to);const tx=new Transaction();tx.feePayer=from;tx.recentBlockhash=context.blockhash;tx.add(SystemProgram.transfer({fromPubkey:from,toPubkey:to,lamports:parseUnitsExact(context.amount,9)}));addPhantomApprovalInstruction(tx,context.to);return tx}
+  async function buildUsdcWithdrawalTransaction(context){const from=new PublicKey(context.from),to=new PublicKey(context.to),mint=new PublicKey(USDC_MINT);const sourceAta=await getAssociatedTokenAddress(mint,from,false,TOKEN_PROGRAM_ID,ASSOCIATED_TOKEN_PROGRAM_ID);const destAta=await getAssociatedTokenAddress(mint,to,false,TOKEN_PROGRAM_ID,ASSOCIATED_TOKEN_PROGRAM_ID);const tx=new Transaction();tx.feePayer=from;tx.recentBlockhash=context.blockhash;tx.add(createAssociatedTokenAccountIdempotentInstruction(from,destAta,to,mint,TOKEN_PROGRAM_ID,ASSOCIATED_TOKEN_PROGRAM_ID));tx.add(createTransferCheckedInstruction(sourceAta,mint,destAta,from,parseUnitsExact(context.amount,6),6,[],TOKEN_PROGRAM_ID));addPhantomApprovalInstruction(tx,context.to);return tx}
 
   async function sendWithdrawal(){
     if(!withdrawAsset||withdrawBusy)return;setError("");setWithdrawMessage("");setWithdrawState(null);const rawAmount=String(withdrawAmount).trim();
     if(!rawAmount){setError("Enter an amount or choose Max.");return}
     const isMax=rawAmount.toUpperCase()==="MAX";
     if(!isMax&&(!Number.isFinite(Number(rawAmount))||Number(rawAmount)<=0)){setError("Enter a valid withdrawal amount.");return}
-    if(!connectedPhantomWallet?.address||connectedPhantomWallet.address!==phantomAddress||typeof connectedPhantomWallet.signMessage!=="function"){setError("Open ASTY Rebound in your linked Phantom wallet before withdrawing.");return}
-    if(!reboundSigningWallet?.address||reboundSigningWallet.address!==reboundAddress||typeof reboundSigningWallet.signAndSendTransaction!=="function"){setError("Your Rebound Wallet signer is not loaded. Refresh the page and try again.");return}
+    if(!connectedPhantomWallet?.address||connectedPhantomWallet.address!==phantomAddress){setError("Open ASTY Rebound in your linked Phantom wallet before withdrawing.");return}
+    if(!reboundSigningWallet?.address||reboundSigningWallet.address!==reboundAddress){setError("Your Rebound Wallet signer is not loaded. Refresh the page and try again.");return}
     setWithdrawBusy(true);
     try{
       const token=await getAccessToken();if(!token)throw new Error("Your login session has expired.");
@@ -477,37 +487,44 @@ function App(){
       const context=await response.json();if(!response.ok)throw new Error(context?.message||"Withdrawal could not be prepared.");
       if(context.from!==reboundAddress||context.to!==phantomAddress||context.to!==connectedPhantomWallet.address)throw new Error("Withdrawal destination verification failed.");
 
-      // Fresh user approval in Phantom. The actual transfer still originates from the
-      // Rebound Wallet, so Phantom approves the exact withdrawal intent first.
-      const approvalMessage=[
-        "ASTY Rebound withdrawal approval",
-        `Asset: ${context.asset}`,
-        `Amount: ${context.amount} ${context.asset}`,
-        `From Rebound Wallet: ${context.from}`,
-        `To linked Phantom: ${context.to}`,
-        "I approve this withdrawal to my permanently linked Phantom wallet."
-      ].join("\n");
-      const approval=await connectedPhantomWallet.signMessage({message:new TextEncoder().encode(approvalMessage)});
-      if(!approval?.signature)throw new Error("Phantom did not return a withdrawal approval signature.");
-
-      // Phantom has approved the withdrawal intent. The actual funds live in the
-      // Privy Rebound Wallet, so Privy must now authorize and send that wallet's
-      // transaction. Keep Privy's wallet UI enabled here: it is the transaction
-      // approval for the wallet that actually owns the funds.
+      // Build one transaction that requires BOTH wallets. The Rebound Wallet signs
+      // first without broadcasting. Phantom then signs the same transaction and
+      // broadcasts it, so the user's Phantom confirmation is the actual withdrawal
+      // approval — no second Privy confirmation screen is needed.
       setWithdrawState("pending");
-      setWithdrawMessage("Phantom approval confirmed. Preparing the Rebound Wallet transaction…");
-      await sleep(150);
+      setWithdrawMessage("Preparing withdrawal for Phantom confirmation…");
       const tx=withdrawAsset==="SOL"?buildSolWithdrawalTransaction(context):await buildUsdcWithdrawalTransaction(context);
-      const serialized=tx.serialize({requireAllSignatures:false,verifySignatures:false});
-      setWithdrawMessage("Confirm the Rebound Wallet transaction to send the withdrawal.");
-      const result=await signAndSendTransaction({
-        transaction:new Uint8Array(serialized),
+      const unsigned=tx.serialize({requireAllSignatures:false,verifySignatures:false});
+
+      const reboundSigned=await signTransaction({
+        transaction:new Uint8Array(unsigned),
         wallet:reboundSigningWallet,
-        chain:context.chain||"solana:mainnet",
-        options:{skipSimulation:false,uiOptions:{showWalletUIs:true}}
+        options:{uiOptions:{showWalletUIs:false}}
       });
-      const signature=signatureToBase58(result.signature);
-      if(!signature)throw new Error("Privy did not return a Solana transaction signature.");
+      let partiallySignedBytes=reboundSigned?.signedTransaction;
+      if(!(partiallySignedBytes instanceof Uint8Array))partiallySignedBytes=new Uint8Array(partiallySignedBytes||[]);
+      if(partiallySignedBytes.length===64){
+        // Some sign-only wallet implementations return only the Ed25519 signature.
+        // Attach it to the original transaction before Phantom signs and broadcasts.
+        const signedTx=Transaction.from(unsigned);
+        signedTx.addSignature(new PublicKey(reboundAddress),partiallySignedBytes);
+        partiallySignedBytes=new Uint8Array(signedTx.serialize({requireAllSignatures:false,verifySignatures:false}));
+      }
+      if(partiallySignedBytes.length<=64)throw new Error("Rebound Wallet did not return a signed Solana transaction.");
+
+      setWithdrawMessage(`Confirm the ${context.amount} ${context.asset} withdrawal in Phantom.`);
+      // Use Phantom's injected Solana provider directly for the final user approval.
+      // This avoids the Privy external-wallet modal/handoff that can leave the
+      // Phantom in-app browser on an empty page after approval.
+      const phantomProvider=window.phantom?.solana||window.solana;
+      if(!phantomProvider?.isPhantom)throw new Error("Phantom provider is not available. Open ASTY Rebound inside Phantom and try again.");
+      if(!phantomProvider.isConnected){await phantomProvider.connect();}
+      const providerAddress=phantomProvider.publicKey?.toString?.()||"";
+      if(providerAddress!==phantomAddress)throw new Error("The connected Phantom account does not match your linked wallet.");
+      const phantomTx=Transaction.from(partiallySignedBytes);
+      const result=await phantomProvider.signAndSendTransaction(phantomTx,{skipPreflight:false,preflightCommitment:"confirmed"});
+      const signature=String(result?.signature||"");
+      if(!signature)throw new Error("Phantom did not return a Solana transaction signature.");
       setWithdrawSignature(signature);setWithdrawState("pending");setWithdrawMessage(`${withdrawAsset} withdrawal sent to your linked Phantom wallet. Waiting for Solana confirmation…`);setWithdrawAmount("");
       const confirmed=await waitForConfirmation(signature);if(confirmed){setWithdrawState("success");setWithdrawMessage(`${withdrawAsset} withdrawal confirmed ✓`);await Promise.all([loadBalance(),loadStrategies(true)]);setWithdrawAsset(null)}else{setWithdrawMessage("Withdrawal was broadcast, but confirmation is taking longer than expected. You can use the transaction link below to check it.")}
     }catch(err){
@@ -875,7 +892,7 @@ function App(){
       e("div",{className:"row-head",style:{marginBottom:"8px"}},e("label",{className:"input-label",style:{marginBottom:0}},"Amount"),e("button",{className:"max-button",type:"button",onClick:useMaxWithdrawal,disabled:withdrawBusy},"Max")),
       e("div",{className:"amount-input-wrap"},e("input",{className:"amount-input",type:"text",inputMode:"decimal",autoComplete:"off",placeholder:withdrawAsset==="USDC"?"10.00":"0.01",value:withdrawAmount,disabled:withdrawBusy,onChange:ev=>setWithdrawAmount(ev.target.value.toUpperCase()==="MAX"?"MAX":ev.target.value.replace(",",".").replace(/[^0-9.]/g,""))}),e("span",{className:"input-asset"},withdrawAsset)),
       e("div",{className:"modal-wallet"},"Destination: ",e("strong",null,phantomAddress?`${phantomAddress.slice(0,8)}…${phantomAddress.slice(-8)}`:"Linked Phantom")),
-      withdrawMessage?e("div",{className:`status-box ${withdrawState==="error"?"error":withdrawState==="success"?"success":"pending"}`,style:{marginTop:"13px"}},e("div",null,withdrawMessage),withdrawSignature?e("a",{className:"tx-link",href:`https://solscan.io/tx/${withdrawSignature}`,target:"_blank",rel:"noopener noreferrer"},"View transaction"):null):e("div",{className:"status-box pending",style:{marginTop:"13px"}},"A fresh Phantom approval is required. The Rebound Wallet then asks you to confirm the actual withdrawal transaction."),
+      withdrawMessage?e("div",{className:`status-box ${withdrawState==="error"?"error":withdrawState==="success"?"success":"pending"}`,style:{marginTop:"13px"}},e("div",null,withdrawMessage),withdrawSignature?e("a",{className:"tx-link",href:`https://solscan.io/tx/${withdrawSignature}`,target:"_blank",rel:"noopener noreferrer"},"View transaction"):null):e("div",{className:"status-box pending",style:{marginTop:"13px"}},"Phantom will confirm the actual withdrawal transaction. No second wallet approval is required."),
       e("div",{className:"modal-buttons"},e("button",{className:"modal-cancel",disabled:withdrawBusy,onClick:closeWithdraw},"Cancel"),e("button",{className:"modal-confirm",disabled:withdrawBusy,onClick:sendWithdrawal},withdrawBusy?"Processing…":`Withdraw ${withdrawAsset}`))
     )):null,
 
