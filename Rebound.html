@@ -490,9 +490,20 @@ function App(){
       const approval=await connectedPhantomWallet.signMessage({message:new TextEncoder().encode(approvalMessage)});
       if(!approval?.signature)throw new Error("Phantom did not return a withdrawal approval signature.");
 
+      // Phantom has approved the intent. Send the actual transaction from the
+      // Privy Rebound Wallet through Privy's supported Solana React hook.
+      // This is the same hook we already use successfully for deposits, but
+      // with the Rebound Wallet selected as the signer.
+      setWithdrawMessage("Approval confirmed. Sending withdrawal…");
+      await sleep(150);
       const tx=withdrawAsset==="SOL"?buildSolWithdrawalTransaction(context):await buildUsdcWithdrawalTransaction(context);
       const serialized=tx.serialize({requireAllSignatures:false,verifySignatures:false});
-      const result=await reboundSigningWallet.signAndSendTransaction({chain:context.chain||"solana:mainnet",transaction:new Uint8Array(serialized)});
+      const result=await signAndSendTransaction({
+        transaction:new Uint8Array(serialized),
+        wallet:reboundSigningWallet,
+        chain:context.chain||"solana:mainnet",
+        options:{skipSimulation:false,uiOptions:{showWalletUIs:false}}
+      });
       const signature=signatureToBase58(result.signature);
       setWithdrawSignature(signature);setWithdrawState("pending");setWithdrawMessage(`${withdrawAsset} withdrawal sent to your linked Phantom wallet. Waiting for Solana confirmation…`);setWithdrawAsset(null);setWithdrawAmount("");
       const confirmed=await waitForConfirmation(signature);if(confirmed){setWithdrawState("success");setWithdrawMessage(`${withdrawAsset} withdrawal confirmed ✓`);await Promise.all([loadBalance(),loadStrategies(true)])}else{setWithdrawMessage("Withdrawal sent. Confirmation is taking longer than expected; balances will refresh automatically.")}
