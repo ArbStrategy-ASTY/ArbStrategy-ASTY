@@ -26,6 +26,7 @@ const WSOL_MINT = "So11111111111111111111111111111111111111112";
 const JUPITER_PROGRAM_ID = "JUP6LkbZbjS1jKKwapdHNy74zcZ3tLUZoi5QNyVTaV4";
 const COMPUTE_BUDGET_PROGRAM_ID = "ComputeBudget111111111111111111111111111111";
 const ASSOCIATED_TOKEN_PROGRAM_ID = "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL";
+const LIGHTHOUSE_PROGRAM_ID = "L2TExMFKdjpN9kozasaurPirfHy9P8sbXoAN1qA3S95";
 const TOKEN_PROGRAM_ID = "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA";
 const SOLANA_MAINNET_CAIP2 = "solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp";
 
@@ -2781,7 +2782,7 @@ async function handleExecutionStatus(request, env) {
 async function handleRoot(request, env) {
   return json(request, {
     service: "ASTY Rebound API",
-    buildVersion: "2026-09-21-cycle-v6-withdraw-program-diagnostic",
+    buildVersion: "2026-09-21-cycle-v7-withdraw-lighthouse",
     status: "online",
     balanceSource: "Helius",
     displayPriceSource: "Helius DAS",
@@ -3226,7 +3227,14 @@ async function handleTransactionBroadcast(request, env) {
 
     const SYSTEM_PROGRAM_ID = "11111111111111111111111111111111";
     const MEMO_PROGRAM_ID = "MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr";
-    const allowedPrograms = new Set([SYSTEM_PROGRAM_ID, TOKEN_PROGRAM_ID, ASSOCIATED_TOKEN_PROGRAM_ID, MEMO_PROGRAM_ID]);
+    const allowedPrograms = new Set([
+      SYSTEM_PROGRAM_ID,
+      TOKEN_PROGRAM_ID,
+      ASSOCIATED_TOKEN_PROGRAM_ID,
+      MEMO_PROGRAM_ID,
+      COMPUTE_BUDGET_PROGRAM_ID,
+      LIGHTHOUSE_PROGRAM_ID,
+    ]);
     const programs = [...new Set(tx.instructions.map((ix) => ix.programId.toBase58()))];
     const unexpectedPrograms = programs.filter((programId) => !allowedPrograms.has(programId));
     if (unexpectedPrograms.length) {
