@@ -487,45 +487,55 @@ function App(){
       const context=await response.json();if(!response.ok)throw new Error(context?.message||"Withdrawal could not be prepared.");
       if(context.from!==reboundAddress||context.to!==phantomAddress||context.to!==connectedPhantomWallet.address)throw new Error("Withdrawal destination verification failed.");
 
-      // Build one transaction that requires BOTH wallets. The Rebound Wallet signs
-      // first without broadcasting. Phantom then signs the same transaction and
-      // broadcasts it, so the user's Phantom confirmation is the actual withdrawal
-      // approval — no second Privy confirmation screen is needed.
+      // Build one transaction that requires BOTH wallets. Phantom signs first.
+      // Phantom explicitly recommends this order for multi-signer Solana
+      // transactions; the Rebound Wallet then adds its signature and the
+      // backend broadcasts the fully signed transaction through Helius.
       setWithdrawState("pending");
       setWithdrawMessage("Preparing withdrawal for Phantom confirmation…");
       const tx=withdrawAsset==="SOL"?buildSolWithdrawalTransaction(context):await buildUsdcWithdrawalTransaction(context);
-      const unsigned=tx.serialize({requireAllSignatures:false,verifySignatures:false});
 
-      const reboundSigned=await signTransaction({
-        transaction:new Uint8Array(unsigned),
-        wallet:reboundSigningWallet,
-        options:{uiOptions:{showWalletUIs:false}}
-      });
-      let partiallySignedBytes=reboundSigned?.signedTransaction;
-      if(!(partiallySignedBytes instanceof Uint8Array))partiallySignedBytes=new Uint8Array(partiallySignedBytes||[]);
-      if(partiallySignedBytes.length===64){
-        // Some sign-only wallet implementations return only the Ed25519 signature.
-        // Attach it to the original transaction before Phantom signs and broadcasts.
-        const signedTx=Transaction.from(unsigned);
-        signedTx.addSignature(new PublicKey(reboundAddress),partiallySignedBytes);
-        partiallySignedBytes=new Uint8Array(signedTx.serialize({requireAllSignatures:false,verifySignatures:false}));
-      }
-      if(partiallySignedBytes.length<=64)throw new Error("Rebound Wallet did not return a signed Solana transaction.");
-
-      setWithdrawMessage(`Confirm the ${context.amount} ${context.asset} withdrawal in Phantom.`);
-      // Use Phantom's injected Solana provider directly for the final user approval.
-      // This avoids the Privy external-wallet modal/handoff that can leave the
-      // Phantom in-app browser on an empty page after approval.
       const phantomProvider=window.phantom?.solana||window.solana;
       if(!phantomProvider?.isPhantom)throw new Error("Phantom provider is not available. Open ASTY Rebound inside Phantom and try again.");
       if(!phantomProvider.isConnected){await phantomProvider.connect();}
       const providerAddress=phantomProvider.publicKey?.toString?.()||"";
       if(providerAddress!==phantomAddress)throw new Error("The connected Phantom account does not match your linked wallet.");
-      const phantomTx=Transaction.from(partiallySignedBytes);
-      const result=await phantomProvider.signAndSendTransaction(phantomTx,{skipPreflight:false,preflightCommitment:"confirmed"});
-      const signature=String(result?.signature||"");
-      if(!signature)throw new Error("Phantom did not return a Solana transaction signature.");
-      setWithdrawSignature(signature);setWithdrawState("pending");setWithdrawMessage(`${withdrawAsset} withdrawal sent to your linked Phantom wallet. Waiting for Solana confirmation…`);setWithdrawAmount("");
+
+      setWithdrawMessage(`Approve the ${context.amount} ${context.asset} withdrawal in Phantom…`);
+      const phantomSigned=await phantomProvider.signTransaction(tx);
+      if(!phantomSigned?.serialize)throw new Error("Phantom did not return a signed Solana transaction.");
+      const phantomSignedBytes=phantomSigned.serialize({requireAllSignatures:false,verifySignatures:false});
+
+      setWithdrawMessage("Phantom approved ✓ Rebound Wallet is co-signing…");
+      const reboundSigned=await signTransaction({
+        transaction:new Uint8Array(phantomSignedBytes),
+        wallet:reboundSigningWallet,
+        options:{uiOptions:{showWalletUIs:false}}
+      });
+      let fullySignedBytes=reboundSigned?.signedTransaction;
+      if(!(fullySignedBytes instanceof Uint8Array))fullySignedBytes=new Uint8Array(fullySignedBytes||[]);
+      if(fullySignedBytes.length===64){
+        const signedTx=Transaction.from(phantomSignedBytes);
+        signedTx.addSignature(new PublicKey(reboundAddress),fullySignedBytes);
+        fullySignedBytes=new Uint8Array(signedTx.serialize({requireAllSignatures:true,verifySignatures:true}));
+      }else{
+        const signedTx=Transaction.from(fullySignedBytes);
+        fullySignedBytes=new Uint8Array(signedTx.serialize({requireAllSignatures:true,verifySignatures:true}));
+      }
+      if(fullySignedBytes.length<=64)throw new Error("Rebound Wallet did not return a fully signed Solana transaction.");
+
+      const transactionBase64=bytesToBase64(fullySignedBytes);
+      setWithdrawMessage("Both signatures complete ✓ Broadcasting to Solana…");
+      const broadcastResponse=await fetch(`${API_BASE}/transaction/broadcast`,{
+        method:"POST",
+        headers:{"Content-Type":"application/json","Authorization":`Bearer ${token}`},
+        body:JSON.stringify({transactionBase64})
+      });
+      const broadcast=await broadcastResponse.json();
+      if(!broadcastResponse.ok)throw new Error(broadcast?.message||"The signed withdrawal could not be broadcast.");
+      const signature=String(broadcast?.signature||"");
+      if(!signature)throw new Error("Solana did not return a transaction signature.");
+      setWithdrawSignature(signature);setWithdrawState("pending");setWithdrawMessage(`${withdrawAsset} withdrawal broadcast ✓ Waiting for Solana confirmation…`);setWithdrawAmount("");
       const confirmed=await waitForConfirmation(signature);if(confirmed){setWithdrawState("success");setWithdrawMessage(`${withdrawAsset} withdrawal confirmed ✓`);await Promise.all([loadBalance(),loadStrategies(true)]);setWithdrawAsset(null)}else{setWithdrawMessage("Withdrawal was broadcast, but confirmation is taking longer than expected. You can use the transaction link below to check it.")}
     }catch(err){
       console.error("Withdrawal error:",err);
@@ -892,7 +902,7 @@ function App(){
       e("div",{className:"row-head",style:{marginBottom:"8px"}},e("label",{className:"input-label",style:{marginBottom:0}},"Amount"),e("button",{className:"max-button",type:"button",onClick:useMaxWithdrawal,disabled:withdrawBusy},"Max")),
       e("div",{className:"amount-input-wrap"},e("input",{className:"amount-input",type:"text",inputMode:"decimal",autoComplete:"off",placeholder:withdrawAsset==="USDC"?"10.00":"0.01",value:withdrawAmount,disabled:withdrawBusy,onChange:ev=>setWithdrawAmount(ev.target.value.toUpperCase()==="MAX"?"MAX":ev.target.value.replace(",",".").replace(/[^0-9.]/g,""))}),e("span",{className:"input-asset"},withdrawAsset)),
       e("div",{className:"modal-wallet"},"Destination: ",e("strong",null,phantomAddress?`${phantomAddress.slice(0,8)}…${phantomAddress.slice(-8)}`:"Linked Phantom")),
-      withdrawMessage?e("div",{className:`status-box ${withdrawState==="error"?"error":withdrawState==="success"?"success":"pending"}`,style:{marginTop:"13px"}},e("div",null,withdrawMessage),withdrawSignature?e("a",{className:"tx-link",href:`https://solscan.io/tx/${withdrawSignature}`,target:"_blank",rel:"noopener noreferrer"},"View transaction"):null):e("div",{className:"status-box pending",style:{marginTop:"13px"}},"Phantom will confirm the actual withdrawal transaction. No second wallet approval is required."),
+      withdrawMessage?e("div",{className:`status-box ${withdrawState==="error"?"error":withdrawState==="success"?"success":"pending"}`,style:{marginTop:"13px"}},e("div",null,withdrawMessage),withdrawSignature?e("a",{className:"tx-link",href:`https://solscan.io/tx/${withdrawSignature}`,target:"_blank",rel:"noopener noreferrer"},"View transaction"):null):e("div",{className:"status-box pending",style:{marginTop:"13px"}},"Phantom approves the withdrawal first. The Rebound Wallet then co-signs the same transaction and the backend broadcasts it to Solana."),
       e("div",{className:"modal-buttons"},e("button",{className:"modal-cancel",disabled:withdrawBusy,onClick:closeWithdraw},"Cancel"),e("button",{className:"modal-confirm",disabled:withdrawBusy,onClick:sendWithdrawal},withdrawBusy?"Processing…":`Withdraw ${withdrawAsset}`))
     )):null,
 
