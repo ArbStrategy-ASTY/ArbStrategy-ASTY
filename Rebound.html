@@ -490,24 +490,33 @@ function App(){
       const approval=await connectedPhantomWallet.signMessage({message:new TextEncoder().encode(approvalMessage)});
       if(!approval?.signature)throw new Error("Phantom did not return a withdrawal approval signature.");
 
-      // Phantom has approved the intent. Send the actual transaction from the
-      // Privy Rebound Wallet through Privy's supported Solana React hook.
-      // This is the same hook we already use successfully for deposits, but
-      // with the Rebound Wallet selected as the signer.
-      setWithdrawMessage("Approval confirmed. Sending withdrawal…");
+      // Phantom has approved the withdrawal intent. The actual funds live in the
+      // Privy Rebound Wallet, so Privy must now authorize and send that wallet's
+      // transaction. Keep Privy's wallet UI enabled here: it is the transaction
+      // approval for the wallet that actually owns the funds.
+      setWithdrawState("pending");
+      setWithdrawMessage("Phantom approval confirmed. Preparing the Rebound Wallet transaction…");
       await sleep(150);
       const tx=withdrawAsset==="SOL"?buildSolWithdrawalTransaction(context):await buildUsdcWithdrawalTransaction(context);
       const serialized=tx.serialize({requireAllSignatures:false,verifySignatures:false});
+      setWithdrawMessage("Confirm the Rebound Wallet transaction to send the withdrawal.");
       const result=await signAndSendTransaction({
         transaction:new Uint8Array(serialized),
         wallet:reboundSigningWallet,
         chain:context.chain||"solana:mainnet",
-        options:{skipSimulation:false,uiOptions:{showWalletUIs:false}}
+        options:{skipSimulation:false,uiOptions:{showWalletUIs:true}}
       });
       const signature=signatureToBase58(result.signature);
-      setWithdrawSignature(signature);setWithdrawState("pending");setWithdrawMessage(`${withdrawAsset} withdrawal sent to your linked Phantom wallet. Waiting for Solana confirmation…`);setWithdrawAsset(null);setWithdrawAmount("");
-      const confirmed=await waitForConfirmation(signature);if(confirmed){setWithdrawState("success");setWithdrawMessage(`${withdrawAsset} withdrawal confirmed ✓`);await Promise.all([loadBalance(),loadStrategies(true)])}else{setWithdrawMessage("Withdrawal sent. Confirmation is taking longer than expected; balances will refresh automatically.")}
-    }catch(err){console.error("Withdrawal error:",err);const m=String(err?.message||err||"");setError(m.toLowerCase().includes("reject")||m.toLowerCase().includes("cancel")?"The withdrawal was cancelled in Phantom.":m||"The withdrawal could not be completed.")}finally{setWithdrawBusy(false)}
+      if(!signature)throw new Error("Privy did not return a Solana transaction signature.");
+      setWithdrawSignature(signature);setWithdrawState("pending");setWithdrawMessage(`${withdrawAsset} withdrawal sent to your linked Phantom wallet. Waiting for Solana confirmation…`);setWithdrawAmount("");
+      const confirmed=await waitForConfirmation(signature);if(confirmed){setWithdrawState("success");setWithdrawMessage(`${withdrawAsset} withdrawal confirmed ✓`);await Promise.all([loadBalance(),loadStrategies(true)]);setWithdrawAsset(null)}else{setWithdrawMessage("Withdrawal was broadcast, but confirmation is taking longer than expected. You can use the transaction link below to check it.")}
+    }catch(err){
+      console.error("Withdrawal error:",err);
+      const m=String(err?.message||err||"");
+      const cancelled=m.toLowerCase().includes("reject")||m.toLowerCase().includes("cancel")||m.toLowerCase().includes("denied");
+      setWithdrawState("error");
+      setWithdrawMessage(cancelled?"Withdrawal cancelled before broadcast.":`Withdrawal failed before broadcast: ${m||"Unknown wallet error."}`);
+    }finally{setWithdrawBusy(false)}
   }
 
   async function enableAutomatedTrading(){
@@ -866,8 +875,8 @@ function App(){
       e("div",{className:"row-head",style:{marginBottom:"8px"}},e("label",{className:"input-label",style:{marginBottom:0}},"Amount"),e("button",{className:"max-button",type:"button",onClick:useMaxWithdrawal,disabled:withdrawBusy},"Max")),
       e("div",{className:"amount-input-wrap"},e("input",{className:"amount-input",type:"text",inputMode:"decimal",autoComplete:"off",placeholder:withdrawAsset==="USDC"?"10.00":"0.01",value:withdrawAmount,disabled:withdrawBusy,onChange:ev=>setWithdrawAmount(ev.target.value.toUpperCase()==="MAX"?"MAX":ev.target.value.replace(",",".").replace(/[^0-9.]/g,""))}),e("span",{className:"input-asset"},withdrawAsset)),
       e("div",{className:"modal-wallet"},"Destination: ",e("strong",null,phantomAddress?`${phantomAddress.slice(0,8)}…${phantomAddress.slice(-8)}`:"Linked Phantom")),
-      e("div",{className:"status-box pending",style:{marginTop:"13px"}},"A fresh wallet confirmation is required. Automated Trading authorization cannot approve withdrawals."),
-      e("div",{className:"modal-buttons"},e("button",{className:"modal-cancel",disabled:withdrawBusy,onClick:closeWithdraw},"Cancel"),e("button",{className:"modal-confirm",disabled:withdrawBusy,onClick:sendWithdrawal},withdrawBusy?"Confirming…":`Withdraw ${withdrawAsset}`))
+      withdrawMessage?e("div",{className:`status-box ${withdrawState==="error"?"error":withdrawState==="success"?"success":"pending"}`,style:{marginTop:"13px"}},e("div",null,withdrawMessage),withdrawSignature?e("a",{className:"tx-link",href:`https://solscan.io/tx/${withdrawSignature}`,target:"_blank",rel:"noopener noreferrer"},"View transaction"):null):e("div",{className:"status-box pending",style:{marginTop:"13px"}},"A fresh Phantom approval is required. The Rebound Wallet then asks you to confirm the actual withdrawal transaction."),
+      e("div",{className:"modal-buttons"},e("button",{className:"modal-cancel",disabled:withdrawBusy,onClick:closeWithdraw},"Cancel"),e("button",{className:"modal-confirm",disabled:withdrawBusy,onClick:sendWithdrawal},withdrawBusy?"Processing…":`Withdraw ${withdrawAsset}`))
     )):null,
 
     strategyModalOpen?e("div",{className:"modal-backdrop",onClick:ev=>{if(ev.target===ev.currentTarget)closeStrategyModal()}},e("div",{className:"modal"},
