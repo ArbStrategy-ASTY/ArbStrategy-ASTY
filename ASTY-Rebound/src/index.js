@@ -25,6 +25,7 @@ const WSOL_MINT = "So11111111111111111111111111111111111111112";
 const JUPITER_PROGRAM_ID = "JUP6LkbZbjS1jKKwapdHNy74zcZ3tLUZoi5QNyVTaV4";
 const COMPUTE_BUDGET_PROGRAM_ID = "ComputeBudget111111111111111111111111111111";
 const ASSOCIATED_TOKEN_PROGRAM_ID = "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL";
+const TOKEN_PROGRAM_ID = "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA";
 const SOLANA_MAINNET_CAIP2 = "solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp";
 
 const ASTY_DECIMALS = 9;
@@ -46,6 +47,7 @@ const MAX_BUY_EXECUTIONS_PER_CRON = 3;
 const MAX_SELL_EXECUTIONS_PER_CRON = 3;
 const MAX_TP_QUOTE_UNDERAGE_BPS = 50;
 const MAX_COMPUTE_UNIT_LIMIT = 1_400_000;
+const WITHDRAW_SOL_FEE_BUFFER_LAMPORTS = 20_000n;
 
 // These statuses still hold their reserved strategy capital as USDC in the wallet.
 // BOUGHT / SELL_TRIGGERED are deployed into the asset and must not be subtracted
@@ -121,6 +123,31 @@ function isTransactionSignature(value) {
 function isPositiveAmount(value) {
   const text = String(value ?? "").trim();
   return /^\d+(\.\d+)?$/.test(text) && Number.isFinite(Number(text)) && Number(text) > 0;
+}
+
+function deriveAssociatedTokenAddress(ownerAddress, mintAddress) {
+  const owner = new PublicKey(ownerAddress);
+  const mint = new PublicKey(mintAddress);
+  const tokenProgram = new PublicKey(TOKEN_PROGRAM_ID);
+  const associatedProgram = new PublicKey(ASSOCIATED_TOKEN_PROGRAM_ID);
+  const [address] = PublicKey.findProgramAddressSync(
+    [owner.toBuffer(), tokenProgram.toBuffer(), mint.toBuffer()],
+    associatedProgram,
+  );
+  return address.toBase58();
+}
+
+async function solanaAccountExists(env, address) {
+  const result = await heliusRpc(env, "getAccountInfo", [
+    address,
+    { commitment: "confirmed", encoding: "base64" },
+  ]);
+  return Boolean(result?.value);
+}
+
+async function getTokenAccountRentLamports(env) {
+  const result = await heliusRpc(env, "getMinimumBalanceForRentExemption", [165]);
+  return BigInt(String(result ?? 0));
 }
 
 function parseDecimalToRaw(value, decimals) {
@@ -2753,7 +2780,7 @@ async function handleExecutionStatus(request, env) {
 async function handleRoot(request, env) {
   return json(request, {
     service: "ASTY Rebound API",
-    buildVersion: "2026-09-20-cycle-v3-history",
+    buildVersion: "2026-09-21-cycle-v4-withdraw-history",
     status: "online",
     balanceSource: "Helius",
     displayPriceSource: "Helius DAS",
@@ -2778,6 +2805,7 @@ async function handleRoot(request, env) {
       accountSync: "POST /account/sync",
       accountBalance: "GET /account/balance",
       depositContext: "POST /deposit/context",
+      withdrawContext: "POST /withdraw/context",
       transactionStatus: "GET /transaction/status?signature=...",
       strategyList: "GET /strategies",
       strategyCreate: "POST /strategies",
@@ -3000,6 +3028,156 @@ async function handleDepositContext(request, env) {
   } catch (error) {
     console.error("Deposit context error:", error);
     return json(request, { status: "error", message: "Deposit preparation is temporarily unavailable." }, 503);
+  }
+}
+
+async function handleWithdrawContext(request, env) {
+  try {
+    const auth = await verifyPrivyRequest(request, env);
+    if (!auth.ok) return json(request, { status: "error", message: auth.message }, auth.status);
+
+    const account = await getReboundAccount(env, auth.userId);
+    if (!account?.phantom_address || !account?.rebound_wallet_address) {
+      return json(request, { status: "error", message: "Rebound account not found." }, 404);
+    }
+
+    let body = {};
+    try { body = await request.json(); } catch {}
+    const asset = String(body?.asset || "").toUpperCase();
+    const requestedAmount = String(body?.amount || "").trim();
+    const useMax = requestedAmount.toLowerCase() === "max";
+
+    if (asset !== "SOL" && asset !== "USDC") {
+      return json(request, { status: "error", message: "Unsupported withdrawal asset." }, 400);
+    }
+    if (!useMax && !isPositiveAmount(requestedAmount)) {
+      return json(request, { status: "error", message: "Enter a valid withdrawal amount." }, 400);
+    }
+
+    const activeCountRow = await env.DB.prepare(`
+      SELECT COUNT(*) AS active_count
+      FROM rebound_strategies
+      WHERE privy_user_id = ?
+        AND status IN (${activeStatusSqlPlaceholders()})
+    `).bind(auth.userId, ...ACTIVE_STRATEGY_STATUSES).first();
+    const activeStrategies = Number(activeCountRow?.active_count || 0);
+
+    if (asset === "USDC") {
+      const [usdc, reservedInUsdcRaw, nativeSol] = await Promise.all([
+        getUsdcBalance(env, account.rebound_wallet_address),
+        getUsdcHeldReservedCapitalRaw(env, auth.userId),
+        getSolBalance(env, account.rebound_wallet_address),
+      ]);
+
+      const walletUsdcRaw = BigInt(usdc.raw);
+      const freeUsdcRaw = walletUsdcRaw > reservedInUsdcRaw ? walletUsdcRaw - reservedInUsdcRaw : 0n;
+      if (freeUsdcRaw <= 0n) {
+        return json(request, { status: "error", code: "NO_FREE_USDC", message: "No free USDC is available to withdraw. Strategy capital remains protected." }, 409);
+      }
+
+      let withdrawRaw;
+      try {
+        withdrawRaw = useMax ? freeUsdcRaw : parseDecimalToRaw(requestedAmount, USDC_DECIMALS);
+      } catch (error) {
+        return json(request, { status: "error", message: error.message }, 400);
+      }
+      if (withdrawRaw <= 0n || withdrawRaw > freeUsdcRaw) {
+        return json(request, {
+          status: "error",
+          code: "INSUFFICIENT_FREE_USDC",
+          message: `You can currently withdraw up to ${formatUnits(freeUsdcRaw, USDC_DECIMALS)} USDC.`,
+        }, 409);
+      }
+
+      const destinationAta = deriveAssociatedTokenAddress(account.phantom_address, USDC_MINT);
+      const destinationAtaExists = await solanaAccountExists(env, destinationAta);
+      const rentLamports = destinationAtaExists ? 0n : await getTokenAccountRentLamports(env);
+      const gasFloor = activeStrategies > 0 ? MIN_GAS_LAMPORTS : 0n;
+      const requiredNativeLamports = gasFloor + WITHDRAW_SOL_FEE_BUFFER_LAMPORTS + rentLamports;
+      const nativeLamports = BigInt(nativeSol.raw);
+      if (nativeLamports < requiredNativeLamports) {
+        return json(request, {
+          status: "error",
+          code: "WITHDRAW_GAS_LOW",
+          message: destinationAtaExists
+            ? "Add a little SOL to the Rebound Wallet before withdrawing USDC."
+            : "A small amount of SOL is required to create the USDC account in Phantom and complete this withdrawal.",
+          requiredSol: formatUnits(requiredNativeLamports, SOL_DECIMALS),
+          currentSol: nativeSol.ui,
+        }, 409);
+      }
+
+      const latest = await getLatestBlockhash(env);
+      return json(request, {
+        status: "ok",
+        chain: "solana:mainnet",
+        asset: "USDC",
+        amount: formatUnits(withdrawRaw, USDC_DECIMALS),
+        amountRaw: withdrawRaw.toString(),
+        decimals: USDC_DECIMALS,
+        from: account.rebound_wallet_address,
+        to: account.phantom_address,
+        usdcMint: USDC_MINT,
+        freeUsdc: formatUnits(freeUsdcRaw, USDC_DECIMALS),
+        destinationAta,
+        destinationAtaExists,
+        activeStrategies,
+        blockhash: latest.blockhash,
+        lastValidBlockHeight: latest.lastValidBlockHeight,
+        confirmationRequired: true,
+      });
+    }
+
+    const sol = await getSolBalance(env, account.rebound_wallet_address);
+    const walletLamports = BigInt(sol.raw);
+    const gasFloor = activeStrategies > 0 ? MIN_GAS_LAMPORTS : 0n;
+    const protectedLamports = gasFloor + WITHDRAW_SOL_FEE_BUFFER_LAMPORTS;
+    const maxWithdrawRaw = walletLamports > protectedLamports ? walletLamports - protectedLamports : 0n;
+    if (maxWithdrawRaw <= 0n) {
+      return json(request, {
+        status: "error",
+        code: "NO_WITHDRAWABLE_SOL",
+        message: activeStrategies > 0
+          ? "SOL is currently needed for the minimum gas reserve while strategies are active."
+          : "Not enough SOL remains after the network-fee buffer.",
+      }, 409);
+    }
+
+    let withdrawRaw;
+    try {
+      withdrawRaw = useMax ? maxWithdrawRaw : parseDecimalToRaw(requestedAmount, SOL_DECIMALS);
+    } catch (error) {
+      return json(request, { status: "error", message: error.message }, 400);
+    }
+    if (withdrawRaw <= 0n || withdrawRaw > maxWithdrawRaw) {
+      return json(request, {
+        status: "error",
+        code: "SOL_RESERVE_PROTECTED",
+        message: `You can currently withdraw up to ${formatUnits(maxWithdrawRaw, SOL_DECIMALS)} SOL.`,
+        minimumReserveSol: activeStrategies > 0 ? formatUnits(MIN_GAS_LAMPORTS, SOL_DECIMALS) : "0",
+      }, 409);
+    }
+
+    const latest = await getLatestBlockhash(env);
+    return json(request, {
+      status: "ok",
+      chain: "solana:mainnet",
+      asset: "SOL",
+      amount: formatUnits(withdrawRaw, SOL_DECIMALS),
+      amountRaw: withdrawRaw.toString(),
+      decimals: SOL_DECIMALS,
+      from: account.rebound_wallet_address,
+      to: account.phantom_address,
+      maxWithdrawableSol: formatUnits(maxWithdrawRaw, SOL_DECIMALS),
+      activeStrategies,
+      minimumReserveSol: activeStrategies > 0 ? formatUnits(MIN_GAS_LAMPORTS, SOL_DECIMALS) : "0",
+      blockhash: latest.blockhash,
+      lastValidBlockHeight: latest.lastValidBlockHeight,
+      confirmationRequired: true,
+    });
+  } catch (error) {
+    console.error("Withdrawal context error:", error);
+    return json(request, { status: "error", message: "Withdrawal preparation is temporarily unavailable." }, 503);
   }
 }
 
@@ -3750,6 +3928,7 @@ async function routeFetch(request, env) {
     case "POST /account/sync": return handleAccountSync(request, env);
     case "GET /account/balance": return handleBalance(request, env);
     case "POST /deposit/context": return handleDepositContext(request, env);
+    case "POST /withdraw/context": return handleWithdrawContext(request, env);
     case "GET /transaction/status": return handleTransactionStatus(request, env, url);
     case "GET /strategies": return handleStrategyList(request, env);
     case "POST /strategies": return handleStrategyCreate(request, env);
