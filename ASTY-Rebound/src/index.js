@@ -6,6 +6,7 @@ import {
   TransactionInstruction,
   TransactionMessage,
   VersionedTransaction,
+  Transaction,
 } from "@solana/web3.js";
 
 const ALLOWED_ORIGINS = new Set([
@@ -2780,7 +2781,7 @@ async function handleExecutionStatus(request, env) {
 async function handleRoot(request, env) {
   return json(request, {
     service: "ASTY Rebound API",
-    buildVersion: "2026-09-21-cycle-v4-withdraw-history",
+    buildVersion: "2026-09-21-cycle-v5-withdraw-broadcast",
     status: "online",
     balanceSource: "Helius",
     displayPriceSource: "Helius DAS",
@@ -2806,6 +2807,7 @@ async function handleRoot(request, env) {
       accountBalance: "GET /account/balance",
       depositContext: "POST /deposit/context",
       withdrawContext: "POST /withdraw/context",
+      transactionBroadcast: "POST /transaction/broadcast",
       transactionStatus: "GET /transaction/status?signature=...",
       strategyList: "GET /strategies",
       strategyCreate: "POST /strategies",
@@ -3178,6 +3180,106 @@ async function handleWithdrawContext(request, env) {
   } catch (error) {
     console.error("Withdrawal context error:", error);
     return json(request, { status: "error", message: "Withdrawal preparation is temporarily unavailable." }, 503);
+  }
+}
+
+
+async function handleTransactionBroadcast(request, env) {
+  try {
+    const auth = await verifyPrivyRequest(request, env);
+    if (!auth.ok) return json(request, { status: "error", message: auth.message }, auth.status);
+
+    const account = await getReboundAccount(env, auth.userId);
+    if (!account?.phantom_address || !account?.rebound_wallet_address) {
+      return json(request, { status: "error", message: "Rebound account not found." }, 404);
+    }
+
+    let body = {};
+    try { body = await request.json(); } catch {}
+    const transactionBase64 = String(body?.transactionBase64 || "").trim();
+    if (!transactionBase64 || transactionBase64.length > 8000) {
+      return json(request, { status: "error", message: "Invalid signed transaction payload." }, 400);
+    }
+
+    let bytes;
+    let tx;
+    try {
+      bytes = base64ToBytes(transactionBase64);
+      tx = Transaction.from(bytes);
+    } catch (error) {
+      return json(request, { status: "error", message: "The signed Solana transaction could not be decoded." }, 400);
+    }
+
+    const reboundAddress = account.rebound_wallet_address;
+    const phantomAddress = account.phantom_address;
+    if (!tx.feePayer || tx.feePayer.toBase58() !== reboundAddress) {
+      return json(request, { status: "error", message: "Withdrawal transaction fee payer verification failed." }, 409);
+    }
+
+    const signerEntries = Array.isArray(tx.signatures) ? tx.signatures : [];
+    const reboundSigner = signerEntries.find((entry) => entry?.publicKey?.toBase58?.() === reboundAddress);
+    const phantomSigner = signerEntries.find((entry) => entry?.publicKey?.toBase58?.() === phantomAddress);
+    const hasSignature = (entry) => Boolean(entry?.signature && entry.signature.some((byte) => byte !== 0));
+    if (!hasSignature(reboundSigner) || !hasSignature(phantomSigner)) {
+      return json(request, { status: "error", message: "Both Rebound and Phantom signatures are required before broadcast." }, 409);
+    }
+
+    const SYSTEM_PROGRAM_ID = "11111111111111111111111111111111";
+    const MEMO_PROGRAM_ID = "MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr";
+    const allowedPrograms = new Set([SYSTEM_PROGRAM_ID, TOKEN_PROGRAM_ID, ASSOCIATED_TOKEN_PROGRAM_ID, MEMO_PROGRAM_ID]);
+    const programs = [...new Set(tx.instructions.map((ix) => ix.programId.toBase58()))];
+    const unexpectedPrograms = programs.filter((programId) => !allowedPrograms.has(programId));
+    if (unexpectedPrograms.length) {
+      return json(request, {
+        status: "error",
+        message: "Withdrawal transaction contains an unexpected Solana program.",
+        unexpectedPrograms,
+      }, 409);
+    }
+
+    const phantomApprovalMemo = tx.instructions.find((ix) =>
+      ix.programId.toBase58() === MEMO_PROGRAM_ID &&
+      ix.keys.some((key) => key.pubkey.toBase58() === phantomAddress && key.isSigner)
+    );
+    if (!phantomApprovalMemo) {
+      return json(request, { status: "error", message: "Phantom withdrawal approval is missing from the transaction." }, 409);
+    }
+
+    const accountKeys = new Set();
+    for (const ix of tx.instructions) {
+      for (const key of ix.keys || []) accountKeys.add(key.pubkey.toBase58());
+    }
+    if (!accountKeys.has(reboundAddress) || !accountKeys.has(phantomAddress)) {
+      return json(request, { status: "error", message: "Withdrawal transaction wallet verification failed." }, 409);
+    }
+
+    let signature;
+    try {
+      signature = await heliusRpc(env, "sendTransaction", [
+        transactionBase64,
+        {
+          encoding: "base64",
+          skipPreflight: false,
+          preflightCommitment: "confirmed",
+          maxRetries: 3,
+        },
+      ]);
+    } catch (error) {
+      console.error("Withdrawal broadcast error:", error);
+      return json(request, {
+        status: "error",
+        message: String(error?.message || "Solana rejected the withdrawal transaction.").slice(0, 700),
+      }, 409);
+    }
+
+    if (!isTransactionSignature(signature)) {
+      return json(request, { status: "error", message: "Solana did not return a valid transaction signature." }, 502);
+    }
+
+    return json(request, { status: "ok", signature, broadcast: true });
+  } catch (error) {
+    console.error("Transaction broadcast error:", error);
+    return json(request, { status: "error", message: "Signed withdrawal broadcast failed." }, 503);
   }
 }
 
@@ -3929,6 +4031,7 @@ async function routeFetch(request, env) {
     case "GET /account/balance": return handleBalance(request, env);
     case "POST /deposit/context": return handleDepositContext(request, env);
     case "POST /withdraw/context": return handleWithdrawContext(request, env);
+    case "POST /transaction/broadcast": return handleTransactionBroadcast(request, env);
     case "GET /transaction/status": return handleTransactionStatus(request, env, url);
     case "GET /strategies": return handleStrategyList(request, env);
     case "POST /strategies": return handleStrategyCreate(request, env);
