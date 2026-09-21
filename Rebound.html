@@ -468,18 +468,35 @@ function App(){
     if(!rawAmount){setError("Enter an amount or choose Max.");return}
     const isMax=rawAmount.toUpperCase()==="MAX";
     if(!isMax&&(!Number.isFinite(Number(rawAmount))||Number(rawAmount)<=0)){setError("Enter a valid withdrawal amount.");return}
-    if(!reboundSigningWallet?.address||reboundSigningWallet.address!==reboundAddress){setError("Your Rebound Wallet signer is not loaded. Refresh the page and try again.");return}
+    if(!connectedPhantomWallet?.address||connectedPhantomWallet.address!==phantomAddress||typeof connectedPhantomWallet.signMessage!=="function"){setError("Open ASTY Rebound in your linked Phantom wallet before withdrawing.");return}
+    if(!reboundSigningWallet?.address||reboundSigningWallet.address!==reboundAddress||typeof reboundSigningWallet.signAndSendTransaction!=="function"){setError("Your Rebound Wallet signer is not loaded. Refresh the page and try again.");return}
     setWithdrawBusy(true);
     try{
       const token=await getAccessToken();if(!token)throw new Error("Your login session has expired.");
       const response=await fetch(`${API_BASE}/withdraw/context`,{method:"POST",headers:{"Content-Type":"application/json","Authorization":`Bearer ${token}`},body:JSON.stringify({asset:withdrawAsset,amount:isMax?"max":rawAmount})});
       const context=await response.json();if(!response.ok)throw new Error(context?.message||"Withdrawal could not be prepared.");
-      if(context.from!==reboundAddress||context.to!==phantomAddress)throw new Error("Withdrawal destination verification failed.");
-      const tx=withdrawAsset==="SOL"?buildSolWithdrawalTransaction(context):await buildUsdcWithdrawalTransaction(context);const serialized=tx.serialize({requireAllSignatures:false,verifySignatures:false});
-      const result=await signAndSendTransaction({transaction:new Uint8Array(serialized),wallet:reboundSigningWallet,options:{skipSimulation:false,uiOptions:{showWalletUIs:true}}});const signature=signatureToBase58(result.signature);
+      if(context.from!==reboundAddress||context.to!==phantomAddress||context.to!==connectedPhantomWallet.address)throw new Error("Withdrawal destination verification failed.");
+
+      // Fresh user approval in Phantom. The actual transfer still originates from the
+      // Rebound Wallet, so Phantom approves the exact withdrawal intent first.
+      const approvalMessage=[
+        "ASTY Rebound withdrawal approval",
+        `Asset: ${context.asset}`,
+        `Amount: ${context.amount} ${context.asset}`,
+        `From Rebound Wallet: ${context.from}`,
+        `To linked Phantom: ${context.to}`,
+        "I approve this withdrawal to my permanently linked Phantom wallet."
+      ].join("\n");
+      const approval=await connectedPhantomWallet.signMessage({message:new TextEncoder().encode(approvalMessage)});
+      if(!approval?.signature)throw new Error("Phantom did not return a withdrawal approval signature.");
+
+      const tx=withdrawAsset==="SOL"?buildSolWithdrawalTransaction(context):await buildUsdcWithdrawalTransaction(context);
+      const serialized=tx.serialize({requireAllSignatures:false,verifySignatures:false});
+      const result=await reboundSigningWallet.signAndSendTransaction({chain:context.chain||"solana:mainnet",transaction:new Uint8Array(serialized)});
+      const signature=signatureToBase58(result.signature);
       setWithdrawSignature(signature);setWithdrawState("pending");setWithdrawMessage(`${withdrawAsset} withdrawal sent to your linked Phantom wallet. Waiting for Solana confirmation…`);setWithdrawAsset(null);setWithdrawAmount("");
       const confirmed=await waitForConfirmation(signature);if(confirmed){setWithdrawState("success");setWithdrawMessage(`${withdrawAsset} withdrawal confirmed ✓`);await Promise.all([loadBalance(),loadStrategies(true)])}else{setWithdrawMessage("Withdrawal sent. Confirmation is taking longer than expected; balances will refresh automatically.")}
-    }catch(err){console.error("Withdrawal error:",err);const m=String(err?.message||err||"");setError(m.toLowerCase().includes("reject")||m.toLowerCase().includes("cancel")?"The withdrawal was cancelled.":m||"The withdrawal could not be completed.")}finally{setWithdrawBusy(false)}
+    }catch(err){console.error("Withdrawal error:",err);const m=String(err?.message||err||"");setError(m.toLowerCase().includes("reject")||m.toLowerCase().includes("cancel")?"The withdrawal was cancelled in Phantom.":m||"The withdrawal could not be completed.")}finally{setWithdrawBusy(false)}
   }
 
   async function enableAutomatedTrading(){
