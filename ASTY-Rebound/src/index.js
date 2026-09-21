@@ -2781,7 +2781,7 @@ async function handleExecutionStatus(request, env) {
 async function handleRoot(request, env) {
   return json(request, {
     service: "ASTY Rebound API",
-    buildVersion: "2026-09-21-cycle-v5-withdraw-broadcast",
+    buildVersion: "2026-09-21-cycle-v6-withdraw-program-diagnostic",
     status: "online",
     balanceSource: "Helius",
     displayPriceSource: "Helius DAS",
@@ -3232,8 +3232,10 @@ async function handleTransactionBroadcast(request, env) {
     if (unexpectedPrograms.length) {
       return json(request, {
         status: "error",
-        message: "Withdrawal transaction contains an unexpected Solana program.",
+        code: "WITHDRAW_UNEXPECTED_PROGRAM",
+        message: `Withdrawal transaction contains an unexpected Solana program: ${unexpectedPrograms.join(", ")}`,
         unexpectedPrograms,
+        programs,
       }, 409);
     }
 
