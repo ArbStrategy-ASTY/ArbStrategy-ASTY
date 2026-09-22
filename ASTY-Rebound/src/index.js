@@ -23,6 +23,9 @@ const ASTY_MINT = "ASTYqeaoK83Zs1pTFEXZUB6BM8cG8YLTsN852NUkt7ZR";
 const USDC_MINT = "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v";
 const WSOL_MINT = "So11111111111111111111111111111111111111112";
 const WBTC_MINT = "3NZ9JMVBmGAqocybic2c7LQCJScmgsAZ6vQqTDzcqmJh";
+const BNB_MINT = "9gP2kCy3wA1ctvYWQk75guqXuHfrEomqydHLtcTCqiLa";
+const RAY_MINT = "4k3Dyjzvzp8eMZWUXbBCjEvwSkkk59S5iCNLY3QrkX6R";
+const ETH_MINT = "7vfCXTUXx5WJV5JADk17DUJ4ksgau7utNKj4b963voxs";
 
 const JUPITER_PROGRAM_ID = "JUP6LkbZbjS1jKKwapdHNy74zcZ3tLUZoi5QNyVTaV4";
 const COMPUTE_BUDGET_PROGRAM_ID = "ComputeBudget111111111111111111111111111111";
@@ -35,11 +38,17 @@ const ASTY_DECIMALS = 9;
 const USDC_DECIMALS = 6;
 const SOL_DECIMALS = 9;
 const WBTC_DECIMALS = 8;
+const BNB_DECIMALS = 8;
+const RAY_DECIMALS = 6;
+const ETH_DECIMALS = 8;
 const PRICE_MICRO_DECIMALS = 6;
 
 const STRATEGY_ASSETS = Object.freeze({
   SOL: { symbol: "SOL", mint: WSOL_MINT, decimals: SOL_DECIMALS, displayName: "SOL", internalAsset: "WSOL" },
   WBTC: { symbol: "WBTC", mint: WBTC_MINT, decimals: WBTC_DECIMALS, displayName: "WBTC", internalAsset: "WBTC (Wormhole)" },
+  BNB: { symbol: "BNB", mint: BNB_MINT, decimals: BNB_DECIMALS, displayName: "BNB", internalAsset: "BNB (Wormhole)" },
+  RAY: { symbol: "RAY", mint: RAY_MINT, decimals: RAY_DECIMALS, displayName: "RAY", internalAsset: "RAY" },
+  ETH: { symbol: "ETH", mint: ETH_MINT, decimals: ETH_DECIMALS, displayName: "ETH", internalAsset: "ETH (Wormhole)" },
 });
 
 function getStrategyAssetConfig(assetSymbol) {
@@ -949,8 +958,8 @@ function resolveStrategyConfiguration(body) {
 
 async function loadWatchingStrategies(env, privyUserId = null) {
   const sql = privyUserId
-    ? `SELECT * FROM rebound_strategies WHERE status = 'WATCHING' AND asset_symbol IN ('SOL','WBTC') AND privy_user_id = ? ORDER BY created_at ASC`
-    : `SELECT * FROM rebound_strategies WHERE status = 'WATCHING' AND asset_symbol IN ('SOL','WBTC') ORDER BY created_at ASC`;
+    ? `SELECT * FROM rebound_strategies WHERE status = 'WATCHING' AND asset_symbol IN ('SOL','WBTC','BNB','RAY','ETH') AND privy_user_id = ? ORDER BY created_at ASC`
+    : `SELECT * FROM rebound_strategies WHERE status = 'WATCHING' AND asset_symbol IN ('SOL','WBTC','BNB','RAY','ETH') ORDER BY created_at ASC`;
   const result = privyUserId
     ? await env.DB.prepare(sql).bind(privyUserId).all()
     : await env.DB.prepare(sql).all();
@@ -967,7 +976,7 @@ function priceMoveFraction(previousRaw, nextRaw) {
 async function runPriceWatcher(env, { source = "cron", privyUserId = null } = {}) {
   const strategies = await loadWatchingStrategies(env, privyUserId);
   if (strategies.length === 0) {
-    return { ok: true, mode: "watch-only", executionEnabled: false, source, checked: 0, updated: 0, triggered: 0, message: "No WATCHING SOL or WBTC strategies found." };
+    return { ok: true, mode: "watch-only", executionEnabled: false, source, checked: 0, updated: 0, triggered: 0, message: "No WATCHING Rebound strategies found." };
   }
 
   const priceByAsset = new Map();
@@ -998,7 +1007,7 @@ async function runPriceWatcher(env, { source = "cron", privyUserId = null } = {}
     const hwm = oldHwm == null || current > oldHwm ? current : oldHwm;
     const dipBps = BigInt(Number(strategy.dip_bps));
     const trigger = hwm * (10_000n - dipBps) / 10_000n;
-    const shouldTrigger = current <= trigger;
+const shouldTrigger = current <= trigger;
     const result = shouldTrigger
       ? await env.DB.prepare(`UPDATE rebound_strategies SET status='BUY_TRIGGERED', current_price_micro_usdc=?, hwm_price_micro_usdc=?, buy_trigger_price_micro_usdc=?, buy_triggered_at=COALESCE(buy_triggered_at,CURRENT_TIMESTAMP), last_price_at=CURRENT_TIMESTAMP, updated_at=CURRENT_TIMESTAMP WHERE id=? AND status='WATCHING'`).bind(current.toString(),hwm.toString(),trigger.toString(),strategy.id).run()
       : await env.DB.prepare(`UPDATE rebound_strategies SET current_price_micro_usdc=?, hwm_price_micro_usdc=?, buy_trigger_price_micro_usdc=?, last_price_at=CURRENT_TIMESTAMP, updated_at=CURRENT_TIMESTAMP WHERE id=? AND status='WATCHING'`).bind(current.toString(),hwm.toString(),trigger.toString(),strategy.id).run();
@@ -1016,7 +1025,7 @@ async function getExecutionCheckStrategy(env, privyUserId, strategyId = null) {
       FROM rebound_strategies
       WHERE id = ?
         AND privy_user_id = ?
-        AND asset_symbol IN ('SOL','WBTC')
+        AND asset_symbol IN ('SOL','WBTC','BNB','RAY','ETH')
         AND status IN ('WATCHING', 'BUY_TRIGGERED')
       LIMIT 1
     `).bind(strategyId, privyUserId).first();
@@ -1026,7 +1035,7 @@ async function getExecutionCheckStrategy(env, privyUserId, strategyId = null) {
     SELECT *
     FROM rebound_strategies
     WHERE privy_user_id = ?
-      AND asset_symbol IN ('SOL','WBTC')
+      AND asset_symbol IN ('SOL','WBTC','BNB','RAY','ETH')
       AND status IN ('WATCHING', 'BUY_TRIGGERED')
     ORDER BY
       CASE WHEN status = 'BUY_TRIGGERED' THEN 0 ELSE 1 END,
@@ -1050,7 +1059,7 @@ async function handleExecutionCheck(request, env) {
       return json(request, {
         status: "error",
         code: "NO_ELIGIBLE_STRATEGY",
-        message: "No WATCHING or BUY_TRIGGERED SOL/WBTC strategy was found for this account.",
+        message: "No WATCHING or BUY_TRIGGERED supported Rebound strategy was found for this account.",
       }, 404);
     }
 
@@ -1932,7 +1941,7 @@ async function loadBoughtStrategies(env) {
     SELECT *
     FROM rebound_strategies
     WHERE status = 'BOUGHT'
-      AND asset_symbol IN ('SOL','WBTC')
+      AND asset_symbol IN ('SOL','WBTC','BNB','RAY','ETH')
       AND entry_wsol_raw IS NOT NULL
       AND entry_wsol_raw > 0
     ORDER BY bought_at ASC, created_at ASC
@@ -1942,7 +1951,7 @@ async function loadBoughtStrategies(env) {
 
 async function runPositionWatcher(env, { source = "cron" } = {}) {
   const strategies = await loadBoughtStrategies(env);
-  if (strategies.length === 0) return { ok:true, source, checked:0, updated:0, takeProfitTriggered:0, stopLossTriggered:0, message:"No open SOL or WBTC positions found." };
+  if (strategies.length === 0) return { ok:true, source, checked:0, updated:0, takeProfitTriggered:0, stopLossTriggered:0, message:"No open supported Rebound positions found." };
   const priceByAsset = new Map();
   let updated=0, takeProfitTriggered=0, stopLossTriggered=0;
   const assetPrices={};
@@ -1998,7 +2007,7 @@ async function finalizeConfirmedSell(env, strategy, signature) {
   if (!fill) {
     return { ok: false, pending: true, strategyId: strategy.id, signature, message: "Confirmed SELL is not fully indexed yet." };
   }
-  if (fill.failed) {
+if (fill.failed) {
     await env.DB.prepare(`
       UPDATE rebound_strategies
       SET pending_signature = NULL,
@@ -2637,12 +2646,22 @@ async function handleExecutionStatus(request, env) {
 async function handleRoot(request, env) {
   return json(request, {
     service: "ASTY Rebound API",
-    buildVersion: "2026-09-22-cycle-v8-wbtc",
+    buildVersion: "2026-09-22-cycle-v9-multiasset",
     status: "online",
     balanceSource: "Helius",
     displayPriceSource: "Helius DAS",
-    supportedStrategyAssets: ["SOL", "WBTC"],
+    supportedStrategyAssets: ["SOL", "WBTC", "BNB", "RAY", "ETH"],
     wbtcMint: WBTC_MINT,
+    bnbMint: BNB_MINT,
+    rayMint: RAY_MINT,
+    ethMint: ETH_MINT,
+    strategyAssetMints: {
+      SOL: WSOL_MINT,
+      WBTC: WBTC_MINT,
+      BNB: BNB_MINT,
+      RAY: RAY_MINT,
+      ETH: ETH_MINT,
+    },
     watcher: {
       mode: "market-watch",
       executionEnabled: false,
@@ -2998,7 +3017,7 @@ async function handleWithdrawContext(request, env) {
         status: "error",
         code: "NO_WITHDRAWABLE_SOL",
         message: activeStrategies > 0
-          ? "SOL is currently needed for the minimum gas reserve while strategies are active."
+? "SOL is currently needed for the minimum gas reserve while strategies are active."
           : "Not enough SOL remains after the network-fee buffer.",
       }, 409);
     }
@@ -3561,8 +3580,8 @@ async function handleStrategyResume(request, env) {
 
 async function handleWatcherStatus(request, env) {
   try {
-    const counts=await env.DB.prepare(`SELECT asset_symbol,status,COUNT(*) AS count FROM rebound_strategies WHERE asset_symbol IN ('SOL','WBTC') GROUP BY asset_symbol,status`).all();
-    const latestRows=await env.DB.prepare(`SELECT asset_symbol,current_price_micro_usdc,hwm_price_micro_usdc,buy_trigger_price_micro_usdc,last_price_at FROM rebound_strategies WHERE asset_symbol IN ('SOL','WBTC') AND last_price_at IS NOT NULL ORDER BY last_price_at DESC`).all();
+    const counts=await env.DB.prepare(`SELECT asset_symbol,status,COUNT(*) AS count FROM rebound_strategies WHERE asset_symbol IN ('SOL','WBTC','BNB','RAY','ETH') GROUP BY asset_symbol,status`).all();
+    const latestRows=await env.DB.prepare(`SELECT asset_symbol,current_price_micro_usdc,hwm_price_micro_usdc,buy_trigger_price_micro_usdc,last_price_at FROM rebound_strategies WHERE asset_symbol IN ('SOL','WBTC','BNB','RAY','ETH') AND last_price_at IS NOT NULL ORDER BY last_price_at DESC`).all();
     const byAsset={};for(const row of counts?.results||[]){const symbol=String(row.asset_symbol||"SOL").toUpperCase();byAsset[symbol]||={watching:0,buyTriggered:0,bought:0,sellTriggered:0,paused:0,stopped:0};const key=({WATCHING:"watching",BUY_TRIGGERED:"buyTriggered",BOUGHT:"bought",SELL_TRIGGERED:"sellTriggered",PAUSED:"paused",STOPPED:"stopped"})[row.status];if(key)byAsset[symbol][key]=Number(row.count||0)}
     const latest={};for(const row of latestRows?.results||[]){const symbol=String(row.asset_symbol||"SOL").toUpperCase();if(latest[symbol])continue;latest[symbol]={currentPriceUsd:formatMicroUsd(row.current_price_micro_usdc),hwmPriceUsd:formatMicroUsd(row.hwm_price_micro_usdc),buyTriggerPriceUsd:formatMicroUsd(row.buy_trigger_price_micro_usdc),lastPriceAt:row.last_price_at}}
     return json(request,{status:"ok",mode:"watch-only",executionEnabled:false,priceSource:"Jupiter Price API V3",assets:byAsset,latest});
