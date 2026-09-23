@@ -74,6 +74,15 @@ const MAX_TP_QUOTE_UNDERAGE_BPS = 50;
 const MAX_COMPUTE_UNIT_LIMIT = 1_400_000;
 const WITHDRAW_SOL_FEE_BUFFER_LAMPORTS = 20_000n;
 
+// If Privy loses the response after signAndSendTransaction, Rebound cannot know
+// immediately whether Solana received the BUY. Keep the strategy quarantined first,
+// then reconcile the wallet's on-chain history before deciding whether to continue.
+const AMBIGUOUS_BUY_RECOVERY_GRACE_MINUTES = 5;
+const AMBIGUOUS_BUY_WINDOW_BEFORE_SECONDS = 45;
+const AMBIGUOUS_BUY_WINDOW_AFTER_SECONDS = 180;
+const AMBIGUOUS_BUY_HISTORY_PAGE_SIZE = 100;
+const AMBIGUOUS_BUY_HISTORY_MAX_PAGES = 3;
+
 // These statuses still hold their reserved strategy capital as USDC in the wallet.
 // BOUGHT / SELL_TRIGGERED are deployed into the asset and must not be subtracted
 // a second time when calculating free on-chain USDC.
@@ -1376,6 +1385,331 @@ async function getConfirmedSwapFill(env, signature, walletAddress, assetSymbol) 
   return { failed:false, assetSymbol:asset.symbol, spentUsdcRaw, receivedAssetRaw, receivedWsolRaw:receivedAssetRaw, fillPriceMicroUsdc, slot:tx.slot??null, blockTime:tx.blockTime??null };
 }
 
+function parseSqliteUtcMs(value) {
+  const raw = String(value || "").trim();
+  if (!raw) return null;
+  const iso = raw.includes("T") ? raw : raw.replace(" ", "T");
+  const normalized = /(?:Z|[+-]\d{2}:\d{2})$/i.test(iso) ? iso : `${iso}Z`;
+  const ms = Date.parse(normalized);
+  return Number.isFinite(ms) ? ms : null;
+}
+
+async function inspectBuyCandidateTransaction(env, signature, walletAddress, assetSymbol) {
+  const asset = getStrategyAssetConfig(assetSymbol);
+  const tx = await heliusRpc(env, "getTransaction", [
+    signature,
+    { commitment: "confirmed", encoding: "jsonParsed", maxSupportedTransactionVersion: 0 },
+  ]);
+
+  if (!tx?.meta) {
+    return { indexed: false, match: false, signature };
+  }
+  if (tx.meta.err) {
+    return { indexed: true, failed: true, match: false, signature, error: tx.meta.err, blockTime: tx.blockTime ?? null };
+  }
+
+  const preUsdc = sumOwnerTokenBalanceRaw(tx.meta.preTokenBalances, USDC_MINT, walletAddress);
+  const postUsdc = sumOwnerTokenBalanceRaw(tx.meta.postTokenBalances, USDC_MINT, walletAddress);
+  const preAsset = sumOwnerTokenBalanceRaw(tx.meta.preTokenBalances, asset.mint, walletAddress);
+  const postAsset = sumOwnerTokenBalanceRaw(tx.meta.postTokenBalances, asset.mint, walletAddress);
+
+  const spentUsdcRaw = preUsdc.total > postUsdc.total ? preUsdc.total - postUsdc.total : 0n;
+  const receivedAssetRaw = postAsset.total > preAsset.total ? postAsset.total - preAsset.total : 0n;
+
+  if (spentUsdcRaw <= 0n || receivedAssetRaw <= 0n) {
+    return {
+      indexed: true,
+      failed: false,
+      match: false,
+      signature,
+      spentUsdcRaw,
+      receivedAssetRaw,
+      blockTime: tx.blockTime ?? null,
+    };
+  }
+
+  const fillPriceMicroUsdc = spentUsdcRaw * (10n ** BigInt(asset.decimals)) / receivedAssetRaw;
+  return {
+    indexed: true,
+    failed: false,
+    match: true,
+    signature,
+    assetSymbol: asset.symbol,
+    spentUsdcRaw,
+    receivedAssetRaw,
+    fillPriceMicroUsdc,
+    blockTime: tx.blockTime ?? null,
+  };
+}
+
+async function scanAmbiguousBuyHistory(env, strategy) {
+  const startedMs = parseSqliteUtcMs(strategy.pending_action_started_at || strategy.paused_at);
+  if (startedMs == null) {
+    return { complete: false, matches: [], unresolved: [], reason: "missing-recovery-timestamp" };
+  }
+
+  const windowStart = Math.floor((startedMs - AMBIGUOUS_BUY_WINDOW_BEFORE_SECONDS * 1000) / 1000);
+  const windowEnd = Math.floor((startedMs + AMBIGUOUS_BUY_WINDOW_AFTER_SECONDS * 1000) / 1000);
+  const capitalRaw = BigInt(String(strategy.current_cycle_capital_usdc_raw || 0));
+  if (capitalRaw <= 0n) {
+    return { complete: false, matches: [], unresolved: [], reason: "invalid-cycle-capital" };
+  }
+
+  const matches = [];
+  const unresolved = [];
+  let before = null;
+  let reachedWindowStart = false;
+  let pages = 0;
+
+  while (pages < AMBIGUOUS_BUY_HISTORY_MAX_PAGES && !reachedWindowStart) {
+    const options = { limit: AMBIGUOUS_BUY_HISTORY_PAGE_SIZE, commitment: "confirmed" };
+    if (before) options.before = before;
+
+    const signatures = await heliusRpc(env, "getSignaturesForAddress", [
+      strategy.rebound_wallet_address,
+      options,
+    ]);
+
+    if (!Array.isArray(signatures) || signatures.length === 0) {
+      reachedWindowStart = true;
+      break;
+    }
+
+    pages += 1;
+
+    for (const item of signatures) {
+      const signature = String(item?.signature || "");
+      const blockTime = Number(item?.blockTime);
+
+      if (!Number.isFinite(blockTime)) {
+        // A missing block time means the scan cannot safely prove the time window is complete.
+        unresolved.push({ signature, reason: "missing-block-time" });
+        continue;
+      }
+
+      if (blockTime < windowStart) {
+        reachedWindowStart = true;
+        break;
+      }
+
+      if (blockTime > windowEnd || !isTransactionSignature(signature)) continue;
+
+      if (item?.err != null) {
+        continue;
+      }
+
+      const inspected = await inspectBuyCandidateTransaction(
+        env,
+        signature,
+        strategy.rebound_wallet_address,
+        strategy.asset_symbol,
+      );
+
+      if (!inspected.indexed) {
+        unresolved.push({ signature, reason: "transaction-not-indexed" });
+        continue;
+      }
+
+      // Jupiter BUYs are exact-input swaps. The USDC amount spent must match this
+      // strategy's cycle capital exactly before an unknown transaction is adopted.
+      if (inspected.match && inspected.spentUsdcRaw === capitalRaw) {
+        matches.push(inspected);
+      }
+    }
+
+    const last = signatures[signatures.length - 1];
+    before = typeof last?.signature === "string" ? last.signature : null;
+    if (!before || signatures.length < AMBIGUOUS_BUY_HISTORY_PAGE_SIZE) {
+      reachedWindowStart = true;
+    }
+  }
+
+  return {
+    complete: reachedWindowStart && unresolved.length === 0,
+    matches,
+    unresolved,
+    pages,
+    windowStart,
+    windowEnd,
+  };
+}
+
+async function adoptRecoveredBuySignature(env, strategy, signature) {
+  const adopted = await env.DB.prepare(`
+    UPDATE rebound_strategies
+    SET status = 'BUY_TRIGGERED',
+        pending_action = 'BUY_SUBMITTED',
+        pending_signature = ?,
+        pending_action_started_at = CURRENT_TIMESTAMP,
+        paused_at = NULL,
+        execution_lock = NULL,
+        execution_lock_at = NULL,
+        updated_at = CURRENT_TIMESTAMP
+    WHERE id = ?
+      AND status = 'PAUSED'
+      AND pending_signature IS NULL
+      AND pending_action IN ('BUY_SEND_UNKNOWN', 'BUY_SIGNATURE_UNKNOWN')
+      AND (entry_wsol_raw IS NULL OR entry_wsol_raw = 0)
+  `).bind(signature, strategy.id).run();
+
+  if (Number(adopted?.meta?.changes ?? 0) === 0) {
+    return { ok: false, strategyId: strategy.id, signature, reason: "state-changed-before-recovery" };
+  }
+
+  const fresh = await env.DB.prepare(`SELECT * FROM rebound_strategies WHERE id = ? LIMIT 1`).bind(strategy.id).first();
+  return finalizeConfirmedBuy(env, fresh, signature);
+}
+
+async function rearmAmbiguousBuyWithNoTransaction(env, strategy) {
+  const [usdc, reservedInUsdcRaw, currentPrice] = await Promise.all([
+    getUsdcBalance(env, strategy.rebound_wallet_address),
+    getUsdcHeldReservedCapitalRaw(env, strategy.privy_user_id),
+    getJupiterAssetPriceMicroUsdc(env, strategy.asset_symbol),
+  ]);
+
+  const walletUsdcRaw = BigInt(String(usdc.raw || 0));
+  if (walletUsdcRaw < reservedInUsdcRaw) {
+    return {
+      ok: false,
+      keptPaused: true,
+      strategyId: strategy.id,
+      reason: "usdc-no-longer-reconciles",
+      walletUsdcRaw: walletUsdcRaw.toString(),
+      reservedInUsdcRaw: reservedInUsdcRaw.toString(),
+    };
+  }
+
+  const trigger = currentPrice.micro * (10_000n - BigInt(Number(strategy.dip_bps))) / 10_000n;
+  const result = await env.DB.prepare(`
+    UPDATE rebound_strategies
+    SET status = 'WATCHING',
+        hwm_price_micro_usdc = ?,
+        current_price_micro_usdc = ?,
+        buy_trigger_price_micro_usdc = ?,
+        buy_fill_price_micro_usdc = NULL,
+        take_profit_price_micro_usdc = NULL,
+        stop_loss_price_micro_usdc = NULL,
+        entry_wsol_raw = NULL,
+        buy_triggered_at = NULL,
+        bought_at = NULL,
+        sell_triggered_at = NULL,
+        sold_at = NULL,
+        paused_at = NULL,
+        pending_action = NULL,
+        pending_signature = NULL,
+        pending_action_started_at = NULL,
+        execution_lock = NULL,
+        execution_lock_at = NULL,
+        last_price_at = CURRENT_TIMESTAMP,
+        updated_at = CURRENT_TIMESTAMP
+    WHERE id = ?
+      AND status = 'PAUSED'
+      AND pending_signature IS NULL
+      AND pending_action IN ('BUY_SEND_UNKNOWN', 'BUY_SIGNATURE_UNKNOWN')
+      AND (entry_wsol_raw IS NULL OR entry_wsol_raw = 0)
+  `).bind(
+    currentPrice.micro.toString(),
+    currentPrice.micro.toString(),
+    trigger.toString(),
+    strategy.id,
+  ).run();
+
+  return {
+    ok: Number(result?.meta?.changes ?? 0) > 0,
+    rearmed: Number(result?.meta?.changes ?? 0) > 0,
+    strategyId: strategy.id,
+    asset: String(strategy.asset_symbol || "SOL").toUpperCase(),
+    referenceHighUsd: formatMicroUsd(currentPrice.micro),
+    buyTriggerUsd: formatMicroUsd(trigger),
+    reason: "no-matching-buy-found-on-chain",
+  };
+}
+
+async function reconcileAmbiguousBuysWithoutSignature(env) {
+  const query = await env.DB.prepare(`
+    SELECT *
+    FROM rebound_strategies
+    WHERE status = 'PAUSED'
+      AND pending_signature IS NULL
+      AND pending_action IN ('BUY_SEND_UNKNOWN', 'BUY_SIGNATURE_UNKNOWN')
+      AND (entry_wsol_raw IS NULL OR entry_wsol_raw = 0)
+    ORDER BY pending_action_started_at ASC
+    LIMIT 10
+  `).all();
+
+  const rows = Array.isArray(query?.results) ? query.results : [];
+  const results = [];
+
+  for (const strategy of rows) {
+    try {
+      const startedMs = parseSqliteUtcMs(strategy.pending_action_started_at || strategy.paused_at);
+      if (startedMs == null) {
+        results.push({ ok: false, keptPaused: true, strategyId: strategy.id, reason: "missing-recovery-timestamp" });
+        continue;
+      }
+
+      const ageMs = Date.now() - startedMs;
+      if (ageMs < AMBIGUOUS_BUY_RECOVERY_GRACE_MINUTES * 60_000) {
+        results.push({
+          ok: true,
+          keptPaused: true,
+          strategyId: strategy.id,
+          reason: "recovery-grace-period",
+          retryAfterSeconds: Math.max(1, Math.ceil((AMBIGUOUS_BUY_RECOVERY_GRACE_MINUTES * 60_000 - ageMs) / 1000)),
+        });
+        continue;
+      }
+
+      const scan = await scanAmbiguousBuyHistory(env, strategy);
+
+      if (scan.matches.length > 1) {
+        // Multiple exact-capital BUYs in the tiny recovery window are not safe to guess between.
+        results.push({
+          ok: false,
+          keptPaused: true,
+          strategyId: strategy.id,
+          reason: "multiple-matching-buy-transactions",
+          signatures: scan.matches.map((item) => item.signature),
+        });
+        continue;
+      }
+
+      if (scan.matches.length === 1) {
+        const match = scan.matches[0];
+        results.push(await adoptRecoveredBuySignature(env, strategy, match.signature));
+        continue;
+      }
+
+      if (!scan.complete) {
+        results.push({
+          ok: true,
+          keptPaused: true,
+          strategyId: strategy.id,
+          reason: "on-chain-history-not-yet-conclusive",
+          unresolved: scan.unresolved,
+          pagesScanned: scan.pages,
+        });
+        continue;
+      }
+
+      // The entire send-time window was checked and no exact USDC -> asset BUY exists.
+      // Only now is it safe to clear the quarantine and restart with a fresh Reference High.
+      results.push(await rearmAmbiguousBuyWithNoTransaction(env, strategy));
+    } catch (error) {
+      console.error("Ambiguous BUY recovery error:", strategy.id, error);
+      results.push({
+        ok: false,
+        keptPaused: true,
+        strategyId: strategy.id,
+        reason: "recovery-error",
+        message: String(error?.message || "Ambiguous BUY recovery failed.").slice(0, 500),
+      });
+    }
+  }
+
+  return results;
+}
+
 async function finalizeConfirmedBuy(env, strategy, signature) {
   const fill = await getConfirmedSwapFill(env, signature, strategy.rebound_wallet_address, strategy.asset_symbol);
   if (!fill) {
@@ -1778,6 +2112,7 @@ async function quarantineStaleAmbiguousBuys(env) {
 
 async function runBuyExecutor(env, { source = "cron" } = {}) {
   const quarantined = await quarantineStaleAmbiguousBuys(env);
+  const ambiguousRecovery = await reconcileAmbiguousBuysWithoutSignature(env);
   const reconciled = await reconcilePendingBuys(env);
 
   if (!autoExecutionRequested(env)) {
@@ -1788,6 +2123,7 @@ async function runBuyExecutor(env, { source = "cron" } = {}) {
       autoExecutionEnabled: false,
       newBuysAttempted: 0,
       quarantinedAmbiguousBuys: quarantined,
+      ambiguousBuyRecovery: ambiguousRecovery,
       reconciled,
       message: "BUY executor is installed but AUTO_EXECUTION_ENABLED is not true. No new BUY was sent.",
     };
@@ -1816,6 +2152,7 @@ async function runBuyExecutor(env, { source = "cron" } = {}) {
     autoExecutionEnabled: true,
     newBuysAttempted: rows.length,
     quarantinedAmbiguousBuys: quarantined,
+    ambiguousBuyRecovery: ambiguousRecovery,
     reconciled,
     executions,
   };
@@ -2646,7 +2983,7 @@ async function handleExecutionStatus(request, env) {
 async function handleRoot(request, env) {
   return json(request, {
     service: "ASTY Rebound API",
-    buildVersion: "2026-09-22-cycle-v9-multiasset",
+    buildVersion: "2026-09-23-cycle-v10-buy-recovery",
     status: "online",
     balanceSource: "Helius",
     displayPriceSource: "Helius DAS",
