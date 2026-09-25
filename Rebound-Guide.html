@@ -11,9 +11,7 @@
   --bg:#09070f;
   --panel:#12101a;
   --panel2:#171321;
-  --panel3:#1b1626;
   --border:#302640;
-  --border2:#3d3150;
   --text:#f5f0ff;
   --muted:#aaa0bb;
   --purple:#b590ff;
@@ -25,306 +23,97 @@
 *{box-sizing:border-box}
 html{scroll-behavior:smooth}
 html,body{
-  margin:0;
-  min-height:100%;
-  background:
-    radial-gradient(circle at 50% -12%,rgba(139,90,255,.23),transparent 34%),
-    var(--bg);
+  margin:0;min-height:100%;
+  background:radial-gradient(circle at 50% -12%,rgba(139,90,255,.23),transparent 34%),var(--bg);
   color:var(--text);
-  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif
 }
 body{min-height:100vh}
 a{color:inherit}
-button,input{font:inherit}
-
-.page{
-  width:min(760px,100%);
-  margin:0 auto;
-  padding:calc(20px + env(safe-area-inset-top)) 18px calc(44px + env(safe-area-inset-bottom));
-}
-
-.brand{
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap:14px;
-  margin-bottom:28px;
-}
+button{font:inherit}
+.page{width:min(760px,100%);margin:0 auto;padding:calc(20px + env(safe-area-inset-top)) 18px calc(44px + env(safe-area-inset-bottom))}
+.brand{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:28px}
 .brand-left{display:flex;align-items:center;gap:13px;min-width:0}
-.brand-logo{
-  width:48px;height:48px;object-fit:contain;
-  filter:drop-shadow(0 0 16px rgba(170,120,255,.3))
-}
+.brand-logo{width:48px;height:48px;object-fit:contain;filter:drop-shadow(0 0 16px rgba(170,120,255,.3))}
 .brand-title{font-size:20px;font-weight:800}
-.brand-project{
-  margin-top:5px;color:var(--purple);font-size:11px;font-weight:700;
-  letter-spacing:.12em;text-transform:uppercase
-}
+.brand-project{margin-top:5px;color:var(--purple);font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase}
 .brand-subtitle{margin-top:4px;color:var(--muted);font-size:12px}
-.back-button{
-  flex:0 0 auto;
-  padding:10px 13px;
-  border:1px solid rgba(181,144,255,.28);
-  border-radius:12px;
-  color:var(--purple);
-  background:rgba(181,144,255,.07);
-  text-decoration:none;
-  font-size:11px;
-  font-weight:800;
-  white-space:nowrap;
-}
-
-.hero{
-  display:grid;
-  grid-template-columns:minmax(0,1fr) 145px;
-  align-items:center;
-  gap:18px;
-  min-height:205px;
-  padding:16px 4px 30px;
-}
+.header-actions{display:flex;align-items:center;gap:8px;flex:0 0 auto}
+.lang-switch{display:flex;padding:3px;border:1px solid rgba(181,144,255,.25);border-radius:11px;background:rgba(181,144,255,.045)}
+.lang-button{min-width:34px;padding:7px 8px;border:0;border-radius:8px;background:transparent;color:var(--muted);font-size:10px;font-weight:850;cursor:pointer}
+.lang-button.active{color:#150b23;background:linear-gradient(135deg,#c49dff,#8d63ff)}
+.back-button{padding:10px 12px;border:1px solid rgba(181,144,255,.28);border-radius:12px;color:var(--purple);background:rgba(181,144,255,.07);text-decoration:none;font-size:11px;font-weight:800;white-space:nowrap}
+.hero{display:grid;grid-template-columns:minmax(0,1fr) 145px;align-items:center;gap:18px;min-height:205px;padding:16px 4px 30px}
 .wolf-wrap{display:flex;align-items:center;justify-content:center}
-.wolf{
-  width:100%;max-width:140px;max-height:180px;object-fit:contain;
-  opacity:.28;filter:drop-shadow(0 0 32px rgba(156,103,255,.22));
-  pointer-events:none
-}
-.kicker{
-  margin-bottom:10px;color:var(--purple);font-size:11px;font-weight:800;
-  letter-spacing:.12em;text-transform:uppercase
-}
-h1{
-  margin:0 0 14px;
-  font-size:clamp(38px,10vw,58px);
-  line-height:.98;
-  letter-spacing:-.04em;
-  background:linear-gradient(90deg,#fff,#d7c6ff,var(--purple));
-  -webkit-background-clip:text;background-clip:text;color:transparent
-}
-.lead{
-  max-width:520px;margin:0;color:var(--muted);font-size:15px;line-height:1.65
-}
-.hero-line{
-  margin-top:14px;color:#ded4f3;font-size:13px;font-weight:750
-}
-
-.card{
-  padding:20px;
-  border:1px solid var(--border);
-  border-radius:24px;
-  background:linear-gradient(180deg,rgba(255,255,255,.026),rgba(255,255,255,.012)),var(--panel);
-  box-shadow:0 22px 70px rgba(0,0,0,.28)
-}
-.card+.card{margin-top:14px}
-.section-label{
-  margin-bottom:8px;color:var(--purple);font-size:10px;font-weight:800;
-  letter-spacing:.1em;text-transform:uppercase
-}
+.wolf{width:100%;max-width:140px;max-height:180px;object-fit:contain;opacity:.28;filter:drop-shadow(0 0 32px rgba(156,103,255,.22));pointer-events:none}
+.kicker{margin-bottom:10px;color:var(--purple);font-size:11px;font-weight:800;letter-spacing:.12em;text-transform:uppercase}
+h1{margin:0 0 14px;font-size:clamp(38px,10vw,58px);line-height:.98;letter-spacing:-.04em;background:linear-gradient(90deg,#fff,#d7c6ff,var(--purple));-webkit-background-clip:text;background-clip:text;color:transparent}
+.lead{max-width:520px;margin:0;color:var(--muted);font-size:15px;line-height:1.65}
+.hero-line{margin-top:14px;color:#ded4f3;font-size:13px;font-weight:750}
+.card{padding:20px;border:1px solid var(--border);border-radius:24px;background:linear-gradient(180deg,rgba(255,255,255,.026),rgba(255,255,255,.012)),var(--panel);box-shadow:0 22px 70px rgba(0,0,0,.28)}
+.section-label{margin-bottom:8px;color:var(--purple);font-size:10px;font-weight:800;letter-spacing:.1em;text-transform:uppercase}
 .section-title{margin:0;font-size:20px;font-weight:850;letter-spacing:-.02em}
 .section-copy{margin:8px 0 0;color:var(--muted);font-size:12px;line-height:1.6}
-
-.flow{
-  display:grid;
-  grid-template-columns:repeat(3,minmax(0,1fr));
-  gap:9px;
-  margin-top:16px
-}
-.flow-step{
-  min-width:0;
-  padding:14px 12px;
-  border:1px solid rgba(255,255,255,.06);
-  border-radius:15px;
-  background:rgba(255,255,255,.022)
-}
-.flow-number{
-  display:inline-flex;
-  align-items:center;
-  justify-content:center;
-  width:24px;height:24px;
-  border-radius:8px;
-  color:#190d2b;
-  background:linear-gradient(135deg,#c49dff,#8d63ff);
-  font-size:10px;font-weight:900
-}
+.flow{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px;margin-top:16px}
+.flow-step{min-width:0;padding:14px 12px;border:1px solid rgba(255,255,255,.06);border-radius:15px;background:rgba(255,255,255,.022)}
+.flow-number{display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:8px;color:#190d2b;background:linear-gradient(135deg,#c49dff,#8d63ff);font-size:10px;font-weight:900}
 .flow-title{margin-top:10px;font-size:12px;font-weight:850}
 .flow-copy{margin-top:5px;color:var(--muted);font-size:10px;line-height:1.45}
-
-.example{
-  margin-top:14px;
-  padding:14px;
-  border:1px solid rgba(181,144,255,.17);
-  border-radius:15px;
-  background:linear-gradient(180deg,rgba(181,144,255,.065),rgba(181,144,255,.025))
-}
+.example{margin-top:14px;padding:14px;border:1px solid rgba(181,144,255,.17);border-radius:15px;background:linear-gradient(180deg,rgba(181,144,255,.065),rgba(181,144,255,.025))}
 .example-title{font-size:11px;font-weight:850;color:#ded0ff}
-.example-grid{
-  display:grid;
-  grid-template-columns:repeat(3,minmax(0,1fr));
-  gap:8px;
-  margin-top:10px
-}
+.example-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:10px}
 .example-item{min-width:0}
-.example-label{
-  color:var(--muted);font-size:8px;font-weight:750;
-  letter-spacing:.06em;text-transform:uppercase
-}
-.example-value{
-  margin-top:3px;font-size:13px;font-weight:850;white-space:nowrap
-}
+.example-label{color:var(--muted);font-size:8px;font-weight:750;letter-spacing:.06em;text-transform:uppercase}
+.example-value{margin-top:3px;font-size:13px;font-weight:850;white-space:nowrap}
 .example-note{margin-top:10px;color:var(--muted);font-size:10px;line-height:1.5}
-
-.quick-links{
-  display:flex;
-  gap:8px;
-  flex-wrap:wrap;
-  margin-top:15px
-}
-.quick-link{
-  padding:8px 10px;
-  border:1px solid rgba(181,144,255,.18);
-  border-radius:10px;
-  color:#d7c6ff;
-  background:rgba(181,144,255,.055);
-  text-decoration:none;
-  font-size:10px;
-  font-weight:750
-}
-
 .faq-section{margin-top:22px}
 .faq-head{margin:0 3px 10px}
-.faq-kicker{
-  color:var(--purple);font-size:10px;font-weight:800;
-  text-transform:uppercase;letter-spacing:.1em
-}
+.faq-kicker{color:var(--purple);font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.1em}
 .faq-title{margin-top:5px;font-size:17px;font-weight:850}
 .faq-copy{margin-top:5px;color:var(--muted);font-size:11px;line-height:1.5}
-
 .faq-list{display:grid;gap:9px}
-.faq{
-  overflow:hidden;
-  border:1px solid #292137;
-  border-radius:16px;
-  background:var(--panel2)
-}
-.faq[open]{
-  border-color:rgba(181,144,255,.27);
-  background:linear-gradient(180deg,rgba(181,144,255,.045),rgba(255,255,255,.012)),var(--panel2)
-}
-.faq summary{
-  position:relative;
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap:12px;
-  min-height:58px;
-  padding:15px 17px;
-  cursor:pointer;
-  list-style:none;
-  font-size:13px;
-  font-weight:800;
-  line-height:1.35
-}
+.faq{overflow:hidden;border:1px solid #292137;border-radius:16px;background:var(--panel2)}
+.faq[open]{border-color:rgba(181,144,255,.27);background:linear-gradient(180deg,rgba(181,144,255,.045),rgba(255,255,255,.012)),var(--panel2)}
+.faq summary{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:58px;padding:15px 17px;cursor:pointer;list-style:none;font-size:13px;font-weight:800;line-height:1.35}
 .faq summary::-webkit-details-marker{display:none}
-.faq summary::after{
-  content:"+";
-  flex:0 0 auto;
-  width:26px;height:26px;
-  display:flex;align-items:center;justify-content:center;
-  border-radius:9px;
-  color:var(--purple);
-  background:rgba(181,144,255,.09);
-  font-size:17px;font-weight:500;
-  transition:transform .18s ease,background .18s ease
-}
-.faq[open] summary::after{
-  content:"−";
-  background:rgba(181,144,255,.14)
-}
-.faq-body{
-  padding:0 17px 17px;
-  color:var(--muted);
-  font-size:12px;
-  line-height:1.65
-}
+.faq summary::after{content:"+";flex:0 0 auto;width:26px;height:26px;display:flex;align-items:center;justify-content:center;border-radius:9px;color:var(--purple);background:rgba(181,144,255,.09);font-size:17px;font-weight:500}
+.faq[open] summary::after{content:"−";background:rgba(181,144,255,.14)}
+.faq-body{padding:0 17px 17px;color:var(--muted);font-size:12px;line-height:1.65}
 .faq-body strong{color:#e7ddf8}
 .faq-body p{margin:0}
 .faq-body p+p{margin-top:10px}
-.faq-body ul{
-  margin:9px 0 0;
-  padding-left:18px
-}
+.faq-body ul{margin:9px 0 0;padding-left:18px}
 .faq-body li+li{margin-top:5px}
-.inline-pill{
-  display:inline-block;
-  padding:2px 6px;
-  border-radius:6px;
-  color:#d9c8ff;
-  background:rgba(181,144,255,.08);
-  font-size:.92em;
-  font-weight:750;
-  white-space:nowrap
-}
-.good{color:var(--green)}
-.warn{color:var(--yellow)}
-
-.callout{
-  margin-top:14px;
-  padding:14px 15px;
-  border:1px solid rgba(255,212,119,.19);
-  border-radius:15px;
-  background:rgba(255,212,119,.05);
-  color:#e8dcc3;
-  font-size:11px;
-  line-height:1.55
-}
+.logic-example{margin:12px 0 2px;padding:13px 14px;border-left:3px solid var(--purple);border-radius:0 12px 12px 0;background:rgba(181,144,255,.06);color:#d9cfeb}
+.logic-example strong{color:#fff}
+.logic-row{display:flex;justify-content:space-between;gap:12px;padding:4px 0}
+.logic-row span:last-child{font-weight:800;color:#e8dcff;white-space:nowrap}
+.callout{margin-top:14px;padding:14px 15px;border:1px solid rgba(255,212,119,.19);border-radius:15px;background:rgba(255,212,119,.05);color:#e8dcc3;font-size:11px;line-height:1.55}
 .callout strong{color:#ffe4a5}
-
-.footer-card{
-  margin-top:22px;
-  padding:20px;
-  border:1px solid rgba(181,144,255,.2);
-  border-radius:22px;
-  background:linear-gradient(135deg,rgba(181,144,255,.08),rgba(141,99,255,.035)),var(--panel)
-}
+.footer-card{margin-top:22px;padding:20px;border:1px solid rgba(181,144,255,.2);border-radius:22px;background:linear-gradient(135deg,rgba(181,144,255,.08),rgba(141,99,255,.035)),var(--panel)}
 .footer-title{font-size:18px;font-weight:850}
 .footer-copy{margin-top:7px;color:var(--muted);font-size:11px;line-height:1.55}
-.primary{
-  display:block;
-  width:100%;
-  margin-top:15px;
-  padding:15px 18px;
-  border-radius:15px;
-  color:#130921;
-  background:linear-gradient(90deg,#c49dff,#8d63ff);
-  box-shadow:0 9px 30px rgba(141,99,255,.22);
-  text-align:center;
-  text-decoration:none;
-  font-size:14px;
-  font-weight:850
-}
-.fineprint{
-  margin:18px 4px 0;
-  color:#7f758f;
-  font-size:9px;
-  line-height:1.55;
-  text-align:center
-}
-
+.primary{display:block;width:100%;margin-top:15px;padding:15px 18px;border-radius:15px;color:#130921;background:linear-gradient(90deg,#c49dff,#8d63ff);box-shadow:0 9px 30px rgba(141,99,255,.22);text-align:center;text-decoration:none;font-size:14px;font-weight:850}
+.fineprint{margin:18px 4px 0;color:#7f758f;font-size:9px;line-height:1.55;text-align:center}
+.lang-panel[hidden]{display:none!important}
 @media(max-width:540px){
   .page{padding-left:14px;padding-right:14px}
   .brand{align-items:flex-start}
   .brand-logo{width:44px;height:44px}
-  .back-button{padding:9px 10px;font-size:10px}
+  .header-actions{gap:5px}
+  .back-button{padding:9px 9px;font-size:9px}
+  .lang-button{min-width:30px;padding:6px;font-size:9px}
   .hero{grid-template-columns:minmax(0,1fr) 96px;gap:6px;min-height:190px;padding-top:10px}
   .wolf{max-width:96px;max-height:135px}
   .flow{grid-template-columns:1fr}
-  .example-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
   .faq summary{padding:14px 15px;font-size:12px}
   .faq-body{padding:0 15px 15px;font-size:11px}
 }
-@media(max-width:370px){
+@media(max-width:380px){
+  .brand-subtitle{display:none}
+  .back-button{display:none}
   .hero{grid-template-columns:1fr}
   .wolf-wrap{display:none}
-  .brand-subtitle{display:none}
   .example-grid{grid-template-columns:1fr}
 }
 </style>
@@ -332,431 +121,361 @@ h1{
 <body>
 <main class="page">
 
-  <header class="brand">
-    <div class="brand-left">
-      <img class="brand-logo" src="assets/logo.png" alt="ASTY">
-      <div>
-        <div class="brand-title">ASTY Rebound</div>
-        <div class="brand-project">ArbStrategy</div>
-        <div class="brand-subtitle">Automated dip & rebound strategy</div>
-      </div>
-    </div>
-    <a class="back-button" href="Rebound.html">Open Rebound</a>
-  </header>
-
-  <section class="hero">
+<header class="brand">
+  <div class="brand-left">
+    <img class="brand-logo" src="assets/logo.png" alt="ASTY">
     <div>
-      <div class="kicker">How it Works</div>
-      <h1>Rebound, explained.</h1>
-      <p class="lead">A simple guide to strategies, your Rebound Wallet, automated trading and the safety rules behind ASTY Rebound.</p>
-      <div class="hero-line">Wait for the dip. Buy the rebound. Take the profit. Repeat.</div>
+      <div class="brand-title">ASTY Rebound</div>
+      <div class="brand-project">ArbStrategy</div>
+      <div class="brand-subtitle" id="brandSubtitle">Automated dip & rebound strategy</div>
     </div>
-    <div class="wolf-wrap">
-      <img class="wolf" src="assets/wolf.png" alt="">
+  </div>
+  <div class="header-actions">
+    <div class="lang-switch" aria-label="Language">
+      <button class="lang-button active" id="langEN" type="button">EN</button>
+      <button class="lang-button" id="langDE" type="button">DE</button>
     </div>
-  </section>
+    <a class="back-button" id="openReboundTop" href="Rebound.html">Open Rebound</a>
+  </div>
+</header>
 
-  <section class="card">
-    <div class="section-label">The idea</div>
-    <h2 class="section-title">What Rebound does</h2>
-    <p class="section-copy">You choose an asset, a dip level and a take-profit target. Rebound watches the Solana market 24/7. It waits instead of chasing the price, buys only after your configured dip is reached and then watches for the rebound.</p>
+<!-- ENGLISH -->
+<div class="lang-panel" id="panelEN">
 
-    <div class="flow">
-      <div class="flow-step">
-        <span class="flow-number">1</span>
-        <div class="flow-title">Watch</div>
-        <div class="flow-copy">Rebound follows the market and keeps a moving Reference High.</div>
+<section class="hero">
+  <div>
+    <div class="kicker">How it Works</div>
+    <h1>Rebound, explained.</h1>
+    <p class="lead">A simple guide to strategies, your Rebound Wallet, automated trading and the safety rules behind ASTY Rebound.</p>
+    <div class="hero-line">Wait for the dip. Buy the rebound. Take the profit. Repeat.</div>
+  </div>
+  <div class="wolf-wrap"><img class="wolf" src="assets/wolf.png" alt=""></div>
+</section>
+
+<section class="card">
+  <div class="section-label">The idea</div>
+  <h2 class="section-title">What Rebound does</h2>
+  <p class="section-copy">You choose an asset, a dip level and a take-profit target. Rebound watches the Solana market 24/7. It follows rising prices with a dynamic Reference High, waits for your configured dip, buys the asset and then watches for the rebound.</p>
+  <div class="flow">
+    <div class="flow-step"><span class="flow-number">1</span><div class="flow-title">Watch</div><div class="flow-copy">Rebound follows the market and keeps a dynamic Reference High.</div></div>
+    <div class="flow-step"><span class="flow-number">2</span><div class="flow-title">Buy the dip</div><div class="flow-copy">When price falls by your chosen percentage from the latest Reference High, Rebound prepares the buy.</div></div>
+    <div class="flow-step"><span class="flow-number">3</span><div class="flow-title">Sell the rebound</div><div class="flow-copy">Take Profit is calculated from the real executed buy price.</div></div>
+  </div>
+</section>
+
+<section class="faq-section">
+  <div class="faq-head"><div class="faq-kicker">Getting started</div><div class="faq-title">The basics</div><div class="faq-copy">What you need before your first strategy.</div></div>
+  <div class="faq-list">
+    <details class="faq"><summary>What do I need to use ASTY Rebound?</summary><div class="faq-body"><p>You need a connected <strong>Phantom wallet</strong>, trading capital in <strong>USDC</strong> and a small amount of native <strong>SOL for Solana network fees</strong>.</p><p>A new strategy requires at least <strong>25 USDC</strong>.</p></div></details>
+    <details class="faq"><summary>Which assets can I trade?</summary><div class="faq-body"><p>The current Rebound version supports <strong>SOL, WBTC, BNB, RAY and ETH</strong> on Solana. Trades are routed through Jupiter instead of being tied to one hard-coded liquidity pool.</p></div></details>
+    <details class="faq"><summary>How much ASTY do I need?</summary><div class="faq-body"><p>You need to hold <strong>2,500 ASTY in your linked Phantom wallet for each active strategy</strong>. Your ASTY stays in Phantom and does not need to be deposited into Rebound.</p></div></details>
+    <details class="faq"><summary>Do I need to keep the website open?</summary><div class="faq-body"><p>No. Active strategies are designed to continue <strong>server-side 24/7</strong>, even when the website or your phone is closed.</p></div></details>
+  </div>
+</section>
+
+<section class="faq-section">
+  <div class="faq-head"><div class="faq-kicker">Strategy logic</div><div class="faq-title">How a Rebound strategy works</div><div class="faq-copy">The most important part of Rebound: understanding the dynamic Reference High.</div></div>
+  <div class="faq-list">
+
+    <details class="faq" open>
+      <summary>What is the Reference High / High-Water Mark?</summary>
+      <div class="faq-body">
+        <p>The <strong>Reference High</strong> is the highest market price the strategy has seen while it is waiting for a dip. Technically, this is also called the <strong>High-Water Mark (HWM)</strong>.</p>
+        <p>The important part: the Reference High can move <strong>up</strong> with every new market high, but it does not move down while the strategy is waiting.</p>
+        <p>Your Buy Trigger is always recalculated from the current Reference High. This means Rebound follows a rising market instead of waiting for a dip from an old price level.</p>
       </div>
-      <div class="flow-step">
-        <span class="flow-number">2</span>
-        <div class="flow-title">Buy the dip</div>
-        <div class="flow-copy">When price falls by your chosen percentage, Rebound prepares the trade through Jupiter.</div>
+    </details>
+
+    <details class="faq" open>
+      <summary>Why can my next Buy be higher than my last Sell?</summary>
+      <div class="faq-body">
+        <p>Because the dip is measured from the <strong>latest Reference High</strong>, not permanently from the previous Sell price.</p>
+        <p>After a completed cycle, the new cycle starts with a new Reference High. If the market then keeps rising, the Reference High rises with it — and so does the Buy Trigger.</p>
+        <div class="logic-example">
+          <div class="logic-row"><span>Previous Sell</span><span>$116.28</span></div>
+          <div class="logic-row"><span>New market high</span><span>$122.64</span></div>
+          <div class="logic-row"><span>Dip setting</span><span>3%</span></div>
+          <div class="logic-row"><span>New Buy Trigger</span><span>≈ $118.96</span></div>
+        </div>
+        <p>So even though the previous cycle sold at $116.28, the next strategy can buy around $118.96 after SOL first climbed to about $122.64 and then fell 3%.</p>
+        <p>This is intentional. Without a dynamic Reference High, Rebound could miss new opportunities for a long time during a strongly rising market.</p>
       </div>
-      <div class="flow-step">
-        <span class="flow-number">3</span>
-        <div class="flow-title">Sell the rebound</div>
-        <div class="flow-copy">Take Profit is calculated from the real executed buy price, not just the trigger.</div>
+    </details>
+
+    <details class="faq">
+      <summary>Why did “Buy at” change after I already saw another price?</summary>
+      <div class="faq-body">
+        <p><strong>“Buy at” is not a permanently fixed price while the strategy is watching.</strong> It is the current dip trigger based on the current Reference High.</p>
+        <p>If the market makes a new high, the Reference High moves up and Rebound immediately recalculates “Buy at”. The earlier displayed Buy price is then replaced by the new one.</p>
+        <p>Example: with a 3% dip, a Reference High of $116.28 gives a trigger around $112.79. If the market later reaches $122.64, the trigger moves to about $118.96.</p>
       </div>
-    </div>
+    </details>
 
-    <div class="example">
-      <div class="example-title">Simple example · 5% Dip / 4% Take Profit</div>
-      <div class="example-grid">
-        <div class="example-item">
-          <div class="example-label">Reference high</div>
-          <div class="example-value">$100.00</div>
-        </div>
-        <div class="example-item">
-          <div class="example-label">Buy trigger</div>
-          <div class="example-value">$95.00</div>
-        </div>
-        <div class="example-item">
-          <div class="example-label">Example fill</div>
-          <div class="example-value">$94.80</div>
-        </div>
+    <details class="faq">
+      <summary>When exactly does Rebound buy?</summary>
+      <div class="faq-body"><p>The Buy Trigger is calculated as <strong>Reference High × (1 − Dip %)</strong>. When the live market reaches the trigger, Rebound prepares the trade. Before sending the Buy, it checks the market again so it does not blindly chase a price that has already rebounded too far.</p></div>
+    </details>
+
+    <details class="faq">
+      <summary>What are the strategy presets?</summary>
+      <div class="faq-body"><ul><li><strong>Frequent:</strong> Dip 3% · Take Profit 2.5%</li><li><strong>Balanced:</strong> Dip 5% · Take Profit 4%</li><li><strong>Deep Dip:</strong> Dip 8% · Take Profit 6%</li><li><strong>Custom:</strong> choose your own supported values.</li></ul></div>
+    </details>
+
+    <details class="faq">
+      <summary>Why is Take Profit based on the actual Buy fill?</summary>
+      <div class="faq-body"><p>The trigger is only the point that starts the Buy process. The real swap can execute at a slightly different price. Rebound therefore stores the <strong>actual average Buy fill</strong> and calculates Take Profit from the price you actually paid.</p></div>
+    </details>
+
+    <details class="faq">
+      <summary>What does “Position open” mean?</summary>
+      <div class="faq-body"><p>The strategy has already used its reserved USDC to buy the selected asset. Rebound is now watching for the Take Profit target or, if enabled, the Stop Loss.</p></div>
+    </details>
+
+    <details class="faq">
+      <summary>What does Stop Loss do?</summary>
+      <div class="faq-body"><p>Stop Loss is optional and is <strong>off by default</strong>. If it is reached, Rebound attempts to sell the open position back to USDC. The strategy then becomes <strong>Paused</strong> until you Resume or stop it.</p></div>
+    </details>
+
+    <details class="faq">
+      <summary>What happens when I Resume a paused strategy?</summary>
+      <div class="faq-body"><p>The same strategy starts again with the same settings and reserved capital. Rebound sets a <strong>fresh Reference High from the current market price</strong> and starts watching again.</p></div>
+    </details>
+
+    <details class="faq">
+      <summary>What is Auto Repeat?</summary>
+      <div class="faq-body"><p>With Auto Repeat enabled, a successful Take Profit automatically starts another cycle. Rebound goes back to watching the market for the next dip.</p></div>
+    </details>
+
+    <details class="faq">
+      <summary>What is the difference between Fixed Capital and Compound?</summary>
+      <div class="faq-body"><p>With <strong>Compound off</strong>, the next cycle uses the original strategy capital again and realized profit becomes free USDC.</p><p>With <strong>Compound on</strong>, the capital returned from the previous cycle becomes the capital for the next cycle.</p></div>
+    </details>
+
+    <details class="faq">
+      <summary>What is Cycle History?</summary>
+      <div class="faq-body"><p>Each strategy keeps its own completed-cycle history, including Buy fill, Sell fill, capital used, capital returned, realized result and links to the on-chain transactions.</p></div>
+    </details>
+
+  </div>
+</section>
+
+<section class="faq-section">
+  <div class="faq-head"><div class="faq-kicker">Wallet & security</div><div class="faq-title">Where your funds are and who can do what</div><div class="faq-copy">Important questions before funding an automated wallet.</div></div>
+  <div class="faq-list">
+    <details class="faq"><summary>What is the Rebound Wallet?</summary><div class="faq-body"><p>The Rebound Wallet is a <strong>dedicated Solana wallet</strong> used for your trading capital, network-fee SOL and open strategy assets. It is separate from your Phantom wallet.</p></div></details>
+    <details class="faq"><summary>Where is my Rebound Wallet?</summary><div class="faq-body"><p>The wallet is created as an embedded Solana wallet through <strong>Privy</strong> and permanently linked to your Rebound account. The funds are on the <strong>Solana blockchain</strong> at the Rebound Wallet address shown in the interface.</p></div></details>
+    <details class="faq"><summary>Do I get a seed phrase or passphrase for the Rebound Wallet?</summary><div class="faq-body"><p>ASTY Rebound does <strong>not ask you to enter or reveal your Phantom recovery phrase</strong>. The normal Rebound flow does not require you to manage a traditional seed phrase for the embedded Rebound Wallet.</p><p><strong>Never enter your Phantom seed phrase or recovery phrase into ASTY Rebound, a chat or any website claiming it is required for Rebound.</strong></p></div></details>
+    <details class="faq"><summary>Who can access the Rebound Wallet?</summary><div class="faq-body"><p>Automated strategy trades use a <strong>restricted Privy trading authorization</strong>. This allows supported trades to execute while the website is closed. The automation is policy-restricted rather than being designed as unrestricted wallet access.</p></div></details>
+    <details class="faq"><summary>Can Rebound withdraw my funds to any wallet?</summary><div class="faq-body"><p>The Rebound withdrawal flow is restricted to your <strong>permanently linked Phantom wallet</strong>. There is no free-form withdrawal address. A withdrawal requires <strong>Phantom approval</strong>.</p></div></details>
+    <details class="faq"><summary>Why does automated trading not ask Phantom for every trade?</summary><div class="faq-body"><p>Because Rebound is designed to operate 24/7. The restricted trading authorization lets supported strategy trades execute while you are asleep, offline or the website is closed.</p></div></details>
+    <details class="faq"><summary>Is the Rebound Wallet the same as my Phantom wallet?</summary><div class="faq-body"><p>No. Phantom is your linked user wallet. The Rebound Wallet is the dedicated execution wallet used for strategy capital and trades.</p></div></details>
+  </div>
+</section>
+
+<section class="faq-section">
+  <div class="faq-head"><div class="faq-kicker">Funds & withdrawals</div><div class="faq-title">How your capital is separated</div><div class="faq-copy">Available funds, strategy capital and gas all have different jobs.</div></div>
+  <div class="faq-list">
+    <details class="faq"><summary>What is Available USDC?</summary><div class="faq-body"><p><strong>Available USDC</strong> is the part of your Rebound Wallet balance that is not reserved by a strategy. It can be used for another strategy or withdrawn.</p></div></details>
+    <details class="faq"><summary>What is Allocated / Strategy Capital?</summary><div class="faq-body"><p>This is capital reserved for active strategies. Each strategy has its own reserved amount and cannot simply use capital assigned to another strategy.</p></div></details>
+    <details class="faq"><summary>Why do I need SOL if my strategy uses USDC?</summary><div class="faq-body"><p>Native SOL pays <strong>Solana network fees</strong>. Rebound recommends about <strong>0.02 SOL</strong>. While strategies are active, the protected minimum reserve is <strong>0.005 SOL</strong>.</p></div></details>
+    <details class="faq"><summary>Can I withdraw USDC that is reserved by a strategy?</summary><div class="faq-body"><p>No. Only free USDC can be withdrawn. Strategy capital remains reserved until the strategy releases it.</p></div></details>
+    <details class="faq"><summary>What happens when I stop a strategy?</summary><div class="faq-body"><p>If it is still watching, its reserved USDC becomes available again. If a position is open, <strong>Stop & close position</strong> first attempts to sell the asset back to USDC and then stop the strategy.</p></div></details>
+  </div>
+</section>
+
+<section class="faq-section">
+  <div class="faq-head"><div class="faq-kicker">Trading & risk</div><div class="faq-title">What happens on-chain</div><div class="faq-copy">Automation reduces manual work. It does not remove market risk.</div></div>
+  <div class="faq-list">
+    <details class="faq"><summary>How does Rebound find a trade route?</summary><div class="faq-body"><p>Rebound uses <strong>Jupiter</strong> to request a route for the selected Solana asset. It is not tied to one hard-coded pool.</p></div></details>
+    <details class="faq"><summary>What does 0.5% slippage mean?</summary><div class="faq-body"><p>The configured <strong>0.5% slippage</strong> is a maximum execution tolerance. It does not mean every trade automatically loses 0.5%.</p></div></details>
+    <details class="faq"><summary>Can Rebound guarantee a profit?</summary><div class="faq-body"><p>No. Rebound automates a strategy but cannot remove market risk. Prices can keep falling after a Buy and real execution can differ from displayed prices.</p></div></details>
+    <details class="faq"><summary>Why can the displayed price differ from my actual fill?</summary><div class="faq-body"><p>The displayed market price is a reference. Real swaps execute against available on-chain liquidity. Rebound therefore records the <strong>actual confirmed fill</strong> and uses it for Take Profit.</p></div></details>
+    <details class="faq"><summary>What if the market reaches my Dip and immediately rebounds?</summary><div class="faq-body"><p>Rebound performs a fresh price check before a triggered Buy is sent. If the market has already rebounded too far, it can return to watching instead of blindly chasing the move.</p></div></details>
+  </div>
+  <div class="callout"><strong>Important:</strong> ASTY Rebound executes real crypto trades. Prices can move quickly and losses are possible. Only allocate capital you are comfortable exposing to market and infrastructure risk.</div>
+</section>
+
+<section class="footer-card">
+  <div class="footer-title">Ready to use Rebound?</div>
+  <div class="footer-copy">Connect Phantom, fund your Rebound Wallet and create a strategy when you are comfortable with how the system works.</div>
+  <a class="primary" href="Rebound.html">Open ASTY Rebound</a>
+</section>
+
+</div>
+
+<!-- DEUTSCH -->
+<div class="lang-panel" id="panelDE" hidden>
+
+<section class="hero">
+  <div>
+    <div class="kicker">So funktioniert es</div>
+    <h1>Rebound erklärt.</h1>
+    <p class="lead">Eine einfache Erklärung zu Strategien, deinem Rebound Wallet, automatischem Trading und den Sicherheitsregeln hinter ASTY Rebound.</p>
+    <div class="hero-line">Auf den Dip warten. Den Rebound kaufen. Gewinn mitnehmen. Wiederholen.</div>
+  </div>
+  <div class="wolf-wrap"><img class="wolf" src="assets/wolf.png" alt=""></div>
+</section>
+
+<section class="card">
+  <div class="section-label">Die Idee</div>
+  <h2 class="section-title">Was Rebound macht</h2>
+  <p class="section-copy">Du wählst einen Coin, einen Dip und ein Take-Profit-Ziel. Rebound beobachtet den Solana-Markt rund um die Uhr. Steigt der Markt weiter, zieht die dynamische Reference High mit. Erst wenn der eingestellte Dip erreicht wird, kauft Rebound und wartet anschließend auf die Erholung.</p>
+  <div class="flow">
+    <div class="flow-step"><span class="flow-number">1</span><div class="flow-title">Beobachten</div><div class="flow-copy">Rebound folgt dem Markt und führt eine dynamische Reference High.</div></div>
+    <div class="flow-step"><span class="flow-number">2</span><div class="flow-title">Dip kaufen</div><div class="flow-copy">Fällt der Kurs um deinen eingestellten Prozentsatz vom letzten Hoch, bereitet Rebound den Kauf vor.</div></div>
+    <div class="flow-step"><span class="flow-number">3</span><div class="flow-title">Rebound verkaufen</div><div class="flow-copy">Das Take Profit wird vom tatsächlich ausgeführten Kaufkurs berechnet.</div></div>
+  </div>
+</section>
+
+<section class="faq-section">
+  <div class="faq-head"><div class="faq-kicker">Erste Schritte</div><div class="faq-title">Die Grundlagen</div><div class="faq-copy">Was du vor deiner ersten Strategie brauchst.</div></div>
+  <div class="faq-list">
+    <details class="faq"><summary>Was brauche ich für ASTY Rebound?</summary><div class="faq-body"><p>Du brauchst ein verbundenes <strong>Phantom Wallet</strong>, Tradingkapital in <strong>USDC</strong> und etwas natives <strong>SOL für die Solana-Netzwerkgebühren</strong>.</p><p>Eine neue Strategie benötigt mindestens <strong>25 USDC</strong>.</p></div></details>
+    <details class="faq"><summary>Welche Coins kann ich handeln?</summary><div class="faq-body"><p>Aktuell unterstützt Rebound <strong>SOL, WBTC, BNB, RAY und ETH</strong> auf Solana. Die Trades werden über Jupiter geroutet und sind nicht an einen einzelnen fest hinterlegten Pool gebunden.</p></div></details>
+    <details class="faq"><summary>Wie viel ASTY brauche ich?</summary><div class="faq-body"><p>Für jede aktive Strategie musst du <strong>2.500 ASTY in deinem verknüpften Phantom Wallet halten</strong>. Die ASTY bleiben in Phantom und müssen nicht in Rebound eingezahlt werden.</p></div></details>
+    <details class="faq"><summary>Muss die Website geöffnet bleiben?</summary><div class="faq-body"><p>Nein. Aktive Strategien laufen <strong>serverseitig 24/7</strong> weiter, auch wenn die Website oder dein Smartphone geschlossen ist.</p></div></details>
+  </div>
+</section>
+
+<section class="faq-section">
+  <div class="faq-head"><div class="faq-kicker">Strategielogik</div><div class="faq-title">Wie eine Rebound-Strategie funktioniert</div><div class="faq-copy">Der wichtigste Punkt: die dynamische Reference High richtig verstehen.</div></div>
+  <div class="faq-list">
+
+    <details class="faq" open>
+      <summary>Was ist die Reference High / High-Water Mark?</summary>
+      <div class="faq-body">
+        <p>Die <strong>Reference High</strong> ist der höchste Marktpreis, den die Strategie gesehen hat, während sie auf einen Dip wartet. Technisch wird das auch <strong>High-Water Mark (HWM)</strong> genannt.</p>
+        <p>Entscheidend ist: Die Reference High kann bei jedem neuen Hoch <strong>weiter steigen</strong>, sie fällt während der Wartephase aber nicht wieder ab.</p>
+        <p>Der Buy Trigger wird immer neu aus der aktuellen Reference High berechnet. Rebound folgt also einem steigenden Markt, statt dauerhaft auf einen Dip von einem längst überholten Kursniveau zu warten.</p>
       </div>
-      <div class="example-note">If the actual average buy fill is $94.80, a 4% Take Profit is calculated from $94.80 — approximately $98.59.</div>
-    </div>
+    </details>
 
-    <div class="quick-links">
-      <a class="quick-link" href="#getting-started">Getting started</a>
-      <a class="quick-link" href="#strategy">Strategy logic</a>
-      <a class="quick-link" href="#wallet-security">Wallet & security</a>
-      <a class="quick-link" href="#funds">Funds & withdrawals</a>
-      <a class="quick-link" href="#risk">Trading & risk</a>
-    </div>
-  </section>
-
-  <section class="faq-section" id="getting-started">
-    <div class="faq-head">
-      <div class="faq-kicker">Getting started</div>
-      <div class="faq-title">The basics</div>
-      <div class="faq-copy">What you need before your first strategy.</div>
-    </div>
-
-    <div class="faq-list">
-
-      <details class="faq">
-        <summary>What do I need to use ASTY Rebound?</summary>
-        <div class="faq-body">
-          <p>You need a connected <strong>Phantom wallet</strong>, trading capital in <strong>USDC</strong>, and a small amount of native <strong>SOL for Solana network fees</strong>.</p>
-          <p>A new strategy requires at least <strong>25 USDC</strong> of strategy capital and your linked Phantom wallet must hold <strong>2,500 ASTY for each active strategy</strong>.</p>
+    <details class="faq" open>
+      <summary>Warum kann der nächste Buy höher sein als der letzte Sell?</summary>
+      <div class="faq-body">
+        <p>Weil der Dip von der <strong>neuesten Reference High</strong> berechnet wird und nicht dauerhaft vom letzten Verkaufspreis.</p>
+        <p>Nach einem abgeschlossenen Cycle startet der neue Cycle zunächst mit einer neuen Reference High. Steigt der Markt danach weiter, steigt auch diese Reference High — und damit wandert auch der Buy Trigger nach oben.</p>
+        <div class="logic-example">
+          <div class="logic-row"><span>Letzter Sell</span><span>$116.28</span></div>
+          <div class="logic-row"><span>Neues Markthoch</span><span>$122.64</span></div>
+          <div class="logic-row"><span>Eingestellter Dip</span><span>3%</span></div>
+          <div class="logic-row"><span>Neuer Buy Trigger</span><span>≈ $118.96</span></div>
         </div>
-      </details>
+        <p>Obwohl der vorherige Cycle also bei $116.28 verkauft hat, kann der nächste Kauf bei etwa $118.96 stattfinden: SOL ist zuerst auf ungefähr $122.64 gestiegen und anschließend 3% gefallen.</p>
+        <p>Das ist bewusst so. Ohne eine dynamische Reference High könnte Rebound in stark steigenden Märkten sehr lange auf einen alten, viel tieferen Einstieg warten und neue Dip-Chancen verpassen.</p>
+      </div>
+    </details>
 
-      <details class="faq">
-        <summary>Which assets can I trade?</summary>
-        <div class="faq-body">
-          <p>Rebound is built for supported assets on the <strong>Solana network</strong>. In the current version the strategy selector includes <strong>SOL, WBTC, BNB, RAY and ETH</strong>.</p>
-          <p>Trades are routed through Jupiter. Rebound does not hard-code one liquidity pool; it asks Jupiter for an available route for the selected asset.</p>
-        </div>
-      </details>
+    <details class="faq">
+      <summary>Warum verändert sich „Buy at“, obwohl vorher ein anderer Wert angezeigt wurde?</summary>
+      <div class="faq-body">
+        <p><strong>„Buy at“ ist während der Wartephase kein dauerhaft festgeschriebener Kurs.</strong> Es ist der aktuelle Dip-Trigger auf Basis der aktuellen Reference High.</p>
+        <p>Macht der Markt ein neues Hoch, steigt die Reference High und Rebound berechnet „Buy at“ sofort neu. Der vorher angezeigte Buy-Kurs wird dadurch ersetzt.</p>
+        <p>Beispiel: Bei einem 3%-Dip ergibt eine Reference High von $116.28 zunächst ungefähr $112.79 als Buy Trigger. Steigt der Markt später auf $122.64, wandert der Buy Trigger auf ungefähr $118.96.</p>
+      </div>
+    </details>
 
-      <details class="faq">
-        <summary>Why do I need ASTY?</summary>
-        <div class="faq-body">
-          <p>ASTY is the access requirement for creating Rebound strategies. The rule is <strong>2,500 ASTY per active strategy</strong>.</p>
-          <p>Your ASTY is <strong>not deposited into Rebound</strong>. It stays in your linked Phantom wallet. The balance is checked when a new strategy is created.</p>
-        </div>
-      </details>
+    <details class="faq"><summary>Wann kauft Rebound genau?</summary><div class="faq-body"><p>Der Buy Trigger berechnet sich als <strong>Reference High × (1 − Dip %)</strong>. Erreicht der Markt diesen Wert, bereitet Rebound den Kauf vor. Direkt vor dem Senden prüft Rebound den Markt erneut, damit einem bereits wieder stark gestiegenen Kurs nicht blind hinterhergekauft wird.</p></div></details>
 
-      <details class="faq">
-        <summary>What happens if my ASTY balance later drops below the requirement?</summary>
-        <div class="faq-body">
-          <p>Existing strategies are not continuously re-checked against the ASTY gate. The check is performed when you create a new strategy.</p>
-          <p>If a strategy is paused and you later use <strong>Resume</strong>, the ASTY gate is not checked again. If you fully stop it and later create a new strategy, the requirement applies again.</p>
-        </div>
-      </details>
+    <details class="faq"><summary>Welche Presets gibt es?</summary><div class="faq-body"><ul><li><strong>Frequent:</strong> Dip 3% · Take Profit 2,5%</li><li><strong>Balanced:</strong> Dip 5% · Take Profit 4%</li><li><strong>Deep Dip:</strong> Dip 8% · Take Profit 6%</li><li><strong>Custom:</strong> eigene unterstützte Werte wählen.</li></ul></div></details>
 
-      <details class="faq">
-        <summary>Do I need to keep the website open?</summary>
-        <div class="faq-body">
-          <p>No. Once the Rebound Wallet and automated trading permission are set up, active strategies are designed to continue <strong>server-side 24/7</strong>, even when the website or your phone is closed.</p>
-        </div>
-      </details>
+    <details class="faq"><summary>Warum basiert Take Profit auf dem tatsächlichen Buy Fill?</summary><div class="faq-body"><p>Der Trigger ist nur der Punkt, an dem der Kaufprozess beginnt. Der echte Swap kann zu einem leicht anderen Kurs ausgeführt werden. Deshalb speichert Rebound den <strong>tatsächlichen durchschnittlichen Kaufkurs</strong> und berechnet das Take Profit von diesem realen Einstieg.</p></div></details>
 
-    </div>
-  </section>
+    <details class="faq"><summary>Was bedeutet „Position open“?</summary><div class="faq-body"><p>Die Strategie hat ihre reservierten USDC bereits verwendet, um den gewählten Coin zu kaufen. Rebound beobachtet jetzt den Markt bis zum Take Profit oder, falls aktiviert, bis zum Stop Loss.</p></div></details>
 
-  <section class="faq-section" id="strategy">
-    <div class="faq-head">
-      <div class="faq-kicker">Strategy logic</div>
-      <div class="faq-title">How a Rebound strategy works</div>
-      <div class="faq-copy">The important terms without the technical noise.</div>
-    </div>
+    <details class="faq"><summary>Was macht der Stop Loss?</summary><div class="faq-body"><p>Der Stop Loss ist optional und standardmäßig <strong>ausgeschaltet</strong>. Wird er erreicht, versucht Rebound die offene Position zurück in USDC zu verkaufen. Anschließend wird die Strategie <strong>pausiert</strong>, bis du sie fortsetzt oder stoppst.</p></div></details>
 
-    <div class="faq-list">
+    <details class="faq"><summary>Was passiert bei Resume?</summary><div class="faq-body"><p>Die gleiche Strategie startet mit den gleichen Einstellungen und dem reservierten Kapital weiter. Rebound setzt eine <strong>frische Reference High anhand des aktuellen Marktpreises</strong> und beginnt erneut mit der Beobachtung.</p></div></details>
 
-      <details class="faq" open>
-        <summary>What is the Reference High / High-Water Mark?</summary>
-        <div class="faq-body">
-          <p>The <strong>Reference High</strong> is the highest market price your strategy has seen while it is waiting for a dip. You may also hear this called the <strong>High-Water Mark</strong> or <strong>HWM</strong>.</p>
-          <p>It can move <strong>up</strong> when the market makes a new high, but it does not move down while the strategy is waiting.</p>
-          <p>Example: if your Reference High is $100 and your Dip is 5%, the Buy Trigger is $95. If price first rises to $104, the Reference High becomes $104 and the new 5% Buy Trigger becomes $98.80. This lets the strategy follow a rising market instead of waiting forever for an old fixed price.</p>
-        </div>
-      </details>
+    <details class="faq"><summary>Was ist Auto Repeat?</summary><div class="faq-body"><p>Ist Auto Repeat aktiviert, startet nach einem erfolgreichen Take Profit automatisch der nächste Cycle. Rebound geht wieder in den Beobachtungsmodus und wartet auf den nächsten Dip.</p></div></details>
 
-      <details class="faq">
-        <summary>When exactly does Rebound buy?</summary>
-        <div class="faq-body">
-          <p>Your Buy Trigger is calculated from:</p>
-          <p><strong>Reference High × (1 − Dip %)</strong></p>
-          <p>When the live market price reaches or falls below that trigger, the strategy enters its buy process. Before sending the trade, Rebound checks the market again so it does not blindly chase a price that has already rebounded too far.</p>
-        </div>
-      </details>
+    <details class="faq"><summary>Was ist der Unterschied zwischen Fixed Capital und Compound?</summary><div class="faq-body"><p>Bei <strong>Compound aus</strong> nutzt der nächste Cycle wieder das ursprüngliche Strategiekapital; realisierter Gewinn wird zu freien USDC.</p><p>Bei <strong>Compound an</strong> wird das zurückerhaltene Kapital inklusive Ergebnis zum Kapital des nächsten Cycles.</p></div></details>
 
-      <details class="faq">
-        <summary>What are the strategy presets?</summary>
-        <div class="faq-body">
-          <ul>
-            <li><strong>Frequent:</strong> Dip 3% · Take Profit 2.5%</li>
-            <li><strong>Balanced:</strong> Dip 5% · Take Profit 4%</li>
-            <li><strong>Deep Dip:</strong> Dip 8% · Take Profit 6%</li>
-            <li><strong>Custom:</strong> choose your own supported Dip and Take Profit values.</li>
-          </ul>
-          <p>Presets only define the strategy levels. They do not guarantee that a trade will occur or that a cycle will be profitable.</p>
-        </div>
-      </details>
+    <details class="faq"><summary>Was ist die Cycle History?</summary><div class="faq-body"><p>Jede Strategie führt ihre eigene Historie abgeschlossener Cycles. Dort siehst du unter anderem Kaufkurs, Verkaufskurs, eingesetztes Kapital, zurückerhaltenes Kapital, realisiertes Ergebnis und Links zu den On-Chain-Transaktionen.</p></div></details>
 
-      <details class="faq">
-        <summary>Why is Take Profit based on the actual buy fill?</summary>
-        <div class="faq-body">
-          <p>The trigger price is only the point at which Rebound starts the buy process. Your actual swap can execute slightly above or below it.</p>
-          <p>That is why the Take Profit target is calculated from the <strong>real average buy fill</strong>. This keeps the target connected to the price you actually paid.</p>
-        </div>
-      </details>
+  </div>
+</section>
 
-      <details class="faq">
-        <summary>What does “Position open” mean?</summary>
-        <div class="faq-body">
-          <p>It means the strategy has already used its reserved USDC to buy the selected asset. Rebound is now watching the live price for the Take Profit target or, if enabled, the Stop Loss.</p>
-        </div>
-      </details>
+<section class="faq-section">
+  <div class="faq-head"><div class="faq-kicker">Wallet & Sicherheit</div><div class="faq-title">Wo dein Kapital liegt und wer was tun kann</div><div class="faq-copy">Wichtige Fragen, bevor du ein automatisiertes Wallet finanzierst.</div></div>
+  <div class="faq-list">
+    <details class="faq"><summary>Was ist das Rebound Wallet?</summary><div class="faq-body"><p>Das Rebound Wallet ist ein <strong>eigenes Solana Wallet</strong> für dein Tradingkapital, SOL-Netzwerkgebühren und offene Strategiepositionen. Es ist von deinem Phantom Wallet getrennt.</p></div></details>
+    <details class="faq"><summary>Wo befindet sich mein Rebound Wallet?</summary><div class="faq-body"><p>Das Wallet wird über <strong>Privy</strong> als eingebettetes Solana Wallet erstellt und dauerhaft deinem Rebound-Konto zugeordnet. Die Coins liegen auf der <strong>Solana Blockchain</strong> unter der Rebound-Wallet-Adresse, die dir in der Oberfläche angezeigt wird.</p></div></details>
+    <details class="faq"><summary>Bekomme ich eine Seed Phrase oder Passphrase für das Rebound Wallet?</summary><div class="faq-body"><p>ASTY Rebound fordert dich <strong>niemals dazu auf, die Recovery Phrase deines Phantom Wallets einzugeben oder offenzulegen</strong>. Für das eingebettete Rebound Wallet musst du im normalen Ablauf keine klassische Seed Phrase verwalten.</p><p><strong>Gib deine Phantom Seed Phrase niemals bei ASTY Rebound, in einem Chat oder auf einer Website ein, die behauptet, sie für Rebound zu benötigen.</strong></p></div></details>
+    <details class="faq"><summary>Wer kann auf das Rebound Wallet zugreifen?</summary><div class="faq-body"><p>Automatisierte Strategie-Trades werden über eine <strong>eingeschränkte Privy-Trading-Autorisierung</strong> ausgeführt. Dadurch können unterstützte Trades auch bei geschlossener Website ausgeführt werden. Die Automatisierung ist dabei durch eine Trading-Policy eingeschränkt.</p></div></details>
+    <details class="faq"><summary>Kann Rebound mein Kapital an irgendeine Wallet auszahlen?</summary><div class="faq-body"><p>Der Rebound-Withdrawal ist auf dein <strong>dauerhaft verknüpftes Phantom Wallet</strong> beschränkt. Es gibt kein frei eingebbares Auszahlungsziel. Eine Auszahlung benötigt außerdem deine <strong>Phantom-Bestätigung</strong>.</p></div></details>
+    <details class="faq"><summary>Warum muss ich nicht jeden automatischen Trade in Phantom bestätigen?</summary><div class="faq-body"><p>Rebound soll rund um die Uhr reagieren können. Die eingeschränkte Trading-Autorisierung ermöglicht unterstützte Strategie-Trades auch dann, wenn du schläfst, offline bist oder die Website geschlossen ist.</p></div></details>
+    <details class="faq"><summary>Ist das Rebound Wallet mein Phantom Wallet?</summary><div class="faq-body"><p>Nein. Phantom ist dein verknüpftes Nutzer-Wallet. Das Rebound Wallet ist das separate Ausführungs-Wallet für Strategiekapital und Trades.</p></div></details>
+  </div>
+</section>
 
-      <details class="faq">
-        <summary>What does Stop Loss do?</summary>
-        <div class="faq-body">
-          <p>Stop Loss is optional and is <strong>off by default</strong>. If enabled and the configured Stop Loss is reached, Rebound attempts to sell the open asset position back to USDC.</p>
-          <p>After a Stop Loss exit, the strategy becomes <strong>Paused</strong>. Its remaining USDC stays reserved for that strategy until you choose <strong>Resume</strong> or fully stop the strategy.</p>
-        </div>
-      </details>
+<section class="faq-section">
+  <div class="faq-head"><div class="faq-kicker">Kapital & Auszahlungen</div><div class="faq-title">Wie dein Kapital getrennt wird</div><div class="faq-copy">Freies Kapital, Strategiekapital und Gas haben unterschiedliche Aufgaben.</div></div>
+  <div class="faq-list">
+    <details class="faq"><summary>Was sind Available USDC?</summary><div class="faq-body"><p><strong>Available USDC</strong> sind die USDC in deinem Rebound Wallet, die keiner Strategie zugeordnet sind. Du kannst sie für eine neue Strategie verwenden oder auszahlen.</p></div></details>
+    <details class="faq"><summary>Was ist Allocated / Strategy Capital?</summary><div class="faq-body"><p>Das ist Kapital, das aktiven Strategien fest zugeordnet ist. Jede Strategie besitzt ihren eigenen reservierten Betrag und kann nicht einfach Kapital einer anderen Strategie verwenden.</p></div></details>
+    <details class="faq"><summary>Warum brauche ich SOL, wenn ich mit USDC trade?</summary><div class="faq-body"><p>Natives SOL bezahlt die <strong>Solana-Netzwerkgebühren</strong>. Rebound empfiehlt ungefähr <strong>0,02 SOL</strong>. Solange Strategien aktiv sind, werden mindestens <strong>0,005 SOL</strong> als Gasreserve geschützt.</p></div></details>
+    <details class="faq"><summary>Kann ich reservierte USDC auszahlen?</summary><div class="faq-body"><p>Nein. Nur freie USDC können ausgezahlt werden. Strategiekapital bleibt reserviert, bis es von der Strategie wieder freigegeben wird.</p></div></details>
+    <details class="faq"><summary>Was passiert, wenn ich eine Strategie stoppe?</summary><div class="faq-body"><p>Wartet sie noch auf einen Einstieg, werden die reservierten USDC wieder frei. Ist bereits eine Position offen, versucht <strong>Stop & close position</strong> zuerst den Coin zurück in USDC zu verkaufen und stoppt anschließend die Strategie.</p></div></details>
+  </div>
+</section>
 
-      <details class="faq">
-        <summary>What happens when I Resume a paused strategy?</summary>
-        <div class="faq-body">
-          <p>The same strategy starts again with the same settings and reserved capital. Rebound sets a <strong>fresh Reference High from the current market price</strong>.</p>
-          <p>The ASTY requirement is not checked again for this Resume action.</p>
-        </div>
-      </details>
+<section class="faq-section">
+  <div class="faq-head"><div class="faq-kicker">Trading & Risiko</div><div class="faq-title">Was On-Chain passiert</div><div class="faq-copy">Automatisierung spart manuelle Arbeit, beseitigt aber kein Marktrisiko.</div></div>
+  <div class="faq-list">
+    <details class="faq"><summary>Wie findet Rebound eine Handelsroute?</summary><div class="faq-body"><p>Rebound nutzt <strong>Jupiter</strong>, um eine Route für den ausgewählten Solana-Coin zu finden. Die Strategie ist nicht an einen einzelnen fest hinterlegten Pool gebunden.</p></div></details>
+    <details class="faq"><summary>Was bedeutet 0,5% Slippage?</summary><div class="faq-body"><p>Die eingestellten <strong>0,5% Slippage</strong> sind eine maximale Ausführungstoleranz. Das bedeutet nicht, dass jeder Trade automatisch 0,5% verliert.</p></div></details>
+    <details class="faq"><summary>Kann Rebound Gewinn garantieren?</summary><div class="faq-body"><p>Nein. Rebound automatisiert eine Strategie, kann aber Marktrisiken nicht beseitigen. Ein Kurs kann nach dem Kauf weiter fallen und reale Ausführungskurse können von angezeigten Kursen abweichen.</p></div></details>
+    <details class="faq"><summary>Warum kann der angezeigte Kurs vom tatsächlichen Fill abweichen?</summary><div class="faq-body"><p>Der angezeigte Marktpreis ist ein Referenzwert. Echte Swaps werden gegen die verfügbare On-Chain-Liquidität ausgeführt. Deshalb speichert Rebound den <strong>tatsächlich bestätigten Fill</strong> und nutzt diesen für das Take Profit.</p></div></details>
+    <details class="faq"><summary>Was passiert, wenn der Dip erreicht wird und der Kurs sofort wieder steigt?</summary><div class="faq-body"><p>Rebound prüft den Kurs direkt vor einem ausgelösten Kauf erneut. Ist der Markt bereits zu weit zurückgestiegen, kann die Strategie wieder in den Beobachtungsmodus gehen, statt dem Kurs blind hinterherzukaufen.</p></div></details>
+  </div>
+  <div class="callout"><strong>Wichtig:</strong> ASTY Rebound führt echte Krypto-Trades aus. Kurse können sich schnell bewegen und Verluste sind möglich. Setze nur Kapital ein, dessen Marktrisiko du tragen kannst.</div>
+</section>
 
-      <details class="faq">
-        <summary>What is Auto Repeat?</summary>
-        <div class="faq-body">
-          <p>With Auto Repeat enabled, a successful Take Profit does not end the strategy. Rebound automatically starts another cycle and begins watching the market for a new dip.</p>
-        </div>
-      </details>
+<section class="footer-card">
+  <div class="footer-title">Bereit für Rebound?</div>
+  <div class="footer-copy">Verbinde Phantom, fülle dein Rebound Wallet und erstelle eine Strategie, sobald du verstanden hast, wie das System arbeitet.</div>
+  <a class="primary" href="Rebound.html">ASTY Rebound öffnen</a>
+</section>
 
-      <details class="faq">
-        <summary>What is the difference between Fixed Capital and Compound?</summary>
-        <div class="faq-body">
-          <p>With <strong>Compound off</strong>, the next cycle uses the strategy's original capital again and realized profit becomes free USDC.</p>
-          <p>Example: 100 USDC becomes 103.40 USDC. The next cycle still uses 100 USDC and 3.40 USDC becomes available.</p>
-          <p>With <strong>Compound on</strong>, the full 103.40 USDC becomes the capital for the next cycle. The Compound setting is fixed after the strategy is created.</p>
-        </div>
-      </details>
+</div>
 
-      <details class="faq">
-        <summary>What is Cycle History?</summary>
-        <div class="faq-body">
-          <p>Each strategy keeps its own completed-cycle history. It can show the buy fill, sell fill, capital used, capital returned, realized result and links to the on-chain buy and sell transactions.</p>
-        </div>
-      </details>
-
-    </div>
-  </section>
-
-  <section class="faq-section" id="wallet-security">
-    <div class="faq-head">
-      <div class="faq-kicker">Wallet & security</div>
-      <div class="faq-title">Where your funds are and who can do what</div>
-      <div class="faq-copy">Important questions before you fund an automated wallet.</div>
-    </div>
-
-    <div class="faq-list">
-
-      <details class="faq">
-        <summary>What is the Rebound Wallet?</summary>
-        <div class="faq-body">
-          <p>The Rebound Wallet is a <strong>dedicated Solana wallet</strong> used by ASTY Rebound for your trading capital, network-fee SOL and open strategy assets.</p>
-          <p>It is separate from your Phantom wallet. You can see and copy the Rebound Wallet address directly in the Rebound interface.</p>
-        </div>
-      </details>
-
-      <details class="faq">
-        <summary>Where is my Rebound Wallet?</summary>
-        <div class="faq-body">
-          <p>The wallet is created as an embedded Solana wallet through <strong>Privy</strong> and is permanently linked to your Rebound account and linked Phantom wallet.</p>
-          <p>The funds themselves are on the <strong>Solana blockchain</strong> at the Rebound Wallet address. The wallet remains the same between sessions.</p>
-        </div>
-      </details>
-
-      <details class="faq">
-        <summary>Do I get a seed phrase or passphrase for the Rebound Wallet?</summary>
-        <div class="faq-body">
-          <p>ASTY Rebound does <strong>not ask you to enter or reveal your Phantom recovery phrase</strong>, and the normal Rebound flow does not rely on you managing a traditional seed phrase for the embedded Rebound Wallet.</p>
-          <p><strong>Never enter your Phantom seed phrase or recovery phrase into ASTY Rebound, a chat, or any website claiming it is required for Rebound.</strong></p>
-        </div>
-      </details>
-
-      <details class="faq">
-        <summary>Who can access the Rebound Wallet?</summary>
-        <div class="faq-body">
-          <p>Your Rebound Wallet is used by the automated trading system through a <strong>restricted Privy trading authorization</strong>. This is what allows a strategy to execute while your browser is closed.</p>
-          <p>The automation is designed for policy-protected trading actions rather than unrestricted wallet use. This is different from keeping funds only in Phantom: funds allocated to Rebound are placed in a separate wallet specifically so automated execution can take place.</p>
-        </div>
-      </details>
-
-      <details class="faq">
-        <summary>Can Rebound withdraw my funds to any wallet?</summary>
-        <div class="faq-body">
-          <p>The Rebound withdrawal flow is restricted to your <strong>permanently linked Phantom wallet</strong>. There is no free-form withdrawal address field.</p>
-          <p>A withdrawal requires <strong>Phantom approval</strong>, after which the Rebound Wallet adds its required signature and the transaction is broadcast to Solana.</p>
-        </div>
-      </details>
-
-      <details class="faq">
-        <summary>Why does automated trading not ask Phantom for every swap?</summary>
-        <div class="faq-body">
-          <p>That is the purpose of the Rebound Wallet. When automated trading is enabled, a restricted server-side signer can execute supported strategy trades according to the configured trading policy.</p>
-          <p>If Phantom confirmation were required for every buy and sell, Rebound could not react to the market 24/7 while you were asleep or offline.</p>
-        </div>
-      </details>
-
-      <details class="faq">
-        <summary>Is the Rebound Wallet the same as my Phantom wallet?</summary>
-        <div class="faq-body">
-          <p>No. Phantom is your linked user wallet. The Rebound Wallet is the dedicated execution wallet.</p>
-          <p>Your Phantom wallet is used for identity, the ASTY holding requirement, deposits and withdrawal approval. Strategy funds are moved into the Rebound Wallet before they can be used by Rebound.</p>
-        </div>
-      </details>
-
-      <details class="faq">
-        <summary>Can I connect a different Phantom wallet later?</summary>
-        <div class="faq-body">
-          <p>Rebound is designed around a permanent mapping between the linked Phantom identity and its Rebound Wallet. It is not intended to behave like a freely switchable trading wallet.</p>
-        </div>
-      </details>
-
-    </div>
-  </section>
-
-  <section class="faq-section" id="funds">
-    <div class="faq-head">
-      <div class="faq-kicker">Funds & withdrawals</div>
-      <div class="faq-title">How capital is separated</div>
-      <div class="faq-copy">Available funds, allocated funds and gas all have different jobs.</div>
-    </div>
-
-    <div class="faq-list">
-
-      <details class="faq">
-        <summary>What is Available USDC?</summary>
-        <div class="faq-body">
-          <p><strong>Available USDC</strong> is the part of your Rebound Wallet balance that is not reserved by a strategy. It can be used to create another strategy or withdrawn back to your linked Phantom wallet.</p>
-        </div>
-      </details>
-
-      <details class="faq">
-        <summary>What is Allocated / Strategy Capital?</summary>
-        <div class="faq-body">
-          <p>This is capital reserved for active strategies. Each strategy owns its own reserved amount.</p>
-          <p>Example: with 100 USDC in the Rebound Wallet, a 50 USDC strategy and a 25 USDC strategy leave 25 USDC available. One strategy cannot simply spend capital reserved for another strategy.</p>
-        </div>
-      </details>
-
-      <details class="faq">
-        <summary>Why do I need SOL if my strategy uses USDC?</summary>
-        <div class="faq-body">
-          <p>Native SOL is used for <strong>Solana network fees</strong>. It is separate from your strategy capital.</p>
-          <p>Rebound recommends about <strong>0.02 SOL</strong> as a comfortable gas reserve. While strategies are active, the minimum protected reserve is <strong>0.005 SOL</strong>.</p>
-        </div>
-      </details>
-
-      <details class="faq">
-        <summary>Can I withdraw USDC that is reserved by a strategy?</summary>
-        <div class="faq-body">
-          <p>No. Only free USDC can be withdrawn. Strategy capital stays reserved until the strategy releases it according to its state.</p>
-        </div>
-      </details>
-
-      <details class="faq">
-        <summary>What happens when I stop a strategy?</summary>
-        <div class="faq-body">
-          <p>If the strategy is still only watching the market, stopping it releases its reserved USDC back to your Available Balance.</p>
-          <p>If a position is already open, <strong>Stop & close position</strong> first attempts to sell the trading asset back to USDC and then stop the strategy.</p>
-        </div>
-      </details>
-
-      <details class="faq">
-        <summary>Why can't I withdraw all my SOL while strategies are active?</summary>
-        <div class="faq-body">
-          <p>Rebound keeps a minimum native SOL reserve so active strategies are not left without enough gas for future on-chain transactions. The protected minimum is <strong>0.005 SOL</strong>.</p>
-        </div>
-      </details>
-
-    </div>
-  </section>
-
-  <section class="faq-section" id="risk">
-    <div class="faq-head">
-      <div class="faq-kicker">Trading & risk</div>
-      <div class="faq-title">What happens on-chain</div>
-      <div class="faq-copy">Automation reduces manual work. It does not remove market risk.</div>
-    </div>
-
-    <div class="faq-list">
-
-      <details class="faq">
-        <summary>How does Rebound find a trade route?</summary>
-        <div class="faq-body">
-          <p>Rebound uses <strong>Jupiter</strong> to request a route for the selected Solana asset. It is not tied to one hard-coded pool.</p>
-          <p>Before automated execution, the system performs route and transaction safety checks and simulates the transaction.</p>
-        </div>
-      </details>
-
-      <details class="faq">
-        <summary>What does 0.5% slippage mean?</summary>
-        <div class="faq-body">
-          <p>The configured <strong>0.5% slippage</strong> is a maximum tolerance for execution — it does not mean every trade automatically loses 0.5%.</p>
-          <p>The final fill can still differ from the displayed market price because markets move, liquidity changes and swaps can include pool or route costs.</p>
-        </div>
-      </details>
-
-      <details class="faq">
-        <summary>Can Rebound guarantee a profit?</summary>
-        <div class="faq-body">
-          <p>No. Rebound automates a strategy; it does not remove trading risk. Markets can continue falling after a buy, liquidity can change, and an exit can execute at a different price from the displayed target.</p>
-          <p>Stop Loss can limit the strategy according to your configured level, but it also cannot guarantee an exact exit price in every market condition.</p>
-        </div>
-      </details>
-
-      <details class="faq">
-        <summary>What happens if Jupiter cannot find a safe route?</summary>
-        <div class="faq-body">
-          <p>Rebound should not blindly send a mismatched trade. The execution process checks the requested asset, amount and route before execution. If the required checks fail, the trade is not supposed to proceed as a normal successful execution.</p>
-        </div>
-      </details>
-
-      <details class="faq">
-        <summary>Why can the displayed price differ slightly from my actual fill?</summary>
-        <div class="faq-body">
-          <p>The displayed market price is a reference price. A real swap happens on-chain through available liquidity, so the average executed price can differ.</p>
-          <p>For that reason Rebound stores the <strong>actual confirmed fill</strong> and uses that fill as the basis for the strategy's Take Profit calculation.</p>
-        </div>
-      </details>
-
-      <details class="faq">
-        <summary>What if the market reaches my Dip and immediately rebounds?</summary>
-        <div class="faq-body">
-          <p>Rebound performs a fresh price check before a triggered buy is sent. If the market has already moved back above the allowed trigger range, the strategy can return to watching instead of blindly buying after the opportunity has passed.</p>
-        </div>
-      </details>
-
-    </div>
-
-    <div class="callout">
-      <strong>Important:</strong> ASTY Rebound executes real crypto trades. Prices can move quickly and losses are possible. Only allocate capital you are comfortable exposing to market and smart-contract / infrastructure risk.
-    </div>
-  </section>
-
-  <section class="footer-card">
-    <div class="footer-title">Ready to use Rebound?</div>
-    <div class="footer-copy">Connect Phantom, fund your Rebound Wallet and create a strategy when you are comfortable with how the system works.</div>
-    <a class="primary" href="Rebound.html">Open ASTY Rebound</a>
-  </section>
-
-  <div class="fineprint">ASTY Rebound · ArbStrategy · Built for automated strategies on Solana</div>
+<div class="fineprint">ASTY Rebound · ArbStrategy · Built for automated strategies on Solana</div>
 
 </main>
+
+<script>
+(function(){
+  const panelEN=document.getElementById("panelEN");
+  const panelDE=document.getElementById("panelDE");
+  const btnEN=document.getElementById("langEN");
+  const btnDE=document.getElementById("langDE");
+  const subtitle=document.getElementById("brandSubtitle");
+  const openTop=document.getElementById("openReboundTop");
+
+  function setLanguage(lang){
+    const de=lang==="de";
+    panelEN.hidden=de;
+    panelDE.hidden=!de;
+    btnEN.classList.toggle("active",!de);
+    btnDE.classList.toggle("active",de);
+    btnEN.setAttribute("aria-pressed",String(!de));
+    btnDE.setAttribute("aria-pressed",String(de));
+    document.documentElement.lang=de?"de":"en";
+    subtitle.textContent=de?"Automatisierte Dip- & Rebound-Strategie":"Automated dip & rebound strategy";
+    openTop.textContent=de?"Rebound öffnen":"Open Rebound";
+    document.title=de?"ASTY Rebound · So funktioniert es":"ASTY Rebound · How it Works";
+    try{localStorage.setItem("astyReboundGuideLanguage",de?"de":"en")}catch(e){}
+    window.scrollTo({top:0,behavior:"smooth"});
+  }
+
+  btnEN.addEventListener("click",()=>setLanguage("en"));
+  btnDE.addEventListener("click",()=>setLanguage("de"));
+
+  let saved="en";
+  try{saved=localStorage.getItem("astyReboundGuideLanguage")||"en"}catch(e){}
+  setLanguage(saved==="de"?"de":"en");
+})();
+</script>
 </body>
 </html>
