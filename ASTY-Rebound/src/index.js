@@ -72,6 +72,10 @@ const MAX_BUY_EXECUTIONS_PER_CRON = 3;
 const MAX_SELL_EXECUTIONS_PER_CRON = 3;
 const MAX_TP_QUOTE_UNDERAGE_BPS = 50;
 const MAX_COMPUTE_UNIT_LIMIT = 1_400_000;
+// Maximum routine native-SOL debit a single automated swap may cause beyond any
+// explicitly allowed ATA rent. This covers normal tx + priority fees while
+// blocking routes that make the user fund expensive DEX/AMM-owned accounts.
+const MAX_ROUTINE_NATIVE_SOL_DEBIT_LAMPORTS = 1_000_000n;
 const WITHDRAW_SOL_FEE_BUFFER_LAMPORTS = 20_000n;
 
 // If Privy loses the response after signAndSendTransaction, Rebound cannot know
@@ -796,6 +800,7 @@ function buildUnsignedV2TransactionBase64(build, walletAddress, instructions) {
 async function buildJupiterV2BuyTransaction(env, {
   build,
   walletAddress,
+  maxNativeSolDebitLamports = null,
 }) {
   const coreInstructions = getV2CoreInstructions(build);
 
@@ -823,7 +828,7 @@ async function buildJupiterV2BuyTransaction(env, {
   ]);
 
   if (simulation?.value?.err) {
-    const error = new Error("Jupiter V2 BUY transaction simulation failed.");
+    const error = new Error("Jupiter V2 transaction simulation failed.");
     error.code = "V2_SIMULATION_FAILED";
     error.simulationError = simulation.value.err;
     error.logs = Array.isArray(simulation.value.logs) ? simulation.value.logs.slice(-12) : [];
@@ -847,6 +852,85 @@ async function buildJupiterV2BuyTransaction(env, {
     finalInstructions,
   );
 
+  let nativeSolDebitLamports = null;
+  let nativeSolBeforeLamports = null;
+  let nativeSolAfterSimulationLamports = null;
+
+  // Production safety gate: simulate the exact final transaction and inspect the
+  // Rebound Wallet's post-simulation lamports. This catches hidden native-SOL
+  // debits inside otherwise valid Jupiter routes (for example a DEX asking the
+  // taker/payer to fund a large AMM-owned account). No transaction is signed or
+  // sent if the debit exceeds the explicitly allowed limit.
+  if (maxNativeSolDebitLamports != null) {
+    const maxDebit = BigInt(String(maxNativeSolDebitLamports));
+    // Keep a fallback snapshot for RPC nodes that do not expose preBalances.
+    const nativeBefore = await getSolBalance(env, walletAddress);
+    nativeSolBeforeLamports = BigInt(String(nativeBefore.raw || 0));
+
+    const finalSimulation = await heliusRpc(env, "simulateTransaction", [
+      finalTx.transactionBase64,
+      {
+        encoding: "base64",
+        commitment: "confirmed",
+        sigVerify: false,
+        replaceRecentBlockhash: true,
+        accounts: {
+          encoding: "base64",
+          addresses: [walletAddress],
+        },
+      },
+    ]);
+
+    if (finalSimulation?.value?.err) {
+      const error = new Error("Final Jupiter V2 transaction simulation failed.");
+      error.code = "V2_FINAL_SIMULATION_FAILED";
+      error.simulationError = finalSimulation.value.err;
+      error.logs = Array.isArray(finalSimulation.value.logs) ? finalSimulation.value.logs.slice(-12) : [];
+      throw error;
+    }
+
+    const simulatedWallet = Array.isArray(finalSimulation?.value?.accounts)
+      ? finalSimulation.value.accounts[0]
+      : null;
+    if (!simulatedWallet || simulatedWallet.lamports == null) {
+      const error = new Error("Native SOL debit could not be verified before execution.");
+      error.code = "NATIVE_SOL_DEBIT_UNVERIFIED";
+      throw error;
+    }
+
+    nativeSolAfterSimulationLamports = BigInt(String(simulatedWallet.lamports));
+
+    // Newer Solana RPC responses expose exact pre/post lamport balances for the
+    // simulated transaction. The fee payer is the first transaction account, so
+    // prefer those values when available. Fall back to the account snapshot above.
+    const preBalances = Array.isArray(finalSimulation?.value?.preBalances)
+      ? finalSimulation.value.preBalances
+      : null;
+    const postBalances = Array.isArray(finalSimulation?.value?.postBalances)
+      ? finalSimulation.value.postBalances
+      : null;
+    if (preBalances?.length && postBalances?.length && preBalances[0] != null && postBalances[0] != null) {
+      nativeSolBeforeLamports = BigInt(String(preBalances[0]));
+      nativeSolAfterSimulationLamports = BigInt(String(postBalances[0]));
+    }
+
+    nativeSolDebitLamports = nativeSolBeforeLamports > nativeSolAfterSimulationLamports
+      ? nativeSolBeforeLamports - nativeSolAfterSimulationLamports
+      : 0n;
+
+    if (nativeSolDebitLamports > maxDebit) {
+      const error = new Error(
+        `Jupiter route rejected because it would debit ${formatUnits(nativeSolDebitLamports, SOL_DECIMALS)} SOL from the Rebound Wallet; maximum allowed is ${formatUnits(maxDebit, SOL_DECIMALS)} SOL.`,
+      );
+      error.code = "NATIVE_SOL_DEBIT_TOO_HIGH";
+      error.nativeSolDebitLamports = nativeSolDebitLamports.toString();
+      error.maxNativeSolDebitLamports = maxDebit.toString();
+      error.nativeSolBeforeLamports = nativeSolBeforeLamports.toString();
+      error.nativeSolAfterSimulationLamports = nativeSolAfterSimulationLamports.toString();
+      throw error;
+    }
+  }
+
   return {
     swapTransaction: finalTx.transactionBase64,
     recentBlockhash: finalTx.recentBlockhash,
@@ -855,6 +939,9 @@ async function buildJupiterV2BuyTransaction(env, {
     unitsConsumed: unitsConsumed || null,
     computeUnitLimit: estimatedComputeUnits,
     instructionCount: finalInstructions.length,
+    nativeSolDebitLamports: nativeSolDebitLamports == null ? null : nativeSolDebitLamports.toString(),
+    nativeSolDebitSol: nativeSolDebitLamports == null ? null : formatUnits(nativeSolDebitLamports, SOL_DECIMALS),
+    maxNativeSolDebitLamports: maxNativeSolDebitLamports == null ? null : String(maxNativeSolDebitLamports),
   };
 }
 
@@ -1217,14 +1304,22 @@ async function handleExecutionCheck(request, env) {
       unitsConsumed: null,
       lookupTableCount: null,
       instructionCount: null,
+      nativeSolDebitLamports: null,
+      nativeSolDebitSol: null,
+      maxNativeSolDebitLamports: null,
       error: null,
     };
 
     if (policyCompatible && routeSanityOk) {
       try {
+        const expectedAtaRentLamports = asset.symbol !== "SOL" && !tradingAsset.ready
+          ? await getTokenAccountRentLamports(env)
+          : 0n;
+        const maxNativeSolDebitLamports = MAX_ROUTINE_NATIVE_SOL_DEBIT_LAMPORTS + expectedAtaRentLamports;
         const builtTransaction = await buildJupiterV2BuyTransaction(env, {
           build,
           walletAddress,
+          maxNativeSolDebitLamports,
         });
 
         transactionBuild = {
@@ -1233,6 +1328,9 @@ async function handleExecutionCheck(request, env) {
           unitsConsumed: builtTransaction.unitsConsumed,
           lookupTableCount: builtTransaction.lookupTableCount,
           instructionCount: builtTransaction.instructionCount,
+          nativeSolDebitLamports: builtTransaction.nativeSolDebitLamports,
+          nativeSolDebitSol: builtTransaction.nativeSolDebitSol,
+          maxNativeSolDebitLamports: builtTransaction.maxNativeSolDebitLamports,
           error: null,
         };
       } catch (error) {
@@ -1242,6 +1340,9 @@ async function handleExecutionCheck(request, env) {
           unitsConsumed: null,
           lookupTableCount: null,
           instructionCount: null,
+          nativeSolDebitLamports: error?.nativeSolDebitLamports || null,
+          nativeSolDebitSol: error?.nativeSolDebitLamports ? formatUnits(BigInt(error.nativeSolDebitLamports), SOL_DECIMALS) : null,
+          maxNativeSolDebitLamports: error?.maxNativeSolDebitLamports || null,
           error: error?.message || "V2 transaction build failed.",
         };
       }
@@ -1328,6 +1429,9 @@ async function handleExecutionCheck(request, env) {
           computeUnitLimit: transactionBuild.computeUnitLimit,
           lookupTableCount: transactionBuild.lookupTableCount,
           instructionCount: transactionBuild.instructionCount,
+          nativeSolDebitLamports: transactionBuild.nativeSolDebitLamports,
+          nativeSolDebitSol: transactionBuild.nativeSolDebitSol,
+          maxNativeSolDebitLamports: transactionBuild.maxNativeSolDebitLamports,
           error: transactionBuild.error,
         },
       },
@@ -2014,9 +2118,14 @@ async function executeTriggeredBuy(env, strategy) {
       };
     }
 
+    const expectedAtaRentLamports = asset.symbol !== "SOL" && !tradingAsset.ready
+      ? await getTokenAccountRentLamports(env)
+      : 0n;
+    const maxNativeSolDebitLamports = MAX_ROUTINE_NATIVE_SOL_DEBIT_LAMPORTS + expectedAtaRentLamports;
     const executable = await buildJupiterV2BuyTransaction(env, {
       build,
       walletAddress,
+      maxNativeSolDebitLamports,
     });
 
     await env.DB.prepare(`
@@ -2760,7 +2869,11 @@ async function executeTriggeredSell(env, strategy) {
       }
     }
 
-    const executable = await buildJupiterV2BuyTransaction(env, { build, walletAddress });
+    const executable = await buildJupiterV2BuyTransaction(env, {
+      build,
+      walletAddress,
+      maxNativeSolDebitLamports: MAX_ROUTINE_NATIVE_SOL_DEBIT_LAMPORTS,
+    });
 
     await env.DB.prepare(`
       UPDATE rebound_strategies
@@ -2957,7 +3070,11 @@ async function handleSellExecutionCheck(request, env) {
       return json(request, { status: "error", ready: false, noTradeExecuted: true, code: "SELL_ROUTE_SANITY_FAILED", message: "SELL route failed the reference-price sanity check." }, 409);
     }
 
-    const tx = await buildJupiterV2BuyTransaction(env, { build, walletAddress });
+    const tx = await buildJupiterV2BuyTransaction(env, {
+      build,
+      walletAddress,
+      maxNativeSolDebitLamports: MAX_ROUTINE_NATIVE_SOL_DEBIT_LAMPORTS,
+    });
     return json(request, {
       status: "ok",
       ready: true,
@@ -2972,7 +3089,16 @@ async function handleSellExecutionCheck(request, env) {
         jupiterV2: { ok: true, inAmountRaw: testRaw.toString(), outAmountRaw: outRaw.toString() },
         policyCompatibility: { ok: true, returnedPrograms: programs },
         routeSanity: { ok: true, referenceShortfallBps: shortfallBps },
-        transactionBuild: { ok: true, computeUnitLimit: tx.computeUnitLimit, unitsConsumed: tx.unitsConsumed, lookupTableCount: tx.lookupTableCount, instructionCount: tx.instructionCount },
+        transactionBuild: {
+          ok: true,
+          computeUnitLimit: tx.computeUnitLimit,
+          unitsConsumed: tx.unitsConsumed,
+          lookupTableCount: tx.lookupTableCount,
+          instructionCount: tx.instructionCount,
+          nativeSolDebitLamports: tx.nativeSolDebitLamports,
+          nativeSolDebitSol: tx.nativeSolDebitSol,
+          maxNativeSolDebitLamports: tx.maxNativeSolDebitLamports,
+        },
       },
       checkedAt: new Date().toISOString(),
     });
@@ -3010,7 +3136,7 @@ async function handleExecutionStatus(request, env) {
 async function handleRoot(request, env) {
   return json(request, {
     service: "ASTY Rebound API",
-    buildVersion: "2026-09-27-cycle-v11-sell-lock-recovery",
+    buildVersion: "2026-09-27-cycle-v13-native-sol-debit-0.001",
     status: "online",
     balanceSource: "Helius",
     displayPriceSource: "Helius DAS",
