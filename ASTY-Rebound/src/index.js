@@ -2823,6 +2823,30 @@ async function executeTriggeredSell(env, strategy) {
   }
 }
 
+async function recoverStaleSellPreparationLocks(env) {
+  // PREPARING is still before signAndSendTransaction(). If the Worker is interrupted
+  // in this phase, no SELL has been submitted yet. A stale PREPARING lock can
+  // therefore be safely returned to its trigger state for a fresh quote/build attempt.
+  const result = await env.DB.prepare(`
+    UPDATE rebound_strategies
+    SET pending_action = CASE
+          WHEN pending_action = 'SELL_SL_PREPARING' THEN 'SELL_TRIGGERED_SL'
+          WHEN pending_action = 'SELL_STOP_PREPARING' THEN 'SELL_TRIGGERED_STOP'
+          ELSE 'SELL_TRIGGERED_TP'
+        END,
+        pending_action_started_at = CURRENT_TIMESTAMP,
+        execution_lock = NULL,
+        execution_lock_at = NULL,
+        updated_at = CURRENT_TIMESTAMP
+    WHERE status = 'SELL_TRIGGERED'
+      AND pending_signature IS NULL
+      AND pending_action IN ('SELL_TP_PREPARING', 'SELL_SL_PREPARING', 'SELL_STOP_PREPARING')
+      AND pending_action_started_at IS NOT NULL
+      AND pending_action_started_at < datetime('now', '-' || ? || ' minutes')
+  `).bind(EXECUTION_LOCK_STALE_MINUTES).run();
+  return Number(result?.meta?.changes ?? 0);
+}
+
 async function quarantineStaleAmbiguousSells(env) {
   const result = await env.DB.prepare(`
     UPDATE rebound_strategies
@@ -2838,7 +2862,7 @@ async function quarantineStaleAmbiguousSells(env) {
         updated_at = CURRENT_TIMESTAMP
     WHERE status = 'SELL_TRIGGERED'
       AND pending_signature IS NULL
-      AND pending_action IN ('SELL_TP_SENDING', 'SELL_SL_SENDING')
+      AND pending_action IN ('SELL_TP_SENDING', 'SELL_SL_SENDING', 'SELL_STOP_SENDING')
       AND pending_action_started_at IS NOT NULL
       AND pending_action_started_at < datetime('now', '-' || ? || ' minutes')
   `).bind(EXECUTION_LOCK_STALE_MINUTES).run();
@@ -2846,6 +2870,7 @@ async function quarantineStaleAmbiguousSells(env) {
 }
 
 async function runSellExecutor(env, { source = "cron" } = {}) {
+  const recoveredStalePreparing = await recoverStaleSellPreparationLocks(env);
   const quarantined = await quarantineStaleAmbiguousSells(env);
   const reconciled = await reconcilePendingSells(env);
   if (!autoSellRequested(env)) {
@@ -2855,6 +2880,7 @@ async function runSellExecutor(env, { source = "cron" } = {}) {
       liveExecutionImplemented: true,
       autoSellEnabled: false,
       newSellsAttempted: 0,
+      recoveredStalePreparingSells: recoveredStalePreparing,
       quarantinedAmbiguousSells: quarantined,
       reconciled,
       message: "SELL executor is installed but AUTO_SELL_ENABLED is not true. No new SELL was sent.",
@@ -2878,6 +2904,7 @@ async function runSellExecutor(env, { source = "cron" } = {}) {
     liveExecutionImplemented: true,
     autoSellEnabled: true,
     newSellsAttempted: rows.length,
+    recoveredStalePreparingSells: recoveredStalePreparing,
     quarantinedAmbiguousSells: quarantined,
     reconciled,
     executions,
@@ -2983,7 +3010,7 @@ async function handleExecutionStatus(request, env) {
 async function handleRoot(request, env) {
   return json(request, {
     service: "ASTY Rebound API",
-    buildVersion: "2026-09-23-cycle-v10-buy-recovery",
+    buildVersion: "2026-09-27-cycle-v11-sell-lock-recovery",
     status: "online",
     balanceSource: "Helius",
     displayPriceSource: "Helius DAS",
