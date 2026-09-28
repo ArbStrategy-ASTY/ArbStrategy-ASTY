@@ -3064,6 +3064,255 @@ async function runSellExecutor(env, { source = "cron" } = {}) {
   };
 }
 
+
+async function handleAssetReadinessCheck(request, env) {
+  try {
+    const auth = await verifyPrivyRequest(request, env);
+    if (!auth.ok) return json(request, { status: "error", message: auth.message }, auth.status);
+
+    let body = {};
+    try { body = await request.json(); } catch {}
+    const asset = getStrategyAssetConfig(body?.assetSymbol || "SOL");
+    const side = String(body?.side || "BUY").trim().toUpperCase();
+    if (!['BUY', 'SELL'].includes(side)) {
+      return json(request, { status: "error", ready: false, noTradeExecuted: true, code: "INVALID_SIDE", message: "side must be BUY or SELL." }, 400);
+    }
+
+    const account = await getReboundAccount(env, auth.userId);
+    if (!account?.rebound_wallet_address) {
+      return json(request, { status: "error", ready: false, noTradeExecuted: true, message: "Rebound account not found." }, 404);
+    }
+
+    const walletAddress = account.rebound_wallet_address;
+    const [nativeSol, usdcToken, tradingAsset, referencePrice] = await Promise.all([
+      getSolBalance(env, walletAddress),
+      getUsdcTokenAccount(env, walletAddress),
+      getOwnedTokenAccount(env, walletAddress, asset.mint, asset.decimals),
+      getJupiterAssetPriceMicroUsdc(env, asset.symbol),
+    ]);
+
+    const gasRaw = BigInt(String(nativeSol.raw || 0));
+    const gasOk = gasRaw >= MIN_GAS_LAMPORTS;
+    if (!gasOk) {
+      return json(request, {
+        status: "error", ready: false, noTradeExecuted: true, code: "GAS_RESERVE_LOW",
+        message: "The Rebound Wallet has less than 0.005 SOL available for network fees.",
+        asset: asset.symbol, side,
+        checks: { gas: { ok: false, currentSol: formatUnits(gasRaw, SOL_DECIMALS), minimumSol: formatUnits(MIN_GAS_LAMPORTS, SOL_DECIMALS) } },
+      }, 409);
+    }
+    if (!usdcToken.ready || !usdcToken.address) {
+      return json(request, { status: "error", ready: false, noTradeExecuted: true, code: "USDC_ACCOUNT_NOT_READY", message: "USDC token account is not ready.", asset: asset.symbol, side }, 409);
+    }
+
+    if (!env.PRIVY_AUTH_KEY_ID || !env.PRIVY_AUTH_PRIVATE_KEY || !env.PRIVY_POLICY_ID) {
+      return json(request, { status: "error", ready: false, noTradeExecuted: true, code: "AUTOMATION_NOT_CONFIGURED", message: "Automated trading authorization is not fully configured.", asset: asset.symbol, side }, 503);
+    }
+    const privy = createPrivyClient(env);
+    const delegatedWallet = await getPrivyDelegatedWallet(privy, auth.userId, walletAddress);
+    if (!delegatedWallet) {
+      return json(request, { status: "error", ready: false, noTradeExecuted: true, code: "AUTOMATION_NOT_ENABLED", message: "Automated Trading is not enabled for this Rebound Wallet.", asset: asset.symbol, side }, 409);
+    }
+
+    const allowedPrograms = allowedSwapProgramsForAsset(asset);
+    const commonChecks = {
+      gas: { ok: true, currentSol: formatUnits(gasRaw, SOL_DECIMALS) },
+      automatedTrading: { ok: true, delegated: true },
+      usdcAccount: { ok: true, tokenAccount: usdcToken.address },
+      tradingAsset: {
+        ok: true,
+        symbol: asset.symbol,
+        mint: asset.mint,
+        tokenProgram: asset.tokenProgram,
+        transferFeeBps: asset.transferFeeBps,
+        tokenAccount: tradingAsset.address || null,
+        accountExists: Boolean(tradingAsset.ready),
+        balanceRaw: String(tradingAsset.raw || "0"),
+        balance: tradingAsset.ui,
+      },
+    };
+
+    if (side === 'BUY') {
+      const walletUsdcRaw = BigInt(String(usdcToken.raw || 0));
+      const testRaw = walletUsdcRaw >= 100_000n ? 100_000n : walletUsdcRaw;
+      if (testRaw <= 0n) {
+        return json(request, { status: "error", ready: false, noTradeExecuted: true, code: "NO_USDC_FOR_BUY_PREFLIGHT", message: "The Rebound Wallet has no USDC available for the BUY preflight simulation.", asset: asset.symbol, side, checks: commonChecks }, 409);
+      }
+
+      const build = await getJupiterV2Build(env, {
+        walletAddress,
+        destinationTokenAccount: tradingAsset.ready ? tradingAsset.address : null,
+        amountRaw: testRaw.toString(),
+        outputMint: asset.mint,
+      });
+      if (build.inputMint !== USDC_MINT || build.outputMint !== asset.mint || String(build.inAmount) !== testRaw.toString()) {
+        return json(request, { status: "error", ready: false, noTradeExecuted: true, code: "JUPITER_ROUTE_MISMATCH", message: "Jupiter returned a BUY route that does not match the selected asset.", asset: asset.symbol, side, checks: commonChecks }, 502);
+      }
+
+      const programs = instructionProgramIds(build);
+      const unexpectedPrograms = programs.filter((id) => !allowedPrograms.has(id));
+      const policyCompatible = programs.includes(JUPITER_PROGRAM_ID) && unexpectedPrograms.length === 0 && !build?.tipInstruction;
+      if (!policyCompatible) {
+        return json(request, {
+          status: "error", ready: false, noTradeExecuted: true, code: "POLICY_ROUTE_MISMATCH",
+          message: `BUY route is not compatible with the current Rebound Worker policy. Unexpected programs: ${unexpectedPrograms.join(", ") || "none"}`,
+          asset: asset.symbol, side,
+          checks: { ...commonChecks, jupiterV2: { ok: true }, policyCompatibility: { ok: false, returnedPrograms: programs, unexpectedPrograms } },
+        }, 409);
+      }
+
+      const outRaw = BigInt(String(build.outAmount || 0));
+      const expectedOutRaw = referencePrice.micro > 0n
+        ? testRaw * (10n ** BigInt(asset.decimals)) / referencePrice.micro
+        : 0n;
+      const referenceShortfallBps = expectedOutRaw > 0n && outRaw < expectedOutRaw
+        ? Number((expectedOutRaw - outRaw) * 10_000n / expectedOutRaw)
+        : 0;
+      const maxReferenceShortfallBps = MAX_ROUTE_REFERENCE_SHORTFALL_BPS + transferFeePriceImpactBps(asset);
+      const routeSanityOk = outRaw > 0n && referenceShortfallBps <= maxReferenceShortfallBps;
+      if (!routeSanityOk) {
+        return json(request, {
+          status: "error", ready: false, noTradeExecuted: true, code: "BUY_ROUTE_SANITY_FAILED",
+          message: `BUY route price safety check failed (${referenceShortfallBps} bps; maximum ${maxReferenceShortfallBps} bps).`,
+          asset: asset.symbol, side,
+          checks: { ...commonChecks, jupiterV2: { ok: true }, policyCompatibility: { ok: true, returnedPrograms: programs }, routeSanity: { ok: false, referenceShortfallBps, maxReferenceShortfallBps } },
+        }, 409);
+      }
+
+      const expectedAtaRentLamports = asset.symbol !== "SOL" && !tradingAsset.ready
+        ? await getTokenAccountRentLamports(env)
+        : 0n;
+      const productionMaxNativeSolDebitLamports = MAX_ROUTINE_NATIVE_SOL_DEBIT_LAMPORTS + expectedAtaRentLamports;
+      const tx = await buildJupiterV2BuyTransaction(env, {
+        build,
+        walletAddress,
+        maxNativeSolDebitLamports: productionMaxNativeSolDebitLamports,
+      });
+
+      return json(request, {
+        status: "ok", ready: true, noTradeExecuted: true, mode: "asset-preflight-only",
+        message: `${asset.symbol} BUY preflight passed. No transaction was signed or sent.`,
+        asset: asset.symbol, side,
+        checks: {
+          ...commonChecks,
+          jupiterV2: { ok: true, inAmountRaw: testRaw.toString(), outAmountRaw: outRaw.toString() },
+          policyCompatibility: { ok: true, returnedPrograms: programs, workerPolicyOnly: true },
+          routeSanity: { ok: true, referenceShortfallBps, maxReferenceShortfallBps },
+          simulation: { ok: true, computeUnitLimit: tx.computeUnitLimit, unitsConsumed: tx.unitsConsumed },
+          nativeSolDebitGuard: {
+            ok: true,
+            debitLamports: tx.nativeSolDebitLamports,
+            debitSol: tx.nativeSolDebitSol,
+            maxLamports: tx.maxNativeSolDebitLamports,
+            expectedAtaRentLamports: expectedAtaRentLamports.toString(),
+          },
+        },
+        note: "This verifies the Rebound Worker allowlist and Solana simulation. Privy policy acceptance is only proven when Privy is asked to sign a transaction.",
+        checkedAt: new Date().toISOString(),
+      });
+    }
+
+    // SELL: build a small route for the selected asset. If the Rebound Wallet has
+    // no balance yet, route + policy compatibility can still be checked, but a
+    // full Solana simulation would fail for insufficient funds and is therefore
+    // reported as a partial readiness result rather than a false failure.
+    const assetBalanceRaw = BigInt(String(tradingAsset.raw || 0));
+    const tenCentsUsdcRaw = 100_000n;
+    let syntheticRaw = referencePrice.micro > 0n
+      ? (tenCentsUsdcRaw * (10n ** BigInt(asset.decimals)) + referencePrice.micro - 1n) / referencePrice.micro
+      : 1n;
+    if (syntheticRaw <= 0n) syntheticRaw = 1n;
+    const testRaw = assetBalanceRaw > 0n && assetBalanceRaw < syntheticRaw ? assetBalanceRaw : syntheticRaw;
+
+    const build = await getJupiterV2SellBuild(env, {
+      walletAddress,
+      destinationTokenAccount: usdcToken.address,
+      amountRaw: testRaw.toString(),
+      inputMint: asset.mint,
+    });
+    if (build.inputMint !== asset.mint || build.outputMint !== USDC_MINT || String(build.inAmount) !== testRaw.toString()) {
+      return json(request, { status: "error", ready: false, noTradeExecuted: true, code: "JUPITER_ROUTE_MISMATCH", message: "Jupiter returned a SELL route that does not match the selected asset.", asset: asset.symbol, side, checks: commonChecks }, 502);
+    }
+
+    const programs = instructionProgramIds(build);
+    const unexpectedPrograms = programs.filter((id) => !allowedPrograms.has(id));
+    const policyCompatible = programs.includes(JUPITER_PROGRAM_ID) && unexpectedPrograms.length === 0 && !build?.tipInstruction;
+    if (!policyCompatible) {
+      return json(request, {
+        status: "error", ready: false, noTradeExecuted: true, code: "POLICY_ROUTE_MISMATCH",
+        message: `SELL route is not compatible with the current Rebound Worker policy. Unexpected programs: ${unexpectedPrograms.join(", ") || "none"}`,
+        asset: asset.symbol, side,
+        checks: { ...commonChecks, jupiterV2: { ok: true }, policyCompatibility: { ok: false, returnedPrograms: programs, unexpectedPrograms } },
+      }, 409);
+    }
+
+    const outRaw = BigInt(String(build.outAmount || 0));
+    const expectedUsdcRaw = testRaw * referencePrice.micro / (10n ** BigInt(asset.decimals));
+    const referenceShortfallBps = expectedUsdcRaw > 0n && outRaw < expectedUsdcRaw
+      ? Number((expectedUsdcRaw - outRaw) * 10_000n / expectedUsdcRaw)
+      : 0;
+    const maxReferenceShortfallBps = MAX_ROUTE_REFERENCE_SHORTFALL_BPS + Number(asset.transferFeeBps || 0);
+    const routeSanityOk = outRaw > 0n && referenceShortfallBps <= maxReferenceShortfallBps;
+    if (!routeSanityOk) {
+      return json(request, {
+        status: "error", ready: false, noTradeExecuted: true, code: "SELL_ROUTE_SANITY_FAILED",
+        message: `SELL route price safety check failed (${referenceShortfallBps} bps; maximum ${maxReferenceShortfallBps} bps).`,
+        asset: asset.symbol, side,
+        checks: { ...commonChecks, jupiterV2: { ok: true }, policyCompatibility: { ok: true, returnedPrograms: programs }, routeSanity: { ok: false, referenceShortfallBps, maxReferenceShortfallBps } },
+      }, 409);
+    }
+
+    if (assetBalanceRaw <= 0n) {
+      return json(request, {
+        status: "partial", ready: false, partial: true, noTradeExecuted: true, code: "SELL_SIMULATION_NEEDS_ASSET_BALANCE",
+        message: `${asset.symbol} SELL route and Worker policy are compatible. Full SELL simulation needs a ${asset.symbol} balance in the Rebound Wallet.`,
+        asset: asset.symbol, side,
+        checks: {
+          ...commonChecks,
+          jupiterV2: { ok: true, inAmountRaw: testRaw.toString(), outAmountRaw: outRaw.toString() },
+          policyCompatibility: { ok: true, returnedPrograms: programs, workerPolicyOnly: true },
+          routeSanity: { ok: true, referenceShortfallBps, maxReferenceShortfallBps },
+          simulation: { ok: false, skipped: true, reason: "no-asset-balance" },
+        },
+        note: "No transaction was signed or sent. Privy policy acceptance is only proven when Privy is asked to sign a transaction.",
+        checkedAt: new Date().toISOString(),
+      }, 200);
+    }
+
+    const tx = await buildJupiterV2BuyTransaction(env, {
+      build,
+      walletAddress,
+      maxNativeSolDebitLamports: MAX_ROUTINE_NATIVE_SOL_DEBIT_LAMPORTS,
+    });
+    return json(request, {
+      status: "ok", ready: true, noTradeExecuted: true, mode: "asset-preflight-only",
+      message: `${asset.symbol} SELL preflight passed. No transaction was signed or sent.`,
+      asset: asset.symbol, side,
+      checks: {
+        ...commonChecks,
+        jupiterV2: { ok: true, inAmountRaw: testRaw.toString(), outAmountRaw: outRaw.toString() },
+        policyCompatibility: { ok: true, returnedPrograms: programs, workerPolicyOnly: true },
+        routeSanity: { ok: true, referenceShortfallBps, maxReferenceShortfallBps },
+        simulation: { ok: true, computeUnitLimit: tx.computeUnitLimit, unitsConsumed: tx.unitsConsumed },
+        nativeSolDebitGuard: { ok: true, debitLamports: tx.nativeSolDebitLamports, debitSol: tx.nativeSolDebitSol, maxLamports: tx.maxNativeSolDebitLamports },
+      },
+      note: "This verifies the Rebound Worker allowlist and Solana simulation. Privy policy acceptance is only proven when Privy is asked to sign a transaction.",
+      checkedAt: new Date().toISOString(),
+    });
+  } catch (error) {
+    console.error("Asset readiness check error:", error);
+    return json(request, {
+      status: "error", ready: false, noTradeExecuted: true,
+      code: error?.code || null,
+      message: error?.message || "Asset readiness check could not be completed.",
+      nativeSolDebitLamports: error?.nativeSolDebitLamports || null,
+      maxNativeSolDebitLamports: error?.maxNativeSolDebitLamports || null,
+      programs: error?.programs || undefined,
+      unexpectedPrograms: error?.unexpectedPrograms || undefined,
+    }, 503);
+  }
+}
+
 async function handleSellExecutionCheck(request, env) {
   try {
     const asset = getStrategyAssetConfig("SOL");
@@ -3177,7 +3426,7 @@ async function handleExecutionStatus(request, env) {
 async function handleRoot(request, env) {
   return json(request, {
     service: "ASTY Rebound API",
-    buildVersion: "2026-09-28-cycle-v14-asty-trading",
+    buildVersion: "2026-09-28-cycle-v15-dev-asset-readiness",
     status: "online",
     balanceSource: "Helius",
     displayPriceSource: "Helius DAS",
@@ -3232,6 +3481,7 @@ async function handleRoot(request, env) {
       watcherRun: "POST /watcher/run",
       executionCheck: "POST /execution/check",
       sellExecutionCheck: "POST /execution/sell-check",
+      assetReadinessCheck: "POST /execution/asset-check",
       executionStatus: "GET /execution/status",
       tradingAuthorization: "GET /trading/authorization-config",
       prepareSolTrading: "POST /trading/prepare-sol-context",
@@ -4433,6 +4683,7 @@ async function routeFetch(request, env) {
     case "POST /watcher/run": return handleWatcherRun(request, env);
     case "POST /execution/check": return handleExecutionCheck(request, env);
     case "POST /execution/sell-check": return handleSellExecutionCheck(request, env);
+    case "POST /execution/asset-check": return handleAssetReadinessCheck(request, env);
     case "GET /execution/status": return handleExecutionStatus(request, env);
     case "GET /trading/authorization-config": return handleAuthorizationConfig(request, env);
     case "POST /trading/prepare-sol-context": return handlePrepareSolContext(request, env);
