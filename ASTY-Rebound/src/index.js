@@ -2884,7 +2884,24 @@ async function executeTriggeredSell(env, strategy) {
     const shortfallBps = expectedUsdcRaw > 0n && outRaw < expectedUsdcRaw
       ? Number((expectedUsdcRaw - outRaw) * 10_000n / expectedUsdcRaw)
       : 0;
-    if (outRaw <= 0n || shortfallBps > MAX_ROUTE_REFERENCE_SHORTFALL_BPS) throw new Error("V2 SELL route failed the reference-price sanity check.");
+
+    // Fee-on-transfer assets such as ASTY legitimately return less USDC than the
+    // raw reference-price calculation suggests because the outbound token transfer
+    // fee is charged before/inside the swap path. Keep the normal 2% route-sanity
+    // allowance for standard assets and add only the configured transfer fee for
+    // fee-on-transfer assets. This mirrors the asset SELL preflight.
+    const maxSellReferenceShortfallBps =
+      MAX_ROUTE_REFERENCE_SHORTFALL_BPS + Number(asset.transferFeeBps || 0);
+
+    if (outRaw <= 0n || shortfallBps > maxSellReferenceShortfallBps) {
+      const error = new Error(
+        `V2 SELL route failed the reference-price sanity check (${shortfallBps} bps; maximum ${maxSellReferenceShortfallBps} bps).`,
+      );
+      error.code = "SELL_ROUTE_SANITY_FAILED";
+      error.referenceShortfallBps = shortfallBps;
+      error.maxReferenceShortfallBps = maxSellReferenceShortfallBps;
+      throw error;
+    }
 
     const quotePriceMicro = outRaw * (10n ** BigInt(asset.decimals)) / amountRaw;
     if (reason === "TP") {
@@ -2972,6 +2989,8 @@ async function executeTriggeredSell(env, strategy) {
       message: error?.message || "SELL execution failed before submission.",
       programs: error?.programs || undefined,
       unexpectedPrograms: error?.unexpectedPrograms || undefined,
+      referenceShortfallBps: error?.referenceShortfallBps ?? undefined,
+      maxReferenceShortfallBps: error?.maxReferenceShortfallBps ?? undefined,
     };
   }
 }
@@ -3426,7 +3445,7 @@ async function handleExecutionStatus(request, env) {
 async function handleRoot(request, env) {
   return json(request, {
     service: "ASTY Rebound API",
-    buildVersion: "2026-09-28-cycle-v15-dev-asset-readiness",
+    buildVersion: "2026-09-28-cycle-v16-asty-sell-fee-sanity",
     status: "online",
     balanceSource: "Helius",
     displayPriceSource: "Helius DAS",
