@@ -32,6 +32,7 @@ const COMPUTE_BUDGET_PROGRAM_ID = "ComputeBudget111111111111111111111111111111";
 const ASSOCIATED_TOKEN_PROGRAM_ID = "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL";
 const LIGHTHOUSE_PROGRAM_ID = "L2TExMFKdjpN9kozasaurPirfHy9P8sbXoAN1qA3S95";
 const TOKEN_PROGRAM_ID = "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA";
+const TOKEN_2022_PROGRAM_ID = "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb";
 const SOLANA_MAINNET_CAIP2 = "solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp";
 
 const ASTY_DECIMALS = 9;
@@ -44,11 +45,12 @@ const ETH_DECIMALS = 8;
 const PRICE_MICRO_DECIMALS = 6;
 
 const STRATEGY_ASSETS = Object.freeze({
-  SOL: { symbol: "SOL", mint: WSOL_MINT, decimals: SOL_DECIMALS, displayName: "SOL", internalAsset: "WSOL" },
-  WBTC: { symbol: "WBTC", mint: WBTC_MINT, decimals: WBTC_DECIMALS, displayName: "WBTC", internalAsset: "WBTC (Wormhole)" },
-  BNB: { symbol: "BNB", mint: BNB_MINT, decimals: BNB_DECIMALS, displayName: "BNB", internalAsset: "BNB (Wormhole)" },
-  RAY: { symbol: "RAY", mint: RAY_MINT, decimals: RAY_DECIMALS, displayName: "RAY", internalAsset: "RAY" },
-  ETH: { symbol: "ETH", mint: ETH_MINT, decimals: ETH_DECIMALS, displayName: "ETH", internalAsset: "ETH (Wormhole)" },
+  SOL: { symbol: "SOL", mint: WSOL_MINT, decimals: SOL_DECIMALS, displayName: "SOL", internalAsset: "WSOL", tokenProgram: TOKEN_PROGRAM_ID, transferFeeBps: 0 },
+  WBTC: { symbol: "WBTC", mint: WBTC_MINT, decimals: WBTC_DECIMALS, displayName: "WBTC", internalAsset: "WBTC (Wormhole)", tokenProgram: TOKEN_PROGRAM_ID, transferFeeBps: 0 },
+  BNB: { symbol: "BNB", mint: BNB_MINT, decimals: BNB_DECIMALS, displayName: "BNB", internalAsset: "BNB (Wormhole)", tokenProgram: TOKEN_PROGRAM_ID, transferFeeBps: 0 },
+  RAY: { symbol: "RAY", mint: RAY_MINT, decimals: RAY_DECIMALS, displayName: "RAY", internalAsset: "RAY", tokenProgram: TOKEN_PROGRAM_ID, transferFeeBps: 0 },
+  ETH: { symbol: "ETH", mint: ETH_MINT, decimals: ETH_DECIMALS, displayName: "ETH", internalAsset: "ETH (Wormhole)", tokenProgram: TOKEN_PROGRAM_ID, transferFeeBps: 0 },
+  ASTY: { symbol: "ASTY", mint: ASTY_MINT, decimals: ASTY_DECIMALS, displayName: "ASTY", internalAsset: "ASTY (Token-2022)", tokenProgram: TOKEN_2022_PROGRAM_ID, transferFeeBps: 100 },
 });
 
 function getStrategyAssetConfig(assetSymbol) {
@@ -56,6 +58,40 @@ function getStrategyAssetConfig(assetSymbol) {
   const config = STRATEGY_ASSETS[symbol];
   if (!config) throw new Error(`Unsupported Rebound asset: ${symbol || "UNKNOWN"}.`);
   return config;
+}
+
+function allowedSwapProgramsForAsset(asset) {
+  const programs = new Set([
+    COMPUTE_BUDGET_PROGRAM_ID,
+    JUPITER_PROGRAM_ID,
+    ASSOCIATED_TOKEN_PROGRAM_ID,
+  ]);
+  if (asset?.tokenProgram === TOKEN_2022_PROGRAM_ID) programs.add(TOKEN_2022_PROGRAM_ID);
+  return programs;
+}
+
+function transferFeePriceImpactBps(asset) {
+  const feeBps = Number(asset?.transferFeeBps || 0);
+  if (!Number.isFinite(feeBps) || feeBps <= 0) return 0;
+  if (feeBps >= 10_000) throw new Error("Invalid transfer fee configuration.");
+  // A fee on received tokens makes the effective BUY price rise by fee/(1-fee).
+  return Math.ceil((feeBps * 10_000) / (10_000 - feeBps));
+}
+
+function grossUpPriceForTransferFee(priceRaw, feeBps) {
+  const price = BigInt(String(priceRaw));
+  const fee = BigInt(Number(feeBps || 0));
+  if (fee <= 0n) return price;
+  if (fee >= 10_000n) throw new Error("Invalid transfer fee configuration.");
+  const denominator = 10_000n - fee;
+  return (price * 10_000n + denominator - 1n) / denominator;
+}
+
+function netTakeProfitPriceRaw(strategy) {
+  const fill = BigInt(String(strategy?.buy_fill_price_micro_usdc || 0));
+  const tpBps = BigInt(Number(strategy?.take_profit_bps || 0));
+  if (fill <= 0n) return 0n;
+  return fill * (10_000n + tpBps) / 10_000n;
 }
 
 const MIN_STRATEGY_USDC_RAW = 25_000_000n;
@@ -1054,8 +1090,8 @@ function resolveStrategyConfiguration(body) {
 
 async function loadWatchingStrategies(env, privyUserId = null) {
   const sql = privyUserId
-    ? `SELECT * FROM rebound_strategies WHERE status = 'WATCHING' AND asset_symbol IN ('SOL','WBTC','BNB','RAY','ETH') AND privy_user_id = ? ORDER BY created_at ASC`
-    : `SELECT * FROM rebound_strategies WHERE status = 'WATCHING' AND asset_symbol IN ('SOL','WBTC','BNB','RAY','ETH') ORDER BY created_at ASC`;
+    ? `SELECT * FROM rebound_strategies WHERE status = 'WATCHING' AND asset_symbol IN ('SOL','WBTC','BNB','RAY','ETH','ASTY') AND privy_user_id = ? ORDER BY created_at ASC`
+    : `SELECT * FROM rebound_strategies WHERE status = 'WATCHING' AND asset_symbol IN ('SOL','WBTC','BNB','RAY','ETH','ASTY') ORDER BY created_at ASC`;
   const result = privyUserId
     ? await env.DB.prepare(sql).bind(privyUserId).all()
     : await env.DB.prepare(sql).all();
@@ -1121,7 +1157,7 @@ async function getExecutionCheckStrategy(env, privyUserId, strategyId = null) {
       FROM rebound_strategies
       WHERE id = ?
         AND privy_user_id = ?
-        AND asset_symbol IN ('SOL','WBTC','BNB','RAY','ETH')
+        AND asset_symbol IN ('SOL','WBTC','BNB','RAY','ETH','ASTY')
         AND status IN ('WATCHING', 'BUY_TRIGGERED')
       LIMIT 1
     `).bind(strategyId, privyUserId).first();
@@ -1131,7 +1167,7 @@ async function getExecutionCheckStrategy(env, privyUserId, strategyId = null) {
     SELECT *
     FROM rebound_strategies
     WHERE privy_user_id = ?
-      AND asset_symbol IN ('SOL','WBTC','BNB','RAY','ETH')
+      AND asset_symbol IN ('SOL','WBTC','BNB','RAY','ETH','ASTY')
       AND status IN ('WATCHING', 'BUY_TRIGGERED')
     ORDER BY
       CASE WHEN status = 'BUY_TRIGGERED' THEN 0 ELSE 1 END,
@@ -1276,11 +1312,7 @@ async function handleExecutionCheck(request, env) {
     }
 
     const programs = instructionProgramIds(build);
-    const allowedPrograms = new Set([
-      COMPUTE_BUDGET_PROGRAM_ID,
-      JUPITER_PROGRAM_ID,
-      ASSOCIATED_TOKEN_PROGRAM_ID,
-    ]);
+    const allowedPrograms = allowedSwapProgramsForAsset(asset);
     const unexpectedPrograms = programs.filter((programId) => !allowedPrograms.has(programId));
     const hasJupiterSwap = programs.includes(JUPITER_PROGRAM_ID);
     const hasTipInstruction = Boolean(build?.tipInstruction);
@@ -1406,11 +1438,7 @@ async function handleExecutionCheck(request, env) {
         },
         policyCompatibility: {
           ok: policyCompatible,
-          expectedPrograms: [
-            COMPUTE_BUDGET_PROGRAM_ID,
-            JUPITER_PROGRAM_ID,
-            ASSOCIATED_TOKEN_PROGRAM_ID,
-          ],
+          expectedPrograms: [...allowedPrograms],
           returnedPrograms: programs,
           unexpectedPrograms,
           hasTipInstruction,
@@ -1833,8 +1861,14 @@ async function finalizeConfirmedBuy(env, strategy, signature) {
     return { ok: false, failed: true, strategyId: strategy.id, signature, message: "BUY transaction failed on-chain and was released for a fresh retry." };
   }
 
+  const asset = getStrategyAssetConfig(strategy.asset_symbol);
   const takeProfitBps = BigInt(Number(strategy.take_profit_bps));
-  const takeProfitPrice = fill.fillPriceMicroUsdc * (10_000n + takeProfitBps) / 10_000n;
+  const netTakeProfitPrice = fill.fillPriceMicroUsdc * (10_000n + takeProfitBps) / 10_000n;
+  // For fee-on-transfer assets such as ASTY, the watcher needs the market to move
+  // high enough that the SELL can still hit the configured TP after the outbound fee.
+  // The confirmed BUY fill already includes the inbound fee because it is based on
+  // the wallet's actual post-transaction token balance.
+  const takeProfitPrice = grossUpPriceForTransferFee(netTakeProfitPrice, asset.transferFeeBps);
   const stopLossPrice = Number(strategy.stop_loss_enabled) === 1 && strategy.stop_loss_bps != null
     ? fill.fillPriceMicroUsdc * (10_000n - BigInt(Number(strategy.stop_loss_bps))) / 10_000n
     : null;
@@ -2077,11 +2111,7 @@ async function executeTriggeredBuy(env, strategy) {
     }
 
     const buildPrograms = instructionProgramIds(build);
-    const allowedPrograms = new Set([
-      COMPUTE_BUDGET_PROGRAM_ID,
-      JUPITER_PROGRAM_ID,
-      ASSOCIATED_TOKEN_PROGRAM_ID,
-    ]);
+    const allowedPrograms = allowedSwapProgramsForAsset(asset);
     const unexpectedBuildPrograms = buildPrograms.filter((id) => !allowedPrograms.has(id));
     if (!buildPrograms.includes(JUPITER_PROGRAM_ID) || unexpectedBuildPrograms.length > 0 || build?.tipInstruction) {
       const error = new Error(`V2 safety gate rejected BUY route. Unexpected programs: ${unexpectedBuildPrograms.join(", ") || "none"}`);
@@ -2105,7 +2135,11 @@ async function executeTriggeredBuy(env, strategy) {
     const quotePriceMicro = builtOutRaw > 0n
       ? cycleCapitalRaw * (10n ** BigInt(asset.decimals)) / builtOutRaw
       : 0n;
-    const maxAllowedQuotePrice = triggerRaw * BigInt(10_000 + MAX_BUY_TRIGGER_OVERAGE_BPS) / 10_000n;
+    // ASTY's 1% transfer fee reduces the tokens that reach the Rebound Wallet.
+    // Treat that known fee as part of the effective fill instead of mistaking it
+    // for price-chasing. The original 0.5% market/route overage guard remains.
+    const maxBuyQuoteOverageBps = MAX_BUY_TRIGGER_OVERAGE_BPS + transferFeePriceImpactBps(asset);
+    const maxAllowedQuotePrice = triggerRaw * BigInt(10_000 + maxBuyQuoteOverageBps) / 10_000n;
     if (quotePriceMicro <= 0n || quotePriceMicro > maxAllowedQuotePrice) {
       await releaseBuyExecutionLock(env, strategy.id, lock);
       return {
@@ -2387,7 +2421,7 @@ async function loadBoughtStrategies(env) {
     SELECT *
     FROM rebound_strategies
     WHERE status = 'BOUGHT'
-      AND asset_symbol IN ('SOL','WBTC','BNB','RAY','ETH')
+      AND asset_symbol IN ('SOL','WBTC','BNB','RAY','ETH','ASTY')
       AND entry_wsol_raw IS NOT NULL
       AND entry_wsol_raw > 0
     ORDER BY bought_at ASC, created_at ASC
@@ -2835,7 +2869,7 @@ async function executeTriggeredSell(env, strategy) {
     }
 
     const programs = instructionProgramIds(build);
-    const allowedPrograms = new Set([COMPUTE_BUDGET_PROGRAM_ID, JUPITER_PROGRAM_ID, ASSOCIATED_TOKEN_PROGRAM_ID]);
+    const allowedPrograms = allowedSwapProgramsForAsset(asset);
     const unexpectedPrograms = programs.filter((id) => !allowedPrograms.has(id));
     if (!programs.includes(JUPITER_PROGRAM_ID) || unexpectedPrograms.length > 0 || build?.tipInstruction) {
       const error = new Error(`V2 safety gate rejected SELL route. Unexpected programs: ${unexpectedPrograms.join(", ") || "none"}`);
@@ -2854,16 +2888,22 @@ async function executeTriggeredSell(env, strategy) {
 
     const quotePriceMicro = outRaw * (10n ** BigInt(asset.decimals)) / amountRaw;
     if (reason === "TP") {
-      const tpRaw = BigInt(String(fresh.take_profit_price_micro_usdc || 0));
-      const minAllowed = tpRaw * BigInt(10_000 - MAX_TP_QUOTE_UNDERAGE_BPS) / 10_000n;
-      if (tpRaw <= 0n || quotePriceMicro < minAllowed) {
+      // take_profit_price_micro_usdc is the market trigger shown to the user. For
+      // ASTY it is grossed up for the 1% outbound transfer fee. The quote itself
+      // is judged against the NET target derived from the actual confirmed BUY fill,
+      // so the configured TP remains a net strategy target rather than a pre-fee one.
+      const marketTpRaw = BigInt(String(fresh.take_profit_price_micro_usdc || 0));
+      const netTpRaw = netTakeProfitPriceRaw(fresh);
+      const minAllowed = netTpRaw * BigInt(10_000 - MAX_TP_QUOTE_UNDERAGE_BPS) / 10_000n;
+      if (marketTpRaw <= 0n || netTpRaw <= 0n || quotePriceMicro < minAllowed) {
         await releaseSellExecutionLock(env, strategy.id, lock, reason, { rearm: true });
         return {
           ok: false,
           skipped: true,
           strategyId: strategy.id,
           reason: "take-profit-quote-no-longer-good-enough",
-          targetPriceUsd: formatMicroUsd(tpRaw),
+          targetPriceUsd: formatMicroUsd(netTpRaw),
+          marketTriggerPriceUsd: formatMicroUsd(marketTpRaw),
           quotePriceUsd: formatMicroUsd(quotePriceMicro),
         };
       }
@@ -3026,6 +3066,7 @@ async function runSellExecutor(env, { source = "cron" } = {}) {
 
 async function handleSellExecutionCheck(request, env) {
   try {
+    const asset = getStrategyAssetConfig("SOL");
     const auth = await verifyPrivyRequest(request, env);
     if (!auth.ok) return json(request, { status: "error", message: auth.message }, auth.status);
     const account = await getReboundAccount(env, auth.userId);
@@ -3056,7 +3097,7 @@ async function handleSellExecutionCheck(request, env) {
       amountRaw: testRaw.toString(),
     });
     const programs = instructionProgramIds(build);
-    const allowedPrograms = new Set([COMPUTE_BUDGET_PROGRAM_ID, JUPITER_PROGRAM_ID, ASSOCIATED_TOKEN_PROGRAM_ID]);
+    const allowedPrograms = allowedSwapProgramsForAsset(asset);
     const unexpectedPrograms = programs.filter((id) => !allowedPrograms.has(id));
     const policyCompatible = programs.includes(JUPITER_PROGRAM_ID) && unexpectedPrograms.length === 0 && !build?.tipInstruction;
     if (!policyCompatible) {
@@ -3136,21 +3177,28 @@ async function handleExecutionStatus(request, env) {
 async function handleRoot(request, env) {
   return json(request, {
     service: "ASTY Rebound API",
-    buildVersion: "2026-09-27-cycle-v13-native-sol-debit-0.001",
+    buildVersion: "2026-09-28-cycle-v14-asty-trading",
     status: "online",
     balanceSource: "Helius",
     displayPriceSource: "Helius DAS",
-    supportedStrategyAssets: ["SOL", "WBTC", "BNB", "RAY", "ETH"],
+    supportedStrategyAssets: ["SOL", "WBTC", "BNB", "RAY", "ETH", "ASTY"],
     wbtcMint: WBTC_MINT,
     bnbMint: BNB_MINT,
     rayMint: RAY_MINT,
     ethMint: ETH_MINT,
+    astyMint: ASTY_MINT,
     strategyAssetMints: {
       SOL: WSOL_MINT,
       WBTC: WBTC_MINT,
       BNB: BNB_MINT,
       RAY: RAY_MINT,
       ETH: ETH_MINT,
+      ASTY: ASTY_MINT,
+    },
+    astyTrading: {
+      tokenProgram: TOKEN_2022_PROGRAM_ID,
+      transferFeeBps: 100,
+      takeProfitMode: "net-after-transfer-fee",
     },
     watcher: {
       mode: "market-watch",
@@ -4070,8 +4118,8 @@ async function handleStrategyResume(request, env) {
 
 async function handleWatcherStatus(request, env) {
   try {
-    const counts=await env.DB.prepare(`SELECT asset_symbol,status,COUNT(*) AS count FROM rebound_strategies WHERE asset_symbol IN ('SOL','WBTC','BNB','RAY','ETH') GROUP BY asset_symbol,status`).all();
-    const latestRows=await env.DB.prepare(`SELECT asset_symbol,current_price_micro_usdc,hwm_price_micro_usdc,buy_trigger_price_micro_usdc,last_price_at FROM rebound_strategies WHERE asset_symbol IN ('SOL','WBTC','BNB','RAY','ETH') AND last_price_at IS NOT NULL ORDER BY last_price_at DESC`).all();
+    const counts=await env.DB.prepare(`SELECT asset_symbol,status,COUNT(*) AS count FROM rebound_strategies WHERE asset_symbol IN ('SOL','WBTC','BNB','RAY','ETH','ASTY') GROUP BY asset_symbol,status`).all();
+    const latestRows=await env.DB.prepare(`SELECT asset_symbol,current_price_micro_usdc,hwm_price_micro_usdc,buy_trigger_price_micro_usdc,last_price_at FROM rebound_strategies WHERE asset_symbol IN ('SOL','WBTC','BNB','RAY','ETH','ASTY') AND last_price_at IS NOT NULL ORDER BY last_price_at DESC`).all();
     const byAsset={};for(const row of counts?.results||[]){const symbol=String(row.asset_symbol||"SOL").toUpperCase();byAsset[symbol]||={watching:0,buyTriggered:0,bought:0,sellTriggered:0,paused:0,stopped:0};const key=({WATCHING:"watching",BUY_TRIGGERED:"buyTriggered",BOUGHT:"bought",SELL_TRIGGERED:"sellTriggered",PAUSED:"paused",STOPPED:"stopped"})[row.status];if(key)byAsset[symbol][key]=Number(row.count||0)}
     const latest={};for(const row of latestRows?.results||[]){const symbol=String(row.asset_symbol||"SOL").toUpperCase();if(latest[symbol])continue;latest[symbol]={currentPriceUsd:formatMicroUsd(row.current_price_micro_usdc),hwmPriceUsd:formatMicroUsd(row.hwm_price_micro_usdc),buyTriggerPriceUsd:formatMicroUsd(row.buy_trigger_price_micro_usdc),lastPriceAt:row.last_price_at}}
     return json(request,{status:"ok",mode:"watch-only",executionEnabled:false,priceSource:"Jupiter Price API V3",assets:byAsset,latest});
