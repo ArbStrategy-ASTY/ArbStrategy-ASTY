@@ -50,7 +50,7 @@ const STRATEGY_ASSETS = Object.freeze({
   BNB: { symbol: "BNB", mint: BNB_MINT, decimals: BNB_DECIMALS, displayName: "BNB", internalAsset: "BNB (Wormhole)", tokenProgram: TOKEN_PROGRAM_ID, transferFeeBps: 0 },
   RAY: { symbol: "RAY", mint: RAY_MINT, decimals: RAY_DECIMALS, displayName: "RAY", internalAsset: "RAY", tokenProgram: TOKEN_PROGRAM_ID, transferFeeBps: 0 },
   ETH: { symbol: "ETH", mint: ETH_MINT, decimals: ETH_DECIMALS, displayName: "ETH", internalAsset: "ETH (Wormhole)", tokenProgram: TOKEN_PROGRAM_ID, transferFeeBps: 0 },
-  ASTY: { symbol: "ASTY", mint: ASTY_MINT, decimals: ASTY_DECIMALS, displayName: "ASTY", internalAsset: "ASTY (Token-2022)", tokenProgram: TOKEN_2022_PROGRAM_ID, transferFeeBps: 100 },
+  ASTY: { symbol: "ASTY", mint: ASTY_MINT, decimals: ASTY_DECIMALS, displayName: "ASTY", internalAsset: "ASTY (Token-2022)", tokenProgram: TOKEN_2022_PROGRAM_ID, transferFeeBps: 100, sellRouteBufferBps: 50 },
 });
 
 function getStrategyAssetConfig(assetSymbol) {
@@ -76,6 +76,12 @@ function transferFeePriceImpactBps(asset) {
   if (feeBps >= 10_000) throw new Error("Invalid transfer fee configuration.");
   // A fee on received tokens makes the effective BUY price rise by fee/(1-fee).
   return Math.ceil((feeBps * 10_000) / (10_000 - feeBps));
+}
+
+function sellReferenceShortfallLimitBps(asset) {
+  return MAX_ROUTE_REFERENCE_SHORTFALL_BPS
+    + Number(asset?.transferFeeBps || 0)
+    + Number(asset?.sellRouteBufferBps || 0);
 }
 
 function grossUpPriceForTransferFee(priceRaw, feeBps) {
@@ -2890,8 +2896,7 @@ async function executeTriggeredSell(env, strategy) {
     // fee is charged before/inside the swap path. Keep the normal 2% route-sanity
     // allowance for standard assets and add only the configured transfer fee for
     // fee-on-transfer assets. This mirrors the asset SELL preflight.
-    const maxSellReferenceShortfallBps =
-      MAX_ROUTE_REFERENCE_SHORTFALL_BPS + Number(asset.transferFeeBps || 0);
+    const maxSellReferenceShortfallBps = sellReferenceShortfallLimitBps(asset);
 
     if (outRaw <= 0n || shortfallBps > maxSellReferenceShortfallBps) {
       const error = new Error(
@@ -3231,17 +3236,62 @@ async function handleAssetReadinessCheck(request, env) {
       });
     }
 
-    // SELL: build a small route for the selected asset. If the Rebound Wallet has
-    // no balance yet, route + policy compatibility can still be checked, but a
-    // full Solana simulation would fail for insufficient funds and is therefore
-    // reported as a partial readiness result rather than a false failure.
+    // SELL: when an actual open position exists for this asset, preflight the same
+    // position size the production executor would attempt. This catches real-size
+    // price impact that a tiny readiness sample can miss. If there is no open
+    // position yet, fall back to the small synthetic readiness sample.
     const assetBalanceRaw = BigInt(String(tradingAsset.raw || 0));
+    const openPosition = await env.DB.prepare(`
+      SELECT id, entry_wsol_raw, status, current_cycle_capital_usdc_raw
+      FROM rebound_strategies
+      WHERE privy_user_id = ?
+        AND asset_symbol = ?
+        AND status IN ('BOUGHT', 'SELL_TRIGGERED')
+        AND entry_wsol_raw IS NOT NULL
+        AND entry_wsol_raw > 0
+      ORDER BY entry_wsol_raw DESC, bought_at ASC, created_at ASC
+      LIMIT 1
+    `).bind(auth.userId, asset.symbol).first();
+
+    const openPositionRaw = BigInt(String(openPosition?.entry_wsol_raw || 0));
+    if (openPositionRaw > 0n && assetBalanceRaw < openPositionRaw) {
+      return json(request, {
+        status: "error",
+        ready: false,
+        noTradeExecuted: true,
+        code: "SELL_POSITION_BALANCE_MISMATCH",
+        message: `The Rebound Wallet ${asset.symbol} balance is below the open strategy position amount.`,
+        asset: asset.symbol,
+        side,
+        checks: {
+          ...commonChecks,
+          positionSizing: {
+            mode: "open-position",
+            strategyId: openPosition?.id || null,
+            positionAmountRaw: openPositionRaw.toString(),
+            walletBalanceRaw: assetBalanceRaw.toString(),
+          },
+        },
+      }, 409);
+    }
+
     const tenCentsUsdcRaw = 100_000n;
     let syntheticRaw = referencePrice.micro > 0n
       ? (tenCentsUsdcRaw * (10n ** BigInt(asset.decimals)) + referencePrice.micro - 1n) / referencePrice.micro
       : 1n;
     if (syntheticRaw <= 0n) syntheticRaw = 1n;
-    const testRaw = assetBalanceRaw > 0n && assetBalanceRaw < syntheticRaw ? assetBalanceRaw : syntheticRaw;
+
+    const usingOpenPosition = openPositionRaw > 0n;
+    const testRaw = usingOpenPosition
+      ? openPositionRaw
+      : (assetBalanceRaw > 0n && assetBalanceRaw < syntheticRaw ? assetBalanceRaw : syntheticRaw);
+    const positionSizing = {
+      mode: usingOpenPosition ? "open-position" : "small-readiness-sample",
+      strategyId: usingOpenPosition ? (openPosition?.id || null) : null,
+      amountRaw: testRaw.toString(),
+      walletBalanceRaw: assetBalanceRaw.toString(),
+      capitalUsdcRaw: usingOpenPosition ? String(openPosition?.current_cycle_capital_usdc_raw || "0") : null,
+    };
 
     const build = await getJupiterV2SellBuild(env, {
       walletAddress,
@@ -3270,7 +3320,7 @@ async function handleAssetReadinessCheck(request, env) {
     const referenceShortfallBps = expectedUsdcRaw > 0n && outRaw < expectedUsdcRaw
       ? Number((expectedUsdcRaw - outRaw) * 10_000n / expectedUsdcRaw)
       : 0;
-    const maxReferenceShortfallBps = MAX_ROUTE_REFERENCE_SHORTFALL_BPS + Number(asset.transferFeeBps || 0);
+    const maxReferenceShortfallBps = sellReferenceShortfallLimitBps(asset);
     const routeSanityOk = outRaw > 0n && referenceShortfallBps <= maxReferenceShortfallBps;
     if (!routeSanityOk) {
       return json(request, {
@@ -3291,6 +3341,7 @@ async function handleAssetReadinessCheck(request, env) {
           jupiterV2: { ok: true, inAmountRaw: testRaw.toString(), outAmountRaw: outRaw.toString() },
           policyCompatibility: { ok: true, returnedPrograms: programs, workerPolicyOnly: true },
           routeSanity: { ok: true, referenceShortfallBps, maxReferenceShortfallBps },
+          positionSizing,
           simulation: { ok: false, skipped: true, reason: "no-asset-balance" },
         },
         note: "No transaction was signed or sent. Privy policy acceptance is only proven when Privy is asked to sign a transaction.",
@@ -3312,6 +3363,7 @@ async function handleAssetReadinessCheck(request, env) {
         jupiterV2: { ok: true, inAmountRaw: testRaw.toString(), outAmountRaw: outRaw.toString() },
         policyCompatibility: { ok: true, returnedPrograms: programs, workerPolicyOnly: true },
         routeSanity: { ok: true, referenceShortfallBps, maxReferenceShortfallBps },
+        positionSizing,
         simulation: { ok: true, computeUnitLimit: tx.computeUnitLimit, unitsConsumed: tx.unitsConsumed },
         nativeSolDebitGuard: { ok: true, debitLamports: tx.nativeSolDebitLamports, debitSol: tx.nativeSolDebitSol, maxLamports: tx.maxNativeSolDebitLamports },
       },
@@ -3445,7 +3497,7 @@ async function handleExecutionStatus(request, env) {
 async function handleRoot(request, env) {
   return json(request, {
     service: "ASTY Rebound API",
-    buildVersion: "2026-09-28-cycle-v16-asty-sell-fee-sanity",
+    buildVersion: "2026-09-28-cycle-v17-asty-sell-350-position-preflight",
     status: "online",
     balanceSource: "Helius",
     displayPriceSource: "Helius DAS",
@@ -3466,6 +3518,8 @@ async function handleRoot(request, env) {
     astyTrading: {
       tokenProgram: TOKEN_2022_PROGRAM_ID,
       transferFeeBps: 100,
+      sellRouteBufferBps: 50,
+      sellReferenceShortfallLimitBps: sellReferenceShortfallLimitBps(STRATEGY_ASSETS.ASTY),
       takeProfitMode: "net-after-transfer-fee",
     },
     watcher: {
