@@ -714,6 +714,7 @@ function App(){
     const lastCycle=strategy?.lastCycle||null;
     const strategyGasLow=balanceAvailable&&solBalance!==null&&Number(solBalance)<.005;
     const compactPriceGrid=strategyUsesCompactPrices(current,strategy?.buyTriggerPriceUsd,entry,target,stop,strategy?.hwmPriceUsd);
+    const isAsty=assetSymbol==="ASTY";
     const priceGridClass=compactPriceGrid?"strategy-price-grid compact":"strategy-price-grid";
 
     if(status==="WATCHING"){
@@ -867,7 +868,7 @@ function App(){
               displayedStrategies.length>0?e("div",{className:"strategy-list"},...displayedStrategies.map(strategy=>
                 e("div",{className:"strategy-card",key:strategy.id},
                   e("div",{className:"strategy-card-top"},
-                    e("div",null,e("div",{className:"strategy-name"},`${String(strategy.assetSymbol||"SOL").toUpperCase()} Rebound`),e("div",{className:"strategy-sub"},e("span",{className:"strategy-sub-main"},`${presetLabel(strategy.preset)} · Dip ${bpsToPercent(strategy.dipBps)}% · TP ${bpsToPercent(strategy.takeProfitBps)}%`),e("span",{className:"strategy-sub-capital unit-pair"},`${formatUsdc(["COMPLETED","STOPPED"].includes(String(strategy.status).toUpperCase())?(strategy.lastCycle?.capitalUsdc||strategy.initialCapitalUsdc):strategy.reservedCapitalUsdc)} USDC`))),
+                    e("div",null,e("div",{className:"strategy-name"},`${String(strategy.assetSymbol||"SOL").toUpperCase()} Rebound`),e("div",{className:"strategy-sub"},e("span",{className:"strategy-sub-main"},`${presetLabel(strategy.preset)} · Dip ${bpsToPercent(strategy.dipBps)}% · TP ${bpsToPercent(strategy.takeProfitBps)}%${String(strategy.assetSymbol||"SOL").toUpperCase()==="ASTY"?" net":""}`),e("span",{className:"strategy-sub-capital unit-pair"},`${formatUsdc(["COMPLETED","STOPPED"].includes(String(strategy.status).toUpperCase())?(strategy.lastCycle?.capitalUsdc||strategy.initialCapitalUsdc):strategy.reservedCapitalUsdc)} USDC`))),
                     e("div",{className:`strategy-status ${strategyStatusClass(strategy.status)}`},strategyStatusLabel(strategy.status))
                   ),
                   renderStrategyLifecycle(strategy),
@@ -930,7 +931,8 @@ function App(){
         e("button",{type:"button",className:`asset-choice ${strategyAsset==="WBTC"?"active":""}`,disabled:strategyCreateBusy,onClick:()=>setStrategyAsset("WBTC")},e("div",{className:"asset-choice-title"},"WBTC"),e("div",{className:"asset-choice-detail"},"Wrapped Bitcoin · Wormhole")),
         e("button",{type:"button",className:`asset-choice ${strategyAsset==="BNB"?"active":""}`,disabled:strategyCreateBusy,onClick:()=>setStrategyAsset("BNB")},e("div",{className:"asset-choice-title"},"BNB"),e("div",{className:"asset-choice-detail"},"BNB · Wormhole from BSC")),
         e("button",{type:"button",className:`asset-choice ${strategyAsset==="RAY"?"active":""}`,disabled:strategyCreateBusy,onClick:()=>setStrategyAsset("RAY")},e("div",{className:"asset-choice-title"},"RAY"),e("div",{className:"asset-choice-detail"},"Raydium · native Solana token")),
-        e("button",{type:"button",className:`asset-choice asset-wide ${strategyAsset==="ETH"?"active":""}`,disabled:strategyCreateBusy,onClick:()=>setStrategyAsset("ETH")},e("div",{className:"asset-choice-title"},"ETH"),e("div",{className:"asset-choice-detail"},"Ether · Wormhole from Ethereum"))
+        e("button",{type:"button",className:`asset-choice ${strategyAsset==="ETH"?"active":""}`,disabled:strategyCreateBusy,onClick:()=>setStrategyAsset("ETH")},e("div",{className:"asset-choice-title"},"ETH"),e("div",{className:"asset-choice-detail"},"Ether · Wormhole from Ethereum")),
+        e("button",{type:"button",className:`asset-choice ${strategyAsset==="ASTY"?"active":""}`,disabled:strategyCreateBusy,onClick:()=>setStrategyAsset("ASTY")},e("div",{className:"asset-choice-title"},"ASTY"),e("div",{className:"asset-choice-detail"},"ArbStrategy · Token-2022 · 1% fee"))
       )),
       e("div",{className:"form-field"},
         e("div",{className:"row-head",style:{marginBottom:"8px"}},e("label",{className:"input-label",style:{marginBottom:0}},"Strategy Capital"),e("button",{className:"max-button",type:"button",onClick:useMaxStrategyCapital,disabled:strategyCreateBusy},`Max ${freeUsdc==null?"—":formatUsdc(freeUsdc)} USDC`)),
@@ -955,7 +957,8 @@ function App(){
         e("div",{className:"toggle-row"},e("div",{className:"toggle-copy"},e("div",{className:"toggle-title"},"Compound"),e("div",{className:"toggle-note"},"Roll the strategy’s full current capital into the next cycle. This setting is fixed after creation.")),e("button",{type:"button",className:`toggle ${compound?"on":""}`,disabled:strategyCreateBusy,onClick:()=>setCompound(v=>!v)},e("span",{className:"toggle-knob"})))
       ),
       e("div",{className:"strategy-warning"},e("span",{className:"unit-pair"},"2,500 ASTY")," per active strategy is required in the linked Phantom wallet when creating a new strategy. ASTY stays in Phantom.",
-        ["WBTC","BNB","ETH"].includes(strategyAsset)?e("div",{style:{marginTop:"5px"}},`${strategyAsset} uses its Wormhole representation on Solana. Jupiter selects the execution route automatically.`):null),
+        ["WBTC","BNB","ETH"].includes(strategyAsset)?e("div",{style:{marginTop:"5px"}},`${strategyAsset} uses its Wormhole representation on Solana. Jupiter selects the execution route automatically.`):null,
+        strategyAsset==="ASTY"?e("div",{style:{marginTop:"6px",color:"#ffc1ca"}},"ASTY charges 1% on every transfer. Rebound uses the ASTY actually received after the BUY fee and adjusts the TAKE PROFIT trigger for the SELL fee. The 2,500 ASTY access requirement still stays in Phantom."):null),
       strategyCreateResult?e("div",{className:`status-box ${strategyCreateResult.state==="success"?"success":"failure"}`},strategyCreateResult.message):null,
       e("div",{className:"modal-buttons"},e("button",{className:"modal-cancel",disabled:strategyCreateBusy,onClick:closeStrategyModal},"Cancel"),e("button",{className:"modal-confirm",disabled:strategyCreateBusy,onClick:createStrategy},strategyCreateBusy?"Creating…":"Create Strategy"))
     )):null,
