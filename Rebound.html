@@ -919,6 +919,9 @@ function App(){
                     " · ",e("strong",null,"Compound: "),strategy.compound?"On":"Off",
                     Number(strategy.cycleNumber||1)>1?` · Cycle ${strategy.cycleNumber}`:""
                   ),
+                  String(strategy.assetSymbol||"").toUpperCase()==="ASTY"&&["BOUGHT","SELL_TRIGGERED","PAUSED"].includes(String(strategy.status||"").toUpperCase())
+                    ?e("div",{style:{marginTop:"8px",fontSize:"10px",lineHeight:"1.35",color:"#ffb5c0"}},"ASTY is disabled for new strategies. Close this existing position to return the proceeds to available USDC.")
+                    :null,
                   ["WATCHING","BUY_TRIGGERED","BOUGHT","PAUSED"].includes(String(strategy.status).toUpperCase())?e("div",{className:"strategy-actions"},
                     String(strategy.status).toUpperCase()==="PAUSED"?e("button",{className:"strategy-action-button resume",disabled:Boolean(strategyActionBusyId),onClick:()=>resumeStrategy(strategy)},strategyActionBusyId===strategy.id?"Working…":"Resume"):null,
                     e("button",{className:"strategy-action-button stop",disabled:Boolean(strategyActionBusyId),onClick:()=>requestStrategyStop(strategy)},String(strategy.status).toUpperCase()==="BOUGHT"?"Stop & close position":"Stop strategy")
@@ -973,7 +976,6 @@ function App(){
         e("button",{type:"button",className:`asset-choice ${strategyAsset==="BNB"?"active":""}`,disabled:strategyCreateBusy,onClick:()=>setStrategyAsset("BNB")},e("div",{className:"asset-choice-title"},"BNB"),e("div",{className:"asset-choice-detail"},"BNB · Wormhole from BSC")),
         e("button",{type:"button",className:`asset-choice ${strategyAsset==="RAY"?"active":""}`,disabled:strategyCreateBusy,onClick:()=>setStrategyAsset("RAY")},e("div",{className:"asset-choice-title"},"RAY"),e("div",{className:"asset-choice-detail"},"Raydium · native Solana token")),
         e("button",{type:"button",className:`asset-choice ${strategyAsset==="ETH"?"active":""}`,disabled:strategyCreateBusy,onClick:()=>setStrategyAsset("ETH")},e("div",{className:"asset-choice-title"},"ETH"),e("div",{className:"asset-choice-detail"},"Ether · Wormhole from Ethereum")),
-        e("button",{type:"button",className:`asset-choice ${strategyAsset==="ASTY"?"active":""}`,disabled:strategyCreateBusy,onClick:()=>setStrategyAsset("ASTY")},e("div",{className:"asset-choice-title"},"ASTY"),e("div",{className:"asset-choice-detail"},"ArbStrategy · Token-2022 · 1% fee"))
       )),
       e("div",{className:"form-field"},
         e("div",{className:"row-head",style:{marginBottom:"8px"}},e("label",{className:"input-label",style:{marginBottom:0}},"Strategy Capital"),e("button",{className:"max-button",type:"button",onClick:useMaxStrategyCapital,disabled:strategyCreateBusy},`Max ${freeUsdc==null?"—":formatUsdc(freeUsdc)} USDC`)),
@@ -999,7 +1001,7 @@ function App(){
       ),
       e("div",{className:"strategy-warning"},e("span",{className:"unit-pair"},"2,500 ASTY")," per active strategy is required in the linked Phantom wallet when creating a new strategy. ASTY stays in Phantom.",
         ["WBTC","BNB","ETH"].includes(strategyAsset)?e("div",{style:{marginTop:"5px"}},`${strategyAsset} uses its Wormhole representation on Solana. Jupiter selects the execution route automatically.`):null,
-        strategyAsset==="ASTY"?e("div",{style:{marginTop:"6px",color:"#ffc1ca"}},"ASTY charges 1% on every transfer. Rebound uses the ASTY actually received after the BUY fee and adjusts the TAKE PROFIT trigger for the SELL fee. The 2,500 ASTY access requirement still stays in Phantom."):null),
+        null),
       strategyCreateResult?e("div",{className:`status-box ${strategyCreateResult.state==="success"?"success":"failure"}`},strategyCreateResult.message):null,
       e("div",{className:"modal-buttons"},e("button",{className:"modal-cancel",disabled:strategyCreateBusy,onClick:closeStrategyModal},"Cancel"),e("button",{className:"modal-confirm",disabled:strategyCreateBusy,onClick:createStrategy},strategyCreateBusy?"Creating…":"Create Strategy"))
     )):null,
