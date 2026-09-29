@@ -2784,13 +2784,13 @@ async function acquireSellExecutionLock(env, strategy) {
     WHERE id = ?
       AND status = 'SELL_TRIGGERED'
       AND pending_signature IS NULL
-      AND pending_action IN ('SELL_TRIGGERED_TP', 'SELL_TRIGGERED_SL', 'SELL_TRIGGERED_STOP')
+      AND pending_action IN ('SELL_TRIGGERED_TP', 'SELL_TRIGGERED_TP_QUOTE_LOW', 'SELL_TRIGGERED_SL', 'SELL_TRIGGERED_STOP')
       AND (execution_lock IS NULL OR execution_lock_at IS NULL OR execution_lock_at < datetime('now', '-' || ? || ' minutes'))
   `).bind(lock, `SELL_${reason}_PREPARING`, strategy.id, EXECUTION_LOCK_STALE_MINUTES).run();
   return Number(result?.meta?.changes ?? 0) > 0 ? { lock, reason } : null;
 }
 
-async function releaseSellExecutionLock(env, strategyId, lock, reason, { rearm = false } = {}) {
+async function releaseSellExecutionLock(env, strategyId, lock, reason, { rearm = false, pendingActionOverride = null } = {}) {
   if (rearm) {
     await env.DB.prepare(`
       UPDATE rebound_strategies
@@ -2812,7 +2812,11 @@ async function releaseSellExecutionLock(env, strategyId, lock, reason, { rearm =
           execution_lock_at = NULL,
           updated_at = CURRENT_TIMESTAMP
       WHERE id = ? AND execution_lock = ? AND pending_signature IS NULL
-    `).bind(reason === "SL" ? "SELL_TRIGGERED_SL" : reason === "STOP" ? "SELL_TRIGGERED_STOP" : "SELL_TRIGGERED_TP", strategyId, lock).run();
+    `).bind(
+      pendingActionOverride || (reason === "SL" ? "SELL_TRIGGERED_SL" : reason === "STOP" ? "SELL_TRIGGERED_STOP" : "SELL_TRIGGERED_TP"),
+      strategyId,
+      lock,
+    ).run();
   }
 }
 
@@ -2857,6 +2861,17 @@ async function executeTriggeredSell(env, strategy) {
       getJupiterAssetPriceMicroUsdc(env, asset.symbol),
     ]);
 
+    // SELL_TRIGGERED positions are no longer updated by the normal BOUGHT position
+    // watcher. Refresh the displayed market price/time here on every retry so the UI
+    // never looks frozen while Rebound is waiting for an executable quote.
+    await env.DB.prepare(`
+      UPDATE rebound_strategies
+      SET current_price_micro_usdc = ?,
+          last_price_at = CURRENT_TIMESTAMP,
+          updated_at = CURRENT_TIMESTAMP
+      WHERE id = ? AND status = 'SELL_TRIGGERED'
+    `).bind(referencePrice.micro.toString(), strategy.id).run();
+
     if (BigInt(nativeSol.raw) < MIN_GAS_LAMPORTS) throw new Error("Gas reserve dropped below 0.005 SOL before SELL execution.");
     if (!tradingAsset.ready || !tradingAsset.address) throw new Error(`${asset.symbol} token account is not ready for SELL execution.`);
     if (!usdcToken.ready || !usdcToken.address) throw new Error("USDC token account is not ready for SELL execution.");
@@ -2899,6 +2914,21 @@ async function executeTriggeredSell(env, strategy) {
     const maxSellReferenceShortfallBps = sellReferenceShortfallLimitBps(asset);
 
     if (outRaw <= 0n || shortfallBps > maxSellReferenceShortfallBps) {
+      if (reason === "TP") {
+        await releaseSellExecutionLock(env, strategy.id, lock, reason, {
+          pendingActionOverride: "SELL_TRIGGERED_TP_QUOTE_LOW",
+        });
+        return {
+          ok: false,
+          skipped: true,
+          strategyId: strategy.id,
+          reason: "sell-route-quote-too-low",
+          referencePriceUsd: formatMicroUsd(referencePrice.micro),
+          referenceShortfallBps: shortfallBps,
+          maxReferenceShortfallBps: maxSellReferenceShortfallBps,
+        };
+      }
+
       const error = new Error(
         `V2 SELL route failed the reference-price sanity check (${shortfallBps} bps; maximum ${maxSellReferenceShortfallBps} bps).`,
       );
@@ -2918,7 +2948,9 @@ async function executeTriggeredSell(env, strategy) {
       const netTpRaw = netTakeProfitPriceRaw(fresh);
       const minAllowed = netTpRaw * BigInt(10_000 - MAX_TP_QUOTE_UNDERAGE_BPS) / 10_000n;
       if (marketTpRaw <= 0n || netTpRaw <= 0n || quotePriceMicro < minAllowed) {
-        await releaseSellExecutionLock(env, strategy.id, lock, reason, { rearm: true });
+        await releaseSellExecutionLock(env, strategy.id, lock, reason, {
+          pendingActionOverride: "SELL_TRIGGERED_TP_QUOTE_LOW",
+        });
         return {
           ok: false,
           skipped: true,
@@ -3068,7 +3100,7 @@ async function runSellExecutor(env, { source = "cron" } = {}) {
     SELECT * FROM rebound_strategies
     WHERE status = 'SELL_TRIGGERED'
       AND pending_signature IS NULL
-      AND pending_action IN ('SELL_TRIGGERED_TP', 'SELL_TRIGGERED_SL', 'SELL_TRIGGERED_STOP')
+      AND pending_action IN ('SELL_TRIGGERED_TP', 'SELL_TRIGGERED_TP_QUOTE_LOW', 'SELL_TRIGGERED_SL', 'SELL_TRIGGERED_STOP')
     ORDER BY sell_triggered_at ASC, created_at ASC
     LIMIT ?
   `).bind(MAX_SELL_EXECUTIONS_PER_CRON).all();
@@ -3497,7 +3529,7 @@ async function handleExecutionStatus(request, env) {
 async function handleRoot(request, env) {
   return json(request, {
     service: "ASTY Rebound API",
-    buildVersion: "2026-09-28-cycle-v17-asty-sell-350-position-preflight",
+    buildVersion: "2026-09-29-cycle-v18-sell-quote-retry-ui-state",
     status: "online",
     balanceSource: "Helius",
     displayPriceSource: "Helius DAS",
