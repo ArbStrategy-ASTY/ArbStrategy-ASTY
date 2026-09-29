@@ -113,6 +113,7 @@ const EXECUTION_LOCK_STALE_MINUTES = 5;
 const MAX_BUY_EXECUTIONS_PER_CRON = 3;
 const MAX_SELL_EXECUTIONS_PER_CRON = 3;
 const MAX_TP_QUOTE_UNDERAGE_BPS = 50;
+const ASTY_MANUAL_STOP_MAX_REFERENCE_SHORTFALL_BPS = 1_000;
 const MAX_COMPUTE_UNIT_LIMIT = 1_400_000;
 // Maximum routine native-SOL debit a single automated swap may cause beyond any
 // explicitly allowed ATA rent. This covers normal tx + priority fees while
@@ -2911,7 +2912,10 @@ async function executeTriggeredSell(env, strategy) {
     // fee is charged before/inside the swap path. Keep the normal 2% route-sanity
     // allowance for standard assets and add only the configured transfer fee for
     // fee-on-transfer assets. This mirrors the asset SELL preflight.
-    const maxSellReferenceShortfallBps = sellReferenceShortfallLimitBps(asset);
+    const maxSellReferenceShortfallBps =
+      reason === "STOP" && asset.symbol === "ASTY"
+        ? ASTY_MANUAL_STOP_MAX_REFERENCE_SHORTFALL_BPS
+        : sellReferenceShortfallLimitBps(asset);
 
     if (outRaw <= 0n || shortfallBps > maxSellReferenceShortfallBps) {
       if (reason === "TP") {
@@ -3529,11 +3533,13 @@ async function handleExecutionStatus(request, env) {
 async function handleRoot(request, env) {
   return json(request, {
     service: "ASTY Rebound API",
-    buildVersion: "2026-09-29-cycle-v18-sell-quote-retry-ui-state",
+    buildVersion: "2026-09-29-cycle-v19-asty-close-only-rescue",
     status: "online",
     balanceSource: "Helius",
     displayPriceSource: "Helius DAS",
     supportedStrategyAssets: ["SOL", "WBTC", "BNB", "RAY", "ETH", "ASTY"],
+    newStrategyAssets: ["SOL", "WBTC", "BNB", "RAY", "ETH"],
+    legacyCloseOnlyAssets: ["ASTY"],
     wbtcMint: WBTC_MINT,
     bnbMint: BNB_MINT,
     rayMint: RAY_MINT,
@@ -3548,10 +3554,13 @@ async function handleRoot(request, env) {
       ASTY: ASTY_MINT,
     },
     astyTrading: {
+      newStrategiesEnabled: false,
+      existingPositionsCloseOnly: true,
       tokenProgram: TOKEN_2022_PROGRAM_ID,
       transferFeeBps: 100,
       sellRouteBufferBps: 50,
       sellReferenceShortfallLimitBps: sellReferenceShortfallLimitBps(STRATEGY_ASSETS.ASTY),
+      manualStopMaxReferenceShortfallBps: ASTY_MANUAL_STOP_MAX_REFERENCE_SHORTFALL_BPS,
       takeProfitMode: "net-after-transfer-fee",
     },
     watcher: {
@@ -4148,6 +4157,14 @@ async function handleStrategyCreate(request, env) {
       asset = getStrategyAssetConfig(body?.assetSymbol || "SOL");
     } catch (error) {
       return json(request, { status: "error", message: error.message }, 400);
+    }
+
+    if (asset.symbol === "ASTY") {
+      return json(request, {
+        status: "error",
+        code: "ASTY_NEW_STRATEGIES_DISABLED",
+        message: "New ASTY Rebound strategies are temporarily disabled. Existing ASTY positions can still be closed back to USDC.",
+      }, 409);
     }
 
     if (capitalRaw < MIN_STRATEGY_USDC_RAW) return json(request, { status: "error", message: "A new strategy requires at least 25 USDC." }, 400);
