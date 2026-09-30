@@ -202,7 +202,7 @@ tbody tr:hover{background:rgba(169,138,255,.045)}
   <b>30-Tage-Performance:</b> Die Pool-Bewertung basiert ausschließlich auf den letzten <b>30 Tagen</b>.
   Entscheidend sind <b>Kapital-Effizienz (Einnahmen / TVL)</b> und die <b>Stabilität der täglichen Performance</b>.
   Daraus entsteht die Einstufung <b>Sehr stark, Stark, Mittel oder Gering</b>. Für den Claiming Day entsprechen diese Stufen einem Reinvest von
-  <b>70 %, 60 %, 40 % oder 0 %</b>. Die bekannten strategisch ausgeklammerten Pools bleiben vollständig außerhalb von Bewertung, Benchmark und Reinvest-Logik.
+  <b>70 %, 60 %, 40 % oder 0 %</b>. <b>SOL, ETH, wBTC, USDC und ARBX</b> erhalten am Claiming Day als strategische Core-Pools immer <b>70 % Reinvest</b>, unabhängig von ihrer Performance-Stufe. Bereits ausgeklammerte SOL-/USDC-Pools bleiben weiterhin vollständig außerhalb von Bewertung, Benchmark und Reinvest-Logik.
 </div>
 
 <section class="kpis">
@@ -305,6 +305,8 @@ let sourceCompareState = {
   gecko:new Map()
 };
 const EXCLUDED_POOL_IDS = new Set(["7tbbdGzFZpjrPmM7jQderyyv1x8Ebz1vhwqNhEW97osb", "HAieGroddWr3NZpSZYqqm39w2aTUuknWNXxfF6vWNpaR", "2WRrdtnKKr2eq67o4ZK2VQv7dXu4Pm8iz6TMN8UXvhbV", "3HhGsPNMtSg1dNV9SVSfzGCQLx3Zp5giAvYJdQuuNqU9", "BWFDr72tjXJsRdUyAfqghv6sGXgQr2zJ78KdeV3c74q1", "61HTuoKeWhEfscoBcd5zSNvmAyGpxdaUNMriLNnyyREz"]);
+// Strategische Core-Pools: sofern nicht ausgeklammert, am Claiming Day immer 70 % reinvestieren.
+const STRATEGIC_REINVEST_70 = new Set(["ASTY/SOL","ASTY/ETH","ASTY/WBTC","ASTY/USDC","ASTY/ARBX"]);
 const TOTAL_POOL_COUNT = POOLS.length;
 const METEORA_POOL_COUNT = POOLS.filter(p=>p.dex==="Meteora").length;
 const RAYDIUM_POOL_COUNT = POOLS.filter(p=>p.dex==="Raydium").length;
@@ -438,6 +440,9 @@ function deriveMetrics(){
     else if(r.performanceScore>=60){r.level="STARK";r.reinvestPct=60;}
     else if(r.performanceScore>=40){r.level="MITTEL";r.reinvestPct=40;}
     else{r.level="GERING";r.reinvestPct=0;}
+    // Strategischer Claiming-Day-Override: Core-Pools erhalten unabhängig vom Score 70 %.
+    // Ausgeklammerte Pools kommen nicht bis hierher und bleiben daher weiterhin ohne Reinvest-Empfehlung.
+    if(STRATEGIC_REINVEST_70.has(r.name)) r.reinvestPct=70;
   });
 }
 
@@ -1714,7 +1719,7 @@ window.openDetail=function(address){
     html+=`<div class="detail full"><div class="l">Status</div><div class="v">Daten nicht geladen</div><div class="kpi-note">${r.error||"Unbekannter Fehler"}</div></div>`;
   }
   html+=`<div class="detail full"><div class="l">Pool-Adresse</div><div class="address-row"><div class="address-box">${r.address}</div><button class="copy" onclick="copyText('${r.address}')">Kopieren</button></div></div>`;
-  html+=`</div><div class="explain"><b>30-Tage-Mechanik:</b> Die Bewertung verwendet ausschließlich die letzten 30 Tage: 70 % relative Kapital-Effizienz (durchschnittliche tägliche Einnahmen/TVL) und 30 % relative Stabilität der täglichen Einnahmen innerhalb dieses Zeitraums. 24h und 7d bleiben reine Informationswerte. Sehr stark = 70 % Reinvest, Stark = 60 %, Mittel = 40 %, Gering = 0 %. Ausgeklammerte Pools nehmen weder an Benchmark noch Ranking oder Reinvest-Logik teil.<br><br><b>Gecko-Fallback:</b> Wenn Meteora/Raydium für TVL oder 24h-Volumen 0 bzw. keinen Wert liefert und GeckoTerminal für dieselbe Pool-Adresse einen positiven Wert meldet, wird ausschließlich für diese beiden Kennzahlen GeckoTerminal verwendet. Einnahmen/Fees werden niemals aus dem Gecko-Volumen geschätzt.<br><br><b>7d / 30d bei Meteora:</b> Die Werte werden aus 24h-Buckets der Historical-Volume-API aggregiert. Für Einnahmen/TVL wird die aktuelle Pool-Liquidität als Nenner verwendet; es handelt sich nicht um eine historische Durchschnitts-TVL.<br><br><b>Wichtig:</b> „Einnahmen“ sind API-Poolgebühren. Die tatsächlich von ASTY beanspruchbaren LP-Einnahmen werden erst nach Anbindung der öffentlichen Owner-Wallets ergänzt.</div>`;
+  html+=`</div><div class="explain"><b>30-Tage-Mechanik:</b> Die Bewertung verwendet ausschließlich die letzten 30 Tage: 70 % relative Kapital-Effizienz (durchschnittliche tägliche Einnahmen/TVL) und 30 % relative Stabilität der täglichen Einnahmen innerhalb dieses Zeitraums. 24h und 7d bleiben reine Informationswerte. Sehr stark = 70 % Reinvest, Stark = 60 %, Mittel = 40 %, Gering = 0 %. Strategischer Override: SOL, ETH, wBTC, USDC und ARBX erhalten am Claiming Day immer 70 % Reinvest, unabhängig von ihrer Performance-Stufe. Ausgeklammerte Pools nehmen weiterhin weder an Benchmark noch Ranking oder Reinvest-Logik teil.<br><br><b>Gecko-Fallback:</b> Wenn Meteora/Raydium für TVL oder 24h-Volumen 0 bzw. keinen Wert liefert und GeckoTerminal für dieselbe Pool-Adresse einen positiven Wert meldet, wird ausschließlich für diese beiden Kennzahlen GeckoTerminal verwendet. Einnahmen/Fees werden niemals aus dem Gecko-Volumen geschätzt.<br><br><b>7d / 30d bei Meteora:</b> Die Werte werden aus 24h-Buckets der Historical-Volume-API aggregiert. Für Einnahmen/TVL wird die aktuelle Pool-Liquidität als Nenner verwendet; es handelt sich nicht um eine historische Durchschnitts-TVL.<br><br><b>Wichtig:</b> „Einnahmen“ sind API-Poolgebühren. Die tatsächlich von ASTY beanspruchbaren LP-Einnahmen werden erst nach Anbindung der öffentlichen Owner-Wallets ergänzt.</div>`;
   $("#modalBody").innerHTML=html; $("#modalBackdrop").classList.add("show");
 }
 window.copyText=async function(t){
