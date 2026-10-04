@@ -151,8 +151,8 @@ function App(){
   const [strategyCapital,setStrategyCapital]=useState("25");
   const [strategyAsset,setStrategyAsset]=useState("SOL");
   const [strategyPreset,setStrategyPreset]=useState("balanced");
-  const [customDipPercent,setCustomDipPercent]=useState("5");
-  const [customTakeProfitPercent,setCustomTakeProfitPercent]=useState("4");
+  const [customDipPercent,setCustomDipPercent]=useState("1");
+  const [customTakeProfitPercent,setCustomTakeProfitPercent]=useState("1");
   const [stopLossEnabled,setStopLossEnabled]=useState(false);
   const [stopLossPercent,setStopLossPercent]=useState("5");
   const [autoRepeat,setAutoRepeat]=useState(false);
@@ -161,7 +161,7 @@ function App(){
   const [executionCheckResults,setExecutionCheckResults]=useState({});
   const [sellCheckBusy,setSellCheckBusy]=useState(false);
   const [sellCheckResult,setSellCheckResult]=useState(null);
-  const [devAsset,setDevAsset]=useState("ASTY");
+  const [devAsset,setDevAsset]=useState("GEOD");
   const [assetReadinessBusy,setAssetReadinessBusy]=useState("");
   const [assetReadinessResult,setAssetReadinessResult]=useState(null);
   const [strategyActionBusyId,setStrategyActionBusyId]=useState("");
@@ -684,7 +684,7 @@ function App(){
     finally{setAssetReadinessBusy("")}
   }
 
-  async function handleLogout(){setError("");setUsdcBalance(null);setReservedUsdc(null);setFreeUsdc(null);setSolBalance(null);setUsdcUsdValue(null);setSolUsdValue(null);setSolTradingReady(null);setSolTradingBalance(null);setBalanceAvailable(false);setStrategies([]);setCycles([]);setCycleHistoryExpandedByStrategy({});setStrategiesLoading(false);setStrategyModalOpen(false);setStrategyCreateResult(null);setExecutionCheckBusyId("");setExecutionCheckResults({});setSellCheckBusy(false);setSellCheckResult(null);setDevAsset("ASTY");setAssetReadinessBusy("");setAssetReadinessResult(null);setStrategyActionBusyId("");setStrategyActionResults({});setStrategyStopTarget(null);setSyncState("waiting");setDepositAsset(null);setDepositState(null);setDepositSignature("");setDepositMessage("");setWithdrawAsset(null);setWithdrawState(null);setWithdrawSignature("");setWithdrawMessage("");setAutomationOverride(null);setServerTestResult(null);setPrepareSolResult(null);setTestSwapModalOpen(false);setTestSwapResult(null);setTestSwapSignature("");syncAttempted.current="";authAttemptedFor.current="";creationAttempted.current=false;setPendingWalletAddress("");setCreatedWallet(null);await logout()}
+  async function handleLogout(){setError("");setUsdcBalance(null);setReservedUsdc(null);setFreeUsdc(null);setSolBalance(null);setUsdcUsdValue(null);setSolUsdValue(null);setSolTradingReady(null);setSolTradingBalance(null);setBalanceAvailable(false);setStrategies([]);setCycles([]);setCycleHistoryExpandedByStrategy({});setStrategiesLoading(false);setStrategyModalOpen(false);setStrategyCreateResult(null);setExecutionCheckBusyId("");setExecutionCheckResults({});setSellCheckBusy(false);setSellCheckResult(null);setDevAsset("GEOD");setAssetReadinessBusy("");setAssetReadinessResult(null);setStrategyActionBusyId("");setStrategyActionResults({});setStrategyStopTarget(null);setSyncState("waiting");setDepositAsset(null);setDepositState(null);setDepositSignature("");setDepositMessage("");setWithdrawAsset(null);setWithdrawState(null);setWithdrawSignature("");setWithdrawMessage("");setAutomationOverride(null);setServerTestResult(null);setPrepareSolResult(null);setTestSwapModalOpen(false);setTestSwapResult(null);setTestSwapSignature("");syncAttempted.current="";authAttemptedFor.current="";creationAttempted.current=false;setPendingWalletAddress("");setCreatedWallet(null);await logout()}
 
   const loading=!ready||!walletsReady;
   const accountReady=authenticated&&Boolean(reboundAddress)&&syncState==="ready";
@@ -750,14 +750,15 @@ function App(){
     }
 
     if(status==="BUY_TRIGGERED"){
+      const initialImmediateEntry=Number(strategy.cycleNumber||1)===1&&String(strategy.hwmPriceMicroUsdc||"")!==""&&String(strategy.hwmPriceMicroUsdc||"")===String(strategy.buyTriggerPriceMicroUsdc||"");
       return e("div",{className:"strategy-watch"},
-        e("div",{className:"strategy-watch-head"},e("div",{className:"strategy-watch-copy"},"Dip reached"),e("div",{className:`strategy-watch-distance${strategyGasLow?" gas-low":""}`},strategyGasLow?"Low gas":"Preparing buy…")),
+        e("div",{className:"strategy-watch-head"},e("div",{className:"strategy-watch-copy"},initialImmediateEntry?"Opening position":"Dip reached"),e("div",{className:`strategy-watch-distance${strategyGasLow?" gas-low":""}`},strategyGasLow?"Low gas":"Preparing buy…")),
         e("div",{className:priceGridClass},
           e("div",{className:"strategy-price-item"},e("div",{className:"strategy-price-label"},`${assetSymbol} now`),e("div",{className:"strategy-price-value"},formatStrategyCardPrice(current))),
-          e("div",{className:"strategy-price-item"},e("div",{className:"strategy-price-label"},"Buy trigger"),e("div",{className:"strategy-price-value accent"},formatStrategyCardPrice(strategy.buyTriggerPriceUsd))),
+          e("div",{className:"strategy-price-item"},e("div",{className:"strategy-price-label"},initialImmediateEntry?"Entry ref.":"Buy trigger"),e("div",{className:"strategy-price-value accent"},formatStrategyCardPrice(strategy.buyTriggerPriceUsd))),
           e("div",{className:"strategy-price-item"},e("div",{className:"strategy-price-label"},"Capital"),e("div",{className:"strategy-price-value"},e("span",{className:"unit-pair"},`${formatUsdc(strategy.currentCycleCapitalUsdc)} USDC`)))
         ),
-        strategyGasLow?e("div",{className:"strategy-gas-alert"},e("strong",null,"Not enough SOL for gas. "),"Add SOL to the Rebound Wallet. Minimum ",e("span",{className:"unit-pair"},"0.005 SOL"),"."):e("div",{className:"strategy-watch-meta"},"Rebound is checking the live Jupiter route before sending the trade.")
+        strategyGasLow?e("div",{className:"strategy-gas-alert"},e("strong",null,"Not enough SOL for gas. "),"Add SOL to the Rebound Wallet. Minimum ",e("span",{className:"unit-pair"},"0.005 SOL"),"."):e("div",{className:"strategy-watch-meta"},initialImmediateEntry?"Initial position is queued for the next executor run. Rebound checks the live Jupiter route before sending the trade.":"Rebound is checking the live Jupiter route before sending the trade.")
       );
     }
 
@@ -848,6 +849,7 @@ function App(){
                     e("option",{value:"BNB"},"BNB"),
                     e("option",{value:"RAY"},"RAY"),
                     e("option",{value:"ETH"},"ETH"),
+                    e("option",{value:"GEOD"},"GEOD · Geodnet · Solana SPL"),
                     e("option",{value:"ASTY"},"ASTY · Token-2022 · 1% fee")
                   ),
                   e("div",{className:"dev-asset-actions"},
@@ -969,13 +971,14 @@ function App(){
 
     strategyModalOpen?e("div",{className:"modal-backdrop strategy-modal-backdrop",onClick:ev=>{if(ev.target===ev.currentTarget)closeStrategyModal()}},e("div",{className:"modal strategy-create-modal"},
       e("h2",{className:"modal-title"},"Create Strategy"),
-      e("p",{className:"modal-description"},`Reserve USDC for a ${strategyAsset} dip-and-rebound strategy. Rebound watches the market 24/7 and only buys when your configured dip is reached.`),
+      e("p",{className:"modal-description"},`Reserve USDC for a ${strategyAsset} Rebound strategy. The first position opens immediately. If Auto Repeat is enabled, the Dip setting controls the next entry after a completed Take Profit.`),
       e("div",{className:"form-field"},e("label",{className:"input-label"},"Asset"),e("div",{className:"asset-choice-grid"},
         e("button",{type:"button",className:`asset-choice ${strategyAsset==="SOL"?"active":""}`,disabled:strategyCreateBusy,onClick:()=>setStrategyAsset("SOL")},e("div",{className:"asset-choice-title"},"SOL"),e("div",{className:"asset-choice-detail"},"Solana · native asset")),
         e("button",{type:"button",className:`asset-choice ${strategyAsset==="WBTC"?"active":""}`,disabled:strategyCreateBusy,onClick:()=>setStrategyAsset("WBTC")},e("div",{className:"asset-choice-title"},"WBTC"),e("div",{className:"asset-choice-detail"},"Wrapped Bitcoin · Wormhole")),
         e("button",{type:"button",className:`asset-choice ${strategyAsset==="BNB"?"active":""}`,disabled:strategyCreateBusy,onClick:()=>setStrategyAsset("BNB")},e("div",{className:"asset-choice-title"},"BNB"),e("div",{className:"asset-choice-detail"},"BNB · Wormhole from BSC")),
         e("button",{type:"button",className:`asset-choice ${strategyAsset==="RAY"?"active":""}`,disabled:strategyCreateBusy,onClick:()=>setStrategyAsset("RAY")},e("div",{className:"asset-choice-title"},"RAY"),e("div",{className:"asset-choice-detail"},"Raydium · native Solana token")),
         e("button",{type:"button",className:`asset-choice ${strategyAsset==="ETH"?"active":""}`,disabled:strategyCreateBusy,onClick:()=>setStrategyAsset("ETH")},e("div",{className:"asset-choice-title"},"ETH"),e("div",{className:"asset-choice-detail"},"Ether · Wormhole from Ethereum")),
+        e("button",{type:"button",className:`asset-choice ${strategyAsset==="GEOD"?"active":""}`,disabled:strategyCreateBusy,onClick:()=>setStrategyAsset("GEOD")},e("div",{className:"asset-choice-title"},"GEOD"),e("div",{className:"asset-choice-detail"},"Geodnet · Solana SPL token")),
       )),
       e("div",{className:"form-field"},
         e("div",{className:"row-head",style:{marginBottom:"8px"}},e("label",{className:"input-label",style:{marginBottom:0}},"Strategy Capital"),e("button",{className:"max-button",type:"button",onClick:useMaxStrategyCapital,disabled:strategyCreateBusy},`Max ${freeUsdc==null?"—":formatUsdc(freeUsdc)} USDC`)),
@@ -983,12 +986,13 @@ function App(){
       ),
       e("div",{className:"form-field"},e("label",{className:"input-label"},"Preset"),e("div",{className:"preset-grid"},
         ...[
-          ["frequent","Frequent","Dip -3% · TP +2.5%"],
-          ["balanced","Balanced","Dip -5% · TP +4%"],
-          ["deep_dip","Deep Dip","Dip -8% · TP +6%"],
+          ["frequent","Frequent","Dip -0.75% · TP +0.75%"],
+          ["balanced","Balanced","Dip -1% · TP +1%"],
+          ["deep_dip","Deep Dip","Dip -1.25% · TP +1.25%"],
           ["custom","Custom","Choose your own levels"]
         ].map(([value,title,detail])=>e("button",{type:"button",key:value,className:`preset-button ${strategyPreset===value?"active":""}`,disabled:strategyCreateBusy,onClick:()=>setStrategyPreset(value)},e("div",{className:"preset-title"},title),e("div",{className:"preset-detail"},detail)))
       )),
+      e("div",{className:"strategy-warning",style:{marginTop:"8px",color:"#d9c8ff"}},"Initial entry: immediate. The Dip setting applies from the next cycle after Take Profit."),
       strategyPreset==="custom"?e("div",{className:"form-grid",style:{marginTop:"12px"}},
         e("div",null,e("label",{className:"input-label"},"Dip %"),e("input",{className:"compact-input",type:"text",inputMode:"decimal",value:customDipPercent,disabled:strategyCreateBusy,onChange:ev=>setCustomDipPercent(ev.target.value.replace(",","."))})),
         e("div",null,e("label",{className:"input-label"},"Take Profit %"),e("input",{className:"compact-input",type:"text",inputMode:"decimal",value:customTakeProfitPercent,disabled:strategyCreateBusy,onChange:ev=>setCustomTakeProfitPercent(ev.target.value.replace(",","."))}))
@@ -1001,6 +1005,7 @@ function App(){
       ),
       e("div",{className:"strategy-warning"},e("span",{className:"unit-pair"},"2,500 ASTY")," per active strategy is required in the linked Phantom wallet when creating a new strategy. ASTY stays in Phantom.",
         ["WBTC","BNB","ETH"].includes(strategyAsset)?e("div",{style:{marginTop:"5px"}},`${strategyAsset} uses its Wormhole representation on Solana. Jupiter selects the execution route automatically.`):null,
+        strategyAsset==="GEOD"?e("div",{style:{marginTop:"5px"}},"GEOD uses the Solana SPL token. Jupiter selects the execution route automatically."):null,
         null),
       strategyCreateResult?e("div",{className:`status-box ${strategyCreateResult.state==="success"?"success":"failure"}`},strategyCreateResult.message):null,
       e("div",{className:"modal-buttons"},e("button",{className:"modal-cancel",disabled:strategyCreateBusy,onClick:closeStrategyModal},"Cancel"),e("button",{className:"modal-confirm",disabled:strategyCreateBusy,onClick:createStrategy},strategyCreateBusy?"Creating…":"Create Strategy"))

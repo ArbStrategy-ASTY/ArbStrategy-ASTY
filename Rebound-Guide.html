@@ -147,7 +147,7 @@ h1{margin:0 0 14px;font-size:clamp(38px,10vw,58px);line-height:.98;letter-spacin
     <div class="kicker">How it Works</div>
     <h1>Rebound, explained.</h1>
     <p class="lead">A simple guide to strategies, your Rebound Wallet, automated trading and the safety rules behind ASTY Rebound.</p>
-    <div class="hero-line">Wait for the dip. Buy the rebound. Take the profit. Repeat.</div>
+    <div class="hero-line">Open the first position. Take profit. Wait for the next dip. Repeat.</div>
   </div>
   <div class="wolf-wrap"><img class="wolf" src="assets/wolf.png" alt=""></div>
 </section>
@@ -155,10 +155,10 @@ h1{margin:0 0 14px;font-size:clamp(38px,10vw,58px);line-height:.98;letter-spacin
 <section class="card">
   <div class="section-label">The idea</div>
   <h2 class="section-title">What Rebound does</h2>
-  <p class="section-copy">You choose an asset, a dip level and a take-profit target. Rebound watches the Solana market 24/7. It follows rising prices with a dynamic Reference High, waits for your configured dip, buys the asset and then watches for the rebound.</p>
+  <p class="section-copy">You choose an asset, a dip level and a take-profit target. The first position is queued for an immediate BUY. After a successful Take Profit, Auto Repeat starts a new cycle that uses the dynamic Reference High and waits for your configured dip before buying again.</p>
   <div class="flow">
-    <div class="flow-step"><span class="flow-number">1</span><div class="flow-title">Watch</div><div class="flow-copy">Rebound follows the market and keeps a dynamic Reference High.</div></div>
-    <div class="flow-step"><span class="flow-number">2</span><div class="flow-title">Buy the dip</div><div class="flow-copy">When price falls by your chosen percentage from the latest Reference High, Rebound prepares the buy.</div></div>
+    <div class="flow-step"><span class="flow-number">1</span><div class="flow-title">Open</div><div class="flow-copy">The first position is queued immediately after you create the strategy.</div></div>
+    <div class="flow-step"><span class="flow-number">2</span><div class="flow-title">Take profit</div><div class="flow-copy">Rebound watches the open position and prepares the SELL when the Take Profit target is reached.</div></div>
     <div class="flow-step"><span class="flow-number">3</span><div class="flow-title">Sell the rebound</div><div class="flow-copy">Take Profit is calculated from the real executed buy price.</div></div>
   </div>
 </section>
@@ -167,9 +167,9 @@ h1{margin:0 0 14px;font-size:clamp(38px,10vw,58px);line-height:.98;letter-spacin
   <div class="faq-head"><div class="faq-kicker">Getting started</div><div class="faq-title">The basics</div><div class="faq-copy">What you need before your first strategy.</div></div>
   <div class="faq-list">
     <details class="faq"><summary>What do I need to use ASTY Rebound?</summary><div class="faq-body"><p>You need a connected <strong>Phantom wallet</strong>, trading capital in <strong>USDC</strong> and a small amount of native <strong>SOL for Solana network fees</strong>.</p><p>A new strategy requires at least <strong>25 USDC</strong>.</p></div></details>
-    <details class="faq"><summary>Which assets can I trade?</summary><div class="faq-body"><p>The current Rebound version supports <strong>SOL, WBTC, BNB, RAY, ETH and ASTY</strong> on Solana. Trades are routed through Jupiter instead of being tied to one hard-coded liquidity pool.</p></div></details>
+    <details class="faq"><summary>Which assets can I trade?</summary><div class="faq-body"><p>New Rebound strategies currently support <strong>SOL, WBTC, BNB, RAY, ETH and GEOD</strong> on Solana. Trades are routed through Jupiter instead of being tied to one hard-coded liquidity pool.</p><p><strong>ASTY is currently disabled for new Rebound strategies.</strong></p></div></details>
     <details class="faq"><summary>How much ASTY do I need?</summary><div class="faq-body"><p>You need to hold <strong>2,500 ASTY in your linked Phantom wallet for each active strategy</strong>. Your ASTY stays in Phantom and does not need to be deposited into Rebound.</p></div></details>
-    <details class="faq"><summary>How does the 1% ASTY transaction fee work in Rebound?</summary><div class="faq-body"><p>ASTY charges its normal <strong>1% fee on every transfer</strong>, including a Rebound BUY and SELL. Rebound records the <strong>actual ASTY received after the BUY fee</strong> as the position size. For Take Profit, the market trigger is adjusted for the outbound ASTY fee and the live Jupiter SELL quote is checked against the configured <strong>net TP target</strong>.</p><p>The <strong>2,500 ASTY access requirement</strong> remains separate and must stay in the linked Phantom wallet.</p></div></details>
+    <details class="faq"><summary>Is ASTY itself tradable in Rebound?</summary><div class="faq-body"><p><strong>No new ASTY Rebound strategies can currently be created.</strong> ASTY remains the access token: you still need to hold <strong>2,500 ASTY in the linked Phantom wallet per active strategy</strong>.</p></div></details>
     <details class="faq"><summary>Do I need to keep the website open?</summary><div class="faq-body"><p>No. Active strategies are designed to continue <strong>server-side 24/7</strong>, even when the website or your phone is closed.</p></div></details>
   </div>
 </section>
@@ -181,7 +181,7 @@ h1{margin:0 0 14px;font-size:clamp(38px,10vw,58px);line-height:.98;letter-spacin
     <details class="faq" open>
       <summary>What is the Reference High / High-Water Mark?</summary>
       <div class="faq-body">
-        <p>The <strong>Reference High</strong> is the highest market price the strategy has seen while it is waiting for a dip. Technically, this is also called the <strong>High-Water Mark (HWM)</strong>.</p>
+        <p>The <strong>Reference High</strong> is the highest market price a repeat cycle has seen while it is waiting for its next dip. Technically, this is also called the <strong>High-Water Mark (HWM)</strong>. The first cycle does not wait for a dip; it opens immediately.</p>
         <p>The important part: the Reference High can move <strong>up</strong> with every new market high, but it does not move down while the strategy is waiting.</p>
         <p>Your Buy Trigger is always recalculated from the current Reference High. This means Rebound follows a rising market instead of waiting for a dip from an old price level.</p>
       </div>
@@ -195,10 +195,10 @@ h1{margin:0 0 14px;font-size:clamp(38px,10vw,58px);line-height:.98;letter-spacin
         <div class="logic-example">
           <div class="logic-row"><span>Previous Sell</span><span>$116.28</span></div>
           <div class="logic-row"><span>New market high</span><span>$122.64</span></div>
-          <div class="logic-row"><span>Dip setting</span><span>3%</span></div>
+          <div class="logic-row"><span>Dip setting</span><span>1%</span></div>
           <div class="logic-row"><span>New Buy Trigger</span><span>≈ $118.96</span></div>
         </div>
-        <p>So even though the previous cycle sold at $116.28, the next strategy can buy around $118.96 after SOL first climbed to about $122.64 and then fell 3%.</p>
+        <p>So even though the previous cycle sold at $116.28, the next strategy can buy around $118.96 after SOL first climbed to about $122.64 and then fell 1%.</p>
         <p>This is intentional. Without a dynamic Reference High, Rebound could miss new opportunities for a long time during a strongly rising market.</p>
       </div>
     </details>
@@ -208,7 +208,7 @@ h1{margin:0 0 14px;font-size:clamp(38px,10vw,58px);line-height:.98;letter-spacin
       <div class="faq-body">
         <p><strong>“Buy at” is not a permanently fixed price while the strategy is watching.</strong> It is the current dip trigger based on the current Reference High.</p>
         <p>If the market makes a new high, the Reference High moves up and Rebound immediately recalculates “Buy at”. The earlier displayed Buy price is then replaced by the new one.</p>
-        <p>Example: with a 3% dip, a Reference High of $116.28 gives a trigger around $112.79. If the market later reaches $122.64, the trigger moves to about $118.96.</p>
+        <p>Example: with a 1% dip, a Reference High of $116.28 gives a trigger around $115.12. If the market later reaches $122.64, the trigger moves to about $121.41.</p>
       </div>
     </details>
 
@@ -219,7 +219,7 @@ h1{margin:0 0 14px;font-size:clamp(38px,10vw,58px);line-height:.98;letter-spacin
 
     <details class="faq">
       <summary>What are the strategy presets?</summary>
-      <div class="faq-body"><ul><li><strong>Frequent:</strong> Dip 3% · Take Profit 2.5%</li><li><strong>Balanced:</strong> Dip 5% · Take Profit 4%</li><li><strong>Deep Dip:</strong> Dip 8% · Take Profit 6%</li><li><strong>Custom:</strong> choose your own supported values.</li></ul></div>
+      <div class="faq-body"><ul><li><strong>Frequent:</strong> Dip 0.75% · Take Profit 0.75%</li><li><strong>Balanced:</strong> Dip 1% · Take Profit 1%</li><li><strong>Deep Dip:</strong> Dip 1.25% · Take Profit 1.25%</li><li><strong>Custom:</strong> choose your own supported values.</li></ul><p>The Dip setting applies from the next cycle after the initial immediate entry.</p></div>
     </details>
 
     <details class="faq">
@@ -320,9 +320,9 @@ h1{margin:0 0 14px;font-size:clamp(38px,10vw,58px);line-height:.98;letter-spacin
 <section class="card">
   <div class="section-label">Die Idee</div>
   <h2 class="section-title">Was Rebound macht</h2>
-  <p class="section-copy">Du wählst einen Coin, einen Dip und ein Take-Profit-Ziel. Rebound beobachtet den Solana-Markt rund um die Uhr. Steigt der Markt weiter, zieht die dynamische Reference High mit. Erst wenn der eingestellte Dip erreicht wird, kauft Rebound und wartet anschließend auf die Erholung.</p>
+  <p class="section-copy">Du wählst einen Coin, einen Dip und ein Take-Profit-Ziel. Die erste Position wird direkt zum Kauf vorgemerkt. Nach einem erfolgreichen Take Profit startet Auto Repeat einen neuen Cycle, der wieder mit der dynamischen Reference High arbeitet und erst beim eingestellten Dip kauft.</p>
   <div class="flow">
-    <div class="flow-step"><span class="flow-number">1</span><div class="flow-title">Beobachten</div><div class="flow-copy">Rebound folgt dem Markt und führt eine dynamische Reference High.</div></div>
+    <div class="flow-step"><span class="flow-number">1</span><div class="flow-title">Öffnen</div><div class="flow-copy">Die erste Position wird direkt nach dem Anlegen der Strategie zum Kauf vorgemerkt.</div></div>
     <div class="flow-step"><span class="flow-number">2</span><div class="flow-title">Dip kaufen</div><div class="flow-copy">Fällt der Kurs um deinen eingestellten Prozentsatz vom letzten Hoch, bereitet Rebound den Kauf vor.</div></div>
     <div class="flow-step"><span class="flow-number">3</span><div class="flow-title">Rebound verkaufen</div><div class="flow-copy">Das Take Profit wird vom tatsächlich ausgeführten Kaufkurs berechnet.</div></div>
   </div>
@@ -332,9 +332,9 @@ h1{margin:0 0 14px;font-size:clamp(38px,10vw,58px);line-height:.98;letter-spacin
   <div class="faq-head"><div class="faq-kicker">Erste Schritte</div><div class="faq-title">Die Grundlagen</div><div class="faq-copy">Was du vor deiner ersten Strategie brauchst.</div></div>
   <div class="faq-list">
     <details class="faq"><summary>Was brauche ich für ASTY Rebound?</summary><div class="faq-body"><p>Du brauchst ein verbundenes <strong>Phantom Wallet</strong>, Tradingkapital in <strong>USDC</strong> und etwas natives <strong>SOL für die Solana-Netzwerkgebühren</strong>.</p><p>Eine neue Strategie benötigt mindestens <strong>25 USDC</strong>.</p></div></details>
-    <details class="faq"><summary>Welche Coins kann ich handeln?</summary><div class="faq-body"><p>Aktuell unterstützt Rebound <strong>SOL, WBTC, BNB, RAY, ETH und ASTY</strong> auf Solana. Die Trades werden über Jupiter geroutet und sind nicht an einen einzelnen fest hinterlegten Pool gebunden.</p></div></details>
+    <details class="faq"><summary>Welche Coins kann ich handeln?</summary><div class="faq-body"><p>Neue Rebound-Strategien unterstützen aktuell <strong>SOL, WBTC, BNB, RAY, ETH und GEOD</strong> auf Solana. Die Trades werden über Jupiter geroutet und sind nicht an einen einzelnen fest hinterlegten Pool gebunden.</p><p><strong>ASTY ist aktuell für neue Rebound-Strategien deaktiviert.</strong></p></div></details>
     <details class="faq"><summary>Wie viel ASTY brauche ich?</summary><div class="faq-body"><p>Für jede aktive Strategie musst du <strong>2.500 ASTY in deinem verknüpften Phantom Wallet halten</strong>. Die ASTY bleiben in Phantom und müssen nicht in Rebound eingezahlt werden.</p></div></details>
-    <details class="faq"><summary>Wie funktioniert die 1%-ASTY-Gebühr in Rebound?</summary><div class="faq-body"><p>Bei ASTY gilt die normale <strong>1%-Gebühr bei jeder Übertragung</strong>, also auch beim Rebound-BUY und SELL. Rebound verwendet für die Position die <strong>tatsächlich nach der BUY-Gebühr angekommenen ASTY</strong>. Beim Take Profit wird der Markt-Trigger für die ausgehende ASTY-Gebühr angepasst und der aktuelle Jupiter-SELL-Quote gegen das konfigurierte <strong>Netto-TP-Ziel</strong> geprüft.</p><p>Die <strong>2.500 ASTY Zugangsvoraussetzung</strong> bleibt davon getrennt und muss weiterhin im verbundenen Phantom Wallet liegen.</p></div></details>
+    <details class="faq"><summary>Kann ASTY selbst in Rebound gehandelt werden?</summary><div class="faq-body"><p><strong>Aktuell können keine neuen ASTY-Rebound-Strategien angelegt werden.</strong> ASTY bleibt aber der Zugangstoken: Für jede aktive Strategie müssen weiterhin <strong>2.500 ASTY im verbundenen Phantom Wallet</strong> gehalten werden.</p></div></details>
     <details class="faq"><summary>Muss die Website geöffnet bleiben?</summary><div class="faq-body"><p>Nein. Aktive Strategien laufen <strong>serverseitig 24/7</strong> weiter, auch wenn die Website oder dein Smartphone geschlossen ist.</p></div></details>
   </div>
 </section>
@@ -346,7 +346,7 @@ h1{margin:0 0 14px;font-size:clamp(38px,10vw,58px);line-height:.98;letter-spacin
     <details class="faq" open>
       <summary>Was ist die Reference High / High-Water Mark?</summary>
       <div class="faq-body">
-        <p>Die <strong>Reference High</strong> ist der höchste Marktpreis, den die Strategie gesehen hat, während sie auf einen Dip wartet. Technisch wird das auch <strong>High-Water Mark (HWM)</strong> genannt.</p>
+        <p>Die <strong>Reference High</strong> ist der höchste Marktpreis, den ein Repeat-Cycle gesehen hat, während er auf den nächsten Dip wartet. Technisch wird das auch <strong>High-Water Mark (HWM)</strong> genannt. Der erste Cycle wartet nicht auf einen Dip, sondern öffnet direkt.</p>
         <p>Entscheidend ist: Die Reference High kann bei jedem neuen Hoch <strong>weiter steigen</strong>, sie fällt während der Wartephase aber nicht wieder ab.</p>
         <p>Der Buy Trigger wird immer neu aus der aktuellen Reference High berechnet. Rebound folgt also einem steigenden Markt, statt dauerhaft auf einen Dip von einem längst überholten Kursniveau zu warten.</p>
       </div>
@@ -360,10 +360,10 @@ h1{margin:0 0 14px;font-size:clamp(38px,10vw,58px);line-height:.98;letter-spacin
         <div class="logic-example">
           <div class="logic-row"><span>Letzter Sell</span><span>$116.28</span></div>
           <div class="logic-row"><span>Neues Markthoch</span><span>$122.64</span></div>
-          <div class="logic-row"><span>Eingestellter Dip</span><span>3%</span></div>
+          <div class="logic-row"><span>Eingestellter Dip</span><span>1%</span></div>
           <div class="logic-row"><span>Neuer Buy Trigger</span><span>≈ $118.96</span></div>
         </div>
-        <p>Obwohl der vorherige Cycle also bei $116.28 verkauft hat, kann der nächste Kauf bei etwa $118.96 stattfinden: SOL ist zuerst auf ungefähr $122.64 gestiegen und anschließend 3% gefallen.</p>
+        <p>Obwohl der vorherige Cycle also bei $116.28 verkauft hat, kann der nächste Kauf bei etwa $118.96 stattfinden: SOL ist zuerst auf ungefähr $122.64 gestiegen und anschließend 1% gefallen.</p>
         <p>Das ist bewusst so. Ohne eine dynamische Reference High könnte Rebound in stark steigenden Märkten sehr lange auf einen alten, viel tieferen Einstieg warten und neue Dip-Chancen verpassen.</p>
       </div>
     </details>
@@ -373,13 +373,13 @@ h1{margin:0 0 14px;font-size:clamp(38px,10vw,58px);line-height:.98;letter-spacin
       <div class="faq-body">
         <p><strong>„Buy at“ ist während der Wartephase kein dauerhaft festgeschriebener Kurs.</strong> Es ist der aktuelle Dip-Trigger auf Basis der aktuellen Reference High.</p>
         <p>Macht der Markt ein neues Hoch, steigt die Reference High und Rebound berechnet „Buy at“ sofort neu. Der vorher angezeigte Buy-Kurs wird dadurch ersetzt.</p>
-        <p>Beispiel: Bei einem 3%-Dip ergibt eine Reference High von $116.28 zunächst ungefähr $112.79 als Buy Trigger. Steigt der Markt später auf $122.64, wandert der Buy Trigger auf ungefähr $118.96.</p>
+        <p>Beispiel: Bei einem 1%-Dip ergibt eine Reference High von $116.28 zunächst ungefähr $115.12 als Buy Trigger. Steigt der Markt später auf $122.64, wandert der Buy Trigger auf ungefähr $121.41.</p>
       </div>
     </details>
 
-    <details class="faq"><summary>Wann kauft Rebound genau?</summary><div class="faq-body"><p>Der Buy Trigger berechnet sich als <strong>Reference High × (1 − Dip %)</strong>. Erreicht der Markt diesen Wert, bereitet Rebound den Kauf vor. Direkt vor dem Senden prüft Rebound den Markt erneut, damit einem bereits wieder stark gestiegenen Kurs nicht blind hinterhergekauft wird.</p></div></details>
+    <details class="faq"><summary>Wann kauft Rebound genau?</summary><div class="faq-body"><p><strong>Der erste Cycle wird direkt beim Anlegen der Strategie zum BUY vorgemerkt.</strong> Der Dip gilt für spätere Auto-Repeat-Cycles. Dort berechnet sich der Buy Trigger als <strong>Reference High × (1 − Dip %)</strong>. Vor jedem BUY prüft Rebound zusätzlich den aktuellen Jupiter-Quote und die Safety-Limits.</p></div></details>
 
-    <details class="faq"><summary>Welche Presets gibt es?</summary><div class="faq-body"><ul><li><strong>Frequent:</strong> Dip 3% · Take Profit 2,5%</li><li><strong>Balanced:</strong> Dip 5% · Take Profit 4%</li><li><strong>Deep Dip:</strong> Dip 8% · Take Profit 6%</li><li><strong>Custom:</strong> eigene unterstützte Werte wählen.</li></ul></div></details>
+    <details class="faq"><summary>Welche Presets gibt es?</summary><div class="faq-body"><ul><li><strong>Frequent:</strong> Dip 0,75% · Take Profit 0,75%</li><li><strong>Balanced:</strong> Dip 1% · Take Profit 1%</li><li><strong>Deep Dip:</strong> Dip 1,25% · Take Profit 1,25%</li><li><strong>Custom:</strong> eigene unterstützte Werte wählen.</li></ul><p>Der Dip gilt ab dem nächsten Cycle nach dem ersten direkten Einstieg.</p></div></details>
 
     <details class="faq"><summary>Warum basiert Take Profit auf dem tatsächlichen Buy Fill?</summary><div class="faq-body"><p>Der Trigger ist nur der Punkt, an dem der Kaufprozess beginnt. Der echte Swap kann zu einem leicht anderen Kurs ausgeführt werden. Deshalb speichert Rebound den <strong>tatsächlichen durchschnittlichen Kaufkurs</strong> und berechnet das Take Profit von diesem realen Einstieg.</p></div></details>
 
