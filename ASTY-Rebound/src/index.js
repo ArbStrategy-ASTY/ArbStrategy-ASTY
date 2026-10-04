@@ -26,6 +26,7 @@ const WBTC_MINT = "3NZ9JMVBmGAqocybic2c7LQCJScmgsAZ6vQqTDzcqmJh";
 const BNB_MINT = "9gP2kCy3wA1ctvYWQk75guqXuHfrEomqydHLtcTCqiLa";
 const RAY_MINT = "4k3Dyjzvzp8eMZWUXbBCjEvwSkkk59S5iCNLY3QrkX6R";
 const ETH_MINT = "7vfCXTUXx5WJV5JADk17DUJ4ksgau7utNKj4b963voxs";
+const GEOD_MINT = "7JA5eZdCzztSfQbJvS8aVVxMFfd81Rs9VvwnocV1mKHu";
 
 const JUPITER_PROGRAM_ID = "JUP6LkbZbjS1jKKwapdHNy74zcZ3tLUZoi5QNyVTaV4";
 const COMPUTE_BUDGET_PROGRAM_ID = "ComputeBudget111111111111111111111111111111";
@@ -42,6 +43,7 @@ const WBTC_DECIMALS = 8;
 const BNB_DECIMALS = 8;
 const RAY_DECIMALS = 6;
 const ETH_DECIMALS = 8;
+const GEOD_DECIMALS = 9;
 const PRICE_MICRO_DECIMALS = 6;
 
 const STRATEGY_ASSETS = Object.freeze({
@@ -50,6 +52,7 @@ const STRATEGY_ASSETS = Object.freeze({
   BNB: { symbol: "BNB", mint: BNB_MINT, decimals: BNB_DECIMALS, displayName: "BNB", internalAsset: "BNB (Wormhole)", tokenProgram: TOKEN_PROGRAM_ID, transferFeeBps: 0 },
   RAY: { symbol: "RAY", mint: RAY_MINT, decimals: RAY_DECIMALS, displayName: "RAY", internalAsset: "RAY", tokenProgram: TOKEN_PROGRAM_ID, transferFeeBps: 0 },
   ETH: { symbol: "ETH", mint: ETH_MINT, decimals: ETH_DECIMALS, displayName: "ETH", internalAsset: "ETH (Wormhole)", tokenProgram: TOKEN_PROGRAM_ID, transferFeeBps: 0 },
+  GEOD: { symbol: "GEOD", mint: GEOD_MINT, decimals: GEOD_DECIMALS, displayName: "GEOD", internalAsset: "GEOD", tokenProgram: TOKEN_PROGRAM_ID, transferFeeBps: 0 },
   ASTY: { symbol: "ASTY", mint: ASTY_MINT, decimals: ASTY_DECIMALS, displayName: "ASTY", internalAsset: "ASTY (Token-2022)", tokenProgram: TOKEN_2022_PROGRAM_ID, transferFeeBps: 100, sellRouteBufferBps: 50 },
 });
 
@@ -140,9 +143,9 @@ const USDC_HELD_STRATEGY_STATUSES = [
 ];
 
 const PRESETS = Object.freeze({
-  frequent: { dipBps: 300, takeProfitBps: 250 },
-  balanced: { dipBps: 500, takeProfitBps: 400 },
-  deep_dip: { dipBps: 800, takeProfitBps: 600 },
+  frequent: { dipBps: 75, takeProfitBps: 75 },
+  balanced: { dipBps: 100, takeProfitBps: 100 },
+  deep_dip: { dipBps: 125, takeProfitBps: 125 },
 });
 
 const ACTIVE_STRATEGY_STATUSES = [
@@ -1097,8 +1100,8 @@ function resolveStrategyConfiguration(body) {
 
 async function loadWatchingStrategies(env, privyUserId = null) {
   const sql = privyUserId
-    ? `SELECT * FROM rebound_strategies WHERE status = 'WATCHING' AND asset_symbol IN ('SOL','WBTC','BNB','RAY','ETH','ASTY') AND privy_user_id = ? ORDER BY created_at ASC`
-    : `SELECT * FROM rebound_strategies WHERE status = 'WATCHING' AND asset_symbol IN ('SOL','WBTC','BNB','RAY','ETH','ASTY') ORDER BY created_at ASC`;
+    ? `SELECT * FROM rebound_strategies WHERE status = 'WATCHING' AND asset_symbol IN ('SOL','WBTC','BNB','RAY','ETH','GEOD','ASTY') AND privy_user_id = ? ORDER BY created_at ASC`
+    : `SELECT * FROM rebound_strategies WHERE status = 'WATCHING' AND asset_symbol IN ('SOL','WBTC','BNB','RAY','ETH','GEOD','ASTY') ORDER BY created_at ASC`;
   const result = privyUserId
     ? await env.DB.prepare(sql).bind(privyUserId).all()
     : await env.DB.prepare(sql).all();
@@ -1164,7 +1167,7 @@ async function getExecutionCheckStrategy(env, privyUserId, strategyId = null) {
       FROM rebound_strategies
       WHERE id = ?
         AND privy_user_id = ?
-        AND asset_symbol IN ('SOL','WBTC','BNB','RAY','ETH','ASTY')
+        AND asset_symbol IN ('SOL','WBTC','BNB','RAY','ETH','GEOD','ASTY')
         AND status IN ('WATCHING', 'BUY_TRIGGERED')
       LIMIT 1
     `).bind(strategyId, privyUserId).first();
@@ -1174,7 +1177,7 @@ async function getExecutionCheckStrategy(env, privyUserId, strategyId = null) {
     SELECT *
     FROM rebound_strategies
     WHERE privy_user_id = ?
-      AND asset_symbol IN ('SOL','WBTC','BNB','RAY','ETH','ASTY')
+      AND asset_symbol IN ('SOL','WBTC','BNB','RAY','ETH','GEOD','ASTY')
       AND status IN ('WATCHING', 'BUY_TRIGGERED')
     ORDER BY
       CASE WHEN status = 'BUY_TRIGGERED' THEN 0 ELSE 1 END,
@@ -2068,6 +2071,13 @@ async function executeTriggeredBuy(env, strategy) {
     const triggerRaw = BigInt(String(fresh.buy_trigger_price_micro_usdc || 0));
     if (cycleCapitalRaw <= 0n || triggerRaw <= 0n) throw new Error("Strategy BUY capital or trigger is invalid.");
 
+    const hwmRaw = BigInt(String(fresh.hwm_price_micro_usdc || 0));
+    const initialImmediateEntry =
+      Number(fresh.cycle_number || 1) === 1 &&
+      !fresh.bought_at &&
+      hwmRaw > 0n &&
+      hwmRaw === triggerRaw;
+
     const [referencePrice, usdc, nativeSol, tradingAsset, reservedInUsdcRaw] = await Promise.all([
       getJupiterAssetPriceMicroUsdc(env, asset.symbol),
       getUsdcBalance(env, walletAddress),
@@ -2076,8 +2086,9 @@ async function executeTriggeredBuy(env, strategy) {
       getUsdcHeldReservedCapitalRaw(env, fresh.privy_user_id),
     ]);
 
-    // Never chase a price that has already rebounded above the trigger before the BUY is sent.
-    if (referencePrice.micro > triggerRaw) {
+    // Repeat cycles must not chase a price that already rebounded above the
+    // dip trigger. The first cycle is intentionally an immediate market entry.
+    if (!initialImmediateEntry && referencePrice.micro > triggerRaw) {
       await releaseBuyExecutionLock(env, strategy.id, lock, { rearm: true });
       return {
         ok: true,
@@ -2146,15 +2157,17 @@ async function executeTriggeredBuy(env, strategy) {
     // Treat that known fee as part of the effective fill instead of mistaking it
     // for price-chasing. The original 0.5% market/route overage guard remains.
     const maxBuyQuoteOverageBps = MAX_BUY_TRIGGER_OVERAGE_BPS + transferFeePriceImpactBps(asset);
-    const maxAllowedQuotePrice = triggerRaw * BigInt(10_000 + maxBuyQuoteOverageBps) / 10_000n;
+    const buyQuoteAnchorPrice = initialImmediateEntry ? referencePrice.micro : triggerRaw;
+    const maxAllowedQuotePrice = buyQuoteAnchorPrice * BigInt(10_000 + maxBuyQuoteOverageBps) / 10_000n;
     if (quotePriceMicro <= 0n || quotePriceMicro > maxAllowedQuotePrice) {
       await releaseBuyExecutionLock(env, strategy.id, lock);
       return {
         ok: false,
         skipped: true,
         strategyId: strategy.id,
-        reason: "quote-price-above-trigger-safety-limit",
+        reason: initialImmediateEntry ? "initial-entry-quote-above-live-safety-limit" : "quote-price-above-trigger-safety-limit",
         triggerPriceUsd: formatMicroUsd(triggerRaw),
+        referencePriceUsd: formatMicroUsd(referencePrice.micro),
         quotePriceUsd: formatMicroUsd(quotePriceMicro),
       };
     }
@@ -2428,7 +2441,7 @@ async function loadBoughtStrategies(env) {
     SELECT *
     FROM rebound_strategies
     WHERE status = 'BOUGHT'
-      AND asset_symbol IN ('SOL','WBTC','BNB','RAY','ETH','ASTY')
+      AND asset_symbol IN ('SOL','WBTC','BNB','RAY','ETH','GEOD','ASTY')
       AND entry_wsol_raw IS NOT NULL
       AND entry_wsol_raw > 0
     ORDER BY bought_at ASC, created_at ASC
@@ -3533,17 +3546,18 @@ async function handleExecutionStatus(request, env) {
 async function handleRoot(request, env) {
   return json(request, {
     service: "ASTY Rebound API",
-    buildVersion: "2026-09-29-cycle-v19-asty-close-only-rescue",
+    buildVersion: "2026-10-04-cycle-v20-geod-immediate-entry-presets",
     status: "online",
     balanceSource: "Helius",
     displayPriceSource: "Helius DAS",
-    supportedStrategyAssets: ["SOL", "WBTC", "BNB", "RAY", "ETH", "ASTY"],
-    newStrategyAssets: ["SOL", "WBTC", "BNB", "RAY", "ETH"],
+    supportedStrategyAssets: ["SOL", "WBTC", "BNB", "RAY", "ETH", "GEOD", "ASTY"],
+    newStrategyAssets: ["SOL", "WBTC", "BNB", "RAY", "ETH", "GEOD"],
     legacyCloseOnlyAssets: ["ASTY"],
     wbtcMint: WBTC_MINT,
     bnbMint: BNB_MINT,
     rayMint: RAY_MINT,
     ethMint: ETH_MINT,
+    geodMint: GEOD_MINT,
     astyMint: ASTY_MINT,
     strategyAssetMints: {
       SOL: WSOL_MINT,
@@ -3551,6 +3565,7 @@ async function handleRoot(request, env) {
       BNB: BNB_MINT,
       RAY: RAY_MINT,
       ETH: ETH_MINT,
+      GEOD: GEOD_MINT,
       ASTY: ASTY_MINT,
     },
     astyTrading: {
@@ -3567,6 +3582,15 @@ async function handleRoot(request, env) {
       mode: "market-watch",
       executionEnabled: false,
       priceSource: "Jupiter Price API V3",
+    },
+    strategyEntry: {
+      firstCycle: "immediate-buy-queued",
+      repeatCycles: "dynamic-reference-high-dip",
+      presetsBps: {
+        frequent: { dip: 75, takeProfit: 75 },
+        balanced: { dip: 100, takeProfit: 100 },
+        deepDip: { dip: 125, takeProfit: 125 },
+      },
     },
     execution: {
       mode: autoExecutionRequested(env) ? (autoSellRequested(env) ? "live-cycle" : "live-buy") : "installed-disabled",
@@ -4225,6 +4249,10 @@ async function handleStrategyCreate(request, env) {
       }, 409);
     }
 
+    // First cycle: queue the BUY immediately. The configured Dip is used only
+    // for later Auto Repeat cycles after a completed Take Profit.
+    const initialPrice = await getJupiterAssetPriceMicroUsdc(env, asset.symbol);
+
     const id = crypto.randomUUID();
     await env.DB.prepare(`
       INSERT INTO rebound_strategies (
@@ -4233,10 +4261,14 @@ async function handleStrategyCreate(request, env) {
         stop_loss_enabled, stop_loss_bps, auto_repeat, compound,
         initial_capital_usdc_raw, reserved_capital_usdc_raw, current_cycle_capital_usdc_raw,
         free_profit_usdc_raw, cycle_number, asty_gate_checked_at, asty_balance_raw_at_creation,
+        hwm_price_micro_usdc, current_price_micro_usdc, buy_trigger_price_micro_usdc,
+        buy_triggered_at, last_price_at,
         created_at, updated_at
       ) VALUES (
-        ?, ?, ?, ?, ?, 'WATCHING', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, 1,
-        CURRENT_TIMESTAMP, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
+        ?, ?, ?, ?, ?, 'BUY_TRIGGERED', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, 1,
+        CURRENT_TIMESTAMP, ?, ?, ?, ?,
+        CURRENT_TIMESTAMP, CURRENT_TIMESTAMP,
+        CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
       )
     `).bind(
       id,
@@ -4254,7 +4286,10 @@ async function handleStrategyCreate(request, env) {
       capitalRaw.toString(),
       capitalRaw.toString(),
       capitalRaw.toString(),
-      astyRaw.toString()
+      astyRaw.toString(),
+      initialPrice.micro.toString(),
+      initialPrice.micro.toString(),
+      initialPrice.micro.toString()
     ).run();
 
     const row = await env.DB.prepare(`SELECT * FROM rebound_strategies WHERE id = ? AND privy_user_id = ? LIMIT 1`)
@@ -4265,8 +4300,8 @@ async function handleStrategyCreate(request, env) {
       created: true,
       tradingActive: autoExecutionRequested(env),
       message: autoExecutionRequested(env)
-        ? "Strategy created. Rebound is watching for the configured dip and can execute the BUY automatically."
-        : "Strategy created in WATCHING mode. Automatic BUY execution is currently disabled.",
+        ? "Strategy created. The initial BUY is queued immediately; the Dip setting applies to repeat cycles after a completed Take Profit."
+        : "Strategy created with its initial BUY queued. Automatic BUY execution is currently disabled.",
       strategy: normalizeStrategyRow(row),
       gate: {
         checked: true,
@@ -4490,8 +4525,8 @@ async function handleStrategyResume(request, env) {
 
 async function handleWatcherStatus(request, env) {
   try {
-    const counts=await env.DB.prepare(`SELECT asset_symbol,status,COUNT(*) AS count FROM rebound_strategies WHERE asset_symbol IN ('SOL','WBTC','BNB','RAY','ETH','ASTY') GROUP BY asset_symbol,status`).all();
-    const latestRows=await env.DB.prepare(`SELECT asset_symbol,current_price_micro_usdc,hwm_price_micro_usdc,buy_trigger_price_micro_usdc,last_price_at FROM rebound_strategies WHERE asset_symbol IN ('SOL','WBTC','BNB','RAY','ETH','ASTY') AND last_price_at IS NOT NULL ORDER BY last_price_at DESC`).all();
+    const counts=await env.DB.prepare(`SELECT asset_symbol,status,COUNT(*) AS count FROM rebound_strategies WHERE asset_symbol IN ('SOL','WBTC','BNB','RAY','ETH','GEOD','ASTY') GROUP BY asset_symbol,status`).all();
+    const latestRows=await env.DB.prepare(`SELECT asset_symbol,current_price_micro_usdc,hwm_price_micro_usdc,buy_trigger_price_micro_usdc,last_price_at FROM rebound_strategies WHERE asset_symbol IN ('SOL','WBTC','BNB','RAY','ETH','GEOD','ASTY') AND last_price_at IS NOT NULL ORDER BY last_price_at DESC`).all();
     const byAsset={};for(const row of counts?.results||[]){const symbol=String(row.asset_symbol||"SOL").toUpperCase();byAsset[symbol]||={watching:0,buyTriggered:0,bought:0,sellTriggered:0,paused:0,stopped:0};const key=({WATCHING:"watching",BUY_TRIGGERED:"buyTriggered",BOUGHT:"bought",SELL_TRIGGERED:"sellTriggered",PAUSED:"paused",STOPPED:"stopped"})[row.status];if(key)byAsset[symbol][key]=Number(row.count||0)}
     const latest={};for(const row of latestRows?.results||[]){const symbol=String(row.asset_symbol||"SOL").toUpperCase();if(latest[symbol])continue;latest[symbol]={currentPriceUsd:formatMicroUsd(row.current_price_micro_usdc),hwmPriceUsd:formatMicroUsd(row.hwm_price_micro_usdc),buyTriggerPriceUsd:formatMicroUsd(row.buy_trigger_price_micro_usdc),lastPriceAt:row.last_price_at}}
     return json(request,{status:"ok",mode:"watch-only",executionEnabled:false,priceSource:"Jupiter Price API V3",assets:byAsset,latest});
