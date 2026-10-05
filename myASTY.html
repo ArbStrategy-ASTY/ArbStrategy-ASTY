@@ -1255,7 +1255,17 @@
     // It avoids direct browser JSON-RPC for normal My ASTY scans.
     const SOLANAFM_API = "https://api.solana.fm";
     const THREE_WS_WALLET_API = "https://three.ws/api/crypto/wallet";
+    const THREE_WS_TOKEN_HOLDINGS_API = "https://three.ws/api/v1/x/solana/token-holdings";
     const THREE_WS_TOKEN_SUPPLY_API = "https://three.ws/api/v1/x/solana/token-supply";
+
+    const WALLET_BALANCE_CACHE_KEY = "myAsty.walletBalanceCache.v2";
+    const FRESH_WALLET_CACHE_MS = 45 * 1000;
+    const STALE_WALLET_CACHE_MS = 10 * 60 * 1000;
+
+    // three.ws documents 20 free token-holdings calls/minute.
+    // 3.15s spacing keeps repeated multi-wallet scans inside that lane.
+    const WALLET_SCAN_SPACING_MS = 3150;
+    const WALLET_RETRY_DELAY_MS = 3400;
 
     // Current RPC fallbacks only.
     // SubQuery's public Solana RPC has been retired.
@@ -2163,6 +2173,411 @@
       );
     }
 
+    function readWalletBalanceCache() {
+      try {
+        const raw =
+          localStorage.getItem(
+            WALLET_BALANCE_CACHE_KEY
+          );
+
+        if (!raw) {
+          return {};
+        }
+
+        const parsed =
+          JSON.parse(raw);
+
+        return (
+          parsed &&
+          typeof parsed === "object"
+            ? parsed
+            : {}
+        );
+      } catch {
+        return {};
+      }
+    }
+
+    function writeWalletBalanceCache(
+      address,
+      result
+    ) {
+      try {
+        const cache =
+          readWalletBalanceCache();
+
+        cache[address] = {
+          asty:
+            Number(result.asty) || 0,
+          tokenAccounts:
+            Number(
+              result.tokenAccounts
+            ) || 0,
+          fetchedAt:
+            Date.now()
+        };
+
+        localStorage.setItem(
+          WALLET_BALANCE_CACHE_KEY,
+          JSON.stringify(cache)
+        );
+      } catch {
+        // Cache is only a reliability helper.
+      }
+    }
+
+    function getCachedWalletBalance(
+      address,
+      maxAgeMs
+    ) {
+      const cache =
+        readWalletBalanceCache();
+
+      const item =
+        cache[address];
+
+      if (!item) {
+        return null;
+      }
+
+      const age =
+        Date.now() -
+        Number(item.fetchedAt || 0);
+
+      if (
+        !Number.isFinite(age) ||
+        age < 0 ||
+        age > maxAgeMs
+      ) {
+        return null;
+      }
+
+      return {
+        address,
+        asty:
+          Number(item.asty) || 0,
+        tokenAccounts:
+          Number(
+            item.tokenAccounts
+          ) || 0,
+        error: false,
+        errorMessage: "",
+        source: "Recent scan",
+        cached: true,
+        cacheAgeMs: age
+      };
+    }
+
+    function findAstyHoldingInPayload(
+      payload
+    ) {
+      let totalAsty = 0;
+      let matches = 0;
+      const seen =
+        new WeakSet();
+
+      function normalizeAmount(
+        object
+      ) {
+        const uiCandidates = [
+          object?.ui_amount,
+          object?.uiAmount,
+          object?.ui_amount_string,
+          object?.uiAmountString,
+          object?.tokenAmount?.uiAmountString,
+          object?.tokenAmount?.uiAmount
+        ];
+
+        for (
+          const candidate of
+          uiCandidates
+        ) {
+          const value =
+            Number(candidate);
+
+          if (
+            Number.isFinite(value)
+          ) {
+            return value;
+          }
+        }
+
+        const amountCandidate =
+          object?.raw_amount ??
+          object?.rawAmount ??
+          object?.amount ??
+          object?.tokenAmount?.amount;
+
+        const decimalsCandidate =
+          object?.decimals ??
+          object?.tokenAmount?.decimals;
+
+        const amount =
+          Number(amountCandidate);
+
+        const decimals =
+          Number(decimalsCandidate);
+
+        if (
+          !Number.isFinite(amount)
+        ) {
+          return null;
+        }
+
+        /*
+         * The endpoint can expose raw atomic amount or a normalized
+         * amount depending on the upstream shape. ASTY can never
+         * exceed ~10M whole tokens, so larger values are safely
+         * interpreted as atomic units.
+         */
+        if (
+          Number.isFinite(decimals) &&
+          decimals >= 0 &&
+          amount >
+            ORIGINAL_SUPPLY *
+            1.1
+        ) {
+          return (
+            amount /
+            Math.pow(
+              10,
+              decimals
+            )
+          );
+        }
+
+        return amount;
+      }
+
+      function walk(node) {
+        if (
+          node === null ||
+          node === undefined
+        ) {
+          return;
+        }
+
+        if (Array.isArray(node)) {
+          for (
+            const child of node
+          ) {
+            walk(child);
+          }
+          return;
+        }
+
+        if (
+          typeof node !== "object"
+        ) {
+          return;
+        }
+
+        if (seen.has(node)) {
+          return;
+        }
+
+        seen.add(node);
+
+        const mint =
+          node?.mint ??
+          node?.info?.mint ??
+          node?.token?.mint ??
+          null;
+
+        if (mint === ASTY_MINT) {
+          const value =
+            normalizeAmount(
+              node?.info ??
+              node
+            );
+
+          if (
+            value !== null &&
+            Number.isFinite(value)
+          ) {
+            totalAsty += value;
+            matches++;
+            return;
+          }
+        }
+
+        for (
+          const value of
+          Object.values(node)
+        ) {
+          walk(value);
+        }
+      }
+
+      walk(payload);
+
+      return {
+        asty: totalAsty,
+        tokenAccounts: matches
+      };
+    }
+
+    async function fetchThreeWsHoldings(
+      address,
+      attempt = 1
+    ) {
+      const url =
+        `${THREE_WS_TOKEN_HOLDINGS_API}?owner=` +
+        `${encodeURIComponent(address)}`;
+
+      try {
+        const payload =
+          await fetchJsonGet(
+            url,
+            18000
+          );
+
+        const parsed =
+          findAstyHoldingInPayload(
+            payload
+          );
+
+        return {
+          address,
+          asty:
+            parsed.asty,
+          tokenAccounts:
+            parsed.tokenAccounts,
+          error: false,
+          errorMessage: "",
+          source:
+            "Three.ws on-chain",
+          cached: false
+        };
+      } catch (error) {
+        const message =
+          String(
+            error?.message || error
+          );
+
+        /*
+         * One retry is useful for free-tier 429/402/5xx responses.
+         * We wait longer than one quota slot before retrying.
+         */
+        if (
+          attempt < 2 &&
+          (
+            message.includes("429") ||
+            message.includes("402") ||
+            message.includes("500") ||
+            message.includes("502") ||
+            message.includes("503") ||
+            message.includes("timeout")
+          )
+        ) {
+          await sleep(
+            WALLET_RETRY_DELAY_MS
+          );
+
+          return fetchThreeWsHoldings(
+            address,
+            attempt + 1
+          );
+        }
+
+        throw error;
+      }
+    }
+
+    async function getWalletAstyViaSolanaFmFiltered(
+      address
+    ) {
+      const url =
+        `${SOLANAFM_API}/v1/tokens/` +
+        `${encodeURIComponent(address)}` +
+        `/token-accounts`;
+
+      const response =
+        await fetchWithTimeout(
+          url,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type":
+                "application/json",
+              "Accept":
+                "application/json"
+            },
+            body: JSON.stringify({
+              includeSolBalance: false,
+              tokenHashes: [
+                ASTY_MINT
+              ]
+            })
+          },
+          18000
+        );
+
+      const text =
+        await response.text();
+
+      if (!response.ok) {
+        throw new Error(
+          `SolanaFM HTTP ${response.status}`
+        );
+      }
+
+      let payload;
+
+      try {
+        payload =
+          JSON.parse(text);
+      } catch {
+        throw new Error(
+          "SolanaFM returned invalid JSON"
+        );
+      }
+
+      const accounts =
+        Array.isArray(
+          payload?.tokenAccounts
+        )
+          ? payload.tokenAccounts
+          : [];
+
+      let asty = 0;
+      let tokenAccounts = 0;
+
+      for (
+        const account of accounts
+      ) {
+        if (
+          account?.info?.mint !==
+          ASTY_MINT
+        ) {
+          continue;
+        }
+
+        asty +=
+          Number(
+            account?.info
+              ?.tokenAmount
+              ?.uiAmountString ??
+            account?.info
+              ?.tokenAmount
+              ?.uiAmount ??
+            0
+          ) || 0;
+
+        tokenAccounts++;
+      }
+
+      return {
+        address,
+        asty,
+        tokenAccounts,
+        error: false,
+        errorMessage: "",
+        source: "SolanaFM",
+        cached: false
+      };
+    }
+
     async function getWalletAstyViaThreeWs(
       address
     ) {
@@ -2202,8 +2617,201 @@
         tokenAccounts,
         error: false,
         errorMessage: "",
-        source: "Three.ws"
+        source: "Three.ws portfolio",
+        cached: false
       };
+    }
+
+    async function scanWalletReliable(
+      address
+    ) {
+      /*
+       * Avoid burning free-tier calls when the user presses Analyze
+       * repeatedly. A result younger than 45 seconds is considered
+       * fresh enough for a dashboard refresh.
+       */
+      const fresh =
+        getCachedWalletBalance(
+          address,
+          FRESH_WALLET_CACHE_MS
+        );
+
+      if (fresh) {
+        return fresh;
+      }
+
+      let lastError = null;
+
+      // 1) Dedicated raw on-chain holdings endpoint.
+      try {
+        const result =
+          await fetchThreeWsHoldings(
+            address
+          );
+
+        writeWalletBalanceCache(
+          address,
+          result
+        );
+
+        return result;
+      } catch (error) {
+        lastError = error;
+        console.warn(
+          "Three.ws holdings failed:",
+          address,
+          error
+        );
+      }
+
+      // 2) The V10 endpoint that has already proven to work here.
+      try {
+        const result =
+          await getWalletAstyViaThreeWs(
+            address
+          );
+
+        writeWalletBalanceCache(
+          address,
+          result
+        );
+
+        return {
+          ...result,
+          source:
+            "Three.ws portfolio"
+        };
+      } catch (error) {
+        lastError = error;
+        console.warn(
+          "Three.ws portfolio fallback failed:",
+          address,
+          error
+        );
+      }
+
+      // 3) Independent provider, filtered to ASTY only.
+      try {
+        const result =
+          await getWalletAstyViaSolanaFmFiltered(
+            address
+          );
+
+        writeWalletBalanceCache(
+          address,
+          result
+        );
+
+        return result;
+      } catch (error) {
+        lastError = error;
+        console.warn(
+          "SolanaFM filtered fallback failed:",
+          address,
+          error
+        );
+      }
+
+      /*
+       * 4) Last-known-good cache.
+       * Never turn a temporary upstream outage into a fake zero.
+       * Cached values are explicitly marked in the UI.
+       */
+      const stale =
+        getCachedWalletBalance(
+          address,
+          STALE_WALLET_CACHE_MS
+        );
+
+      if (stale) {
+        return {
+          ...stale,
+          source:
+            "Cached balance",
+          cached: true
+        };
+      }
+
+      return {
+        address,
+        asty: 0,
+        tokenAccounts: 0,
+        error: true,
+        errorMessage:
+          lastError?.message ||
+          "All wallet data sources failed",
+        source: "",
+        cached: false
+      };
+    }
+
+    async function getWalletsReliable(
+      wallets
+    ) {
+      const results = [];
+
+      for (
+        let i = 0;
+        i < wallets.length;
+        i++
+      ) {
+        const address =
+          wallets[i];
+
+        setStatus(
+          "Reading wallets",
+          `Wallet ${i + 1} of ${wallets.length} • ${shortAddr(address)}`,
+          "READ ONLY"
+        );
+
+        const startedAt =
+          Date.now();
+
+        const result =
+          await scanWalletReliable(
+            address
+          );
+
+        results.push(result);
+
+        /*
+         * The dedicated three.ws holdings lane is 20/minute.
+         * Pace only real network scans; recent-cache hits need no wait.
+         */
+        const usedNetwork =
+          result?.source !==
+          "Recent scan" &&
+          result?.source !==
+          "Cached balance";
+
+        if (
+          usedNetwork &&
+          i < wallets.length - 1
+        ) {
+          const elapsed =
+            Date.now() -
+            startedAt;
+
+          const wait =
+            Math.max(
+              0,
+              WALLET_SCAN_SPACING_MS -
+              elapsed
+            );
+
+          if (wait > 0) {
+            setStatus(
+              "Reading wallets",
+              `Wallet ${i + 1} of ${wallets.length} complete • next wallet in ${Math.ceil(wait / 1000)}s`,
+              "READ ONLY"
+            );
+
+            await sleep(wait);
+          }
+        }
+      }
+
+      return results;
     }
 
     async function getWalletsViaThreeWs(
@@ -2962,7 +3570,7 @@
                 <button class="copy-btn" data-copy="${addr}">Copy</button>
               </div>
               <div class="wallet-meta">
-                ${escapeHtml(shortAddr(wallet.address))} • ${formatPct(wallet.currentShare, 4)} of current supply • ${wallet.tokenAccounts} ASTY token account${wallet.tokenAccounts === 1 ? "" : "s"}
+                ${escapeHtml(shortAddr(wallet.address))} • ${formatPct(wallet.currentShare, 4)} of current supply • ${wallet.tokenAccounts} ASTY token account${wallet.tokenAccounts === 1 ? "" : "s"}${wallet.cached ? " • cached" : ""}${wallet.source ? ` • ${escapeHtml(wallet.source)}` : ""}
               </div>
             </div>
 
@@ -3129,22 +3737,9 @@
             });
 
         let walletResults =
-          await getWalletsViaThreeWs(
+          await getWalletsReliable(
             parsed.valid
           );
-
-        const primaryFailed =
-          walletResults.filter(
-            wallet =>
-              wallet.error
-          ).length;
-
-        if (primaryFailed) {
-          walletResults =
-            await rescueFailedWalletsWithSolanaFm(
-              walletResults
-            );
-        }
 
         setStatus(
           "Loading ASTY supply",
@@ -3206,7 +3801,11 @@
                 ),
               errorMessage:
                 wallet.errorMessage ||
-                ""
+                "",
+              source:
+                wallet.source || "",
+              cached:
+                Boolean(wallet.cached)
             })
           );
 
@@ -3226,6 +3825,13 @@
               wallet.asty <= 0
           ).length;
 
+        const cached =
+          state.wallets.filter(
+            wallet =>
+              !wallet.error &&
+              wallet.cached
+          ).length;
+
         const success =
           state.wallets.length -
           failed;
@@ -3242,6 +3848,11 @@
         if (failed) {
           summary +=
             ` • ${failed} could not be read`;
+        }
+
+        if (cached) {
+          summary +=
+            ` • ${cached} cached`;
         }
 
         if (
