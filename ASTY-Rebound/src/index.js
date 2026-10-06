@@ -27,6 +27,7 @@ const BNB_MINT = "9gP2kCy3wA1ctvYWQk75guqXuHfrEomqydHLtcTCqiLa";
 const RAY_MINT = "4k3Dyjzvzp8eMZWUXbBCjEvwSkkk59S5iCNLY3QrkX6R";
 const ETH_MINT = "7vfCXTUXx5WJV5JADk17DUJ4ksgau7utNKj4b963voxs";
 const GEOD_MINT = "7JA5eZdCzztSfQbJvS8aVVxMFfd81Rs9VvwnocV1mKHu";
+const CARDS_MINT = "CARDSccUMFKoPRZxt5vt3ksUbxEFEcnZ3H2pd3dKxYjp";
 
 const JUPITER_PROGRAM_ID = "JUP6LkbZbjS1jKKwapdHNy74zcZ3tLUZoi5QNyVTaV4";
 const COMPUTE_BUDGET_PROGRAM_ID = "ComputeBudget111111111111111111111111111111";
@@ -44,6 +45,7 @@ const BNB_DECIMALS = 8;
 const RAY_DECIMALS = 6;
 const ETH_DECIMALS = 8;
 const GEOD_DECIMALS = 9;
+const CARDS_DECIMALS = 6;
 const PRICE_MICRO_DECIMALS = 6;
 
 const STRATEGY_ASSETS = Object.freeze({
@@ -53,7 +55,7 @@ const STRATEGY_ASSETS = Object.freeze({
   RAY: { symbol: "RAY", mint: RAY_MINT, decimals: RAY_DECIMALS, displayName: "RAY", internalAsset: "RAY", tokenProgram: TOKEN_PROGRAM_ID, transferFeeBps: 0 },
   ETH: { symbol: "ETH", mint: ETH_MINT, decimals: ETH_DECIMALS, displayName: "ETH", internalAsset: "ETH (Wormhole)", tokenProgram: TOKEN_PROGRAM_ID, transferFeeBps: 0 },
   GEOD: { symbol: "GEOD", mint: GEOD_MINT, decimals: GEOD_DECIMALS, displayName: "GEOD", internalAsset: "GEOD", tokenProgram: TOKEN_PROGRAM_ID, transferFeeBps: 0 },
-  ASTY: { symbol: "ASTY", mint: ASTY_MINT, decimals: ASTY_DECIMALS, displayName: "ASTY", internalAsset: "ASTY (Token-2022)", tokenProgram: TOKEN_2022_PROGRAM_ID, transferFeeBps: 100, sellRouteBufferBps: 50 },
+  CARDS: { symbol: "CARDS", mint: CARDS_MINT, decimals: CARDS_DECIMALS, displayName: "CARDS", internalAsset: "Collector Crypt (CARDS)", tokenProgram: TOKEN_PROGRAM_ID, transferFeeBps: 0 },
 });
 
 function getStrategyAssetConfig(assetSymbol) {
@@ -116,7 +118,6 @@ const EXECUTION_LOCK_STALE_MINUTES = 5;
 const MAX_BUY_EXECUTIONS_PER_CRON = 3;
 const MAX_SELL_EXECUTIONS_PER_CRON = 3;
 const MAX_TP_QUOTE_UNDERAGE_BPS = 50;
-const ASTY_MANUAL_STOP_MAX_REFERENCE_SHORTFALL_BPS = 1_000;
 const MAX_COMPUTE_UNIT_LIMIT = 1_400_000;
 // Maximum routine native-SOL debit a single automated swap may cause beyond any
 // explicitly allowed ATA rent. This covers normal tx + priority fees while
@@ -1100,8 +1101,8 @@ function resolveStrategyConfiguration(body) {
 
 async function loadWatchingStrategies(env, privyUserId = null) {
   const sql = privyUserId
-    ? `SELECT * FROM rebound_strategies WHERE status = 'WATCHING' AND asset_symbol IN ('SOL','WBTC','BNB','RAY','ETH','GEOD','ASTY') AND privy_user_id = ? ORDER BY created_at ASC`
-    : `SELECT * FROM rebound_strategies WHERE status = 'WATCHING' AND asset_symbol IN ('SOL','WBTC','BNB','RAY','ETH','GEOD','ASTY') ORDER BY created_at ASC`;
+    ? `SELECT * FROM rebound_strategies WHERE status = 'WATCHING' AND asset_symbol IN ('SOL','WBTC','BNB','RAY','ETH','GEOD','CARDS') AND privy_user_id = ? ORDER BY created_at ASC`
+    : `SELECT * FROM rebound_strategies WHERE status = 'WATCHING' AND asset_symbol IN ('SOL','WBTC','BNB','RAY','ETH','GEOD','CARDS') ORDER BY created_at ASC`;
   const result = privyUserId
     ? await env.DB.prepare(sql).bind(privyUserId).all()
     : await env.DB.prepare(sql).all();
@@ -1167,7 +1168,7 @@ async function getExecutionCheckStrategy(env, privyUserId, strategyId = null) {
       FROM rebound_strategies
       WHERE id = ?
         AND privy_user_id = ?
-        AND asset_symbol IN ('SOL','WBTC','BNB','RAY','ETH','GEOD','ASTY')
+        AND asset_symbol IN ('SOL','WBTC','BNB','RAY','ETH','GEOD','CARDS')
         AND status IN ('WATCHING', 'BUY_TRIGGERED')
       LIMIT 1
     `).bind(strategyId, privyUserId).first();
@@ -1177,7 +1178,7 @@ async function getExecutionCheckStrategy(env, privyUserId, strategyId = null) {
     SELECT *
     FROM rebound_strategies
     WHERE privy_user_id = ?
-      AND asset_symbol IN ('SOL','WBTC','BNB','RAY','ETH','GEOD','ASTY')
+      AND asset_symbol IN ('SOL','WBTC','BNB','RAY','ETH','GEOD','CARDS')
       AND status IN ('WATCHING', 'BUY_TRIGGERED')
     ORDER BY
       CASE WHEN status = 'BUY_TRIGGERED' THEN 0 ELSE 1 END,
@@ -2441,7 +2442,7 @@ async function loadBoughtStrategies(env) {
     SELECT *
     FROM rebound_strategies
     WHERE status = 'BOUGHT'
-      AND asset_symbol IN ('SOL','WBTC','BNB','RAY','ETH','GEOD','ASTY')
+      AND asset_symbol IN ('SOL','WBTC','BNB','RAY','ETH','GEOD','CARDS')
       AND entry_wsol_raw IS NOT NULL
       AND entry_wsol_raw > 0
     ORDER BY bought_at ASC, created_at ASC
@@ -2939,15 +2940,12 @@ async function executeTriggeredSell(env, strategy) {
       ? Number((expectedUsdcRaw - outRaw) * 10_000n / expectedUsdcRaw)
       : 0;
 
-    // Fee-on-transfer assets such as ASTY legitimately return less USDC than the
+    // Fee-on-transfer assets can legitimately return less USDC than the
     // raw reference-price calculation suggests because the outbound token transfer
     // fee is charged before/inside the swap path. Keep the normal 2% route-sanity
     // allowance for standard assets and add only the configured transfer fee for
     // fee-on-transfer assets. This mirrors the asset SELL preflight.
-    const maxSellReferenceShortfallBps =
-      reason === "STOP" && asset.symbol === "ASTY"
-        ? ASTY_MANUAL_STOP_MAX_REFERENCE_SHORTFALL_BPS
-        : sellReferenceShortfallLimitBps(asset);
+    const maxSellReferenceShortfallBps = sellReferenceShortfallLimitBps(asset);
 
     if (outRaw <= 0n || shortfallBps > maxSellReferenceShortfallBps) {
       if (reason === "TP") {
@@ -2977,7 +2975,7 @@ async function executeTriggeredSell(env, strategy) {
     const quotePriceMicro = outRaw * (10n ** BigInt(asset.decimals)) / amountRaw;
     if (reason === "TP") {
       // take_profit_price_micro_usdc is the market trigger shown to the user. For
-      // ASTY it is grossed up for the 1% outbound transfer fee. The quote itself
+      // a fee-on-transfer asset it may be grossed up for the outbound fee. The quote itself
       // is judged against the NET target derived from the actual confirmed BUY fill,
       // so the configured TP remains a net strategy target rather than a pre-fee one.
       const marketTpRaw = BigInt(String(fresh.take_profit_price_micro_usdc || 0));
@@ -3565,19 +3563,19 @@ async function handleExecutionStatus(request, env) {
 async function handleRoot(request, env) {
   return json(request, {
     service: "ASTY Rebound API",
-    buildVersion: "2026-10-06-cycle-v21-tp-retry-rearm",
+    buildVersion: "2026-10-06-cycle-v22-cards-remove-asty-trading",
     status: "online",
     balanceSource: "Helius",
     displayPriceSource: "Helius DAS",
-    supportedStrategyAssets: ["SOL", "WBTC", "BNB", "RAY", "ETH", "GEOD", "ASTY"],
-    newStrategyAssets: ["SOL", "WBTC", "BNB", "RAY", "ETH", "GEOD"],
-    legacyCloseOnlyAssets: ["ASTY"],
+    supportedStrategyAssets: ["SOL", "WBTC", "BNB", "RAY", "ETH", "GEOD", "CARDS"],
+    newStrategyAssets: ["SOL", "WBTC", "BNB", "RAY", "ETH", "GEOD", "CARDS"],
     wbtcMint: WBTC_MINT,
     bnbMint: BNB_MINT,
     rayMint: RAY_MINT,
     ethMint: ETH_MINT,
     geodMint: GEOD_MINT,
-    astyMint: ASTY_MINT,
+    cardsMint: CARDS_MINT,
+    astyAccessMint: ASTY_MINT,
     strategyAssetMints: {
       SOL: WSOL_MINT,
       WBTC: WBTC_MINT,
@@ -3585,17 +3583,7 @@ async function handleRoot(request, env) {
       RAY: RAY_MINT,
       ETH: ETH_MINT,
       GEOD: GEOD_MINT,
-      ASTY: ASTY_MINT,
-    },
-    astyTrading: {
-      newStrategiesEnabled: false,
-      existingPositionsCloseOnly: true,
-      tokenProgram: TOKEN_2022_PROGRAM_ID,
-      transferFeeBps: 100,
-      sellRouteBufferBps: 50,
-      sellReferenceShortfallLimitBps: sellReferenceShortfallLimitBps(STRATEGY_ASSETS.ASTY),
-      manualStopMaxReferenceShortfallBps: ASTY_MANUAL_STOP_MAX_REFERENCE_SHORTFALL_BPS,
-      takeProfitMode: "net-after-transfer-fee",
+      CARDS: CARDS_MINT,
     },
     watcher: {
       mode: "market-watch",
@@ -4202,14 +4190,6 @@ async function handleStrategyCreate(request, env) {
       return json(request, { status: "error", message: error.message }, 400);
     }
 
-    if (asset.symbol === "ASTY") {
-      return json(request, {
-        status: "error",
-        code: "ASTY_NEW_STRATEGIES_DISABLED",
-        message: "New ASTY Rebound strategies are temporarily disabled. Existing ASTY positions can still be closed back to USDC.",
-      }, 409);
-    }
-
     if (capitalRaw < MIN_STRATEGY_USDC_RAW) return json(request, { status: "error", message: "A new strategy requires at least 25 USDC." }, 400);
 
     const [usdc, asty, reservedRaw, reservedInUsdcRaw, activeCountRow] = await Promise.all([
@@ -4544,8 +4524,8 @@ async function handleStrategyResume(request, env) {
 
 async function handleWatcherStatus(request, env) {
   try {
-    const counts=await env.DB.prepare(`SELECT asset_symbol,status,COUNT(*) AS count FROM rebound_strategies WHERE asset_symbol IN ('SOL','WBTC','BNB','RAY','ETH','GEOD','ASTY') GROUP BY asset_symbol,status`).all();
-    const latestRows=await env.DB.prepare(`SELECT asset_symbol,current_price_micro_usdc,hwm_price_micro_usdc,buy_trigger_price_micro_usdc,last_price_at FROM rebound_strategies WHERE asset_symbol IN ('SOL','WBTC','BNB','RAY','ETH','GEOD','ASTY') AND last_price_at IS NOT NULL ORDER BY last_price_at DESC`).all();
+    const counts=await env.DB.prepare(`SELECT asset_symbol,status,COUNT(*) AS count FROM rebound_strategies WHERE asset_symbol IN ('SOL','WBTC','BNB','RAY','ETH','GEOD','CARDS') GROUP BY asset_symbol,status`).all();
+    const latestRows=await env.DB.prepare(`SELECT asset_symbol,current_price_micro_usdc,hwm_price_micro_usdc,buy_trigger_price_micro_usdc,last_price_at FROM rebound_strategies WHERE asset_symbol IN ('SOL','WBTC','BNB','RAY','ETH','GEOD','CARDS') AND last_price_at IS NOT NULL ORDER BY last_price_at DESC`).all();
     const byAsset={};for(const row of counts?.results||[]){const symbol=String(row.asset_symbol||"SOL").toUpperCase();byAsset[symbol]||={watching:0,buyTriggered:0,bought:0,sellTriggered:0,paused:0,stopped:0};const key=({WATCHING:"watching",BUY_TRIGGERED:"buyTriggered",BOUGHT:"bought",SELL_TRIGGERED:"sellTriggered",PAUSED:"paused",STOPPED:"stopped"})[row.status];if(key)byAsset[symbol][key]=Number(row.count||0)}
     const latest={};for(const row of latestRows?.results||[]){const symbol=String(row.asset_symbol||"SOL").toUpperCase();if(latest[symbol])continue;latest[symbol]={currentPriceUsd:formatMicroUsd(row.current_price_micro_usdc),hwmPriceUsd:formatMicroUsd(row.hwm_price_micro_usdc),buyTriggerPriceUsd:formatMicroUsd(row.buy_trigger_price_micro_usdc),lastPriceAt:row.last_price_at}}
     return json(request,{status:"ok",mode:"watch-only",executionEnabled:false,priceSource:"Jupiter Price API V3",assets:byAsset,latest});
