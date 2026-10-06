@@ -2886,6 +2886,25 @@ async function executeTriggeredSell(env, strategy) {
       WHERE id = ? AND status = 'SELL_TRIGGERED'
     `).bind(referencePrice.micro.toString(), strategy.id).run();
 
+    // A TP sell may have been triggered on an earlier cron, but the market can
+    // fall back below the TP trigger before a good executable Jupiter quote exists.
+    // In that case the position must leave RETRYING and return to BOUGHT.
+    // The normal position watcher can then wait for the TP to be reached again.
+    if (reason === "TP") {
+      const marketTpRawNow = BigInt(String(fresh.take_profit_price_micro_usdc || 0));
+      if (marketTpRawNow > 0n && referencePrice.micro < marketTpRawNow) {
+        await releaseSellExecutionLock(env, strategy.id, lock, reason, { rearm: true });
+        return {
+          ok: true,
+          rearmed: true,
+          strategyId: strategy.id,
+          reason: "take-profit-market-fell-below-trigger",
+          currentPriceUsd: formatMicroUsd(referencePrice.micro),
+          marketTriggerPriceUsd: formatMicroUsd(marketTpRawNow),
+        };
+      }
+    }
+
     if (BigInt(nativeSol.raw) < MIN_GAS_LAMPORTS) throw new Error("Gas reserve dropped below 0.005 SOL before SELL execution.");
     if (!tradingAsset.ready || !tradingAsset.address) throw new Error(`${asset.symbol} token account is not ready for SELL execution.`);
     if (!usdcToken.ready || !usdcToken.address) throw new Error("USDC token account is not ready for SELL execution.");
@@ -3546,7 +3565,7 @@ async function handleExecutionStatus(request, env) {
 async function handleRoot(request, env) {
   return json(request, {
     service: "ASTY Rebound API",
-    buildVersion: "2026-10-04-cycle-v20-geod-immediate-entry-presets",
+    buildVersion: "2026-10-06-cycle-v21-tp-retry-rearm",
     status: "online",
     balanceSource: "Helius",
     displayPriceSource: "Helius DAS",
