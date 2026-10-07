@@ -146,6 +146,44 @@ select,input[type=url]{width:100%;background:#09090f;color:var(--text);border:1p
   .success-overlay,.success-card,.success-check{transition:none!important}
   .success-overlay.show .success-particles i{animation:none!important}
 }
+.dust-estimate{color:#bda2ff}
+.receipt-card{
+  display:none;margin:16px 0;border:1px solid rgba(114,239,169,.18);border-radius:18px;
+  background:
+    radial-gradient(circle at 90% 0%,rgba(114,239,169,.07),transparent 38%),
+    rgba(10,10,16,.96);
+  box-shadow:0 18px 48px rgba(0,0,0,.18);overflow:hidden;
+}
+.receipt-card.show{display:block}
+.receipt-head{
+  display:flex;align-items:flex-start;justify-content:space-between;gap:12px;
+  padding:16px;border-bottom:1px solid var(--line)
+}
+.receipt-head h3{margin:0;font-size:12px;font-weight:1000;color:var(--green);letter-spacing:.03em}
+.receipt-head p{margin:5px 0 0;font-size:8px;line-height:1.5;color:var(--muted)}
+.receipt-badge{
+  flex:0 0 auto;padding:5px 8px;border-radius:999px;border:1px solid rgba(114,239,169,.24);
+  background:rgba(114,239,169,.055);font-size:8px;font-weight:900;color:var(--green)
+}
+.receipt-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--line)}
+.receipt-stat{min-width:0;padding:13px 12px;background:#0b0b12}
+.receipt-stat small{display:block;font-size:7px;line-height:1.35;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+.receipt-stat b{display:block;margin-top:5px;font-size:11px;overflow-wrap:anywhere}
+.receipt-stat.net b{color:var(--green)}
+.receipt-stat.fee b{color:#bda2ff}
+.receipt-txs{padding:13px 16px 15px}
+.receipt-txs-title{font-size:8px;font-weight:900;color:#d4cfdb;margin-bottom:8px}
+.receipt-links{display:flex;gap:7px;flex-wrap:wrap}
+.receipt-link{
+  display:inline-flex;align-items:center;gap:5px;padding:7px 9px;border-radius:9px;
+  border:1px solid rgba(189,140,255,.18);background:rgba(189,140,255,.035);
+  color:#cdb9ff;text-decoration:none;font-size:8px;font-weight:900
+}
+.receipt-link:hover{border-color:rgba(189,140,255,.38)}
+.receipt-local{margin-top:9px;font-size:7px;line-height:1.5;color:#666171}
+@media(max-width:700px){
+  .receipt-grid{grid-template-columns:repeat(2,1fr)}
+}
 .actionbar{position:sticky;bottom:9px;margin-top:13px;border:1px solid rgba(189,140,255,.28);border-radius:18px;padding:13px;background:rgba(12,11,20,.95);display:none;align-items:center;justify-content:space-between;gap:12px}
 .actiontext small{display:block;color:var(--muted);font-size:8px;text-transform:uppercase;font-weight:1000;letter-spacing:.08em}.actiontext strong{font-size:17px;color:var(--green)}
 .security{margin-top:13px;border:1px solid var(--line);border-radius:20px;overflow:hidden;background:rgba(13,13,20,.94)}
@@ -812,9 +850,9 @@ footer{padding-bottom:10px}
           <div class="dust-count" id="dustCount">—</div>
         </div>
         <div class="dust-copy"
-             data-en="Very small token remainders (up to 0.00001 token) that can be burned and then closed. Never selected automatically. Burning is permanent."
-             data-de="Sehr kleine Token-Restbestände (bis 0,00001 Token), die verbrannt und danach geschlossen werden können. Nie automatisch ausgewählt. Das Verbrennen ist endgültig.">
-          Very small token remainders (up to 0.00001 token) that can be burned and then closed. Never selected automatically. Burning is permanent.
+             data-en="Tiny token remainders or token balances with an estimated value of $0.01 or less can appear here. Never selected automatically. Burning is permanent."
+             data-de="Sehr kleine Token-Restbestände oder Tokenbestände mit einem geschätzten Wert von höchstens 0,01 $ können hier erscheinen. Nie automatisch ausgewählt. Das Verbrennen ist endgültig.">
+          Tiny token remainders or token balances with an estimated value of $0.01 or less can appear here. Never selected automatically. Burning is permanent.
         </div>
       </div>
       <div id="dustList"><div class="empty"><b data-en="No scan yet." data-de="Noch kein Scan.">No scan yet.</b><span data-en="Dust accounts are checked during the wallet scan." data-de="Dust-Konten werden beim Wallet-Scan geprüft.">Dust accounts are checked during the wallet scan.</span></div></div>
@@ -827,12 +865,49 @@ footer{padding-bottom:10px}
   <button class="btn primary" id="rescueBtn" data-en="UNLOCK MY SOL" data-de="SOL ZURÜCKHOLEN">UNLOCK MY SOL</button>
 </div>
 
+<section class="receipt-card" id="lastUnlockReceipt" aria-live="polite">
+  <div class="receipt-head">
+    <div>
+      <h3 data-en="Last Unlock · On-chain receipt" data-de="Letzter Unlock · On-Chain-Beleg">Last Unlock · On-chain receipt</h3>
+      <p id="receiptTime">—</p>
+    </div>
+    <div class="receipt-badge" id="receiptBadge">VERIFIED</div>
+  </div>
+  <div class="receipt-grid">
+    <div class="receipt-stat">
+      <small data-en="Gross recovered" data-de="Brutto zurückgeholt">Gross recovered</small>
+      <b id="receiptGross">—</b>
+    </div>
+    <div class="receipt-stat fee">
+      <small data-en="ASTY Unlockr Fee" data-de="ASTY Unlockr Fee">ASTY Unlockr Fee</small>
+      <b id="receiptFee">—</b>
+    </div>
+    <div class="receipt-stat">
+      <small data-en="Network fees" data-de="Netzwerkgebühren">Network fees</small>
+      <b id="receiptNetwork">—</b>
+    </div>
+    <div class="receipt-stat net">
+      <small data-en="Net wallet increase" data-de="Netto in der Wallet">Net wallet increase</small>
+      <b id="receiptNet">—</b>
+    </div>
+  </div>
+  <div class="receipt-txs">
+    <div class="receipt-txs-title" data-en="Transactions" data-de="Transaktionen">Transactions</div>
+    <div class="receipt-links" id="receiptTxLinks"></div>
+    <div class="receipt-local"
+         data-en="This receipt is stored only in this browser for the connected wallet. The transaction data itself is public on Solana."
+         data-de="Dieser Beleg wird nur in diesem Browser für die verbundene Wallet gespeichert. Die Transaktionsdaten selbst sind öffentlich auf Solana.">
+      This receipt is stored only in this browser for the connected wallet. The transaction data itself is public on Solana.
+    </div>
+  </div>
+</section>
+
 <section class="security" style="display:none" aria-hidden="true">
   <div class="securityhead"><h3>Wallet Security Check</h3><p>Aktive Token-Delegates werden nur angezeigt. Berechtigungen werden nicht automatisch verändert.</p></div>
   <div id="delegateList"><div class="empty"><b>Noch keine Daten.</b>Der Delegate-Check läuft automatisch mit dem Wallet-Scan.</div></div>
 </section>
 
-<div class="notice"><strong data-en="Unlock principle:" data-de="Rescue-Prinzip:">Unlock principle:</strong> <span data-en="Only token accounts with an exact token balance of 0 are closed. 2% of the SOL actually recovered is sent to the ASTY Reserve Wallet as the ASTY Unlockr Fee. Network fees are separate." data-de="Es werden ausschließlich Tokenkonten mit Tokenbestand exakt 0 geschlossen. Von dem tatsächlich zurückgeholten SOL gehen 2 % als ASTY Unlockr Fee an die ASTY Reserve Wallet. Netzwerkgebühren sind separat.">Only token accounts with an exact token balance of 0 are closed. 2% of the SOL actually recovered is sent to the ASTY Reserve Wallet as the ASTY Unlockr Fee. Network fees are separate.</span></div>
+<div class="notice"><strong data-en="Unlock principle:" data-de="Rescue-Prinzip:">Unlock principle:</strong> <span data-en="Empty token accounts can be closed directly. Dust Cleanup is optional and permanently burns only the dust balances you explicitly select before closing those accounts. 2% of recovered SOL is sent to the ASTY Reserve Wallet as the ASTY Unlockr Fee. Network fees are separate." data-de="Leere Tokenkonten können direkt geschlossen werden. Dust Cleanup ist optional und verbrennt dauerhaft nur die Dust-Bestände, die du ausdrücklich auswählst, bevor diese Konten geschlossen werden. 2 % des zurückgeholten SOL gehen als ASTY Unlockr Fee an die ASTY Reserve Wallet. Netzwerkgebühren sind separat.">Empty token accounts can be closed directly. Dust Cleanup is optional and permanently burns only the dust balances you explicitly select before closing those accounts. 2% of recovered SOL is sent to the ASTY Reserve Wallet as the ASTY Unlockr Fee. Network fees are separate.</span></div>
 
 
 <section class="contract-section-unlockr" aria-label="ASTY contract address">
@@ -909,10 +984,10 @@ footer{padding-bottom:10px}
     <div class="success-check">✓</div>
     <div class="success-kicker" data-en="UNLOCK COMPLETE" data-de="UNLOCK ABGESCHLOSSEN">UNLOCK COMPLETE</div>
     <div class="success-amount" id="successAmount">0 SOL</div>
-    <div class="success-copy"
-         data-en="Unlocked back to your wallet after the 2% ASTY Unlockr Fee. Network fees are separate."
-         data-de="Nach der 2-%-ASTY-Unlockr-Fee zurück in deine Wallet geholt. Netzwerkgebühren sind separat.">
-      Unlocked back to your wallet after the 2% ASTY Unlockr Fee. Network fees are separate.
+    <div class="success-copy" id="successCopy"
+         data-en="Net SOL received on-chain after the 2% ASTY Unlockr Fee and network fees."
+         data-de="Netto-SOL, die nach der 2-%-ASTY-Unlockr-Fee und den Netzwerkgebühren On-Chain in deiner Wallet angekommen sind.">
+      Net SOL received on-chain after the 2% ASTY Unlockr Fee and network fees.
     </div>
   </div>
 </div>
@@ -922,7 +997,10 @@ const LAMPORTS_PER_SOL=1_000_000_000;
 const TOKEN_PROGRAM_ID_STR="TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA";
 const TOKEN_2022_PROGRAM_ID_STR="TokenzQdYh7D4m3rZPFYycgPPK3uTQxjTzqkJ9dM9";
 const BATCH_SIZE=7;
-const DUST_MAX_UI_DECIMALS=5; // max base-token amount: 0.00001
+const DUST_MAX_UI_DECIMALS=5; // legacy micro-amount fallback: <= 0.00001 token
+const DUST_MAX_USD=0.01;      // estimated token value threshold
+const ASSET_BATCH_SIZE=50;
+const RECEIPT_STORAGE_PREFIX="astyUnlockr:lastReceipt:";
 const RESCUE_FEE_BPS=200;
 const RESCUE_FEE_WALLET="7jJ8wC8fquf4uEz4DpMiu6SFP89sEMy1VcY1LLYyZ3nK";
 const RESCUE_GATEWAY="/rpc";
@@ -947,7 +1025,7 @@ const TXT={
   loadingSpl:{en:"Loading SPL token accounts…",de:"SPL-Tokenkonten werden geladen…"},
   checkingClosability:{en:"Checking close eligibility for empty token accounts…",de:"Leere Tokenkonten werden auf Schließbarkeit geprüft…"},
   checkingDust:{en:"Checking tiny token remainders for Dust Cleanup…",de:"Kleine Token-Restbestände werden für Dust Cleanup geprüft…"},
-  loadingDustNames:{en:"Loading token names for Dust Cleanup…",de:"Tokennamen für Dust Cleanup werden geladen…"},
+  loadingDustNames:{en:"Loading token names and value estimates for Dust Cleanup…",de:"Tokennamen und Wertschätzungen für Dust Cleanup werden geladen…"},
   scanDone:{en:"{count} token accounts checked · scan complete",de:"{count} Tokenkonten geprüft · Scan abgeschlossen"},
   scanDoneSkipped:{en:"{count} token accounts checked · {skipped} account(s) skipped because the close preflight failed",de:"{count} Tokenkonten geprüft · {skipped} Konto/Konten übersprungen, weil der Close-Preflight fehlgeschlagen ist"},
   scanFailed:{en:"Scan failed: {msg}",de:"Scan fehlgeschlagen: {msg}"},
@@ -1024,6 +1102,7 @@ function applyLanguage(lang){
     renderDelegates();
     renderStats();
   }
+  if(lastReceipt)renderReceipt(lastReceipt);
 
   const boxes=[...document.querySelectorAll(".acctcheck")];
   if(boxes.length){
@@ -1034,7 +1113,7 @@ function applyLanguage(lang){
 
 
 let PublicKey,Transaction,SystemProgram,createCloseAccountInstruction,createBurnCheckedInstruction,TOKEN_PROGRAM_ID,TOKEN_2022_PROGRAM_ID;
-let provider=null,walletPubkey=null,emptyAccounts=[],dustAccounts=[],delegates=[],skippedUnclosableAccounts=[],skippedDustAccounts=[],busy=false,activeRpc=null,rescueNetworkOnline=false,connectionPending=false,connectionSyncBusy=false,hasScanned=false,rescueUpstream="";
+let provider=null,walletPubkey=null,emptyAccounts=[],dustAccounts=[],delegates=[],skippedUnclosableAccounts=[],skippedDustAccounts=[],busy=false,activeRpc=null,rescueNetworkOnline=false,connectionPending=false,connectionSyncBusy=false,hasScanned=false,rescueUpstream="",lastReceipt=null;
 
 function scanStatus(text,kind=""){const cls=kind==="live"?" live":kind==="err"?" err":"";$("scanStatus").innerHTML=`<span class="dot${cls}"></span>${esc(text)}`}
 function progress(v){$("progress").style.display=(v>0&&v<100)?"block":"none";$("bar").style.width=`${v}%`}
@@ -1105,6 +1184,7 @@ async function applyConnectedWallet(pubkey,{autoScan=true}={}){
   $("scanBtn").disabled=!rescueNetworkOnline;
 
   scanStatus(tr("connected",{wallet:short(nextKey)}),"live");
+  loadLastReceipt(nextKey);
 
   if(autoScan && rescueNetworkOnline && !busy && !alreadySame){
     await sleep(250);
@@ -1169,6 +1249,7 @@ function installProviderListeners(){
       $("disconnectBtn").style.display="none";
       $("scanBtn").disabled=true;
       resetResults();
+      hideReceipt();
       updateWalletButton();
       scanStatus(tr("disconnected"));
     });
@@ -1249,7 +1330,7 @@ document.addEventListener("visibilitychange",()=>{
   if(document.visibilityState==="visible")schedulePhantomSync();
 });
 
-async function disconnectWallet(){try{if(provider?.disconnect)await provider.disconnect()}catch{}connectionPending=false;walletPubkey=null;emptyAccounts=[];dustAccounts=[];delegates=[];skippedUnclosableAccounts=[];skippedDustAccounts=[];$("connectedLine").style.display="none";$("connectBtn").style.display="";$("disconnectBtn").style.display="none";$("scanBtn").disabled=true;resetResults();scanStatus("Wallet getrennt.")}
+async function disconnectWallet(){try{if(provider?.disconnect)await provider.disconnect()}catch{}connectionPending=false;walletPubkey=null;emptyAccounts=[];dustAccounts=[];delegates=[];skippedUnclosableAccounts=[];skippedDustAccounts=[];$("connectedLine").style.display="none";$("connectBtn").style.display="";$("disconnectBtn").style.display="none";$("scanBtn").disabled=true;resetResults();hideReceipt();scanStatus("Wallet getrennt.")}
 function resetResults(){hasScanned=false;$("recoverSol").textContent="—";$("emptyCount").textContent="—";$("selectedCount").textContent="—";$("selectedSol").textContent="— SOL";$("delegateCount").textContent="—";$("dustCount").textContent="—";$("accountList").innerHTML=`<div class="empty"><b>Noch kein Scan.</b>Verbinde Phantom und starte den Wallet-Scan.</div>`;$("dustList").innerHTML=`<div class="empty"><b>Noch kein Scan.</b>Dust-Konten werden beim Wallet-Scan geprüft.</div>`;$("delegateList").innerHTML=`<div class="empty"><b>Noch keine Daten.</b>Der Delegate-Check läuft automatisch mit dem Wallet-Scan.</div>`;$("actionBar").style.display="none";$("selectAllBtn").disabled=true}
 async function getParsedAccounts(programId){return await rpcRequest("getTokenAccountsByOwner",[walletPubkey.toString(),{programId},{encoding:"jsonParsed",commitment:"confirmed"}])}
 function parseTokenAccount(row,programId){
@@ -1269,12 +1350,28 @@ function formatRawTokenAmount(raw,decimals){
   return `${negative?"-":""}${whole}${fraction?`.`+fraction:""}`;
 }
 
+function isLegacyMicroDust(a){
+  if(!Number.isInteger(a?.decimals)||a.decimals<DUST_MAX_UI_DECIMALS)return false;
+  const threshold=10n**BigInt(a.decimals-DUST_MAX_UI_DECIMALS);
+  return a.rawAmount>0n&&a.rawAmount<=threshold;
+}
+
 function isDustCandidate(a){
   if(!a||a.isNative||a.rawAmount<=0n)return false;
   if(!authorityCanClose(a))return false;
-  if(!Number.isInteger(a.decimals)||a.decimals<DUST_MAX_UI_DECIMALS)return false;
-  const threshold=10n**BigInt(a.decimals-DUST_MAX_UI_DECIMALS);
-  return a.rawAmount<=threshold;
+
+  if(isLegacyMicroDust(a))return true;
+
+  const usd=Number(a.estimatedUsdValue);
+  return Number.isFinite(usd)&&usd>=0&&usd<=DUST_MAX_USD;
+}
+
+function formatDustUsd(a){
+  const usd=Number(a?.estimatedUsdValue);
+  if(!Number.isFinite(usd)||usd<0)return "";
+  if(usd<0.0001)return "< $0.0001";
+  if(usd<0.01)return `< $0.01`;
+  return `$${usd.toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:4})}`;
 }
 
 function operationInstructionCost(a){return a.kind==="dust"?2:1}
@@ -1346,7 +1443,7 @@ async function isolateUnclosableAccounts(batch,blockhash){
   const value=await simulateCloseEligibilityBatch(batch,blockhash);
 
   // Keep scan-time simulations below the public /rpc rate limit.
-  await sleep(650);
+  await sleep(800);
 
   if(simulationSucceeded(value))return [];
 
@@ -1363,10 +1460,10 @@ async function isolateUnclosableAccounts(batch,blockhash){
   return [...left,...right];
 }
 
-async function filterUnclosableAccounts(candidates){
+async function filterUnclosableAccounts(candidates,statusKey="checkingClosability"){
   if(!candidates.length)return {closable:[],blocked:[]};
 
-  scanStatus(tr("checkingClosability"));
+  scanStatus(tr(statusKey));
   const bh=await latestBlockhash();
   const blocked=[];
 
@@ -1394,23 +1491,27 @@ async function scanWallet(){
     const zeroBalanceCandidates=all
       .filter(a=>a.rawAmount===0n&&authorityCanClose(a)&&!a.isNative)
       .map(a=>({...a,kind:"empty"}));
-    const dustCandidates=all
-      .filter(isDustCandidate)
-      .map(a=>({...a,kind:"dust"}));
+    const positiveBalanceCandidates=all
+      .filter(a=>a.rawAmount>0n&&authorityCanClose(a)&&!a.isNative);
     delegates=all.filter(a=>!!a.delegate&&a.delegatedRaw>0n);
 
     progress(62);
-    const emptyEligibility=await filterUnclosableAccounts(zeroBalanceCandidates);
+    const emptyEligibility=await filterUnclosableAccounts(zeroBalanceCandidates,"checkingClosability");
     emptyAccounts=emptyEligibility.closable;
     skippedUnclosableAccounts=emptyEligibility.blocked;
 
-    progress(78);
+    progress(72);
+    const enrichedPositive=await enrichTokenMetadata(positiveBalanceCandidates);
+    const dustCandidates=enrichedPositive
+      .filter(isDustCandidate)
+      .map(a=>({...a,kind:"dust"}));
+
+    progress(82);
     let dustEligibility={closable:[],blocked:[]};
     if(dustCandidates.length){
-      scanStatus(tr("checkingDust"));
-      dustEligibility=await filterUnclosableAccounts(dustCandidates);
+      dustEligibility=await filterUnclosableAccounts(dustCandidates,"checkingDust");
     }
-    dustAccounts=await enrichDustTokenMetadata(dustEligibility.closable);
+    dustAccounts=dustEligibility.closable;
     skippedDustAccounts=dustEligibility.blocked;
 
     hasScanned=true;
@@ -1445,37 +1546,58 @@ function tokenDisplayName(a){
   return short(a?.mint);
 }
 
-async function enrichDustTokenMetadata(accounts){
+async function enrichTokenMetadata(accounts){
   if(!accounts.length)return accounts;
 
   const ids=[...new Set(accounts.map(a=>a.mint).filter(Boolean))];
   if(!ids.length)return accounts;
 
+  const byMint=new Map();
+
   try{
     scanStatus(tr("loadingDustNames"));
-    const assets=await rpcRequest("getAssetBatch",{
-      ids,
-      displayOptions:{showFungible:true}
-    });
 
-    const byMint=new Map();
-    (Array.isArray(assets)?assets:[]).forEach((asset,index)=>{
-      if(!asset)return;
-      const id=asset.id||ids[index];
-      const name=String(asset?.content?.metadata?.name||"").trim();
-      const symbol=String(
-        asset?.content?.metadata?.symbol||
-        asset?.token_info?.symbol||
-        ""
-      ).trim();
-      if(id)byMint.set(id,{tokenName:name,tokenSymbol:symbol});
-    });
+    for(let i=0;i<ids.length;i+=ASSET_BATCH_SIZE){
+      const chunk=ids.slice(i,i+ASSET_BATCH_SIZE);
+      const assets=await rpcRequest("getAssetBatch",{
+        ids:chunk,
+        displayOptions:{showFungible:true}
+      });
 
-    return accounts.map(a=>({...a,...(byMint.get(a.mint)||{})}));
+      (Array.isArray(assets)?assets:[]).forEach((asset,index)=>{
+        if(!asset)return;
+        const id=asset.id||chunk[index];
+        const name=String(asset?.content?.metadata?.name||"").trim();
+        const symbol=String(
+          asset?.content?.metadata?.symbol||
+          asset?.token_info?.symbol||
+          ""
+        ).trim();
+        const price=Number(asset?.token_info?.price_info?.price_per_token);
+        if(id)byMint.set(id,{
+          tokenName:name,
+          tokenSymbol:symbol,
+          tokenPriceUsd:Number.isFinite(price)&&price>=0?price:null
+        });
+      });
+
+      if(i+ASSET_BATCH_SIZE<ids.length)await sleep(650);
+    }
   }catch(e){
-    console.warn("ASTY Unlockr token metadata unavailable",e);
-    return accounts;
+    console.warn("ASTY Unlockr token metadata/value unavailable",e);
   }
+
+  return accounts.map(a=>{
+    const meta=byMint.get(a.mint)||{};
+    const uiAmount=Number(formatRawTokenAmount(a.rawAmount,a.decimals));
+    const price=Number(meta.tokenPriceUsd);
+    const estimatedUsdValue=
+      Number.isFinite(uiAmount)&&uiAmount>=0&&Number.isFinite(price)&&price>=0
+        ?uiAmount*price
+        :null;
+
+    return {...a,...meta,estimatedUsdValue};
+  });
 }
 
 function renderAccounts(){
@@ -1503,7 +1625,7 @@ function renderAccounts(){
           <div class="tokenidentity"><div class="tokenname">${esc(tokenDisplayName(a))}</div></div>
           <div class="meta">${programLabel(a)} · Mint ${short(a.mint)} · Account ${short(a.address)} · ${esc(tr("dustBalance",{amount}))}</div>
         </div>
-        <div class="value"><b>${fmtSol(a.lamports/LAMPORTS_PER_SOL)}</b><small class="dust-amount">${esc(amount)} token · ${esc(tr("boundLamports"))}</small></div>
+        <div class="value"><b>${fmtSol(a.lamports/LAMPORTS_PER_SOL)}</b><small class="dust-amount">${esc(amount)} ${esc(a.tokenSymbol||"token")}${formatDustUsd(a)?` · <span class="dust-estimate">${esc(formatDustUsd(a))}</span>`:""} · ${esc(tr("boundLamports"))}</small></div>
       </label>`;
     }).join("");
   }
@@ -1570,6 +1692,97 @@ async function confirmSignature(sig){
   }
   return false;
 }
+
+async function getOnChainTransaction(sig){
+  for(let i=0;i<12;i++){
+    try{
+      const tx=await rpcRequest("getTransaction",[
+        sig,
+        {commitment:"confirmed",encoding:"json",maxSupportedTransactionVersion:0}
+      ]);
+      if(tx?.meta&&Array.isArray(tx.meta.preBalances)&&Array.isArray(tx.meta.postBalances)){
+        return tx;
+      }
+    }catch(e){
+      console.warn("ASTY Unlockr receipt lookup",e);
+    }
+    await sleep(500);
+  }
+  return null;
+}
+
+function hideReceipt(){
+  lastReceipt=null;
+  const box=$("lastUnlockReceipt");
+  if(box)box.classList.remove("show");
+}
+
+function receiptStorageKey(wallet){
+  return `${RECEIPT_STORAGE_PREFIX}${wallet}`;
+}
+
+function renderReceipt(receipt){
+  if(!receipt)return hideReceipt();
+  lastReceipt=receipt;
+
+  const box=$("lastUnlockReceipt");
+  if(!box)return;
+
+  const locale=currentLang==="de"?"de-DE":"en-US";
+  const date=new Date(receipt.timestamp||Date.now());
+  $("receiptTime").textContent=date.toLocaleString(locale);
+
+  const verified=receipt.verified===true;
+  $("receiptBadge").textContent=verified
+    ?(currentLang==="de"?"ON-CHAIN VERIFIZIERT":"ON-CHAIN VERIFIED")
+    :(currentLang==="de"?"BESTÄTIGT · DETAILS OFFEN":"CONFIRMED · DETAILS PENDING");
+
+  $("receiptGross").textContent=Number.isFinite(receipt.grossLamports)
+    ?fmtSol(receipt.grossLamports/LAMPORTS_PER_SOL)
+    :"—";
+  $("receiptFee").textContent=Number.isFinite(receipt.unlockrFeeLamports)
+    ?fmtSol(receipt.unlockrFeeLamports/LAMPORTS_PER_SOL)
+    :"—";
+  $("receiptNetwork").textContent=Number.isFinite(receipt.networkFeeLamports)
+    ?fmtSol(receipt.networkFeeLamports/LAMPORTS_PER_SOL)
+    :"—";
+  $("receiptNet").textContent=Number.isFinite(receipt.netLamports)
+    ?fmtSol(receipt.netLamports/LAMPORTS_PER_SOL)
+    :"—";
+
+  const txs=Array.isArray(receipt.signatures)?receipt.signatures:[];
+  $("receiptTxLinks").innerHTML=txs.map((sig,i)=>{
+    const safe=String(sig||"");
+    return `<a class="receipt-link" href="https://solscan.io/tx/${encodeURIComponent(safe)}" target="_blank" rel="noopener noreferrer">TX ${i+1} ↗</a>`;
+  }).join("");
+
+  box.classList.add("show");
+}
+
+function saveReceipt(receipt){
+  if(!receipt?.wallet)return;
+  lastReceipt=receipt;
+  try{
+    localStorage.setItem(receiptStorageKey(receipt.wallet),JSON.stringify(receipt));
+  }catch(e){
+    console.warn("ASTY Unlockr receipt storage",e);
+  }
+  renderReceipt(receipt);
+}
+
+function loadLastReceipt(wallet){
+  hideReceipt();
+  if(!wallet)return;
+  try{
+    const raw=localStorage.getItem(receiptStorageKey(wallet));
+    if(!raw)return;
+    const receipt=JSON.parse(raw);
+    if(receipt?.wallet===wallet)renderReceipt(receipt);
+  }catch(e){
+    console.warn("ASTY Unlockr receipt load",e);
+  }
+}
+
 function log(msg){$("txLog").style.display="block";$("txLog").insertAdjacentHTML("beforeend",`${esc(msg)}<br>`);$("txLog").scrollTop=$("txLog").scrollHeight}
 
 function waitForAppVisible(timeoutMs=4000){
@@ -1601,7 +1814,7 @@ function waitForAppVisible(timeoutMs=4000){
   });
 }
 
-async function playSuccessOverlay(netLamports){
+async function playSuccessOverlay(netLamports,{verified=true}={}){
   const overlay=$("successOverlay");
   if(!overlay)return;
 
@@ -1609,6 +1822,13 @@ async function playSuccessOverlay(netLamports){
   await sleep(160);
 
   $("successAmount").textContent=fmtSol(netLamports/LAMPORTS_PER_SOL);
+  $("successCopy").textContent=verified
+    ?(currentLang==="de"
+      ?"Netto-SOL, die nach der 2-%-ASTY-Unlockr-Fee und den Netzwerkgebühren On-Chain in deiner Wallet angekommen sind."
+      :"Net SOL received on-chain after the 2% ASTY Unlockr Fee and network fees.")
+    :(currentLang==="de"
+      ?"Unlock bestätigt. Die exakten On-Chain-Gebührendaten konnten noch nicht vollständig geladen werden."
+      :"Unlock confirmed. Exact on-chain fee details are still loading.");
 
   overlay.classList.remove("show");
   overlay.setAttribute("aria-hidden","false");
@@ -1626,48 +1846,145 @@ async function playSuccessOverlay(netLamports){
 async function performRescue(){
   const selected=selectedAccounts();if(!selected.length)return;
   if(selected.some(a=>a.kind==="dust")&&!$("dustConfirmCheck").checked)return;
+
   const batches=splitRescueBatches(selected,BATCH_SIZE);
   const feeWallet=new PublicKey(RESCUE_FEE_WALLET);
-  $("confirmBtn").disabled=true;$("cancelBtn").disabled=true;$("txLog").innerHTML="";$("txLog").style.display="block";
+  const walletString=walletPubkey.toString();
+
+  $("confirmBtn").disabled=true;
+  $("cancelBtn").disabled=true;
+  $("txLog").innerHTML="";
+  $("txLog").style.display="block";
+
   let done=0;
-  let confirmedNetLamports=0;
   let allBatchesConfirmed=true;
+  let receiptVerified=true;
+  let receiptGross=0;
+  let receiptUnlockrFee=0;
+  let receiptNetworkFee=0;
+  let receiptNet=0;
+  const signatures=[];
+
+  const plannedGross=selected.reduce((s,a)=>s+a.lamports,0);
+  const plannedUnlockrFee=feeLamports(plannedGross);
+
   try{
     for(let i=0;i<batches.length;i++){
       const batch=batches[i];
       const batchGross=batch.reduce((s,a)=>s+a.lamports,0);
       const batchFee=feeLamports(batchGross);
-      const batchNet=batchGross-batchFee;
+      const batchNetBeforeNetwork=batchGross-batchFee;
 
-      const bh=await latestBlockhash();const tx=new Transaction({feePayer:walletPubkey,recentBlockhash:bh.blockhash});
+      const bh=await latestBlockhash();
+      const tx=new Transaction({feePayer:walletPubkey,recentBlockhash:bh.blockhash});
+
       for(const a of batch)addAccountInstructions(tx,a);
       if(batchFee>0){
-        tx.add(SystemProgram.transfer({fromPubkey:walletPubkey,toPubkey:feeWallet,lamports:batchFee}));
+        tx.add(SystemProgram.transfer({
+          fromPubkey:walletPubkey,
+          toPubkey:feeWallet,
+          lamports:batchFee
+        }));
       }
 
       const batchDust=batch.filter(a=>a.kind==="dust").length;
-      log(tr("batchLog",{i:i+1,total:batches.length,accounts:batch.length,dust:batchDust,gross:fmtSol(batchGross/LAMPORTS_PER_SOL),fee:fmtSol(batchFee/LAMPORTS_PER_SOL),net:fmtSol(batchNet/LAMPORTS_PER_SOL)}));
+      log(tr("batchLog",{
+        i:i+1,
+        total:batches.length,
+        accounts:batch.length,
+        dust:batchDust,
+        gross:fmtSol(batchGross/LAMPORTS_PER_SOL),
+        fee:fmtSol(batchFee/LAMPORTS_PER_SOL),
+        net:fmtSol(batchNetBeforeNetwork/LAMPORTS_PER_SOL)
+      }));
+
       log(tr("preflightCheck"));
       await simulateRescueTransaction(tx);
       log(tr("preflightOk"));
-      const sent=await provider.signAndSendTransaction(tx);const sig=typeof sent==="string"?sent:sent.signature;log(tr("sent",{sig:short(sig)}));
+
+      const sent=await provider.signAndSendTransaction(tx);
+      const sig=typeof sent==="string"?sent:sent.signature;
+      signatures.push(sig);
+      log(tr("sent",{sig:short(sig)}));
+
       const confirmed=await confirmSignature(sig);
       log(confirmed?tr("confirmed"):tr("pending"));
-      if(confirmed){
-        confirmedNetLamports+=batchNet;
-      }else{
+
+      if(!confirmed){
         allBatchesConfirmed=false;
+      }else{
+        const chainTx=await getOnChainTransaction(sig);
+
+        if(
+          chainTx?.meta &&
+          Array.isArray(chainTx.meta.preBalances) &&
+          Array.isArray(chainTx.meta.postBalances) &&
+          Number.isFinite(Number(chainTx.meta.preBalances[0])) &&
+          Number.isFinite(Number(chainTx.meta.postBalances[0])) &&
+          Number.isFinite(Number(chainTx.meta.fee))
+        ){
+          const pre=Number(chainTx.meta.preBalances[0]);
+          const post=Number(chainTx.meta.postBalances[0]);
+          const networkFee=Number(chainTx.meta.fee);
+          const walletDelta=post-pre;
+
+          // Our transaction contains only Burn/Close operations plus the
+          // ASTY Unlockr fee transfer. Therefore:
+          // recovered rent = wallet delta + Unlockr fee + network fee.
+          const actualGross=walletDelta+batchFee+networkFee;
+
+          receiptGross+=actualGross;
+          receiptUnlockrFee+=batchFee;
+          receiptNetworkFee+=networkFee;
+          receiptNet+=walletDelta;
+        }else{
+          receiptVerified=false;
+        }
       }
+
       done+=batch.length;
     }
+
     log(tr("finished",{count:done}));
+
+    if(!allBatchesConfirmed||done!==selected.length){
+      return;
+    }
+
+    const fallbackNetBeforeNetwork=plannedGross-plannedUnlockrFee;
+    const receipt={
+      version:1,
+      wallet:walletString,
+      timestamp:Date.now(),
+      accounts:selected.length,
+      dustAccounts:selected.filter(a=>a.kind==="dust").length,
+      signatures,
+      verified:receiptVerified,
+      grossLamports:receiptVerified?receiptGross:plannedGross,
+      unlockrFeeLamports:receiptVerified?receiptUnlockrFee:plannedUnlockrFee,
+      networkFeeLamports:receiptVerified?receiptNetworkFee:null,
+      netLamports:receiptVerified?receiptNet:null,
+      netBeforeNetworkLamports:fallbackNetBeforeNetwork
+    };
+
+    saveReceipt(receipt);
+
     await sleep(450);
     closeModal();
-    if(allBatchesConfirmed&&done===selected.length){
-      await playSuccessOverlay(confirmedNetLamports);
-    }
+
+    await playSuccessOverlay(
+      receiptVerified?receiptNet:fallbackNetBeforeNetwork,
+      {verified:receiptVerified}
+    );
+
     await scanWallet();
-  }catch(e){console.error(e);log(tr("error",{msg:e.message||e}));$("cancelBtn").disabled=false;$("cancelBtn").textContent=currentLang==="en"?"CLOSE":"SCHLIESSEN"}
+
+  }catch(e){
+    console.error(e);
+    log(tr("error",{msg:e.message||e}));
+    $("cancelBtn").disabled=false;
+    $("cancelBtn").textContent=currentLang==="en"?"CLOSE":"SCHLIESSEN";
+  }
 }
 function openModal(){
   const sel=selectedAccounts();if(!sel.length)return;
@@ -1692,7 +2009,7 @@ function openModal(){
     $("dustWarningText").textContent=tr("dustBurnPermanent",{count:dust.length});
     $("dustWarningList").innerHTML=dust.map(a=>{
       const amount=formatRawTokenAmount(a.rawAmount,a.decimals);
-      return `${esc(tokenDisplayName(a))} · ${esc(amount)} token · ${esc(short(a.mint))}`;
+      return `${esc(tokenDisplayName(a))} · ${esc(amount)} ${esc(a.tokenSymbol||"token")}${formatDustUsd(a)?` · ${esc(formatDustUsd(a))}`:""} · ${esc(short(a.mint))}`;
     }).join("<br>");
     warning.style.display="block";
     confirmRow.style.display="flex";
