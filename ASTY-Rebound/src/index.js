@@ -115,7 +115,7 @@ const RECOMMENDED_GAS_LAMPORTS = 20_000_000n;
 const MAX_ROUTE_REFERENCE_SHORTFALL_BPS = 200;
 const MAX_BUY_TRIGGER_OVERAGE_BPS = 50;
 const EXECUTION_LOCK_STALE_MINUTES = 5;
-const MAX_BUY_EXECUTIONS_PER_CRON = 3;
+const MAX_BUY_EXECUTIONS_PER_CRON = 1;
 const MAX_SELL_EXECUTIONS_PER_CRON = 3;
 const MAX_TP_QUOTE_UNDERAGE_BPS = 50;
 const MAX_COMPUTE_UNIT_LIMIT = 1_400_000;
@@ -2256,6 +2256,26 @@ async function executeTriggeredBuy(env, strategy) {
   }
 }
 
+async function recoverStaleBuyPreparationLocks(env) {
+  // BUY_PREPARING is still before signAndSendTransaction(). If a Worker run is
+  // interrupted here, no BUY has been submitted yet. After the stale window,
+  // clear the preparation lock so a later cron can retry safely.
+  const result = await env.DB.prepare(`
+    UPDATE rebound_strategies
+    SET pending_action = NULL,
+        pending_action_started_at = NULL,
+        execution_lock = NULL,
+        execution_lock_at = NULL,
+        updated_at = CURRENT_TIMESTAMP
+    WHERE status = 'BUY_TRIGGERED'
+      AND pending_signature IS NULL
+      AND pending_action = 'BUY_PREPARING'
+      AND pending_action_started_at IS NOT NULL
+      AND pending_action_started_at < datetime('now', '-' || ? || ' minutes')
+  `).bind(EXECUTION_LOCK_STALE_MINUTES).run();
+  return Number(result?.meta?.changes ?? 0);
+}
+
 async function quarantineStaleAmbiguousBuys(env) {
   const result = await env.DB.prepare(`
     UPDATE rebound_strategies
@@ -2275,6 +2295,7 @@ async function quarantineStaleAmbiguousBuys(env) {
 }
 
 async function runBuyExecutor(env, { source = "cron" } = {}) {
+  const recoveredStalePreparing = await recoverStaleBuyPreparationLocks(env);
   const quarantined = await quarantineStaleAmbiguousBuys(env);
   const ambiguousRecovery = await reconcileAmbiguousBuysWithoutSignature(env);
   const reconciled = await reconcilePendingBuys(env);
@@ -2286,6 +2307,7 @@ async function runBuyExecutor(env, { source = "cron" } = {}) {
       liveExecutionImplemented: true,
       autoExecutionEnabled: false,
       newBuysAttempted: 0,
+      recoveredStalePreparingBuys: recoveredStalePreparing,
       quarantinedAmbiguousBuys: quarantined,
       ambiguousBuyRecovery: ambiguousRecovery,
       reconciled,
@@ -2298,7 +2320,7 @@ async function runBuyExecutor(env, { source = "cron" } = {}) {
     FROM rebound_strategies
     WHERE status = 'BUY_TRIGGERED'
       AND pending_signature IS NULL
-      AND (pending_action IS NULL OR pending_action = 'BUY_PREPARING')
+      AND pending_action IS NULL
     ORDER BY buy_triggered_at ASC, created_at ASC
     LIMIT ?
   `).bind(MAX_BUY_EXECUTIONS_PER_CRON).all();
@@ -2315,6 +2337,7 @@ async function runBuyExecutor(env, { source = "cron" } = {}) {
     liveExecutionImplemented: true,
     autoExecutionEnabled: true,
     newBuysAttempted: rows.length,
+    recoveredStalePreparingBuys: recoveredStalePreparing,
     quarantinedAmbiguousBuys: quarantined,
     ambiguousBuyRecovery: ambiguousRecovery,
     reconciled,
@@ -3563,7 +3586,7 @@ async function handleExecutionStatus(request, env) {
 async function handleRoot(request, env) {
   return json(request, {
     service: "ASTY Rebound API",
-    buildVersion: "2026-10-06-cycle-v22-cards-remove-asty-trading",
+    buildVersion: "2026-10-07-cycle-v23-buy-preparing-recovery",
     status: "online",
     balanceSource: "Helius",
     displayPriceSource: "Helius DAS",
