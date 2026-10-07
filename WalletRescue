@@ -79,38 +79,44 @@ select,input[type=url]{width:100%;background:#09090f;color:var(--text);border:1p
 .tokenidentity{display:flex;align-items:baseline;gap:6px;flex-wrap:wrap}
 .tokensymbol{font-size:8px;font-weight:900;color:#bda2ff;letter-spacing:.04em}
 .success-overlay{
-  position:fixed;inset:0;z-index:9000;display:grid;place-items:center;padding:18px;
-  background:rgba(3,3,8,.42);backdrop-filter:blur(7px);-webkit-backdrop-filter:blur(7px);
+  position:fixed;inset:0;z-index:2147483000;display:grid;place-items:center;padding:18px;
+  background:rgba(3,3,8,.48);backdrop-filter:blur(9px);-webkit-backdrop-filter:blur(9px);
   opacity:0;visibility:hidden;pointer-events:none;
+  transition:opacity .22s ease,visibility 0s linear .22s;
 }
 .success-overlay.show{
-  visibility:visible;
-  animation:successOverlayLife 3.2s ease both;
+  opacity:1;visibility:visible;pointer-events:auto;
+  transition:opacity .22s ease,visibility 0s linear 0s;
 }
 .success-card{
   position:relative;overflow:hidden;width:min(430px,100%);padding:30px 24px 27px;
-  text-align:center;border:1px solid rgba(189,140,255,.34);border-radius:24px;
+  text-align:center;border:1px solid rgba(189,140,255,.38);border-radius:24px;
   background:
     radial-gradient(circle at 50% 0%,rgba(99,229,244,.12),transparent 38%),
-    radial-gradient(circle at 50% 100%,rgba(189,140,255,.16),transparent 45%),
-    rgba(10,10,17,.97);
-  box-shadow:0 28px 80px rgba(0,0,0,.48),0 0 48px rgba(125,89,255,.15);
-  transform:translateY(70px) scale(.84);
+    radial-gradient(circle at 50% 100%,rgba(189,140,255,.17),transparent 45%),
+    rgba(10,10,17,.985);
+  box-shadow:0 28px 80px rgba(0,0,0,.52),0 0 54px rgba(125,89,255,.18);
+  transform:translateY(34px) scale(.94);
   opacity:0;
-  animation:successCardLife 3.2s cubic-bezier(.18,.84,.25,1) both;
+  transition:transform .38s cubic-bezier(.18,.84,.25,1),opacity .28s ease;
+}
+.success-overlay.show .success-card{
+  transform:translateY(0) scale(1);
+  opacity:1;
 }
 .success-card::before{
   content:"";position:absolute;inset:-60%;pointer-events:none;
   background:conic-gradient(from 0deg,transparent,rgba(189,140,255,.08),transparent,rgba(99,229,244,.07),transparent);
-  animation:successSpin 3.2s linear both;
 }
 .success-check{
   position:relative;z-index:2;width:72px;height:72px;margin:0 auto 14px;border-radius:50%;
   display:grid;place-items:center;font-size:34px;font-weight:1000;color:#090b10;
   background:linear-gradient(135deg,var(--green),var(--cyan));
   box-shadow:0 0 0 8px rgba(114,239,169,.055),0 0 42px rgba(114,239,169,.25);
-  animation:successCheckPulse 3.2s ease both;
+  transform:scale(.72);
+  transition:transform .45s cubic-bezier(.18,.84,.25,1) .08s;
 }
+.success-overlay.show .success-check{transform:scale(1)}
 .success-kicker{position:relative;z-index:2;font-size:9px;font-weight:1000;letter-spacing:.18em;text-transform:uppercase;color:#bda2ff}
 .success-amount{
   position:relative;z-index:2;margin-top:8px;font-size:clamp(28px,7vw,42px);font-weight:1000;
@@ -130,28 +136,16 @@ select,input[type=url]{width:100%;background:#09090f;color:var(--text);border:1p
 .success-particles i:nth-child(6){--x:78px;--y:102px;background:var(--cyan)}
 .success-particles i:nth-child(7){--x:-55px;--y:-105px;background:var(--purple)}
 .success-particles i:nth-child(8){--x:42px;--y:-116px;background:var(--cyan)}
-.success-overlay.show .success-particles i{animation:successParticle 1.25s ease-out .15s both}
-@keyframes successOverlayLife{
-  0%{opacity:0}10%,78%{opacity:1}100%{opacity:0}
-}
-@keyframes successCardLife{
-  0%{opacity:0;transform:translateY(70px) scale(.84)}
-  14%{opacity:1;transform:translateY(-5px) scale(1.025)}
-  22%,78%{opacity:1;transform:translateY(0) scale(1)}
-  100%{opacity:0;transform:translateY(-26px) scale(.96)}
-}
-@keyframes successCheckPulse{
-  0%{transform:scale(.45) rotate(-16deg);opacity:0}
-  16%{transform:scale(1.12) rotate(4deg);opacity:1}
-  24%,78%{transform:scale(1) rotate(0);opacity:1}
-  100%{transform:scale(.92);opacity:0}
-}
+.success-overlay.show .success-particles i{animation:successParticle 1.15s ease-out .16s both}
 @keyframes successParticle{
   0%{opacity:0;transform:translate(0,0) scale(.4)}
   22%{opacity:1}
   100%{opacity:0;transform:translate(var(--x),var(--y)) scale(1.15)}
 }
-@keyframes successSpin{to{transform:rotate(125deg)}}
+@media(prefers-reduced-motion:reduce){
+  .success-overlay,.success-card,.success-check{transition:none!important}
+  .success-overlay.show .success-particles i{animation:none!important}
+}
 .actionbar{position:sticky;bottom:9px;margin-top:13px;border:1px solid rgba(189,140,255,.28);border-radius:18px;padding:13px;background:rgba(12,11,20,.95);display:none;align-items:center;justify-content:space-between;gap:12px}
 .actiontext small{display:block;color:var(--muted);font-size:8px;text-transform:uppercase;font-weight:1000;letter-spacing:.08em}.actiontext strong{font-size:17px;color:var(--green)}
 .security{margin-top:13px;border:1px solid var(--line);border-radius:20px;overflow:hidden;background:rgba(13,13,20,.94)}
@@ -1578,23 +1572,55 @@ async function confirmSignature(sig){
 }
 function log(msg){$("txLog").style.display="block";$("txLog").insertAdjacentHTML("beforeend",`${esc(msg)}<br>`);$("txLog").scrollTop=$("txLog").scrollHeight}
 
-let successOverlayTimer=null;
-function showSuccessOverlay(netLamports){
+function waitForAppVisible(timeoutMs=4000){
+  if(document.visibilityState==="visible" && document.hasFocus())return Promise.resolve();
+
+  return new Promise(resolve=>{
+    let finished=false;
+    const finish=()=>{
+      if(finished)return;
+      if(document.visibilityState!=="visible" || !document.hasFocus())return;
+      finished=true;
+      cleanup();
+      resolve();
+    };
+    const force=()=>{
+      if(finished)return;
+      finished=true;
+      cleanup();
+      resolve();
+    };
+    const cleanup=()=>{
+      window.removeEventListener("focus",finish);
+      document.removeEventListener("visibilitychange",finish);
+      clearTimeout(timer);
+    };
+    const timer=setTimeout(force,timeoutMs);
+    window.addEventListener("focus",finish);
+    document.addEventListener("visibilitychange",finish);
+  });
+}
+
+async function playSuccessOverlay(netLamports){
   const overlay=$("successOverlay");
   if(!overlay)return;
 
+  await waitForAppVisible();
+  await sleep(160);
+
   $("successAmount").textContent=fmtSol(netLamports/LAMPORTS_PER_SOL);
-  clearTimeout(successOverlayTimer);
 
   overlay.classList.remove("show");
   overlay.setAttribute("aria-hidden","false");
-  void overlay.offsetWidth;
+
+  await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
   overlay.classList.add("show");
 
-  successOverlayTimer=setTimeout(()=>{
-    overlay.classList.remove("show");
-    overlay.setAttribute("aria-hidden","true");
-  },3250);
+  await sleep(3000);
+
+  overlay.classList.remove("show");
+  await sleep(260);
+  overlay.setAttribute("aria-hidden","true");
 }
 
 async function performRescue(){
@@ -1635,10 +1661,10 @@ async function performRescue(){
       done+=batch.length;
     }
     log(tr("finished",{count:done}));
-    await sleep(650);
+    await sleep(450);
     closeModal();
     if(allBatchesConfirmed&&done===selected.length){
-      showSuccessOverlay(confirmedNetLamports);
+      await playSuccessOverlay(confirmedNetLamports);
     }
     await scanWallet();
   }catch(e){console.error(e);log(tr("error",{msg:e.message||e}));$("cancelBtn").disabled=false;$("cancelBtn").textContent=currentLang==="en"?"CLOSE":"SCHLIESSEN"}
