@@ -61,6 +61,97 @@ select,input[type=url]{width:100%;background:#09090f;color:var(--text);border:1p
 .account{display:grid;grid-template-columns:28px 1fr auto;gap:10px;align-items:center;padding:13px 15px;border-bottom:1px solid var(--line)}
 .account input{width:17px;height:17px;accent-color:#9f72ff}.tokenname{font-size:11px;font-weight:900}.meta{font-size:8px;color:#777181;margin-top:4px;line-height:1.5;word-break:break-all}
 .value{text-align:right}.value b{display:block;font-size:11px;color:var(--green)}.value small{font-size:8px;color:var(--muted)}
+.dust-section{border-top:1px solid var(--line)}
+.dust-head{padding:15px 16px 10px}
+.dust-head-row{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.dust-title{font-size:12px;font-weight:900;color:#c4b5fd}
+.dust-count{font-size:8px;font-weight:900;color:var(--purple);border:1px solid rgba(167,139,250,.25);border-radius:999px;padding:4px 7px}
+.dust-copy{margin-top:6px;font-size:9px;line-height:1.55;color:var(--muted)}
+.account.dust-account{background:rgba(167,139,250,.035)}
+.account.dust-account input{accent-color:#bd8cff}
+.value .dust-amount{color:#d7c3ff}
+.dust-warning-modal{display:none;margin:12px 0;padding:12px;border:1px solid rgba(255,201,107,.24);border-radius:13px;background:rgba(255,201,107,.045);font-size:9px;line-height:1.6;color:#cfc7d6}
+.dust-warning-modal strong{color:var(--amber)}
+.dust-warning-list{margin-top:8px;padding:8px;border-radius:10px;background:#08080d;border:1px solid var(--line);font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;font-size:8px;line-height:1.6;overflow-wrap:anywhere}
+.dust-confirm-row{display:none;align-items:flex-start;gap:9px;margin-top:10px;padding:10px;border-radius:10px;border:1px solid rgba(189,140,255,.18);background:rgba(189,140,255,.035);cursor:pointer}
+.dust-confirm-row input{width:17px;height:17px;flex:0 0 auto;margin-top:1px;accent-color:#9f72ff}
+.dust-confirm-row span{font-size:9px;line-height:1.5;color:#d3cddd}
+.tokenidentity{display:flex;align-items:baseline;gap:6px;flex-wrap:wrap}
+.tokensymbol{font-size:8px;font-weight:900;color:#bda2ff;letter-spacing:.04em}
+.success-overlay{
+  position:fixed;inset:0;z-index:9000;display:grid;place-items:center;padding:18px;
+  background:rgba(3,3,8,.42);backdrop-filter:blur(7px);-webkit-backdrop-filter:blur(7px);
+  opacity:0;visibility:hidden;pointer-events:none;
+}
+.success-overlay.show{
+  visibility:visible;
+  animation:successOverlayLife 3.2s ease both;
+}
+.success-card{
+  position:relative;overflow:hidden;width:min(430px,100%);padding:30px 24px 27px;
+  text-align:center;border:1px solid rgba(189,140,255,.34);border-radius:24px;
+  background:
+    radial-gradient(circle at 50% 0%,rgba(99,229,244,.12),transparent 38%),
+    radial-gradient(circle at 50% 100%,rgba(189,140,255,.16),transparent 45%),
+    rgba(10,10,17,.97);
+  box-shadow:0 28px 80px rgba(0,0,0,.48),0 0 48px rgba(125,89,255,.15);
+  transform:translateY(70px) scale(.84);
+  opacity:0;
+  animation:successCardLife 3.2s cubic-bezier(.18,.84,.25,1) both;
+}
+.success-card::before{
+  content:"";position:absolute;inset:-60%;pointer-events:none;
+  background:conic-gradient(from 0deg,transparent,rgba(189,140,255,.08),transparent,rgba(99,229,244,.07),transparent);
+  animation:successSpin 3.2s linear both;
+}
+.success-check{
+  position:relative;z-index:2;width:72px;height:72px;margin:0 auto 14px;border-radius:50%;
+  display:grid;place-items:center;font-size:34px;font-weight:1000;color:#090b10;
+  background:linear-gradient(135deg,var(--green),var(--cyan));
+  box-shadow:0 0 0 8px rgba(114,239,169,.055),0 0 42px rgba(114,239,169,.25);
+  animation:successCheckPulse 3.2s ease both;
+}
+.success-kicker{position:relative;z-index:2;font-size:9px;font-weight:1000;letter-spacing:.18em;text-transform:uppercase;color:#bda2ff}
+.success-amount{
+  position:relative;z-index:2;margin-top:8px;font-size:clamp(28px,7vw,42px);font-weight:1000;
+  letter-spacing:-.045em;color:var(--green);text-shadow:0 0 24px rgba(114,239,169,.16)
+}
+.success-copy{position:relative;z-index:2;margin-top:8px;font-size:10px;line-height:1.6;color:#aaa4b5}
+.success-particles{position:absolute;inset:0;pointer-events:none}
+.success-particles i{
+  position:absolute;left:50%;top:43%;width:6px;height:6px;border-radius:50%;
+  background:var(--purple);opacity:0;
+}
+.success-particles i:nth-child(1){--x:-125px;--y:-70px}
+.success-particles i:nth-child(2){--x:-92px;--y:82px;background:var(--cyan)}
+.success-particles i:nth-child(3){--x:118px;--y:-76px;background:var(--green)}
+.success-particles i:nth-child(4){--x:132px;--y:58px;background:var(--purple)}
+.success-particles i:nth-child(5){--x:-142px;--y:12px;background:var(--green)}
+.success-particles i:nth-child(6){--x:78px;--y:102px;background:var(--cyan)}
+.success-particles i:nth-child(7){--x:-55px;--y:-105px;background:var(--purple)}
+.success-particles i:nth-child(8){--x:42px;--y:-116px;background:var(--cyan)}
+.success-overlay.show .success-particles i{animation:successParticle 1.25s ease-out .15s both}
+@keyframes successOverlayLife{
+  0%{opacity:0}10%,78%{opacity:1}100%{opacity:0}
+}
+@keyframes successCardLife{
+  0%{opacity:0;transform:translateY(70px) scale(.84)}
+  14%{opacity:1;transform:translateY(-5px) scale(1.025)}
+  22%,78%{opacity:1;transform:translateY(0) scale(1)}
+  100%{opacity:0;transform:translateY(-26px) scale(.96)}
+}
+@keyframes successCheckPulse{
+  0%{transform:scale(.45) rotate(-16deg);opacity:0}
+  16%{transform:scale(1.12) rotate(4deg);opacity:1}
+  24%,78%{transform:scale(1) rotate(0);opacity:1}
+  100%{transform:scale(.92);opacity:0}
+}
+@keyframes successParticle{
+  0%{opacity:0;transform:translate(0,0) scale(.4)}
+  22%{opacity:1}
+  100%{opacity:0;transform:translate(var(--x),var(--y)) scale(1.15)}
+}
+@keyframes successSpin{to{transform:rotate(125deg)}}
 .actionbar{position:sticky;bottom:9px;margin-top:13px;border:1px solid rgba(189,140,255,.28);border-radius:18px;padding:13px;background:rgba(12,11,20,.95);display:none;align-items:center;justify-content:space-between;gap:12px}
 .actiontext small{display:block;color:var(--muted);font-size:8px;text-transform:uppercase;font-weight:1000;letter-spacing:.08em}.actiontext strong{font-size:17px;color:var(--green)}
 .security{margin-top:13px;border:1px solid var(--line);border-radius:20px;overflow:hidden;background:rgba(13,13,20,.94)}
@@ -719,6 +810,21 @@ footer{padding-bottom:10px}
   <div class="card accounts">
     <div class="listhead"><h3 data-en="Empty, closable token accounts" data-de="Leere, schließbare Tokenkonten">Empty, closable token accounts</h3><button class="selectall" id="selectAllBtn" disabled data-en="SELECT ALL" data-de="ALLE AUSWÄHLEN">SELECT ALL</button></div>
     <div id="accountList"><div class="empty"><b data-en="No scan yet." data-de="Noch kein Scan.">No scan yet.</b><span data-en="Connect Phantom and start the wallet scan." data-de="Verbinde Phantom und starte den Wallet-Scan.">Connect Phantom and start the wallet scan.</span></div></div>
+
+    <div class="dust-section">
+      <div class="dust-head">
+        <div class="dust-head-row">
+          <div class="dust-title" data-en="Dust Cleanup" data-de="Dust Cleanup">Dust Cleanup</div>
+          <div class="dust-count" id="dustCount">—</div>
+        </div>
+        <div class="dust-copy"
+             data-en="Very small token remainders (up to 0.00001 token) that can be burned and then closed. Never selected automatically. Burning is permanent."
+             data-de="Sehr kleine Token-Restbestände (bis 0,00001 Token), die verbrannt und danach geschlossen werden können. Nie automatisch ausgewählt. Das Verbrennen ist endgültig.">
+          Very small token remainders (up to 0.00001 token) that can be burned and then closed. Never selected automatically. Burning is permanent.
+        </div>
+      </div>
+      <div id="dustList"><div class="empty"><b data-en="No scan yet." data-de="Noch kein Scan.">No scan yet.</b><span data-en="Dust accounts are checked during the wallet scan." data-de="Dust-Konten werden beim Wallet-Scan geprüft.">Dust accounts are checked during the wallet scan.</span></div></div>
+    </div>
   </div>
 </section>
 
@@ -785,15 +891,44 @@ footer{padding-bottom:10px}
   <div class="modalstat"><small data-en="ASTY Unlockr Fee · 2%" data-de="ASTY Unlockr Fee · 2 %">ASTY Unlockr Fee · 2%</small><b class="fee-purple" id="modalFee">—</b></div>
   <div class="modalstat"><small data-en="You receive" data-de="Du erhältst">You receive</small><b class="green" id="modalNet">—</b></div>
 </div>
+  <div class="dust-warning-modal" id="dustWarningModal">
+    <strong data-en="Permanent Dust Burn" data-de="Dauerhafter Dust-Burn">Permanent Dust Burn</strong>
+    <div id="dustWarningText"></div>
+    <div class="dust-warning-list" id="dustWarningList"></div>
+    <label class="dust-confirm-row" id="dustConfirmRow">
+      <input type="checkbox" id="dustConfirmCheck">
+      <span data-en="I understand that the selected dust token remainder(s) will be permanently burned before the token account is closed."
+            data-de="Ich verstehe, dass die ausgewählten Dust-Token-Restbestände dauerhaft verbrannt werden, bevor das Tokenkonto geschlossen wird.">
+        I understand that the selected dust token remainder(s) will be permanently burned before the token account is closed.
+      </span>
+    </label>
+  </div>
   <p id="batchInfo"></p><div class="txlog" id="txLog"></div>
   <div class="modalactions"><button class="btn ghost" id="cancelBtn" data-en="CANCEL" data-de="ABBRECHEN">CANCEL</button><button class="btn primary" id="confirmBtn" data-en="CONFIRM IN PHANTOM" data-de="IN PHANTOM BESTÄTIGEN">CONFIRM IN PHANTOM</button></div>
 </div></div>
+
+<div class="success-overlay" id="successOverlay" aria-hidden="true">
+  <div class="success-card">
+    <div class="success-particles" aria-hidden="true">
+      <i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i>
+    </div>
+    <div class="success-check">✓</div>
+    <div class="success-kicker" data-en="UNLOCK COMPLETE" data-de="UNLOCK ABGESCHLOSSEN">UNLOCK COMPLETE</div>
+    <div class="success-amount" id="successAmount">0 SOL</div>
+    <div class="success-copy"
+         data-en="Unlocked back to your wallet after the 2% ASTY Unlockr Fee. Network fees are separate."
+         data-de="Nach der 2-%-ASTY-Unlockr-Fee zurück in deine Wallet geholt. Netzwerkgebühren sind separat.">
+      Unlocked back to your wallet after the 2% ASTY Unlockr Fee. Network fees are separate.
+    </div>
+  </div>
+</div>
 
 <script type="module">
 const LAMPORTS_PER_SOL=1_000_000_000;
 const TOKEN_PROGRAM_ID_STR="TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA";
 const TOKEN_2022_PROGRAM_ID_STR="TokenzQdYh7D4m3rZPFYycgPPK3uTQxjTzqkJ9dM9";
 const BATCH_SIZE=7;
+const DUST_MAX_UI_DECIMALS=5; // max base-token amount: 0.00001
 const RESCUE_FEE_BPS=200;
 const RESCUE_FEE_WALLET="7jJ8wC8fquf4uEz4DpMiu6SFP89sEMy1VcY1LLYyZ3nK";
 const RESCUE_GATEWAY="/rpc";
@@ -817,6 +952,8 @@ const TXT={
   disconnected:{en:"Phantom disconnected.",de:"Phantom getrennt."},
   loadingSpl:{en:"Loading SPL token accounts…",de:"SPL-Tokenkonten werden geladen…"},
   checkingClosability:{en:"Checking close eligibility for empty token accounts…",de:"Leere Tokenkonten werden auf Schließbarkeit geprüft…"},
+  checkingDust:{en:"Checking tiny token remainders for Dust Cleanup…",de:"Kleine Token-Restbestände werden für Dust Cleanup geprüft…"},
+  loadingDustNames:{en:"Loading token names for Dust Cleanup…",de:"Tokennamen für Dust Cleanup werden geladen…"},
   scanDone:{en:"{count} token accounts checked · scan complete",de:"{count} Tokenkonten geprüft · Scan abgeschlossen"},
   scanDoneSkipped:{en:"{count} token accounts checked · {skipped} account(s) skipped because the close preflight failed",de:"{count} Tokenkonten geprüft · {skipped} Konto/Konten übersprungen, weil der Close-Preflight fehlgeschlagen ist"},
   scanFailed:{en:"Scan failed: {msg}",de:"Scan fehlgeschlagen: {msg}"},
@@ -830,13 +967,17 @@ const TXT={
   noEmptyTitle:{en:"No empty closable accounts found.",de:"Keine leeren schließbaren Konten gefunden."},
   noEmptyBody:{en:"This wallet currently has no obvious rent recovery potential from empty token accounts.",de:"In dieser Wallet liegt aktuell kein offensichtliches Rent-Potential aus leeren Tokenkonten."},
   tokenBalanceZero:{en:"Token balance 0",de:"Tokenbestand 0"},
+  dustBalance:{en:"Dust balance {amount}",de:"Dust-Bestand {amount}"},
+  dustBurnPermanent:{en:"{count} selected dust remainder(s) will be permanently burned before closing.",de:"{count} ausgewählte Dust-Restbestand/-bestände werden vor dem Schließen dauerhaft verbrannt."},
+  dustNone:{en:"No burnable dust accounts found.",de:"Keine burnbaren Dust-Konten gefunden."},
+  dustNoneBody:{en:"Only tiny remainders that pass a burn + close preflight are shown here.",de:"Hier werden nur sehr kleine Restbestände angezeigt, die einen Burn- und Close-Preflight bestehen."},
   boundLamports:{en:"locked lamports",de:"gebundene Lamports"},
   selectAll:{en:"SELECT ALL",de:"ALLE AUSWÄHLEN"},
   deselectAll:{en:"DESELECT ALL",de:"ALLE ABWÄHLEN"},
   gross:{en:"Gross",de:"Brutto"},
   feeCurrent:{en:"{sol} for current selection",de:"{sol} bei aktueller Auswahl"},
-  batchInfo:{en:"Maximum {size} close instructions per transaction. This results in {batches} Phantom signature(s). The 2% fee is transferred per executed batch.",de:"Maximal {size} Close-Instructions pro Transaktion. Das ergibt {batches} Phantom-Signatur(en). Die 2-%-Fee wird pro ausgeführtem Batch übertragen."},
-  batchLog:{en:"Batch {i}/{total}: {accounts} accounts · Gross {gross} · Fee {fee} · Net {net}",de:"Batch {i}/{total}: {accounts} Konten · Brutto {gross} · Fee {fee} · Netto {net}"},
+  batchInfo:{en:"Maximum {size} token instructions per transaction. Dust Cleanup uses Burn + Close. This results in {batches} Phantom signature(s). The 2% fee is transferred per executed batch.",de:"Maximal {size} Token-Instructions pro Transaktion. Dust Cleanup nutzt Burn + Close. Das ergibt {batches} Phantom-Signatur(en). Die 2-%-Fee wird pro ausgeführtem Batch übertragen."},
+  batchLog:{en:"Batch {i}/{total}: {accounts} accounts · {dust} dust burn(s) · Gross {gross} · Fee {fee} · Net {net}",de:"Batch {i}/{total}: {accounts} Konten · {dust} Dust-Burn(s) · Brutto {gross} · Fee {fee} · Netto {net}"},
   preflightCheck:{en:"Preflight check: simulating transaction before Phantom…",de:"Preflight-Check: Transaktion wird vor Phantom simuliert…"},
   preflightOk:{en:"✓ Simulation successful · ready for Phantom",de:"✓ Simulation erfolgreich · bereit für Phantom"},
   simulationNoResult:{en:"Simulation returned no usable result.",de:"Die Simulation hat kein verwertbares Ergebnis geliefert."},
@@ -898,8 +1039,8 @@ function applyLanguage(lang){
 }
 
 
-let PublicKey,Transaction,SystemProgram,createCloseAccountInstruction,TOKEN_PROGRAM_ID,TOKEN_2022_PROGRAM_ID;
-let provider=null,walletPubkey=null,emptyAccounts=[],delegates=[],skippedUnclosableAccounts=[],busy=false,activeRpc=null,rescueNetworkOnline=false,connectionPending=false,connectionSyncBusy=false,hasScanned=false,rescueUpstream="";
+let PublicKey,Transaction,SystemProgram,createCloseAccountInstruction,createBurnCheckedInstruction,TOKEN_PROGRAM_ID,TOKEN_2022_PROGRAM_ID;
+let provider=null,walletPubkey=null,emptyAccounts=[],dustAccounts=[],delegates=[],skippedUnclosableAccounts=[],skippedDustAccounts=[],busy=false,activeRpc=null,rescueNetworkOnline=false,connectionPending=false,connectionSyncBusy=false,hasScanned=false,rescueUpstream="";
 
 function scanStatus(text,kind=""){const cls=kind==="live"?" live":kind==="err"?" err":"";$("scanStatus").innerHTML=`<span class="dot${cls}"></span>${esc(text)}`}
 function progress(v){$("progress").style.display=(v>0&&v<100)?"block":"none";$("bar").style.width=`${v}%`}
@@ -927,6 +1068,7 @@ async function loadSdk(){
   const s=await import("https://esm.sh/@solana/spl-token@0.4.14?bundle&deps=@solana/web3.js@1.98.4");
   PublicKey=w.PublicKey;Transaction=w.Transaction;SystemProgram=w.SystemProgram;
   createCloseAccountInstruction=s.createCloseAccountInstruction;
+  createBurnCheckedInstruction=s.createBurnCheckedInstruction;
   TOKEN_PROGRAM_ID=s.TOKEN_PROGRAM_ID;TOKEN_2022_PROGRAM_ID=s.TOKEN_2022_PROGRAM_ID;
 }
 function findProvider(){if(window.phantom?.solana?.isPhantom)return window.phantom.solana;if(window.solana?.isPhantom)return window.solana;return null}
@@ -1113,15 +1255,69 @@ document.addEventListener("visibilitychange",()=>{
   if(document.visibilityState==="visible")schedulePhantomSync();
 });
 
-async function disconnectWallet(){try{if(provider?.disconnect)await provider.disconnect()}catch{}connectionPending=false;walletPubkey=null;emptyAccounts=[];delegates=[];skippedUnclosableAccounts=[];$("connectedLine").style.display="none";$("connectBtn").style.display="";$("disconnectBtn").style.display="none";$("scanBtn").disabled=true;resetResults();scanStatus("Wallet getrennt.")}
-function resetResults(){hasScanned=false;$("recoverSol").textContent="—";$("emptyCount").textContent="—";$("selectedCount").textContent="—";$("selectedSol").textContent="— SOL";$("delegateCount").textContent="—";$("accountList").innerHTML=`<div class="empty"><b>Noch kein Scan.</b>Verbinde Phantom und starte den Wallet-Scan.</div>`;$("delegateList").innerHTML=`<div class="empty"><b>Noch keine Daten.</b>Der Delegate-Check läuft automatisch mit dem Wallet-Scan.</div>`;$("actionBar").style.display="none";$("selectAllBtn").disabled=true}
+async function disconnectWallet(){try{if(provider?.disconnect)await provider.disconnect()}catch{}connectionPending=false;walletPubkey=null;emptyAccounts=[];dustAccounts=[];delegates=[];skippedUnclosableAccounts=[];skippedDustAccounts=[];$("connectedLine").style.display="none";$("connectBtn").style.display="";$("disconnectBtn").style.display="none";$("scanBtn").disabled=true;resetResults();scanStatus("Wallet getrennt.")}
+function resetResults(){hasScanned=false;$("recoverSol").textContent="—";$("emptyCount").textContent="—";$("selectedCount").textContent="—";$("selectedSol").textContent="— SOL";$("delegateCount").textContent="—";$("dustCount").textContent="—";$("accountList").innerHTML=`<div class="empty"><b>Noch kein Scan.</b>Verbinde Phantom und starte den Wallet-Scan.</div>`;$("dustList").innerHTML=`<div class="empty"><b>Noch kein Scan.</b>Dust-Konten werden beim Wallet-Scan geprüft.</div>`;$("delegateList").innerHTML=`<div class="empty"><b>Noch keine Daten.</b>Der Delegate-Check läuft automatisch mit dem Wallet-Scan.</div>`;$("actionBar").style.display="none";$("selectAllBtn").disabled=true}
 async function getParsedAccounts(programId){return await rpcRequest("getTokenAccountsByOwner",[walletPubkey.toString(),{programId},{encoding:"jsonParsed",commitment:"confirmed"}])}
 function parseTokenAccount(row,programId){
   const info=row?.account?.data?.parsed?.info;if(!info)return null;
   const tokenAmount=info.tokenAmount||{};const rawAmount=BigInt(tokenAmount.amount||"0");
-  return {address:row.pubkey,mint:info.mint,owner:info.owner||null,closeAuthority:info.closeAuthority||null,delegate:info.delegate||null,delegatedRaw:BigInt(info.delegatedAmount?.amount||"0"),rawAmount,lamports:Number(row.account.lamports||0),programId,isNative:!!info.isNative};
+  return {address:row.pubkey,mint:info.mint,owner:info.owner||null,closeAuthority:info.closeAuthority||null,delegate:info.delegate||null,delegatedRaw:BigInt(info.delegatedAmount?.amount||"0"),rawAmount,decimals:Number(tokenAmount.decimals||0),lamports:Number(row.account.lamports||0),programId,isNative:!!info.isNative};
 }
 function authorityCanClose(a){const w=walletPubkey.toString();return a.owner===w&&(!a.closeAuthority||a.closeAuthority===w)}
+
+function formatRawTokenAmount(raw,decimals){
+  const negative=raw<0n;
+  let s=(negative?-raw:raw).toString();
+  if(decimals<=0)return `${negative?"-":""}${s}`;
+  s=s.padStart(decimals+1,"0");
+  const whole=s.slice(0,-decimals)||"0";
+  const fraction=s.slice(-decimals).replace(/0+$/,"");
+  return `${negative?"-":""}${whole}${fraction?`.`+fraction:""}`;
+}
+
+function isDustCandidate(a){
+  if(!a||a.isNative||a.rawAmount<=0n)return false;
+  if(!authorityCanClose(a))return false;
+  if(!Number.isInteger(a.decimals)||a.decimals<DUST_MAX_UI_DECIMALS)return false;
+  const threshold=10n**BigInt(a.decimals-DUST_MAX_UI_DECIMALS);
+  return a.rawAmount<=threshold;
+}
+
+function operationInstructionCost(a){return a.kind==="dust"?2:1}
+
+function splitRescueBatches(arr,maxTokenInstructions){
+  const out=[];
+  let current=[];
+  let used=0;
+  for(const a of arr){
+    const cost=operationInstructionCost(a);
+    if(current.length && used+cost>maxTokenInstructions){
+      out.push(current);
+      current=[];
+      used=0;
+    }
+    current.push(a);
+    used+=cost;
+  }
+  if(current.length)out.push(current);
+  return out;
+}
+
+function addAccountInstructions(tx,a){
+  const program=a.programId===TOKEN_2022_PROGRAM_ID.toString()?TOKEN_2022_PROGRAM_ID:TOKEN_PROGRAM_ID;
+  if(a.kind==="dust"){
+    tx.add(createBurnCheckedInstruction(
+      new PublicKey(a.address),
+      new PublicKey(a.mint),
+      walletPubkey,
+      a.rawAmount,
+      a.decimals,
+      [],
+      program
+    ));
+  }
+  tx.add(createCloseAccountInstruction(new PublicKey(a.address),walletPubkey,walletPubkey,[],program));
+}
 
 function simulationSucceeded(value){
   return !!value && !value.err;
@@ -1139,10 +1335,7 @@ function simulationFailureSummary(value){
 
 async function simulateCloseEligibilityBatch(batch,blockhash){
   const tx=new Transaction({feePayer:walletPubkey,recentBlockhash:blockhash});
-  for(const a of batch){
-    const program=a.programId===TOKEN_2022_PROGRAM_ID.toString()?TOKEN_2022_PROGRAM_ID:TOKEN_PROGRAM_ID;
-    tx.add(createCloseAccountInstruction(new PublicKey(a.address),walletPubkey,walletPubkey,[],program));
-  }
+  for(const a of batch)addAccountInstructions(tx,a);
 
   const serialized=tx.serialize({requireAllSignatures:false,verifySignatures:false});
   const encoded=bytesToBase64(serialized);
@@ -1185,7 +1378,7 @@ async function filterUnclosableAccounts(candidates){
 
   // Test the exact same maximum number of CloseAccount instructions that
   // the rescue transaction later uses. Only failed batches are split further.
-  for(const batch of splitBatches(candidates,BATCH_SIZE)){
+  for(const batch of splitRescueBatches(candidates,BATCH_SIZE)){
     const found=await isolateUnclosableAccounts(batch,bh.blockhash);
     blocked.push(...found);
   }
@@ -1204,27 +1397,43 @@ async function scanWallet(){
   try{
     const [classic,t22]=await Promise.all([getParsedAccounts(TOKEN_PROGRAM_ID.toString()),getParsedAccounts(TOKEN_2022_PROGRAM_ID.toString())]);progress(58);
     const all=[...(classic?.value||[]).map(x=>parseTokenAccount(x,TOKEN_PROGRAM_ID.toString())),...(t22?.value||[]).map(x=>parseTokenAccount(x,TOKEN_2022_PROGRAM_ID.toString()))].filter(Boolean);
-    const zeroBalanceCandidates=all.filter(a=>a.rawAmount===0n&&authorityCanClose(a)&&!a.isNative);
+    const zeroBalanceCandidates=all
+      .filter(a=>a.rawAmount===0n&&authorityCanClose(a)&&!a.isNative)
+      .map(a=>({...a,kind:"empty"}));
+    const dustCandidates=all
+      .filter(isDustCandidate)
+      .map(a=>({...a,kind:"dust"}));
     delegates=all.filter(a=>!!a.delegate&&a.delegatedRaw>0n);
 
-    progress(68);
-    const eligibility=await filterUnclosableAccounts(zeroBalanceCandidates);
-    emptyAccounts=eligibility.closable;
-    skippedUnclosableAccounts=eligibility.blocked;
+    progress(62);
+    const emptyEligibility=await filterUnclosableAccounts(zeroBalanceCandidates);
+    emptyAccounts=emptyEligibility.closable;
+    skippedUnclosableAccounts=emptyEligibility.blocked;
+
+    progress(78);
+    let dustEligibility={closable:[],blocked:[]};
+    if(dustCandidates.length){
+      scanStatus(tr("checkingDust"));
+      dustEligibility=await filterUnclosableAccounts(dustCandidates);
+    }
+    dustAccounts=await enrichDustTokenMetadata(dustEligibility.closable);
+    skippedDustAccounts=dustEligibility.blocked;
 
     hasScanned=true;
     renderAccounts();renderDelegates();renderStats();progress(100);
 
-    if(skippedUnclosableAccounts.length){
-      console.warn("ASTY Unlockr skipped unclosable accounts",
-        skippedUnclosableAccounts.map(a=>({
+    const skippedTotal=skippedUnclosableAccounts.length+skippedDustAccounts.length;
+    if(skippedTotal){
+      console.warn("ASTY Unlockr skipped unexecutable accounts",
+        [...skippedUnclosableAccounts,...skippedDustAccounts].map(a=>({
           address:a.address,
           mint:a.mint,
+          kind:a.kind,
           program:a.programId,
-          error:a.closePreflightError||"Close preflight failed"
+          error:a.closePreflightError||"Preflight failed"
         }))
       );
-      scanStatus(tr("scanDoneSkipped",{count:all.length,skipped:skippedUnclosableAccounts.length}),"live");
+      scanStatus(tr("scanDoneSkipped",{count:all.length,skipped:skippedTotal}),"live");
     }else{
       scanStatus(tr("scanDone",{count:all.length}),"live");
     }
@@ -1232,26 +1441,92 @@ async function scanWallet(){
   finally{busy=false;$("scanBtn").disabled=false;$("rescueBtn").disabled=false}
 }
 function programLabel(a){return a.programId===TOKEN_2022_PROGRAM_ID.toString()?"Token-2022":"SPL Token"}
+
+function tokenDisplayName(a){
+  const name=String(a?.tokenName||"").trim();
+  const symbol=String(a?.tokenSymbol||"").trim();
+  if(name&&symbol&&name.toLowerCase()!==symbol.toLowerCase())return `${name} (${symbol})`;
+  if(name)return name;
+  if(symbol)return symbol;
+  return short(a?.mint);
+}
+
+async function enrichDustTokenMetadata(accounts){
+  if(!accounts.length)return accounts;
+
+  const ids=[...new Set(accounts.map(a=>a.mint).filter(Boolean))];
+  if(!ids.length)return accounts;
+
+  try{
+    scanStatus(tr("loadingDustNames"));
+    const assets=await rpcRequest("getAssetBatch",{
+      ids,
+      displayOptions:{showFungible:true}
+    });
+
+    const byMint=new Map();
+    (Array.isArray(assets)?assets:[]).forEach((asset,index)=>{
+      if(!asset)return;
+      const id=asset.id||ids[index];
+      const name=String(asset?.content?.metadata?.name||"").trim();
+      const symbol=String(
+        asset?.content?.metadata?.symbol||
+        asset?.token_info?.symbol||
+        ""
+      ).trim();
+      if(id)byMint.set(id,{tokenName:name,tokenSymbol:symbol});
+    });
+
+    return accounts.map(a=>({...a,...(byMint.get(a.mint)||{})}));
+  }catch(e){
+    console.warn("ASTY Unlockr token metadata unavailable",e);
+    return accounts;
+  }
+}
+
 function renderAccounts(){
   if(!emptyAccounts.length){
     $("accountList").innerHTML=`<div class="empty"><b>${esc(tr("noEmptyTitle"))}</b>${esc(tr("noEmptyBody"))}</div>`;
-    $("selectAllBtn").disabled=true;$("actionBar").style.display="none";return
+    $("selectAllBtn").disabled=true;
+  }else{
+    $("selectAllBtn").disabled=false;
+    $("accountList").innerHTML=emptyAccounts.map((a,i)=>`<label class="account">
+      <input type="checkbox" class="acctcheck" data-index="${i}" checked>
+      <div><div class="tokenname">${short(a.mint)}</div><div class="meta">${programLabel(a)} · Account ${short(a.address)} · ${esc(tr("tokenBalanceZero"))}</div></div>
+      <div class="value"><b>${fmtSol(a.lamports/LAMPORTS_PER_SOL)}</b><small>${esc(tr("boundLamports"))}</small></div>
+    </label>`).join("");
   }
-  $("selectAllBtn").disabled=false;
-  $("accountList").innerHTML=emptyAccounts.map((a,i)=>`<label class="account">
-    <input type="checkbox" class="acctcheck" data-index="${i}" checked>
-    <div><div class="tokenname">${short(a.mint)}</div><div class="meta">${programLabel(a)} · Account ${short(a.address)} · ${esc(tr("tokenBalanceZero"))}</div></div>
-    <div class="value"><b>${fmtSol(a.lamports/LAMPORTS_PER_SOL)}</b><small>${esc(tr("boundLamports"))}</small></div>
-  </label>`).join("");
-  document.querySelectorAll(".acctcheck").forEach(c=>c.addEventListener("change",renderStats));
+
+  $("dustCount").textContent=dustAccounts.length||"—";
+  if(!dustAccounts.length){
+    $("dustList").innerHTML=`<div class="empty"><b>${esc(tr("dustNone"))}</b>${esc(tr("dustNoneBody"))}</div>`;
+  }else{
+    $("dustList").innerHTML=dustAccounts.map((a,i)=>{
+      const amount=formatRawTokenAmount(a.rawAmount,a.decimals);
+      return `<label class="account dust-account">
+        <input type="checkbox" class="dustcheck" data-index="${i}">
+        <div>
+          <div class="tokenidentity"><div class="tokenname">${esc(tokenDisplayName(a))}</div></div>
+          <div class="meta">${programLabel(a)} · Mint ${short(a.mint)} · Account ${short(a.address)} · ${esc(tr("dustBalance",{amount}))}</div>
+        </div>
+        <div class="value"><b>${fmtSol(a.lamports/LAMPORTS_PER_SOL)}</b><small class="dust-amount">${esc(amount)} token · ${esc(tr("boundLamports"))}</small></div>
+      </label>`;
+    }).join("");
+  }
+
+  document.querySelectorAll(".acctcheck,.dustcheck").forEach(c=>c.addEventListener("change",renderStats));
 }
 function renderDelegates(){
   if(!delegates.length){$("delegateList").innerHTML=`<div class="empty"><b>Keine aktiven Delegates gefunden.</b>Für die gescannten Tokenkonten wurde keine aktive Delegate-Berechtigung erkannt.</div>`;return}
   $("delegateList").innerHTML=delegates.map(a=>`<div class="delegate"><div><b>Mint ${short(a.mint)}</b><span>Delegate ${short(a.delegate)} · Account ${short(a.address)}</span></div><div class="badge">PRÜFEN</div></div>`).join("");
 }
-function selectedAccounts(){return [...document.querySelectorAll(".acctcheck:checked")].map(c=>emptyAccounts[Number(c.dataset.index)]).filter(Boolean)}
+function selectedAccounts(){
+  const empty=[...document.querySelectorAll(".acctcheck:checked")].map(c=>emptyAccounts[Number(c.dataset.index)]).filter(Boolean);
+  const dust=[...document.querySelectorAll(".dustcheck:checked")].map(c=>dustAccounts[Number(c.dataset.index)]).filter(Boolean);
+  return [...empty,...dust];
+}
 function renderStats(){
-  const totalLamports=emptyAccounts.reduce((s,a)=>s+a.lamports,0);
+  const totalLamports=[...emptyAccounts,...dustAccounts].reduce((s,a)=>s+a.lamports,0);
   const sel=selectedAccounts();
   const selectedLamports=sel.reduce((s,a)=>s+a.lamports,0);
   const selectedFee=feeLamports(selectedLamports);
@@ -1302,11 +1577,35 @@ async function confirmSignature(sig){
   return false;
 }
 function log(msg){$("txLog").style.display="block";$("txLog").insertAdjacentHTML("beforeend",`${esc(msg)}<br>`);$("txLog").scrollTop=$("txLog").scrollHeight}
+
+let successOverlayTimer=null;
+function showSuccessOverlay(netLamports){
+  const overlay=$("successOverlay");
+  if(!overlay)return;
+
+  $("successAmount").textContent=fmtSol(netLamports/LAMPORTS_PER_SOL);
+  clearTimeout(successOverlayTimer);
+
+  overlay.classList.remove("show");
+  overlay.setAttribute("aria-hidden","false");
+  void overlay.offsetWidth;
+  overlay.classList.add("show");
+
+  successOverlayTimer=setTimeout(()=>{
+    overlay.classList.remove("show");
+    overlay.setAttribute("aria-hidden","true");
+  },3250);
+}
+
 async function performRescue(){
-  const selected=selectedAccounts();if(!selected.length)return;const batches=splitBatches(selected,BATCH_SIZE);
+  const selected=selectedAccounts();if(!selected.length)return;
+  if(selected.some(a=>a.kind==="dust")&&!$("dustConfirmCheck").checked)return;
+  const batches=splitRescueBatches(selected,BATCH_SIZE);
   const feeWallet=new PublicKey(RESCUE_FEE_WALLET);
   $("confirmBtn").disabled=true;$("cancelBtn").disabled=true;$("txLog").innerHTML="";$("txLog").style.display="block";
   let done=0;
+  let confirmedNetLamports=0;
+  let allBatchesConfirmed=true;
   try{
     for(let i=0;i<batches.length;i++){
       const batch=batches[i];
@@ -1315,22 +1614,33 @@ async function performRescue(){
       const batchNet=batchGross-batchFee;
 
       const bh=await latestBlockhash();const tx=new Transaction({feePayer:walletPubkey,recentBlockhash:bh.blockhash});
-      for(const a of batch){
-        const program=a.programId===TOKEN_2022_PROGRAM_ID.toString()?TOKEN_2022_PROGRAM_ID:TOKEN_PROGRAM_ID;
-        tx.add(createCloseAccountInstruction(new PublicKey(a.address),walletPubkey,walletPubkey,[],program));
-      }
+      for(const a of batch)addAccountInstructions(tx,a);
       if(batchFee>0){
         tx.add(SystemProgram.transfer({fromPubkey:walletPubkey,toPubkey:feeWallet,lamports:batchFee}));
       }
 
-      log(tr("batchLog",{i:i+1,total:batches.length,accounts:batch.length,gross:fmtSol(batchGross/LAMPORTS_PER_SOL),fee:fmtSol(batchFee/LAMPORTS_PER_SOL),net:fmtSol(batchNet/LAMPORTS_PER_SOL)}));
+      const batchDust=batch.filter(a=>a.kind==="dust").length;
+      log(tr("batchLog",{i:i+1,total:batches.length,accounts:batch.length,dust:batchDust,gross:fmtSol(batchGross/LAMPORTS_PER_SOL),fee:fmtSol(batchFee/LAMPORTS_PER_SOL),net:fmtSol(batchNet/LAMPORTS_PER_SOL)}));
       log(tr("preflightCheck"));
       await simulateRescueTransaction(tx);
       log(tr("preflightOk"));
       const sent=await provider.signAndSendTransaction(tx);const sig=typeof sent==="string"?sent:sent.signature;log(tr("sent",{sig:short(sig)}));
-      const confirmed=await confirmSignature(sig);log(confirmed?tr("confirmed"):tr("pending"));done+=batch.length;
+      const confirmed=await confirmSignature(sig);
+      log(confirmed?tr("confirmed"):tr("pending"));
+      if(confirmed){
+        confirmedNetLamports+=batchNet;
+      }else{
+        allBatchesConfirmed=false;
+      }
+      done+=batch.length;
     }
-    log(tr("finished",{count:done}));await sleep(1300);closeModal();await scanWallet();
+    log(tr("finished",{count:done}));
+    await sleep(650);
+    closeModal();
+    if(allBatchesConfirmed&&done===selected.length){
+      showSuccessOverlay(confirmedNetLamports);
+    }
+    await scanWallet();
   }catch(e){console.error(e);log(tr("error",{msg:e.message||e}));$("cancelBtn").disabled=false;$("cancelBtn").textContent=currentLang==="en"?"CLOSE":"SCHLIESSEN"}
 }
 function openModal(){
@@ -1338,14 +1648,37 @@ function openModal(){
   const gross=sel.reduce((s,a)=>s+a.lamports,0);
   const fee=feeLamports(gross);
   const net=gross-fee;
-  const batches=Math.ceil(sel.length/BATCH_SIZE);
+  const batches=splitRescueBatches(sel,BATCH_SIZE).length;
+  const dust=sel.filter(a=>a.kind==="dust");
+
   $("modalCount").textContent=sel.length;
   $("modalSol").textContent=fmtSol(gross/LAMPORTS_PER_SOL);
   $("modalFee").textContent=fmtSol(fee/LAMPORTS_PER_SOL);
   $("modalNet").textContent=fmtSol(net/LAMPORTS_PER_SOL);
   $("batchInfo").textContent=tr("batchInfo",{size:BATCH_SIZE,batches});
+
+  const warning=$("dustWarningModal");
+  const confirmRow=$("dustConfirmRow");
+  const confirmCheck=$("dustConfirmCheck");
+  confirmCheck.checked=false;
+
+  if(dust.length){
+    $("dustWarningText").textContent=tr("dustBurnPermanent",{count:dust.length});
+    $("dustWarningList").innerHTML=dust.map(a=>{
+      const amount=formatRawTokenAmount(a.rawAmount,a.decimals);
+      return `${esc(tokenDisplayName(a))} · ${esc(amount)} token · ${esc(short(a.mint))}`;
+    }).join("<br>");
+    warning.style.display="block";
+    confirmRow.style.display="flex";
+    $("confirmBtn").disabled=true;
+  }else{
+    warning.style.display="none";
+    confirmRow.style.display="none";
+    $("dustWarningList").innerHTML="";
+    $("confirmBtn").disabled=false;
+  }
+
   $("txLog").style.display="none";
-  $("confirmBtn").disabled=false;
   $("cancelBtn").disabled=false;
   $("cancelBtn").textContent=currentLang==="en"?"CANCEL":"ABBRECHEN";
   $("modalBack").style.display="flex"
@@ -1374,6 +1707,10 @@ async function checkRescueNetwork(){
   }
 }
 $("modalBack").addEventListener("click",e=>{if(e.target===$("modalBack"))closeModal()});
+$("dustConfirmCheck").addEventListener("change",()=>{
+  const dustSelected=selectedAccounts().some(a=>a.kind==="dust");
+  $("confirmBtn").disabled=dustSelected&&!$("dustConfirmCheck").checked;
+});
 
 async function boot(){
   try{
