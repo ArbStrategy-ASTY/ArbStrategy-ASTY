@@ -2,7 +2,7 @@
   "success": true,
   "token": "ASTYqeaoK83Zs1pTFEXZUB6BM8cG8YLTsN852NUkt7ZR",
   "amount": 930336.5678584441,
-  "value": 25591.221086435544,
+  "value": 25504.185492261888,
   "resolved": 5,
   "total": 5,
   "balances": [
@@ -10,46 +10,46 @@
       "wallet": "8KgDtknVhs88sMjRckCGzVDhaFBre3V3FAvhwxfANmfq",
       "resolved": true,
       "amount": 191916.898325996,
-      "value": 5286.56851254066,
+      "value": 5261.19723023778,
       "decimals": 9,
-      "price": 0.027546133553913166
+      "price": 0.027413934239917462
     },
     {
       "wallet": "9Hv3HPGSHS1vq1qjfumoER4TEhu2sgWUmL3S4EaUWrk6",
       "resolved": true,
       "amount": 189575.068423553,
-      "value": 5203.509071562377,
+      "value": 5196.998459291135,
       "decimals": 9,
-      "price": 0.027448277428214228
+      "price": 0.027413934239917462
     },
     {
       "wallet": "4aGjJavF5fq15szkFTdDGQAz9mUUSZ1y1c74isQm2zYV",
       "resolved": true,
       "amount": 177844.565508895,
-      "value": 4881.526973188369,
+      "value": 4875.41922378754,
       "decimals": 9,
-      "price": 0.027448277428214228
+      "price": 0.027413934239917462
     },
     {
       "wallet": "8aYomPkFRaetda3672NfVLZ1xhrJRm9fro2gzNxCPbyf",
       "resolved": true,
       "amount": 185000.0178,
-      "value": 5096.035197795113,
+      "value": 5071.57832235276,
       "decimals": 9,
-      "price": 0.027546133553913166
+      "price": 0.027413934239917462
     },
     {
       "wallet": "9EDJ8RnqnVhwEZF8w3whGgCumDbeexPcHpzWRaWr6USt",
       "resolved": true,
       "amount": 186000.0178,
-      "value": 5123.581331349026,
+      "value": 5098.992256592677,
       "decimals": 9,
-      "price": 0.027546133553913166
+      "price": 0.027413934239917462
     }
   ],
   "source": "BirdEye Wallet API",
   "currentSupply": 9243262.935482249,
   "supplyDecimals": 9,
-  "updatedAt": 1791591670237,
-  "updatedAtIso": "2026-10-10T00:21:10.237Z"
+  "updatedAt": 1791612510315,
+  "updatedAtIso": "2026-10-10T06:08:30.315Z"
 }
