@@ -2488,7 +2488,9 @@ async function runPositionWatcher(env, { source = "cron" } = {}) {
       if(priceMoveFraction(priceInfo.micro,second.micro)>0.02)throw new Error(`${symbol} position watcher rejected an unstable >20% price move.`);
       priceInfo=second;priceByAsset.set(symbol,second);
     }
-    const current=priceInfo.micro;assetPrices[symbol]=formatMicroUsd(current);await ensureOpenCycleFromBoughtStrategy(env,strategy);
+    // v24: Cycle History is inserted after the confirmed BUY and repaired when a SELL is finalized.
+    // Do not re-check/create it for every BOUGHT position on every minute-long watcher run.
+    const current=priceInfo.micro;assetPrices[symbol]=formatMicroUsd(current);
     const tp=strategy.take_profit_price_micro_usdc==null?null:BigInt(String(strategy.take_profit_price_micro_usdc));
     const sl=Number(strategy.stop_loss_enabled)===1&&strategy.stop_loss_price_micro_usdc!=null?BigInt(String(strategy.stop_loss_price_micro_usdc)):null;
     let reason=null;if(tp!=null&&current>=tp)reason="TP";else if(sl!=null&&current<=sl)reason="SL";
@@ -3586,7 +3588,7 @@ async function handleExecutionStatus(request, env) {
 async function handleRoot(request, env) {
   return json(request, {
     service: "ASTY Rebound API",
-    buildVersion: "2026-10-07-cycle-v23-buy-preparing-recovery",
+    buildVersion: "2026-10-10-cycle-v24-position-watcher-cpu",
     status: "online",
     balanceSource: "Helius",
     displayPriceSource: "Helius DAS",
