@@ -9,6 +9,8 @@ import {
   Transaction,
 } from "@solana/web3.js";
 
+// v25: optional stop after the next confirmed SELL; requires the accompanying
+// additive D1 migration before deployment. Existing stop calls remain immediate.
 const ALLOWED_ORIGINS = new Set([
   "https://arbstrategy.net",
   "https://www.arbstrategy.net",
@@ -1008,6 +1010,7 @@ function normalizeStrategyRow(row) {
     stopLossEnabled: Boolean(row.stop_loss_enabled),
     stopLossBps: row.stop_loss_bps == null ? null : Number(row.stop_loss_bps),
     autoRepeat: Boolean(row.auto_repeat),
+    stopAfterNextSell: Number(row.stop_after_next_sell ?? 0) === 1,
     compound: Boolean(row.compound),
     initialCapitalUsdcRaw: String(row.initial_capital_usdc_raw),
     reservedCapitalUsdcRaw: String(row.reserved_capital_usdc_raw),
@@ -2585,11 +2588,15 @@ if (fill.failed) {
 
   const existingFreeProfit = BigInt(String(strategy.free_profit_usdc_raw || 0));
 
-  if (reason === "MANUAL_STOP") {
+  // A deferred stop does not alter TP / SL triggers or send an early sale.
+  // It only prevents a new cycle after this SELL is confirmed on-chain.
+  // The real SELL reason (TAKE_PROFIT, STOP_LOSS or MANUAL_STOP) remains in cycle history.
+  if (reason === "MANUAL_STOP" || Number(strategy.stop_after_next_sell ?? 0) === 1) {
     const releasedProfit = pnlRaw > 0n ? pnlRaw : 0n;
     const result = await env.DB.prepare(`
       UPDATE rebound_strategies
       SET status = 'STOPPED',
+          stop_after_next_sell = 0,
           reserved_capital_usdc_raw = 0,
           current_cycle_capital_usdc_raw = 0,
           free_profit_usdc_raw = ?,
@@ -3588,7 +3595,7 @@ async function handleExecutionStatus(request, env) {
 async function handleRoot(request, env) {
   return json(request, {
     service: "ASTY Rebound API",
-    buildVersion: "2026-10-10-cycle-v24-position-watcher-cpu",
+    buildVersion: "2026-10-11-cycle-v25-stop-after-next-sell",
     status: "online",
     balanceSource: "Helius",
     displayPriceSource: "Helius DAS",
@@ -4350,6 +4357,11 @@ async function handleStrategyStop(request, env) {
     try { body = await request.json(); } catch {}
     const strategyId = String(body?.strategyId || "").trim();
     if (!strategyId) return json(request, { status: "error", message: "Strategy ID is required." }, 400);
+    // Legacy calls without `mode` are kept as the current immediate stop.
+    const mode = String(body?.mode || "now").trim().toLowerCase();
+    if (!["now", "after_next_sell", "cancel_after_next_sell"].includes(mode)) {
+      return json(request, { status: "error", message: "Unsupported stop mode." }, 400);
+    }
 
     const strategy = await env.DB.prepare(`
       SELECT * FROM rebound_strategies
@@ -4359,6 +4371,39 @@ async function handleStrategyStop(request, env) {
     if (!strategy) return json(request, { status: "error", message: "Strategy not found." }, 404);
 
     const status = String(strategy.status || "").toUpperCase();
+    if (mode === "after_next_sell" || mode === "cancel_after_next_sell") {
+      // The plan may only be changed while the position is still BOUGHT.
+      // Never interrupt a submitted transaction or acquire an execution lock here.
+      if (status !== "BOUGHT") {
+        return json(request, { status: "error", code: "POSITION_NOT_OPEN", message: "A deferred stop can only be set or cancelled while the position is open and no SELL has started." }, 409);
+      }
+      if (mode === "after_next_sell" && !autoSellRequested(env)) {
+        return json(request, { status: "error", code: "AUTO_SELL_DISABLED", message: "Automatic SELL execution must be enabled to schedule a stop after the next sell." }, 409);
+      }
+      const enabled = mode === "after_next_sell" ? 1 : 0;
+      const result = await env.DB.prepare(`
+        UPDATE rebound_strategies
+        SET stop_after_next_sell = ?,
+            updated_at = CURRENT_TIMESTAMP
+        WHERE id = ?
+          AND privy_user_id = ?
+          AND status = 'BOUGHT'
+          AND pending_signature IS NULL
+          AND execution_lock IS NULL
+      `).bind(enabled, strategyId, auth.userId).run();
+      if (Number(result?.meta?.changes ?? 0) === 0) {
+        return json(request, { status: "error", code: "TRADE_IN_PROGRESS", message: "The strategy changed while updating the planned stop. Refresh and try again." }, 409);
+      }
+      const updated = await env.DB.prepare(`SELECT * FROM rebound_strategies WHERE id = ? AND privy_user_id = ? LIMIT 1`).bind(strategyId, auth.userId).first();
+      return json(request, {
+        status: "ok",
+        stoppingAfterNextSell: enabled === 1,
+        strategy: normalizeStrategyRow(updated),
+        message: enabled
+          ? "Stop scheduled. Rebound will wait for the next confirmed TP or Stop Loss sell, then stop this strategy without starting another cycle. A profit is not guaranteed."
+          : "Planned stop cancelled. The strategy will continue normally.",
+      });
+    }
     if (status === "STOPPED") {
       return json(request, { status: "ok", stopped: true, strategy: normalizeStrategyRow(strategy), message: "Strategy is already stopped." });
     }
@@ -4376,6 +4421,7 @@ async function handleStrategyStop(request, env) {
       const result = await env.DB.prepare(`
         UPDATE rebound_strategies
         SET status = 'SELL_TRIGGERED',
+            stop_after_next_sell = 0,
             pending_action = 'SELL_TRIGGERED_STOP',
             pending_action_started_at = CURRENT_TIMESTAMP,
             sell_triggered_at = CURRENT_TIMESTAMP,
@@ -4419,6 +4465,7 @@ async function handleStrategyStop(request, env) {
     const result = await env.DB.prepare(`
       UPDATE rebound_strategies
       SET status = 'STOPPED',
+          stop_after_next_sell = 0,
           reserved_capital_usdc_raw = 0,
           current_cycle_capital_usdc_raw = 0,
           pending_action = NULL,
