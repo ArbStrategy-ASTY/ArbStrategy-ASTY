@@ -1605,7 +1605,7 @@
     const PRESALE_PRICE = 0.0025;
     const CHUNK_SIZE = 25;
     const REFRESH_MS = 60_000;
-    const CACHE_KEY = "asty-live-dashboard-v6";
+    const CACHE_KEY = "asty-live-dashboard-v7";
 
     // Optional secure server endpoint. It should return either:
     // { price, priceChange24h } or a BirdEye-like { data: { price, ... } } object.
@@ -1617,7 +1617,7 @@
     const BIRDEYE_RESERVE_API_KEY = "d920d9664acf463c87f6b6b17893b70a";
     const BIRDEYE_API_BASE = "https://public-api.birdeye.so";
 
-    // Generated every five minutes by update-lp-reserve.yml.
+    // Generated once daily by update-lp-reserve.yml.
     // A raw GitHub URL is used because the dashboard is often opened through
     // htmlpreview.github.io rather than directly through GitHub Pages.
     const LP_RESERVE_JSON_URL =
