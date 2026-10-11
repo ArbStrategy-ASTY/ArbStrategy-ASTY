@@ -3,7 +3,7 @@ name: Update ASTY LP Reserve
 on:
   workflow_dispatch:
   schedule:
-    - cron: "*/5 * * * *"
+    - cron: "0 6 * * *"
 
 permissions:
   contents: write
@@ -77,10 +77,7 @@ jobs:
                   );
                 }
 
-                if (
-                  payload?.success !== true ||
-                  !Array.isArray(payload?.data)
-                ) {
+                if (payload?.success !== true || !Array.isArray(payload?.data)) {
                   throw new Error("Unexpected BirdEye response");
                 }
 
@@ -98,9 +95,7 @@ jobs:
                 };
               } catch (error) {
                 lastError = error;
-                if (attempt < 4) {
-                  await sleep(attempt * 2000);
-                }
+                if (attempt < 4) await sleep(attempt * 2000);
               }
             }
 
@@ -146,24 +141,16 @@ jobs:
                 }
 
                 const value = payload?.result?.value;
-
-                if (
-                  !value?.amount ||
-                  !Number.isInteger(value?.decimals)
-                ) {
-                  throw new Error(
-                    "Unexpected Solana supply response"
-                  );
+                if (!value?.amount || !Number.isInteger(value?.decimals)) {
+                  throw new Error("Unexpected Solana supply response");
                 }
 
                 const raw = BigInt(value.amount);
                 const factor = 10n ** BigInt(value.decimals);
                 const whole = raw / factor;
                 const fraction = raw % factor;
-
                 const currentSupply =
-                  Number(whole) +
-                  Number(fraction) / (10 ** value.decimals);
+                  Number(whole) + Number(fraction) / (10 ** value.decimals);
 
                 if (
                   !Number.isFinite(currentSupply) ||
@@ -173,20 +160,12 @@ jobs:
                   throw new Error("Implausible ASTY supply");
                 }
 
-                console.log(
-                  `Supply loaded from ${endpoint}: ${currentSupply}`
-                );
-
                 return {
                   currentSupply,
                   supplyDecimals: value.decimals
                 };
               } catch (error) {
                 lastError = error;
-                console.warn(
-                  `Supply RPC failed (${endpoint}):`,
-                  error?.message || error
-                );
               }
             }
 
@@ -194,7 +173,6 @@ jobs:
               "Supply could not be refreshed; reserve update will continue:",
               lastError?.message || lastError
             );
-
             return null;
           }
 
@@ -207,29 +185,20 @@ jobs:
               await sleep(500);
             }
 
-            const resolved =
-              balances.filter(item => item.resolved).length;
-
+            const resolved = balances.filter(item => item.resolved).length;
             const amount = balances.reduce(
-              (sum, item) =>
-                sum +
-                (Number.isFinite(item.amount) ? item.amount : 0),
+              (sum, item) => sum + (Number.isFinite(item.amount) ? item.amount : 0),
               0
             );
-
             const value = balances.reduce(
-              (sum, item) =>
-                sum +
-                (Number.isFinite(item.value) ? item.value : 0),
+              (sum, item) => sum + (Number.isFinite(item.value) ? item.value : 0),
               0
             );
 
             if (resolved === 0) {
               throw new Error(
                 "BirdEye returned no successful reserve wallet response: " +
-                balances
-                  .map(item => item.error || "unknown")
-                  .join(" | ")
+                balances.map(item => item.error || "unknown").join(" | ")
               );
             }
 
@@ -256,16 +225,9 @@ jobs:
             );
 
             console.log(
-              `ASTY LP Reserve: ${amount.toLocaleString("en-US")} ASTY ` +
-              `across ${resolved}/${WALLETS.length} wallets`
+              `ASTY LP Reserve: ${amount.toLocaleString("en-US")} ASTY across ` +
+              `${resolved}/${WALLETS.length} wallets`
             );
-
-            if (supply) {
-              console.log(
-                `Current ASTY supply: ` +
-                `${supply.currentSupply.toLocaleString("en-US")}`
-              );
-            }
           }
 
           main().catch(error => {
