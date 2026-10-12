@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#09070f">
 <title>ASTY Rebound</title>
-<!-- build: 2026-10-11-v32-clean-running-status -->
+<!-- build: 2026-10-12-v33-acc-asset -->
 <style>
 :root{--bg:#09070f;--panel:#12101a;--panel2:#171321;--border:#302640;--text:#f5f0ff;--muted:#aaa0bb;--purple:#b590ff;--green:#69e7a6;--yellow:#ffd477;--red:#ff7f91}
 *{box-sizing:border-box}html,body{margin:0;min-height:100%;background:radial-gradient(circle at 50% -16%,rgba(139,90,255,.22),transparent 38%),var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif}body{min-height:100vh}.page{width:min(760px,100%);margin:0 auto;padding:calc(20px + env(safe-area-inset-top)) 18px calc(36px + env(safe-area-inset-bottom))}
@@ -45,6 +45,7 @@ const WBTC_MINT="3NZ9JMVBmGAqocybic2c7LQCJScmgsAZ6vQqTDzcqmJh";
 const BNB_MINT="9gP2kCy3wA1ctvYWQk75guqXuHfrEomqydHLtcTCqiLa";
 const RAY_MINT="4k3Dyjzvzp8eMZWUXbBCjEvwSkkk59S5iCNLY3QrkX6R";
 const ETH_MINT="7vfCXTUXx5WJV5JADk17DUJ4ksgau7utNKj4b963voxs";
+const ACC_MINT="CrMwppXm5kQEbXPGNH45ASkQyRbd7uonD8heVQsEbgSA";
 const e=React.createElement;
 
 function bytesToBase64(bytes){let s="";const a=bytes instanceof Uint8Array?bytes:new Uint8Array(bytes);for(const b of a)s+=String.fromCharCode(b);return btoa(s)}
@@ -851,7 +852,8 @@ function App(){
                     e("option",{value:"RAY"},"RAY"),
                     e("option",{value:"ETH"},"ETH"),
                     e("option",{value:"GEOD"},"GEOD · Geodnet · Solana SPL"),
-                    e("option",{value:"CARDS"},"CARDS · Collector Crypt · Solana SPL")
+                    e("option",{value:"CARDS"},"CARDS · Collector Crypt · Solana SPL"),
+                    e("option",{value:"ACC"},"ACC · AnonymousCodingCult · Solana SPL")
                   ),
                   e("div",{className:"dev-asset-actions"},
                     e("button",{className:"dev-check-button",disabled:Boolean(assetReadinessBusy),onClick:()=>runAssetReadinessCheck("BUY")},assetReadinessBusy==="BUY"?`Checking ${devAsset} BUY…`:`Run ${devAsset} BUY preflight`),
@@ -977,6 +979,7 @@ function App(){
         e("button",{type:"button",className:`asset-choice ${strategyAsset==="ETH"?"active":""}`,disabled:strategyCreateBusy,onClick:()=>setStrategyAsset("ETH")},e("div",{className:"asset-choice-title"},"ETH"),e("div",{className:"asset-choice-detail"},"Ether · Wormhole from Ethereum")),
         e("button",{type:"button",className:`asset-choice ${strategyAsset==="GEOD"?"active":""}`,disabled:strategyCreateBusy,onClick:()=>setStrategyAsset("GEOD")},e("div",{className:"asset-choice-title"},"GEOD"),e("div",{className:"asset-choice-detail"},"Geodnet · Solana SPL token")),
         e("button",{type:"button",className:`asset-choice ${strategyAsset==="CARDS"?"active":""}`,disabled:strategyCreateBusy,onClick:()=>setStrategyAsset("CARDS")},e("div",{className:"asset-choice-title"},"CARDS"),e("div",{className:"asset-choice-detail"},"Collector Crypt · Solana SPL token")),
+        e("button",{type:"button",className:`asset-choice ${strategyAsset==="ACC"?"active":""}`,disabled:strategyCreateBusy,onClick:()=>setStrategyAsset("ACC")},e("div",{className:"asset-choice-title"},"ACC"),e("div",{className:"asset-choice-detail"},"AnonymousCodingCult · Solana SPL token")),
       )),
       e("div",{className:"form-field"},
         e("div",{className:"row-head",style:{marginBottom:"8px"}},e("label",{className:"input-label",style:{marginBottom:0}},"Strategy Capital"),e("button",{className:"max-button",type:"button",onClick:useMaxStrategyCapital,disabled:strategyCreateBusy},`Max ${freeUsdc==null?"—":formatUsdc(freeUsdc)} USDC`)),
@@ -1005,6 +1008,7 @@ function App(){
         ["WBTC","BNB","ETH"].includes(strategyAsset)?e("div",{style:{marginTop:"5px"}},`${strategyAsset} uses its Wormhole representation on Solana. Jupiter selects the execution route automatically.`):null,
         strategyAsset==="GEOD"?e("div",{style:{marginTop:"5px"}},"GEOD uses the Solana SPL token. Jupiter selects the execution route automatically."):null,
         strategyAsset==="CARDS"?e("div",{style:{marginTop:"5px"}},"CARDS (Collector Crypt) uses the standard Solana SPL token. Jupiter selects the execution route automatically."):null,
+        strategyAsset==="ACC"?e("div",{style:{marginTop:"5px"}},"ACC (AnonymousCodingCult) uses a standard Solana SPL token. Liquidity can be thin; Jupiter route checks still apply. Check BUY and SELL in dev mode before trading."):null,
         null),
       strategyCreateResult?e("div",{className:`status-box ${strategyCreateResult.state==="success"?"success":"failure"}`},strategyCreateResult.message):null,
       e("div",{className:"modal-buttons"},e("button",{className:"modal-cancel",disabled:strategyCreateBusy,onClick:closeStrategyModal},"Cancel"),e("button",{className:"modal-confirm",disabled:strategyCreateBusy,onClick:createStrategy},strategyCreateBusy?"Creating…":"Create Strategy"))
