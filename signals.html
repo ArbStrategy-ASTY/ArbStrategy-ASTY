@@ -480,7 +480,7 @@ function getChipData(actualAngle,s,focus){
 
 function shortCandidates(actualAngle,s,focus,selectedMode){
   const pair = focus.label;
-  const links = `Website: ${SITE_LINK}\nCommunity: ${TG_LINK}`;
+  const links = `${SITE_LINK}\n${TG_LINK}`;
   const hookWords = pick(HOOK_BANKS,2).slice(0,3).join(" • ");
 
   const bank = {
@@ -510,7 +510,7 @@ function fitShort(candidates, selectedMode, actualAngle, s, focus){
     const text = candidates[(generationIndex+i)%candidates.length];
     if(xWeightedLength(text) <= 280) return text;
   }
-  const fallback = `🟣 ASTY ${postHeading(selectedMode)}\n\n${focus.label}\n\n${actualAngle === "system" ? "Revenue" : "24h revenue"}: ${actualAngle === "system" ? fmtUsd(s.totalRevenue) : fmtUsd(focus.revenue24h)}\n\nWebsite: ${SITE_LINK}\nCommunity: ${TG_LINK}\n#ASTY #ArbiTrage`;
+  const fallback = `🟣 ASTY ${postHeading(selectedMode)}\n\n${focus.label}\n\n${actualAngle === "system" ? "Revenue" : "24h revenue"}: ${actualAngle === "system" ? fmtUsd(s.totalRevenue) : fmtUsd(focus.revenue24h)}\n\n${SITE_LINK}\n${TG_LINK}\n#ASTY #ArbiTrage`;
   return fallback;
 }
 
@@ -540,7 +540,7 @@ function buildLong(actualAngle,s,focus,selectedMode){
     auto: `Fresh live data always gives ASTY another angle to push.`
   };
 
-  return `🟣 ASTY ${postHeading(selectedMode)}\n\n${pair}\n\n${introByMode[actualAngle] || introByMode.auto}\n\n${bodyByMode[actualAngle] || bodyByMode.auto}\n\n${closingByMode[actualAngle] || closingByMode.auto}\n\nWebsite: ${SITE_LINK}\nCommunity: ${TG_LINK}\n\n${getHooks()}\n#ASTY #ArbiTrage`;
+  return `🟣 ASTY ${postHeading(selectedMode)}\n\n${pair}\n\n${introByMode[actualAngle] || introByMode.auto}\n\n${bodyByMode[actualAngle] || bodyByMode.auto}\n\n${closingByMode[actualAngle] || closingByMode.auto}\n\n${SITE_LINK}\n${TG_LINK}\n\n${getHooks()}\n#ASTY #ArbiTrage`;
 }
 
 function generateCopy(){
@@ -609,11 +609,33 @@ async function copyToClipboard(text,button,label){
 }
 
 function downloadImage(){
-  canvas.toBlob(blob=>{
+  canvas.toBlob(async blob=>{
     if(!blob){
       setStatus("Image export was blocked. Open the page via GitHub Pages or another normal web host.","error");
       return;
     }
+
+    const isiOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+    if(isiOS && navigator.canShare){
+      try{
+        const file = new File([blob], "asty-x-signal.png", {type:"image/png"});
+        if(navigator.canShare({files:[file]})){
+          await navigator.share({
+            title: "ASTY X Signal",
+            text: "ASTY X Signal",
+            files: [file]
+          });
+          setStatus("Share sheet opened. You can save the image directly to Photos.","ok");
+          return;
+        }
+      }catch(err){
+        if(err && err.name === "AbortError"){
+          setStatus("Share was canceled.","error");
+          return;
+        }
+      }
+    }
+
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
@@ -716,9 +738,8 @@ function drawChip(x,y,text){
 
 async function drawCanvas(s,focus,selectedMode,actualAngle){
   const logo = await loadImage(ASSET_BASE + "logo.png");
+  const wolf = await loadImage(ASSET_BASE + "wolf.png");
   const pack = buildVisualPack(selectedMode,actualAngle,s,focus);
-  const heroMetric = getHeroMetric(actualAngle,s,focus);
-  const chips = getChipData(actualAngle,s,focus);
 
   ctx.clearRect(0,0,1200,1200);
 
@@ -735,7 +756,7 @@ async function drawCanvas(s,focus,selectedMode,actualAngle){
   ctx.fillStyle = glowA;
   ctx.fillRect(0,0,760,520);
 
-  const glowB = ctx.createRadialGradient(1000,220,0,1000,220,360);
+  const glowB = ctx.createRadialGradient(990,230,0,990,230,360);
   glowB.addColorStop(0,"rgba(103,232,249,.12)");
   glowB.addColorStop(1,"rgba(103,232,249,0)");
   ctx.fillStyle = glowB;
@@ -746,7 +767,14 @@ async function drawCanvas(s,focus,selectedMode,actualAngle){
 
   card(40,40,1120,1120,"rgba(5,8,18,.34)","rgba(196,181,253,.15)",34);
 
-  if(logo){ ctx.drawImage(logo,975,74,116,116); }
+  if(wolf){
+    ctx.save();
+    ctx.globalAlpha = 0.10;
+    ctx.drawImage(wolf, 660, 120, 420, 420);
+    ctx.restore();
+  }
+
+  if(logo){ ctx.drawImage(logo,985,74,106,106); }
 
   ctx.fillStyle = "#c4b5fd";
   ctx.font = "900 20px Arial";
@@ -756,72 +784,80 @@ async function drawCanvas(s,focus,selectedMode,actualAngle){
   ctx.font = "800 15px Arial";
   ctx.fillText(`${s.loadedCount} LIVE POOLS • SOLANA`,90,127);
 
-  const kickerGrad = ctx.createLinearGradient(90,0,520,0);
+  const kickerGrad = ctx.createLinearGradient(90,0,540,0);
   kickerGrad.addColorStop(0,pack.accentA);
   kickerGrad.addColorStop(1,pack.accentB);
   ctx.fillStyle = kickerGrad;
-  ctx.font = "900 22px Arial";
-  ctx.fillText(pack.kicker,90,205);
-
-  const titleGrad = ctx.createLinearGradient(90,0,900,0);
-  titleGrad.addColorStop(0,"#ffffff");
-  titleGrad.addColorStop(.55,pack.accentA);
-  titleGrad.addColorStop(1,pack.accentB);
-  ctx.fillStyle = titleGrad;
-  ctx.font = "900 96px Arial";
-  let titleY = 305;
-  for(const line of pack.title.split("\n")){
-    ctx.fillText(line,90,titleY);
-    titleY += 98;
-  }
+  ctx.font = "900 24px Arial";
+  ctx.fillText(postHeading(selectedMode).toUpperCase(),90,198);
 
   ctx.fillStyle = "#ffffff";
-  ctx.font = "900 58px Arial";
-  ctx.fillText(focus.label,90,485);
+  ctx.font = "900 64px Arial";
+  ctx.fillText(focus.label,90,285);
 
-  wrapText(pack.sub,90,535,760,34,"800 24px Arial","#d2d8ec");
+  const statGrad1 = ctx.createLinearGradient(90,0,560,0);
+  statGrad1.addColorStop(0,"rgba(255,255,255,.07)");
+  statGrad1.addColorStop(1,"rgba(255,255,255,.04)");
+  const statGrad2 = ctx.createLinearGradient(640,0,1110,0);
+  statGrad2.addColorStop(0,"rgba(255,255,255,.07)");
+  statGrad2.addColorStop(1,"rgba(255,255,255,.04)");
 
-  const metricGrad = ctx.createLinearGradient(90,610,1110,880);
-  metricGrad.addColorStop(0,"rgba(255,255,255,.05)");
-  metricGrad.addColorStop(1,"rgba(255,255,255,.03)");
-  card(90,610,1020,275,metricGrad,"rgba(196,181,253,.17)",34);
+  card(90,350,470,340,statGrad1,"rgba(196,181,253,.18)",36);
+  card(640,350,470,340,statGrad2,"rgba(196,181,253,.18)",36);
 
   ctx.fillStyle = "#8e9ab8";
-  ctx.font = "900 20px Arial";
-  ctx.fillText(heroMetric.label,130,674);
+  ctx.font = "900 24px Arial";
+  ctx.fillText("TOTAL VOLUME",122,410);
+  ctx.fillText("TOTAL OUTPUT",672,410);
 
-  const bigGrad = ctx.createLinearGradient(130,0,1060,0);
-  bigGrad.addColorStop(0,"#ffffff");
-  bigGrad.addColorStop(.55,pack.accentA);
-  bigGrad.addColorStop(1,pack.accentB);
-  ctx.fillStyle = bigGrad;
-  ctx.font = "900 126px Arial";
-  ctx.fillText(heroMetric.value,130,805);
+  const leftAccent = ctx.createLinearGradient(122,0,520,0);
+  leftAccent.addColorStop(0,"#ffffff");
+  leftAccent.addColorStop(1,pack.accentB);
+  const rightAccent = ctx.createLinearGradient(672,0,1070,0);
+  rightAccent.addColorStop(0,"#ffffff");
+  rightAccent.addColorStop(1,pack.accentA);
+
+  ctx.fillStyle = leftAccent;
+  ctx.font = "900 98px Arial";
+  ctx.fillText(fmtUsd(s.totalVolume),122,545);
+
+  ctx.fillStyle = rightAccent;
+  ctx.font = "900 98px Arial";
+  ctx.fillText(fmtUsd(s.totalRevenue),672,545);
 
   ctx.fillStyle = "#d8def1";
-  ctx.font = "900 30px Arial";
-  const hypeLine = actualAngle === "viral"
-    ? "SOLANA LIQUIDITY. ON-CHAIN SIGNAL. MORE REACH."
-    : actualAngle === "system"
-    ? "LIVE NETWORK ACTIVITY WITH A STRONGER STORY."
-    : actualAngle === "effect"
-    ? "ACTIVITY FEEDS MOMENTUM AND MOMENTUM FEEDS ATTENTION."
-    : "A STRONG PAIR CAN PULL MORE ATTENTION TO ASTY.";
-  wrapText(hypeLine,130,845,900,38,"900 30px Arial","#d8def1");
+  ctx.font = "900 28px Arial";
+  ctx.fillText("24H NETWORK VOLUME",122,615);
+  ctx.fillText("24H NETWORK REVENUE",672,615);
 
-  ctx.font = "900 16px Arial";
-  let chipX = 90;
-  chips.forEach((chip,i)=>{
-    const w = drawChip(chipX,920,chip);
-    chipX += w + 14;
-  });
+  card(90,745,1020,210,"rgba(255,255,255,.045)","rgba(196,181,253,.14)",32);
+  ctx.fillStyle = "#8e9ab8";
+  ctx.font = "900 22px Arial";
+  ctx.fillText("TOP PAIR REVENUE",122,810);
+  ctx.fillText("POOLS LOADED",720,810);
 
-  card(90,1038,1020,74,"rgba(103,232,249,.035)","rgba(103,232,249,.14)",18);
+  const miniGrad = ctx.createLinearGradient(122,0,520,0);
+  miniGrad.addColorStop(0,"#ffffff");
+  miniGrad.addColorStop(1,pack.accentA);
+  ctx.fillStyle = miniGrad;
+  ctx.font = "900 74px Arial";
+  ctx.fillText(fmtUsd(focus.revenue24h),122,900);
+
+  ctx.fillStyle = "#ffffff";
+  ctx.font = "900 74px Arial";
+  ctx.fillText(`${s.loadedCount}/${s.configuredCount}`,720,900);
+
+  ctx.fillStyle = "#cfd5eb";
+  ctx.font = "900 24px Arial";
+  ctx.fillText("REVENUE OF THE CURRENT LEADING PAIR",122,935);
+  ctx.fillText("LIVE POOLS AVAILABLE NOW",720,935);
+
+  card(90,1028,1020,76,"rgba(103,232,249,.035)","rgba(103,232,249,.14)",20);
   ctx.fillStyle = "#c4b5fd";
-  ctx.font = "900 20px Arial";
-  ctx.fillText("Website: ArbStrategy.net",122,1085);
+  ctx.font = "900 22px Arial";
+  ctx.fillText("ArbStrategy.net",122,1076);
   ctx.fillStyle = "#67e8f9";
-  ctx.fillText("Community: t.me/ArbStrategyASTY",635,1085);
+  ctx.fillText("t.me/ArbStrategyASTY",760,1076);
 }
 
 function drawEmptyCanvas(message){
