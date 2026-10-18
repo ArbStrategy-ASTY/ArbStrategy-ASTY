@@ -8,20 +8,18 @@
 <style>
 :root{
   --bg:#060914;
-  --bg2:#090d1a;
-  --panel:rgba(12,17,34,.82);
+  --panel:rgba(12,17,34,.84);
   --panel2:rgba(18,24,46,.72);
-  --line:rgba(196,181,253,.17);
-  --line2:rgba(103,232,249,.14);
+  --line:rgba(196,181,253,.16);
   --text:#f8f7ff;
-  --muted:#9da8c7;
+  --muted:#97a3c3;
   --lilac:#c4b5fd;
   --purple:#a78bfa;
   --violet:#8b5cf6;
   --cyan:#67e8f9;
   --green:#86efac;
   --red:#fca5a5;
-  --shadow:0 24px 90px rgba(0,0,0,.42);
+  --shadow:0 28px 90px rgba(0,0,0,.42);
 }
 *{box-sizing:border-box}
 html{scroll-behavior:smooth}
@@ -31,9 +29,9 @@ body{
   color:var(--text);
   font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
   background:
-    radial-gradient(circle at 16% 0%,rgba(139,92,246,.25),transparent 31%),
-    radial-gradient(circle at 92% 13%,rgba(103,232,249,.10),transparent 27%),
-    radial-gradient(circle at 52% 100%,rgba(99,102,241,.10),transparent 34%),
+    radial-gradient(circle at 14% 0%,rgba(139,92,246,.24),transparent 34%),
+    radial-gradient(circle at 88% 16%,rgba(103,232,249,.10),transparent 28%),
+    radial-gradient(circle at 50% 100%,rgba(99,102,241,.10),transparent 36%),
     linear-gradient(180deg,#080b16 0%,#050711 62%,#03050c 100%);
   padding:24px;
 }
@@ -42,14 +40,14 @@ body::before{
   position:fixed;
   inset:0;
   pointer-events:none;
-  opacity:.18;
+  opacity:.16;
   background-image:
-    linear-gradient(rgba(255,255,255,.025) 1px,transparent 1px),
-    linear-gradient(90deg,rgba(255,255,255,.025) 1px,transparent 1px);
+    linear-gradient(rgba(255,255,255,.022) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(255,255,255,.022) 1px,transparent 1px);
   background-size:42px 42px;
   mask-image:linear-gradient(to bottom,rgba(0,0,0,.75),transparent 86%);
 }
-button,select{font:inherit}
+button,select,textarea{font:inherit}
 button{border:0}
 a{color:inherit}
 .wrap{width:min(1180px,100%);margin:0 auto;position:relative;z-index:1}
@@ -61,110 +59,65 @@ a{color:inherit}
   margin-bottom:18px;
 }
 .brand{display:flex;align-items:center;gap:14px;min-width:0}
-.brandLogo{
-  width:58px;
-  height:58px;
-  object-fit:contain;
-  flex:0 0 auto;
-}
-.eyebrow{
-  display:flex;align-items:center;gap:8px;
-  color:var(--lilac);font-weight:800;font-size:12px;letter-spacing:.16em;text-transform:uppercase;
-}
+.brandLogo{width:58px;height:58px;object-fit:contain;flex:0 0 auto}
+.eyebrow{display:flex;align-items:center;gap:8px;color:var(--lilac);font-weight:800;font-size:12px;letter-spacing:.16em;text-transform:uppercase}
 .dot{width:8px;height:8px;border-radius:50%;background:var(--purple);box-shadow:0 0 18px rgba(167,139,250,.95)}
 h1{margin:4px 0 0;font-size:clamp(28px,4vw,44px);letter-spacing:-.045em;line-height:1}
-.gradientText{
-  background:linear-gradient(90deg,#ffffff 0%,#d8ccff 42%,#8eeeff 100%);
-  -webkit-background-clip:text;background-clip:text;color:transparent;
-}
+.gradientText{background:linear-gradient(90deg,#ffffff 0%,#d8ccff 42%,#8eeeff 100%);-webkit-background-clip:text;background-clip:text;color:transparent}
 .topActions{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:9px}
 .navBtn,.ghostBtn,.primaryBtn,.copyBtn{
   border-radius:999px;cursor:pointer;font-weight:800;transition:.18s ease;text-decoration:none;display:inline-flex;align-items:center;justify-content:center;gap:8px;
 }
-.navBtn{
-  padding:10px 14px;border:1px solid rgba(196,181,253,.16);background:rgba(255,255,255,.035);color:#d8d9e8;font-size:13px;
-}
+.navBtn{padding:10px 14px;border:1px solid rgba(196,181,253,.16);background:rgba(255,255,255,.035);color:#d8d9e8;font-size:13px}
 .navBtn:hover,.ghostBtn:hover,.copyBtn:hover{border-color:rgba(196,181,253,.48);background:rgba(167,139,250,.08);transform:translateY(-1px)}
-.heroCard{
-  border:1px solid var(--line);border-radius:30px;background:linear-gradient(180deg,rgba(15,20,39,.92),rgba(7,10,21,.9));box-shadow:var(--shadow);overflow:hidden;position:relative;
-}
-.heroCard::before{
-  content:"";position:absolute;inset:0;pointer-events:none;
-  background:radial-gradient(circle at 85% 12%,rgba(103,232,249,.08),transparent 28%),radial-gradient(circle at 15% 0%,rgba(167,139,250,.10),transparent 30%);
-}
-.heroHeader{
-  padding:22px 22px 0;display:flex;align-items:flex-end;justify-content:space-between;gap:18px;position:relative;z-index:1;
-}
-.heroCopy{max-width:700px}
+.heroCard{border:1px solid var(--line);border-radius:30px;background:linear-gradient(180deg,rgba(15,20,39,.92),rgba(7,10,21,.9));box-shadow:var(--shadow);overflow:hidden;position:relative}
+.heroCard::before{content:"";position:absolute;inset:0;pointer-events:none;background:radial-gradient(circle at 85% 12%,rgba(103,232,249,.08),transparent 28%),radial-gradient(circle at 15% 0%,rgba(167,139,250,.10),transparent 30%)}
+.heroHeader{padding:22px 22px 0;display:flex;align-items:flex-end;justify-content:space-between;gap:18px;position:relative;z-index:1}
+.heroCopy{max-width:740px}
 .heroCopy p{margin:9px 0 0;color:var(--muted);font-size:14px;line-height:1.6}
-.livePill{
-  display:inline-flex;align-items:center;gap:8px;padding:9px 12px;border-radius:999px;border:1px solid rgba(134,239,172,.2);background:rgba(134,239,172,.055);color:#c6f6d5;font-size:12px;font-weight:850;white-space:nowrap;
-}
+.livePill{display:inline-flex;align-items:center;gap:8px;padding:9px 12px;border-radius:999px;border:1px solid rgba(134,239,172,.2);background:rgba(134,239,172,.055);color:#c6f6d5;font-size:12px;font-weight:850;white-space:nowrap}
 .livePulse{width:8px;height:8px;border-radius:50%;background:var(--green);box-shadow:0 0 18px rgba(134,239,172,.8);animation:pulse 1.8s ease-in-out infinite}
 @keyframes pulse{0%,100%{opacity:.55;transform:scale(.85)}50%{opacity:1;transform:scale(1.12)}}
 .previewWrap{padding:18px 22px 0;position:relative;z-index:1}
-.canvasFrame{
-  position:relative;border-radius:24px;padding:1px;background:linear-gradient(135deg,rgba(196,181,253,.28),rgba(103,232,249,.09),rgba(255,255,255,.05));
-}
+.canvasFrame{position:relative;border-radius:24px;padding:1px;background:linear-gradient(135deg,rgba(196,181,253,.28),rgba(103,232,249,.09),rgba(255,255,255,.05))}
 .canvasInner{border-radius:23px;overflow:hidden;background:#050711;position:relative}
 canvas{display:block;width:100%;height:auto;background:#050711}
-.canvasBadge{
-  position:absolute;right:14px;bottom:14px;background:rgba(5,8,18,.78);backdrop-filter:blur(10px);border:1px solid rgba(196,181,253,.17);border-radius:999px;padding:8px 11px;color:#c7cee4;font-size:11px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;
-}
-.metricGrid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;padding:14px 22px 0;position:relative;z-index:1}
-.metric{
-  min-width:0;padding:14px 15px;border-radius:18px;border:1px solid rgba(196,181,253,.12);background:rgba(255,255,255,.025);
-}
+.canvasBadge{position:absolute;right:14px;bottom:14px;background:rgba(5,8,18,.78);backdrop-filter:blur(10px);border:1px solid rgba(196,181,253,.17);border-radius:999px;padding:8px 11px;color:#c7cee4;font-size:11px;font-weight:800;letter-spacing:.05em;text-transform:uppercase}
+.metricGrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;padding:14px 22px 0;position:relative;z-index:1}
+.metric{min-width:0;padding:14px 15px;border-radius:18px;border:1px solid rgba(196,181,253,.12);background:rgba(255,255,255,.025)}
 .metricLabel{font-size:11px;text-transform:uppercase;letter-spacing:.11em;color:#7f8bab;font-weight:800}
 .metricValue{margin-top:7px;font-size:17px;font-weight:900;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .metricSub{margin-top:5px;color:#8e9ab8;font-size:11px}
-.controls{
-  display:grid;grid-template-columns:minmax(180px,1fr) auto auto auto;gap:10px;padding:14px 22px 22px;position:relative;z-index:1;
-}
+.controls{display:grid;grid-template-columns:minmax(180px,1fr) auto auto auto;gap:10px;padding:14px 22px 22px;position:relative;z-index:1}
 .selectWrap{position:relative}
-select{
-  appearance:none;width:100%;height:46px;border-radius:15px;border:1px solid rgba(196,181,253,.16);background:#0a0f20;color:#e8e7f3;padding:0 42px 0 14px;outline:none;font-weight:750;cursor:pointer;
-}
+select{appearance:none;width:100%;height:46px;border-radius:15px;border:1px solid rgba(196,181,253,.16);background:#0a0f20;color:#e8e7f3;padding:0 42px 0 14px;outline:none;font-weight:750;cursor:pointer}
 .selectWrap::after{content:"⌄";position:absolute;right:15px;top:9px;color:var(--lilac);font-size:20px;pointer-events:none}
 .primaryBtn,.ghostBtn{height:46px;padding:0 17px}
-.primaryBtn{
-  color:#0a0a12;background:linear-gradient(135deg,#d8ccff 0%,#a78bfa 52%,#67e8f9 135%);box-shadow:0 0 28px rgba(167,139,250,.2);
-}
+.primaryBtn{color:#0a0a12;background:linear-gradient(135deg,#d8ccff 0%,#a78bfa 52%,#67e8f9 135%);box-shadow:0 0 28px rgba(167,139,250,.2)}
 .primaryBtn:hover{transform:translateY(-1px);filter:brightness(1.05);box-shadow:0 0 36px rgba(167,139,250,.34)}
 .ghostBtn{color:#e6e7f1;background:rgba(255,255,255,.035);border:1px solid rgba(196,181,253,.16)}
 .spin{width:14px;height:14px;border:2px solid rgba(196,181,253,.23);border-top-color:var(--lilac);border-radius:50%;display:none;animation:spin .8s linear infinite}
 .loading .spin{display:inline-block}
 @keyframes spin{to{transform:rotate(360deg)}}
 .outputGrid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:14px}
-.outputCard{
-  border:1px solid var(--line);border-radius:25px;background:linear-gradient(180deg,rgba(12,17,34,.86),rgba(7,10,20,.86));box-shadow:0 18px 55px rgba(0,0,0,.24);overflow:hidden;
-}
+.outputCard{border:1px solid var(--line);border-radius:25px;background:linear-gradient(180deg,rgba(12,17,34,.86),rgba(7,10,20,.86));box-shadow:0 18px 55px rgba(0,0,0,.24);overflow:hidden}
 .outputHead{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:17px 18px 12px}
 .outputTitle{font-weight:900;font-size:16px;display:flex;align-items:center;gap:8px}
 .tag{font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--lilac);border:1px solid rgba(196,181,253,.17);padding:5px 8px;border-radius:999px;background:rgba(167,139,250,.055)}
-.counter{font-size:12px;color:#93a0bd;font-weight:800;white-space:nowrap}
-.counter.good{color:#a7f3d0}.counter.bad{color:var(--red)}
-.textBox{
-  width:calc(100% - 36px);margin:0 18px 14px;min-height:280px;resize:vertical;border-radius:18px;border:1px solid rgba(196,181,253,.13);background:#070b17;color:#f5f5fa;padding:15px 15px 18px;font:500 14px/1.58 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;outline:none;
-}
+.counter{font-size:12px;color:#93a0bd;font-weight:800;white-space:nowrap}.counter.good{color:#a7f3d0}.counter.bad{color:var(--red)}
+.textBox{width:calc(100% - 36px);margin:0 18px 14px;min-height:280px;resize:vertical;border-radius:18px;border:1px solid rgba(196,181,253,.13);background:#070b17;color:#f5f5fa;padding:15px 15px 18px;font:500 14px/1.58 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;outline:none}
 .textBox:focus{border-color:rgba(167,139,250,.42);box-shadow:0 0 0 3px rgba(139,92,246,.07)}
 .outputFoot{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:0 18px 18px}
 .hint{color:#7f8bab;font-size:11px;line-height:1.4}
 .copyBtn{padding:10px 13px;background:rgba(167,139,250,.08);border:1px solid rgba(196,181,253,.18);color:#eeeaff;font-size:12px}
-.systemNote{
-  margin-top:14px;border:1px solid rgba(103,232,249,.11);border-radius:22px;padding:15px 17px;background:rgba(103,232,249,.025);color:#aeb8d3;font-size:12px;line-height:1.6;
-}
-.systemNote strong{color:#dfdef0}
 .statusRow{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:12px;padding:0 3px;color:#8c98b6;font-size:12px;min-height:18px}
 .statusLeft{display:flex;align-items:center;gap:8px}
-.statusDot{width:7px;height:7px;border-radius:50%;background:#64748b}
-.statusDot.ok{background:var(--green);box-shadow:0 0 14px rgba(134,239,172,.5)}
-.statusDot.error{background:var(--red)}
+.statusDot{width:7px;height:7px;border-radius:50%;background:#64748b}.statusDot.ok{background:var(--green);box-shadow:0 0 14px rgba(134,239,172,.5)}.statusDot.error{background:var(--red)}
 @media(max-width:900px){
   body{padding:14px}.topbar{align-items:flex-start}.topActions{display:none}.heroHeader{align-items:flex-start;flex-direction:column}.metricGrid{grid-template-columns:repeat(2,minmax(0,1fr))}.controls{grid-template-columns:1fr 1fr}.controls .selectWrap{grid-column:1/-1}.outputGrid{grid-template-columns:1fr}.textBox{min-height:250px}
 }
 @media(max-width:560px){
-  .heroHeader,.previewWrap,.metricGrid,.controls{padding-left:14px;padding-right:14px}.metricGrid{grid-template-columns:1fr 1fr}.metricValue{font-size:15px}.controls{grid-template-columns:1fr}.controls .selectWrap{grid-column:auto}.primaryBtn,.ghostBtn{width:100%}.brand{align-items:flex-start}.brandLogo{width:50px;height:50px}.outputFoot{align-items:flex-start;flex-direction:column}.copyBtn{width:100%}.textBox{width:calc(100% - 28px);margin-left:14px;margin-right:14px}.outputHead,.outputFoot{padding-left:14px;padding-right:14px}
+  .heroHeader,.previewWrap,.metricGrid,.controls{padding-left:14px;padding-right:14px}.metricGrid{grid-template-columns:1fr}.metricValue{font-size:15px}.controls{grid-template-columns:1fr}.controls .selectWrap{grid-column:auto}.primaryBtn,.ghostBtn{width:100%}.brand{align-items:flex-start}.brandLogo{width:50px;height:50px}.outputFoot{align-items:flex-start;flex-direction:column}.copyBtn{width:100%}.textBox{width:calc(100% - 28px);margin-left:14px;margin-right:14px}.outputHead,.outputFoot{padding-left:14px;padding-right:14px}
 }
 </style>
 </head>
@@ -179,7 +132,7 @@ select{
       </div>
     </div>
     <div class="topActions">
-      <a class="navBtn" href="https://ArbStrategy.net" target="_blank" rel="noopener">System Overview</a>
+      <a class="navBtn" href="https://ArbStrategy.net" target="_blank" rel="noopener">Website</a>
       <a class="navBtn" href="https://htmlpreview.github.io/?https://github.com/ArbStrategy-ASTY/ArbStrategy-ASTY/blob/main/Dashboard.html" target="_blank" rel="noopener">Live Dashboard</a>
       <a class="navBtn" href="https://t.me/ArbStrategyASTY" target="_blank" rel="noopener">Telegram</a>
     </div>
@@ -189,7 +142,7 @@ select{
     <div class="heroHeader">
       <div class="heroCopy">
         <div class="eyebrow"><span class="dot"></span> Live Solana Pool Intelligence</div>
-        <p>Turn live ASTY pool performance into ready-to-post X content. Choose a short version for standard X or a stronger long-form version for X Premium.</p>
+        <p>Turn live ASTY pool momentum into hype-ready X posts and a bold visual card. Each mode now changes not just the headline, but the image focus, text structure and overall tone.</p>
       </div>
       <div class="livePill"><span class="livePulse"></span><span id="livePillText">LIVE DATA READY</span></div>
     </div>
@@ -197,17 +150,16 @@ select{
     <div class="previewWrap">
       <div class="canvasFrame">
         <div class="canvasInner">
-          <canvas id="signalCanvas" width="1200" height="675"></canvas>
+          <canvas id="signalCanvas" width="1200" height="1200"></canvas>
           <div class="canvasBadge" id="canvasBadge">ASTY • SOLANA • LIVE</div>
         </div>
       </div>
     </div>
 
     <div class="metricGrid">
-      <div class="metric"><div class="metricLabel">Top Pool</div><div class="metricValue" id="mTopPool">--</div><div class="metricSub">24h leader</div></div>
-      <div class="metric"><div class="metricLabel">Top Pool Revenue</div><div class="metricValue" id="mTopRevenue">--</div><div class="metricSub">24h live estimate</div></div>
+      <div class="metric"><div class="metricLabel">Focus Pair</div><div class="metricValue" id="mTopPool">--</div><div class="metricSub">live highlight</div></div>
+      <div class="metric"><div class="metricLabel">Top Pool Revenue</div><div class="metricValue" id="mTopRevenue">--</div><div class="metricSub">24h estimate</div></div>
       <div class="metric"><div class="metricLabel">Network Revenue</div><div class="metricValue" id="mNetworkRevenue">--</div><div class="metricSub">24h across ASTY pools</div></div>
-      <div class="metric"><div class="metricLabel">Pools Loaded</div><div class="metricValue" id="mPoolCount">--</div><div class="metricSub">current live snapshot</div></div>
     </div>
 
     <div class="controls">
@@ -215,12 +167,13 @@ select{
         <select id="angleSelect" aria-label="Post angle">
           <option value="auto">Live Signal</option>
           <option value="leader">Top Pool Spotlight</option>
-              <option value="system">System Pulse</option>
-          <option value="effect">Effect</option>
+          <option value="system">System Pulse</option>
+          <option value="effect">ASTY Effect</option>
         </select>
       </div>
       <button class="primaryBtn" id="generateBtn" type="button">Generate New Text</button>
       <button class="ghostBtn" id="refreshBtn" type="button"><span class="spin"></span><span>Refresh Live Data</span></button>
+      <button class="ghostBtn" id="downloadBtn" type="button">Download Image</button>
     </div>
   </section>
 
@@ -232,7 +185,7 @@ select{
       </div>
       <textarea id="shortText" class="textBox" spellcheck="false"></textarea>
       <div class="outputFoot">
-        <div class="hint">Weighted X count: URLs count as 23 characters. Designed to stay below 280.</div>
+        <div class="hint">Short version for standard X accounts. URLs are counted with weighted X logic.</div>
         <button class="copyBtn" id="copyShortBtn" type="button">Copy Short</button>
       </div>
     </article>
@@ -244,7 +197,7 @@ select{
       </div>
       <textarea id="longText" class="textBox" spellcheck="false"></textarea>
       <div class="outputFoot">
-        <div class="hint">More space for the story, the numbers and the strongest ASTY angle.</div>
+        <div class="hint">Longer version with a stronger story and a clearer hype angle.</div>
         <button class="copyBtn" id="copyLongBtn" type="button">Copy Long</button>
       </div>
     </article>
@@ -260,7 +213,6 @@ select{
 const ASSET_BASE = "https://raw.githubusercontent.com/ArbStrategy-ASTY/ArbStrategy-ASTY/main/assets/";
 const SITE_LINK = "https://ArbStrategy.net";
 const TG_LINK = "https://t.me/ArbStrategyASTY";
-const DASHBOARD_LINK = "https://htmlpreview.github.io/?https://github.com/ArbStrategy-ASTY/ArbStrategy-ASTY/blob/main/Dashboard.html";
 const CHUNK_SIZE = 25;
 
 const pools = [
@@ -326,11 +278,7 @@ const pools = [
 ["EDrT8LWDRuYE7v75Dkc9gUjLk7MvDYdezvDcnoHGqwuq","ASTY/TROLL",1],
 ["ArKpj5vcNtHJTLhUKeADCmvuBpn1ZZoGNHZZYQ1QXq5n","ASTY/CUPSEY",1],
 ["DGuvY79xbLuJRb3CzwQL59z5zoit7KLnFwyL2t6EQCcj","ASTY/SERIOUS",1],
-["5rwRQ4KprvvM1Z7h3QQ5WtUPUG5NMYEw1JtehSAxWeh3","ASTY/Chiikawa",1],
-["2Gk1FWW4vKJ23pR42WnAfg7RG4UtMfEpKUKTsYMNCfax","ASTY/KMNO",1],
-["9cXtSR11UfZAj5qMUq7HNkEkt2JktEmkB9t29sTnUqHz","ASTY/ANSEM",1],
-["9zrdaC8tHges3JLTfsRVuibQ2xhXivZx3keymkZV2PAa","ASTY/three",1],
-["CghjfgQqqvuWEcFmoJiCcegEo1DjtgCX9yCEG2wUWE6N","ASTY/CARDS",1]
+["9zrdaC8tHges3JLTfsRVuibQ2xhXivZx3keymkZV2PAa","ASTY/three",1]
 ];
 
 const canvas = document.getElementById("signalCanvas");
@@ -344,8 +292,9 @@ const statusDot = document.getElementById("statusDot");
 const stampEl = document.getElementById("stamp");
 const refreshBtn = document.getElementById("refreshBtn");
 const angleSelect = document.getElementById("angleSelect");
+const generateBtn = document.getElementById("generateBtn");
+const downloadBtn = document.getElementById("downloadBtn");
 
-let liveRows = [];
 let currentSnapshot = null;
 let generationIndex = 0;
 
@@ -357,6 +306,7 @@ function setStatus(text,type="idle"){
 function setLoading(on){
   refreshBtn.classList.toggle("loading",on);
   refreshBtn.disabled = on;
+  generateBtn.disabled = on;
   document.getElementById("livePillText").textContent = on ? "UPDATING LIVE DATA" : "LIVE DATA READY";
 }
 
@@ -375,11 +325,6 @@ function fmtUsd(n){
   return "$" + n.toFixed(2);
 }
 
-function fmtPct(n,digits=1){
-  n = Number(n) || 0;
-  return n.toFixed(digits) + "%";
-}
-
 function cleanPoolName(label){
   const parts = label.split("/").map(part=>part.trim()).filter(Boolean);
   return parts.map(part=>{
@@ -391,19 +336,7 @@ function cleanPoolName(label){
 function getPoolToken(label){
   const parts = label.split("/");
   const raw = (parts[1] || parts[0] || "SOL").trim();
-  return raw.replace(/[^a-zA-Z0-9]/g,"").toUpperCase();
-}
-
-function tokenCashtag(token){
-  if(!token) return "$SOL";
-  const normalized = token.replace(/[^A-Za-z0-9]/g,"");
-  return normalized ? "$" + normalized : "$SOL";
-}
-
-function shufflePick(arr,offset=0){
-  if(!arr.length) return "";
-  const idx = (generationIndex + offset + Math.floor(Math.random()*arr.length)) % arr.length;
-  return arr[idx];
+  return raw.replace(/[^A-Za-z0-9]/g,"").toUpperCase();
 }
 
 async function fetchGeckoChunk(chunk){
@@ -436,18 +369,16 @@ async function loadPoolData(){
     if(!item) return null;
     const a = item.attributes || {};
     const volume24h = Number.parseFloat(a.volume_usd?.h24 || "0") || 0;
-    const volume1h = Number.parseFloat(a.volume_usd?.h1 || "0") || 0;
     const tvl = Number.parseFloat(a.reserve_in_usd || "0") || 0;
     const feeRate = feePercent / 100;
     const revenue24h = volume24h * feeRate;
     return {
       id,
-      label:cleanPoolName(label),
-      rawLabel:label,
-      poolToken:getPoolToken(label),
+      label: cleanPoolName(label),
+      rawLabel: label,
+      poolToken: getPoolToken(label),
       feePercent,
       volume24h,
-      volume1h,
       tvl,
       revenue24h
     };
@@ -461,22 +392,25 @@ function buildSnapshot(rows){
   const topPool = byRevenue[0];
   const totalRevenue = rows.reduce((s,p)=>s+p.revenue24h,0);
   const totalVolume = rows.reduce((s,p)=>s+p.volume24h,0);
-  const totalTvl = rows.reduce((s,p)=>s+p.tvl,0);
-  const topShare = totalRevenue>0 ? topPool.revenue24h/totalRevenue : 0;
-  const top3Revenue = byRevenue.slice(0,3).reduce((s,p)=>s+p.revenue24h,0);
-  const top3Share = totalRevenue>0 ? top3Revenue/totalRevenue : 0;
-
+  const topShare = totalRevenue > 0 ? topPool.revenue24h / totalRevenue : 0;
   return {
     rows,
     topPool,
     totalRevenue,
     totalVolume,
-    totalTvl,
     topShare,
-    top3Share,
-    loadedCount:rows.length,
-    configuredCount:pools.length
+    loadedCount: rows.length,
+    configuredCount: pools.length
   };
+}
+
+function postHeading(mode){
+  return {
+    auto:"Live Signal",
+    leader:"Top Pool Spotlight",
+    system:"System Pulse",
+    effect:"ASTY Effect"
+  }[mode] || "Live Signal";
 }
 
 function chooseAutoAngle(s){
@@ -485,217 +419,198 @@ function chooseAutoAngle(s){
   return generationIndex % 2 ? "effect" : "leader";
 }
 
-function buildKeywords(s,focus){
-  const token = (focus.poolToken || "SOL").replace(/[^A-Za-z0-9]/g,"").toUpperCase();
-  const banks = [
-    [`${token}`,`Solana DeFi`,`on-chain liquidity`],
-    [`${token}`,`liquidity pools`,`LP revenue`],
-    [`ASTY`,`${token}`,`Solana liquidity`],
-    [`${token}`,`Solana`,`DeFi liquidity`]
+function resolveAngle(mode,s){
+  return mode === "auto" ? chooseAutoAngle(s) : mode;
+}
+
+function buildVisualPack(selectedMode, actualAngle, s, focus){
+  const map = {
+    auto: {
+      title: "LIVE SIGNAL",
+      kicker: "REAL-TIME ASTY MOMENTUM",
+      sub: actualAngle === "system"
+        ? "The ASTY network is active right now."
+        : actualAngle === "effect"
+        ? "Momentum is building across the ASTY ecosystem."
+        : `${focus.label} is leading the live ASTY snapshot.`,
+      accentA: "#c4b5fd",
+      accentB: "#67e8f9",
+      heroGlow: "rgba(139,92,246,.30)"
+    },
+    leader: {
+      title: "TOP POOL\nSPOTLIGHT",
+      kicker: "CURRENT LEADER",
+      sub: `${focus.label} is setting the pace inside the ASTY network.`,
+      accentA: "#d8ccff",
+      accentB: "#67e8f9",
+      heroGlow: "rgba(103,232,249,.20)"
+    },
+    system: {
+      title: "SYSTEM\nPULSE",
+      kicker: "NETWORK SNAPSHOT",
+      sub: "The wider ASTY network is showing live activity across Solana.",
+      accentA: "#67e8f9",
+      accentB: "#c4b5fd",
+      heroGlow: "rgba(103,232,249,.16)"
+    },
+    effect: {
+      title: "ASTY\nEFFECT",
+      kicker: "ECOSYSTEM MOMENTUM",
+      sub: "More activity. More flow. More momentum around ASTY.",
+      accentA: "#f0abfc",
+      accentB: "#c4b5fd",
+      heroGlow: "rgba(240,171,252,.18)"
+    }
+  };
+  return map[selectedMode] || map.auto;
+}
+
+function getStatsForAngle(actualAngle,s,focus){
+  if(actualAngle === "system"){
+    return [
+      {label:"24H NETWORK REVENUE", value:fmtUsd(s.totalRevenue)},
+      {label:"24H NETWORK VOLUME", value:fmtUsd(s.totalVolume)},
+      {label:"POOLS LOADED", value:`${s.loadedCount} / ${s.configuredCount}`}
+    ];
+  }
+  if(actualAngle === "effect"){
+    return [
+      {label:"24H NETWORK REVENUE", value:fmtUsd(s.totalRevenue)},
+      {label:"FOCUS PAIR", value:focus.label},
+      {label:"24H POOL REVENUE", value:fmtUsd(focus.revenue24h)}
+    ];
+  }
+  return [
+    {label:"24H POOL REVENUE", value:fmtUsd(focus.revenue24h)},
+    {label:"24H POOL VOLUME", value:fmtUsd(focus.volume24h)},
+    {label:"POOLS LOADED", value:`${s.loadedCount} / ${s.configuredCount}`}
   ];
-  return banks[generationIndex % banks.length].join(" · ");
 }
 
-function postHeading(mode){
-  return {
-    auto:"Live Signal",
-    leader:"Top Pool Spotlight",
-    system:"System Pulse",
-    effect:"Effect"
-  }[mode] || "Live Signal";
-}
-
-function shortCandidates(angle,s,focus,mode){
+function shortCandidates(actualAngle,s,focus,selectedMode){
   const pair = focus.label;
-  const revenue = fmtUsd(focus.revenue24h);
-  const volume = fmtUsd(focus.volume24h);
-  const count = s.loadedCount;
+  const links = `Website: ${SITE_LINK}\nCommunity: ${TG_LINK}`;
 
-  const links = `Live Dashboard: ${SITE_LINK}
-Community: ${TG_LINK}`;
-
-  const base = {
+  const bank = {
     leader:[
-`🟣 ASTY ${postHeading(mode)}
+`🟣 ASTY ${postHeading(selectedMode)}
 
 ${pair}
 
-Leads the 24h snapshot across ${count} live ASTY pools on Solana.
-
-Est. LP revenue: ${revenue}
-Volume: ${volume}
-
-Capital follows measurable performance.
+This pair is leading the live ASTY snapshot.
+24h LP revenue: ${fmtUsd(focus.revenue24h)}
+24h volume: ${fmtUsd(focus.volume24h)}
 
 ${links}
 #ASTY #ArbiTrage`,
-`🟣 ASTY ${postHeading(mode)}
+`🟣 ASTY ${postHeading(selectedMode)}
 
 ${pair}
 
-Currently leads the ASTY liquidity network on Solana.
-
-24h revenue: ${revenue}
-24h volume: ${volume}
-
-Data first. Capital second.
-
-${links}
-#ASTY #ArbiTrage`,
-`🟣 ASTY ${postHeading(mode)}
-
-${pair}
-
-The strongest 24h revenue pool in the current ASTY snapshot.
-
-Revenue: ${revenue} | Volume: ${volume}
-
-ASTY turns liquidity data into capital allocation.
+Current leader in the ASTY network.
+Revenue: ${fmtUsd(focus.revenue24h)}
+Volume: ${fmtUsd(focus.volume24h)}
 
 ${links}
 #ASTY #ArbiTrage`
     ],
     system:[
-`🟣 ASTY ${postHeading(mode)}
+`🟣 ASTY ${postHeading(selectedMode)}
 
 ${pair}
 
-${count} live Solana pools
-24h volume: ${fmtUsd(s.totalVolume)}
-Est. LP revenue: ${fmtUsd(s.totalRevenue)}
-
-ASTY is building a measurable DeFi liquidity system, not a single-pair token.
+The ASTY network is active across ${s.loadedCount} live pools.
+24h network revenue: ${fmtUsd(s.totalRevenue)}
+24h network volume: ${fmtUsd(s.totalVolume)}
 
 ${links}
 #ASTY #ArbiTrage`,
-`🟣 ASTY ${postHeading(mode)}
+`🟣 ASTY ${postHeading(selectedMode)}
 
 ${pair}
 
-Across ${count} loaded liquidity pools, ASTY processed ${fmtUsd(s.totalVolume)} in 24h trading volume with ${fmtUsd(s.totalRevenue)} in estimated LP revenue.
-
-Performance decides where capital goes next.
+Live network snapshot:
+Pools loaded: ${s.loadedCount}
+Revenue: ${fmtUsd(s.totalRevenue)}
+Volume: ${fmtUsd(s.totalVolume)}
 
 ${links}
 #ASTY #ArbiTrage`
     ],
     effect:[
-`🟣 ASTY ${postHeading(mode)}
+`🟣 ASTY ${postHeading(selectedMode)}
 
 ${pair}
 
-Trading activity creates data. Data reveals efficient pools. Efficient pools receive capital.
-
-At the token level, the 1% ASTY fee splits 40% burn, 40% growth and 20% treasury.
+More activity. More flow. More momentum.
+24h network revenue: ${fmtUsd(s.totalRevenue)}
+Focus pair revenue: ${fmtUsd(focus.revenue24h)}
 
 ${links}
 #ASTY #ArbiTrage`,
-`🟣 ASTY ${postHeading(mode)}
+`🟣 ASTY ${postHeading(selectedMode)}
 
 ${pair}
 
-Pool performance guides liquidity allocation while the 1% ASTY transaction fee feeds burn, growth and treasury.
-
-That feedback loop is the ASTY Effect.
+The ASTY Effect is live.
+Revenue: ${fmtUsd(s.totalRevenue)}
+Lead pair: ${focus.label}
 
 ${links}
 #ASTY #ArbiTrage`
     ]
   };
-  return base[angle] || base.leader;
+
+  return bank[actualAngle] || bank.leader;
 }
 
-function fitShort(candidates,mode){
-  const ordered = [...candidates];
-  for(let i=0;i<ordered.length;i++){
-    const text = ordered[(generationIndex+i)%ordered.length];
+function fitShort(candidates, selectedMode, actualAngle, s, focus){
+  for(let i=0;i<candidates.length;i++){
+    const text = candidates[(generationIndex+i)%candidates.length];
     if(xWeightedLength(text) <= 280) return text;
   }
-  const fallback = `🟣 ASTY ${postHeading(mode)}
-
-${currentSnapshot.topPool.label}
-
-Leads the live 24h pool snapshot.
-Revenue: ${fmtUsd(currentSnapshot.topPool.revenue24h)}
-Volume: ${fmtUsd(currentSnapshot.topPool.volume24h)}
-
-Live Dashboard: ${SITE_LINK}
-Community: ${TG_LINK}
-#ASTY #ArbiTrage`;
-  if(xWeightedLength(fallback) <= 280) return fallback;
-  return `🟣 ASTY ${postHeading(mode)}
-
-${currentSnapshot.topPool.label}
-
-Leads the 24h snapshot.
-Revenue: ${fmtUsd(currentSnapshot.topPool.revenue24h)}
-
-Live Dashboard: ${SITE_LINK}
-Community: ${TG_LINK}
-#ASTY #ArbiTrage`;
+  const fallback = `🟣 ASTY ${postHeading(selectedMode)}\n\n${focus.label}\n\nRevenue: ${actualAngle === "system" ? fmtUsd(s.totalRevenue) : fmtUsd(focus.revenue24h)}\n\nWebsite: ${SITE_LINK}\nCommunity: ${TG_LINK}\n#ASTY #ArbiTrage`;
+  return fallback;
 }
 
-function buildLong(angle,s,focus,mode){
+function buildLong(actualAngle,s,focus,selectedMode){
   const pair = focus.label;
-  const revenue = fmtUsd(focus.revenue24h);
-  const volume = fmtUsd(focus.volume24h);
-  const keywords = buildKeywords(s,focus);
-
   const intros = {
-    leader:`This pair is currently the strongest 24h revenue contributor in the ASTY liquidity network on Solana.`,
-    system:`The latest ASTY snapshot shows how broad the liquidity network has become across Solana.`,
-    effect:`The ASTY Effect becomes easier to understand when live pool data and token mechanics are viewed together.`
+    leader: `Right now ${pair} is the strongest visible pair in the ASTY network and it deserves the spotlight.`,
+    system: `The latest live snapshot shows that ASTY is not about one isolated pool. It is a growing network with measurable activity across Solana.`,
+    effect: `The ASTY Effect becomes obvious when you look at live activity: momentum builds, attention grows and the network gets stronger.`,
+    auto: `The live ASTY signal is all about what stands out right now.`
   };
 
-  const context = angle === "system"
-    ? `Across ${s.loadedCount} loaded pools, the network shows ${fmtUsd(s.totalVolume)} in 24h trading volume and ${fmtUsd(s.totalRevenue)} in estimated LP revenue.`
-    : `Current pool data:
-• 24h volume: ${volume}
-• Estimated 24h LP revenue: ${revenue}`;
+  const bodies = {
+    leader: `Current focus:\n• 24h LP revenue: ${fmtUsd(focus.revenue24h)}\n• 24h volume: ${fmtUsd(focus.volume24h)}\n\nThis is the kind of signal that makes ASTY worth watching. The pair is active, visible and pushing the current snapshot forward.`,
+    system: `Current network snapshot:\n• Pools loaded: ${s.loadedCount} / ${s.configuredCount}\n• 24h network revenue: ${fmtUsd(s.totalRevenue)}\n• 24h network volume: ${fmtUsd(s.totalVolume)}\n\nThe bigger picture matters. More active pools give ASTY more surface area, more reach and more reasons for people to pay attention.`,
+    effect: `Current momentum:\n• Focus pair: ${pair}\n• 24h network revenue: ${fmtUsd(s.totalRevenue)}\n• Focus pair revenue: ${fmtUsd(focus.revenue24h)}\n\nThat is the ASTY Effect in simple form: activity creates flow, flow creates visibility and visibility strengthens the ecosystem.`,
+    auto: `Current focus:\n• Pair: ${pair}\n• 24h revenue: ${fmtUsd(focus.revenue24h)}\n• 24h volume: ${fmtUsd(focus.volume24h)}\n\nThe goal is simple: pick up the strongest live angle and turn it into content people actually want to share.`
+  };
 
-  const mechanics = `ASTY connects a growing Solana liquidity network with a simple idea: real activity should strengthen the ecosystem. Active pools create revenue, the network keeps expanding and the ASTY Effect becomes visible on-chain.`;
+  const closer = {
+    leader: `ASTY keeps producing real signals and this is one of them.`,
+    system: `A network with visible activity is easier to talk about, easier to share and easier to grow.`,
+    effect: `That feedback loop is what gives ASTY its own identity.`,
+    auto: `Fresh live data always gives ASTY a new story to tell.`
+  };
 
-  const closers = [
-`The result is a Solana DeFi network where real trading activity keeps feeding the wider ASTY ecosystem.`,
-`More activity, more pool revenue and a stronger network. That is the ASTY Effect in motion.`,
-`The interesting part is not one isolated pool. It is the growing network behind ASTY and the activity flowing through it.`
-  ];
-
-  return `🟣 ASTY ${postHeading(mode)}
-
-${pair}
-
-${intros[angle] || intros.leader}
-
-${context}
-
-${mechanics}
-
-${shufflePick(closers,2)}
-
-Live Dashboard: ${SITE_LINK}
-Community: ${TG_LINK}
-
-${keywords}
-#ASTY #ArbiTrage`;
+  return `🟣 ASTY ${postHeading(selectedMode)}\n\n${pair}\n\n${intros[actualAngle] || intros.auto}\n\n${bodies[actualAngle] || bodies.auto}\n\n${closer[actualAngle] || closer.auto}\n\nWebsite: ${SITE_LINK}\nCommunity: ${TG_LINK}\n\n#ASTY #ArbiTrage`;
 }
 
 function generateCopy(){
   if(!currentSnapshot) return;
   generationIndex++;
-  const mode = angleSelect.value;
-  let angle = mode;
-  if(angle === "auto") angle = chooseAutoAngle(currentSnapshot);
+  const selectedMode = angleSelect.value;
+  const actualAngle = resolveAngle(selectedMode,currentSnapshot);
   const focus = currentSnapshot.topPool;
 
-  const short = fitShort(shortCandidates(angle,currentSnapshot,focus,mode),mode);
-  const long = buildLong(angle,currentSnapshot,focus,mode);
-
-  shortText.value = short;
-  longText.value = long;
+  shortText.value = fitShort(shortCandidates(actualAngle,currentSnapshot,focus,selectedMode), selectedMode, actualAngle, currentSnapshot, focus);
+  longText.value = buildLong(actualAngle,currentSnapshot,focus,selectedMode);
   updateCounters();
-  drawCanvas(currentSnapshot,focus,angle,mode);
-  setStatus(`Generated ${postHeading(mode)} text from ${currentSnapshot.loadedCount}/${currentSnapshot.configuredCount} live pools.`,"ok");
+  drawCanvas(currentSnapshot,focus,selectedMode,actualAngle);
+  setStatus(`Generated ${postHeading(selectedMode)} text from ${currentSnapshot.loadedCount}/${currentSnapshot.configuredCount} live pools.`,"ok");
 }
 
 function xWeightedLength(text){
@@ -773,13 +688,12 @@ async function refreshData(){
   try{
     const {rows,failedChunks} = await loadPoolData();
     if(!rows.length) throw new Error("No pool data returned");
-    liveRows = rows;
     currentSnapshot = buildSnapshot(rows);
     updateMetricCards(currentSnapshot);
     generateCopy();
     const now = new Date();
     stampEl.textContent = `Updated ${now.toLocaleTimeString([], {hour:"2-digit",minute:"2-digit"})}`;
-    document.getElementById("canvasBadge").textContent = `${currentSnapshot.loadedCount} POOLS • SOLANA • LIVE`;
+    document.getElementById("canvasBadge").textContent = `${currentSnapshot.loadedCount} POOLS • ASTY • LIVE`;
     if(failedChunks){
       setStatus(`Live snapshot loaded with ${failedChunks} partial API request issue(s): ${rows.length}/${pools.length} pools available.`,"ok");
     }
@@ -796,7 +710,6 @@ function updateMetricCards(s){
   document.getElementById("mTopPool").textContent = s.topPool.label;
   document.getElementById("mTopRevenue").textContent = fmtUsd(s.topPool.revenue24h);
   document.getElementById("mNetworkRevenue").textContent = fmtUsd(s.totalRevenue);
-  document.getElementById("mPoolCount").textContent = `${s.loadedCount} / ${s.configuredCount}`;
 }
 
 function loadImage(src){
@@ -820,123 +733,187 @@ function roundRectPath(x,y,w,h,r){
   ctx.closePath();
 }
 
-function card(x,y,w,h,fill="rgba(255,255,255,.045)",stroke="rgba(196,181,253,.15)",r=22){
+function card(x,y,w,h,fill,stroke,r=22){
   roundRectPath(x,y,w,h,r);
-  ctx.fillStyle=fill;ctx.fill();ctx.strokeStyle=stroke;ctx.lineWidth=1.2;ctx.stroke();
+  ctx.fillStyle = fill;
+  ctx.fill();
+  ctx.strokeStyle = stroke;
+  ctx.lineWidth = 1.2;
+  ctx.stroke();
 }
 
-function truncateCanvasText(text,maxWidth,font){
-  ctx.font=font;
-  if(ctx.measureText(text).width<=maxWidth) return text;
-  let s=text;
-  while(s.length>3 && ctx.measureText(s+"…").width>maxWidth) s=s.slice(0,-1);
-  return s+"…";
-}
-
-function drawMetricCanvas(label,value,x,y,w=250){
-  card(x,y,w,84,"rgba(255,255,255,.038)","rgba(196,181,253,.12)",18);
-  ctx.fillStyle="#8d99b8";ctx.font="800 14px Arial";ctx.fillText(label.toUpperCase(),x+18,y+27);
-  ctx.fillStyle="#f8f7ff";ctx.font="900 26px Arial";ctx.fillText(truncateCanvasText(value,w-36,"900 26px Arial"),x+18,y+61);
-}
-
-function drawNetworkArt(){
-  const nodes=[
-    [930,145,7],[1030,205,4],[905,255,5],[1085,320,7],[970,365,4],[1110,455,5],[1000,510,6],[875,465,4]
-  ];
-  ctx.save();
-  ctx.globalAlpha=.42;
-  for(let i=0;i<nodes.length;i++){
-    const [x,y,r]=nodes[i];
-    for(let j=i+1;j<nodes.length;j++){
-      const [x2,y2]=nodes[j];
-      const d=Math.hypot(x-x2,y-y2);
-      if(d<190){
-        ctx.strokeStyle=d<130?"rgba(103,232,249,.22)":"rgba(167,139,250,.13)";
-        ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x2,y2);ctx.stroke();
-      }
+function wrapText(text,x,y,maxWidth,lineHeight,font,color){
+  ctx.font = font;
+  ctx.fillStyle = color;
+  const words = text.split(" ");
+  let line = "";
+  for(const word of words){
+    const test = line + word + " ";
+    if(ctx.measureText(test).width > maxWidth && line){
+      ctx.fillText(line.trim(),x,y);
+      line = word + " ";
+      y += lineHeight;
+    }else{
+      line = test;
     }
   }
-  for(const [x,y,r] of nodes){
-    ctx.shadowColor="#a78bfa";ctx.shadowBlur=18;ctx.fillStyle=r>5?"#c4b5fd":"#67e8f9";ctx.beginPath();ctx.arc(x,y,r,0,Math.PI*2);ctx.fill();
-  }
-  ctx.restore();ctx.shadowBlur=0;
+  if(line) ctx.fillText(line.trim(),x,y);
+  return y;
 }
 
-async function drawCanvas(s,focus,angle,mode){
-  const logo = await loadImage(ASSET_BASE+"logo.png");
-  ctx.clearRect(0,0,1200,675);
+function drawStatCard(x,y,w,h,label,value,accentA,accentB){
+  const grad = ctx.createLinearGradient(x,y,x+w,y+h);
+  grad.addColorStop(0, "rgba(255,255,255,.055)");
+  grad.addColorStop(1, "rgba(255,255,255,.03)");
+  card(x,y,w,h,grad,"rgba(196,181,253,.14)",28);
 
-  const bg=ctx.createLinearGradient(0,0,1200,675);
-  bg.addColorStop(0,"#10091f");bg.addColorStop(.46,"#070b17");bg.addColorStop(1,"#06101a");
-  ctx.fillStyle=bg;ctx.fillRect(0,0,1200,675);
+  ctx.fillStyle = "#8e9ab8";
+  ctx.font = "900 16px Arial";
+  ctx.fillText(label,x+26,y+36);
 
-  const glow1=ctx.createRadialGradient(170,40,0,170,40,360);
-  glow1.addColorStop(0,"rgba(139,92,246,.26)");glow1.addColorStop(1,"rgba(139,92,246,0)");ctx.fillStyle=glow1;ctx.fillRect(0,0,620,500);
-  const glow2=ctx.createRadialGradient(1050,140,0,1050,140,320);
-  glow2.addColorStop(0,"rgba(103,232,249,.12)");glow2.addColorStop(1,"rgba(103,232,249,0)");ctx.fillStyle=glow2;ctx.fillRect(730,0,470,470);
+  const accent = ctx.createLinearGradient(x,y,x+w,y);
+  accent.addColorStop(0, accentA);
+  accent.addColorStop(1, accentB);
+  ctx.fillStyle = accent;
+  ctx.font = "900 40px Arial";
+  const display = value.length > 18 ? value.slice(0,18) + "…" : value;
+  ctx.fillText(display,x+26,y+92);
+}
 
-  for(let x=0;x<1200;x+=48){
-    ctx.strokeStyle="rgba(255,255,255,.018)";ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,675);ctx.stroke();
+async function drawCanvas(s,focus,selectedMode,actualAngle){
+  const logo = await loadImage(ASSET_BASE + "logo.png");
+  const pack = buildVisualPack(selectedMode,actualAngle,s,focus);
+  const stats = getStatsForAngle(actualAngle,s,focus);
+
+  ctx.clearRect(0,0,1200,1200);
+
+  const bg = ctx.createLinearGradient(0,0,1200,1200);
+  bg.addColorStop(0,"#0d0b1c");
+  bg.addColorStop(.45,"#060a14");
+  bg.addColorStop(1,"#07111a");
+  ctx.fillStyle = bg;
+  ctx.fillRect(0,0,1200,1200);
+
+  const glowA = ctx.createRadialGradient(180,120,0,180,120,420);
+  glowA.addColorStop(0,pack.heroGlow);
+  glowA.addColorStop(1,"rgba(139,92,246,0)");
+  ctx.fillStyle = glowA;
+  ctx.fillRect(0,0,720,520);
+
+  const glowB = ctx.createRadialGradient(1010,210,0,1010,210,360);
+  glowB.addColorStop(0,"rgba(103,232,249,.10)");
+  glowB.addColorStop(1,"rgba(103,232,249,0)");
+  ctx.fillStyle = glowB;
+  ctx.fillRect(720,0,480,420);
+
+  for(let x=0;x<1200;x+=54){
+    ctx.strokeStyle = "rgba(255,255,255,.016)";
+    ctx.lineWidth = 1;
+    ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,1200);ctx.stroke();
   }
-  for(let y=0;y<675;y+=48){
-    ctx.strokeStyle="rgba(255,255,255,.018)";ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(1200,y);ctx.stroke();
+  for(let y=0;y<1200;y+=54){
+    ctx.strokeStyle = "rgba(255,255,255,.016)";
+    ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(1200,y);ctx.stroke();
   }
 
-  card(36,34,1128,607,"rgba(4,7,16,.26)","rgba(196,181,253,.16)",30);
-  drawNetworkArt();
+  card(40,40,1120,1120,"rgba(5,8,18,.36)","rgba(196,181,253,.15)",34);
 
-  ctx.shadowColor="#a78bfa";ctx.shadowBlur=18;ctx.fillStyle="#a78bfa";ctx.beginPath();ctx.arc(72,78,7,0,Math.PI*2);ctx.fill();ctx.shadowBlur=0;
-  ctx.fillStyle="#c4b5fd";ctx.font="900 18px Arial";ctx.fillText("ASTY INTELLIGENCE",92,84);
-  ctx.fillStyle="#7f8bab";ctx.font="800 13px Arial";ctx.fillText(`${s.loadedCount} LIVE POOLS • SOLANA`,92,108);
+  if(logo){ ctx.drawImage(logo,980,76,110,110); }
 
-  if(logo){ctx.drawImage(logo,1041,61,84,84)}
+  ctx.fillStyle = "#c4b5fd";
+  ctx.font = "900 20px Arial";
+  ctx.fillText("ASTY X SIGNAL LAB",90,98);
 
-  const angleTitle=postHeading(mode).toUpperCase();
-  ctx.fillStyle="#f8f7ff";ctx.font="900 51px Arial";ctx.fillText(angleTitle,70,195);
+  ctx.fillStyle = "#8fa0bd";
+  ctx.font = "800 15px Arial";
+  ctx.fillText(`${s.loadedCount} LIVE POOLS • SOLANA`,90,127);
 
-  ctx.fillStyle="#67e8f9";ctx.font="900 20px Arial";ctx.fillText("LIVE LIQUIDITY SNAPSHOT",70,232);
+  const kickerGrad = ctx.createLinearGradient(90,0,510,0);
+  kickerGrad.addColorStop(0,pack.accentA);
+  kickerGrad.addColorStop(1,pack.accentB);
+  ctx.fillStyle = kickerGrad;
+  ctx.font = "900 22px Arial";
+  ctx.fillText(pack.kicker,90,210);
 
-  card(70,266,760,108,"rgba(167,139,250,.055)","rgba(196,181,253,.16)",22);
-  ctx.fillStyle="#8d99b8";ctx.font="800 14px Arial";ctx.fillText("FOCUS POOL",92,298);
-  ctx.fillStyle="#ffffff";ctx.font="900 34px Arial";ctx.fillText(truncateCanvasText(focus.label,700,"900 34px Arial"),92,340);
+  const titleLines = pack.title.split("\n");
+  const titleGrad = ctx.createLinearGradient(90,0,780,0);
+  titleGrad.addColorStop(0,"#ffffff");
+  titleGrad.addColorStop(.55,pack.accentA);
+  titleGrad.addColorStop(1,pack.accentB);
+  ctx.fillStyle = titleGrad;
+  ctx.font = "900 92px Arial";
+  let ty = 310;
+  for(const line of titleLines){
+    ctx.fillText(line,90,ty);
+    ty += 96;
+  }
 
-  drawMetricCanvas("24H Pool Revenue",fmtUsd(focus.revenue24h),70,398,238);
-  drawMetricCanvas("24H Pool Volume",fmtUsd(focus.volume24h),320,398,238);
-  drawMetricCanvas("Network Revenue",fmtUsd(s.totalRevenue),570,398,238);
-  drawMetricCanvas("Network Volume",fmtUsd(s.totalVolume),820,398,260);
+  card(90,430,1020,170,"rgba(255,255,255,.045)","rgba(196,181,253,.16)",28);
+  ctx.fillStyle = "#8e9ab8";
+  ctx.font = "900 18px Arial";
+  ctx.fillText("FOCUS PAIR",122,476);
 
-  ctx.fillStyle="#f8f7ff";ctx.font="900 22px Arial";ctx.fillText("Live activity across the growing ASTY network.",70,531);
-  ctx.fillStyle="#9da8c7";ctx.font="700 16px Arial";ctx.fillText(`Network: ${fmtUsd(s.totalRevenue)} est. LP revenue • ${fmtUsd(s.totalVolume)} volume / 24h`,70,560);
+  const pairGrad = ctx.createLinearGradient(122,0,860,0);
+  pairGrad.addColorStop(0,"#ffffff");
+  pairGrad.addColorStop(1,pack.accentA);
+  ctx.fillStyle = pairGrad;
+  ctx.font = "900 54px Arial";
+  ctx.fillText(focus.label,122,541);
 
-  card(70,586,1010,35,"rgba(103,232,249,.035)","rgba(103,232,249,.10)",14);
-  ctx.fillStyle="#c4b5fd";ctx.font="900 12px Arial";ctx.fillText("ASTY • SOLANA • DEFI • LIVE POOL DATA",88,608);
-  ctx.fillStyle="#67e8f9";ctx.fillText("ArbStrategy.net",904,608);
+  wrapText(pack.sub,122,580,930,34,"800 24px Arial","#cfd5eb");
+
+  drawStatCard(90,660,320,160,stats[0].label,stats[0].value,pack.accentA,pack.accentB);
+  drawStatCard(440,660,320,160,stats[1].label,stats[1].value,pack.accentA,pack.accentB);
+  drawStatCard(790,660,320,160,stats[2].label,stats[2].value,pack.accentA,pack.accentB);
+
+  ctx.fillStyle = "#ffffff";
+  ctx.font = "900 34px Arial";
+  const hypeLine = actualAngle === "system"
+    ? "ASTY is building network visibility through live activity."
+    : actualAngle === "effect"
+    ? "Activity feeds momentum and momentum feeds the story."
+    : "A strong pair gives the whole ASTY network more attention.";
+  wrapText(hypeLine,90,915,980,42,"900 34px Arial","#ffffff");
+
+  ctx.fillStyle = "#9fb0ce";
+  ctx.font = "800 24px Arial";
+  const subLine = actualAngle === "system"
+    ? `Network revenue ${fmtUsd(s.totalRevenue)} • Network volume ${fmtUsd(s.totalVolume)}`
+    : `Focus pair revenue ${fmtUsd(focus.revenue24h)} • 24h volume ${fmtUsd(focus.volume24h)}`;
+  ctx.fillText(subLine,90,982);
+
+  card(90,1044,1020,68,"rgba(103,232,249,.035)","rgba(103,232,249,.14)",18);
+  ctx.fillStyle = "#c4b5fd";
+  ctx.font = "900 20px Arial";
+  ctx.fillText("Website: ArbStrategy.net",122,1088);
+  ctx.fillStyle = "#67e8f9";
+  ctx.fillText("Community: t.me/ArbStrategyASTY",640,1088);
 }
 
 function drawEmptyCanvas(message){
-  ctx.clearRect(0,0,1200,675);
-  ctx.fillStyle="#070b17";ctx.fillRect(0,0,1200,675);
-  ctx.fillStyle="#a78bfa";ctx.font="900 22px Arial";ctx.fillText("ASTY INTELLIGENCE",70,90);
-  ctx.fillStyle="#ffffff";ctx.font="900 48px Arial";ctx.fillText(message,70,220);
-  ctx.fillStyle="#8d99b8";ctx.font="700 20px Arial";ctx.fillText("Refresh the live data to generate a new signal.",70,260);
+  ctx.clearRect(0,0,1200,1200);
+  ctx.fillStyle = "#070b17";
+  ctx.fillRect(0,0,1200,1200);
+  ctx.fillStyle = "#a78bfa";
+  ctx.font = "900 24px Arial";
+  ctx.fillText("ASTY X SIGNAL LAB",90,110);
+  ctx.fillStyle = "#ffffff";
+  ctx.font = "900 74px Arial";
+  ctx.fillText(message,90,280);
+  ctx.fillStyle = "#8d99b8";
+  ctx.font = "700 28px Arial";
+  ctx.fillText("Refresh the live data to generate a new ASTY signal.",90,340);
 }
 
 document.getElementById("generateBtn").addEventListener("click",generateCopy);
 refreshBtn.addEventListener("click",refreshData);
+downloadBtn.addEventListener("click",downloadImage);
 document.getElementById("copyShortBtn").addEventListener("click",e=>copyToClipboard(shortText.value,e.currentTarget,"Short post"));
 document.getElementById("copyLongBtn").addEventListener("click",e=>copyToClipboard(longText.value,e.currentTarget,"Long post"));
 shortText.addEventListener("input",updateCounters);
 longText.addEventListener("input",updateCounters);
 angleSelect.addEventListener("change",()=>currentSnapshot && generateCopy());
 canvas.addEventListener("dblclick",downloadImage);
-
-// Add an explicit image download button to the preview without making the main controls crowded.
-const downloadBtn=document.createElement("button");
-downloadBtn.type="button";
-downloadBtn.className="ghostBtn";
-downloadBtn.textContent="Download Image";
-downloadBtn.addEventListener("click",downloadImage);
-document.querySelector(".controls").appendChild(downloadBtn);
 
 refreshData();
 </script>
