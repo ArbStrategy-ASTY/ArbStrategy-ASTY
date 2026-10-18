@@ -7,15 +7,11 @@
 <title>ASTY X Signal Lab</title>
 <style>
 :root{
-  --bg:#060914;
-  --panel:rgba(12,17,34,.84);
-  --panel2:rgba(18,24,46,.72);
   --line:rgba(196,181,253,.16);
   --text:#f8f7ff;
   --muted:#97a3c3;
   --lilac:#c4b5fd;
   --purple:#a78bfa;
-  --violet:#8b5cf6;
   --cyan:#67e8f9;
   --green:#86efac;
   --red:#fca5a5;
@@ -51,13 +47,7 @@ button,select,textarea{font:inherit}
 button{border:0}
 a{color:inherit}
 .wrap{width:min(1180px,100%);margin:0 auto;position:relative;z-index:1}
-.topbar{
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap:18px;
-  margin-bottom:18px;
-}
+.topbar{display:flex;align-items:center;justify-content:space-between;gap:18px;margin-bottom:18px}
 .brand{display:flex;align-items:center;gap:14px;min-width:0}
 .brandLogo{width:58px;height:58px;object-fit:contain;flex:0 0 auto}
 .eyebrow{display:flex;align-items:center;gap:8px;color:var(--lilac);font-weight:800;font-size:12px;letter-spacing:.16em;text-transform:uppercase}
@@ -65,15 +55,13 @@ a{color:inherit}
 h1{margin:4px 0 0;font-size:clamp(28px,4vw,44px);letter-spacing:-.045em;line-height:1}
 .gradientText{background:linear-gradient(90deg,#ffffff 0%,#d8ccff 42%,#8eeeff 100%);-webkit-background-clip:text;background-clip:text;color:transparent}
 .topActions{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:9px}
-.navBtn,.ghostBtn,.primaryBtn,.copyBtn{
-  border-radius:999px;cursor:pointer;font-weight:800;transition:.18s ease;text-decoration:none;display:inline-flex;align-items:center;justify-content:center;gap:8px;
-}
+.navBtn,.ghostBtn,.primaryBtn,.copyBtn{border-radius:999px;cursor:pointer;font-weight:800;transition:.18s ease;text-decoration:none;display:inline-flex;align-items:center;justify-content:center;gap:8px}
 .navBtn{padding:10px 14px;border:1px solid rgba(196,181,253,.16);background:rgba(255,255,255,.035);color:#d8d9e8;font-size:13px}
 .navBtn:hover,.ghostBtn:hover,.copyBtn:hover{border-color:rgba(196,181,253,.48);background:rgba(167,139,250,.08);transform:translateY(-1px)}
 .heroCard{border:1px solid var(--line);border-radius:30px;background:linear-gradient(180deg,rgba(15,20,39,.92),rgba(7,10,21,.9));box-shadow:var(--shadow);overflow:hidden;position:relative}
 .heroCard::before{content:"";position:absolute;inset:0;pointer-events:none;background:radial-gradient(circle at 85% 12%,rgba(103,232,249,.08),transparent 28%),radial-gradient(circle at 15% 0%,rgba(167,139,250,.10),transparent 30%)}
 .heroHeader{padding:22px 22px 0;display:flex;align-items:flex-end;justify-content:space-between;gap:18px;position:relative;z-index:1}
-.heroCopy{max-width:740px}
+.heroCopy{max-width:760px}
 .heroCopy p{margin:9px 0 0;color:var(--muted);font-size:14px;line-height:1.6}
 .livePill{display:inline-flex;align-items:center;gap:8px;padding:9px 12px;border-radius:999px;border:1px solid rgba(134,239,172,.2);background:rgba(134,239,172,.055);color:#c6f6d5;font-size:12px;font-weight:850;white-space:nowrap}
 .livePulse{width:8px;height:8px;border-radius:50%;background:var(--green);box-shadow:0 0 18px rgba(134,239,172,.8);animation:pulse 1.8s ease-in-out infinite}
@@ -105,7 +93,7 @@ select{appearance:none;width:100%;height:46px;border-radius:15px;border:1px soli
 .outputTitle{font-weight:900;font-size:16px;display:flex;align-items:center;gap:8px}
 .tag{font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--lilac);border:1px solid rgba(196,181,253,.17);padding:5px 8px;border-radius:999px;background:rgba(167,139,250,.055)}
 .counter{font-size:12px;color:#93a0bd;font-weight:800;white-space:nowrap}.counter.good{color:#a7f3d0}.counter.bad{color:var(--red)}
-.textBox{width:calc(100% - 36px);margin:0 18px 14px;min-height:280px;resize:vertical;border-radius:18px;border:1px solid rgba(196,181,253,.13);background:#070b17;color:#f5f5fa;padding:15px 15px 18px;font:500 14px/1.58 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;outline:none}
+.textBox{width:calc(100% - 36px);margin:0 18px 14px;min-height:310px;resize:vertical;border-radius:18px;border:1px solid rgba(196,181,253,.13);background:#070b17;color:#f5f5fa;padding:15px 15px 18px;font:500 14px/1.58 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;outline:none}
 .textBox:focus{border-color:rgba(167,139,250,.42);box-shadow:0 0 0 3px rgba(139,92,246,.07)}
 .outputFoot{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:0 18px 18px}
 .hint{color:#7f8bab;font-size:11px;line-height:1.4}
@@ -113,12 +101,8 @@ select{appearance:none;width:100%;height:46px;border-radius:15px;border:1px soli
 .statusRow{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:12px;padding:0 3px;color:#8c98b6;font-size:12px;min-height:18px}
 .statusLeft{display:flex;align-items:center;gap:8px}
 .statusDot{width:7px;height:7px;border-radius:50%;background:#64748b}.statusDot.ok{background:var(--green);box-shadow:0 0 14px rgba(134,239,172,.5)}.statusDot.error{background:var(--red)}
-@media(max-width:900px){
-  body{padding:14px}.topbar{align-items:flex-start}.topActions{display:none}.heroHeader{align-items:flex-start;flex-direction:column}.metricGrid{grid-template-columns:repeat(2,minmax(0,1fr))}.controls{grid-template-columns:1fr 1fr}.controls .selectWrap{grid-column:1/-1}.outputGrid{grid-template-columns:1fr}.textBox{min-height:250px}
-}
-@media(max-width:560px){
-  .heroHeader,.previewWrap,.metricGrid,.controls{padding-left:14px;padding-right:14px}.metricGrid{grid-template-columns:1fr}.metricValue{font-size:15px}.controls{grid-template-columns:1fr}.controls .selectWrap{grid-column:auto}.primaryBtn,.ghostBtn{width:100%}.brand{align-items:flex-start}.brandLogo{width:50px;height:50px}.outputFoot{align-items:flex-start;flex-direction:column}.copyBtn{width:100%}.textBox{width:calc(100% - 28px);margin-left:14px;margin-right:14px}.outputHead,.outputFoot{padding-left:14px;padding-right:14px}
-}
+@media(max-width:900px){body{padding:14px}.topbar{align-items:flex-start}.topActions{display:none}.heroHeader{align-items:flex-start;flex-direction:column}.metricGrid{grid-template-columns:repeat(2,minmax(0,1fr))}.controls{grid-template-columns:1fr 1fr}.controls .selectWrap{grid-column:1/-1}.outputGrid{grid-template-columns:1fr}.textBox{min-height:250px}}
+@media(max-width:560px){.heroHeader,.previewWrap,.metricGrid,.controls{padding-left:14px;padding-right:14px}.metricGrid{grid-template-columns:1fr}.metricValue{font-size:15px}.controls{grid-template-columns:1fr}.controls .selectWrap{grid-column:auto}.primaryBtn,.ghostBtn{width:100%}.brand{align-items:flex-start}.brandLogo{width:50px;height:50px}.outputFoot{align-items:flex-start;flex-direction:column}.copyBtn{width:100%}.textBox{width:calc(100% - 28px);margin-left:14px;margin-right:14px}.outputHead,.outputFoot{padding-left:14px;padding-right:14px}}
 </style>
 </head>
 <body>
@@ -142,7 +126,7 @@ select{appearance:none;width:100%;height:46px;border-radius:15px;border:1px soli
     <div class="heroHeader">
       <div class="heroCopy">
         <div class="eyebrow"><span class="dot"></span> Live Solana Pool Intelligence</div>
-        <p>Turn live ASTY pool momentum into hype-ready X posts and a bold visual card. Each mode now changes not just the headline, but the image focus, text structure and overall tone.</p>
+        <p>Turn live ASTY pool momentum into sharper X posts and a more aggressive content card. Viral Reach adds recognizable Solana ecosystem hooks like Jupiter, Meteora, Raydium, Birdeye and DexScreener without turning the copy into obvious keyword spam.</p>
       </div>
       <div class="livePill"><span class="livePulse"></span><span id="livePillText">LIVE DATA READY</span></div>
     </div>
@@ -169,6 +153,7 @@ select{appearance:none;width:100%;height:46px;border-radius:15px;border:1px soli
           <option value="leader">Top Pool Spotlight</option>
           <option value="system">System Pulse</option>
           <option value="effect">ASTY Effect</option>
+          <option value="viral">Viral Reach</option>
         </select>
       </div>
       <button class="primaryBtn" id="generateBtn" type="button">Generate New Text</button>
@@ -185,7 +170,7 @@ select{appearance:none;width:100%;height:46px;border-radius:15px;border:1px soli
       </div>
       <textarea id="shortText" class="textBox" spellcheck="false"></textarea>
       <div class="outputFoot">
-        <div class="hint">Short version for standard X accounts. URLs are counted with weighted X logic.</div>
+        <div class="hint">Short version for standard X accounts. URLs use weighted X counting.</div>
         <button class="copyBtn" id="copyShortBtn" type="button">Copy Short</button>
       </div>
     </article>
@@ -197,7 +182,7 @@ select{appearance:none;width:100%;height:46px;border-radius:15px;border:1px soli
       </div>
       <textarea id="longText" class="textBox" spellcheck="false"></textarea>
       <div class="outputFoot">
-        <div class="hint">Longer version with a stronger story and a clearer hype angle.</div>
+        <div class="hint">Longer version with recognition hooks and a more visible Solana / DeFi angle.</div>
         <button class="copyBtn" id="copyLongBtn" type="button">Copy Long</button>
       </div>
     </article>
@@ -281,6 +266,27 @@ const pools = [
 ["9zrdaC8tHges3JLTfsRVuibQ2xhXivZx3keymkZV2PAa","ASTY/three",1]
 ];
 
+const HOOK_BANKS = [
+  ["Solana","DeFi","Jupiter","Meteora","on-chain liquidity"],
+  ["Raydium","Birdeye","DexScreener","meme coin liquidity","Solana"],
+  ["Phantom","Jupiter","on-chain","DeFi","liquidity network"],
+  ["Meteora","Raydium","Birdeye","small-cap project","Solana liquidity"]
+];
+
+const VIRAL_PHRASES = [
+  "One of the more interesting small-cap liquidity angles on Solana right now.",
+  "Not just another token post. This is a live Solana liquidity story.",
+  "More than hype: this is the kind of on-chain signal people notice.",
+  "The kind of Solana project angle that stands out beyond normal meme coin noise."
+];
+
+const RECOGNITION_LINES = [
+  "It fits naturally into the same ecosystem people already watch through Jupiter, Meteora, Raydium, Birdeye and DexScreener.",
+  "It is the kind of on-chain story that makes sense in the same Solana stack people already know from Jupiter, Meteora, Raydium and Phantom.",
+  "The context is familiar: Solana, DeFi, pool activity, Birdeye visibility and DexScreener attention.",
+  "It speaks the language people already recognise across the Solana ecosystem: Jupiter, Raydium, Meteora, Birdeye and DexScreener."
+];
+
 const canvas = document.getElementById("signalCanvas");
 const ctx = canvas.getContext("2d");
 const shortText = document.getElementById("shortText");
@@ -314,6 +320,10 @@ function chunkArray(arr,size){
   const out=[];
   for(let i=0;i<arr.length;i+=size) out.push(arr.slice(i,i+size));
   return out;
+}
+
+function pick(arr,offset=0){
+  return arr[(generationIndex + offset) % arr.length];
 }
 
 function fmtUsd(n){
@@ -369,7 +379,6 @@ async function loadPoolData(){
     if(!item) return null;
     const a = item.attributes || {};
     const volume24h = Number.parseFloat(a.volume_usd?.h24 || "0") || 0;
-    const tvl = Number.parseFloat(a.reserve_in_usd || "0") || 0;
     const feeRate = feePercent / 100;
     const revenue24h = volume24h * feeRate;
     return {
@@ -379,7 +388,6 @@ async function loadPoolData(){
       poolToken: getPoolToken(label),
       feePercent,
       volume24h,
-      tvl,
       revenue24h
     };
   }).filter(Boolean);
@@ -409,158 +417,91 @@ function postHeading(mode){
     auto:"Live Signal",
     leader:"Top Pool Spotlight",
     system:"System Pulse",
-    effect:"ASTY Effect"
+    effect:"ASTY Effect",
+    viral:"Viral Reach"
   }[mode] || "Live Signal";
 }
 
 function chooseAutoAngle(s){
-  if(s.topShare >= .34) return "leader";
-  if(s.totalRevenue >= 20 || s.totalVolume >= 2500) return "system";
-  return generationIndex % 2 ? "effect" : "leader";
+  if(s.topShare >= .36) return "leader";
+  if(s.totalRevenue >= 20 || s.totalVolume >= 2500) return generationIndex % 2 ? "system" : "viral";
+  return generationIndex % 3 === 0 ? "viral" : "effect";
 }
 
 function resolveAngle(mode,s){
   return mode === "auto" ? chooseAutoAngle(s) : mode;
 }
 
+function getHooks(){
+  const bank = pick(HOOK_BANKS,1);
+  return bank.join(" · ");
+}
+
 function buildVisualPack(selectedMode, actualAngle, s, focus){
   const map = {
-    auto: {
-      title: "LIVE SIGNAL",
-      kicker: "REAL-TIME ASTY MOMENTUM",
-      sub: actualAngle === "system"
-        ? "The ASTY network is active right now."
-        : actualAngle === "effect"
-        ? "Momentum is building across the ASTY ecosystem."
-        : `${focus.label} is leading the live ASTY snapshot.`,
-      accentA: "#c4b5fd",
-      accentB: "#67e8f9",
-      heroGlow: "rgba(139,92,246,.30)"
-    },
-    leader: {
-      title: "TOP POOL\nSPOTLIGHT",
-      kicker: "CURRENT LEADER",
-      sub: `${focus.label} is setting the pace inside the ASTY network.`,
-      accentA: "#d8ccff",
-      accentB: "#67e8f9",
-      heroGlow: "rgba(103,232,249,.20)"
-    },
-    system: {
-      title: "SYSTEM\nPULSE",
-      kicker: "NETWORK SNAPSHOT",
-      sub: "The wider ASTY network is showing live activity across Solana.",
-      accentA: "#67e8f9",
-      accentB: "#c4b5fd",
-      heroGlow: "rgba(103,232,249,.16)"
-    },
-    effect: {
-      title: "ASTY\nEFFECT",
-      kicker: "ECOSYSTEM MOMENTUM",
-      sub: "More activity. More flow. More momentum around ASTY.",
-      accentA: "#f0abfc",
-      accentB: "#c4b5fd",
-      heroGlow: "rgba(240,171,252,.18)"
-    }
+    auto:{title:"LIVE\nSIGNAL", kicker:"REAL-TIME ASTY MOMENTUM", sub:"A live content angle built from current ASTY pool activity.", accentA:"#c4b5fd", accentB:"#67e8f9", heroGlow:"rgba(139,92,246,.30)"},
+    leader:{title:"TOP POOL\nSPOTLIGHT", kicker:"CURRENT LEADER", sub:`${focus.label} is currently setting the pace inside the ASTY network.`, accentA:"#ffffff", accentB:"#67e8f9", heroGlow:"rgba(103,232,249,.22)"},
+    system:{title:"SYSTEM\nPULSE", kicker:"NETWORK SNAPSHOT", sub:"A broader look at live ASTY activity across the network.", accentA:"#67e8f9", accentB:"#c4b5fd", heroGlow:"rgba(103,232,249,.18)"},
+    effect:{title:"ASTY\nEFFECT", kicker:"ECOSYSTEM MOMENTUM", sub:"Momentum compounds when activity and visibility feed each other.", accentA:"#f0abfc", accentB:"#c4b5fd", heroGlow:"rgba(240,171,252,.18)"},
+    viral:{title:"VIRAL\nREACH", kicker:"ATTENTION MAGNET", sub:"A harder-hitting angle designed for more recognition and wider reach.", accentA:"#67e8f9", accentB:"#ffffff", heroGlow:"rgba(103,232,249,.20)"}
   };
   return map[selectedMode] || map.auto;
 }
 
-function getStatsForAngle(actualAngle,s,focus){
-  if(actualAngle === "system"){
-    return [
-      {label:"24H NETWORK REVENUE", value:fmtUsd(s.totalRevenue)},
-      {label:"24H NETWORK VOLUME", value:fmtUsd(s.totalVolume)},
-      {label:"POOLS LOADED", value:`${s.loadedCount} / ${s.configuredCount}`}
-    ];
-  }
-  if(actualAngle === "effect"){
-    return [
-      {label:"24H NETWORK REVENUE", value:fmtUsd(s.totalRevenue)},
-      {label:"FOCUS PAIR", value:focus.label},
-      {label:"24H POOL REVENUE", value:fmtUsd(focus.revenue24h)}
-    ];
-  }
+function getHeroMetric(actualAngle,s,focus){
+  if(actualAngle === "system") return {label:"24H NETWORK REVENUE", value:fmtUsd(s.totalRevenue)};
+  if(actualAngle === "effect") return {label:"24H NETWORK REVENUE", value:fmtUsd(s.totalRevenue)};
+  if(actualAngle === "viral") return {label:"24H VOLUME", value:fmtUsd(focus.volume24h)};
+  return {label:"24H POOL REVENUE", value:fmtUsd(focus.revenue24h)};
+}
+
+function getChipData(actualAngle,s,focus){
+  if(actualAngle === "system") return [
+    `FOCUS ${focus.label}`,
+    `NETWORK VOLUME ${fmtUsd(s.totalVolume)}`,
+    `POOLS ${s.loadedCount}/${s.configuredCount}`
+  ];
+  if(actualAngle === "viral") return [
+    `PAIR ${focus.label}`,
+    `REVENUE ${fmtUsd(focus.revenue24h)}`,
+    `SOLANA DEFI`
+  ];
+  if(actualAngle === "effect") return [
+    `PAIR ${focus.label}`,
+    `NETWORK ${fmtUsd(s.totalRevenue)}`,
+    `LIVE MOMENTUM`
+  ];
   return [
-    {label:"24H POOL REVENUE", value:fmtUsd(focus.revenue24h)},
-    {label:"24H POOL VOLUME", value:fmtUsd(focus.volume24h)},
-    {label:"POOLS LOADED", value:`${s.loadedCount} / ${s.configuredCount}`}
+    `PAIR ${focus.label}`,
+    `VOLUME ${fmtUsd(focus.volume24h)}`,
+    `POOLS ${s.loadedCount}/${s.configuredCount}`
   ];
 }
 
 function shortCandidates(actualAngle,s,focus,selectedMode){
   const pair = focus.label;
   const links = `Website: ${SITE_LINK}\nCommunity: ${TG_LINK}`;
+  const hookWords = pick(HOOK_BANKS,2).slice(0,3).join(" • ");
 
   const bank = {
     leader:[
-`🟣 ASTY ${postHeading(selectedMode)}
-
-${pair}
-
-This pair is leading the live ASTY snapshot.
-24h LP revenue: ${fmtUsd(focus.revenue24h)}
-24h volume: ${fmtUsd(focus.volume24h)}
-
-${links}
-#ASTY #ArbiTrage`,
-`🟣 ASTY ${postHeading(selectedMode)}
-
-${pair}
-
-Current leader in the ASTY network.
-Revenue: ${fmtUsd(focus.revenue24h)}
-Volume: ${fmtUsd(focus.volume24h)}
-
-${links}
-#ASTY #ArbiTrage`
+`🟣 ASTY ${postHeading(selectedMode)}\n\n${pair}\n\nCurrent leader in the ASTY network.\n24h LP revenue: ${fmtUsd(focus.revenue24h)}\n24h volume: ${fmtUsd(focus.volume24h)}\n\n${links}\n#ASTY #ArbiTrage`,
+`🟣 ASTY ${postHeading(selectedMode)}\n\n${pair}\n\nA live Solana liquidity signal worth watching.\nRevenue: ${fmtUsd(focus.revenue24h)}\nVolume: ${fmtUsd(focus.volume24h)}\n\n${links}\n#ASTY #ArbiTrage`
     ],
     system:[
-`🟣 ASTY ${postHeading(selectedMode)}
-
-${pair}
-
-The ASTY network is active across ${s.loadedCount} live pools.
-24h network revenue: ${fmtUsd(s.totalRevenue)}
-24h network volume: ${fmtUsd(s.totalVolume)}
-
-${links}
-#ASTY #ArbiTrage`,
-`🟣 ASTY ${postHeading(selectedMode)}
-
-${pair}
-
-Live network snapshot:
-Pools loaded: ${s.loadedCount}
-Revenue: ${fmtUsd(s.totalRevenue)}
-Volume: ${fmtUsd(s.totalVolume)}
-
-${links}
-#ASTY #ArbiTrage`
+`🟣 ASTY ${postHeading(selectedMode)}\n\n${pair}\n\n${s.loadedCount} live pools.\n24h network revenue: ${fmtUsd(s.totalRevenue)}\n24h network volume: ${fmtUsd(s.totalVolume)}\n\n${links}\n#ASTY #ArbiTrage`,
+`🟣 ASTY ${postHeading(selectedMode)}\n\n${pair}\n\nASTY is building visible Solana network activity.\nRevenue: ${fmtUsd(s.totalRevenue)}\nVolume: ${fmtUsd(s.totalVolume)}\n\n${links}\n#ASTY #ArbiTrage`
     ],
     effect:[
-`🟣 ASTY ${postHeading(selectedMode)}
-
-${pair}
-
-More activity. More flow. More momentum.
-24h network revenue: ${fmtUsd(s.totalRevenue)}
-Focus pair revenue: ${fmtUsd(focus.revenue24h)}
-
-${links}
-#ASTY #ArbiTrage`,
-`🟣 ASTY ${postHeading(selectedMode)}
-
-${pair}
-
-The ASTY Effect is live.
-Revenue: ${fmtUsd(s.totalRevenue)}
-Lead pair: ${focus.label}
-
-${links}
-#ASTY #ArbiTrage`
+`🟣 ASTY ${postHeading(selectedMode)}\n\n${pair}\n\nMore activity. More flow. More attention.\n24h network revenue: ${fmtUsd(s.totalRevenue)}\nFocus pair revenue: ${fmtUsd(focus.revenue24h)}\n\n${links}\n#ASTY #ArbiTrage`,
+`🟣 ASTY ${postHeading(selectedMode)}\n\n${pair}\n\nA live feedback loop between activity, visibility and ecosystem momentum.\n\n${links}\n#ASTY #ArbiTrage`
+    ],
+    viral:[
+`🟣 ASTY ${postHeading(selectedMode)}\n\n${pair}\n\n${pick(VIRAL_PHRASES)}\n${hookWords}\n\n${links}\n#ASTY #ArbiTrage`,
+`🟣 ASTY ${postHeading(selectedMode)}\n\n${pair}\n\nSolana. DeFi. On-chain liquidity.\nASTY is building a stronger story than normal meme coin noise.\n\n${links}\n#ASTY #ArbiTrage`,
+`🟣 ASTY ${postHeading(selectedMode)}\n\n${pair}\n\nThe kind of on-chain angle that fits conversations around Jupiter, Meteora, Raydium, Birdeye and DexScreener.\n\n${links}\n#ASTY #ArbiTrage`
     ]
   };
-
   return bank[actualAngle] || bank.leader;
 }
 
@@ -569,34 +510,37 @@ function fitShort(candidates, selectedMode, actualAngle, s, focus){
     const text = candidates[(generationIndex+i)%candidates.length];
     if(xWeightedLength(text) <= 280) return text;
   }
-  const fallback = `🟣 ASTY ${postHeading(selectedMode)}\n\n${focus.label}\n\nRevenue: ${actualAngle === "system" ? fmtUsd(s.totalRevenue) : fmtUsd(focus.revenue24h)}\n\nWebsite: ${SITE_LINK}\nCommunity: ${TG_LINK}\n#ASTY #ArbiTrage`;
+  const fallback = `🟣 ASTY ${postHeading(selectedMode)}\n\n${focus.label}\n\n${actualAngle === "system" ? "Revenue" : "24h revenue"}: ${actualAngle === "system" ? fmtUsd(s.totalRevenue) : fmtUsd(focus.revenue24h)}\n\nWebsite: ${SITE_LINK}\nCommunity: ${TG_LINK}\n#ASTY #ArbiTrage`;
   return fallback;
 }
 
 function buildLong(actualAngle,s,focus,selectedMode){
   const pair = focus.label;
-  const intros = {
-    leader: `Right now ${pair} is the strongest visible pair in the ASTY network and it deserves the spotlight.`,
-    system: `The latest live snapshot shows that ASTY is not about one isolated pool. It is a growing network with measurable activity across Solana.`,
-    effect: `The ASTY Effect becomes obvious when you look at live activity: momentum builds, attention grows and the network gets stronger.`,
-    auto: `The live ASTY signal is all about what stands out right now.`
+  const introByMode = {
+    leader: `${pair} is currently the strongest visible pair inside the ASTY network and it is a good example of why ASTY is more than a generic token post.`,
+    system: `The latest ASTY snapshot shows a growing Solana liquidity network with live activity spread across multiple pairs and pools.`,
+    effect: `The ASTY Effect becomes easier to explain when live activity, visibility and ecosystem momentum all start reinforcing each other.`,
+    viral: `${pick(VIRAL_PHRASES,1)} ${pick(RECOGNITION_LINES,2)}`,
+    auto: `The live ASTY signal is about turning the strongest current angle into content people actually want to share.`
   };
 
-  const bodies = {
-    leader: `Current focus:\n• 24h LP revenue: ${fmtUsd(focus.revenue24h)}\n• 24h volume: ${fmtUsd(focus.volume24h)}\n\nThis is the kind of signal that makes ASTY worth watching. The pair is active, visible and pushing the current snapshot forward.`,
-    system: `Current network snapshot:\n• Pools loaded: ${s.loadedCount} / ${s.configuredCount}\n• 24h network revenue: ${fmtUsd(s.totalRevenue)}\n• 24h network volume: ${fmtUsd(s.totalVolume)}\n\nThe bigger picture matters. More active pools give ASTY more surface area, more reach and more reasons for people to pay attention.`,
-    effect: `Current momentum:\n• Focus pair: ${pair}\n• 24h network revenue: ${fmtUsd(s.totalRevenue)}\n• Focus pair revenue: ${fmtUsd(focus.revenue24h)}\n\nThat is the ASTY Effect in simple form: activity creates flow, flow creates visibility and visibility strengthens the ecosystem.`,
-    auto: `Current focus:\n• Pair: ${pair}\n• 24h revenue: ${fmtUsd(focus.revenue24h)}\n• 24h volume: ${fmtUsd(focus.volume24h)}\n\nThe goal is simple: pick up the strongest live angle and turn it into content people actually want to share.`
+  const bodyByMode = {
+    leader: `Current focus:\n• Pair: ${pair}\n• 24h LP revenue: ${fmtUsd(focus.revenue24h)}\n• 24h volume: ${fmtUsd(focus.volume24h)}\n\nThis is a cleaner story than random hype. It is a visible pool, measurable activity and a strong pair that can carry attention into the wider ASTY ecosystem.`,
+    system: `Current network snapshot:\n• Pools loaded: ${s.loadedCount} / ${s.configuredCount}\n• 24h network revenue: ${fmtUsd(s.totalRevenue)}\n• 24h network volume: ${fmtUsd(s.totalVolume)}\n\nThat matters because projects with visible on-chain activity are easier to talk about, easier to share and easier to position in a crowded Solana environment.`,
+    effect: `Current momentum:\n• Focus pair: ${pair}\n• 24h network revenue: ${fmtUsd(s.totalRevenue)}\n• Focus pair revenue: ${fmtUsd(focus.revenue24h)}\n\nThe loop is simple: activity creates signal, signal creates visibility and visibility strengthens the ASTY story.`,
+    viral: `Current angle:\n• Pair: ${pair}\n• 24h LP revenue: ${fmtUsd(focus.revenue24h)}\n• 24h volume: ${fmtUsd(focus.volume24h)}\n\nASTY can benefit from language people already recognise around Solana, DeFi, on-chain liquidity, Jupiter, Meteora, Raydium, Birdeye, DexScreener and Phantom. The key is to use those hooks naturally so the post feels bigger without feeling forced.`,
+    auto: `Current focus:\n• Pair: ${pair}\n• 24h revenue: ${fmtUsd(focus.revenue24h)}\n• 24h volume: ${fmtUsd(focus.volume24h)}\n\nThe goal is simple: identify the strongest live angle and make it easier for the community to spread.`
   };
 
-  const closer = {
-    leader: `ASTY keeps producing real signals and this is one of them.`,
-    system: `A network with visible activity is easier to talk about, easier to share and easier to grow.`,
+  const closingByMode = {
+    leader: `A strong pair gives ASTY a simple, visible and easy-to-share story.`,
+    system: `A network with live activity has a stronger narrative than a project that only talks about potential.`,
     effect: `That feedback loop is what gives ASTY its own identity.`,
-    auto: `Fresh live data always gives ASTY a new story to tell.`
+    viral: `Recognition hooks help, but the real advantage is that ASTY has live data behind the story.`,
+    auto: `Fresh live data always gives ASTY another angle to push.`
   };
 
-  return `🟣 ASTY ${postHeading(selectedMode)}\n\n${pair}\n\n${intros[actualAngle] || intros.auto}\n\n${bodies[actualAngle] || bodies.auto}\n\n${closer[actualAngle] || closer.auto}\n\nWebsite: ${SITE_LINK}\nCommunity: ${TG_LINK}\n\n#ASTY #ArbiTrage`;
+  return `🟣 ASTY ${postHeading(selectedMode)}\n\n${pair}\n\n${introByMode[actualAngle] || introByMode.auto}\n\n${bodyByMode[actualAngle] || bodyByMode.auto}\n\n${closingByMode[actualAngle] || closingByMode.auto}\n\nWebsite: ${SITE_LINK}\nCommunity: ${TG_LINK}\n\n${getHooks()}\n#ASTY #ArbiTrage`;
 }
 
 function generateCopy(){
@@ -761,29 +705,20 @@ function wrapText(text,x,y,maxWidth,lineHeight,font,color){
   return y;
 }
 
-function drawStatCard(x,y,w,h,label,value,accentA,accentB){
-  const grad = ctx.createLinearGradient(x,y,x+w,y+h);
-  grad.addColorStop(0, "rgba(255,255,255,.055)");
-  grad.addColorStop(1, "rgba(255,255,255,.03)");
-  card(x,y,w,h,grad,"rgba(196,181,253,.14)",28);
-
-  ctx.fillStyle = "#8e9ab8";
+function drawChip(x,y,text){
+  const w = Math.max(170, ctx.measureText(text).width + 34);
+  card(x,y,w,46,"rgba(255,255,255,.045)","rgba(196,181,253,.14)",999);
+  ctx.fillStyle = "#d8def1";
   ctx.font = "900 16px Arial";
-  ctx.fillText(label,x+26,y+36);
-
-  const accent = ctx.createLinearGradient(x,y,x+w,y);
-  accent.addColorStop(0, accentA);
-  accent.addColorStop(1, accentB);
-  ctx.fillStyle = accent;
-  ctx.font = "900 40px Arial";
-  const display = value.length > 18 ? value.slice(0,18) + "…" : value;
-  ctx.fillText(display,x+26,y+92);
+  ctx.fillText(text,x+18,y+30);
+  return w;
 }
 
 async function drawCanvas(s,focus,selectedMode,actualAngle){
   const logo = await loadImage(ASSET_BASE + "logo.png");
   const pack = buildVisualPack(selectedMode,actualAngle,s,focus);
-  const stats = getStatsForAngle(actualAngle,s,focus);
+  const heroMetric = getHeroMetric(actualAngle,s,focus);
+  const chips = getChipData(actualAngle,s,focus);
 
   ctx.clearRect(0,0,1200,1200);
 
@@ -794,31 +729,24 @@ async function drawCanvas(s,focus,selectedMode,actualAngle){
   ctx.fillStyle = bg;
   ctx.fillRect(0,0,1200,1200);
 
-  const glowA = ctx.createRadialGradient(180,120,0,180,120,420);
+  const glowA = ctx.createRadialGradient(180,120,0,180,120,460);
   glowA.addColorStop(0,pack.heroGlow);
   glowA.addColorStop(1,"rgba(139,92,246,0)");
   ctx.fillStyle = glowA;
-  ctx.fillRect(0,0,720,520);
+  ctx.fillRect(0,0,760,520);
 
-  const glowB = ctx.createRadialGradient(1010,210,0,1010,210,360);
-  glowB.addColorStop(0,"rgba(103,232,249,.10)");
+  const glowB = ctx.createRadialGradient(1000,220,0,1000,220,360);
+  glowB.addColorStop(0,"rgba(103,232,249,.12)");
   glowB.addColorStop(1,"rgba(103,232,249,0)");
   ctx.fillStyle = glowB;
   ctx.fillRect(720,0,480,420);
 
-  for(let x=0;x<1200;x+=54){
-    ctx.strokeStyle = "rgba(255,255,255,.016)";
-    ctx.lineWidth = 1;
-    ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,1200);ctx.stroke();
-  }
-  for(let y=0;y<1200;y+=54){
-    ctx.strokeStyle = "rgba(255,255,255,.016)";
-    ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(1200,y);ctx.stroke();
-  }
+  for(let x=0;x<1200;x+=54){ctx.strokeStyle="rgba(255,255,255,.016)";ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,1200);ctx.stroke();}
+  for(let y=0;y<1200;y+=54){ctx.strokeStyle="rgba(255,255,255,.016)";ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(1200,y);ctx.stroke();}
 
-  card(40,40,1120,1120,"rgba(5,8,18,.36)","rgba(196,181,253,.15)",34);
+  card(40,40,1120,1120,"rgba(5,8,18,.34)","rgba(196,181,253,.15)",34);
 
-  if(logo){ ctx.drawImage(logo,980,76,110,110); }
+  if(logo){ ctx.drawImage(logo,975,74,116,116); }
 
   ctx.fillStyle = "#c4b5fd";
   ctx.font = "900 20px Arial";
@@ -828,66 +756,72 @@ async function drawCanvas(s,focus,selectedMode,actualAngle){
   ctx.font = "800 15px Arial";
   ctx.fillText(`${s.loadedCount} LIVE POOLS • SOLANA`,90,127);
 
-  const kickerGrad = ctx.createLinearGradient(90,0,510,0);
+  const kickerGrad = ctx.createLinearGradient(90,0,520,0);
   kickerGrad.addColorStop(0,pack.accentA);
   kickerGrad.addColorStop(1,pack.accentB);
   ctx.fillStyle = kickerGrad;
   ctx.font = "900 22px Arial";
-  ctx.fillText(pack.kicker,90,210);
+  ctx.fillText(pack.kicker,90,205);
 
-  const titleLines = pack.title.split("\n");
-  const titleGrad = ctx.createLinearGradient(90,0,780,0);
+  const titleGrad = ctx.createLinearGradient(90,0,900,0);
   titleGrad.addColorStop(0,"#ffffff");
   titleGrad.addColorStop(.55,pack.accentA);
   titleGrad.addColorStop(1,pack.accentB);
   ctx.fillStyle = titleGrad;
-  ctx.font = "900 92px Arial";
-  let ty = 310;
-  for(const line of titleLines){
-    ctx.fillText(line,90,ty);
-    ty += 96;
+  ctx.font = "900 96px Arial";
+  let titleY = 305;
+  for(const line of pack.title.split("\n")){
+    ctx.fillText(line,90,titleY);
+    titleY += 98;
   }
 
-  card(90,430,1020,170,"rgba(255,255,255,.045)","rgba(196,181,253,.16)",28);
-  ctx.fillStyle = "#8e9ab8";
-  ctx.font = "900 18px Arial";
-  ctx.fillText("FOCUS PAIR",122,476);
-
-  const pairGrad = ctx.createLinearGradient(122,0,860,0);
-  pairGrad.addColorStop(0,"#ffffff");
-  pairGrad.addColorStop(1,pack.accentA);
-  ctx.fillStyle = pairGrad;
-  ctx.font = "900 54px Arial";
-  ctx.fillText(focus.label,122,541);
-
-  wrapText(pack.sub,122,580,930,34,"800 24px Arial","#cfd5eb");
-
-  drawStatCard(90,660,320,160,stats[0].label,stats[0].value,pack.accentA,pack.accentB);
-  drawStatCard(440,660,320,160,stats[1].label,stats[1].value,pack.accentA,pack.accentB);
-  drawStatCard(790,660,320,160,stats[2].label,stats[2].value,pack.accentA,pack.accentB);
-
   ctx.fillStyle = "#ffffff";
-  ctx.font = "900 34px Arial";
-  const hypeLine = actualAngle === "system"
-    ? "ASTY is building network visibility through live activity."
+  ctx.font = "900 58px Arial";
+  ctx.fillText(focus.label,90,485);
+
+  wrapText(pack.sub,90,535,760,34,"800 24px Arial","#d2d8ec");
+
+  const metricGrad = ctx.createLinearGradient(90,610,1110,880);
+  metricGrad.addColorStop(0,"rgba(255,255,255,.05)");
+  metricGrad.addColorStop(1,"rgba(255,255,255,.03)");
+  card(90,610,1020,275,metricGrad,"rgba(196,181,253,.17)",34);
+
+  ctx.fillStyle = "#8e9ab8";
+  ctx.font = "900 20px Arial";
+  ctx.fillText(heroMetric.label,130,674);
+
+  const bigGrad = ctx.createLinearGradient(130,0,1060,0);
+  bigGrad.addColorStop(0,"#ffffff");
+  bigGrad.addColorStop(.55,pack.accentA);
+  bigGrad.addColorStop(1,pack.accentB);
+  ctx.fillStyle = bigGrad;
+  ctx.font = "900 126px Arial";
+  ctx.fillText(heroMetric.value,130,805);
+
+  ctx.fillStyle = "#d8def1";
+  ctx.font = "900 30px Arial";
+  const hypeLine = actualAngle === "viral"
+    ? "SOLANA LIQUIDITY. ON-CHAIN SIGNAL. MORE REACH."
+    : actualAngle === "system"
+    ? "LIVE NETWORK ACTIVITY WITH A STRONGER STORY."
     : actualAngle === "effect"
-    ? "Activity feeds momentum and momentum feeds the story."
-    : "A strong pair gives the whole ASTY network more attention.";
-  wrapText(hypeLine,90,915,980,42,"900 34px Arial","#ffffff");
+    ? "ACTIVITY FEEDS MOMENTUM AND MOMENTUM FEEDS ATTENTION."
+    : "A STRONG PAIR CAN PULL MORE ATTENTION TO ASTY.";
+  wrapText(hypeLine,130,845,900,38,"900 30px Arial","#d8def1");
 
-  ctx.fillStyle = "#9fb0ce";
-  ctx.font = "800 24px Arial";
-  const subLine = actualAngle === "system"
-    ? `Network revenue ${fmtUsd(s.totalRevenue)} • Network volume ${fmtUsd(s.totalVolume)}`
-    : `Focus pair revenue ${fmtUsd(focus.revenue24h)} • 24h volume ${fmtUsd(focus.volume24h)}`;
-  ctx.fillText(subLine,90,982);
+  ctx.font = "900 16px Arial";
+  let chipX = 90;
+  chips.forEach((chip,i)=>{
+    const w = drawChip(chipX,920,chip);
+    chipX += w + 14;
+  });
 
-  card(90,1044,1020,68,"rgba(103,232,249,.035)","rgba(103,232,249,.14)",18);
+  card(90,1038,1020,74,"rgba(103,232,249,.035)","rgba(103,232,249,.14)",18);
   ctx.fillStyle = "#c4b5fd";
   ctx.font = "900 20px Arial";
-  ctx.fillText("Website: ArbStrategy.net",122,1088);
+  ctx.fillText("Website: ArbStrategy.net",122,1085);
   ctx.fillStyle = "#67e8f9";
-  ctx.fillText("Community: t.me/ArbStrategyASTY",640,1088);
+  ctx.fillText("Community: t.me/ArbStrategyASTY",635,1085);
 }
 
 function drawEmptyCanvas(message){
