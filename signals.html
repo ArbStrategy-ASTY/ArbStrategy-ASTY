@@ -770,30 +770,46 @@ async function drawCanvas(s,focus,selectedMode,actualAngle){
   if(wolf){
     ctx.save();
     ctx.globalAlpha = 0.10;
-    ctx.drawImage(wolf, 660, 120, 420, 420);
+    const maxW = 420;
+    const maxH = 420;
+    const aspect = (wolf.width && wolf.height) ? wolf.width / wolf.height : 1;
+    let drawW = maxW;
+    let drawH = drawW / aspect;
+    if(drawH > maxH){
+      drawH = maxH;
+      drawW = drawH * aspect;
+    }
+    const drawX = 660 + (maxW - drawW) / 2;
+    const drawY = 120 + (maxH - drawH) / 2;
+    ctx.drawImage(wolf, drawX, drawY, drawW, drawH);
     ctx.restore();
   }
 
   if(logo){ ctx.drawImage(logo,985,74,106,106); }
 
-  ctx.fillStyle = "#c4b5fd";
-  ctx.font = "900 20px Arial";
-  ctx.fillText("ASTY X SIGNAL LAB",90,98);
-
-  ctx.fillStyle = "#8fa0bd";
-  ctx.font = "800 15px Arial";
-  ctx.fillText(`${s.loadedCount} LIVE POOLS • SOLANA`,90,127);
-
-  const kickerGrad = ctx.createLinearGradient(90,0,540,0);
-  kickerGrad.addColorStop(0,pack.accentA);
-  kickerGrad.addColorStop(1,pack.accentB);
-  ctx.fillStyle = kickerGrad;
-  ctx.font = "900 24px Arial";
-  ctx.fillText(postHeading(selectedMode).toUpperCase(),90,198);
+  const headingText = postHeading(selectedMode).toUpperCase();
+  const headingGrad = ctx.createLinearGradient(90,0,760,0);
+  headingGrad.addColorStop(0,"#ffffff");
+  headingGrad.addColorStop(.55,pack.accentA);
+  headingGrad.addColorStop(1,pack.accentB);
+  ctx.fillStyle = headingGrad;
+  ctx.font = "900 68px Arial";
+  ctx.fillText(headingText,90,145);
 
   ctx.fillStyle = "#ffffff";
   ctx.font = "900 64px Arial";
-  ctx.fillText(focus.label,90,285);
+  ctx.fillText(focus.label,90,255);
+
+  const shortSub = actualAngle === "viral"
+    ? "SOLANA REACH WITH A STRONGER HOOK."
+    : actualAngle === "system"
+    ? "LIVE NETWORK SIGNAL ACROSS ASTY POOLS."
+    : actualAngle === "effect"
+    ? "MOMENTUM THAT FEEDS THE ASTY STORY."
+    : "THE LEADING PAIR IN THE LIVE SNAPSHOT.";
+  ctx.fillStyle = "#d2d8ec";
+  ctx.font = "900 26px Arial";
+  ctx.fillText(shortSub,90,302);
 
   const statGrad1 = ctx.createLinearGradient(90,0,560,0);
   statGrad1.addColorStop(0,"rgba(255,255,255,.07)");
