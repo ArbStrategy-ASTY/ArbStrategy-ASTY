@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#09070f">
 <title>ASTY Rebound</title>
-<!-- build: 2026-10-12-v33-acc-asset -->
+<!-- build: 2026-10-20-v34-sell-safety-recovery -->
 <style>
 :root{--bg:#09070f;--panel:#12101a;--panel2:#171321;--border:#302640;--text:#f5f0ff;--muted:#aaa0bb;--purple:#b590ff;--green:#69e7a6;--yellow:#ffd477;--red:#ff7f91}
 *{box-sizing:border-box}html,body{margin:0;min-height:100%;background:radial-gradient(circle at 50% -16%,rgba(139,90,255,.22),transparent 38%),var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif}body{min-height:100vh}.page{width:min(760px,100%);margin:0 auto;padding:calc(20px + env(safe-area-inset-top)) 18px calc(36px + env(safe-area-inset-bottom))}
@@ -807,7 +807,18 @@ function App(){
       );
     }
 
-    if(status==="PAUSED")return e("div",{className:"strategy-waiting"},"Strategy paused. No new trade will start until you resume it.");
+    if(status==="PAUSED"){
+      const pending=String(strategy.pendingAction||"").toUpperCase();
+      if(/^SELL_(TP|SL|STOP)_(SEND_UNKNOWN|SIGNATURE_UNKNOWN)$/.test(pending)){
+        return e("div",{className:"strategy-waiting"},
+          e("strong",null,"SELL safety verification in progress. "),
+          "Rebound is checking Solana history and the Wallet balance before allowing any further trade. ",
+          "It will automatically recover only if the result is unambiguous. If verification is inconclusive, ",
+          "the strategy will stay paused for your protection. Never reset or retry this position manually."
+        );
+      }
+      return e("div",{className:"strategy-waiting"},"Strategy paused. No new trade will start until you resume it.");
+    }
     if(status==="STOPPED")return e("div",{className:"strategy-waiting"},"Strategy stopped. No capital is reserved and no new trade will start.");
     return e("div",{className:"strategy-waiting"},"Strategy state is being updated…");
   }
@@ -920,7 +931,7 @@ function App(){
                     Number(strategy.cycleNumber||1)>1?` · Cycle ${strategy.cycleNumber}`:""
                   ),
                   ["WATCHING","BUY_TRIGGERED","BOUGHT","PAUSED"].includes(String(strategy.status).toUpperCase())?e("div",{className:`strategy-actions ${String(strategy.status).toUpperCase()==="BOUGHT"?"exit-choice":""}`},
-                    String(strategy.status).toUpperCase()==="PAUSED"?e("button",{className:"strategy-action-button resume",disabled:Boolean(strategyActionBusyId),onClick:()=>resumeStrategy(strategy)},strategyActionBusyId===strategy.id?"Working…":"Resume"):null,
+                    String(strategy.status).toUpperCase()==="PAUSED"?e("button",{className:"strategy-action-button resume",disabled:Boolean(strategyActionBusyId)||/^SELL_(TP|SL|STOP)_(SEND_UNKNOWN|SIGNATURE_UNKNOWN)$/.test(String(strategy.pendingAction||"").toUpperCase()),onClick:()=>resumeStrategy(strategy)},strategyActionBusyId===strategy.id?"Working…":/^SELL_(TP|SL|STOP)_(SEND_UNKNOWN|SIGNATURE_UNKNOWN)$/.test(String(strategy.pendingAction||"").toUpperCase())?"Safety verification":"Resume"):null,
                     String(strategy.status).toUpperCase()==="BOUGHT"?(strategy.stopAfterNextSell
                       ?e("div",{className:"strategy-stop-planned"},"Stop scheduled: Rebound will close this strategy after its next confirmed SELL. Take Profit and Stop Loss remain active.")
                       :e("button",{className:"strategy-action-button next-sell",disabled:Boolean(strategyActionBusyId),onClick:()=>requestStrategyStop(strategy,"after_next_sell")},"Stop & close position after next sell")):null,
