@@ -9,8 +9,9 @@ import {
   Transaction,
 } from "@solana/web3.js";
 
-// v26: add ACC (AnonymousCodingCult), resolving and verifying its on-chain mint
-// decimals and token program. v25 stop-after-next-sell remains unchanged.
+// v26.1: targeted SELL safety hotfix. Recognize only explicit Privy HTTP 400
+// pre-broadcast simulation failures with on-chain Custom:6001 (slippage).
+// Keep unknown broadcast failures quarantined and all BUY logic unchanged.
 const ALLOWED_ORIGINS = new Set([
   "https://arbstrategy.net",
   "https://www.arbstrategy.net",
@@ -327,6 +328,17 @@ function getSafePrivyError(error) {
 function looksLikePolicyDenial(info) {
   const text = [info?.name, info?.code, info?.message].filter(Boolean).join(" ").toLowerCase();
   return text.includes("policy") || text.includes("denied") || text.includes("not allowed") || text.includes("not permitted") || text.includes("forbidden");
+}
+
+// IMPORTANT: Only the exact, explicit pre-broadcast simulation rejection is
+// classified as safely unsent. Generic timeouts, 5xx, unknown signatures and
+// transport errors stay PAUSED for chain reconciliation. Do not weaken this.
+function isConfirmedPreBroadcastSlippageRejection(info) {
+  const message = String(info?.message || "");
+  return Number(info?.status) === 400
+    && String(info?.code || "") === "transaction_broadcast_failure"
+    && /transaction simulation failed/i.test(message)
+    && /Custom[^0-9]{0,24}6001/i.test(message);
 }
 
 function normalizeBoolean(value, defaultValue = false) {
@@ -3112,6 +3124,26 @@ async function executeTriggeredSell(env, strategy) {
         await releaseSellExecutionLock(env, strategy.id, lock, reason);
         return { ok: false, strategyId: strategy.id, policyDenied: true, error: info };
       }
+      if (isConfirmedPreBroadcastSlippageRejection(info)) {
+        // The transaction failed Privy's pre-broadcast simulation. It was not
+        // submitted, so there is no signature to reconcile. For a TAKE_PROFIT,
+        // return to BOUGHT to let the price watcher trigger a fresh TP only
+        // when the market again meets our unchanged price/quote safety gates.
+        // For SL/manual STOP keep the original SELL trigger armed for retry.
+        await releaseSellExecutionLock(env, strategy.id, lock, reason, {
+          rearm: reason === "TP",
+        });
+        console.warn("SELL simulation rejected before broadcast (6001):", strategy.id);
+        return {
+          ok: false,
+          skipped: true,
+          submitted: false,
+          strategyId: strategy.id,
+          reason: "sell-simulation-slippage-6001",
+          nextStatus: reason === "TP" ? "BOUGHT" : "SELL_TRIGGERED",
+        };
+      }
+      // All ambiguous sign-and-send failures MUST stay quarantined.
       await pauseAmbiguousSell(env, strategy.id, lock, reason, "SEND_UNKNOWN");
       return { ok: false, paused: true, ambiguous: true, strategyId: strategy.id, error: info };
     }
@@ -3653,7 +3685,7 @@ async function handleExecutionStatus(request, env) {
 async function handleRoot(request, env) {
   return json(request, {
     service: "ASTY Rebound API",
-    buildVersion: "2026-10-12-cycle-v26-acc-asset",
+    buildVersion: "2026-10-20-cycle-v26-1-sell-slippage",
     status: "online",
     balanceSource: "Helius",
     displayPriceSource: "Helius DAS",
