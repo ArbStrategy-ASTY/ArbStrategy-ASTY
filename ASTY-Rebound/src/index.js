@@ -9,9 +9,12 @@ import {
   Transaction,
 } from "@solana/web3.js";
 
-// v26.1: targeted SELL safety hotfix. Recognize only explicit Privy HTTP 400
-// pre-broadcast simulation failures with on-chain Custom:6001 (slippage).
-// Keep unknown broadcast failures quarantined and all BUY logic unchanged.
+// v26.2: SELL reconciliation safety. Keep v26.1 strict Privy pre-broadcast
+// 6001 handling; also examine ambiguous no-signature SELLs on-chain, conservatively.
+// Only rearm when history is complete, no asset debit is found in the send window,
+// and current wallet assets cover ALL recorded open positions for that mint.
+// Recover proven successful matches by adopting the chain signature first.
+// Any RPC gap, ambiguous match or balance mismatch MUST remain PAUSED.
 const ALLOWED_ORIGINS = new Set([
   "https://arbstrategy.net",
   "https://www.arbstrategy.net",
@@ -159,6 +162,17 @@ const MAX_BUY_TRIGGER_OVERAGE_BPS = 50;
 const EXECUTION_LOCK_STALE_MINUTES = 5;
 const MAX_BUY_EXECUTIONS_PER_CRON = 1;
 const MAX_SELL_EXECUTIONS_PER_CRON = 3;
+// Run history reconciliation only for rare, ambiguous SELL sends (not routine positions).
+// A Solana blockhash expires in roughly 1-2 minutes. The 10-minute grace avoids
+// rearming a transaction that might still be propagating or indexing.
+const AMBIGUOUS_SELL_RECOVERY_GRACE_MINUTES = 10;
+const AMBIGUOUS_SELL_RECHECK_MINUTES = 5;
+const AMBIGUOUS_SELL_WINDOW_BEFORE_SECONDS = 45;
+const AMBIGUOUS_SELL_WINDOW_AFTER_SECONDS = 240;
+const AMBIGUOUS_SELL_HISTORY_PAGE_SIZE = 100;
+const AMBIGUOUS_SELL_HISTORY_MAX_PAGES = 3;
+const MAX_AMBIGUOUS_SELL_RECOVERIES_PER_CRON = 2;
+const MAX_AMBIGUOUS_SELL_TX_INSPECTIONS = 40;
 const MAX_TP_QUOTE_UNDERAGE_BPS = 50;
 const MAX_COMPUTE_UNIT_LIMIT = 1_400_000;
 // Maximum routine native-SOL debit a single automated swap may cause beyond any
@@ -2950,6 +2964,242 @@ async function pauseAmbiguousSell(env, strategyId, lock, reason, failureCode) {
   `).bind(`SELL_${reason}_${failureCode}`, strategyId, lock).run();
 }
 
+// The following recovery NEVER signs, sends or broadcasts a transaction.
+// It operates only on paused SELL_*_SEND_UNKNOWN / SIGNATURE_UNKNOWN states.
+// Proven on-chain success is adopted and finalized; conclusively absent SELLs
+// are rearmed; incomplete evidence stays paused. This is not a time-based unlock.
+function isUnresolvedSellAction(action) {
+  return /^SELL_(TP|SL|STOP)_(SEND_UNKNOWN|SIGNATURE_UNKNOWN)$/.test(String(action || ""));
+}
+
+function pendingSellReasonCode(action) {
+  const raw = String(action || "");
+  if (raw.startsWith("SELL_SL_")) return "SL";
+  if (raw.startsWith("SELL_STOP_")) return "STOP";
+  return "TP";
+}
+
+function txSignedByWalletAndUsesJupiter(tx, walletAddress) {
+  const message = tx?.transaction?.message;
+  const signed = Array.isArray(message?.accountKeys) && message.accountKeys.some((key) =>
+    String(key?.pubkey || key) === walletAddress && key?.signer === true
+  );
+  const outer = Array.isArray(message?.instructions) ? message.instructions : [];
+  const inner = Array.isArray(tx?.meta?.innerInstructions)
+    ? tx.meta.innerInstructions.flatMap((entry) => Array.isArray(entry.instructions) ? entry.instructions : []) : [];
+  const isJupiter = [...outer, ...inner].some((instruction) =>
+    String(instruction?.programId || "") === JUPITER_PROGRAM_ID
+  );
+  return signed && isJupiter;
+}
+
+async function inspectAmbiguousSellCandidate(env, signature, strategy) {
+  const asset = await getStrategyAssetConfig(strategy.asset_symbol, env);
+  const tx = await heliusRpc(env, "getTransaction", [
+    signature, { commitment: "confirmed", encoding: "jsonParsed", maxSupportedTransactionVersion: 0 },
+  ]);
+  if (!tx?.meta) return { indexed: false, signature };
+  if (tx.meta.err) return { indexed: true, successful: false, assetDebitRaw: 0n, signature };
+  const walletAddress = strategy.rebound_wallet_address;
+  const assetBefore = sumOwnerTokenBalanceRaw(tx.meta.preTokenBalances, asset.mint, walletAddress);
+  const assetAfter = sumOwnerTokenBalanceRaw(tx.meta.postTokenBalances, asset.mint, walletAddress);
+  const usdcBefore = sumOwnerTokenBalanceRaw(tx.meta.preTokenBalances, USDC_MINT, walletAddress);
+  const usdcAfter = sumOwnerTokenBalanceRaw(tx.meta.postTokenBalances, USDC_MINT, walletAddress);
+  const assetDebitRaw = assetBefore.total > assetAfter.total ? assetBefore.total - assetAfter.total : 0n;
+  const receivedUsdcRaw = usdcAfter.total > usdcBefore.total ? usdcAfter.total - usdcBefore.total : 0n;
+  const expectedRaw = BigInt(String(strategy.entry_wsol_raw || 0));
+  const exactJupiterSell = assetDebitRaw === expectedRaw && expectedRaw > 0n
+    && receivedUsdcRaw > 0n && txSignedByWalletAndUsesJupiter(tx, walletAddress);
+  return { indexed: true, successful: true, assetDebitRaw, receivedUsdcRaw,
+    match: exactJupiterSell, signature };
+}
+
+async function scanAmbiguousSellHistory(env, strategy) {
+  const started = parseSqliteUtcMs(strategy.pending_action_started_at);
+  if (started == null) return { complete: false, matches: [], unexpectedAssetDebits: [], unresolved: ["missing-send-timestamp"] };
+  const windowStart = Math.floor((started - AMBIGUOUS_SELL_WINDOW_BEFORE_SECONDS * 1000) / 1000);
+  const windowEnd = Math.floor((started + AMBIGUOUS_SELL_WINDOW_AFTER_SECONDS * 1000) / 1000);
+  if (Date.now() < (windowEnd + 120) * 1000) {
+    return { complete: false, matches: [], unexpectedAssetDebits: [], unresolved: ["send-window-not-settled"] };
+  }
+  const matches = [], unexpectedAssetDebits = [], unresolved = [];
+  let before = null, reachedStart = false, pages = 0, inspectedCount = 0, sawSignature = false;
+  while (pages < AMBIGUOUS_SELL_HISTORY_MAX_PAGES && !reachedStart) {
+    const options = { limit: AMBIGUOUS_SELL_HISTORY_PAGE_SIZE, commitment: "confirmed" };
+    if (before) options.before = before;
+    const signatures = await heliusRpc(env, "getSignaturesForAddress", [strategy.rebound_wallet_address, options]);
+    if (!Array.isArray(signatures)) throw new Error("SELL recovery: missing signature history from RPC");
+    if (signatures.length === 0) { reachedStart = true; break; }
+    sawSignature = true;
+    pages++;
+    for (const item of signatures) {
+      const signature = String(item?.signature || "");
+      // Missing timestamps cannot prove we covered the correct time window.
+      if (!Number.isFinite(Number(item?.blockTime)) || item?.blockTime == null) {
+        unresolved.push("signature-without-block-time");
+        continue;
+      }
+      const timestamp = Number(item.blockTime);
+      if (timestamp < windowStart) { reachedStart = true; break; }
+      if (timestamp > windowEnd) continue;
+      if (!isTransactionSignature(signature)) { unresolved.push("invalid-signature-in-window"); continue; }
+      if (item?.err != null) continue; // Confirmed failed TX cannot move tokens.
+      if (++inspectedCount > MAX_AMBIGUOUS_SELL_TX_INSPECTIONS) {
+        unresolved.push("too-many-transactions-in-send-window");
+        return { complete: false, matches, unexpectedAssetDebits, unresolved, pages };
+      }
+      const inspected = await inspectAmbiguousSellCandidate(env, signature, strategy);
+      if (!inspected.indexed) { unresolved.push("transaction-not-indexed"); continue; }
+      if (inspected.match) matches.push({ signature, assetDebitRaw: inspected.assetDebitRaw });
+      else if (inspected.assetDebitRaw > 0n) {
+        // Another debit of the same asset around send-time makes recovery unsafe.
+        unexpectedAssetDebits.push(signature);
+      }
+    }
+    before = typeof signatures[signatures.length - 1]?.signature === "string"
+      ? signatures[signatures.length - 1].signature : null;
+    if (!before || signatures.length < AMBIGUOUS_SELL_HISTORY_PAGE_SIZE) reachedStart = true;
+  }
+  // An empty RPC history is not evidence for an already BOUGHT position.
+  if (!sawSignature) unresolved.push("no-wallet-history-returned");
+  return { complete: reachedStart && unresolved.length === 0, matches,
+    unexpectedAssetDebits, unresolved, pages };
+}
+
+async function recoverPausedAmbiguousSell(env, strategy) {
+  if (!isUnresolvedSellAction(strategy.pending_action) || strategy.status !== "PAUSED"
+      || strategy.pending_signature || strategy.execution_lock) {
+    return { ok: false, keptPaused: true, strategyId: strategy.id, reason: "not-eligible-for-recovery" };
+  }
+  const scan = await scanAmbiguousSellHistory(env, strategy);
+  if (!scan.complete || scan.unexpectedAssetDebits.length || scan.matches.length > 1) {
+    return { ok: false, keptPaused: true, strategyId: strategy.id,
+      reason: scan.unexpectedAssetDebits.length ? "other-asset-debit-in-send-window"
+        : scan.matches.length > 1 ? "multiple-matching-sells" : "history-not-conclusive",
+      pagesScanned: scan.pages ?? 0, unresolved: scan.unresolved };
+  }
+  // An OPEN cycle and exact position must still exist before any transition.
+  const cycle = await env.DB.prepare(`SELECT status, entry_asset_raw, sell_signature, sold_at
+    FROM rebound_cycles WHERE strategy_id = ? AND cycle_number = ? LIMIT 1`)
+    .bind(strategy.id, strategy.cycle_number).first();
+  if (!cycle || cycle.status !== "OPEN" || cycle.sell_signature || cycle.sold_at
+      || BigInt(String(cycle.entry_asset_raw || 0)) !== BigInt(String(strategy.entry_wsol_raw || 0))) {
+    return { ok: false, keptPaused: true, strategyId: strategy.id, reason: "cycle-history-mismatch" };
+  }
+  if (scan.matches.length === 1) {
+    const match = scan.matches[0];
+    // Same-wallet strategies can use the same mint. Never attribute a found SELL
+    // to this cycle if another live position has the identical raw quantity, or
+    // another strategy/cycle already owns the signature.
+    const competingPosition = await env.DB.prepare(`SELECT id FROM rebound_strategies
+      WHERE id <> ? AND rebound_wallet_address = ? AND asset_symbol = ?
+        AND status IN ('BOUGHT','SELL_TRIGGERED','PAUSED') AND entry_wsol_raw = ?
+      LIMIT 1`)
+      .bind(strategy.id, strategy.rebound_wallet_address, strategy.asset_symbol,
+        String(strategy.entry_wsol_raw)).first();
+    const signatureOwner = await env.DB.prepare(`SELECT strategy_id FROM rebound_cycles
+      WHERE sell_signature = ? AND strategy_id <> ? LIMIT 1`)
+      .bind(match.signature, strategy.id).first();
+    const pendingOwner = await env.DB.prepare(`SELECT id FROM rebound_strategies
+      WHERE id <> ? AND pending_signature = ? LIMIT 1`)
+      .bind(strategy.id, match.signature).first();
+    if (competingPosition || signatureOwner || pendingOwner) {
+      return { ok: false, keptPaused: true, strategyId: strategy.id,
+        reason: "sell-attribution-not-unique" };
+    }
+    const status = await getSignatureState(env, match.signature);
+    if (!status.confirmed || status.failed) {
+      return { ok: false, keptPaused: true, strategyId: strategy.id, reason: "matching-sell-not-finalized" };
+    }
+    const fill = await getConfirmedSellFill(env, match.signature, strategy.rebound_wallet_address, strategy.asset_symbol);
+    if (!fill || fill.failed || fill.soldAssetRaw !== BigInt(String(strategy.entry_wsol_raw))) {
+      return { ok: false, keptPaused: true, strategyId: strategy.id, reason: "matching-sell-fill-not-indexed" };
+    }
+    const action = `SELL_${pendingSellReasonCode(strategy.pending_action)}_SUBMITTED`;
+    const result = await env.DB.prepare(`UPDATE rebound_strategies
+      SET status = 'SELL_TRIGGERED', pending_action = ?, pending_signature = ?,
+          pending_action_started_at = CURRENT_TIMESTAMP, paused_at = NULL,
+          execution_lock = NULL, execution_lock_at = NULL, updated_at = CURRENT_TIMESTAMP
+      WHERE id = ? AND status = 'PAUSED' AND pending_action = ? AND pending_signature IS NULL
+        AND entry_wsol_raw = ? AND cycle_number = ?`)
+      .bind(action, match.signature, strategy.id, strategy.pending_action,
+        String(strategy.entry_wsol_raw), strategy.cycle_number).run();
+    if (Number(result?.meta?.changes ?? 0) !== 1) {
+      return { ok: false, keptPaused: true, strategyId: strategy.id, reason: "state-changed-during-adoption" };
+    }
+    const fresh = await env.DB.prepare(`SELECT * FROM rebound_strategies WHERE id = ? LIMIT 1`)
+      .bind(strategy.id).first();
+    return { ...(await finalizeConfirmedSell(env, fresh, match.signature)),
+      recoveredFrom: "verified-on-chain-sell", strategyId: strategy.id };
+  }
+
+  // No successful SELL in the complete send-time window. Prove the wallet still
+  // holds enough tokens to cover *all* deployed strategies sharing this wallet.
+  const asset = await getStrategyAssetConfig(strategy.asset_symbol, env);
+  const [walletAsset, totalDeployedRaw] = await Promise.all([
+    getOwnedTokenAccount(env, strategy.rebound_wallet_address, asset.mint, asset.decimals),
+    getDeployedAssetRaw(env, strategy.privy_user_id, asset.symbol),
+  ]);
+  const walletRaw = BigInt(String(walletAsset?.raw || 0));
+  // Exact equality rejects wallets with unexplained assets/deficits. Extra
+  // tokens may be harmless, but they cannot be used as proof of the missing SELL.
+  if (!walletAsset?.ready || walletRaw !== totalDeployedRaw || totalDeployedRaw <= 0n) {
+    return { ok: false, keptPaused: true, strategyId: strategy.id,
+      reason: "wallet-asset-balance-not-reconciled" };
+  }
+  const reason = pendingSellReasonCode(strategy.pending_action);
+  const isTp = reason === "TP";
+  const nextStatus = isTp ? "BOUGHT" : "SELL_TRIGGERED";
+  const nextAction = isTp ? null : `SELL_TRIGGERED_${reason}`;
+  const result = await env.DB.prepare(`UPDATE rebound_strategies
+    SET status = ?, pending_action = ?, pending_signature = NULL,
+        pending_action_started_at = NULL, paused_at = NULL,
+        sell_triggered_at = CASE WHEN ? = 1 THEN NULL ELSE sell_triggered_at END,
+        execution_lock = NULL, execution_lock_at = NULL, updated_at = CURRENT_TIMESTAMP
+    WHERE id = ? AND status = 'PAUSED' AND pending_action = ? AND pending_signature IS NULL
+      AND entry_wsol_raw = ? AND cycle_number = ? AND execution_lock IS NULL`)
+    .bind(nextStatus, nextAction, isTp ? 1 : 0, strategy.id, strategy.pending_action,
+      String(strategy.entry_wsol_raw), strategy.cycle_number).run();
+  const changed = Number(result?.meta?.changes ?? 0) === 1;
+  return { ok: changed, recovered: changed, keptPaused: !changed, strategyId: strategy.id,
+    reason: changed ? "verified-no-on-chain-sell" : "state-changed-during-recovery",
+    nextStatus: changed ? nextStatus : null };
+}
+
+async function reconcileAmbiguousSellsWithoutSignature(env) {
+  const query = await env.DB.prepare(`SELECT * FROM rebound_strategies
+    WHERE status = 'PAUSED' AND pending_signature IS NULL
+      AND pending_action IN ('SELL_TP_SEND_UNKNOWN','SELL_SL_SEND_UNKNOWN','SELL_STOP_SEND_UNKNOWN',
+                             'SELL_TP_SIGNATURE_UNKNOWN','SELL_SL_SIGNATURE_UNKNOWN','SELL_STOP_SIGNATURE_UNKNOWN')
+      AND entry_wsol_raw IS NOT NULL AND entry_wsol_raw > 0
+      AND pending_action_started_at IS NOT NULL
+      AND pending_action_started_at <= datetime('now', '-' || ? || ' minutes')
+      AND updated_at <= datetime('now', '-' || ? || ' minutes')
+    ORDER BY paused_at ASC, created_at ASC LIMIT ?`)
+    .bind(AMBIGUOUS_SELL_RECOVERY_GRACE_MINUTES, AMBIGUOUS_SELL_RECHECK_MINUTES,
+      MAX_AMBIGUOUS_SELL_RECOVERIES_PER_CRON).all();
+  const rows = Array.isArray(query?.results) ? query.results : [];
+  const results = [];
+  for (const strategy of rows) {
+    // Atomic claim: multiple overlapping cron invocations cannot examine / rearm
+    // the same paused strategy simultaneously. Next inconclusive scan after 5min.
+    const claimed = await env.DB.prepare(`UPDATE rebound_strategies SET updated_at = CURRENT_TIMESTAMP
+      WHERE id = ? AND status = 'PAUSED' AND pending_action = ?
+      AND pending_signature IS NULL AND execution_lock IS NULL AND updated_at = ?`)
+      .bind(strategy.id, strategy.pending_action, strategy.updated_at).run();
+    if (Number(claimed?.meta?.changes ?? 0) !== 1) continue;
+    try {
+      const result = await recoverPausedAmbiguousSell(env, strategy);
+      if (result?.recovered || result?.finalized) console.warn("ASTY Rebound SELL auto-recovery:", JSON.stringify(result));
+      results.push(result);
+    } catch (error) {
+      console.error("Ambiguous SELL recovery failed; strategy remains PAUSED:", strategy.id, error);
+      results.push({ ok: false, keptPaused: true, strategyId: strategy.id, reason: "recovery-check-failed" });
+    }
+  }
+  return results;
+}
+
 async function executeTriggeredSell(env, strategy) {
   const acquired = await acquireSellExecutionLock(env, strategy);
   if (!acquired) return { ok: true, skipped: true, strategyId: strategy.id, reason: "execution-lock-not-acquired" };
@@ -3238,6 +3488,7 @@ async function runSellExecutor(env, { source = "cron" } = {}) {
   const recoveredStalePreparing = await recoverStaleSellPreparationLocks(env);
   const quarantined = await quarantineStaleAmbiguousSells(env);
   const reconciled = await reconcilePendingSells(env);
+  const ambiguousSellRecovery = await reconcileAmbiguousSellsWithoutSignature(env);
   if (!autoSellRequested(env)) {
     return {
       ok: true,
@@ -3248,6 +3499,7 @@ async function runSellExecutor(env, { source = "cron" } = {}) {
       recoveredStalePreparingSells: recoveredStalePreparing,
       quarantinedAmbiguousSells: quarantined,
       reconciled,
+      ambiguousSellRecovery,
       message: "SELL executor is installed but AUTO_SELL_ENABLED is not true. No new SELL was sent.",
     };
   }
@@ -3272,6 +3524,7 @@ async function runSellExecutor(env, { source = "cron" } = {}) {
     recoveredStalePreparingSells: recoveredStalePreparing,
     quarantinedAmbiguousSells: quarantined,
     reconciled,
+    ambiguousSellRecovery,
     executions,
   };
 }
@@ -3685,7 +3938,7 @@ async function handleExecutionStatus(request, env) {
 async function handleRoot(request, env) {
   return json(request, {
     service: "ASTY Rebound API",
-    buildVersion: "2026-10-20-cycle-v26-1-sell-slippage",
+    buildVersion: "2026-10-20-cycle-v26-2-sell-auto-recovery",
     status: "online",
     balanceSource: "Helius",
     displayPriceSource: "Helius DAS",
