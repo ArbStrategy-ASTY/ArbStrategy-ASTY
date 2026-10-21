@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#09070f">
 <title>ASTY Rebound</title>
-<!-- build: 2026-10-20-v34-sell-safety-recovery -->
+<!-- build: 2026-10-21-v35-buy-sell-verification-ui -->
 <style>
 :root{--bg:#09070f;--panel:#12101a;--panel2:#171321;--border:#302640;--text:#f5f0ff;--muted:#aaa0bb;--purple:#b590ff;--green:#69e7a6;--yellow:#ffd477;--red:#ff7f91}
 *{box-sizing:border-box}html,body{margin:0;min-height:100%;background:radial-gradient(circle at 50% -16%,rgba(139,90,255,.22),transparent 38%),var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif}body{min-height:100vh}.page{width:min(760px,100%);margin:0 auto;padding:calc(20px + env(safe-area-inset-top)) 18px calc(36px + env(safe-area-inset-bottom))}
@@ -21,6 +21,17 @@ button{appearance:none;border:0;font-family:inherit;cursor:pointer}button:disabl
 .strategy-summary{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:12px 0}.strategy-summary-item{padding:12px;border:1px solid rgba(255,255,255,.055);border-radius:13px;background:rgba(255,255,255,.022)}.strategy-summary-label{color:var(--muted);font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em}.strategy-summary-value{margin-top:5px;font-size:17px;font-weight:800}.strategy-list{display:grid;gap:10px;margin-top:12px;width:100%;min-width:0}.strategy-card{width:100%;max-width:100%;min-width:0;margin:0 auto;padding:15px;border:1px solid rgba(255,255,255,.065);border-radius:16px;background:rgba(255,255,255,.022)}.strategy-card>*{min-width:0}.strategy-card-top{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}.strategy-name{font-size:14px;font-weight:800}.strategy-sub{margin-top:3px;color:var(--muted);font-size:10px;line-height:1.35}.strategy-sub-main{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.strategy-sub-capital{display:block;margin-top:1px}.strategy-status{flex:0 0 auto;white-space:nowrap;padding:5px 8px;border-radius:8px;font-size:9px;font-weight:800;letter-spacing:.05em;text-transform:uppercase}.strategy-status.watching{color:#d9c8ff;background:rgba(181,144,255,.12)}.strategy-status.paused{color:var(--yellow);background:rgba(255,212,119,.09)}.strategy-status.stopped{color:var(--muted);background:rgba(255,255,255,.05)}.strategy-status.completed{color:var(--green);background:rgba(105,231,166,.09)}.strategy-status.live{color:var(--green);background:rgba(105,231,166,.09)}.dev-check{margin-top:11px;padding-top:11px;border-top:1px solid rgba(255,255,255,.055)}.dev-check-button{width:100%;padding:10px 12px;border-radius:11px;color:#d9c8ff;background:rgba(181,144,255,.07);border:1px solid rgba(181,144,255,.22);font-size:11px;font-weight:800}.dev-check-result{margin-top:8px;padding:9px 10px;border-radius:10px;font-size:10px;line-height:1.45}.dev-check-result.ok{color:#baf6d5;background:rgba(105,231,166,.06);border:1px solid rgba(105,231,166,.18)}.dev-check-result.fail{color:#ffc1ca;background:rgba(255,127,145,.06);border:1px solid rgba(255,127,145,.18)}.dev-check-detail{margin-top:4px;opacity:.78}.dev-asset-panel{margin-top:12px;padding:12px;border:1px solid rgba(181,144,255,.16);border-radius:13px;background:rgba(181,144,255,.035)}.dev-asset-title{font-size:11px;font-weight:850;color:#e6dcff}.dev-asset-copy{margin-top:4px;color:var(--muted);font-size:9.5px;line-height:1.45}.dev-asset-select{width:100%;margin-top:10px;padding:11px 12px;border-radius:11px;border:1px solid rgba(181,144,255,.22);background:#17131f;color:var(--text);font-size:12px;font-weight:800;outline:none}.dev-asset-actions{display:grid;grid-template-columns:1fr;gap:8px;margin-top:9px}.dev-check-result.partial{color:#ffe0a6;background:rgba(255,212,119,.06);border:1px solid rgba(255,212,119,.2)}.dev-asset-meta{margin-top:6px;color:var(--muted);font-size:9px;line-height:1.45;overflow-wrap:anywhere}.strategy-watch{margin-top:13px;padding:13px;border:1px solid rgba(181,144,255,.14);border-radius:13px;background:linear-gradient(180deg,rgba(181,144,255,.065),rgba(181,144,255,.025))}.strategy-watch-head{display:flex;align-items:center;justify-content:space-between;gap:10px}.strategy-watch-copy{font-size:12px;font-weight:750}.strategy-watch-distance{white-space:nowrap;color:var(--purple);font-size:11px;font-weight:800}.strategy-watch-distance.quote-waiting{max-width:44%;white-space:normal;text-align:right;font-size:9.5px;line-height:1.25;overflow-wrap:anywhere}.strategy-watch-distance.quote-retrying{max-width:42%;white-space:normal;text-align:right;font-size:8.8px;line-height:1.18;overflow-wrap:anywhere;color:#d9c8ff}.strategy-price-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;align-items:start;margin-top:12px}.strategy-price-grid.compact{gap:8px}.strategy-price-item{min-width:0}.strategy-price-label{color:var(--muted);font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.055em;line-height:1.1;white-space:nowrap}.strategy-price-grid.compact .strategy-price-label{font-size:9px;letter-spacing:.055em}.strategy-price-value{margin-top:4px;font-size:14px;font-weight:850;letter-spacing:-.02em;line-height:1.15;white-space:nowrap;font-variant-numeric:tabular-nums}.strategy-price-grid.compact .strategy-price-value{font-size:14px;letter-spacing:-.02em}.strategy-price-value.accent{color:#d9c8ff}.strategy-progress{height:5px;margin-top:12px;overflow:hidden;border-radius:999px;background:rgba(255,255,255,.06)}.strategy-progress-bar{height:100%;border-radius:inherit;background:linear-gradient(90deg,#8d63ff,#c49dff);transition:width .35s ease}.strategy-watch-meta{margin-top:9px;color:var(--muted);font-size:9px;line-height:1.45}.strategy-cycle-result{margin-top:13px;padding:13px;border:1px solid rgba(105,231,166,.16);border-radius:13px;background:rgba(105,231,166,.045)}.strategy-cycle-title{font-size:12px;font-weight:800}.strategy-cycle-route{margin-top:7px;color:#ddd4ea;font-size:11px}.strategy-cycle-profit{margin-top:9px;font-size:17px;font-weight:850}.strategy-cycle-profit.positive{color:var(--green)}.strategy-cycle-profit.negative{color:var(--red)}.strategy-cycle-note{margin-top:5px;color:var(--muted);font-size:9px;line-height:1.45}.strategy-options{max-width:100%;overflow:hidden;margin-top:10px;color:var(--muted);font-size:clamp(7.5px,2.1vw,10px);line-height:1.5;white-space:nowrap;letter-spacing:-.015em}.strategy-options strong{color:#d8caf6;font-weight:750}.strategy-waiting{margin-top:12px;padding:12px;border-radius:12px;background:rgba(181,144,255,.055);color:#d8caf6;font-size:11px;line-height:1.5}.asset-choice-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}.asset-choice{padding:12px;border:1px solid var(--border);border-radius:13px;background:rgba(255,255,255,.025);color:var(--text);text-align:left}.asset-choice.active{border-color:rgba(181,144,255,.72);background:rgba(181,144,255,.11);box-shadow:0 0 0 1px rgba(181,144,255,.13) inset}.asset-choice-title{font-size:12px;font-weight:800}.asset-choice-detail{margin-top:4px;color:var(--muted);font-size:10px;line-height:1.35}.asset-choice.asset-wide{grid-column:1/-1}.preset-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}.preset-button{padding:12px;border:1px solid var(--border);border-radius:13px;background:rgba(255,255,255,.025);color:var(--text);text-align:left}.preset-button.active{border-color:rgba(181,144,255,.72);background:rgba(181,144,255,.11);box-shadow:0 0 0 1px rgba(181,144,255,.13) inset}.preset-title{font-size:12px;font-weight:800}.preset-detail{margin-top:4px;color:var(--muted);font-size:10px}.form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.form-field{margin-top:13px}.form-field:first-child{margin-top:0}.compact-input{width:100%;padding:13px;border:1px solid var(--border);border-radius:13px;outline:0;color:var(--text);background:rgba(255,255,255,.025);font:inherit;font-size:15px;font-weight:700}.compact-input:focus{border-color:rgba(181,144,255,.6)}.toggle-row{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:12px 0;border-top:1px solid rgba(255,255,255,.055)}.toggle-copy{min-width:0}.toggle-title{font-size:12px;font-weight:800}.toggle-note{margin-top:3px;color:var(--muted);font-size:10px;line-height:1.4}.toggle{position:relative;width:44px;height:25px;flex:0 0 44px;border-radius:999px;background:#342d3f;border:1px solid rgba(255,255,255,.08)}.toggle.on{background:rgba(181,144,255,.45);border-color:rgba(181,144,255,.6)}.toggle-knob{position:absolute;top:3px;left:3px;width:17px;height:17px;border-radius:50%;background:#fff;transition:.18s}.toggle.on .toggle-knob{left:22px}.max-button{padding:7px 9px;border-radius:8px;color:var(--purple);background:rgba(181,144,255,.09);border:1px solid rgba(181,144,255,.2);font-size:10px;font-weight:800}.strategy-warning{margin-top:10px;color:var(--yellow);font-size:10px;line-height:1.45}.strategy-success{margin-top:10px;color:var(--green);font-size:10px;line-height:1.45}.strategy-gas-alert{margin-top:10px;padding:9px 10px;border:1px solid rgba(255,127,145,.28);border-radius:10px;background:rgba(255,127,145,.08);color:#ffc1ca;font-size:9.5px;font-weight:700;line-height:1.4;overflow-wrap:anywhere}.strategy-gas-alert strong{color:#ff9dad;font-weight:850}.strategy-watch-distance.gas-low{color:var(--red);background:rgba(255,127,145,.09);border:1px solid rgba(255,127,145,.2);padding:4px 7px;border-radius:8px;font-size:9px;letter-spacing:.025em;text-transform:uppercase}
 .system-ready-strip{margin-top:14px;padding:14px 15px;border:1px solid rgba(105,231,166,.18);border-radius:16px;background:rgba(105,231,166,.045)}.system-ready-main{display:flex;align-items:center;justify-content:space-between;gap:12px}.system-ready-title{display:flex;align-items:center;gap:9px;font-size:13px;font-weight:800}.system-ready-copy{margin-top:5px;color:var(--muted);font-size:10px;line-height:1.45}.strategy-create-unavailable{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:2px;padding:11px 12px;border:1px solid rgba(255,255,255,.055);border-radius:13px;background:rgba(255,255,255,.02);color:var(--muted);font-size:10px;line-height:1.4}.strategy-create-unavailable button{flex:0 0 auto;padding:7px 10px;border:1px solid rgba(181,144,255,.24);border-radius:9px;color:var(--purple);background:rgba(181,144,255,.07);font-size:10px;font-weight:800}.wallet-compact{margin-top:14px;padding:13px 15px;border:1px solid #292137;border-radius:16px;background:var(--panel2)}.wallet-compact summary{cursor:pointer;color:var(--muted);font-size:10px;font-weight:750;letter-spacing:.07em;text-transform:uppercase;list-style:none}.wallet-compact summary::-webkit-details-marker{display:none}.wallet-compact[open] summary{margin-bottom:11px}.balance-breakdown{margin-top:4px;min-height:36px;color:var(--muted);font-size:9px;line-height:1.45}.balance-item .usd-value{min-height:36px}.strategy-actions{display:flex;gap:8px;margin-top:11px;padding-top:11px;border-top:1px solid rgba(255,255,255,.055)}.strategy-action-button{flex:1;padding:9px 10px;border-radius:10px;font-size:10px;font-weight:800}.strategy-action-button.resume{color:#baf6d5;background:rgba(105,231,166,.07);border:1px solid rgba(105,231,166,.2)}.strategy-action-button.stop{color:#ffc1ca;background:rgba(255,127,145,.055);border:1px solid rgba(255,127,145,.18)}.strategy-actions.exit-choice{flex-direction:column}.strategy-action-button.next-sell{color:#e6d6ff;background:rgba(181,144,255,.10);border:1px solid rgba(181,144,255,.3)}.strategy-action-button.cancel-scheduled{color:#d6c2ff;background:rgba(181,144,255,.04);border:1px solid rgba(181,144,255,.16)}.strategy-stop-planned{padding:10px 11px;border-radius:10px;color:#ffe4a5;background:rgba(255,212,119,.06);border:1px solid rgba(255,212,119,.18);font-size:10px;line-height:1.45}.strategy-action-button:disabled{opacity:.5;cursor:not-allowed}.strategy-action-result{margin-top:8px;color:var(--muted);font-size:9px;line-height:1.45}.strategy-action-result.ok{color:#baf6d5}.strategy-action-result.fail{color:#ffc1ca}
 @media(max-width:540px){.modal-backdrop.strategy-modal-backdrop{display:block;overflow-y:auto;overscroll-behavior-y:contain;-webkit-overflow-scrolling:touch;touch-action:pan-y;padding:calc(12px + env(safe-area-inset-top)) 14px calc(18px + env(safe-area-inset-bottom))}.strategy-create-modal{width:100%;max-height:none;overflow:visible;margin:0 auto}.hero{grid-template-columns:minmax(0,1fr) 105px;gap:8px;min-height:200px}.wolf{max-width:105px;max-height:145px}.balance-grid,.strategy-summary{grid-template-columns:repeat(2,minmax(0,1fr))}.strategy-metrics,.form-grid,.preset-grid{grid-template-columns:1fr}.balance-item{padding:12px}.balance-item .deposit-button,.balance-item .withdraw-button{padding:10px 8px;font-size:10px;font-weight:800;line-height:1.2}.balance-item .asset-info{font-size:9px}.strategy-summary-item{padding:10px}.strategy-summary-value{font-size:15px}}@media(min-width:541px){.modal-backdrop{align-items:center}}@media(max-width:370px){.hero{grid-template-columns:1fr}.wolf-wrap{display:none}}
+/* v35: clear, read-only presentation for ambiguous BUY / SELL recovery */
+.strategy-status.verifying{color:#dfc6ff;background:rgba(181,144,255,.17);border:1px solid rgba(181,144,255,.24)}
+.strategy-verifying{margin-top:12px;padding:13px 14px;border-radius:13px;border:1px solid rgba(181,144,255,.25);background:linear-gradient(180deg,rgba(181,144,255,.10),rgba(181,144,255,.045));color:#e8dcff;font-size:11px;line-height:1.5}
+.strategy-verifying-title{display:flex;align-items:center;gap:8px;font-size:12px;font-weight:850;margin-bottom:7px}
+.strategy-verifying-title:before{content:"";display:inline-block;width:8px;height:8px;border:2px solid #b590ff;border-top-color:transparent;border-radius:50%;animation:rebound-verify-spin 1.1s linear infinite;flex:none}
+@keyframes rebound-verify-spin{to{transform:rotate(360deg)}}
+@media(prefers-reduced-motion:reduce){.strategy-verifying-title:before{animation:none}}
+.strategy-verifying-note{margin-top:7px;color:#bfb0d4;font-size:10px;line-height:1.45}
+.strategy-verify-controls{margin-top:11px;padding:10px 12px;border-radius:10px;border:1px solid rgba(181,144,255,.14);background:rgba(181,144,255,.035);color:#bbabd5;font-size:10px;line-height:1.45;text-align:center}
+.strategy-recovery-notice{margin-top:12px;padding:11px 12px;border:1px solid rgba(105,231,166,.24);border-radius:11px;background:rgba(105,231,166,.07);color:#baf6d5;font-size:10px;line-height:1.55}
+.strategy-recovery-notice strong{display:block;font-size:11px;margin-bottom:3px}
 </style>
 <script type="importmap">
 {"imports":{"react":"https://esm.sh/react@18.3.1","react/jsx-runtime":"https://esm.sh/react@18.3.1/jsx-runtime","react-dom":"https://esm.sh/react-dom@18.3.1","react-dom/client":"https://esm.sh/react-dom@18.3.1/client"}}
@@ -57,10 +68,17 @@ function formatSol(v){const n=Number(v);return Number.isFinite(n)?n.toLocaleStri
 function formatUsd(v){const n=Number(v);return v!=null&&Number.isFinite(n)?`≈ $${n.toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2})}`:"—"}
 function bpsToPercent(v){const n=Number(v);return Number.isFinite(n)?(n/100).toFixed(n%100===0?0:2):"—"}
 function percentToBps(v){const n=Number(String(v).replace(",","."));if(!Number.isFinite(n)||n<=0)throw new Error("Enter a valid percentage.");return Math.round(n*100)}
-function strategyStatusClass(status){const s=String(status||"").toUpperCase();if(s==="WATCHING")return "watching";if(s==="PAUSED")return "paused";if(s==="STOPPED")return "stopped";if(s==="COMPLETED")return "completed";return "live"}
+function strategyVerificationKind(strategy){
+  if(String(strategy?.status||"").toUpperCase()!=="PAUSED")return null;
+  const action=String(strategy?.pendingAction||"").toUpperCase();
+  if(action==="BUY_SEND_UNKNOWN"||action==="BUY_SIGNATURE_UNKNOWN")return "BUY";
+  if(/^SELL_(TP|SL|STOP)_(SEND_UNKNOWN|SIGNATURE_UNKNOWN)$/.test(action))return "SELL";
+  return null;
+}
+function strategyStatusClass(status,strategy){const s=String(status||"").toUpperCase();if(strategyVerificationKind(strategy))return "verifying";if(s==="WATCHING")return "watching";if(s==="PAUSED")return "paused";if(s==="STOPPED")return "stopped";if(s==="COMPLETED")return "completed";return "live"}
 function presetLabel(preset){return ({frequent:"Frequent",balanced:"Balanced",deep_dip:"Deep Dip",custom:"Custom"})[preset]||String(preset||"Strategy")}
 function strategyStatusLabel(status){return ({WATCHING:"Watching",BUY_TRIGGERED:"Buying",BOUGHT:"Position open",SELL_TRIGGERED:"Selling",PAUSED:"Paused",COMPLETED:"Completed",STOPPED:"Stopped"})[String(status||"").toUpperCase()]||String(status||"—").replaceAll("_"," ")}
-function strategyDisplayStatus(strategy){const status=String(strategy?.status||"").toUpperCase();const action=String(strategy?.pendingAction||"").toUpperCase();if(status==="SELL_TRIGGERED"&&action.includes("QUOTE_LOW"))return "Retrying";return strategyStatusLabel(status)}
+function strategyDisplayStatus(strategy){const status=String(strategy?.status||"").toUpperCase();const action=String(strategy?.pendingAction||"").toUpperCase();if(strategyVerificationKind(strategy))return "Verifying";if(status==="SELL_TRIGGERED"&&action.includes("QUOTE_LOW"))return "Retrying";return strategyStatusLabel(status)}
 function formatMarketPrice(v){const n=Number(v);if(!Number.isFinite(n)||n<=0)return "—";const digits=n>=1?2:4;return `$${n.toLocaleString("en-US",{minimumFractionDigits:digits,maximumFractionDigits:digits})}`}
 function formatStrategyCardPrice(v){const n=Number(v);if(!Number.isFinite(n)||n<=0)return "—";let digits=n>=1?2:4;if(n>=10000)digits=0;else if(n>=1000)digits=1;return `$${n.toLocaleString("en-US",{minimumFractionDigits:digits,maximumFractionDigits:digits})}`}
 function strategyUsesCompactPrices(...values){return values.some(v=>{const n=Number(v);return Number.isFinite(n)&&n>=1000})}
@@ -140,6 +158,10 @@ function App(){
   const [reservedUsdc,setReservedUsdc]=useState(null);
   const [freeUsdc,setFreeUsdc]=useState(null);
   const [strategies,setStrategies]=useState([]);
+  // Notices are derived only from an actual PAUSED -> active transition observed by this page.
+  // No inferred recovery from timestamps, balances or the absence of an error.
+  const previousStrategySnapshot=useRef(null);
+  const [recentRecoveryNotices,setRecentRecoveryNotices]=useState({});
   const activeStrategyStatuses=new Set(["WATCHING","BUY_TRIGGERED","BOUGHT","SELL_TRIGGERED","PAUSED"]);
   const displayedStrategies=strategies.filter(strategy=>String(strategy?.status||"").toUpperCase()!=="STOPPED");
   const activeStrategyCount=strategies.filter(strategy=>activeStrategyStatuses.has(String(strategy?.status||"").toUpperCase())).length;
@@ -344,7 +366,27 @@ function App(){
       const token=await getAccessToken();if(!token)throw new Error("No session.");
       const response=await fetch(`${API_BASE}/strategies`,{headers:{"Authorization":`Bearer ${token}`}});
       const result=await response.json();if(!response.ok)throw new Error(result?.message||"Strategies unavailable.");
-      setStrategies(Array.isArray(result?.strategies)?result.strategies:[]);
+      const nextStrategies=Array.isArray(result?.strategies)?result.strategies:[];
+      const previous=previousStrategySnapshot.current;
+      if(previous){
+        const oldById=new Map(previous.map(s=>[s.id,s]));
+        const recovered=nextStrategies.filter(s=>{
+          const old=oldById.get(s.id);
+          return old&&strategyVerificationKind(old)&&["WATCHING","BUY_TRIGGERED","BOUGHT","SELL_TRIGGERED","COMPLETED"].includes(String(s.status||"").toUpperCase());
+        });
+        if(recovered.length){
+          const detectedAt=Date.now();
+          setRecentRecoveryNotices(current=>{
+            const next={...current};
+            for(const strategy of recovered){
+              next[strategy.id]={at:detectedAt,kind:strategyVerificationKind(oldById.get(strategy.id))};
+            }
+            return next;
+          });
+        }
+      }
+      previousStrategySnapshot.current=nextStrategies;
+      setStrategies(nextStrategies);
       setCycles(Array.isArray(result?.cycles)?result.cycles:[]);
       if(result?.capital){setReservedUsdc(result.capital.reservedUsdc??"0");setFreeUsdc(result.capital.freeUsdc??"0");}
     }catch(err){console.error("Strategies:",err);if(!silent)setError(err?.message||"Strategies could not be loaded.");}
@@ -687,7 +729,7 @@ function App(){
     finally{setAssetReadinessBusy("")}
   }
 
-  async function handleLogout(){setError("");setUsdcBalance(null);setReservedUsdc(null);setFreeUsdc(null);setSolBalance(null);setUsdcUsdValue(null);setSolUsdValue(null);setSolTradingReady(null);setSolTradingBalance(null);setBalanceAvailable(false);setStrategies([]);setCycles([]);setCycleHistoryExpandedByStrategy({});setStrategiesLoading(false);setStrategyModalOpen(false);setStrategyCreateResult(null);setExecutionCheckBusyId("");setExecutionCheckResults({});setSellCheckBusy(false);setSellCheckResult(null);setDevAsset("GEOD");setAssetReadinessBusy("");setAssetReadinessResult(null);setStrategyActionBusyId("");setStrategyActionResults({});setStrategyStopTarget(null);setSyncState("waiting");setDepositAsset(null);setDepositState(null);setDepositSignature("");setDepositMessage("");setWithdrawAsset(null);setWithdrawState(null);setWithdrawSignature("");setWithdrawMessage("");setAutomationOverride(null);setServerTestResult(null);setPrepareSolResult(null);setTestSwapModalOpen(false);setTestSwapResult(null);setTestSwapSignature("");syncAttempted.current="";authAttemptedFor.current="";creationAttempted.current=false;setPendingWalletAddress("");setCreatedWallet(null);await logout()}
+  async function handleLogout(){setError("");setUsdcBalance(null);setReservedUsdc(null);setFreeUsdc(null);setSolBalance(null);setUsdcUsdValue(null);setSolUsdValue(null);setSolTradingReady(null);setSolTradingBalance(null);setBalanceAvailable(false);setStrategies([]);previousStrategySnapshot.current=null;setRecentRecoveryNotices({});setCycles([]);setCycleHistoryExpandedByStrategy({});setStrategiesLoading(false);setStrategyModalOpen(false);setStrategyCreateResult(null);setExecutionCheckBusyId("");setExecutionCheckResults({});setSellCheckBusy(false);setSellCheckResult(null);setDevAsset("GEOD");setAssetReadinessBusy("");setAssetReadinessResult(null);setStrategyActionBusyId("");setStrategyActionResults({});setStrategyStopTarget(null);setSyncState("waiting");setDepositAsset(null);setDepositState(null);setDepositSignature("");setDepositMessage("");setWithdrawAsset(null);setWithdrawState(null);setWithdrawSignature("");setWithdrawMessage("");setAutomationOverride(null);setServerTestResult(null);setPrepareSolResult(null);setTestSwapModalOpen(false);setTestSwapResult(null);setTestSwapSignature("");syncAttempted.current="";authAttemptedFor.current="";creationAttempted.current=false;setPendingWalletAddress("");setCreatedWallet(null);await logout()}
 
   const loading=!ready||!walletsReady;
   const accountReady=authenticated&&Boolean(reboundAddress)&&syncState==="ready";
@@ -808,19 +850,38 @@ function App(){
     }
 
     if(status==="PAUSED"){
-      const pending=String(strategy.pendingAction||"").toUpperCase();
-      if(/^SELL_(TP|SL|STOP)_(SEND_UNKNOWN|SIGNATURE_UNKNOWN)$/.test(pending)){
-        return e("div",{className:"strategy-waiting"},
-          e("strong",null,"SELL safety verification in progress. "),
-          "Rebound is checking Solana history and the Wallet balance before allowing any further trade. ",
-          "It will automatically recover only if the result is unambiguous. If verification is inconclusive, ",
-          "the strategy will stay paused for your protection. Never reset or retry this position manually."
+      const verificationKind=strategyVerificationKind(strategy);
+      if(verificationKind){
+        const isBuy=verificationKind==="BUY";
+        return e("div",{className:"strategy-verifying",role:"status"},
+          e("div",{className:"strategy-verifying-title"},"Automatic safety verification"),
+          isBuy
+            ?"Rebound is checking whether the previous BUY reached Solana. A duplicate purchase will not be attempted while the result is uncertain."
+            :"Rebound is checking whether the previous SELL reached Solana. A duplicate sale will not be attempted while the result is uncertain.",
+          e("div",{className:"strategy-verifying-note"},
+            isBuy
+              ?"This is a temporary safety hold. Rebound checks the previous BUY and resumes only if the result is clear. If it cannot be verified, this strategy remains paused. Do not retry manually."
+              :"This is a temporary safety hold. Automatic SELL recovery requires the v26.2 worker. Trading resumes only if the transaction result can be verified; otherwise this strategy remains paused for manual review. Do not retry manually."
+          )
         );
       }
       return e("div",{className:"strategy-waiting"},"Strategy paused. No new trade will start until you resume it.");
     }
     if(status==="STOPPED")return e("div",{className:"strategy-waiting"},"Strategy stopped. No capital is reserved and no new trade will start.");
     return e("div",{className:"strategy-waiting"},"Strategy state is being updated…");
+  }
+
+  function renderRecentRecoveryNotice(strategy){
+    const notice=recentRecoveryNotices[strategy.id];
+    if(!notice||Date.now()-notice.at>10*60_000)return null;
+    const status=String(strategy.status||"").toUpperCase();
+    if(!["WATCHING","BUY_TRIGGERED","BOUGHT","SELL_TRIGGERED","COMPLETED"].includes(status))return null;
+    const resumed=status==="WATCHING"?"Market monitoring has resumed.":status==="BOUGHT"?"Your position is being monitored again.":"The strategy is active again.";
+    const checkedAt=new Date(notice.at).toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"});
+    return e("div",{className:"strategy-recovery-notice",role:"status"},
+      e("strong",null,"Safety check completed ✓"),
+      `The previous ${notice.kind} safety hold cleared. ${resumed} · ${checkedAt}`
+    );
   }
 
   const renderResult=(result)=>result?e("div",{className:`status-box ${result.state==="success"?"success":result.state==="pending"?"pending":"failure"}`},e("div",null,result.message),result.signature?e("a",{className:"tx-link",href:`https://solscan.io/tx/${result.signature}`,target:"_blank",rel:"noopener noreferrer"},"View transaction"):null):null;
@@ -921,23 +982,27 @@ function App(){
                 e("div",{className:"strategy-card",key:strategy.id},
                   e("div",{className:"strategy-card-top"},
                     e("div",null,e("div",{className:"strategy-name"},`${String(strategy.assetSymbol||"SOL").toUpperCase()} Rebound`),e("div",{className:"strategy-sub"},e("span",{className:"strategy-sub-main"},`${presetLabel(strategy.preset)} · Dip ${bpsToPercent(strategy.dipBps)}% · TP ${bpsToPercent(strategy.takeProfitBps)}%${String(strategy.assetSymbol||"SOL").toUpperCase()==="ASTY"?" net":""}`),e("span",{className:"strategy-sub-capital unit-pair"},`${formatUsdc(["COMPLETED","STOPPED"].includes(String(strategy.status).toUpperCase())?(strategy.lastCycle?.capitalUsdc||strategy.initialCapitalUsdc):strategy.reservedCapitalUsdc)} USDC`))),
-                    e("div",{className:`strategy-status ${strategyStatusClass(strategy.status)}`},strategyDisplayStatus(strategy))
+                    e("div",{className:`strategy-status ${strategyStatusClass(strategy.status,strategy)}`},strategyDisplayStatus(strategy))
                   ),
                   renderStrategyLifecycle(strategy),
+                  renderRecentRecoveryNotice(strategy),
                   e("div",{className:"strategy-options"},
                     e("strong",null,"Stop loss: "),strategy.stopLossEnabled?`-${bpsToPercent(strategy.stopLossBps)}%`:"Off",
                     " · ",e("strong",null,"Auto repeat: "),strategy.autoRepeat?"On":"Off",
                     " · ",e("strong",null,"Compound: "),strategy.compound?"On":"Off",
                     Number(strategy.cycleNumber||1)>1?` · Cycle ${strategy.cycleNumber}`:""
                   ),
-                  ["WATCHING","BUY_TRIGGERED","BOUGHT","PAUSED"].includes(String(strategy.status).toUpperCase())?e("div",{className:`strategy-actions ${String(strategy.status).toUpperCase()==="BOUGHT"?"exit-choice":""}`},
+                  ["WATCHING","BUY_TRIGGERED","BOUGHT","PAUSED"].includes(String(strategy.status).toUpperCase())?
+                    (strategyVerificationKind(strategy)?e("div",{className:"strategy-verify-controls"},
+                      "Trading controls are temporarily locked during automatic verification. Rebound will update this status when it has a conclusive result."
+                    ):e("div",{className:`strategy-actions ${String(strategy.status).toUpperCase()==="BOUGHT"?"exit-choice":""}`},
                     String(strategy.status).toUpperCase()==="PAUSED"?e("button",{className:"strategy-action-button resume",disabled:Boolean(strategyActionBusyId)||/^SELL_(TP|SL|STOP)_(SEND_UNKNOWN|SIGNATURE_UNKNOWN)$/.test(String(strategy.pendingAction||"").toUpperCase()),onClick:()=>resumeStrategy(strategy)},strategyActionBusyId===strategy.id?"Working…":/^SELL_(TP|SL|STOP)_(SEND_UNKNOWN|SIGNATURE_UNKNOWN)$/.test(String(strategy.pendingAction||"").toUpperCase())?"Safety verification":"Resume"):null,
                     String(strategy.status).toUpperCase()==="BOUGHT"?(strategy.stopAfterNextSell
                       ?e("div",{className:"strategy-stop-planned"},"Stop scheduled: Rebound will close this strategy after its next confirmed SELL. Take Profit and Stop Loss remain active.")
                       :e("button",{className:"strategy-action-button next-sell",disabled:Boolean(strategyActionBusyId),onClick:()=>requestStrategyStop(strategy,"after_next_sell")},"Stop & close position after next sell")):null,
                     String(strategy.status).toUpperCase()==="BOUGHT"&&strategy.stopAfterNextSell?e("button",{className:"strategy-action-button cancel-scheduled",disabled:Boolean(strategyActionBusyId),onClick:()=>requestStrategyStop(strategy,"cancel_after_next_sell")},"Cancel planned stop"):null,
                     e("button",{className:"strategy-action-button stop",disabled:Boolean(strategyActionBusyId),onClick:()=>requestStrategyStop(strategy,"now")},String(strategy.status).toUpperCase()==="BOUGHT"?"Stop & close position now":"Stop strategy")
-                  ):null,
+                  )):null,
                   strategyActionResults[strategy.id]?e("div",{className:`strategy-action-result ${strategyActionResults[strategy.id].ok?"ok":"fail"}`},strategyActionResults[strategy.id].message):null,
                   cyclesForStrategy(strategy.id).length?e("div",{className:"strategy-history"},
                     e("button",{className:"strategy-history-toggle",onClick:()=>toggleStrategyHistory(strategy.id)},
