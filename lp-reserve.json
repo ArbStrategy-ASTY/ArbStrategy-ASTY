@@ -1,8 +1,8 @@
 {
   "success": true,
   "token": "ASTYqeaoK83Zs1pTFEXZUB6BM8cG8YLTsN852NUkt7ZR",
-  "amount": 921451.919064785,
-  "value": 22241.46078746008,
+  "amount": 926455.775064785,
+  "value": 21839.86432235397,
   "resolved": 5,
   "total": 5,
   "balances": [
@@ -10,46 +10,46 @@
       "wallet": "8KgDtknVhs88sMjRckCGzVDhaFBre3V3FAvhwxfANmfq",
       "resolved": true,
       "amount": 186848.42699405,
-      "value": 4510.036689059821,
+      "value": 4404.683314872699,
       "decimals": 9,
-      "price": 0.02413740785306926
+      "price": 0.023573563801064068
     },
     {
       "wallet": "9Hv3HPGSHS1vq1qjfumoER4TEhu2sgWUmL3S4EaUWrk6",
       "resolved": true,
       "amount": 186489.820660136,
-      "value": 4501.3808617194445,
+      "value": 4396.229685580712,
       "decimals": 9,
-      "price": 0.02413740785306926
+      "price": 0.023573563801064068
     },
     {
       "wallet": "4aGjJavF5fq15szkFTdDGQAz9mUUSZ1y1c74isQm2zYV",
       "resolved": true,
-      "amount": 177113.635810599,
-      "value": 4275.064063900401,
+      "amount": 182117.491810599,
+      "value": 4293.1583124869185,
       "decimals": 9,
-      "price": 0.02413740785306926
+      "price": 0.023573563801064068
     },
     {
       "wallet": "8aYomPkFRaetda3672NfVLZ1xhrJRm9fro2gzNxCPbyf",
       "resolved": true,
       "amount": 185000.0178,
-      "value": 4465.4208824636735,
+      "value": 4361.109722806288,
       "decimals": 9,
-      "price": 0.02413740785306926
+      "price": 0.023573563801064068
     },
     {
       "wallet": "9EDJ8RnqnVhwEZF8w3whGgCumDbeexPcHpzWRaWr6USt",
       "resolved": true,
       "amount": 186000.0178,
-      "value": 4489.558290316742,
+      "value": 4384.683286607353,
       "decimals": 9,
-      "price": 0.02413740785306926
+      "price": 0.023573563801064068
     }
   ],
   "source": "BirdEye Wallet API",
-  "currentSupply": 9237311.912815765,
+  "currentSupply": 9232308.049338847,
   "supplyDecimals": 9,
-  "updatedAt": 1793632989495,
-  "updatedAtIso": "2026-11-02T15:23:09.495Z"
+  "updatedAt": 1793714219312,
+  "updatedAtIso": "2026-11-03T13:56:59.312Z"
 }
