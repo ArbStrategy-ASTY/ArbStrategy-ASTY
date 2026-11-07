@@ -1255,17 +1255,20 @@
     // It avoids direct browser JSON-RPC for normal My ASTY scans.
     const SOLANAFM_API = "https://api.solana.fm";
     const THREE_WS_WALLET_API = "https://three.ws/api/crypto/wallet";
-    const THREE_WS_TOKEN_HOLDINGS_API = "https://three.ws/api/v1/x/solana/token-holdings";
     const THREE_WS_TOKEN_SUPPLY_API = "https://three.ws/api/v1/x/solana/token-supply";
 
-    const WALLET_BALANCE_CACHE_KEY = "myAsty.walletBalanceCache.v2";
-    const FRESH_WALLET_CACHE_MS = 45 * 1000;
-    const STALE_WALLET_CACHE_MS = 10 * 60 * 1000;
+    // Existing ASTY Unlockr gateway -> Helius.
+    // This infrastructure already exists; My ASTY only reuses its read-only /rpc route.
+    const ASTY_RPC_GATEWAYS = [
+      "https://unlockr.arbstrategy.net/rpc",
+      "https://walletrescue.mail-timothy.workers.dev/rpc"
+    ];
 
-    // three.ws documents 20 free token-holdings calls/minute.
-    // 3.15s spacing keeps repeated multi-wallet scans inside that lane.
-    const WALLET_SCAN_SPACING_MS = 3150;
-    const WALLET_RETRY_DELAY_MS = 3400;
+    const MY_ASTY_CACHE_KEY = "myAsty.heliusBalanceCache.v1";
+    const FRESH_CACHE_MS = 30 * 1000;
+    const STALE_CACHE_MS = 5 * 60 * 1000;
+    const WALLET_REQUEST_GAP_MS = 250;
+    const WALLET_RETRY_MS = 700;
 
     // Current RPC fallbacks only.
     // SubQuery's public Solana RPC has been retired.
@@ -2173,11 +2176,11 @@
       );
     }
 
-    function readWalletBalanceCache() {
+    function readMyAstyCache() {
       try {
         const raw =
           localStorage.getItem(
-            WALLET_BALANCE_CACHE_KEY
+            MY_ASTY_CACHE_KEY
           );
 
         if (!raw) {
@@ -2198,40 +2201,12 @@
       }
     }
 
-    function writeWalletBalanceCache(
-      address,
-      result
-    ) {
-      try {
-        const cache =
-          readWalletBalanceCache();
-
-        cache[address] = {
-          asty:
-            Number(result.asty) || 0,
-          tokenAccounts:
-            Number(
-              result.tokenAccounts
-            ) || 0,
-          fetchedAt:
-            Date.now()
-        };
-
-        localStorage.setItem(
-          WALLET_BALANCE_CACHE_KEY,
-          JSON.stringify(cache)
-        );
-      } catch {
-        // Cache is only a reliability helper.
-      }
-    }
-
-    function getCachedWalletBalance(
+    function getCachedAstyBalance(
       address,
       maxAgeMs
     ) {
       const cache =
-        readWalletBalanceCache();
+        readMyAstyCache();
 
       const item =
         cache[address];
@@ -2262,239 +2237,47 @@
           ) || 0,
         error: false,
         errorMessage: "",
-        source: "Recent scan",
-        cached: true,
-        cacheAgeMs: age
+        source: "Cached",
+        cached: true
       };
     }
 
-    function findAstyHoldingInPayload(
-      payload
+    function saveAstyBalanceCache(
+      result
     ) {
-      let totalAsty = 0;
-      let matches = 0;
-      const seen =
-        new WeakSet();
-
-      function normalizeAmount(
-        object
-      ) {
-        const uiCandidates = [
-          object?.ui_amount,
-          object?.uiAmount,
-          object?.ui_amount_string,
-          object?.uiAmountString,
-          object?.tokenAmount?.uiAmountString,
-          object?.tokenAmount?.uiAmount
-        ];
-
-        for (
-          const candidate of
-          uiCandidates
-        ) {
-          const value =
-            Number(candidate);
-
-          if (
-            Number.isFinite(value)
-          ) {
-            return value;
-          }
-        }
-
-        const amountCandidate =
-          object?.raw_amount ??
-          object?.rawAmount ??
-          object?.amount ??
-          object?.tokenAmount?.amount;
-
-        const decimalsCandidate =
-          object?.decimals ??
-          object?.tokenAmount?.decimals;
-
-        const amount =
-          Number(amountCandidate);
-
-        const decimals =
-          Number(decimalsCandidate);
-
-        if (
-          !Number.isFinite(amount)
-        ) {
-          return null;
-        }
-
-        /*
-         * The endpoint can expose raw atomic amount or a normalized
-         * amount depending on the upstream shape. ASTY can never
-         * exceed ~10M whole tokens, so larger values are safely
-         * interpreted as atomic units.
-         */
-        if (
-          Number.isFinite(decimals) &&
-          decimals >= 0 &&
-          amount >
-            ORIGINAL_SUPPLY *
-            1.1
-        ) {
-          return (
-            amount /
-            Math.pow(
-              10,
-              decimals
-            )
-          );
-        }
-
-        return amount;
-      }
-
-      function walk(node) {
-        if (
-          node === null ||
-          node === undefined
-        ) {
-          return;
-        }
-
-        if (Array.isArray(node)) {
-          for (
-            const child of node
-          ) {
-            walk(child);
-          }
-          return;
-        }
-
-        if (
-          typeof node !== "object"
-        ) {
-          return;
-        }
-
-        if (seen.has(node)) {
-          return;
-        }
-
-        seen.add(node);
-
-        const mint =
-          node?.mint ??
-          node?.info?.mint ??
-          node?.token?.mint ??
-          null;
-
-        if (mint === ASTY_MINT) {
-          const value =
-            normalizeAmount(
-              node?.info ??
-              node
-            );
-
-          if (
-            value !== null &&
-            Number.isFinite(value)
-          ) {
-            totalAsty += value;
-            matches++;
-            return;
-          }
-        }
-
-        for (
-          const value of
-          Object.values(node)
-        ) {
-          walk(value);
-        }
-      }
-
-      walk(payload);
-
-      return {
-        asty: totalAsty,
-        tokenAccounts: matches
-      };
-    }
-
-    async function fetchThreeWsHoldings(
-      address,
-      attempt = 1
-    ) {
-      const url =
-        `${THREE_WS_TOKEN_HOLDINGS_API}?owner=` +
-        `${encodeURIComponent(address)}`;
-
       try {
-        const payload =
-          await fetchJsonGet(
-            url,
-            18000
-          );
+        const cache =
+          readMyAstyCache();
 
-        const parsed =
-          findAstyHoldingInPayload(
-            payload
-          );
-
-        return {
-          address,
+        cache[result.address] = {
           asty:
-            parsed.asty,
+            Number(result.asty) || 0,
           tokenAccounts:
-            parsed.tokenAccounts,
-          error: false,
-          errorMessage: "",
-          source:
-            "Three.ws on-chain",
-          cached: false
+            Number(
+              result.tokenAccounts
+            ) || 0,
+          fetchedAt:
+            Date.now()
         };
-      } catch (error) {
-        const message =
-          String(
-            error?.message || error
-          );
 
-        /*
-         * One retry is useful for free-tier 429/402/5xx responses.
-         * We wait longer than one quota slot before retrying.
-         */
-        if (
-          attempt < 2 &&
-          (
-            message.includes("429") ||
-            message.includes("402") ||
-            message.includes("500") ||
-            message.includes("502") ||
-            message.includes("503") ||
-            message.includes("timeout")
-          )
-        ) {
-          await sleep(
-            WALLET_RETRY_DELAY_MS
-          );
-
-          return fetchThreeWsHoldings(
-            address,
-            attempt + 1
-          );
-        }
-
-        throw error;
+        localStorage.setItem(
+          MY_ASTY_CACHE_KEY,
+          JSON.stringify(cache)
+        );
+      } catch {
+        // Cache is only a reliability helper.
       }
     }
 
-    async function getWalletAstyViaSolanaFmFiltered(
-      address
+    async function callUnlockrRpc(
+      endpoint,
+      method,
+      params,
+      retry = true
     ) {
-      const url =
-        `${SOLANAFM_API}/v1/tokens/` +
-        `${encodeURIComponent(address)}` +
-        `/token-accounts`;
-
       const response =
         await fetchWithTimeout(
-          url,
+          endpoint,
           {
             method: "POST",
             headers: {
@@ -2504,78 +2287,324 @@
                 "application/json"
             },
             body: JSON.stringify({
-              includeSolBalance: false,
-              tokenHashes: [
-                ASTY_MINT
-              ]
+              jsonrpc: "2.0",
+              id: `myasty-${Date.now()}-${Math.random()}`,
+              method,
+              params
             })
           },
-          18000
+          15000
         );
+
+      if (
+        response.status === 429 &&
+        retry
+      ) {
+        const retryAfter =
+          Number(
+            response.headers.get(
+              "Retry-After"
+            )
+          );
+
+        await sleep(
+          Number.isFinite(
+            retryAfter
+          ) &&
+          retryAfter > 0
+            ? retryAfter * 1000
+            : WALLET_RETRY_MS
+        );
+
+        return callUnlockrRpc(
+          endpoint,
+          method,
+          params,
+          false
+        );
+      }
 
       const text =
         await response.text();
 
       if (!response.ok) {
         throw new Error(
-          `SolanaFM HTTP ${response.status}`
+          `ASTY gateway HTTP ${response.status}`
         );
       }
 
-      let payload;
+      let json;
 
       try {
-        payload =
+        json =
           JSON.parse(text);
       } catch {
         throw new Error(
-          "SolanaFM returned invalid JSON"
+          "ASTY gateway returned invalid JSON"
         );
       }
 
+      if (json?.error) {
+        throw new Error(
+          json.error.message ||
+          "ASTY gateway RPC error"
+        );
+      }
+
+      /*
+       * Current Unlockr Worker behaves like a JSON-RPC proxy.
+       * Also accept a wrapped result in case its response shell changes.
+       */
+      return (
+        json?.result ??
+        json?.data?.result ??
+        json?.data ??
+        json
+      );
+    }
+
+    function parseAstyTokenAccounts(
+      rpcResult
+    ) {
       const accounts =
         Array.isArray(
-          payload?.tokenAccounts
+          rpcResult?.value
         )
-          ? payload.tokenAccounts
-          : [];
+          ? rpcResult.value
+          : Array.isArray(
+              rpcResult?.result?.value
+            )
+            ? rpcResult.result.value
+            : [];
 
       let asty = 0;
-      let tokenAccounts = 0;
 
       for (
-        const account of accounts
+        const item of accounts
       ) {
-        if (
-          account?.info?.mint !==
-          ASTY_MINT
-        ) {
-          continue;
-        }
+        const amount =
+          item?.account?.data?.parsed
+            ?.info?.tokenAmount
+            ?.uiAmountString ??
+          item?.account?.data?.parsed
+            ?.info?.tokenAmount
+            ?.uiAmount ??
+          "0";
 
         asty +=
-          Number(
-            account?.info
-              ?.tokenAmount
-              ?.uiAmountString ??
-            account?.info
-              ?.tokenAmount
-              ?.uiAmount ??
-            0
-          ) || 0;
+          Number(amount) || 0;
+      }
 
-        tokenAccounts++;
+      return {
+        asty,
+        tokenAccounts:
+          accounts.length
+      };
+    }
+
+    async function getWalletAstyViaExistingGateway(
+      address
+    ) {
+      let lastError = null;
+
+      for (
+        const endpoint of
+        ASTY_RPC_GATEWAYS
+      ) {
+        try {
+          const result =
+            await callUnlockrRpc(
+              endpoint,
+              "getTokenAccountsByOwner",
+              [
+                address,
+                {
+                  mint: ASTY_MINT
+                },
+                {
+                  encoding:
+                    "jsonParsed",
+                  commitment:
+                    "confirmed"
+                }
+              ]
+            );
+
+          const parsed =
+            parseAstyTokenAccounts(
+              result
+            );
+
+          return {
+            address,
+            asty:
+              parsed.asty,
+            tokenAccounts:
+              parsed.tokenAccounts,
+            error: false,
+            errorMessage: "",
+            source:
+              "ASTY Helius gateway",
+            cached: false
+          };
+        } catch (error) {
+          lastError = error;
+
+          console.warn(
+            "ASTY gateway failed:",
+            endpoint,
+            address,
+            error
+          );
+        }
+      }
+
+      throw (
+        lastError ||
+        new Error(
+          "ASTY gateway unavailable"
+        )
+      );
+    }
+
+    async function getWalletAstyReliable(
+      address
+    ) {
+      /*
+       * Repeated clicks within 30 seconds do not re-query the chain.
+       * This prevents the user from rate-limiting their own scan.
+       */
+      const fresh =
+        getCachedAstyBalance(
+          address,
+          FRESH_CACHE_MS
+        );
+
+      if (fresh) {
+        return fresh;
+      }
+
+      let primaryError = null;
+
+      // PRIMARY: existing Unlockr Cloudflare -> Helius gateway.
+      try {
+        const result =
+          await getWalletAstyViaExistingGateway(
+            address
+          );
+
+        saveAstyBalanceCache(
+          result
+        );
+
+        return result;
+      } catch (error) {
+        primaryError = error;
+
+        console.warn(
+          "Primary Helius gateway failed:",
+          address,
+          error
+        );
+      }
+
+      // ONE FALLBACK: the V10 browser source that already worked for you.
+      try {
+        const result =
+          await getWalletAstyViaThreeWs(
+            address
+          );
+
+        const normalized = {
+          ...result,
+          source:
+            "Three.ws fallback",
+          cached: false
+        };
+
+        saveAstyBalanceCache(
+          normalized
+        );
+
+        return normalized;
+      } catch (error) {
+        console.warn(
+          "V10 wallet fallback failed:",
+          address,
+          error
+        );
+      }
+
+      /*
+       * Last-known-good result, clearly marked.
+       * Better than dropping one wallet from the total because a provider
+       * had a short outage. Never older than five minutes.
+       */
+      const stale =
+        getCachedAstyBalance(
+          address,
+          STALE_CACHE_MS
+        );
+
+      if (stale) {
+        return {
+          ...stale,
+          source:
+            "Last known balance",
+          cached: true
+        };
       }
 
       return {
         address,
-        asty,
-        tokenAccounts,
-        error: false,
-        errorMessage: "",
-        source: "SolanaFM",
+        asty: 0,
+        tokenAccounts: 0,
+        error: true,
+        errorMessage:
+          primaryError?.message ||
+          "Wallet could not be read",
+        source: "",
         cached: false
       };
+    }
+
+    async function getWalletsReliable(
+      wallets
+    ) {
+      const results = [];
+
+      for (
+        let i = 0;
+        i < wallets.length;
+        i++
+      ) {
+        const address =
+          wallets[i];
+
+        setStatus(
+          "Reading wallets",
+          `Wallet ${i + 1} of ${wallets.length} • ${shortAddr(address)}`,
+          "HELIUS"
+        );
+
+        const result =
+          await getWalletAstyReliable(
+            address
+          );
+
+        results.push(result);
+
+        if (
+          i < wallets.length - 1 &&
+          !result.cached
+        ) {
+          await sleep(
+            WALLET_REQUEST_GAP_MS
+          );
+        }
+      }
+
+      return results;
     }
 
     async function getWalletAstyViaThreeWs(
@@ -2617,201 +2646,8 @@
         tokenAccounts,
         error: false,
         errorMessage: "",
-        source: "Three.ws portfolio",
-        cached: false
+        source: "Three.ws"
       };
-    }
-
-    async function scanWalletReliable(
-      address
-    ) {
-      /*
-       * Avoid burning free-tier calls when the user presses Analyze
-       * repeatedly. A result younger than 45 seconds is considered
-       * fresh enough for a dashboard refresh.
-       */
-      const fresh =
-        getCachedWalletBalance(
-          address,
-          FRESH_WALLET_CACHE_MS
-        );
-
-      if (fresh) {
-        return fresh;
-      }
-
-      let lastError = null;
-
-      // 1) Dedicated raw on-chain holdings endpoint.
-      try {
-        const result =
-          await fetchThreeWsHoldings(
-            address
-          );
-
-        writeWalletBalanceCache(
-          address,
-          result
-        );
-
-        return result;
-      } catch (error) {
-        lastError = error;
-        console.warn(
-          "Three.ws holdings failed:",
-          address,
-          error
-        );
-      }
-
-      // 2) The V10 endpoint that has already proven to work here.
-      try {
-        const result =
-          await getWalletAstyViaThreeWs(
-            address
-          );
-
-        writeWalletBalanceCache(
-          address,
-          result
-        );
-
-        return {
-          ...result,
-          source:
-            "Three.ws portfolio"
-        };
-      } catch (error) {
-        lastError = error;
-        console.warn(
-          "Three.ws portfolio fallback failed:",
-          address,
-          error
-        );
-      }
-
-      // 3) Independent provider, filtered to ASTY only.
-      try {
-        const result =
-          await getWalletAstyViaSolanaFmFiltered(
-            address
-          );
-
-        writeWalletBalanceCache(
-          address,
-          result
-        );
-
-        return result;
-      } catch (error) {
-        lastError = error;
-        console.warn(
-          "SolanaFM filtered fallback failed:",
-          address,
-          error
-        );
-      }
-
-      /*
-       * 4) Last-known-good cache.
-       * Never turn a temporary upstream outage into a fake zero.
-       * Cached values are explicitly marked in the UI.
-       */
-      const stale =
-        getCachedWalletBalance(
-          address,
-          STALE_WALLET_CACHE_MS
-        );
-
-      if (stale) {
-        return {
-          ...stale,
-          source:
-            "Cached balance",
-          cached: true
-        };
-      }
-
-      return {
-        address,
-        asty: 0,
-        tokenAccounts: 0,
-        error: true,
-        errorMessage:
-          lastError?.message ||
-          "All wallet data sources failed",
-        source: "",
-        cached: false
-      };
-    }
-
-    async function getWalletsReliable(
-      wallets
-    ) {
-      const results = [];
-
-      for (
-        let i = 0;
-        i < wallets.length;
-        i++
-      ) {
-        const address =
-          wallets[i];
-
-        setStatus(
-          "Reading wallets",
-          `Wallet ${i + 1} of ${wallets.length} • ${shortAddr(address)}`,
-          "READ ONLY"
-        );
-
-        const startedAt =
-          Date.now();
-
-        const result =
-          await scanWalletReliable(
-            address
-          );
-
-        results.push(result);
-
-        /*
-         * The dedicated three.ws holdings lane is 20/minute.
-         * Pace only real network scans; recent-cache hits need no wait.
-         */
-        const usedNetwork =
-          result?.source !==
-          "Recent scan" &&
-          result?.source !==
-          "Cached balance";
-
-        if (
-          usedNetwork &&
-          i < wallets.length - 1
-        ) {
-          const elapsed =
-            Date.now() -
-            startedAt;
-
-          const wait =
-            Math.max(
-              0,
-              WALLET_SCAN_SPACING_MS -
-              elapsed
-            );
-
-          if (wait > 0) {
-            setStatus(
-              "Reading wallets",
-              `Wallet ${i + 1} of ${wallets.length} complete • next wallet in ${Math.ceil(wait / 1000)}s`,
-              "READ ONLY"
-            );
-
-            await sleep(wait);
-          }
-        }
-      }
-
-      return results;
     }
 
     async function getWalletsViaThreeWs(
@@ -3805,7 +3641,9 @@
               source:
                 wallet.source || "",
               cached:
-                Boolean(wallet.cached)
+                Boolean(
+                  wallet.cached
+                )
             })
           );
 
@@ -3928,6 +3766,7 @@
 
       try {
         localStorage.removeItem(STORAGE_KEY);
+        localStorage.removeItem(MY_ASTY_CACHE_KEY);
         localStorage.setItem(STORAGE_REMEMBER_KEY, "0");
       } catch {}
 
