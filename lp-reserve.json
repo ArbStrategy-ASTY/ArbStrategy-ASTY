@@ -1,8 +1,8 @@
 {
   "success": true,
   "token": "ASTYqeaoK83Zs1pTFEXZUB6BM8cG8YLTsN852NUkt7ZR",
-  "amount": 926455.775064785,
-  "value": 22328.80153181951,
+  "amount": 924106.261060663,
+  "value": 22514.67069905085,
   "resolved": 5,
   "total": 5,
   "balances": [
@@ -10,46 +10,46 @@
       "wallet": "8KgDtknVhs88sMjRckCGzVDhaFBre3V3FAvhwxfANmfq",
       "resolved": true,
       "amount": 186848.42699405,
-      "value": 4503.2926073466,
+      "value": 4552.323668468817,
       "decimals": 9,
-      "price": 0.0241013139890656
+      "price": 0.024363724874246765
     },
     {
       "wallet": "9Hv3HPGSHS1vq1qjfumoER4TEhu2sgWUmL3S4EaUWrk6",
       "resolved": true,
       "amount": 186489.820660136,
-      "value": 4494.649723494471,
+      "value": 4543.586682411174,
       "decimals": 9,
-      "price": 0.0241013139890656
+      "price": 0.024363724874246765
     },
     {
       "wallet": "4aGjJavF5fq15szkFTdDGQAz9mUUSZ1y1c74isQm2zYV",
       "resolved": true,
-      "amount": 182117.491810599,
-      "value": 4389.270853028329,
+      "amount": 179767.977806477,
+      "value": 4379.817552476704,
       "decimals": 9,
-      "price": 0.0241013139890656
+      "price": 0.024363724874246765
     },
     {
       "wallet": "8aYomPkFRaetda3672NfVLZ1xhrJRm9fro2gzNxCPbyf",
       "resolved": true,
       "amount": 185000.0178,
-      "value": 4458.743516980525,
+      "value": 4507.289535409955,
       "decimals": 9,
-      "price": 0.0241013139890656
+      "price": 0.024363724874246765
     },
     {
       "wallet": "9EDJ8RnqnVhwEZF8w3whGgCumDbeexPcHpzWRaWr6USt",
       "resolved": true,
       "amount": 186000.0178,
-      "value": 4482.8448309695905,
+      "value": 4531.653260284201,
       "decimals": 9,
-      "price": 0.0241013139890656
+      "price": 0.024363724874246765
     }
   ],
   "source": "BirdEye Wallet API",
   "currentSupply": 9232307.98558056,
   "supplyDecimals": 9,
-  "updatedAt": 1794143167575,
-  "updatedAtIso": "2026-11-08T13:06:07.575Z"
+  "updatedAt": 1794239407967,
+  "updatedAtIso": "2026-11-09T15:50:07.967Z"
 }
