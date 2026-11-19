@@ -1,7 +1,7 @@
 name: ASTY 24h pool volume snapshot
 on:
   schedule:
-    - cron: '7,22,37,52 * * * *'
+    - cron: '8,18,28,38,48,58 * * * *'
   workflow_dispatch:
   push:
     branches: [main]
