@@ -1,43 +1,21 @@
-name: ASTY API availability probe (test only)
+name: ASTY 68-pool volume collector test
 on:
   push:
-    branches:
-      - test/asty-volume-egress
+    branches: [test/asty-volume-egress]
   workflow_dispatch:
 permissions:
   contents: read
 jobs:
   check:
     runs-on: ubuntu-latest
-    timeout-minutes: 4
+    timeout-minutes: 6
     steps:
-      - name: Check one public ASTY/SOL pool against both providers
-        shell: bash
-        run: |
-          node --input-type=module <<'NODE'
-          const pool = '2ufiEWc5wF8gJB1a9YiPkFuLwrFn4Zgyma1kdQRakoAr';
-          const urls = {
-            geckoterminal: 'https://api.geckoterminal.com/api/v2/networks/solana/pools/' + pool,
-            dexscreener: 'https://api.dexscreener.com/latest/dex/pairs/solana/' + pool
-          };
-          for (const [provider, url] of Object.entries(urls)) {
-            const started = Date.now();
-            try {
-              const response = await fetch(url, {
-                headers: { 'Accept': 'application/json', 'User-Agent': 'ASTY-Pool-Diagnostics/1.0' },
-                signal: AbortSignal.timeout(15000)
-              });
-              const data = response.ok ? await response.json() : null;
-              const volume = provider === 'geckoterminal' ?
-                data?.data?.attributes?.volume_usd?.h24 :
-                data?.pairs?.find(p => p?.pairAddress === pool)?.volume?.h24;
-              console.log(JSON.stringify({
-                provider, status: response.status, 
-                validPoolVolume: volume !== undefined && volume !== null && Number.isFinite(Number(volume)),
-                elapsedMs: Date.now() - started
-              }));
-            } catch (error) {
-              console.log(JSON.stringify({provider,error: String(error?.message ?? error)}));
-            }
-          }
-          NODE
+      - uses: actions/checkout@v4
+      - name: Collect GeckoTerminal and DEX Screener volume for all dashboard pools
+        run: node scripts/asty-volume-snapshot.mjs
+      - name: Upload diagnostic snapshot
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: asty-pool-volume-snapshot-test
+          path: data/asty-pool-volume.json
