@@ -1,7 +1,7 @@
 {
   "schema": "asty-pool-volume/v1",
-  "observedAt": "2026-11-19T22:19:43.173Z",
-  "poolNetworkVolume24hUsd": 647.516058,
+  "observedAt": "2026-11-20T03:38:55.441Z",
+  "poolNetworkVolume24hUsd": 957.647541,
   "configuredPools": 68,
   "coveredPools": 68,
   "coveragePercent": 100,
@@ -12,7 +12,7 @@
   "partial": false,
   "pools": {
     "3UvhqPrMyf13qgRodARDi5oGJGoxHYb2ykZdCaa1TV8i": {
-      "usd24h": 0.6405230043,
+      "usd24h": 0,
       "source": "geckoterminal"
     },
     "HeuivHLqCEmsgKhYhX1M6MGthEbtHrGmZdXQSCBVkstP": {
@@ -20,11 +20,11 @@
       "source": "geckoterminal"
     },
     "CSD1NpGwhnohByefBp73Jyk6u6ZCkwwDFDVqvmkDrfxE": {
-      "usd24h": 0,
+      "usd24h": 4.0718096616,
       "source": "geckoterminal"
     },
     "DxMFG4kn8pxuf7AoKD1ffXjUhPpj4a8WAdgw87gyM2mj": {
-      "usd24h": 2.7850706904,
+      "usd24h": 4.0560412698,
       "source": "geckoterminal"
     },
     "CoD6KLgnW2wKe2UtnNjSQk4RSS6fMU4P2vwKqsUxK9Bf": {
@@ -36,7 +36,7 @@
       "source": "geckoterminal"
     },
     "B6fq1uNpMkyGANAQo5D9GJfMCkcaNewc6q8sWZAfWZ4M": {
-      "usd24h": 2.1224909071,
+      "usd24h": 1.74784212,
       "source": "geckoterminal"
     },
     "8aXv2DDRG3k5N3ADTw37Di4ytHGJ3ZaS2tPp1f2EW5ZD": {
@@ -44,11 +44,11 @@
       "source": "geckoterminal"
     },
     "CRGcFA8f577F2BEZSmgohd4cuBTVsBpLjwqfVHrG8krE": {
-      "usd24h": 1.0753670762,
+      "usd24h": 0,
       "source": "geckoterminal"
     },
     "3UapB8rB3T88Kac7CG3F44SKCa5xSBsKaJndbx8YrxWG": {
-      "usd24h": 6.3858507612,
+      "usd24h": 5.3756292778,
       "source": "geckoterminal"
     },
     "92RKFRJSctMAuw8Tym7cZgd2yjMcHeZ5hDUMdnZd54zV": {
@@ -56,39 +56,39 @@
       "source": "geckoterminal"
     },
     "Gec7ENkk9irtsmmwpwLHk1i4VntB4vFGRAe1ET3LeT3J": {
-      "usd24h": 5.788544666,
+      "usd24h": 4.0089272393,
       "source": "geckoterminal"
     },
     "iZXTZMMS51US5erGnviWfc8CNGx5QDDzp6DERH25EtW": {
-      "usd24h": 35.2335672176,
+      "usd24h": 40.8384278315,
       "source": "geckoterminal"
     },
     "29eKi5ipMR9fLgkYpM91Xrab2LVBnUU75SYG8kCt1nis": {
-      "usd24h": 2.4242829195,
+      "usd24h": 2.8901992902,
       "source": "geckoterminal"
     },
     "CSiAzSiCMNGjLwYKRdhDUjNwz4obf3Q5ZnMQECnmxshV": {
-      "usd24h": 1.7484507187,
+      "usd24h": 1.7591507535,
       "source": "geckoterminal"
     },
     "2uNbRDLDeMizdJNEqKaapzAGJWVwa3uuJ3w4trVud4ZW": {
-      "usd24h": 21.6150471611,
+      "usd24h": 31.6692721111,
       "source": "geckoterminal"
     },
     "GyVyv2H2SB4fYaC7C6raWNSQqNhShdzNuSqQwG9uUUcE": {
-      "usd24h": 0.3758653471,
+      "usd24h": 0.7911879267,
       "source": "geckoterminal"
     },
     "RYztJXyPCmwUmfi7punwCf7q6FbxoJbRtBEodZ7j7GH": {
-      "usd24h": 1.86268822,
+      "usd24h": 4.3092802564,
       "source": "geckoterminal"
     },
     "DfJsn7Ui6YBUC25kM5FoqrCYrqfRVCoSxpTeyEzWv4vT": {
-      "usd24h": 15.252552561,
+      "usd24h": 24.7722692813,
       "source": "geckoterminal"
     },
     "2ufiEWc5wF8gJB1a9YiPkFuLwrFn4Zgyma1kdQRakoAr": {
-      "usd24h": 123.7450261536,
+      "usd24h": 251.1043003395,
       "source": "geckoterminal"
     },
     "7tbbdGzFZpjrPmM7jQderyyv1x8Ebz1vhwqNhEW97osb": {
@@ -108,19 +108,19 @@
       "source": "geckoterminal"
     },
     "tDqqTi8tJds88AkxFvhjZTQK5iDtV5ZG9ZkNYxh23MG": {
-      "usd24h": 7.1390989718,
+      "usd24h": 2.5692288217,
       "source": "geckoterminal"
     },
     "3HhGsPNMtSg1dNV9SVSfzGCQLx3Zp5giAvYJdQuuNqU9": {
-      "usd24h": 0.02688156027,
+      "usd24h": 0.08730181385,
       "source": "geckoterminal"
     },
     "5zCsWjFoEQ7jGNaHNwBRvZq7RMqVh6vQhmiYv4NWkDZK": {
-      "usd24h": 3.621418683,
+      "usd24h": 14.6998278552,
       "source": "geckoterminal"
     },
     "BqdoyTYoXpnAzRafoBQPrY4ubVSzYE42rxJzNJwoxmZP": {
-      "usd24h": 137.6803029197,
+      "usd24h": 198.4475831315,
       "source": "geckoterminal"
     },
     "BWFDr72tjXJsRdUyAfqghv6sGXgQr2zJ78KdeV3c74q1": {
@@ -128,23 +128,23 @@
       "source": "geckoterminal"
     },
     "2Hjjn2aoVdUeGraV4vRak94GGAAW5w9syfVBeXU4Ad5J": {
-      "usd24h": 1.8732732157,
+      "usd24h": 0.6895090631,
       "source": "geckoterminal"
     },
     "7Fr58kHKW85XiFgZ8WibumE7P5CLZFo4A8qsQxKNEWaE": {
-      "usd24h": 0.1669414108,
+      "usd24h": 0.06948130955,
       "source": "geckoterminal"
     },
     "4TgvcTKzq9zZR5znyak2y3tvaXg4q6hvKWEZgxesQqkx": {
-      "usd24h": 88.9156111174,
+      "usd24h": 154.7508669196,
       "source": "geckoterminal"
     },
     "5wpSZwUmdXy5kB96n7U24iFzvbSNEvFd4BvERhhqYjQY": {
-      "usd24h": 2.002627025,
+      "usd24h": 2.7430285776,
       "source": "geckoterminal"
     },
     "2aWCx2qrYmjen1N8UW3eLBzNu7fCPqxjL9NKXqHGXPHc": {
-      "usd24h": 1.4226390766,
+      "usd24h": 0,
       "source": "geckoterminal"
     },
     "2WRrdtnKKr2eq67o4ZK2VQv7dXu4Pm8iz6TMN8UXvhbV": {
@@ -152,11 +152,11 @@
       "source": "geckoterminal"
     },
     "4iHVvcWHNYFDPFySosAx1qGZoFsDN7gXHxKqUFnGq6oJ": {
-      "usd24h": 6.183738273,
+      "usd24h": 10.1922380203,
       "source": "geckoterminal"
     },
     "4kWT67c13svR9EfxM4TGn8inNqFsXeuAWQhn8KBVajBs": {
-      "usd24h": 27.0113356517,
+      "usd24h": 31.4583020912,
       "source": "geckoterminal"
     },
     "61HTuoKeWhEfscoBcd5zSNvmAyGpxdaUNMriLNnyyREz": {
@@ -164,7 +164,7 @@
       "source": "geckoterminal"
     },
     "8fBYS2Kq9f4Lm1SYdt4sdHRL27Ni8UcRMPtFNLdEcnAH": {
-      "usd24h": 1.4361792797,
+      "usd24h": 0,
       "source": "geckoterminal"
     },
     "DdK87cRD7uzoUWc9JZNRNxPoLHXeAcGkfU2b49YTZrm3": {
@@ -172,15 +172,15 @@
       "source": "geckoterminal"
     },
     "DwZZHyqnzWEqNP4VuczHHwfJsni6xqo57TBm7SoeJ62u": {
-      "usd24h": 5.2142041556,
+      "usd24h": 1.6248660072,
       "source": "geckoterminal"
     },
     "HvmNZyopYSwHRUXCUti4D6YANpfWscVLSQVv9nw2XYhx": {
-      "usd24h": 31.7202225242,
+      "usd24h": 33.9674560821,
       "source": "geckoterminal"
     },
     "m1e9swvUoggDm2zLXzrzKRrbVwmGEP8aQy7BQigFZgK": {
-      "usd24h": 14.2409101233,
+      "usd24h": 20.0149145096,
       "source": "geckoterminal"
     },
     "3PVPMEseLJxE6yyB5eBJ3qzRCzCGN6L9qa85stcZH4FM": {
@@ -188,11 +188,11 @@
       "source": "geckoterminal"
     },
     "BM9W33kccA1GCdbkuGoNDvJLTQW5xKbKwXht8sCXayc3": {
-      "usd24h": 3.5381254584,
+      "usd24h": 4.7042058567,
       "source": "geckoterminal"
     },
     "AiazXNe6ShtCbQHZbmpnkuuswVHFKh5rLZKeudzWU3aq": {
-      "usd24h": 27.9102684707,
+      "usd24h": 34.5582749684,
       "source": "geckoterminal"
     },
     "DitqC25rriaMeZyiQPeXLNgfxqRTZL2qxFHp3MHrxM6t": {
@@ -204,11 +204,11 @@
       "source": "geckoterminal"
     },
     "39dM3NfQuPiGwC3M93BUsXKrRdXTAZWPX6VxianCSevn": {
-      "usd24h": 0.4494690035,
+      "usd24h": 0.3857082869,
       "source": "geckoterminal"
     },
     "5fEodJwZNUTwXbiTRKU2KPCc4Xr15fPKVmxbAph7yX7v": {
-      "usd24h": 0.73,
+      "usd24h": 0.7,
       "source": "dexscreener"
     },
     "Fmna4bQBthaFT51VRtKR6QfgHisjxzcrzCWmPCP9dMNy": {
@@ -216,11 +216,11 @@
       "source": "geckoterminal"
     },
     "AwmLBQ3keEicdD93gTr22avcJqsXwDTGMaLt25Jvyexo": {
-      "usd24h": 0.09371671142,
+      "usd24h": 0,
       "source": "geckoterminal"
     },
     "4UPuDZPPkrC5YHdpFnfv4RX7dfHYnjz8BYZaTCewSn5v": {
-      "usd24h": 0,
+      "usd24h": 0.05302751445,
       "source": "geckoterminal"
     },
     "9dvPJ67AEzZZD9ThHAEJzkzVwxiVQrvC2Virv8KyGgZb": {
@@ -232,7 +232,7 @@
       "source": "geckoterminal"
     },
     "28yNWBwCvNLaC8h2Lf8AFcZqzfRpKMQMynwjjMibRwRU": {
-      "usd24h": 0.244262615,
+      "usd24h": 0.1323491338,
       "source": "geckoterminal"
     },
     "7wCaiBEGFHPhB5iDTCERsNXbzsc7bZyamqQsHNxuhdYU": {
@@ -252,7 +252,7 @@
       "source": "geckoterminal"
     },
     "ArKpj5vcNtHJTLhUKeADCmvuBpn1ZZoGNHZZYQ1QXq5n": {
-      "usd24h": 4.1537930953,
+      "usd24h": 4.9350870101,
       "source": "geckoterminal"
     },
     "DGuvY79xbLuJRb3CzwQL59z5zoit7KLnFwyL2t6EQCcj": {
@@ -260,27 +260,27 @@
       "source": "geckoterminal"
     },
     "5rwRQ4KprvvM1Z7h3QQ5WtUPUG5NMYEw1JtehSAxWeh3": {
-      "usd24h": 1.7243565732,
+      "usd24h": 3.7728362508,
       "source": "geckoterminal"
     },
     "2Gk1FWW4vKJ23pR42WnAfg7RG4UtMfEpKUKTsYMNCfax": {
-      "usd24h": 1.7208313283,
+      "usd24h": 1.310196614,
       "source": "geckoterminal"
     },
     "9cXtSR11UfZAj5qMUq7HNkEkt2JktEmkB9t29sTnUqHz": {
-      "usd24h": 4.2342853623,
+      "usd24h": 3.6918472733,
       "source": "geckoterminal"
     },
     "CghjfgQqqvuWEcFmoJiCcegEo1DjtgCX9yCEG2wUWE6N": {
-      "usd24h": 2.1649180317,
+      "usd24h": 2.3474770492,
       "source": "geckoterminal"
     },
     "5jvpFfjgqGa3M6YmYcozbmYz4ek8MGVWFBYUyRzCCPXs": {
-      "usd24h": 6.0404559787,
+      "usd24h": 6.108829718,
       "source": "geckoterminal"
     },
     "9zrdaC8tHges3JLTfsRVuibQ2xhXivZx3keymkZV2PAa": {
-      "usd24h": 1.717904026,
+      "usd24h": 3.1557993658,
       "source": "geckoterminal"
     }
   },
