@@ -371,7 +371,7 @@ async function tick(env){
     }catch(e){console.error('refresh',f.id,errString(e));}
   }
   // Retry unfinished final notifications if Telegram was temporarily unavailable.
-  const pendingNotifications=await env.DB.prepare(`SELECT DISTINCT gm.fight_id FROM group_messages gm JOIN fights f ON f.id=gm.fight_id LEFT JOIN sent_events e ON e.fight_id=f.id AND e.chat_id=gm.chat_id AND e.event_type='end_'||f.status WHERE f.status IN ('ended','unresolved') AND (e.sent_at IS NULL OR e.sent_at<=0) ORDER BY f.archived_at DESC LIMIT 15`).all();
+  const pendingNotifications=await env.DB.prepare(`SELECT DISTINCT gm.fight_id FROM group_messages gm JOIN fights f ON f.id=gm.fight_id LEFT JOIN sent_events e ON e.fight_id=f.id AND e.chat_id=gm.chat_id AND e.event_type='end_'||f.status WHERE f.status IN ('ended','unresolved','cancelled') AND (e.sent_at IS NULL OR e.sent_at<=0) ORDER BY f.archived_at DESC LIMIT 15`).all();
   for(const row of pendingNotifications.results)await refreshMessages(env,row.fight_id,true).catch(e=>console.error('retry final',row.fight_id,errString(e)));
   // After 30 days the votes are deleted. The archived aggregate remains correct.
   await env.DB.prepare(`DELETE FROM votes WHERE fight_id IN (SELECT id FROM fights WHERE status IN ('ended','unresolved','cancelled') AND archived_at<?)`).bind(now()-VOTE_RETENTION).run();
