@@ -193,7 +193,7 @@ async function sendMilestones(env,id){
   if(elapsed>minTime+2*REFRESH_INTERVAL)return;
   const msgs=await env.DB.prepare('SELECT * FROM group_messages WHERE fight_id=?').bind(id).all();
   for(const m of msgs.results){
-    await deliverEvent(env,id,m.chat_id,`milestone_${milestone}`,`🥊 <b>ASTY TOKEN FIGHT</b> – ${html(tokenLabel(f.sym_a))} VS ${html(tokenLabel(f.sym_b))}\n${milestone==='23h'?'⏰ Only 1 hour left!':'⚡ Battle update'}\n\n🟣 Powered by ASTY - ArbStrategy.net`,siteButtons(f)).catch(e=>console.error('milestone',id,errString(e)));
+    await deliverEvent(env,id,m.chat_id,`milestone_${milestone}`,`🥊 <b>ASTY TOKEN FIGHT</b> – ${html(tokenLabel(f.sym_a))} VS ${html(tokenLabel(f.sym_b))}\n${milestone==='23h'?'⏰ Only 1 hour left!':'⚡ Battle update'}\n\n<b>Powered by ASTY <a href="https://arbstrategy.net/">ArbStrategy.net</a></b>`,siteButtons(f)).catch(e=>console.error('milestone',id,errString(e)));
   }
 }
 
@@ -266,7 +266,7 @@ async function screen(env,chat,text,reply_markup,q=null) {
 }
 
 async function menuHome(env,chat,q=null){
-  return screen(env,chat,'🥊 <b>ASTY TOKEN FIGHT</b>\n\nTwo Solana projects. One 24-hour battle.\n50% community votes + 50% price change.\n\nSelect an option to get started.\n\n🟣 <b>Powered by ASTY - ArbStrategy.net</b>',menuButtons(),q);
+  return screen(env,chat,'🥊 <b>ASTY TOKEN FIGHT</b>\n\nTwo Solana projects. One 24-hour battle.\n50% community votes + 50% price change.\n\nSelect an option to get started.\n\n<b>Powered by ASTY <a href="https://arbstrategy.net/">ArbStrategy.net</a></b>',menuButtons(),q);
 }
 
 async function groupHome(env,chat,q=null){
@@ -529,7 +529,7 @@ async function websiteSave(env,chat,user,mint,raw){
   await env.DB.prepare(`INSERT INTO project_websites(mint,website_url,updated_by,updated_at) VALUES(?,?,?,?) ON CONFLICT(mint) DO UPDATE SET website_url=excluded.website_url,updated_by=excluded.updated_by,updated_at=excluded.updated_at`).bind(mint,website_url,String(user),now()).run();
   await env.DB.prepare('DELETE FROM draft_state WHERE user_id=?').bind(String(user)).run();
   await refreshActiveWebsiteButtons(env,mint);
-  await say(env,chat,'✅ Website saved! The website buttons in the current active fight have been updated.');
+  await say(env,chat,'✅ Website saved! The latest fight posts have been updated where possible; future battle posts will automatically include the link.');
   return projectScreen(env,chat,user,mint);
 }
 
@@ -965,7 +965,7 @@ async function fightList(env,chat,history=false,mint=null){
   for(const row of list.results){const f=await detail(env,row.id);if(!f)continue;
     lines.push(`${html(tokenLabel(f.sym_a))} VS ${html(tokenLabel(f.sym_b))} · <code>${html(f.id)}</code>${history?(f.status==='ended'?` · Winner: ${f.winner==='draw'?'Draw':html(tokenLabel(f.winner==='a'?f.sym_a:f.sym_b))}`:' · No result'):' · LIVE'}`);
   }
-  lines.push('\n/status FIGHT_ID for details · 🟣 Powered by ASTY - ArbStrategy.net');
+  lines.push('\n/status FIGHT_ID for details\n\n<b>Powered by ASTY <a href="https://arbstrategy.net/">ArbStrategy.net</a></b>');
   return say(env,chat,lines.join('\n'));
 }
 async function onUpdate(env,u){
