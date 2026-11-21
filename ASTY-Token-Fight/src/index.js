@@ -2,6 +2,7 @@ import { calculateScore } from './scoring.mjs';
 import { fightImage } from './card.js';
 import { birdeyeTokenInfo, birdeyePairPrices, pause } from './birdeye.mjs';
 import { normalizeProjectWebsite, projectWebsiteDisplay } from './website.mjs';
+import { countdownThreshold } from './countdown.mjs';
 import { ensureLogoTable, cachedLogo, ensureTokenLogo, saveUploadedLogo, telegramUploadedBytes } from './logo-cache.mjs';
 
 const DAY=86400;
@@ -208,7 +209,8 @@ async function sendFinalCountdownReminders(env){
       if(!f||f.status!=='active')continue;
       const left=f.ends_at-now();
       if(left<=0||left>15*60)continue;
-      const minutes=left>10*60?15:left>5*60?10:5;
+      const minutes=countdownThreshold(left);
+      if(minutes===null)continue;
       const [va,vb]=await stats(env,f.id);
       const result=calculateScore(va,vb,f.start_price_a,f.latest_price_a,f.start_price_b,f.latest_price_b);
       const line=result?`🏆 Score: <b>${result.scoreA.toFixed(1)}%</b> · <b>${result.scoreB.toFixed(1)}%</b>`:'🏆 Score: n/a';
@@ -291,6 +293,8 @@ async function helpScreen(env,chat,q=null,isGroup=false){
     '50% community votes + 50% price performance.',
     'In the price category, every 0.1 percentage-point lead in 24h token return earns 1 point (maximum 100).',
     '',
+    '⏱️ Live stats are posted every 30 minutes. Both groups get extra reminders 15, 10 and 5 minutes before the fight ends.',
+    '',
     '🏆 At the end, both groups receive a winner announcement, and the result appears in the Hall of Fame.',
     '',
     'Project websites appear as optional buttons below battle posts.',
@@ -340,7 +344,8 @@ async function helpSection(env,chat,section,q=null,isGroup=false){
         '5. A 24-hour fight starts in both groups.',
         '6. Vote using the buttons. Each Telegram account has one vote per fight, no matter which group.',
         '7. A new message with the current votes, price change, scores and countdown is posted approximately every 30 minutes. Every successful new vote also triggers a short group message.',
-        '8. When 24 hours end, both groups get a result notification.'
+        '8. Both groups receive extra reminders with voting buttons at 15, 10 and 5 minutes remaining.',
+        '9. When 24 hours end, both groups get a winner or draw notification.'
       ];break;
     case 'rules':
       lines=[
@@ -367,6 +372,8 @@ async function helpSection(env,chat,section,q=null,isGroup=false){
     case 'ending':
       lines=[
         '🏆 <b>WHEN THE FIGHT ENDS</b>',
+        '',
+        'Before the end, both groups receive separate reminders at 15, 10 and 5 minutes remaining, each with voting buttons.',
         '',
         'After 24 hours, the bot checks the final votes and both token prices.',
         'The final 50:50 score determines the winner. Exactly equal final scores result in a draw.',
@@ -527,7 +534,7 @@ async function websiteSave(env,chat,user,mint,raw){
 }
 
 async function websiteRemove(env,chat,user,mint,q=null){
-  if(!mintOk(mint)||!(await canManageWebsite(env,mint,user)))return say(env,chat,'Only admins of the first linked project group can remove the website.');
+  if(!mintOk(mint)||!(await canManageWebsite(env,mint,user)))return say(env,chat,'Only a current admin of the first linked project group may remove its website. Active fights do not restrict this.');
   await env.DB.prepare('DELETE FROM project_websites WHERE mint=?').bind(mint).run();
   await refreshActiveWebsiteButtons(env,mint);
   return projectScreen(env,chat,user,mint,q);
@@ -637,7 +644,7 @@ async function groupCallback(env,q){
 
 async function confirmWebsiteRemove(env,chat,user,mint,q){
   if(!mintOk(mint)||!(await canManageWebsite(env,mint,user)))return say(env,chat,'Only admins of the first linked project group can change the website.');
-  return screen(env,chat,'🗑 <b>REMOVE PROJECT WEBSITE?</b>\n\nThis removes the website from upcoming battle posts. You can add a new URL any time.',keyboard([[{text:'✅ Remove Website',callback_data:`site:delete:${mint}`}],[{text:'↩️ Keep Website',callback_data:`site:open:${mint}`}]]),q);
+  return screen(env,chat,'🗑 <b>REMOVE PROJECT WEBSITE?</b>\n\nThis removes the website from the latest active fight post and upcoming updates. You can add a new URL any time.',keyboard([[{text:'✅ Remove Website',callback_data:`site:delete:${mint}`}],[{text:'↩️ Keep Website',callback_data:`site:open:${mint}`}]]),q);
 }
 
 async function beginLogoUpload(env,chat,user,mint,q=null){
