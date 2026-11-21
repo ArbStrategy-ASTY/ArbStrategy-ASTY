@@ -80,29 +80,26 @@ function caption(f,votesA,votesB){
 }
 function votingButtons(f){const rows=[[{text:`🗳️ ${tokenLabel(f.sym_a)}`,callback_data:`vote:${f.id}:a`},{text:`🗳️ ${tokenLabel(f.sym_b)}`,callback_data:`vote:${f.id}:b`}]]; return keyboard([...rows,...siteButtons(f).inline_keyboard]);}
 async function postFight(env,id){
-  const f=await detail(env,id);if(!f||f.status!=='active')return;
-  // Only groups whose live post is missing need an image. Normal 10-minute refreshes never re-render.
+  const f=await detail(env,id);if(!f||f.status!=='active')return 0;
   const groups=await env.DB.prepare(`SELECT DISTINCT pg.chat_id FROM project_groups pg WHERE pg.mint IN (?,?) AND NOT EXISTS (SELECT 1 FROM group_messages gm WHERE gm.fight_id=? AND gm.chat_id=pg.chat_id)`).bind(f.mint_a,f.mint_b,id).all();
-  if(!groups.results.length)return;
-  const [logoA,logoB]=await Promise.all([cachedLogo(env,f.mint_a),cachedLogo(env,f.mint_b)]);
-  if(!logoA||!logoB){console.error('postFight postponed: missing persisted token logo',id);return;}
-  let img=null;
-  try{img=await fightImage(
-      {mint:f.mint_a,symbol:f.sym_a,logo_data_uri:logoA},
-      {mint:f.mint_b,symbol:f.sym_b,logo_data_uri:logoB});}catch(e){console.error('Battle graphic unavailable; retry later',errString(e));return;}
+  if(!groups.results?.length)return 0;
+  const videoId=await getFightVideo(env);
+  if(!videoId){console.error('postFight: no reusable video configured',id);return 0;}
+  const [a,b]=await stats(env,id);
+  let posted=0;
   for(const group of groups.results){
-    const existing=await env.DB.prepare('SELECT live_message_id FROM group_messages WHERE fight_id=? AND chat_id=?').bind(id,group.chat_id).first();
-    if(existing?.live_message_id)continue;
     try{
-      let r,kind='photo';
-      if(img){
-        const form=new FormData();form.append('chat_id',group.chat_id);form.append('photo',new Blob([img],{type:'image/png'}),'ASTY-Fight.png');form.append('caption',caption(f,0,0));form.append('parse_mode','HTML');form.append('reply_markup',JSON.stringify(votingButtons(f)));
-        try{r=await telegram(env,'sendPhoto',form);}catch(e){console.error('Photo upload failed; falling back to text',errString(e));}
-      }
-      if(!r)throw new Error('Battle image upload failed; will retry instead of posting a logo-less fight.');
-      await env.DB.prepare('INSERT OR IGNORE INTO group_messages(fight_id,chat_id,live_message_id,message_type) VALUES(?,?,?,?)').bind(id,group.chat_id,r.message_id,kind).run();
-    }catch(e){console.error('postFight group',group.chat_id,errString(e));}
+      const sent=await telegram(env,'sendVideo',{
+        chat_id:group.chat_id,video:videoId,caption:caption(f,a,b),
+        parse_mode:'HTML',reply_markup:votingButtons(f),supports_streaming:true
+      });
+      if(!Number.isInteger(sent?.message_id))throw new Error('Telegram sendVideo returned no message ID');
+      const record=await env.DB.prepare(`INSERT OR IGNORE INTO group_messages(fight_id,chat_id,live_message_id,message_type) VALUES(?,?,?,'video')`)
+        .bind(id,group.chat_id,sent.message_id).run();
+      if(changed(record))posted++;
+    }catch(e){console.error('postFight video',id,group.chat_id,errString(e));}
   }
+  return posted;
 }
 // Durable at-least-once group message delivery. Negative sent_at is a 90-second lease.
 // In the rare case Telegram accepts a message but the database write fails, it may retry once.
@@ -122,50 +119,67 @@ async function deliverEvent(env,id,chat,eventType,text,reply_markup=null){
 // Every 10 minutes, post a NEW battle message with the current numbers.
 // Telegram copyMessage reuses the already uploaded photo without rendering/reuploading it.
 // Keep only the newest message ID in D1 so the next update copies the newest card.
-async function refreshMessages(env,id,final=false,repost=false){
-  const f=await detail(env,id);if(!f)return;
-  const [va,vb]=await stats(env,id),msgs=await env.DB.prepare('SELECT * FROM group_messages WHERE fight_id=?').bind(id).all();
-  const currentCaption=caption(f,va,vb);
-  for(const m of msgs.results){
+async function refreshMessages(env,id,final=false,repost=false,skipChats=null){
+  const f=await detail(env,id);
+  if(!f)return {targets:0,sent:0,failed:0};
+  const [va,vb]=await stats(env,id);
+  const msgs=await env.DB.prepare('SELECT * FROM group_messages WHERE fight_id=?').bind(id).all();
+  const currentCaption=caption(f,va,vb),summary={targets:0,sent:0,failed:0};
+  const videoId=repost&&f.status==='active'?await getFightVideo(env):null;
+  for(const m of msgs.results||[]){
+    if(skipChats?.has(String(m.chat_id)))continue;
+    summary.targets++;
     if(repost&&f.status==='active'){
       try{
-        let sent;
-        if(m.message_type==='text'){
+        let sent,kind=m.message_type;
+        if(videoId){
+          // The SAME permanent video file_id is reusable for every fight and every update.
+          sent=await telegram(env,'sendVideo',{
+            chat_id:m.chat_id,video:videoId,caption:currentCaption,parse_mode:'HTML',
+            reply_markup:votingButtons(f),supports_streaming:true
+          });
+          kind='video';
+        }else if(m.message_type==='text'){
           sent=await say(env,m.chat_id,currentCaption,{reply_markup:votingButtons(f)});
         }else{
+          // Existing fights can still be reposted before the first video is configured.
           sent=await telegram(env,'copyMessage',{
             chat_id:m.chat_id,from_chat_id:m.chat_id,message_id:m.live_message_id,
             caption:currentCaption,parse_mode:'HTML',reply_markup:votingButtons(f)
           });
         }
-        if(!Number.isInteger(sent?.message_id))throw new Error('Telegram returned no copied message ID');
-        await env.DB.prepare('UPDATE group_messages SET live_message_id=? WHERE fight_id=? AND chat_id=? AND live_message_id=?')
-          .bind(sent.message_id,id,m.chat_id,m.live_message_id).run();
+        if(!Number.isInteger(sent?.message_id))throw new Error('Telegram returned no new post ID');
+        const updated=await env.DB.prepare('UPDATE group_messages SET live_message_id=?,message_type=? WHERE fight_id=? AND chat_id=? AND live_message_id=?')
+          .bind(sent.message_id,kind,id,m.chat_id,m.live_message_id).run();
+        if(!changed(updated))throw new Error('New group message could not be saved');
+        summary.sent++;
       }catch(e){
-        console.error('repost',id,m.chat_id,errString(e));
-        // Never lose live stats if Telegram rejects a repost; edit the previous post instead.
+        summary.failed++;
+        console.error('repost failed',id,m.chat_id,errString(e));
+        // Keep current visible stats readable, but retry a NEW post at the next cron run.
         try{
           await telegram(env,m.message_type==='text'?'editMessageText':'editMessageCaption',{
             chat_id:m.chat_id,message_id:m.live_message_id,
             [m.message_type==='text'?'text':'caption']:currentCaption,
             parse_mode:'HTML',reply_markup:votingButtons(f)
           });
-        }catch(fallbackError){
-          if(!errString(fallbackError).includes('message is not modified'))console.error('repost fallback',id,m.chat_id,errString(fallbackError));
+        }catch(editError){
+          if(!errString(editError).includes('message is not modified'))console.error('repost fallback',id,m.chat_id,errString(editError));
         }
       }
       continue;
     }
-    // The final result updates the latest posted card and adds one final notification.
     try{
       await telegram(env,m.message_type==='text'?'editMessageText':'editMessageCaption',{
         chat_id:m.chat_id,message_id:m.live_message_id,
-        [m.message_type==='text'?'text':'caption']:currentCaption,
-        parse_mode:'HTML',reply_markup:f.status==='active'?votingButtons(f):siteButtons(f)
+        [m.message_type==='text'?'text':'caption']:currentCaption,parse_mode:'HTML',
+        reply_markup:f.status==='active'?votingButtons(f):siteButtons(f)
       });
     }catch(e){if(!errString(e).includes('message is not modified'))console.error('edit',id,m.chat_id,errString(e));}
-    if(final)await deliverEvent(env,id,m.chat_id,`end_${f.status}`,currentCaption,siteButtons(f)).catch(e=>console.error('final event',id,m.chat_id,errString(e)));
+    if(final)await deliverEvent(env,id,m.chat_id,`end_${f.status}`,currentCaption,siteButtons(f))
+      .catch(e=>console.error('final event',id,m.chat_id,errString(e)));
   }
+  return summary;
 }
 async function sendMilestones(env,id){
   const f=await detail(env,id);if(!f||f.status!=='active')return;
@@ -644,22 +658,10 @@ async function accept(env,query,id,decline=false){
   let p;
   try{p=await prices(env,f.mint_a,f.mint_b);}catch(e){return say(env,chat,'Cannot start this fight because the price source is unavailable: '+html(errString(e)));}
   if(!p[0]||!p[1])return say(env,chat,'Birdeye has no price for at least one token. Fight not started.');
-  // Require 2 permanently cached, usable logos BEFORE reserving either token.
-  const [logoA,logoB]=await Promise.all([
-    ensureTokenLogo(env,{mint:f.mint_a,symbol:f.sym_a,logo_url:f.logo_a}),
-    ensureTokenLogo(env,{mint:f.mint_b,symbol:f.sym_b,logo_url:f.logo_b})
-  ]);
-  if(!logoA||!logoB){
-    const missing=[!logoA?tokenLabel(f.sym_a):null,!logoB?tokenLabel(f.sym_b):null].filter(Boolean).join(' and ');
-    return say(env,chat,`🖼️ Official logo needed for ${html(missing)} before this fight can start.\n\nThe project admin can upload a PNG/JPEG through My Projects → Upload Logo.\n\nThe challenge remains pending.`,{reply_markup:keyboard([[{text:'🪙 My Projects',callback_data:'menu:projects'}]])});
-  }
-  try{
-    const image=await fightImage({symbol:f.sym_a,logo_data_uri:logoA},{symbol:f.sym_b,logo_data_uri:logoB});
-    if(!image?.length)throw new Error('Empty graphic');
-  }catch(e){
-    console.error('fight start image preflight',f.id,errString(e));
-    return say(env,chat,'⚠️ The token logos could not be rendered yet. Please re-upload them as Telegram photos before retrying.');
-  }
+  const videoId=await getFightVideo(env);
+  if(!videoId)return say(env,chat,
+    '🎬 The fixed fight video has not been configured yet. The ASTY video manager must upload it through /video before any fight can start.',
+    {reply_markup:keyboard([[{text:'🎬 Fight Video',callback_data:'menu:video'}]])});
   const t=now();
   try{
     // D1 batch is transactional: either BOTH token locks + status change succeed or none.
