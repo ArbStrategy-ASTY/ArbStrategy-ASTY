@@ -6,6 +6,15 @@ CREATE TABLE IF NOT EXISTS projects (
  logo_url TEXT,
  updated_at INTEGER NOT NULL
 );
+-- Project-submitted promotional links, scoped to one Solana token across all rematches.
+-- Authorization is checked against live Telegram group-admin membership in the Worker.
+CREATE TABLE IF NOT EXISTS project_websites (
+  mint TEXT PRIMARY KEY,
+  website_url TEXT NOT NULL,
+  updated_by TEXT NOT NULL,
+  updated_at INTEGER NOT NULL,
+  FOREIGN KEY(mint) REFERENCES projects(mint)
+);
 CREATE TABLE IF NOT EXISTS project_groups (
  mint TEXT NOT NULL,
  chat_id TEXT NOT NULL,
