@@ -1,4 +1,4 @@
-# 🥊 ASTY Token Fight – Telegram Bot v0.6.0 (Birdeye)
+# 🥊 ASTY Token Fight – Telegram Bot v0.6.1 (Birdeye)
 
 **Status: private Beta / laufende Tests.** Der Bot wurde in früheren Versionen auf Cloudflare deployed und mit ASTY-vs.-ARBX-Gruppen getestet. Die neuen Menüs, Website-Buttons, Vote-Benachrichtigungen und das Grafikdesign von v0.4.2 sind im GitHub-Code implementiert, aber müssen nach Cloudflare-Deployment noch in Telegram geprüft werden. Alle Änderungen bleiben auf den Ordner `ASTY-Token-Fight/` beschränkt.
 
@@ -242,3 +242,12 @@ Health diagnostics: GET /health returns version 0.6.0, cron_last_started, cron_l
 Initial test: confirm /health reports 0.6.0, upload the MP4 in the private bot chat, verify preview and video_configured=true, then tap Refresh Now for an existing active fight. Check new video posts in both Telegram groups and then confirm another update after 10 minutes.
 
 Security: uploading/replacing the global video is restricted to the ASTY project's original group registrar (or FIGHT_VIDEO_ADMIN_ID). Project website links remain button-only. Existing project links, fights, and vote data remain untouched.
+
+
+## Video-Eigentum dauerhaft auf den ersten zugelassenen Uploader beschränkt (v0.6.1)
+
+- Vor dem allerersten Video-Upload gilt weiterhin: entweder `FIGHT_VIDEO_ADMIN_ID` aus der Cloudflare-Umgebung oder, falls nicht gesetzt, der erste ASTY-Projektgruppen-Registrant mit nachweislich aktuellen Telegram-Adminrechten.
+- Beim ersten **erfolgreichen** Upload wird die Telegram-User-ID in `worker_settings.fight_video_owner_id` dauerhaft gespeichert. Die Zuordnung wird mit dem Video-Eintrag in einer D1-Transaktion abgesichert.
+- Für jeden weiteren Zugriff auf **Upload Video**, **Replace Video** und die Vorschau wird der gespeicherte Besitzer geprüft. Eine später geänderte Umgebungsvariable oder andere Gruppenadministratoren übernehmen die Berechtigung nicht.
+- Das Video selbst darf ausschließlich der ursprüngliche, einmal festgelegte Eigentümer ersetzen. Andere Token-/Gruppenadmins können es ansehen, aber nicht ersetzen. Eine Rücksetzung des Eigentümers ist nur durch eine ausdrücklich autorisierte Betreiberaktion außerhalb des Bots möglich.
+- Diese Sicherung gilt im Bot ab `0.6.1`; GitHub-Commit allein bedeutet noch nicht, dass Cloudflare bereits auf dieser Version läuft.
