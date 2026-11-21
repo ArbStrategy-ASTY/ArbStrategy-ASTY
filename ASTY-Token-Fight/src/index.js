@@ -239,7 +239,7 @@ async function vote(env,q,id,side){
   const symbol=String(side==='a'?f.sym_a:f.sym_b).replace(/^[$]/,'').slice(0,50);
   return telegram(env,'answerCallbackQuery',{
     callback_query_id:q.id,
-    text:changed(r)?`New vote for $${symbol}`:'You have already voted or this fight has ended.',
+    text:changed(r)?`🔥 New vote for ${symbol} 🔥`:'You have already voted or this fight has ended.',
     show_alert:false
   });
 }
