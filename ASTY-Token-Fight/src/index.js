@@ -195,7 +195,8 @@ function menuButtons(){
   return keyboard([
     [{text:'🥊 New Fight',callback_data:'menu:new'},{text:'🪙 My Projects',callback_data:'menu:projects'}],
     [{text:'⚡ Active Fights',callback_data:'menu:active'},{text:'🏆 Hall of Fame',callback_data:'menu:history'}],
-    [{text:'🌐 Project Websites',callback_data:'menu:sites'},{text:'❓ Help',callback_data:'menu:help'}]
+    [{text:'🌐 Project Websites',callback_data:'menu:sites'},{text:'❓ Help',callback_data:'menu:help'}],
+    [{text:'🖼️ Token Logos',callback_data:'menu:logos'}]
   ]);
 }
 
@@ -228,7 +229,7 @@ async function groupHome(env,chat,q=null){
 async function helpScreen(env,chat,q=null,isGroup=false) {
   const text=isGroup
     ? '❓ <b>GROUP HELP</b>\n\n<code>/link MINT</code> — Link this group to a Solana token (admins only).\n<code>/unlink MINT</code> — Remove a group-token link (admins only).\n<code>/help</code> — Show this help.\n\nUse the button to link a token without writing a command. Reply to the bot with its mint address.\n\n🟣 Powered by ASTY - ArbStrategy.net'
-    : '❓ <b>ASTY TOKEN FIGHT — HELP</b>\n\n<b>Use the buttons</b> to create challenges, select existing projects, manage websites and browse fights.\n\n<b>Commands</b>\n<code>/start</code> / <code>/menu</code> — Main menu\n<code>/new</code> — Create a challenge\n<code>/projects</code> — My linked projects\n<code>/website</code> — Add or change a project website\n<code>/fights</code> — Active battles\n<code>/history</code> — Finished battles\n<code>/status ID</code> — Detailed fight stats\n<code>/withdraw ID</code> — Withdraw a pending challenge\n<code>/stop ID</code> — Stop your active test fight\n<code>/cancel</code> — Cancel current setup\n<code>/help</code> — This help\n\n<b>In Telegram groups</b>\n<code>/link MINT</code> — Link project\n<code>/unlink MINT</code> — Unlink project\n\n<b>How it works</b>\n1. Add the bot to your group and link your project token.\n2. Optionally add your website once (paste the URL).\n3. Choose New Fight, select your project and opponent.\n4. Opponent accepts the challenge; voting and price tracking begin.\n\nEach Telegram account gets one vote per fight. Website links are supplied by project admins, not verified by ASTY.';
+    : '❓ <b>ASTY TOKEN FIGHT — HELP</b>\n\n<b>Use the buttons</b> to create challenges, select existing projects, manage websites and browse fights.\n\n<b>Commands</b>\n<code>/start</code> / <code>/menu</code> — Main menu\n<code>/new</code> — Create a challenge\n<code>/projects</code> — My linked projects\n<code>/website</code> — Add or change a project website\n<code>/logo</code> — Upload and manage project logos\n<code>/fights</code> — Active battles\n<code>/history</code> — Finished battles\n<code>/status ID</code> — Detailed fight stats\n<code>/withdraw ID</code> — Withdraw a pending challenge\n<code>/stop ID</code> — Stop your active test fight\n<code>/cancel</code> — Cancel current setup\n<code>/help</code> — This help\n\n<b>In Telegram groups</b>\n<code>/link MINT</code> — Link project\n<code>/unlink MINT</code> — Unlink project\n\n<b>How it works</b>\n1. Add the bot to your group and link your project token.\n2. Optionally add your website once (paste the URL).\n3. Choose New Fight, select your project and opponent.\n4. Opponent accepts the challenge; voting and price tracking begin.\n\nEach Telegram account gets one vote per fight. Website links are supplied by project admins, not verified by ASTY.';
   return screen(env,chat,text,isGroup?groupButtons(env):keyboard([[{text:'🏠 Main Menu',callback_data:'menu:home'}],[{text:'🥊 New Fight',callback_data:'menu:new'}]]),q);
 }
 
@@ -262,11 +263,14 @@ async function projectScreen(env,chat,user,mint,q=null){
     [{text:`🥊 Challenge as ${tokenLabel(p.symbol)}`,callback_data:`new:own:${mint}`}],
   ];
   const websiteAdmin=await canManageWebsite(env,mint,user);
+  const logoReady=!!(await cachedLogo(env,mint));
+  if(websiteAdmin)rows.push([{text:logoReady?'📷 Replace Logo':'📷 Upload Logo',callback_data:`logo:set:${mint}`}]);
+  if(websiteAdmin&&!logoReady)rows.push([{text:'🔎 Find Logo Automatically',callback_data:`logo:auto:${mint}`}]);
   if(websiteAdmin)rows.push([{text:'🌐 Set / Edit Website',callback_data:`site:set:${mint}`}]);
   if(p.website_url&&websiteAdmin)rows.push([{text:'🗑 Remove Website',callback_data:`site:remove:${mint}`}]);
   if(p.website_url)rows.push([{text:`🌐 Visit ${tokenLabel(p.symbol)}`,url:p.website_url}]);
   rows.push([{text:'🪙 My Projects',callback_data:'menu:projects'},{text:'🏠 Menu',callback_data:'menu:home'}]);
-  return screen(env,chat,`🪙 <b>${html(tokenLabel(p.symbol))}</b>\n${html(p.name)}\n${web}\n\nYour website will appear in battle posts and fight notifications.`,keyboard(rows),q);
+  return screen(env,chat,`🪙 <b>${html(tokenLabel(p.symbol))}</b>\n${html(p.name)}\n\n🖼️ Logo: ${logoReady?'✅ Saved':'⚠️ Missing'}\n${web}\n\nSaved logos are reused in future battles.`,keyboard(rows),q);
 }
 
 async function newFightScreen(env,chat,user,q=null){
@@ -397,22 +401,64 @@ async function confirmWebsiteRemove(env,chat,user,mint,q){
   return screen(env,chat,'🗑 <b>REMOVE PROJECT WEBSITE?</b>\n\nThis removes the website from upcoming battle posts. You can add a new URL any time.',keyboard([[{text:'✅ Remove Website',callback_data:`site:delete:${mint}`}],[{text:'↩️ Keep Website',callback_data:`site:open:${mint}`}]]),q);
 }
 
+async function beginLogoUpload(env,chat,user,mint,q=null){
+  if(!mintOk(mint)||!(await canManageWebsite(env,mint,user)))return say(env,chat,'Only admins of the first linked project group can manage this logo.');
+  await env.DB.prepare("INSERT INTO draft_state(user_id,step,own_mint,updated_at) VALUES(?,'logo',?,?) ON CONFLICT(user_id) DO UPDATE SET step='logo',own_mint=excluded.own_mint,updated_at=excluded.updated_at").bind(String(user),mint,now()).run();
+  const p=await env.DB.prepare('SELECT symbol FROM projects WHERE mint=?').bind(mint).first();
+  return screen(env,chat,`🖼️ <b>UPLOAD LOGO FOR ${html(tokenLabel(p?.symbol||'TOKEN'))}</b>\n\nSend your official logo as a Telegram photo in this private chat.\n\nPNG/JPEG, under 440 KB. Telegram compresses photo uploads automatically.\n\nOnce saved, the logo is reused in every future fight.`,keyboard([[{text:'↩️ My Projects',callback_data:'menu:projects'}],[{text:'🏠 Main Menu',callback_data:'menu:home'}]]),q);
+}
+
+async function findLogoAutomatically(env,chat,user,mint,q=null){
+  if(!mintOk(mint)||!(await canManageWebsite(env,mint,user)))return say(env,chat,'Only a project admin can manage its logo.');
+  const p=await env.DB.prepare('SELECT mint,symbol,logo_url FROM projects WHERE mint=?').bind(mint).first();
+  if(!p)return say(env,chat,'Project not found.');
+  const image=await ensureTokenLogo(env,p);
+  return screen(env,chat,image?`✅ <b>${html(tokenLabel(p.symbol))} LOGO READY</b>\n\nSaved permanently for future battles.`:`🖼️ <b>LOGO MISSING FOR ${html(tokenLabel(p.symbol))}</b>\n\nNo usable image was found automatically. Please upload the official logo once.`,keyboard([[{text:image?'📷 Replace Logo':'📷 Upload Logo',callback_data:`logo:set:${mint}`}],[{text:'🪙 My Projects',callback_data:'menu:projects'}]]),q);
+}
+
+async function receiveLogoPhoto(env,msg){
+  if(msg?.chat?.type!=='private'||!msg?.from?.id||!msg.photo?.length)return;
+  const user=msg.from.id,chat=msg.chat.id;
+  const draft=await env.DB.prepare('SELECT * FROM draft_state WHERE user_id=?').bind(String(user)).first();
+  if(!draft||draft.step!=='logo')return;
+  if(now()-draft.updated_at>1800){
+    await env.DB.prepare('DELETE FROM draft_state WHERE user_id=?').bind(String(user)).run();
+    return say(env,chat,'Logo upload expired. Please choose Upload Logo again.');
+  }
+  if(!(await canManageWebsite(env,draft.own_mint,user)))return say(env,chat,'Only admins of the first linked group can upload this logo.');
+  const sizes=[...msg.photo].filter(p=>p?.file_id&&Number(p.file_size||0)<=440000).sort((a,b)=>Number(b.width||0)*Number(b.height||0)-Number(a.width||0)*Number(a.height||0));
+  if(!sizes.length)return say(env,chat,'Please send a smaller logo photo (under 440 KB).');
+  try{
+    const bytes=await telegramUploadedBytes(env,sizes[0].file_id);
+    await saveUploadedLogo(env,draft.own_mint,user,bytes);
+    await env.DB.prepare('DELETE FROM draft_state WHERE user_id=?').bind(String(user)).run();
+    await say(env,chat,'✅ Official logo saved permanently! All future battles will use this image.');
+    return projectScreen(env,chat,user,draft.own_mint);
+  }catch(e){
+    console.error('logo upload',errString(e));
+    return say(env,chat,'⚠️ '+html(errString(e))+'\n\nPlease try a smaller Telegram photo.');
+  }
+}
+
 async function menuCallback(env,q){
   const chat=q?.message?.chat?.id,user=q?.from?.id,cmd=q?.data||'';
   if(chat==null||user==null)return;
   const privateChat=q.message.chat.type==='private';
   if(!privateChat)return groupCallback(env,q);
-  if(['menu:home','menu:new','menu:projects','menu:sites'].includes(cmd))await env.DB.prepare('DELETE FROM draft_state WHERE user_id=?').bind(String(user)).run();
+  if(['menu:home','menu:new','menu:projects','menu:sites','menu:logos'].includes(cmd))await env.DB.prepare('DELETE FROM draft_state WHERE user_id=?').bind(String(user)).run();
   if(cmd==='menu:home')return menuHome(env,chat,q);
   if(cmd==='menu:help')return helpScreen(env,chat,q);
   if(cmd==='menu:projects')return projectsScreen(env,chat,user,q);
   if(cmd==='menu:sites')return projectsScreen(env,chat,user,q,true);
+  if(cmd==='menu:logos')return projectsScreen(env,chat,user,q);
   if(cmd==='menu:new')return newFightScreen(env,chat,user,q);
   if(cmd==='menu:active')return fightScreen(env,chat,user,false,q);
   if(cmd==='menu:history')return fightScreen(env,chat,user,true,q);
   if(cmd.startsWith('project:view:'))return projectScreen(env,chat,user,cmd.slice(13),q);
   if(cmd.startsWith('site:open:'))return projectScreen(env,chat,user,cmd.slice(10),q);
   if(cmd.startsWith('site:set:'))return websiteStart(env,chat,user,cmd.slice(9),q);
+  if(cmd.startsWith('logo:set:'))return beginLogoUpload(env,chat,user,cmd.slice(9),q);
+  if(cmd.startsWith('logo:auto:'))return findLogoAutomatically(env,chat,user,cmd.slice(10),q);
   if(cmd.startsWith('site:remove:'))return confirmWebsiteRemove(env,chat,user,cmd.slice(12),q);
   if(cmd.startsWith('site:delete:'))return websiteRemove(env,chat,user,cmd.slice(12),q);
   if(cmd.startsWith('new:own:'))return chooseOwn(env,chat,user,cmd.slice(8),q);
@@ -443,7 +489,7 @@ async function ensureWebsiteTable(env){
 
 async function ensureBotCommands(env){
   // Persist a version marker so Telegram's command menu isn't rewritten each minute.
-  const key='bot_commands_v2_buttons';
+  const key='bot_commands_v3_logo_upload';
   const current=await env.DB.prepare('SELECT value FROM worker_settings WHERE key=?').bind(key).first();
   if(current)return;
   const commands=[
@@ -452,6 +498,7 @@ async function ensureBotCommands(env){
     {command:'new',description:'Create a new token fight'},
     {command:'projects',description:'Manage linked projects'},
     {command:'website',description:'Set project websites'},
+    {command:'logo',description:'Upload an official project logo'},
     {command:'fights',description:'Active token fights'},
     {command:'history',description:'Hall of Fame'},
     {command:'help',description:'Commands and how to play'},
@@ -586,7 +633,9 @@ async function onUpdate(env,u){
     if(parts[0]==='accept'||parts[0]==='decline')return accept(env,q,parts[1],parts[0]==='decline');
     return menuCallback(env,q);
   }
-  const msg=u.message;if(!msg?.text||!msg.from)return;
+  const msg=u.message;
+  if(msg?.photo?.length)return receiveLogoPhoto(env,msg);
+  if(!msg?.text||!msg.from)return;
   const chat=msg.chat.id,privateChat=msg.chat.type==='private';
   const [raw,...args]=msg.text.trim().split(/\s+/),cmd=raw.toLowerCase().split('@')[0];
   if(cmd==='/link')return linkGroup(env,msg,args[0]);
@@ -608,6 +657,7 @@ async function onUpdate(env,u){
   if(cmd==='/menu')return menuHome(env,chat);
   if(cmd==='/projects')return projectsScreen(env,chat,msg.from.id);
   if(cmd==='/website')return projectsScreen(env,chat,msg.from.id,null,true);
+  if(cmd==='/logo')return projectsScreen(env,chat,msg.from.id);
   if(cmd==='/help')return helpScreen(env,chat);
   if(cmd==='/fights')return fightScreen(env,chat,msg.from.id,false);
   if(cmd==='/history')return args[0]&&mintOk(args[0])?fightList(env,chat,true,args[0]):fightScreen(env,chat,msg.from.id,true);
@@ -631,6 +681,7 @@ async function onUpdate(env,u){
   if(!raw.startsWith('/')){
     const draft=await env.DB.prepare('SELECT * FROM draft_state WHERE user_id=?').bind(String(msg.from.id)).first();
     if(draft?.step==='website'&&now()-draft.updated_at<=1800)return websiteSave(env,chat,msg.from.id,draft.own_mint,raw);
+    if(draft?.step==='logo'&&now()-draft.updated_at<=1800)return say(env,chat,'📷 Please send an image as a Telegram photo, not a text message.');
     if(!draft||now()-draft.updated_at>1800){
       if(draft)await env.DB.prepare('DELETE FROM draft_state WHERE user_id=?').bind(String(msg.from.id)).run();
       // Never silently ignore a submitted mint when a challenge draft has expired.
