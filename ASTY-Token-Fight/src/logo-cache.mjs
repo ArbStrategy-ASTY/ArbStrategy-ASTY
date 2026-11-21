@@ -66,8 +66,11 @@ async function externalCandidates(mint){
   }catch{}
   return [...new Set(urls)];
 }
+let logoTableReady=false;
 export async function ensureLogoTable(env){
+  if(logoTableReady)return;
   await env.DB.prepare('CREATE TABLE IF NOT EXISTS project_logos (mint TEXT PRIMARY KEY,data_uri TEXT NOT NULL,source TEXT NOT NULL,updated_by TEXT,updated_at INTEGER NOT NULL,FOREIGN KEY(mint) REFERENCES projects(mint))').run();
+  logoTableReady=true;
 }
 export async function cachedLogo(env,mint){
   if(!MINT_RE.test(mint||''))return null;
@@ -79,15 +82,23 @@ export async function ensureTokenLogo(env,token){
   if(!MINT_RE.test(mint||''))return null;
   const cached=await cachedLogo(env,mint);
   if(cached)return cached;
-  const urls=[token?.logo_url];
-  if(String(token?.symbol||'').replace(/^\$+/,'').toUpperCase()==='ASTY')urls.push('https://raw.githubusercontent.com/ArbStrategy-ASTY/ArbStrategy-ASTY/main/assets/logo.png');
-  urls.push(...await externalCandidates(mint));
-  for(const url of [...new Set(urls.filter(Boolean))]){
-    const image=await fetchImage(url);
-    if(!image)continue;
-    // Preserve any prior logo, especially an uploaded one.
+  const direct=[token?.logo_url];
+  if(String(token?.symbol||'').replace(/^\$+/,'').toUpperCase()==='ASTY')direct.push('https://raw.githubusercontent.com/ArbStrategy-ASTY/ArbStrategy-ASTY/main/assets/logo.png');
+  const store=async uri=>{
+    const image=await fetchImage(uri);
+    if(!image)return null;
     await env.DB.prepare("INSERT OR IGNORE INTO project_logos(mint,data_uri,source,updated_by,updated_at) VALUES(?,?,'metadata',NULL,?)").bind(mint,image,Math.floor(Date.now()/1000)).run();
     return cachedLogo(env,mint);
+  };
+  // First try the actual token metadata URL (or ASTY repository asset).
+  // Only call the slower alternative metadata APIs if these URLs fail.
+  for(const url of [...new Set(direct.filter(Boolean))]){
+    const found=await store(url);
+    if(found)return found;
+  }
+  for(const url of await externalCandidates(mint)){
+    const found=await store(url);
+    if(found)return found;
   }
   return null;
 }
