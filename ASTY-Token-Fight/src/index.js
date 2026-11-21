@@ -550,7 +550,6 @@ async function fightList(env,chat,history=false,mint=null){
   const lines=[history?'🏆 <b>ASTY Token Fight – Hall of Fame</b>':'🥊 <b>Active fights</b>'];
   for(const row of list.results){const f=await detail(env,row.id);if(!f)continue;
     lines.push(`${html(tokenLabel(f.sym_a))} VS ${html(tokenLabel(f.sym_b))} · <code>${html(f.id)}</code>${history?(f.status==='ended'?` · Winner: ${f.winner==='draw'?'Draw':html(tokenLabel(f.winner==='a'?f.sym_a:f.sym_b))}`:' · No result'):' · LIVE'}`);
-    lines.push(...siteLines(f));
   }
   lines.push('\n/status FIGHT_ID for details · 🟣 Powered by ASTY - ArbStrategy.net');
   return say(env,chat,lines.join('\n'));
