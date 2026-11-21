@@ -199,6 +199,8 @@ function menuButtons(){
 function groupButtons(env){
   return keyboard([
     [{text:'🔗 Link Project Token',callback_data:'group:link'}],
+    [{text:'🔓 Unlink Project Token',callback_data:'group:unlink'}],
+    [{text:'❓ Help',callback_data:'menu:help'}],
     [{text:'🥊 Open Fight Bot',url:`https://t.me/${env.BOT_USERNAME.replace('@','')}`}]
   ]);
 }
@@ -347,18 +349,46 @@ async function stopFight(env,chat,user,id){
   await refreshMessages(env,id,true);
 }
 
+async function groupCallback(env,q){
+  const chat=q.message.chat.id,user=q.from.id,cmd=q.data||'';
+  if(cmd==='group:link'){
+    if(!await tgAdmin(env,chat,user))return say(env,chat,'Only a group administrator can link a token.');
+    return say(env,chat,'🔗 Reply with the Solana token mint address for this Telegram group:',{reply_markup:{force_reply:true,input_field_placeholder:'Paste token mint address'}});
+  }
+  if(cmd==='menu:help')return helpScreen(env,chat,null,true);
+  if(cmd==='group:unlink'){
+    if(!await tgAdmin(env,chat,user))return say(env,chat,'Only group administrators can unlink tokens.');
+    const linked=await env.DB.prepare('SELECT pg.mint,p.symbol FROM project_groups pg JOIN projects p ON p.mint=pg.mint WHERE pg.chat_id=? ORDER BY pg.registered_at DESC LIMIT 20').bind(String(chat)).all();
+    const rows=(linked.results||[]).map(p=>[{text:`🔓 Unlink ${tokenLabel(p.symbol)}`,callback_data:`group:remove:${p.mint}`}]);
+    rows.push([{text:'↩️ Back',callback_data:'menu:group'}]);
+    return screen(env,chat,linked.results?.length?'Select the token link to remove from this group.':'No token links found for this group.',keyboard(rows),q);
+  }
+  if(cmd.startsWith('group:remove:')){
+    if(!await tgAdmin(env,chat,user))return say(env,chat,'Only group administrators can unlink tokens.');
+    const mint=cmd.slice(13);
+    if(!mintOk(mint))return groupHome(env,chat,q);
+    return screen(env,chat,'🔓 <b>UNLINK PROJECT?</b>\n\nThis removes the group-token link. Existing battle messages remain.',keyboard([[{text:'✅ Unlink Token',callback_data:`group:do:${mint}`}],[{text:'↩️ Keep Linked',callback_data:'menu:group'}]]),q);
+  }
+  if(cmd.startsWith('group:do:')){
+    if(!await tgAdmin(env,chat,user))return say(env,chat,'Only group administrators can unlink tokens.');
+    const mint=cmd.slice(9);
+    if(!mintOk(mint))return groupHome(env,chat,q);
+    await env.DB.prepare('DELETE FROM project_groups WHERE mint=? AND chat_id=?').bind(mint,String(chat)).run();
+    return screen(env,chat,'✅ This token is no longer linked to the group.',groupButtons(env),q);
+  }
+  return groupHome(env,chat,q);
+}
+
+async function confirmWebsiteRemove(env,chat,user,mint,q){
+  if(!mintOk(mint)||!(await groupForAdmin(env,mint,user)))return say(env,chat,'Only a project group admin can change its website.');
+  return screen(env,chat,'🗑 <b>REMOVE PROJECT WEBSITE?</b>\n\nThis removes the website from upcoming battle posts. You can add a new URL any time.',keyboard([[{text:'✅ Remove Website',callback_data:`site:delete:${mint}`}],[{text:'↩️ Keep Website',callback_data:`site:open:${mint}`}]]),q);
+}
+
 async function menuCallback(env,q){
   const chat=q?.message?.chat?.id,user=q?.from?.id,cmd=q?.data||'';
   if(chat==null||user==null)return;
   const privateChat=q.message.chat.type==='private';
-  if(!privateChat){
-    if(cmd==='group:link'){
-      if(!await tgAdmin(env,chat,user))return say(env,chat,'Only a group administrator can link a token.');
-      return say(env,chat,'🔗 Reply with the Solana token mint address for this Telegram group:',{reply_markup:{force_reply:true,input_field_placeholder:'Paste token mint address'}});
-    }
-    if(cmd==='menu:help')return helpScreen(env,chat,null,true);
-    return groupHome(env,chat,q);
-  }
+  if(!privateChat)return groupCallback(env,q);
   if(['menu:home','menu:new','menu:projects','menu:sites'].includes(cmd))await env.DB.prepare('DELETE FROM draft_state WHERE user_id=?').bind(String(user)).run();
   if(cmd==='menu:home')return menuHome(env,chat,q);
   if(cmd==='menu:help')return helpScreen(env,chat,q);
@@ -370,7 +400,8 @@ async function menuCallback(env,q){
   if(cmd.startsWith('project:view:'))return projectScreen(env,chat,user,cmd.slice(13),q);
   if(cmd.startsWith('site:open:'))return projectScreen(env,chat,user,cmd.slice(10),q);
   if(cmd.startsWith('site:set:'))return websiteStart(env,chat,user,cmd.slice(9),q);
-  if(cmd.startsWith('site:remove:'))return websiteRemove(env,chat,user,cmd.slice(12),q);
+  if(cmd.startsWith('site:remove:'))return confirmWebsiteRemove(env,chat,user,cmd.slice(12),q);
+  if(cmd.startsWith('site:delete:'))return websiteRemove(env,chat,user,cmd.slice(12),q);
   if(cmd.startsWith('new:own:'))return chooseOwn(env,chat,user,cmd.slice(8),q);
   if(cmd==='new:paste')return screen(env,chat,'📋 Paste the opponent’s Solana token mint address in this private chat.',keyboard([[{text:'↩️ Choose Own Project',callback_data:'menu:new'}],[{text:'🏠 Menu',callback_data:'menu:home'}]]),q);
   if(cmd.startsWith('new:opp:')){
@@ -399,7 +430,7 @@ async function ensureWebsiteTable(env){
 
 async function ensureBotCommands(env){
   // Persist a version marker so Telegram's command menu isn't rewritten each minute.
-  const key='bot_commands_v1_buttons';
+  const key='bot_commands_v2_buttons';
   const current=await env.DB.prepare('SELECT value FROM worker_settings WHERE key=?').bind(key).first();
   if(current)return;
   const commands=[
@@ -412,6 +443,10 @@ async function ensureBotCommands(env){
     {command:'history',description:'Hall of Fame'},
     {command:'help',description:'Commands and how to play'},
     {command:'link',description:'Link a token in a group'},
+    {command:'unlink',description:'Unlink token from a group'},
+    {command:'status',description:'Detailed fight statistics'},
+    {command:'withdraw',description:'Withdraw a pending challenge'},
+    {command:'stop',description:'Stop your active fight'},
     {command:'cancel',description:'Cancel an input wizard'}
   ];
   await telegram(env,'setMyCommands',{commands});
