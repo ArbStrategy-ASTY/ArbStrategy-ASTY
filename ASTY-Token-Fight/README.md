@@ -152,3 +152,14 @@ Der frühere manuelle `curl setWebhook`-Schritt aus Abschnitt 3 ist für v0.2.2 
 Während eines aktiven Fights **postet der Bot jetzt ungefähr alle 10 Minuten eine neue Battle-Nachricht in beide verknüpften Gruppen**, statt nur die alte Nachricht zu editieren. Er verwendet dafür bei Grafiken Telegrams `copyMessage` mit aktueller Caption und Abstimmungsbuttons, damit das Bild nicht erneut gerendert/hochgeladen werden muss. Der jeweils neueste Message-ID-Eintrag wird in `group_messages` aktualisiert. Falls Telegram das Kopieren ablehnt, wird zur Sicherheit die bisherige Nachricht editiert.
 
 **Hinweis zur Häufigkeit:** Bei 24 Stunden entstehen theoretisch ca. 144 neue Nachrichten pro Gruppe und Fight, zusätzlich zu Milestones und Abschluss. Das ist bewusst für den Test eingestellt; vor einem öffentlichen Rollout sollten wir prüfen, ob ein längeres Posting-Intervall (z. B. stündlich) für Communities angenehmer ist. Alte Posts bleiben in der Gruppe; ältere Abstimmungsbuttons sind nach Abschluss nicht mehr wirksam.
+
+## Card and chat refresh v0.3.0
+
+- All Telegram bot user-facing messages are in English. The fight card and text captions show a single `$` before token symbols.
+- Active-fight caption matches `🥊 LIVE TOKEN FIGHT <id>`, `⚡ $TOKEN_A VS $TOKEN_B`, `Votes`, `Price change`, `Score`, `Remaining`, and `🟣 Powered by ASTY - ArbStrategy.net`.
+- Token vote confirmation is `🔥 New vote for $TOKEN 🔥`; multiple votes per Telegram user per fight are still disallowed.
+- New 1200×680 neon-arena battle card is dynamically generated for any Solana token pair. All text is drawn with SVG vector paths so it remains visible in Cloudflare without installed fonts. Birdeye image-proxy hosts are allowlisted, and unsupported logos fall back to token initials. For ASTY, the repo's existing `assets/logo.png` is used as a fallback.
+- The original fight graphic is uploaded only at fight creation. New ten-minute posts reuse Telegram's stored image, so the newly designed graphic will appear **on the next fight**, not retroactively on existing fights.
+- The challenge creator can end an active test fight with `/stop FIGHT_ID` in the private bot chat. This marks the fight as `cancelled`, removes both active token locks, disables voting on the latest posts, and sends a stopped notice to linked groups. No winner is declared; the cancelled battle is not added to the Hall of Fame. `/cancel` still only cancels the interactive draft wizard.
+- After 30 days, individual votes of stopped fights are also deleted.
+- Cloudflare health version: `0.3.0`. Confirm deployment first before attempting `/stop`.
