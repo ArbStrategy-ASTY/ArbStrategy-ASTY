@@ -240,11 +240,118 @@ async function groupHome(env,chat,q=null){
   return screen(env,chat,'🥊 <b>ASTY TOKEN FIGHT</b>\n\nConnect this Telegram group to its Solana token. Group administrators can link a token and promote its website.\n\nUse the button below to get started.',groupButtons(env),q);
 }
 
-async function helpScreen(env,chat,q=null,isGroup=false) {
-  const text=isGroup
-    ? '❓ <b>GROUP HELP</b>\n\n<code>/link MINT</code> — Link this group to a Solana token (admins only).\n<code>/unlink MINT</code> — Remove a group-token link (admins only).\n<code>/help</code> — Show this help.\n\nUse the button to link a token without writing a command. Reply to the bot with its mint address.\n\n🟣 Powered by ASTY - ArbStrategy.net'
-    : '❓ <b>ASTY TOKEN FIGHT — HELP</b>\n\n<b>Use the buttons</b> to create challenges, select existing projects, manage websites and browse fights.\n\n<b>Commands</b>\n<code>/start</code> / <code>/menu</code> — Main menu\n<code>/new</code> — Create a challenge\n<code>/projects</code> — My linked projects\n<code>/website</code> — Add or change a project website\n<code>/video</code> — Manage the fixed fight video\n<code>/fights</code> — Active battles\n<code>/history</code> — Finished battles\n<code>/status ID</code> — Detailed fight stats\n<code>/withdraw ID</code> — Withdraw a pending challenge\n<code>/stop ID</code> — Stop your active test fight\n<code>/refresh ID</code> — Repost fight stats now\n<code>/cancel</code> — Cancel current setup\n<code>/help</code> — This help\n\n<b>In Telegram groups</b>\n<code>/link MINT</code> — Link project\n<code>/unlink MINT</code> — Unlink project\n\n<b>How it works</b>\n1. Add the bot to your group and link your project token.\n2. Optionally add your website once (paste the URL).\n3. Choose New Fight, select your project and opponent.\n4. Opponent accepts the challenge; voting and price tracking begin.\n\nEach Telegram account gets one vote per fight. Website links are supplied by project admins, not verified by ASTY.';
-  return screen(env,chat,text,isGroup?groupButtons(env):keyboard([[{text:'🏠 Main Menu',callback_data:'menu:home'}],[{text:'🥊 New Fight',callback_data:'menu:new'}]]),q);
+function helpKeyboard(isGroup=false){
+  const rows=[
+    [{text:'🥊 How It Works',callback_data:'help:setup'},{text:'⚖️ Scoring Rules',callback_data:'help:rules'}],
+    [{text:'🏆 Fight Results',callback_data:'help:ending'},{text:'📋 Commands',callback_data:'help:commands'}],
+    [{text:'🏠 Back to Menu',callback_data:isGroup?'menu:group':'menu:home'}]
+  ];
+  return keyboard(rows);
+}
+async function helpScreen(env,chat,q=null,isGroup=false){
+  const help=[
+    '❓ <b>ASTY TOKEN FIGHT — HELP</b>',
+    '',
+    '🥊 <b>24-hour Solana token battles</b>',
+    'One Telegram account = one vote per fight, even across both groups.',
+    '',
+    '⚖️ <b>FINAL SCORE</b>',
+    '50% community votes + 50% price performance.',
+    'In the price category, every 0.1 percentage-point lead in 24h token return earns 1 point (maximum 100).',
+    '',
+    '🏆 At the end, both groups receive a winner announcement, and the result appears in the Hall of Fame.',
+    '',
+    '🎬 All fights use the same permanently locked official video. Project websites appear as optional buttons below battle posts.',
+    '',
+    'Select a topic below to see the details.'
+  ];
+  return screen(env,chat,help.join('\n'),helpKeyboard(isGroup),q);
+}
+async function helpSection(env,chat,section,q=null,isGroup=false){
+  let lines;
+  switch(section){
+    case 'setup':
+      lines=[
+        '🥊 <b>HOW ASTY TOKEN FIGHT WORKS</b>',
+        '',
+        '1. Add the bot to your Telegram project group. A group admin links its Solana token once.',
+        '2. A project admin may add the official website. Websites are shown as buttons, never repeated in the battle text.',
+        '3. In the private bot chat, select New Fight → your registered project → an opponent.',
+        '4. The opposing project admin accepts the challenge.',
+        '5. A 24-hour fight starts in both groups using the same fixed ASTY video.',
+        '6. Vote using the buttons. Each Telegram account has one vote per fight, no matter which group.',
+        '7. A new message with the current votes, price change, scores and countdown is posted approximately every 10 minutes. Every successful new vote also triggers a short group message.',
+        '8. When 24 hours end, both groups get a result notification.',
+        '',
+        'The original video is permanently locked. Project admins cannot replace it.'
+      ];break;
+    case 'rules':
+      lines=[
+        '⚖️ <b>SCORING RULES</b>',
+        '',
+        '<b>50% Community Votes</b>',
+        'Vote score = each token’s share of all valid Telegram votes. Without votes, it is 50:50.',
+        '',
+        '<b>50% Price Performance</b>',
+        'Compare the two tokens’ percentage price changes over the same 24-hour fight. Absolute token price and trading volume do not determine this score.',
+        'For every <b>0.1 percentage-point</b> advantage in price change, a token earns <b>1 price-category point</b>.',
+        'Price points for token A = 50 + 10 × (A price change − B price change). These points are limited to 0–100. Token B receives the rest.',
+        '',
+        '<b>Final score = (vote percentage + price points) ÷ 2.</b>',
+        '',
+        '<b>Example</b>',
+        '$ASTY: 30 votes, +5.00% price change.',
+        '$ARBX: 20 votes, +3.00% price change.',
+        'Votes: 60–40. Price points: 70–30.',
+        '🏆 Final score: <b>$ASTY 65.0% · $ARBX 35.0%</b>.',
+        '',
+        'A difference of 5 percentage points already reaches the 100-point cap in the price category.'
+      ];break;
+    case 'ending':
+      lines=[
+        '🏆 <b>WHEN THE FIGHT ENDS</b>',
+        '',
+        'After 24 hours, the bot checks the final votes and both token prices.',
+        'The final 50:50 score determines the winner. Exactly equal final scores result in a draw.',
+        '',
+        '📣 Both groups receive a <b>new text result announcement</b> showing the votes, price change, final score and winning token.',
+        'The latest battle message is updated and voting closes. The result is saved in the Hall of Fame. Both tokens are released for rematches.',
+        '',
+        'If valid final prices cannot be retrieved, the bot retries briefly (up to about 3 minutes). If the data is still missing, the fight closes without a declared winner rather than inventing a result.',
+        '',
+        'A fight stopped early by its creator does not receive a winner.'
+      ];break;
+    case 'commands':
+      lines=[
+        '📋 <b>COMMANDS</b>',
+        '',
+        '<b>Private bot chat</b>',
+        '<code>/start</code> or <code>/menu</code> — Open button menu',
+        '<code>/new</code> — New challenge',
+        '<code>/projects</code> — Manage registered projects',
+        '<code>/website</code> — Add/change project website',
+        '<code>/video</code> — View the fixed official video',
+        '<code>/fights</code> — Active fights',
+        '<code>/history</code> — Hall of Fame',
+        '<code>/status ID</code> — Fight details',
+        '<code>/refresh ID</code> — Repost live stats (creator only)',
+        '<code>/withdraw ID</code> — Withdraw pending challenge',
+        '<code>/stop ID</code> — Stop active fight (creator only)',
+        '<code>/cancel</code> — Cancel current input',
+        '<code>/help</code> — Help & rules',
+        '',
+        '<b>Inside project groups</b>',
+        '<code>/start</code> — Group menu',
+        '<code>/link MINT</code> — Link token (admins)',
+        '<code>/unlink MINT</code> — Unlink token (admins)',
+        '<code>/help</code> — Help & rules',
+        '',
+        'All main actions can also be opened using buttons. A new mint address or website only has to be pasted when first configured.'
+      ];break;
+    default:return helpScreen(env,chat,q,isGroup);
+  }
+  return screen(env,chat,lines.join('\n'),
+    keyboard([[{text:'↩️ Help Topics',callback_data:'menu:help'}],[{text:'🏠 Main Menu',callback_data:isGroup?'menu:group':'menu:home'}]]),q);
 }
 
 async function adminProjects(env,user) {
@@ -411,7 +518,8 @@ async function groupCallback(env,q){
     rows.push([{text:'↩️ Group Menu',callback_data:'menu:group'}]);
     return screen(env,chat,linked.results?.length?'🖼️ <b>PROJECT LOGOS</b>\n\nSelect your token to upload its official logo in the private bot chat.':'No linked projects found in this group.',keyboard(rows),q);
   }
-  if(cmd==='menu:help')return helpScreen(env,chat,null,true);
+  if(cmd==='menu:help')return helpScreen(env,chat,q,true);
+  if(cmd.startsWith('help:'))return helpSection(env,chat,cmd.slice(5),q,true);
   if(cmd==='group:unlink'){
     if(!await tgAdmin(env,chat,user))return say(env,chat,'Only group administrators can unlink tokens.');
     const linked=await env.DB.prepare('SELECT pg.mint,p.symbol FROM project_groups pg JOIN projects p ON p.mint=pg.mint WHERE pg.chat_id=? ORDER BY pg.registered_at DESC LIMIT 20').bind(String(chat)).all();
@@ -487,6 +595,7 @@ async function menuCallback(env,q){
   if(['menu:home','menu:new','menu:projects','menu:sites','menu:logos'].includes(cmd))await env.DB.prepare('DELETE FROM draft_state WHERE user_id=?').bind(String(user)).run();
   if(cmd==='menu:home')return menuHome(env,chat,q);
   if(cmd==='menu:help')return helpScreen(env,chat,q);
+  if(cmd.startsWith('help:'))return helpSection(env,chat,cmd.slice(5),q);
   if(cmd==='menu:projects')return projectsScreen(env,chat,user,q);
   if(cmd==='menu:sites')return projectsScreen(env,chat,user,q,true);
   if(cmd==='menu:video')return videoScreen(env,chat,user,q);
