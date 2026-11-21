@@ -899,7 +899,7 @@ async function receiveFightVideo(env,msg){
     if(!changed(committed[1]))return say(env,chat,'🔒 The official video is already locked and cannot be replaced.');
     await env.DB.prepare('DELETE FROM draft_state WHERE user_id=?').bind(String(user)).run();
     return say(env,chat,'✅ Official video saved and permanently locked! All future fights and 30-minute updates will reuse this video.',{
-      reply_markup:keyboard([[{text:'🥊 New Fight',callback_data:'menu:new'}],[{text:'🎬 Fight Video',callback_data:'menu:video'}]])
+      reply_markup:keyboard([[{text:'🥊 New Fight',callback_data:'menu:new'}]])
     });
   }catch(error){
     console.error('video upload',errString(error));
@@ -956,8 +956,8 @@ async function accept(env,query,id,decline=false){
   if(!p[0]||!p[1])return say(env,chat,'Birdeye has no price for at least one token. Fight not started.');
   const videoId=await getFightVideo(env);
   if(!videoId)return say(env,chat,
-    '🎬 The fixed fight video has not been configured yet. The ASTY video manager must upload it through /video before any fight can start.',
-    {reply_markup:keyboard([[{text:'🎬 Fight Video',callback_data:'menu:video'}]])});
+    '🎬 The official fight video is not configured. Ask the ASTY operator to finish the initial setup before starting a fight.',
+    {reply_markup:keyboard([[{text:'🏠 Main Menu',callback_data:'menu:home'}]])});
   const t=now();
   try{
     // D1 batch is transactional: either BOTH token locks + status change succeed or none.
