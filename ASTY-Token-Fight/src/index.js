@@ -66,13 +66,15 @@ function caption(f,votesA,votesB){
   const bScore=f.status==='ended'&&f.final_score_b!==null?f.final_score_b:computed?.scoreB;
   const left=Math.max(0,(f.ends_at||now())-now()),time=`${Math.floor(left/3600)}h ${Math.floor((left%3600)/60)}m`;
   const statuses={pending:'CHALLENGE PENDING',active:'LIVE TOKEN FIGHT',ended:'FINISHED TOKEN FIGHT',unresolved:'PRICE UNAVAILABLE',declined:'CHALLENGE DECLINED',cancelled:'FIGHT STOPPED',expired:'CHALLENGE EXPIRED'};
-  const lines=[`<b>🥊 ${statuses[f.status]||'TOKEN FIGHT'} ${html(f.id)}</b>`,`⚡ ${html(tokenLabel(f.sym_a))} VS ${html(tokenLabel(f.sym_b))}`,`🗳️ Votes: <b>${va}</b> · <b>${vb}</b>`,`📈 Price change: ${ra===null?'n/a':pct(ra)} · ${rb===null?'n/a':pct(rb)}`];
+  const header=`<b>🥊 ${statuses[f.status]||'TOKEN FIGHT'} ${html(f.id)}</b>`;
+  const lines=[header,'',`⚡ ${html(tokenLabel(f.sym_a))} VS ${html(tokenLabel(f.sym_b))}`,'',
+    `🗳️ Votes: <b>${va}</b> · <b>${vb}</b>`,
+    `📈 Price change: ${ra===null?'n/a':pct(ra)} · ${rb===null?'n/a':pct(rb)}`];
   if(aScore!==undefined&&['active','ended'].includes(f.status))lines.push(`🏆 Score: <b>${aScore.toFixed(1)}%</b> · <b>${bScore.toFixed(1)}%</b>`);
   if(f.status==='active')lines.push(`⏳ Remaining: ${time}`);
   if(f.status==='ended')lines.push(`🥇 ${f.winner==='draw'?'DRAW':html(tokenLabel(f.winner==='a'?f.sym_a:f.sym_b))+' WINS!'}`);
   if(f.status==='unresolved')lines.push('No winner declared. Manual price review required.');
-  lines.push(...siteLines(f));
-  lines.push('🟣 <b>Powered by ASTY - ArbStrategy.net</b>');
+  lines.push('','🟣 <b>Powered by ASTY - ArbStrategy.net</b>');
   return lines.join('\n');
 }
 function votingButtons(f){const rows=[[{text:`🗳️ ${tokenLabel(f.sym_a)}`,callback_data:`vote:${f.id}:a`},{text:`🗳️ ${tokenLabel(f.sym_b)}`,callback_data:`vote:${f.id}:b`}]]; return keyboard([...rows,...siteButtons(f).inline_keyboard]);}
@@ -170,15 +172,8 @@ async function sendMilestones(env,id){
   if(elapsed>minTime+2*REFRESH_INTERVAL)return;
   const msgs=await env.DB.prepare('SELECT * FROM group_messages WHERE fight_id=?').bind(id).all();
   for(const m of msgs.results){
-    await deliverEvent(env,id,m.chat_id,`milestone_${milestone}`,`🥊 <b>ASTY TOKEN FIGHT</b> – ${html(tokenLabel(f.sym_a))} VS ${html(tokenLabel(f.sym_b))}\n${milestone==='23h'?'⏰ Only 1 hour left!':'⚡ Battle update'}\n\n${siteLines(f).join('\n')}\n🟣 Powered by ASTY - ArbStrategy.net`).catch(e=>console.error('milestone',id,errString(e)));
+    await deliverEvent(env,id,m.chat_id,`milestone_${milestone}`,`🥊 <b>ASTY TOKEN FIGHT</b> – ${html(tokenLabel(f.sym_a))} VS ${html(tokenLabel(f.sym_b))}\n${milestone==='23h'?'⏰ Only 1 hour left!':'⚡ Battle update'}\n\n🟣 Powered by ASTY - ArbStrategy.net`).catch(e=>console.error('milestone',id,errString(e)));
   }
-}
-
-function siteLines(f) {
-  const result=[];
-  if(f?.website_a)result.push(`🌐 ${html(tokenLabel(f.sym_a))}: <a href="${html(f.website_a)}">${html(projectWebsiteDisplay(f.website_a))}</a>`);
-  if(f?.website_b)result.push(`🌐 ${html(tokenLabel(f.sym_b))}: <a href="${html(f.website_b)}">${html(projectWebsiteDisplay(f.website_b))}</a>`);
-  return result;
 }
 
 function siteButtons(f){
@@ -474,10 +469,9 @@ async function createFight(env,user,a,b,chat){
   const id=eid();
   try{await env.DB.prepare(`INSERT INTO fights(id,mint_a,mint_b,creator_id,status,created_at) VALUES(?,?,?,?,'pending',?)`).bind(id,a,b,String(user),now()).run();}
   catch(e){return say(env,chat,'This token pair already has an open or active challenge. Wait for it to finish.');}
-  const promo=siteLines(await detail(env,id)).join('\n');
-  await say(env,chat,`🥊 <b>Challenge created!</b>\nShare this link with your opponent:\n${botLink(env,id)}\n\n${promo}\n\nThe opponent must link their Telegram group and accept the challenge.`,{reply_markup:keyboard([[{text:'🔗 Share challenge',url:botLink(env,id)}]])});
+  await say(env,chat,`🥊 <b>Challenge created!</b>\nShare this link with your opponent:\n${botLink(env,id)}\n\nThe opponent must link their Telegram group and accept the challenge.`,{reply_markup:keyboard([[{text:'🔗 Share challenge',url:botLink(env,id)}]])});
   const opponents=await env.DB.prepare('SELECT DISTINCT registered_by FROM project_groups WHERE mint=?').bind(b).all();
-  for(const x of opponents.results){try{await say(env,x.registered_by,`🥊 New challenge for your project!\n${botLink(env,id)}\n${promo}`);}catch{}}
+  for(const x of opponents.results){try{await say(env,x.registered_by,`🥊 New challenge for your project!\n${botLink(env,id)}`);}catch{}}
 }
 async function linkGroup(env,msg,arg){
   if(!['group','supergroup'].includes(msg.chat.type))return say(env,msg.chat.id,'Use <code>/link TOKEN_MINT</code> in your Telegram group.');
@@ -497,7 +491,7 @@ async function unlinkGroup(env,msg,arg){
 async function challengeView(env,chat,id){
   const f=await detail(env,id);if(!f)return say(env,chat,'Challenge not found.');
   if(f.status!=='pending')return say(env,chat,`This fight has the status ${html(f.status)}.`);
-  return say(env,chat,`🥊 <b>NEW ASTY TOKEN FIGHT CHALLENGE</b>\n${html(tokenLabel(f.sym_a))} challenges ${html(tokenLabel(f.sym_b))}!\n⏳ 24 hours · 50% votes · 50% price change\n\n${siteLines(f).join('\n')}\n\nYou must be an admin of a group linked to ${html(tokenLabel(f.sym_b))}.`,{reply_markup:keyboard([[{text:'✅ Accept challenge',callback_data:`accept:${f.id}`}],[{text:'❌ Decline',callback_data:`decline:${f.id}`} ]])});
+  return say(env,chat,`🥊 <b>NEW ASTY TOKEN FIGHT CHALLENGE</b>\n${html(tokenLabel(f.sym_a))} challenges ${html(tokenLabel(f.sym_b))}!\n⏳ 24 hours · 50% votes · 50% price change\n\nYou must be an admin of a group linked to ${html(tokenLabel(f.sym_b))}.`,{reply_markup:keyboard([[{text:'✅ Accept challenge',callback_data:`accept:${f.id}`}],[{text:'❌ Decline',callback_data:`decline:${f.id}`} ]])});
 }
 async function accept(env,query,id,decline=false){
   const uid=query.from.id,chat=query.message.chat.id;
@@ -521,8 +515,8 @@ async function accept(env,query,id,decline=false){
     ]);
     if(!changed(batch[2]))return say(env,chat,'This challenge has already been processed.');
   }catch(e){return say(env,chat,'One of these tokens is already in another active fight. Try accepting the challenge later.');}
-  await say(env,chat,`✅ Challenge accepted! The 24-hour fight is now live in both groups.\n${siteLines(f).join('\n')}`);
-  await say(env,f.creator_id,`🥊 ${html(tokenLabel(f.sym_b))} accepted! Fight ${f.id} is LIVE.\n${siteLines(f).join('\n')}`).catch(()=>{});
+  await say(env,chat,`✅ Challenge accepted! The 24-hour fight is now live in both groups.`);
+  await say(env,f.creator_id,`🥊 ${html(tokenLabel(f.sym_b))} accepted! Fight ${f.id} is LIVE.`).catch(()=>{});
   await postFight(env,id);
 }
 async function vote(env,q,id,side){
