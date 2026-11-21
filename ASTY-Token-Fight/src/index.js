@@ -76,7 +76,15 @@ function caption(f,votesA,votesB){
   if(f.status==='active')lines.push(`⏳ Remaining: ${time}`);
   if(f.status==='ended')lines.push(`🥇 ${f.winner==='draw'?'DRAW':html(tokenLabel(f.winner==='a'?f.sym_a:f.sym_b))+' WINS!'}`);
   if(f.status==='unresolved')lines.push('No winner declared. Manual price review required.');
-  if(f.status==='active')lines.push('','<i>...Stats update every 30 minutes...</i>');
+  if(f.status==='active'){
+    lines.push('','📣 <b>The losing project must post about the winner on X!</b>');
+    lines.push('','<i>...Stats update every 30 minutes...</i>');
+  }
+  if(f.status==='ended'&&f.winner!=='draw'){
+    const loser=html(tokenLabel(f.winner==='a'?f.sym_b:f.sym_a));
+    const winner=html(tokenLabel(f.winner==='a'?f.sym_a:f.sym_b));
+    lines.push('','📣 <b>'+loser+' must post about '+winner+' on X!</b>');
+  }
   lines.push('','<b>Powered by ASTY <a href="https://arbstrategy.net/">ArbStrategy.net</a></b>');
   return lines.join('\n');
 }
@@ -336,6 +344,7 @@ async function helpScreen(env,chat,q=null,isGroup=false){
     '⏱️ Live stats are posted every 30 minutes. Both groups get extra reminders 15, 10 and 5 minutes before the fight ends.',
     '',
     '🏆 At the end, both groups receive a winner announcement, and the result appears in the Hall of Fame.',
+    '📣 The losing project must post about the winning project on X. No post is required for a draw or an unresolved fight.',
     '',
     'Project websites appear as optional buttons below battle posts.',
     '',
@@ -385,7 +394,8 @@ async function helpSection(env,chat,section,q=null,isGroup=false){
         '6. Vote using the buttons. Each Telegram account has one vote per fight, no matter which group.',
         '7. A new message with the current votes, price change, scores and countdown is posted approximately every 30 minutes. Every successful new vote also triggers a short group message.',
         '8. Both groups receive extra reminders with voting buttons at 15, 10 and 5 minutes remaining.',
-        '9. When 24 hours end, both groups get a winner or draw notification.'
+        '9. When 24 hours end, both groups get a winner or draw notification.',
+        '10. The losing project must publish an X post about the winning project. Draws and unresolved fights have no posting obligation.'
       ];break;
     case 'rules':
       lines=[
@@ -420,6 +430,9 @@ async function helpSection(env,chat,section,q=null,isGroup=false){
         '',
         '📣 Both groups receive a <b>new text result announcement</b> showing the votes, price change, final score and winning token.',
         'The latest battle message is updated and voting closes. The result is saved in the Hall of Fame. Both tokens are released for rematches.',
+        '',
+        '📣 <b>Loser’s X-post challenge:</b> The losing project must publish an X post about the winning project.',
+        'No X post is required after a draw, an unresolved outcome or a fight stopped early. The bot announces the rule but cannot automatically publish or verify X posts.',
         '',
         'If valid final prices cannot be retrieved, the bot retries briefly (up to about 3 minutes). If the data is still missing, the fight closes without a declared winner rather than inventing a result.',
         '',
@@ -1344,7 +1357,7 @@ export default {
           if(row.key==='fight_video_file_id')videoConfigured=!!row.value;
         }
       }catch(e){console.error('health database query',errString(e));}
-      return Response.json({status:'ok',app:'ASTY Token Fight',version:'0.8.3',
+      return Response.json({status:'ok',app:'ASTY Token Fight',version:'0.8.4',
         cron_last_started:started,cron_last_completed:completed,video_configured:videoConfigured});
     }
     if(url.pathname!=='/telegram'||request.method!=='POST')return new Response('Not Found',{status:404});
