@@ -218,7 +218,6 @@ function groupButtons(env){
   return keyboard([
     [{text:'🔗 Link Project Token',callback_data:'group:link'}],
     [{text:'🔓 Unlink Project Token',callback_data:'group:unlink'}],
-    [{text:'🖼️ Project Logos',callback_data:'group:logos'}],
     [{text:'❓ Help',callback_data:'menu:help'}],
     [{text:'🥊 Open Fight Bot',url:`https://t.me/${env.BOT_USERNAME.replace('@','')}`}]
   ]);
@@ -244,7 +243,7 @@ async function groupHome(env,chat,q=null){
 async function helpScreen(env,chat,q=null,isGroup=false) {
   const text=isGroup
     ? '❓ <b>GROUP HELP</b>\n\n<code>/link MINT</code> — Link this group to a Solana token (admins only).\n<code>/unlink MINT</code> — Remove a group-token link (admins only).\n<code>/help</code> — Show this help.\n\nUse the button to link a token without writing a command. Reply to the bot with its mint address.\n\n🟣 Powered by ASTY - ArbStrategy.net'
-    : '❓ <b>ASTY TOKEN FIGHT — HELP</b>\n\n<b>Use the buttons</b> to create challenges, select existing projects, manage websites and browse fights.\n\n<b>Commands</b>\n<code>/start</code> / <code>/menu</code> — Main menu\n<code>/new</code> — Create a challenge\n<code>/projects</code> — My linked projects\n<code>/website</code> — Add or change a project website\n<code>/logo</code> — Upload and manage project logos\n<code>/video</code> — Manage the fixed fight video\n<code>/fights</code> — Active battles\n<code>/history</code> — Finished battles\n<code>/status ID</code> — Detailed fight stats\n<code>/withdraw ID</code> — Withdraw a pending challenge\n<code>/stop ID</code> — Stop your active test fight\n<code>/cancel</code> — Cancel current setup\n<code>/help</code> — This help\n\n<b>In Telegram groups</b>\n<code>/link MINT</code> — Link project\n<code>/unlink MINT</code> — Unlink project\n\n<b>How it works</b>\n1. Add the bot to your group and link your project token.\n2. Optionally add your website once (paste the URL).\n3. Choose New Fight, select your project and opponent.\n4. Opponent accepts the challenge; voting and price tracking begin.\n\nEach Telegram account gets one vote per fight. Website links are supplied by project admins, not verified by ASTY.';
+    : '❓ <b>ASTY TOKEN FIGHT — HELP</b>\n\n<b>Use the buttons</b> to create challenges, select existing projects, manage websites and browse fights.\n\n<b>Commands</b>\n<code>/start</code> / <code>/menu</code> — Main menu\n<code>/new</code> — Create a challenge\n<code>/projects</code> — My linked projects\n<code>/website</code> — Add or change a project website\n<code>/video</code> — Manage the fixed fight video\n<code>/fights</code> — Active battles\n<code>/history</code> — Finished battles\n<code>/status ID</code> — Detailed fight stats\n<code>/withdraw ID</code> — Withdraw a pending challenge\n<code>/stop ID</code> — Stop your active test fight\n<code>/cancel</code> — Cancel current setup\n<code>/help</code> — This help\n\n<b>In Telegram groups</b>\n<code>/link MINT</code> — Link project\n<code>/unlink MINT</code> — Unlink project\n\n<b>How it works</b>\n1. Add the bot to your group and link your project token.\n2. Optionally add your website once (paste the URL).\n3. Choose New Fight, select your project and opponent.\n4. Opponent accepts the challenge; voting and price tracking begin.\n\nEach Telegram account gets one vote per fight. Website links are supplied by project admins, not verified by ASTY.';
   return screen(env,chat,text,isGroup?groupButtons(env):keyboard([[{text:'🏠 Main Menu',callback_data:'menu:home'}],[{text:'🥊 New Fight',callback_data:'menu:new'}]]),q);
 }
 
@@ -278,14 +277,11 @@ async function projectScreen(env,chat,user,mint,q=null){
     [{text:`🥊 Challenge as ${tokenLabel(p.symbol)}`,callback_data:`new:own:${mint}`}],
   ];
   const websiteAdmin=await canManageWebsite(env,mint,user);
-  const logoReady=!!(await cachedLogo(env,mint));
-  if(websiteAdmin)rows.push([{text:logoReady?'📷 Replace Logo':'📷 Upload Logo',callback_data:`logo:set:${mint}`}]);
-  if(websiteAdmin&&!logoReady)rows.push([{text:'🔎 Find Logo Automatically',callback_data:`logo:auto:${mint}`}]);
   if(websiteAdmin)rows.push([{text:'🌐 Set / Edit Website',callback_data:`site:set:${mint}`}]);
   if(p.website_url&&websiteAdmin)rows.push([{text:'🗑 Remove Website',callback_data:`site:remove:${mint}`}]);
   if(p.website_url)rows.push([{text:`🌐 Visit ${tokenLabel(p.symbol)}`,url:p.website_url}]);
   rows.push([{text:'🪙 My Projects',callback_data:'menu:projects'},{text:'🏠 Menu',callback_data:'menu:home'}]);
-  return screen(env,chat,`🪙 <b>${html(tokenLabel(p.symbol))}</b>\n${html(p.name)}\n\n🖼️ Logo: ${logoReady?'✅ Saved':'⚠️ Missing'}\n${web}\n\nSaved logos are reused in future battles.`,keyboard(rows),q);
+  return screen(env,chat,`🪙 <b>${html(tokenLabel(p.symbol))}</b>\n${html(p.name)}\n\n${web}`,keyboard(rows),q);
 }
 
 async function newFightScreen(env,chat,user,q=null){
@@ -518,7 +514,7 @@ async function ensureWebsiteTable(env){
 
 async function ensureBotCommands(env){
   // Persist a version marker so Telegram's command menu isn't rewritten each minute.
-  const key='bot_commands_v4_video';
+  const key='bot_commands_v5_video_clean';
   const current=await env.DB.prepare('SELECT value FROM worker_settings WHERE key=?').bind(key).first();
   if(current)return;
   const commands=[
@@ -527,7 +523,6 @@ async function ensureBotCommands(env){
     {command:'new',description:'Create a new token fight'},
     {command:'projects',description:'Manage linked projects'},
     {command:'website',description:'Set project websites'},
-    {command:'logo',description:'Upload an official project logo'},
     {command:'video',description:'Manage the fixed battle video'},
     {command:'fights',description:'Active token fights'},
     {command:'history',description:'Hall of Fame'},
@@ -745,7 +740,6 @@ async function onUpdate(env,u){
   if(cmd==='/menu')return menuHome(env,chat);
   if(cmd==='/projects')return projectsScreen(env,chat,msg.from.id);
   if(cmd==='/website')return projectsScreen(env,chat,msg.from.id,null,true);
-  if(cmd==='/logo')return projectsScreen(env,chat,msg.from.id);
   if(cmd==='/video')return videoScreen(env,chat,msg.from.id);
   if(cmd==='/help')return helpScreen(env,chat);
   if(cmd==='/fights')return fightScreen(env,chat,msg.from.id,false);
