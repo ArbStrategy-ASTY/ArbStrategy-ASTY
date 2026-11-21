@@ -1,4 +1,4 @@
-# 🥊 ASTY Token Fight – Telegram Bot v0.8.4 (Birdeye)
+# 🥊 ASTY Token Fight – Telegram Bot v0.8.5 (Birdeye)
 
 **Status: private Beta / laufende Tests.** Der Bot wurde in früheren Versionen auf Cloudflare deployed und mit ASTY-vs.-ARBX-Gruppen getestet. Die neuen Menüs, Website-Buttons, Vote-Benachrichtigungen und das Grafikdesign von v0.4.2 sind im GitHub-Code implementiert, aber müssen nach Cloudflare-Deployment noch in Telegram geprüft werden. Alle Änderungen bleiben auf den Ordner `ASTY-Token-Fight/` beschränkt.
 
@@ -355,3 +355,14 @@ No additional Cloudflare service, manual D1 reset, token mint change or new vide
 - After the fight ends with a declared winner, the final result names both losing and winning tokens in the X-post instruction. Draws and unresolved results do not impose the challenge; early-stopped fights do not have a winner either.
 - `/help` overview, How It Works and Fight Results document this community rule, including that the bot cannot itself publish or verify X posts.
 - Existing permanent fight video, live website buttons, scoring, votes, 30-minute updates and 15/10/5-minute alerts remain unchanged.
+
+## End of Fight: Loser X post with Telegram bot promotion (v0.8.5)
+
+- A fight settled with a real winner explicitly names the **losing** and **winning** token in the final Telegram battle caption and in the separate closing announcement sent to both Telegram groups.
+- The final result instructs the losing project to post about the winning project on X **and include a clickable link to** `https://t.me/ASTY_TokenFightBot` in its X post.
+- The final result now shows a **✍️ Create Loser’s X Post** button alongside the two project-website buttons. It uses X's compose intent (`https://x.com/intent/tweet?text=...`) and prefills an editable post congratulating the winner, mentioning both token tickers, linking to the winner's project website if available, and linking to the ASTY Token Fight Telegram bot.
+- The draft is for the losing project to edit and publish via its X account: **the Telegram bot does not publish to X automatically or verify whether the losing project fulfilled the challenge**.
+- On a draw, unresolved fight or cancelled fight, there is no posting obligation and no X compose button. Existing one-vote rules, fixed video, 30-minute posts, 15/10/5-minute reminders, D1 records and project website priorities remain unchanged.
+- `/help` overview, How It Works and Fight Results explicitly explain the mandatory bot link and the one-click X compose button.
+
+Deployment check: `/health` should report version `0.8.5` once Cloudflare publishes these GitHub changes.
