@@ -372,7 +372,7 @@ async function helpSection(env,chat,section,q=null,isGroup=false){
         '🥊 <b>HOW ASTY TOKEN FIGHT WORKS</b>',
         '',
         '1. Add the bot to both project groups. For reliable admin checks, promote it to administrator and allow text/video posts. A group admin then links its token once.',
-        '2. A project admin may add the official website. Websites are shown as buttons.',
+        '2. Group admins may add a website for their own Telegram group. Admins of the original project group can also manage the official project-wide website.',
         '3. In the private bot chat, select New Fight → your registered project → an opponent.',
         '4. The opposing project admin accepts the challenge.',
         '5. A 24-hour fight starts in both groups.',
@@ -498,14 +498,14 @@ async function projectsScreen(env,chat,user,q=null,forSite=false){
   }
   rows.push([{text:forSite?'🥊 New Fight':'🌐 Manage Websites',callback_data:forSite?'menu:new':'menu:sites'}]);
   rows.push([{text:'🏠 Main Menu',callback_data:'menu:home'}]);
-  return screen(env,chat,forSite?'🌐 <b>PROJECT WEBSITES</b>\n\nChoose a project. Group admins can manage their own websites; only original-group admins can change the official link.':'🪙 <b>MY PROJECTS</b>\n\nSelect a project to view its website or start a challenge.',keyboard(rows),q);
+  return screen(env,chat,forSite?'🌐 <b>PROJECT WEBSITES</b>\n\nChoose a project. Group admins may edit their own group website; only original-group admins may change the official link.':'🪙 <b>MY PROJECTS</b>\n\nSelect a project to view its website or start a challenge.',keyboard(rows),q);
 }
 
 async function projectScreen(env,chat,user,mint,q=null){
   if(!mintOk(mint)||!(await groupForAdmin(env,mint,user)))return screen(env,chat,'This project is not linked to a group you currently administer.',keyboard([[{text:'🪙 My Projects',callback_data:'menu:projects'}]]),q);
   const p=await env.DB.prepare(`SELECT p.*,w.website_url FROM projects p LEFT JOIN project_websites w ON w.mint=p.mint WHERE p.mint=?`).bind(mint).first();
   if(!p)return say(env,chat,'Project not found.');
-  const web=p.website_url ? `🌐 Website: <a href="${html(p.website_url)}">${html(projectWebsiteDisplay(p.website_url))}</a>`:'🌐 Website: Not set';
+  const web=p.website_url ? `🌐 Official website: <a href="${html(p.website_url)}">${html(projectWebsiteDisplay(p.website_url))}</a>`:'🌐 Official website: Not set';
   const rows=[
     [{text:`🥊 Challenge as ${tokenLabel(p.symbol)}`,callback_data:`new:own:${mint}`}],
   ];
