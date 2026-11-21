@@ -1,4 +1,4 @@
-# 🥊 ASTY Token Fight – Telegram Bot v0.5.0 (Birdeye)
+# 🥊 ASTY Token Fight – Telegram Bot v0.6.0 (Birdeye)
 
 **Status: private Beta / laufende Tests.** Der Bot wurde in früheren Versionen auf Cloudflare deployed und mit ASTY-vs.-ARBX-Gruppen getestet. Die neuen Menüs, Website-Buttons, Vote-Benachrichtigungen und das Grafikdesign von v0.4.2 sind im GitHub-Code implementiert, aber müssen nach Cloudflare-Deployment noch in Telegram geprüft werden. Alle Änderungen bleiben auf den Ordner `ASTY-Token-Fight/` beschränkt.
 
@@ -228,3 +228,17 @@ Technische Daten: `project_logos(mint,data_uri,source,updated_by,updated_at)`, m
 - Als Telegram-Foto das echte ARBX-Logo senden. Der Bot bestätigt, dass es gespeichert ist.
 - Mit **$ASTY** ebenso vorgehen, falls das Logo noch nicht im D1-Cache liegt (alternativ **Find Logo Automatically**).
 - Die ausstehende Herausforderung annehmen oder einen neuen Test-Fight starten. Beide Logos werden direkt aus D1 eingebettet und anschließend in den periodischen Telegram-Fight-Posts kopiert.
+
+## Fixed Fight Video + Reliable Updates (v0.6.0)
+
+The bot now sends one fixed MP4 clip instead of dynamically generated token logos. The original ASTY group registrar, who must still be group administrator, can upload it in private Telegram via Start > Fight Video > Upload Video. Optional Cloudflare secret FIGHT_VIDEO_ADMIN_ID authorizes a specific account instead. A Telegram sendVideo preview confirms the bot can reuse the video. Only the canonical Telegram file ID is stored in the existing D1 worker_settings table, not the video itself. No additional Cloudflare product or API is required.
+
+New fights require a configured video but do not require project logos. Both groups receive the same video with per-fight statistics, voting buttons, and optional website buttons. Existing photo-based fights switch to the fixed video on their next scheduled repost.
+
+Every ten minutes the worker should publish a NEW video message in each group. The scheduled handler is triggered every minute by wrangler.jsonc, and due fights run once every 600 seconds. Price-refresh failures do not block posting: votes and remaining time are still updated; last known price figures are not invented. After Telegram delivery errors, retry after approximately 90 seconds. The fight creator may also use Active Fights > Refresh Now (or /refresh FIGHT_ID) for a rate-limited immediate test.
+
+Health diagnostics: GET /health returns version 0.6.0, cron_last_started, cron_last_completed, and video_configured, without exposing the Telegram file ID or secrets. The Cron timestamp values are UTC ISO strings. If these timestamps are stale, inspect Cloudflare Scheduled Triggers; if they update but group messages fail, inspect the Cloudflare worker logs.
+
+Initial test: confirm /health reports 0.6.0, upload the MP4 in the private bot chat, verify preview and video_configured=true, then tap Refresh Now for an existing active fight. Check new video posts in both Telegram groups and then confirm another update after 10 minutes.
+
+Security: uploading/replacing the global video is restricted to the ASTY project's original group registrar (or FIGHT_VIDEO_ADMIN_ID). Project website links remain button-only. Existing project links, fights, and vote data remain untouched.
