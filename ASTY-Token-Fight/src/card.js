@@ -95,8 +95,13 @@ export function fightCardSvg(a,b,logoA=null,logoB=null){
 
 export async function fightImage(a,b){
   const astyAsset='https://raw.githubusercontent.com/ArbStrategy-ASTY/ArbStrategy-ASTY/main/assets/logo.png';
-  const safeLogo=a?.logo_url||(String(a?.symbol??'').replace(/^\$+/,'').toUpperCase()==='ASTY'?astyAsset:null);
-  const safeLogoB=b?.logo_url||(String(b?.symbol??'').replace(/^\$+/,'').toUpperCase()==='ASTY'?astyAsset:null);
-  const [logoA,logoB]=await Promise.all([embedLogo(safeLogo),embedLogo(safeLogoB)]);
+  const resolveLogo=async token=>{
+    const fromBirdeye=await embedLogo(token?.logo_url);
+    if(fromBirdeye)return fromBirdeye;
+    // Use existing ASTY artwork if its external token metadata logo is unavailable.
+    if(String(token?.symbol??'').replace(/^\$+/,'').toUpperCase()==='ASTY')return embedLogo(astyAsset);
+    return null;
+  };
+  const [logoA,logoB]=await Promise.all([resolveLogo(a),resolveLogo(b)]);
   return new Resvg(fightCardSvg(a,b,logoA,logoB)).render().asPng();
 }
