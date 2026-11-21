@@ -1,6 +1,6 @@
-# 🥊 ASTY Token Fight – Telegram Bot v0.4.0 (Birdeye)
+# 🥊 ASTY Token Fight – Telegram Bot v0.4.2 (Birdeye)
 
-**Status: private Beta / laufende Tests.** Der Bot wurde in früheren Versionen auf Cloudflare deployed und mit ASTY-vs.-ARBX-Gruppen getestet. Die neuen Menüs und Website-Funktionen von v0.4.0 sind im GitHub-Code implementiert, aber müssen nach Cloudflare-Deployment noch in Telegram geprüft werden. Alle Änderungen bleiben auf den Ordner `ASTY-Token-Fight/` beschränkt.
+**Status: private Beta / laufende Tests.** Der Bot wurde in früheren Versionen auf Cloudflare deployed und mit ASTY-vs.-ARBX-Gruppen getestet. Die neuen Menüs, Website-Buttons, Vote-Benachrichtigungen und das Grafikdesign von v0.4.2 sind im GitHub-Code implementiert, aber müssen nach Cloudflare-Deployment noch in Telegram geprüft werden. Alle Änderungen bleiben auf den Ordner `ASTY-Token-Fight/` beschränkt.
 
 ## Was neu ist in 0.2?
 
@@ -180,14 +180,14 @@ In einer Telegram-Gruppe zeigt `/start` die Buttons **Link Project Token**, **Un
 - Website pro Token dauerhaft in D1-Tabelle `project_websites` gespeichert; alle Rematches greifen auf dieselbe URL zu.
 - Die Website des Tokens darf nur ein Telegram-Admin der **zuerst für diesen Token registrierten Gruppe** verwalten. Die Zugehörigkeit wird beim Speichern live über Telegram geprüft. **Dies ist kein kryptografischer Nachweis von Token-Eigentum.**
 - Nur öffentliche HTTPS-Domains akzeptieren; IP-Adressen, lokale Hostnamen, fremde Protokolle, URLs mit Zugangsdaten, nicht-HTTPS und zu lange URLs ablehnen. Maximale Länge 160 Zeichen.
-- Website-Domains erscheinen als klickbare Zeilen `🌐 $TOKEN: example.org` in den Battle-Captions und relevanten Benachrichtigungen. Zusätzlich werden direkte Website-Buttons unter den Abstimmungsbuttons angezeigt. Existiert noch keine Website, wird kein Link erfunden.
+- Website-URLs werden nicht im Nachrichtentext wiederholt; sie erscheinen ausschließlich als klickbare Buttons `🌐 $TOKEN Website` unter den Abstimmungsbuttons in Battle-Posts und bei wichtigen Benachrichtigungen. Existiert noch keine Website, wird kein Link erfunden.
 - URLs sind **von Gruppenadmins eingereichte Links und nicht von ASTY verifiziert**.
 - Bestehende D1-Tabellen und Gruppenverknüpfungen bleiben erhalten: `project_websites` wird bei der nächsten Anfrage bzw. Cron-Ausführung mit `CREATE TABLE IF NOT EXISTS` automatisch angelegt.
 - Das Telegram-Befehlsmenü wird nach Deployment einmalig automatisch über `setMyCommands` aktualisiert; es sind keine neuen Secrets notwendig.
 
 ### Testfolge für v0.4.0
 
-1. Im Cloudflare-Worker `/health` kontrollieren: `0.4.0`.
+1. Im Cloudflare-Worker `/health` kontrollieren: `0.4.2`.
 2. Privat `/start` öffnen: alle sechs Menüpunkte müssen als Buttons sichtbar sein.
 3. `My Projects` oder `Project Websites` wählen; beide Testprojekte ASTY und ARBX sollten auswählbar sein, wenn sie vorher durch denselben Telegram-Admin verknüpft wurden.
 4. Für beide Projekte eine Website speichern; anschließend `New Fight` → ASTY → ARBX über Buttons wählen.
@@ -195,3 +195,14 @@ In einer Telegram-Gruppe zeigt `/start` die Buttons **Link Project Token**, **Un
 6. Updates im 10-Minuten-Abstand, `/help`, Hall of Fame und Stop-Bestätigung prüfen.
 
 Das Menü ersetzt weder die einmalige Eingabe einer neuen Mint-Adresse beim ersten Linking noch das einmalige Einfügen einer vom Admin gewählten Website-URL.
+
+
+## Anzeige-Update v0.4.2 – Nur Buttons für Websites, sichtbare Votes
+
+- **Keine Projekt-Websites im Nachrichtentext.** Keine URL-Zeilen in Battle-Captions, Challenge-Einladungen, Milestone-Nachrichten oder Abschlussmeldungen.
+- Stattdessen Website-Buttons `🌐 $TOKEN Website` direkt **unterhalb** der Abstimmungsbuttons. Bei wichtigen Benachrichtigungen ebenfalls Buttons, sofern URLs hinterlegt sind; keine leeren Telegram-Keyboards senden.
+- Für Battle-Captions echte Leerzeilen zwischen Überschrift, Tokenpaar, Statistikblock und ASTY-Branding.
+- Jede tatsächlich neu gezählte Stimme sendet zusätzlich **eine sichtbare Nachricht nur in die Gruppe, in der abgestimmt wurde**: `🔥 New vote for $TOKEN 🔥`. Mehrfachklicks erzeugen keine weitere öffentliche Meldung. Telegrams Callback-Info bleibt erhalten.
+- Grafik vollständig vereinfacht: geteiltes dunkles Design, zwei große Tokenfelder und Logos, ein einziges VS, glatte Vektor-Schriftzüge statt Pixel-Schrift, ruhiges Branding. Die jeweils neu erzeugte Fight-Grafik wird nur **beim nächsten Fight** verwendet, nicht automatisch in laufenden Fights ersetzt.
+- Birdeye bleibt die Preisquelle. Für Tokenbilder versucht die Grafik zunächst den Birdeye-Logo-Link, danach bei ASTY das vorhandene ASTY-GitHub-Logo und bei Bedarf einen Bildlink aus öffentlichen DEX-Screener-Metadaten. Nur explizit zugelassene Bild-CDNs, keine beliebigen Hostnamen. Der Fallback bei fehlendem Bild nennt das tatsächliche Token-Ticker-Symbol, statt ein fremdes Logo zu erfinden.
+- Die Funktionen sind im Code strukturell getestet; die Live-Darstellung und Tokenlogos auf Telegram müssen weiter überprüft werden.
