@@ -83,3 +83,9 @@ CREATE TABLE IF NOT EXISTS sent_events (
  sent_at INTEGER NOT NULL,
  PRIMARY KEY (fight_id,chat_id,event_type)
 );
+-- Worker runtime settings; only fingerprints (never bot tokens or secrets) are stored.
+CREATE TABLE IF NOT EXISTS worker_settings (
+  key TEXT PRIMARY KEY,
+  value TEXT NOT NULL,
+  updated_at INTEGER NOT NULL
+);
