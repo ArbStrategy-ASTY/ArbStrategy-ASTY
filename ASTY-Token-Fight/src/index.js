@@ -236,10 +236,10 @@ async function vote(env,q,id,side){
   const f=await detail(env,id);
   if(!f||f.status!=='active'||now()>=f.ends_at)return telegram(env,'answerCallbackQuery',{callback_query_id:q.id,text:'This fight is no longer active.',show_alert:true});
   const r=await env.DB.prepare(`INSERT OR IGNORE INTO votes(fight_id,voter_id,side,voted_at) SELECT ?,?,?,? WHERE EXISTS(SELECT 1 FROM fights WHERE id=? AND status='active' AND ends_at>?)`).bind(id,String(q.from.id),side,now(),id,now()).run();
-  const symbol=String(side==='a'?f.sym_a:f.sym_b).replace(/^\\$/,'').slice(0,50);
+  const symbol=String(side==='a'?f.sym_a:f.sym_b).replace(/^[$]/,'').slice(0,50);
   return telegram(env,'answerCallbackQuery',{
     callback_query_id:q.id,
-    text:changed(r)?`New vote for ${symbol}`:'You have already voted or this fight has ended.',
+    text:changed(r)?`New vote for $${symbol}`:'You have already voted or this fight has ended.',
     show_alert:false
   });
 }
