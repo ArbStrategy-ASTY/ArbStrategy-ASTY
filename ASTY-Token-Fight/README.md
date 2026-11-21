@@ -136,3 +136,13 @@ Die Node-Tests prüfen die Wertung; die Python-SQLite-Tests prüfen die Datenban
 - Die zwei Preisabfragen je Fight sind zeitlich mindestens 1,2 Sekunden auseinander; **das verhindert noch keine accountweiten Limits bei gleichzeitig laufenden Fights**.
 - Das vorhandene `JUPITER_API_KEY` Secret ist für die neue Version nicht nötig. Benötigt wird `BIRDEYE_API_KEY`, als Cloudflare Secret. Secret niemals in GitHub eintragen.
 - Ein API-Live-Test mit dem echten Birdeye-Key steht noch aus. API-Verfügbarkeit und verbleibendes Monatskontingent im Birdeye-Dashboard prüfen.
+
+## Telegram-Webhook automatisch (v0.2.2)
+
+Der Worker registriert seinen Telegram-Webhook automatisch beim nächsten Cron-Lauf (etwa innerhalb einer Minute nach dem Deployment). Dafür müssen in Cloudflare **Settings → Variables and Secrets** diese zwei vertraulichen Werte als **Secrets** hinterlegt sein: `TELEGRAM_BOT_TOKEN` und `TELEGRAM_WEBHOOK_SECRET`. Für die Tokenkurse wird zusätzlich `BIRDEYE_API_KEY` benötigt. **Niemals Zugangsdaten in GitHub-Dateien oder Chat-Nachrichten schreiben.**
+
+Die öffentliche Zieladresse steht ausschließlich als nicht geheimer Wert `WEBHOOK_URL` in `wrangler.jsonc`. Ein SHA-256-Fingerabdruck aus URL und Secrets wird in `worker_settings` gespeichert, damit die Registrierung nicht jede Minute wiederholt wird; Geheimwerte werden nicht in D1 gespeichert. Bei einer Secret-Rotation registriert sich der Bot erneut. Bei vorhandenen v0.2-Datenbanken wird die Tabelle `worker_settings` bei Bedarf automatisch erstellt.
+
+**So testen:** Zuerst `https://asty-token-fight.mail-timothy.workers.dev/health` öffnen und `version: 0.2.2` prüfen. Dann nach 1–2 Minuten in Telegram `@ASTY_TokenFightBot` öffnen und `/start` senden. Sollte keine Antwort kommen, in Cloudflare unter **Workers & Pages → asty-token-fight → Logs** nach `telegram webhook setup` suchen, ohne Secrets offenzulegen.
+
+Der frühere manuelle `curl setWebhook`-Schritt aus Abschnitt 3 ist für v0.2.2 **nicht mehr nötig**. Der Worker steht separat in `ASTY-Token-Fight/`; alle anderen ASTY-Projekte bleiben unberührt.
