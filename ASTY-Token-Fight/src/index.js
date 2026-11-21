@@ -133,17 +133,17 @@ async function sendMilestones(env,id){
 }
 
 async function createFight(env,user,a,b,chat){
-  if(!mintOk(a)||!mintOk(b)||a===b)return say(env,chat,'Bitte zwei unterschiedliche gültige Solana-Tokenadressen angeben.');
-  if(!(await groupForAdmin(env,a,user)))return say(env,chat,`Du musst zuerst als Admin in deiner Projektgruppe <code>/link ${html(a)}</code> eingeben.`);
+  if(!mintOk(a)||!mintOk(b)||a===b)return say(env,chat,'Please provide two different valid Solana token mint addresses.');
+  if(!(await groupForAdmin(env,a,user)))return say(env,chat,`First link your project group as an admin: <code>/link ${html(a)}</code>.`);
   const pending=await env.DB.prepare(`SELECT COUNT(*) n FROM fights WHERE creator_id=? AND status='pending'`).bind(String(user)).first();
   if(Number(pending?.n||0)>=3)return say(env,chat,'Maximal drei offene Herausforderungen gleichzeitig.');
   const busy=await env.DB.prepare(`SELECT COUNT(*) n FROM active_token_locks WHERE mint IN (?,?)`).bind(a,b).first();
   if(Number(busy?.n||0)>0)return say(env,chat,'Mindestens einer der Tokens kämpft bereits in einem aktiven Fight. Nach dessen Ende kannst du erneut herausfordern.');
-  try{await tokenInfo(env,a);await pause(1200);await tokenInfo(env,b);}catch(e){return say(env,chat,`Tokenprüfung fehlgeschlagen: ${html(errString(e))}`);}
+  try{await tokenInfo(env,a);await pause(1200);await tokenInfo(env,b);}catch(e){return say(env,chat,`Token lookup failed: ${html(errString(e))}`);}
   const id=eid();
   try{await env.DB.prepare(`INSERT INTO fights(id,mint_a,mint_b,creator_id,status,created_at) VALUES(?,?,?,?,'pending',?)`).bind(id,a,b,String(user),now()).run();}
   catch(e){return say(env,chat,'Für dieses Token-Paar existiert bereits eine offene oder aktive Herausforderung. Wiederholung erst nach deren Abschluss möglich.');}
-  await say(env,chat,`🥊 <b>Challenge erstellt!</b>\nSchicke diesen Link dem gegnerischen Projektadmin:\n${botLink(env,id)}\n\nEr muss eine Telegram-Gruppe für den gegnerischen Token verknüpfen und die Herausforderung annehmen.`,{reply_markup:keyboard([[{text:'🔗 Challenge teilen',url:botLink(env,id)}]])});
+  await say(env,chat,`🥊 <b>Challenge created!</b>\nShare this link with your opponent:\n${botLink(env,id)}\n\nThe opponent must link their Telegram group and accept the challenge.`,{reply_markup:keyboard([[{text:'🔗 Share challenge',url:botLink(env,id)}]])});
   const opponents=await env.DB.prepare('SELECT DISTINCT registered_by FROM project_groups WHERE mint=?').bind(b).all();
   for(const x of opponents.results){try{await say(env,x.registered_by,`🥊 Neue Herausforderung für dein Projekt!\n${botLink(env,id)}`);}catch{}}
 }
@@ -153,7 +153,7 @@ async function linkGroup(env,msg,arg){
   if(!mintOk(arg))return say(env,msg.chat.id,'Syntax: <code>/link SOLANA_TOKENADRESSE</code>');
   try{await tokenInfo(env,arg);}catch(e){return say(env,msg.chat.id,'Token nicht gefunden: '+html(errString(e)));}
   await env.DB.prepare(`INSERT INTO project_groups(mint,chat_id,chat_title,registered_by,registered_at) VALUES(?,?,?,?,?) ON CONFLICT(mint,chat_id) DO UPDATE SET chat_title=excluded.chat_title,registered_by=excluded.registered_by,registered_at=excluded.registered_at`).bind(arg,String(msg.chat.id),msg.chat.title||'',String(msg.from.id),now()).run();
-  return say(env,msg.chat.id,`✅ Gruppe mit Token <code>${html(arg)}</code> verknüpft.\nDie Verbindung bleibt für spätere Battles erhalten. Anpinnen entscheidet ausschließlich der Gruppenadmin.`);
+  return say(env,msg.chat.id,`✅ Group linked to <code>${html(arg)}</code>. Ready for future battles.`);
 }
 async function unlinkGroup(env,msg,arg){
   if(!['group','supergroup'].includes(msg.chat.type)||!await tgAdmin(env,msg.chat.id,msg.from.id))return say(env,msg.chat.id,'Nur ein Gruppenadmin kann hier eine Gruppe trennen.');
@@ -251,15 +251,20 @@ async function onUpdate(env,u){
   if(cmd==='/new'){
     if(args.length>=2)return createFight(env,msg.from.id,args[0],args[1],chat);
     await env.DB.prepare(`INSERT INTO draft_state(user_id,step,own_mint,updated_at) VALUES(?,'own',NULL,?) ON CONFLICT(user_id) DO UPDATE SET step='own',own_mint=NULL,updated_at=excluded.updated_at`).bind(String(msg.from.id),now()).run();
-    return say(env,chat,'Sende jetzt die <b>Tokenadresse deines eigenen Projekts</b>. Mit /cancel abbrechen.');
+    return say(env,chat,'Send your <b>project token mint address</b>. Use /cancel to stop.');
   }
   if(!raw.startsWith('/')){
     const draft=await env.DB.prepare('SELECT * FROM draft_state WHERE user_id=?').bind(String(msg.from.id)).first();
-    if(!draft||now()-draft.updated_at>1800)return;
-    if(!mintOk(raw))return say(env,chat,'Bitte eine gültige Solana-Tokenadresse senden.');
+    if(!draft||now()-draft.updated_at>1800){
+      if(draft)await env.DB.prepare('DELETE FROM draft_state WHERE user_id=?').bind(String(msg.from.id)).run();
+      // Never silently ignore a submitted mint when a challenge draft has expired.
+      if(mintOk(raw))return say(env,chat,'Your challenge setup has expired or is no longer active. Send /new to start again.');
+      return;
+    }
+    if(!mintOk(raw))return say(env,chat,'Please send a valid Solana token address.');
     if(draft.step==='own'){
       await env.DB.prepare(`UPDATE draft_state SET step='opponent',own_mint=?,updated_at=? WHERE user_id=?`).bind(raw,now(),String(msg.from.id)).run();
-      return say(env,chat,'Jetzt die <b>Tokenadresse des Gegners</b> senden.');
+      return say(env,chat,'Now send the <b>opponent token mint address</b>.');
     }
     await env.DB.prepare('DELETE FROM draft_state WHERE user_id=?').bind(String(msg.from.id)).run();
     return createFight(env,msg.from.id,draft.own_mint,raw,chat);
@@ -317,6 +322,23 @@ async function tick(env){
 }
 // Register the Telegram webhook from inside Cloudflare. Secrets never pass through a browser URL.
 // The fingerprint makes registration idempotent and reconfigures Telegram if secrets change.
+async function handleUpdateWithFeedback(env,update){
+  try{
+    await onUpdate(env,update);
+  }catch(error){
+    const errorId=crypto.randomUUID().slice(0,8);
+    console.error('webhook update failure',errorId,errString(error));
+    const chat=update?.callback_query?.message?.chat?.id ?? update?.message?.chat?.id;
+    if(chat!=null){
+      try{
+        await say(env,chat,`⚠️ Something went wrong while processing your request. Please retry. If it persists, report error ${errorId}.`);
+      }catch(replyError){
+        console.error('webhook error response failed',errorId,errString(replyError));
+      }
+    }
+  }
+}
+
 async function ensureTelegramWebhook(env){
   if(!env.TELEGRAM_BOT_TOKEN||!env.TELEGRAM_WEBHOOK_SECRET||!env.WEBHOOK_URL){
     throw new Error('Telegram setup: Cloudflare secrets or WEBHOOK_URL missing');
@@ -348,11 +370,11 @@ async function ensureTelegramWebhook(env){
 export default {
   async fetch(request,env,ctx){
     const url=new URL(request.url);
-    if(url.pathname==='/health'&&request.method==='GET')return Response.json({status:'ok',app:'ASTY Token Fight',version:'0.2.2'});
+    if(url.pathname==='/health'&&request.method==='GET')return Response.json({status:'ok',app:'ASTY Token Fight',version:'0.2.3'});
     if(url.pathname!=='/telegram'||request.method!=='POST')return new Response('Not Found',{status:404});
     if(!env.TELEGRAM_WEBHOOK_SECRET||request.headers.get('X-Telegram-Bot-Api-Secret-Token')!==env.TELEGRAM_WEBHOOK_SECRET)return new Response('Unauthorized',{status:401});
     let update;try{update=await request.json();}catch{return new Response('Bad JSON',{status:400});}
-    ctx.waitUntil(onUpdate(env,update).catch(e=>console.error('webhook',errString(e))));
+    ctx.waitUntil(handleUpdateWithFeedback(env,update));
     return new Response('OK');
   },
   async scheduled(_event,env,ctx){
