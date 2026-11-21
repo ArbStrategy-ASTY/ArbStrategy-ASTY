@@ -87,7 +87,7 @@ export function fightCardSvg(a,b,logoA=null,logoB=null){
   ${vectorText('$'+left,282,503,{pixel:10,color:'#ffffff',tracking:3,align:'middle',maxWidth:430})}
   ${vectorText('$'+right,918,503,{pixel:10,color:'#ffffff',tracking:3,align:'middle',maxWidth:430})}
   <path d="M505 579H695" stroke="#8259bf" stroke-width="2" opacity=".8"/>
-  ${vectorText('50% VOTES - 50% PRICE',600,589,{pixel:4,color:'#d0bceb',tracking:2,align:'middle',maxWidth:610})}
+  ${vectorText('50% VOTES - 50% PRICE CHANGE',600,589,{pixel:4,color:'#d0bceb',tracking:2,align:'middle',maxWidth:610})}
   <path d="M232 622H968" stroke="#61409d" stroke-width="1" opacity=".8"/>
   ${vectorText('POWERED BY ASTY - ARBSTRATEGY.NET',600,632,{pixel:4,color:'#cbb0ff',tracking:2,align:'middle',maxWidth:900})}
   </svg>`;
