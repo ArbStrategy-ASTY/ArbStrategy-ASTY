@@ -1,6 +1,6 @@
 {
   "name": "asty-token-fight",
-  "version": "0.8.2",
+  "version": "0.8.3",
   "private": true,
   "type": "module",
   "description": "Telegram Solana community battles powered by ASTY",
