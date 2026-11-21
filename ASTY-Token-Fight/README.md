@@ -1,8 +1,6 @@
-# 🥊 ASTY Token Fight – MVP v0.2.1 (Birdeye)
+# 🥊 ASTY Token Fight – Telegram Bot v0.4.0 (Birdeye)
 
-**Status: technische Testversion – noch nicht live.**
-
-Der Code baut auf der bereitgestellten v0.1 auf. Er ist **nicht** bei Cloudflare deployt, hat **keinen echten Telegram-/Jupiter-End-to-End-Test** durchlaufen und hat euer bestehendes GitHub-Repository nicht verändert. Die bestehende ASTY-Website bleibt unverändert.
+**Status: private Beta / laufende Tests.** Der Bot wurde in früheren Versionen auf Cloudflare deployed und mit ASTY-vs.-ARBX-Gruppen getestet. Die neuen Menüs und Website-Funktionen von v0.4.0 sind im GitHub-Code implementiert, aber müssen nach Cloudflare-Deployment noch in Telegram geprüft werden. Alle Änderungen bleiben auf den Ordner `ASTY-Token-Fight/` beschränkt.
 
 ## Was neu ist in 0.2?
 
@@ -163,3 +161,37 @@ Während eines aktiven Fights **postet der Bot jetzt ungefähr alle 10 Minuten e
 - The challenge creator can end an active test fight with `/stop FIGHT_ID` in the private bot chat. This marks the fight as `cancelled`, removes both active token locks, disables voting on the latest posts, and sends a stopped notice to linked groups. No winner is declared; the cancelled battle is not added to the Hall of Fame. `/cancel` still only cancels the interactive draft wizard.
 - After 30 days, individual votes of stopped fights are also deleted.
 - Cloudflare health version: `0.3.0`. Confirm deployment first before attempting `/stop`.
+
+
+## Button-Menüs und Projekt-Websites (v0.4.0)
+
+Die private Bot-Startseite (`/start` oder `/menu`) zeigt vollständig bedienbare Inline-Buttons für:
+- **New Fight**: eigenes bereits verknüpftes Projekt wählen, dann einen registrierten Gegner wählen, Challenge erstellen; für bereits registrierte Projekte ist keine Mint-Eingabe mehr nötig.
+- **My Projects**: verknüpfte Projekte wählen, Webseite ansehen/bearbeiten oder Challenge starten.
+- **Active Fights**: Status anschauen und eigene aktive Fights per Bestätigungsbutton beenden.
+- **Hall of Fame**: vergangene Kämpfe und deren Details auswählen.
+- **Project Websites**: Website für ein Projekt einmalig einfügen (HTTPS) und später per Button bearbeiten oder löschen.
+- **Help**: erklärt die Funktionen und listet die verfügbaren Befehle, einschließlich `/link`, `/unlink`, `/stop` und `/withdraw`.
+
+In einer Telegram-Gruppe zeigt `/start` die Buttons **Link Project Token**, **Unlink Project Token**, **Help** und **Open Fight Bot**. Die Verknüpfung über Buttons erfordert nur, dass der Gruppenadmin die unbekannte Solana-Tokenadresse einmalig als Antwort auf die Nachricht des Bots einfügt (Telegram ForceReply). Bereits registrierte Projekte sind danach ohne Texteingabe auswählbar. Manuelle Gruppenbefehle (`/link MINT`) bleiben kompatibel.
+
+### Website-Funktion und Werbung
+
+- Website pro Token dauerhaft in D1-Tabelle `project_websites` gespeichert; alle Rematches greifen auf dieselbe URL zu.
+- Die Website des Tokens darf nur ein Telegram-Admin der **zuerst für diesen Token registrierten Gruppe** verwalten. Die Zugehörigkeit wird beim Speichern live über Telegram geprüft. **Dies ist kein kryptografischer Nachweis von Token-Eigentum.**
+- Nur öffentliche HTTPS-Domains akzeptieren; IP-Adressen, lokale Hostnamen, fremde Protokolle, URLs mit Zugangsdaten, nicht-HTTPS und zu lange URLs ablehnen. Maximale Länge 160 Zeichen.
+- Website-Domains erscheinen als klickbare Zeilen `🌐 $TOKEN: example.org` in den Battle-Captions und relevanten Benachrichtigungen. Zusätzlich werden direkte Website-Buttons unter den Abstimmungsbuttons angezeigt. Existiert noch keine Website, wird kein Link erfunden.
+- URLs sind **von Gruppenadmins eingereichte Links und nicht von ASTY verifiziert**.
+- Bestehende D1-Tabellen und Gruppenverknüpfungen bleiben erhalten: `project_websites` wird bei der nächsten Anfrage bzw. Cron-Ausführung mit `CREATE TABLE IF NOT EXISTS` automatisch angelegt.
+- Das Telegram-Befehlsmenü wird nach Deployment einmalig automatisch über `setMyCommands` aktualisiert; es sind keine neuen Secrets notwendig.
+
+### Testfolge für v0.4.0
+
+1. Im Cloudflare-Worker `/health` kontrollieren: `0.4.0`.
+2. Privat `/start` öffnen: alle sechs Menüpunkte müssen als Buttons sichtbar sein.
+3. `My Projects` oder `Project Websites` wählen; beide Testprojekte ASTY und ARBX sollten auswählbar sein, wenn sie vorher durch denselben Telegram-Admin verknüpft wurden.
+4. Für beide Projekte eine Website speichern; anschließend `New Fight` → ASTY → ARBX über Buttons wählen.
+5. Challenge per vorhandenem Deep-Link annehmen; beide Gruppen müssen die klickbaren Websites und Voting-Buttons sehen.
+6. Updates im 10-Minuten-Abstand, `/help`, Hall of Fame und Stop-Bestätigung prüfen.
+
+Das Menü ersetzt weder die einmalige Eingabe einer neuen Mint-Adresse beim ersten Linking noch das einmalige Einfügen einer vom Admin gewählten Website-URL.
