@@ -831,12 +831,22 @@ async function vote(env,q,id,side){
   const newVote=changed(r), message=`🔥 New vote for ${selected} 🔥`;
   // Acknowledge Telegram's tap promptly; the public post is a separate group message.
   await telegram(env,'answerCallbackQuery',{callback_query_id:q.id,text:newVote?message:'You have already voted or this fight has ended.',show_alert:false});
-  if(newVote&&q.message?.chat?.id!=null){
+  if(newVote){
+    // Announce each newly counted vote in BOTH project communities, concurrently.
+    // Include chats from existing fight posts if a group was unlinked mid-fight.
     try{
-      await say(env,q.message.chat.id,message);
+      const chats=await env.DB.prepare(`SELECT DISTINCT chat_id FROM project_groups WHERE mint IN (?,?)
+        UNION SELECT DISTINCT chat_id FROM group_messages WHERE fight_id=?`)
+        .bind(f.mint_a,f.mint_b,id).all();
+      const targets=(chats.results||[]).map(row=>row.chat_id).filter(chatId=>chatId!=null);
+      const deliveries=await Promise.allSettled(targets.map(chatId=>say(env,chatId,message)));
+      deliveries.forEach((delivery,i)=>{
+        if(delivery.status==='rejected')console.error('vote announcement failed',id,targets[i],errString(delivery.reason));
+      });
+      if(!targets.length)console.error('vote announcement: no project groups found',id);
     }catch(e){
-      // Never undo a valid vote when the group has disabled new bot messages.
-      console.error('vote announcement',id,q.message.chat.id,errString(e));
+      // The vote remains valid even when Telegram or group discovery is temporarily down.
+      console.error('vote announcement lookup',id,errString(e));
     }
   }
 }
@@ -1066,7 +1076,7 @@ export default {
           if(row.key==='fight_video_file_id')videoConfigured=!!row.value;
         }
       }catch(e){console.error('health database query',errString(e));}
-      return Response.json({status:'ok',app:'ASTY Token Fight',version:'0.7.1',
+      return Response.json({status:'ok',app:'ASTY Token Fight',version:'0.7.2',
         cron_last_started:started,cron_last_completed:completed,video_configured:videoConfigured});
     }
     if(url.pathname!=='/telegram'||request.method!=='POST')return new Response('Not Found',{status:404});
