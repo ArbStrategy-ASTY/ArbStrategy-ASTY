@@ -1,5 +1,6 @@
 import { calculateScore } from './scoring.mjs';
 import { fightImage } from './card.js';
+import { birdeyeTokenInfo, birdeyePairPrices, pause } from './birdeye.mjs';
 
 const DAY=86400;
 const PENDING_TTL=7*DAY;
@@ -35,20 +36,13 @@ function botLink(env,fightId){return `https://t.me/${env.BOT_USERNAME.replace('@
 async function tokenInfo(env,mint){
   const prev=await env.DB.prepare('SELECT * FROM projects WHERE mint=?').bind(mint).first();
   if(prev&&now()-prev.updated_at<DAY)return prev;
-  const res=await fetch(`https://api.jup.ag/tokens/v2/search?query=${encodeURIComponent(mint)}`,{headers:{'x-api-key':env.JUPITER_API_KEY},signal:AbortSignal.timeout(9000)});
-  if(!res.ok)throw new Error(`Jupiter token lookup: HTTP ${res.status}`);
-  const tokens=await res.json();
-  const item=(Array.isArray(tokens)?tokens:[]).find(t=>t.id===mint);
-  if(!item)throw new Error('Tokenadresse wurde bei Jupiter nicht gefunden.');
-  const p={mint,name:String(item.name||mint.slice(0,8)),symbol:String(item.symbol||'?'),logo_url:typeof item.icon==='string'?item.icon:null,updated_at:now()};
+  const data=await birdeyeTokenInfo(env,mint);
+  const p={...data,updated_at:now()};
   await env.DB.prepare(`INSERT INTO projects(mint,name,symbol,logo_url,updated_at) VALUES(?,?,?,?,?) ON CONFLICT(mint) DO UPDATE SET name=excluded.name,symbol=excluded.symbol,logo_url=excluded.logo_url,updated_at=excluded.updated_at`).bind(p.mint,p.name,p.symbol,p.logo_url,p.updated_at).run();
   return p;
 }
 async function prices(env,a,b){
-  const res=await fetch(`https://api.jup.ag/price/v3?ids=${encodeURIComponent(a+','+b)}`,{headers:{'x-api-key':env.JUPITER_API_KEY},signal:AbortSignal.timeout(9000)});
-  if(!res.ok)throw new Error(`Jupiter price: HTTP ${res.status}`);
-  const data=await res.json(),x=Number(data?.[a]?.usdPrice),y=Number(data?.[b]?.usdPrice);
-  return [x>0&&Number.isFinite(x)?x:null,y>0&&Number.isFinite(y)?y:null];
+  return birdeyePairPrices(env,a,b);
 }
 async function stats(env,id){
   const r=await env.DB.prepare(`SELECT COUNT(*) n,COALESCE(SUM(CASE WHEN side='a' THEN 1 ELSE 0 END),0) a FROM votes WHERE fight_id=?`).bind(id).first();
@@ -145,7 +139,7 @@ async function createFight(env,user,a,b,chat){
   if(Number(pending?.n||0)>=3)return say(env,chat,'Maximal drei offene Herausforderungen gleichzeitig.');
   const busy=await env.DB.prepare(`SELECT COUNT(*) n FROM active_token_locks WHERE mint IN (?,?)`).bind(a,b).first();
   if(Number(busy?.n||0)>0)return say(env,chat,'Mindestens einer der Tokens kämpft bereits in einem aktiven Fight. Nach dessen Ende kannst du erneut herausfordern.');
-  try{await Promise.all([tokenInfo(env,a),tokenInfo(env,b)]);}catch(e){return say(env,chat,`Tokenprüfung fehlgeschlagen: ${html(errString(e))}`);}
+  try{await tokenInfo(env,a);await pause(1200);await tokenInfo(env,b);}catch(e){return say(env,chat,`Tokenprüfung fehlgeschlagen: ${html(errString(e))}`);}
   const id=eid();
   try{await env.DB.prepare(`INSERT INTO fights(id,mint_a,mint_b,creator_id,status,created_at) VALUES(?,?,?,?,'pending',?)`).bind(id,a,b,String(user),now()).run();}
   catch(e){return say(env,chat,'Für dieses Token-Paar existiert bereits eine offene oder aktive Herausforderung. Wiederholung erst nach deren Abschluss möglich.');}
@@ -183,7 +177,7 @@ async function accept(env,query,id,decline=false){
   }
   let p;
   try{p=await prices(env,f.mint_a,f.mint_b);}catch(e){return say(env,chat,'Der Start ist derzeit wegen der Preisquelle nicht möglich: '+html(errString(e)));}
-  if(!p[0]||!p[1])return say(env,chat,'Für mindestens einen Token fehlt gerade ein Jupiter-Preis. Kein Fight gestartet.');
+  if(!p[0]||!p[1])return say(env,chat,'Für mindestens einen Token fehlt gerade ein Birdeye-Preis. Kein Fight gestartet.');
   const t=now();
   try{
     // D1 batch is transactional: either BOTH token locks + status change succeed or none.
@@ -324,7 +318,7 @@ async function tick(env){
 export default {
   async fetch(request,env,ctx){
     const url=new URL(request.url);
-    if(url.pathname==='/health'&&request.method==='GET')return Response.json({status:'ok',app:'ASTY Token Fight',version:'0.2'});
+    if(url.pathname==='/health'&&request.method==='GET')return Response.json({status:'ok',app:'ASTY Token Fight',version:'0.2.1'});
     if(url.pathname!=='/telegram'||request.method!=='POST')return new Response('Not Found',{status:404});
     if(!env.TELEGRAM_WEBHOOK_SECRET||request.headers.get('X-Telegram-Bot-Api-Secret-Token')!==env.TELEGRAM_WEBHOOK_SECRET)return new Response('Unauthorized',{status:401});
     let update;try{update=await request.json();}catch{return new Response('Bad JSON',{status:400});}
