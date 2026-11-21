@@ -40,6 +40,30 @@ test('approved token logo downloaded once then permanently reused',async()=>{
     assert.equal(requests,1);
   }finally{globalThis.fetch=original;}
 });
+test('GeckoTerminal exact-mint metadata supplies ARBX when Birdeye has no image',async()=>{
+  const original=globalThis.fetch;
+  const image=jpeg();
+  let fetchedLogo=0;
+  globalThis.fetch=async url=>{
+    const u=String(url);
+    if(u.startsWith('https://tokens.jup.ag/'))return {ok:false,status:404};
+    if(u.startsWith('https://api.dexscreener.com/'))return {ok:true,json:async()=>[]};
+    if(u.startsWith('https://api.geckoterminal.com/'))return {ok:true,json:async()=>({
+      data:{id:'solana_'+ARBX,attributes:{image_url:'https://coin-images.coingecko.com/test/arbx.jpg'}}
+    })};
+    assert.equal(u,'https://coin-images.coingecko.com/test/arbx.jpg');
+    fetchedLogo++;
+    return {ok:true,status:200,headers:new Headers({'content-length':String(image.length)}),arrayBuffer:async()=>image.buffer};
+  };
+  try{
+    const env=db();
+    const logo=await ensureTokenLogo(env,{mint:ARBX,symbol:'ARBX',logo_url:null});
+    assert.ok(logo?.startsWith('data:image/jpeg;base64,'));
+    assert.equal(fetchedLogo,1);
+    assert.equal(env.rows.get(ARBX).source,'metadata');
+  }finally{globalThis.fetch=original;}
+});
+
 test('uploaded official photo replaces metadata and becomes authoritative',async()=>{
   const env=db();await ensureLogoTable(env);
   const data=await saveUploadedLogo(env,ARBX,42,jpeg());
