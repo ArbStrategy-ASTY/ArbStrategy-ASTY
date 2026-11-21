@@ -1,4 +1,4 @@
-# 🥊 ASTY Token Fight – Telegram Bot v0.7.0 (Birdeye)
+# 🥊 ASTY Token Fight – Telegram Bot v0.7.1 (Birdeye)
 
 **Status: private Beta / laufende Tests.** Der Bot wurde in früheren Versionen auf Cloudflare deployed und mit ASTY-vs.-ARBX-Gruppen getestet. Die neuen Menüs, Website-Buttons, Vote-Benachrichtigungen und das Grafikdesign von v0.4.2 sind im GitHub-Code implementiert, aber müssen nach Cloudflare-Deployment noch in Telegram geprüft werden. Alle Änderungen bleiben auf den Ordner `ASTY-Token-Fight/` beschränkt.
 
@@ -266,3 +266,11 @@ Security: uploading/replacing the global video is restricted to the ASTY project
 - In English under `/help` (in a group or private bot chat), users get an overview and interactive sections: How It Works, Scoring Rules, Fight Results and Commands. The full price formula, example, winner announcement, website buttons, one-vote rule, fixed video and ten-minute posts are explained.
 
 Deployment check: after Cloudflare Builds publishes the changes, `/health` must show version `0.7.0`. Do not clear or reupload the stored D1 video.
+
+
+## Telegram caption and help text v0.7.1
+
+- Live battle caption: `🥊 LIVE TOKEN FIGHT - ID: ...`, blank line, `⚡ $TOKEN_A VS $TOKEN_B ⚡`, blank line, votes/price change/score/countdown on separate lines, blank line, italic `...Stats update every 10 minutes...`, blank line, bold `Powered by ASTY - ArbStrategy.net` with a hyperlink on the domain to `https://arbstrategy.net/`.
+- For ended/unresolved/stopped fights the appropriate status heading remains, and the stats-update line is shown **only while active**.
+- Removed from both `/help` overview and How It Works: the explanatory video-lock wording, the phrase about websites 'never repeated in the battle text', and the description of 'the same fixed ASTY video'.
+- Website buttons stay under the fight message, not in the caption. No changes to the stored MP4, scores, D1 records, or current fights.
