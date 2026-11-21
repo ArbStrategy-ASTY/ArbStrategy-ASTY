@@ -34,6 +34,18 @@ CREATE TABLE IF NOT EXISTS project_groups (
  PRIMARY KEY(mint, chat_id)
 );
 CREATE INDEX IF NOT EXISTS idx_project_groups_mint ON project_groups(mint);
+-- Optional, GROUP-SCOPED website overrides. A linked group's current admin can
+-- manage only this row; other groups keep the canonical token website untouched.
+CREATE TABLE IF NOT EXISTS group_websites (
+ mint TEXT NOT NULL,
+ chat_id TEXT NOT NULL,
+ website_url TEXT NOT NULL,
+ updated_by TEXT NOT NULL,
+ updated_at INTEGER NOT NULL,
+ PRIMARY KEY(mint,chat_id),
+ FOREIGN KEY(mint) REFERENCES projects(mint)
+);
+CREATE INDEX IF NOT EXISTS idx_group_websites_chat ON group_websites(chat_id);
 CREATE TABLE IF NOT EXISTS draft_state (
  user_id TEXT PRIMARY KEY,
  step TEXT NOT NULL,
