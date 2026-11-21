@@ -204,6 +204,7 @@ function groupButtons(env){
   return keyboard([
     [{text:'🔗 Link Project Token',callback_data:'group:link'}],
     [{text:'🔓 Unlink Project Token',callback_data:'group:unlink'}],
+    [{text:'🖼️ Project Logos',callback_data:'group:logos'}],
     [{text:'❓ Help',callback_data:'menu:help'}],
     [{text:'🥊 Open Fight Bot',url:`https://t.me/${env.BOT_USERNAME.replace('@','')}`}]
   ]);
@@ -371,6 +372,13 @@ async function groupCallback(env,q){
   if(cmd==='group:link'){
     if(!await tgAdmin(env,chat,user))return say(env,chat,'Only a group administrator can link a token.');
     return say(env,chat,'🔗 Reply with the Solana token mint address for this Telegram group:',{reply_markup:{force_reply:true,input_field_placeholder:'Paste token mint address'}});
+  }
+  if(cmd==='group:logos'){
+    if(!await tgAdmin(env,chat,user))return say(env,chat,'Only a group administrator can upload project logos.');
+    const linked=await env.DB.prepare('SELECT pg.mint,p.symbol FROM project_groups pg JOIN projects p ON p.mint=pg.mint WHERE pg.chat_id=? ORDER BY pg.registered_at DESC LIMIT 20').bind(String(chat)).all();
+    const rows=(linked.results||[]).map(p=>[{text:'📷 Upload '+tokenLabel(p.symbol)+' Logo',url:'https://t.me/'+env.BOT_USERNAME.replace('@','')+'?start=logo_'+p.mint}]);
+    rows.push([{text:'↩️ Group Menu',callback_data:'menu:group'}]);
+    return screen(env,chat,linked.results?.length?'🖼️ <b>PROJECT LOGOS</b>\n\nSelect your token to upload its official logo in the private bot chat.':'No linked projects found in this group.',keyboard(rows),q);
   }
   if(cmd==='menu:help')return helpScreen(env,chat,null,true);
   if(cmd==='group:unlink'){
