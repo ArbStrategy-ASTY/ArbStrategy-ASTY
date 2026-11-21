@@ -1,4 +1,4 @@
-# 🥊 ASTY Token Fight – Telegram Bot v0.7.1 (Birdeye)
+# 🥊 ASTY Token Fight – Telegram Bot v0.7.2 (Birdeye)
 
 **Status: private Beta / laufende Tests.** Der Bot wurde in früheren Versionen auf Cloudflare deployed und mit ASTY-vs.-ARBX-Gruppen getestet. Die neuen Menüs, Website-Buttons, Vote-Benachrichtigungen und das Grafikdesign von v0.4.2 sind im GitHub-Code implementiert, aber müssen nach Cloudflare-Deployment noch in Telegram geprüft werden. Alle Änderungen bleiben auf den Ordner `ASTY-Token-Fight/` beschränkt.
 
@@ -274,3 +274,8 @@ Deployment check: after Cloudflare Builds publishes the changes, `/health` must 
 - For ended/unresolved/stopped fights the appropriate status heading remains, and the stats-update line is shown **only while active**.
 - Removed from both `/help` overview and How It Works: the explanatory video-lock wording, the phrase about websites 'never repeated in the battle text', and the description of 'the same fixed ASTY video'.
 - Website buttons stay under the fight message, not in the caption. No changes to the stored MP4, scores, D1 records, or current fights.
+
+
+## Vote notifications in both fight communities (v0.7.2)
+
+For each successfully counted vote the bot now sends `🔥 New vote for $TOKEN 🔥` **concurrently** to both project groups via `Promise.allSettled`. Group IDs are drawn from currently linked project groups plus the group's recorded fight posts, deduplicated using SQL `UNION`. A second vote by the same Telegram user still produces no notification. The vote acknowledgement in Telegram remains immediate, and failure to post to one group does not prevent delivery to the other group or undo the valid vote. The automatic 10-minute status/video posts remain unchanged.
