@@ -1,4 +1,4 @@
-# 🥊 ASTY Token Fight – Telegram Bot v0.8.0 (Birdeye)
+# 🥊 ASTY Token Fight – Telegram Bot v0.8.1 (Birdeye)
 
 **Status: private Beta / laufende Tests.** Der Bot wurde in früheren Versionen auf Cloudflare deployed und mit ASTY-vs.-ARBX-Gruppen getestet. Die neuen Menüs, Website-Buttons, Vote-Benachrichtigungen und das Grafikdesign von v0.4.2 sind im GitHub-Code implementiert, aber müssen nach Cloudflare-Deployment noch in Telegram geprüft werden. Alle Änderungen bleiben auf den Ordner `ASTY-Token-Fight/` beschränkt.
 
@@ -302,3 +302,14 @@ Der Bot braucht die Möglichkeit, Textmeldungen für Votes, 10-Minuten-Updates u
 - Automated countdown boundary tests cover 15m/10m/5m windows, zero/negative remainder and invalid values. Mocked reminder and ARBX-live-website flows were checked during development.
 
 Verification: `/health` should report `0.8.0` after Cloudflare deployment. Test ARBX via `/start` → Project Websites → ARBX → Set / Edit Website. If Telegram still denies the change, verify admin membership in the earliest linked ARBX group and make the bot admin; Cloudflare logs can pinpoint any remaining API permission error.
+
+## Project website access and simplified menu (v0.8.1)
+
+- Removed the redundant **Fight Video** button from the private main menu, and removed `/video` from the public Help/Telegram command menu. The previously uploaded, permanently locked MP4 and all existing battle media remain unchanged; no D1 video value is modified. Older `/video` URLs still open a read-only preview.
+- Added **Manage Project Website** to the Telegram group menu (`/start`). Administrators can select the linked token and open its website management privately using the bot's `?start=website_MINT` deep link.
+- Private **Project Websites** now also shows opponents encountered in the user's own fights, clearly marked **admin required**. It displays existing project website details read-only and describes the required permission instead of silently hiding the menu item.
+- Website modifications remain restricted to a current Telegram admin of the **original, earliest-linked project group** for that mint. An admin of another newly-linked group cannot impersonate the token project or replace its website. Bot admin rights in the original group are recommended for reliable Telegram `getChatMember` calls. No private group title is disclosed to unauthorized viewers.
+- The active-fight restriction is not involved in website editing. Authorized admins can add/edit the website at any time; latest battle message buttons in both groups are updated immediately where Telegram allows it, and future posts use the saved link.
+- If an ASTY-only admin sees **$ARBX (admin required)**, they cannot change ARBX's promoted website themselves. A real admin of ARBX's original group must do it from that group's bot menu. If the user actually is that admin but the bot does not recognize them, check that the bot is itself a group admin and Telegram's getChatMember permissions.
+
+Deployment version shown in `/health`: `0.8.1`.
