@@ -245,6 +245,7 @@ function helpKeyboard(isGroup=false){
   const rows=[
     [{text:'🥊 How It Works',callback_data:'help:setup'},{text:'⚖️ Scoring Rules',callback_data:'help:rules'}],
     [{text:'🏆 Fight Results',callback_data:'help:ending'},{text:'📋 Commands',callback_data:'help:commands'}],
+    [{text:'🔐 Bot Permissions',callback_data:'help:permissions'}],
     [{text:'🏠 Back to Menu',callback_data:isGroup?'menu:group':'menu:home'}]
   ];
   return keyboard(rows);
@@ -264,6 +265,9 @@ async function helpScreen(env,chat,q=null,isGroup=false){
     '',
     'Project websites appear as optional buttons below battle posts.',
     '',
+    '🔐 <b>GROUP PERMISSIONS</b>',
+    'For reliable group-admin verification, make the bot an administrator in both project groups and allow it to post text messages and videos.',
+    '',
     'Select a topic below to see the details.'
   ];
   return screen(env,chat,help.join('\n'),helpKeyboard(isGroup),q);
@@ -271,11 +275,35 @@ async function helpScreen(env,chat,q=null,isGroup=false){
 async function helpSection(env,chat,section,q=null,isGroup=false){
   let lines;
   switch(section){
+    case 'permissions':
+      lines=[
+        '🔐 <b>BOT PERMISSIONS & SETUP</b>',
+        '',
+        'For reliable operation, add @ASTY_TokenFightBot to BOTH participating project groups and promote it to group administrator.',
+        '',
+        '<b>Why admin?</b>',
+        'The bot checks whether the people linking tokens and accepting challenges are group admins. Telegram only guarantees the required getChatMember checks when the bot is a chat administrator.',
+        '',
+        '<b>What it must be allowed to do</b>',
+        '• Send text messages (votes, updates and winner announcements).',
+        '• Send videos (new battle posts every 10 minutes).',
+        '• Edit its own battle messages to show the final result.',
+        '',
+        '<b>Not needed</b>',
+        'Deleting messages, pinning posts, banning/restricting members, adding admins or changing group information.',
+        '',
+        '<b>Project setup</b>',
+        'A human group administrator must link the project token using /link MINT or the group menu. The bot does not need permission to pin the posts.',
+        '',
+        'If the bot is only a regular member and can post messages and videos, basic battle posts may still work, but group-admin verification may fail.',
+        '',
+        'Check this setup in BOTH groups before starting a challenge.'
+      ];break;
     case 'setup':
       lines=[
         '🥊 <b>HOW ASTY TOKEN FIGHT WORKS</b>',
         '',
-        '1. Add the bot to your Telegram project group. A group admin links its Solana token once.',
+        '1. Add the bot to both project groups. For reliable admin checks, promote it to administrator and allow text/video posts. A group admin then links its token once.',
         '2. A project admin may add the official website. Websites are shown as buttons.',
         '3. In the private bot chat, select New Fight → your registered project → an opponent.',
         '4. The opposing project admin accepts the challenge.',
@@ -338,6 +366,8 @@ async function helpSection(env,chat,section,q=null,isGroup=false){
         '<code>/stop ID</code> — Stop active fight (creator only)',
         '<code>/cancel</code> — Cancel current input',
         '<code>/help</code> — Help & rules',
+        '',
+        '🔐 <b>Permissions:</b> Promote the bot to administrator in both groups for reliable admin verification. Allow text and video posts.',
         '',
         '<b>Inside project groups</b>',
         '<code>/start</code> — Group menu',
@@ -1076,7 +1106,7 @@ export default {
           if(row.key==='fight_video_file_id')videoConfigured=!!row.value;
         }
       }catch(e){console.error('health database query',errString(e));}
-      return Response.json({status:'ok',app:'ASTY Token Fight',version:'0.7.2',
+      return Response.json({status:'ok',app:'ASTY Token Fight',version:'0.7.3',
         cron_last_started:started,cron_last_completed:completed,video_configured:videoConfigured});
     }
     if(url.pathname!=='/telegram'||request.method!=='POST')return new Response('Not Found',{status:404});
