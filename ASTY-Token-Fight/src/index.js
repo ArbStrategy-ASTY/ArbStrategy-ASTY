@@ -568,16 +568,25 @@ async function getFightVideo(env){
   return r?.value||null;
 }
 
+async function getVideoOwner(env){
+  const owner=await env.DB.prepare("SELECT value FROM worker_settings WHERE key='fight_video_owner_id'").first();
+  return owner?.value||null;
+}
 async function isVideoManager(env,user){
+  const owner=await getVideoOwner(env);
+  // Once the first approved uploader succeeds, that Telegram user ID is locked.
+  // Neither another project/group admin nor a later change to the environment can replace it.
+  if(owner)return String(user)===String(owner);
+  // Before first upload, a configured explicit owner has priority.
   if(env.FIGHT_VIDEO_ADMIN_ID)return String(user)===String(env.FIGHT_VIDEO_ADMIN_ID);
-  // Fallback only to the original ASTY group registrar (not arbitrary linked token holders).
+  // Backwards-compatible first-upload bootstrap for the original ASTY group registrar.
   const mint='ASTYqeaoK83Zs1pTFEXZUB6BM8cG8YLTsN852NUkt7ZR';
   const origin=await env.DB.prepare('SELECT chat_id,registered_by FROM project_groups WHERE mint=? ORDER BY registered_at ASC,chat_id ASC LIMIT 1').bind(mint).first();
   return !!origin&&String(origin.registered_by)===String(user)&&await tgAdmin(env,origin.chat_id,user);
 }
 
 async function videoScreen(env,chat,user,q=null){
-  if(!(await isVideoManager(env,user)))return screen(env,chat,'🎬 <b>FIGHT VIDEO</b>\n\nOnly the original ASTY group registrant may replace the global battle video.',keyboard([[{text:'🏠 Main Menu',callback_data:'menu:home'}]]),q);
+  if(!(await isVideoManager(env,user)))return screen(env,chat,'🎬 <b>FIGHT VIDEO</b>\n\nOnly the original video owner can replace the global battle video.',keyboard([[{text:'🏠 Main Menu',callback_data:'menu:home'}]]),q);
   const fileId=await getFightVideo(env);
   const lines=[
     '🎬 <b>FIGHT VIDEO</b>','',
@@ -592,7 +601,7 @@ async function videoScreen(env,chat,user,q=null){
 }
 
 async function startVideoUpload(env,chat,user,q=null){
-  if(!(await isVideoManager(env,user)))return say(env,chat,'Only the designated ASTY video manager can upload the global battle video.');
+  if(!(await isVideoManager(env,user)))return say(env,chat,'Only the original video owner, or the designated initial uploader, may upload the battle video.');
   await env.DB.prepare("INSERT INTO draft_state(user_id,step,own_mint,updated_at) VALUES(?,'video',NULL,?) ON CONFLICT(user_id) DO UPDATE SET step='video',own_mint=NULL,updated_at=excluded.updated_at")
     .bind(String(user),now()).run();
   return screen(env,chat,'🎬 <b>UPLOAD FIGHT VIDEO</b>\n\nSend the MP4 video as a Telegram video in this private chat (not a link).\n\nThe bot will verify that Telegram can resend it, then save its reusable file ID for all fights. Send /cancel to abort.',keyboard([[{text:'↩️ Fight Video',callback_data:'menu:video'}],[{text:'🏠 Menu',callback_data:'menu:home'}]]),q);
@@ -607,7 +616,7 @@ async function receiveFightVideo(env,msg){
     await env.DB.prepare('DELETE FROM draft_state WHERE user_id=?').bind(String(user)).run();
     return say(env,chat,'Video upload session expired. Open Fight Video and try again.');
   }
-  if(!(await isVideoManager(env,user)))return say(env,chat,'You are not allowed to replace the global battle video.');
+  if(!(await isVideoManager(env,user)))return say(env,chat,'Only the original video owner may replace this video.');
   const video=msg.video;
   if(Number(video.file_size||0)>50*1024*1024)return say(env,chat,'Please send a video under 50 MB.');
   if(video.mime_type&&video.mime_type!=='video/mp4')return say(env,chat,'Please send an MP4 video.');
@@ -617,8 +626,19 @@ async function receiveFightVideo(env,msg){
       caption:'🎬 ASTY Token Fight — fixed video preview',supports_streaming:true});
     const saved=preview?.video?.file_id||video.file_id;
     if(typeof saved!=='string'||!saved||saved.length>300)throw new Error('Telegram returned no usable video file ID');
-    await env.DB.prepare("INSERT INTO worker_settings(key,value,updated_at) VALUES(?,?,?) ON CONFLICT(key) DO UPDATE SET value=excluded.value,updated_at=excluded.updated_at")
-      .bind(fixedVideoKey(),saved,now()).run();
+    // A single D1 transaction claims the first uploader as permanent owner, then
+    // accepts the new video ONLY when its Telegram user ID matches that owner.
+    const committed=await env.DB.batch([
+      env.DB.prepare("INSERT OR IGNORE INTO worker_settings(key,value,updated_at) VALUES('fight_video_owner_id',?,?)")
+        .bind(String(user),now()),
+      env.DB.prepare(`INSERT INTO worker_settings(key,value,updated_at)
+        SELECT 'fight_video_file_id',?,?
+        WHERE EXISTS (SELECT 1 FROM worker_settings WHERE key='fight_video_owner_id' AND value=?)
+        ON CONFLICT(key) DO UPDATE SET value=excluded.value,updated_at=excluded.updated_at
+        WHERE EXISTS (SELECT 1 FROM worker_settings WHERE key='fight_video_owner_id' AND value=?)`)
+        .bind(saved,now(),String(user),String(user))
+    ]);
+    if(!changed(committed[1]))return say(env,chat,'⛔ Video locked. Only the original video owner can replace it.');
     await env.DB.prepare('DELETE FROM draft_state WHERE user_id=?').bind(String(user)).run();
     return say(env,chat,'✅ Your fixed video has been saved and tested. New fights and future 10-minute posts will use it.',{
       reply_markup:keyboard([[{text:'🥊 New Fight',callback_data:'menu:new'}],[{text:'🎬 Fight Video',callback_data:'menu:video'}]])
@@ -937,7 +957,7 @@ export default {
           if(row.key==='fight_video_file_id')videoConfigured=!!row.value;
         }
       }catch(e){console.error('health database query',errString(e));}
-      return Response.json({status:'ok',app:'ASTY Token Fight',version:'0.6.0',
+      return Response.json({status:'ok',app:'ASTY Token Fight',version:'0.6.1',
         cron_last_started:started,cron_last_completed:completed,video_configured:videoConfigured});
     }
     if(url.pathname!=='/telegram'||request.method!=='POST')return new Response('Not Found',{status:404});
