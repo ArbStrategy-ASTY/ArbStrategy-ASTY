@@ -1,4 +1,4 @@
-# 🥊 ASTY Token Fight – Telegram Bot v0.4.2 (Birdeye)
+# 🥊 ASTY Token Fight – Telegram Bot v0.5.0 (Birdeye)
 
 **Status: private Beta / laufende Tests.** Der Bot wurde in früheren Versionen auf Cloudflare deployed und mit ASTY-vs.-ARBX-Gruppen getestet. Die neuen Menüs, Website-Buttons, Vote-Benachrichtigungen und das Grafikdesign von v0.4.2 sind im GitHub-Code implementiert, aber müssen nach Cloudflare-Deployment noch in Telegram geprüft werden. Alle Änderungen bleiben auf den Ordner `ASTY-Token-Fight/` beschränkt.
 
@@ -206,3 +206,25 @@ Das Menü ersetzt weder die einmalige Eingabe einer neuen Mint-Adresse beim erst
 - Grafik vollständig vereinfacht: geteiltes dunkles Design, zwei große Tokenfelder und Logos, ein einziges VS, glatte Vektor-Schriftzüge statt Pixel-Schrift, ruhiges Branding. Die jeweils neu erzeugte Fight-Grafik wird nur **beim nächsten Fight** verwendet, nicht automatisch in laufenden Fights ersetzt.
 - Birdeye bleibt die Preisquelle. Für Tokenbilder versucht die Grafik zunächst den Birdeye-Logo-Link, danach bei ASTY das vorhandene ASTY-GitHub-Logo und bei Bedarf einen Bildlink aus öffentlichen DEX-Screener-Metadaten. Nur explizit zugelassene Bild-CDNs, keine beliebigen Hostnamen. Der Fallback bei fehlendem Bild nennt das tatsächliche Token-Ticker-Symbol, statt ein fremdes Logo zu erfinden.
 - Die Funktionen sind im Code strukturell getestet; die Live-Darstellung und Tokenlogos auf Telegram müssen weiter überprüft werden.
+
+## Logos zuverlässig in D1 speichern (v0.5.0)
+
+Ein frisches Tokenlogo wird beim Fight-Start nicht länger blind per URL eingebettet. Der Bot prüft beide Logos **vor der Annahme** der Challenge:
+
+1. Ist das Logo bereits in Cloudflare D1 (`project_logos`) gespeichert, wird diese Kopie benutzt – ohne fremden Bilder-Server abzufragen.
+2. Andernfalls prüft er zunächst die direkte Birdeye-Logo-URL und für ASTY das GitHub-Logo aus `assets/logo.png`.
+3. Falls diese nicht funktionieren, folgen Jupiter-/DEX-Screener-Metadaten für **dieselbe Mint-Adresse**. Damit werden nicht versehentlich Bilder des Gegen-Tokens eines Pools verwendet.
+4. Wenn keine gültige PNG-/JPEG-Datei verfügbar ist, wird der Fight **nicht gestartet**. Die Herausforderung bleibt offen und kann nach dem Einreichen des Logos erneut angenommen werden.
+5. Projektadmins öffnen **My Projects → Token → Upload Logo** oder **Token Logos**. Die offizielle Logo-Fotodatei wird über Telegram `getFile` entgegengenommen, geprüft und in der bestehenden D1-Datenbank gespeichert. Der einmalige Upload funktioniert direkt im Telegram-Chat ohne weitere Anwendungen. Adminrechte der zuerst verknüpften Projektgruppe sind erforderlich.
+6. Nach dem Speichern werden bei Rematches beide Bilder aus D1 geladen, nicht aus Birdeye oder DEX Screener. Logo-Updates werden von Projektadmins bewusst vorgenommen, automatische Metadaten dürfen sie nicht überschreiben.
+
+Technische Daten: `project_logos(mint,data_uri,source,updated_by,updated_at)`, max. 440 KB Rohbild (D1-String bleibt unter 2 MB). Unterstützt PNG und JPEG. Unsichere externe Logo-Hosts, ungeprüfte Redirects und Bildinhalte ohne PNG-/JPEG-Signatur werden abgelehnt. Keine neue Cloudflare-Komponente und keine zusätzlichen Secrets erforderlich.
+
+**Wichtig:** Automatischer Abruf kann bei fehlenden/defekten Metadaten scheitern. Daher lässt sich nicht garantieren, dass jedes Projekt ohne Mitwirkung ein Logo hat. Für **neu gestartete Fights** erzwingt der Bot aber, dass zwei gespeicherte gültige Logos vorliegen – ansonsten startet er nicht. Bereits laufende Fights behalten ihr einmal veröffentlichtes Telegram-Bild.
+
+### Test: ARBX-Logo
+- Nach dem Cloudflare-Deployment muss `/health` die Version `0.5.0` melden.
+- Privat `/start` → **My Projects** → **$ARBX** → **Upload Logo**.
+- Als Telegram-Foto das echte ARBX-Logo senden. Der Bot bestätigt, dass es gespeichert ist.
+- Mit **$ASTY** ebenso vorgehen, falls das Logo noch nicht im D1-Cache liegt (alternativ **Find Logo Automatically**).
+- Die ausstehende Herausforderung annehmen oder einen neuen Test-Fight starten. Beide Logos werden direkt aus D1 eingebettet und anschließend in den periodischen Telegram-Fight-Posts kopiert.
