@@ -1,4 +1,4 @@
-# 🥊 ASTY Token Fight – MVP v0.2
+# 🥊 ASTY Token Fight – MVP v0.2.1 (Birdeye)
 
 **Status: technische Testversion – noch nicht live.**
 
@@ -20,9 +20,9 @@ Der Code baut auf der bereitgestellten v0.1 auf. Er ist **nicht** bei Cloudflare
 
 ## Weiterhin enthalten
 
-- 24-Stunden-Fight: **50 % Community-Voting + 50 % Token-Kursentwicklung (Jupiter USD-Preis)**.
+- 24-Stunden-Fight: **50 % Community-Voting + 50 % Token-Kursentwicklung (Birdeye USD-Preis)**.
 - Ein Vote je Telegram-ID und Fight. Keine Wallet, kein Tokenkauf notwendig.
-- **Keine Mindestliquidität.** Token muss aber in Jupiter einen gültigen Preis liefern, sonst startet er nicht. Fehlt ein zeitnaher Endpreis, wird das Ergebnis `unresolved`, **ohne erfundenen Sieger**.
+- **Keine Mindestliquidität.** Token muss aber in Birdeye einen gültigen Preis liefern, sonst startet er nicht. Fehlt ein zeitnaher Endpreis, wird das Ergebnis `unresolved`, **ohne erfundenen Sieger**.
 - Automatisch generiertes PNG mit beiden Tokenlogos und ASTY-Branding für den Fightstart (SVG → PNG über `@cf-wasm/resvg`). Für fehlende Logos gibt es Ersatzsymbole. Scheitert das Rendering, geht eine Text-Battle-Anzeige raus.
 - Live-Battle-Text wird etwa alle zehn Minuten aktualisiert, das ursprüngliche Bild nicht jedes Mal neu generiert.
 
@@ -34,7 +34,7 @@ Dieses Projekt ist für den Unterordner `ASTY-Token-Fight/` in `ArbStrategy-ASTY
 
 1. Telegram-Bot über [@BotFather](https://t.me/BotFather) erstellen, Bot-Username und Bot-Token bereithalten.
 2. Cloudflare-Account mit Workers und D1 nutzen.
-3. Jupiter-API-Key besorgen (aktuellen Tarif und Kontingente prüfen; **kostenloser Betrieb ist nicht garantiert**).
+3. Birdeye-API-Key bereithalten (aktuellen Tarif und Kontingente prüfen; **kostenloser Betrieb ist nicht garantiert**). Im Standard-Free-Tarif ist nur eine Anfrage pro Sekunde erlaubt; deshalb verwendet der Bot einzelne Preisabfragen statt des kostenpflichtigeren Batch-Endpunkts. Bei vielen parallelen Battles müssen wir das global rate-limitieren.
 4. Node.js 20+ installieren.
 
 **Zugangsdaten niemals hier im Chat oder in einem öffentlichen GitHub-Repository veröffentlichen.**
@@ -59,7 +59,7 @@ Danach die vorhandene Datenbank initialisieren und die Secrets setzen:
 ```bash
 npm run db:remote
 npx wrangler secret put TELEGRAM_BOT_TOKEN
-npx wrangler secret put JUPITER_API_KEY
+npx wrangler secret put BIRDEYE_API_KEY
 npx wrangler secret put TELEGRAM_WEBHOOK_SECRET
 npm run deploy
 ```
@@ -87,7 +87,7 @@ curl -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/setWebhook" \
 3. Admin B verknüpft in Gruppe B `/link <TOKEN_B_MINT>`.
 4. Admin A startet den Bot privat und sendet `/new <TOKEN_A_MINT> <TOKEN_B_MINT>`.
 5. Admin A sendet den Challenge-Link an Admin B. Dieser öffnet ihn **privat im Bot** und akzeptiert.
-6. Der Fight beginnt nur, wenn für beide Tokens gültige Jupiter-Preise vorhanden sind. Beide Gruppen bekommen einen Battle-Post.
+6. Der Fight beginnt nur, wenn für beide Tokens gültige Birdeye-Preise vorhanden sind. Beide Gruppen bekommen einen Battle-Post.
 7. Über denselben Telegram-Account darf pro Fight nur einmal abgestimmt werden. Nach 24 Stunden wird der Fight abgerechnet oder bei fehlenden Daten auf `unresolved` gesetzt.
 8. Nach Beendigung per `/new <TOKEN_A_MINT> <TOKEN_B_MINT>` einen **neuen Fight** starten. Die alte Gruppenverknüpfung muss nicht wiederholt werden.
 9. Ein zweites, **unabhängiges** Tokenpaar darf bereits während des ersten Fights antreten. Ein Überschneidungs-Token dagegen nicht.
@@ -117,7 +117,7 @@ Die **2,5 Punkte je Prozentpunkt Renditeunterschied** sind eine **vorläufige An
 - **Daten-/Datenschutzhinweise**, Löschkonzept sowie dokumentierte Nutzerrechte für einen öffentlichen Betrieb.
 - **Siegerehrungsbild:** Aktuell gibt es beim Abschluss einen Textpost und eine aktualisierte Live-Karte; die automatische Champion-Grafik ist noch nicht implementiert.
 - **Skalierung/Monitoring:** Cron bearbeitet begrenzte Batches, damit Free-Tarif und externe API-Limits nicht unkontrolliert belastet werden. Bei sehr vielen parallelen Fights müssen wir das Scheduling und Kapazitäten messen.
-- **Preisquellen-Limits:** Verfügbarkeit, historische Genauigkeit und Jupiter-Gebühren vor Live-Start verifizieren.
+- **Preisquellen-Limits:** Verfügbarkeit, historische Genauigkeit und Birdeye-Kontingente und Berechtigungen vor Live-Start verifizieren.
 
 ## 7. Tests (offline)
 
@@ -127,3 +127,12 @@ python3 -m unittest discover -s tests -p 'sqlite_*.py' -v
 ```
 
 Die Node-Tests prüfen die Wertung; die Python-SQLite-Tests prüfen die Datenbankinvarianten: parallele Fights, Token-Sperren, atomare Konkurrenzvermeidung, Rematch, Archiv-Snapshot, Freigabe abgelaufener Challenges. Python-Tests benötigen keine Zusatzpakete.
+
+## Birdeye-Umstellung v0.2.1
+
+- Nur Dateien in `ASTY-Token-Fight/` geändert; alle anderen ASTY-Anwendungen bleiben unverändert.
+- Tokenname, Ticker und Logo kommen von `GET /defi/token_overview`.
+- Der USD-Tokenpreis kommt von `GET /defi/price`, auf Basis der Token-Mint-Adresse, **nicht** einer einzelnen Pooladresse.
+- Die zwei Preisabfragen je Fight sind zeitlich mindestens 1,2 Sekunden auseinander; **das verhindert noch keine accountweiten Limits bei gleichzeitig laufenden Fights**.
+- Das vorhandene `JUPITER_API_KEY` Secret ist für die neue Version nicht nötig. Benötigt wird `BIRDEYE_API_KEY`, als Cloudflare Secret. Secret niemals in GitHub eintragen.
+- Ein API-Live-Test mit dem echten Birdeye-Key steht noch aus. API-Verfügbarkeit und verbleibendes Monatskontingent im Birdeye-Dashboard prüfen.
