@@ -228,6 +228,38 @@ async function sendFinalCountdownReminders(env){
   }
 }
 
+function compactGroupChat(chatId){return BigInt(String(chatId)).toString(36);}
+
+function restoreGroupChat(encoded){
+  if(typeof encoded!=='string'||!/^-?[0-9a-z]{1,13}$/.test(encoded))return null;
+  const negative=encoded.startsWith('-'),digits=negative?encoded.slice(1):encoded;
+  let number=0n;
+  for(const character of digits)number=number*36n+BigInt(parseInt(character,36));
+  const value=(negative?-number:number).toString();
+  return /^-\d{4,20}$/.test(value)?value:null;
+}
+
+async function groupAdminForWebsite(env,mint,groupId,user){
+  if(!mintOk(mint)||!/^-\d{4,20}$/.test(String(groupId)))return null;
+  const group=await env.DB.prepare('SELECT chat_id,chat_title FROM project_groups WHERE mint=? AND chat_id=?')
+    .bind(mint,String(groupId)).first();
+  if(!group||!(await tgAdmin(env,group.chat_id,user)))return null;
+  return group;
+}
+
+async function websiteViewForChat(env,f,chatId){
+  const rows=await env.DB.prepare(`SELECT gw.mint,gw.website_url FROM group_websites gw
+    JOIN project_groups pg ON pg.chat_id=gw.chat_id AND pg.mint=gw.mint
+    WHERE gw.chat_id=? AND gw.mint IN (?,?)`)
+    .bind(String(chatId),f.mint_a,f.mint_b).all();
+  const override={...f};
+  for(const r of rows.results||[]){
+    if(r.mint===f.mint_a)override.website_a=r.website_url;
+    if(r.mint===f.mint_b)override.website_b=r.website_url;
+  }
+  return override;
+}
+
 function siteButtons(f){
   const rows=[];
   if(f?.website_a)rows.push([{text:`🌐 ${tokenLabel(f.sym_a)} Website`,url:f.website_a}]);
@@ -785,9 +817,10 @@ async function menuCallback(env,q){
 
 let websiteTableReady=false;
 async function ensureWebsiteTable(env){
-  // Creates this table in an existing D1 database without touching group or fight records.
+  // Non-destructive migration for existing D1 deployments.
   if(websiteTableReady)return;
   await env.DB.prepare(`CREATE TABLE IF NOT EXISTS project_websites(mint TEXT PRIMARY KEY,website_url TEXT NOT NULL,updated_by TEXT NOT NULL,updated_at INTEGER NOT NULL,FOREIGN KEY(mint) REFERENCES projects(mint))`).run();
+  await env.DB.prepare(`CREATE TABLE IF NOT EXISTS group_websites(mint TEXT NOT NULL,chat_id TEXT NOT NULL,website_url TEXT NOT NULL,updated_by TEXT NOT NULL,updated_at INTEGER NOT NULL,PRIMARY KEY(mint,chat_id),FOREIGN KEY(mint) REFERENCES projects(mint))`).run();
   websiteTableReady=true;
 }
 
@@ -1227,7 +1260,7 @@ export default {
           if(row.key==='fight_video_file_id')videoConfigured=!!row.value;
         }
       }catch(e){console.error('health database query',errString(e));}
-      return Response.json({status:'ok',app:'ASTY Token Fight',version:'0.8.1',
+      return Response.json({status:'ok',app:'ASTY Token Fight',version:'0.8.2',
         cron_last_started:started,cron_last_completed:completed,video_configured:videoConfigured});
     }
     if(url.pathname!=='/telegram'||request.method!=='POST')return new Response('Not Found',{status:404});
