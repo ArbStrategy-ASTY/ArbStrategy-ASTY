@@ -93,7 +93,7 @@ async function postFight(env,id){
     try{
       const sent=await telegram(env,'sendVideo',{
         chat_id:group.chat_id,video:videoId,caption:caption(f,a,b),
-        parse_mode:'HTML',reply_markup:votingButtons(f),supports_streaming:true
+        parse_mode:'HTML',reply_markup:votingButtons(await websiteViewForChat(env,f,group.chat_id)),supports_streaming:true
       });
       if(!Number.isInteger(sent?.message_id))throw new Error('Telegram sendVideo returned no message ID');
       const record=await env.DB.prepare(`INSERT OR IGNORE INTO group_messages(fight_id,chat_id,live_message_id,message_type) VALUES(?,?,?,'video')`)
@@ -130,6 +130,7 @@ async function refreshMessages(env,id,final=false,repost=false,skipChats=null){
   const videoId=repost&&f.status==='active'?await getFightVideo(env):null;
   for(const m of msgs.results||[]){
     if(skipChats?.has(String(m.chat_id)))continue;
+    const chatView=await websiteViewForChat(env,f,m.chat_id);
     summary.targets++;
     if(repost&&f.status==='active'){
       try{
@@ -138,16 +139,16 @@ async function refreshMessages(env,id,final=false,repost=false,skipChats=null){
           // The SAME permanent video file_id is reusable for every fight and every update.
           sent=await telegram(env,'sendVideo',{
             chat_id:m.chat_id,video:videoId,caption:currentCaption,parse_mode:'HTML',
-            reply_markup:votingButtons(f),supports_streaming:true
+            reply_markup:votingButtons(chatView),supports_streaming:true
           });
           kind='video';
         }else if(m.message_type==='text'){
-          sent=await say(env,m.chat_id,currentCaption,{reply_markup:votingButtons(f)});
+          sent=await say(env,m.chat_id,currentCaption,{reply_markup:votingButtons(chatView)});
         }else{
           // Existing fights can still be reposted before the first video is configured.
           sent=await telegram(env,'copyMessage',{
             chat_id:m.chat_id,from_chat_id:m.chat_id,message_id:m.live_message_id,
-            caption:currentCaption,parse_mode:'HTML',reply_markup:votingButtons(f)
+            caption:currentCaption,parse_mode:'HTML',reply_markup:votingButtons(chatView)
           });
         }
         if(!Number.isInteger(sent?.message_id))throw new Error('Telegram returned no new post ID');
@@ -163,7 +164,7 @@ async function refreshMessages(env,id,final=false,repost=false,skipChats=null){
           await telegram(env,m.message_type==='text'?'editMessageText':'editMessageCaption',{
             chat_id:m.chat_id,message_id:m.live_message_id,
             [m.message_type==='text'?'text':'caption']:currentCaption,
-            parse_mode:'HTML',reply_markup:votingButtons(f)
+            parse_mode:'HTML',reply_markup:votingButtons(chatView)
           });
         }catch(editError){
           if(!errString(editError).includes('message is not modified'))console.error('repost fallback',id,m.chat_id,errString(editError));
@@ -175,10 +176,10 @@ async function refreshMessages(env,id,final=false,repost=false,skipChats=null){
       await telegram(env,m.message_type==='text'?'editMessageText':'editMessageCaption',{
         chat_id:m.chat_id,message_id:m.live_message_id,
         [m.message_type==='text'?'text':'caption']:currentCaption,parse_mode:'HTML',
-        reply_markup:f.status==='active'?votingButtons(f):siteButtons(f)
+        reply_markup:f.status==='active'?votingButtons(chatView):siteButtons(chatView)
       });
     }catch(e){if(!errString(e).includes('message is not modified'))console.error('edit',id,m.chat_id,errString(e));}
-    if(final)await deliverEvent(env,id,m.chat_id,`end_${f.status}`,currentCaption,siteButtons(f))
+    if(final)await deliverEvent(env,id,m.chat_id,`end_${f.status}`,currentCaption,siteButtons(chatView))
       .catch(e=>console.error('final event',id,m.chat_id,errString(e)));
   }
   return summary;
@@ -193,7 +194,8 @@ async function sendMilestones(env,id){
   if(elapsed>minTime+2*REFRESH_INTERVAL)return;
   const msgs=await env.DB.prepare('SELECT * FROM group_messages WHERE fight_id=?').bind(id).all();
   for(const m of msgs.results){
-    await deliverEvent(env,id,m.chat_id,`milestone_${milestone}`,`🥊 <b>ASTY TOKEN FIGHT</b> – ${html(tokenLabel(f.sym_a))} VS ${html(tokenLabel(f.sym_b))}\n${milestone==='23h'?'⏰ Only 1 hour left!':'⚡ Battle update'}\n\n<b>Powered by ASTY <a href="https://arbstrategy.net/">ArbStrategy.net</a></b>`,siteButtons(f)).catch(e=>console.error('milestone',id,errString(e)));
+    const chatView=await websiteViewForChat(env,f,m.chat_id);
+    await deliverEvent(env,id,m.chat_id,`milestone_${milestone}`,`🥊 <b>ASTY TOKEN FIGHT</b> – ${html(tokenLabel(f.sym_a))} VS ${html(tokenLabel(f.sym_b))}\n${milestone==='23h'?'⏰ Only 1 hour left!':'⚡ Battle update'}\n\n<b>Powered by ASTY <a href="https://arbstrategy.net/">ArbStrategy.net</a></b>`,siteButtons(chatView)).catch(e=>console.error('milestone',id,errString(e)));
   }
 }
 
@@ -222,8 +224,8 @@ async function sendFinalCountdownReminders(env){
         '<b>Powered by ASTY <a href="https://arbstrategy.net/">ArbStrategy.net</a></b>'
       ].join('\n');
       const posts=await env.DB.prepare('SELECT chat_id FROM group_messages WHERE fight_id=?').bind(f.id).all();
-      await Promise.all((posts.results||[]).map(post=>deliverEvent(env,f.id,post.chat_id,
-        `countdown_${minutes}m`,text,votingButtons(f)).catch(e=>console.error('countdown reminder',f.id,minutes,post.chat_id,errString(e)))));
+      await Promise.all((posts.results||[]).map(async post=>deliverEvent(env,f.id,post.chat_id,
+        `countdown_${minutes}m`,text,votingButtons(await websiteViewForChat(env,f,post.chat_id))).catch(e=>console.error('countdown reminder',f.id,minutes,post.chat_id,errString(e)))));
     }catch(e){console.error('countdown scan',item.id,errString(e));}
   }
 }
@@ -616,7 +618,7 @@ async function websiteStart(env,chat,user,mint,q=null){
   return screen(env,chat,`🌐 <b>SET WEBSITE FOR ${html(tokenLabel(p?.symbol||'TOKEN'))}</b>\n\nPaste your project's HTTPS website address (for example: https://arbstrategy.net).\n\nThis is the only information you need to enter manually. You can change it later.`,keyboard([[{text:'↩️ My Projects',callback_data:'menu:sites'}],[{text:'🏠 Main Menu',callback_data:'menu:home'}]]),q);
 }
 
-async function refreshActiveWebsiteButtons(env,mint){
+async function refreshActiveWebsiteButtons(env,mint,onlyChatId=null){
   // A website may be created or changed while a fight is LIVE.
   // Update the latest post in both groups without sending an unnecessary new video.
   try{
@@ -624,9 +626,10 @@ async function refreshActiveWebsiteButtons(env,mint){
     for(const fight of ongoing.results||[]){
       const f=await detail(env,fight.id);if(!f)continue;
       const posts=await env.DB.prepare('SELECT chat_id,live_message_id FROM group_messages WHERE fight_id=?').bind(f.id).all();
-      const current=votingButtons(f);
-      await Promise.all((posts.results||[]).filter(p=>p.live_message_id).map(async p=>{
+      await Promise.all((posts.results||[]).filter(p=>p.live_message_id&&(onlyChatId===null||String(p.chat_id)===String(onlyChatId))).map(async p=>{
         try{
+          const chatView=await websiteViewForChat(env,f,p.chat_id);
+          const current=votingButtons(chatView);
           await telegram(env,'editMessageReplyMarkup',{chat_id:p.chat_id,message_id:p.live_message_id,reply_markup:current});
         }catch(e){
           if(!errString(e).includes('message is not modified'))console.error('website buttons refresh',f.id,p.chat_id,errString(e));
