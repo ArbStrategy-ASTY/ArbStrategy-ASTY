@@ -204,13 +204,13 @@ async function unlinkGroup(env,msg,arg){
 async function challengeView(env,chat,id){
   const f=await detail(env,id);if(!f)return say(env,chat,'Challenge not found.');
   if(f.status!=='pending')return say(env,chat,`This fight has the status ${html(f.status)}.`);
-  return say(env,chat,`🥊 <b>NEW ASTY TOKEN FIGHT CHALLENGE</b>\n${html(f.sym_a)} challenges ${html(f.sym_b)}!\n⏳ 24 hours · 50% votes · 50% price change\n\nYou must be an admin of a group linked to ${html(f.sym_b)}.`,{reply_markup:keyboard([[{text:'✅ Accept challenge',callback_data:`accept:${f.id}`}],[{text:'❌ Decline',callback_data:`decline:${f.id}`} ]])});
+  return say(env,chat,`🥊 <b>NEW ASTY TOKEN FIGHT CHALLENGE</b>\n${html(tokenLabel(f.sym_a))} challenges ${html(tokenLabel(f.sym_b))}!\n⏳ 24 hours · 50% votes · 50% price change\n\nYou must be an admin of a group linked to ${html(tokenLabel(f.sym_b))}.`,{reply_markup:keyboard([[{text:'✅ Accept challenge',callback_data:`accept:${f.id}`}],[{text:'❌ Decline',callback_data:`decline:${f.id}`} ]])});
 }
 async function accept(env,query,id,decline=false){
   const uid=query.from.id,chat=query.message.chat.id;
   if(query.message.chat.type!=='private')return say(env,chat,'Open this challenge in the private bot chat.');
   const f=await detail(env,id);if(!f||f.status!=='pending')return say(env,chat,'This challenge is no longer pending.');
-  if(!(await groupForAdmin(env,f.mint_b,uid)))return say(env,chat,`You must be an admin of a group linked to ${html(f.sym_b)}. Link the group first using <code>/link ${html(f.mint_b)}</code>.`);
+  if(!(await groupForAdmin(env,f.mint_b,uid)))return say(env,chat,`You must be an admin of a group linked to ${html(tokenLabel(f.sym_b))}. Link the group first using <code>/link ${html(f.mint_b)}</code>.`);
   if(decline){
     const r=await env.DB.prepare(`UPDATE fights SET status='declined' WHERE id=? AND status='pending'`).bind(id).run();
     return say(env,chat,changed(r)?'Challenge declined.':'Challenge already processed.');
@@ -226,10 +226,10 @@ async function accept(env,query,id,decline=false){
       env.DB.prepare(`INSERT INTO active_token_locks(mint,fight_id) SELECT mint_b,id FROM fights WHERE id=? AND status='pending'`).bind(id),
       env.DB.prepare(`UPDATE fights SET status='active',accepted_by=?,started_at=?,ends_at=?,start_price_a=?,start_price_b=?,latest_price_a=?,latest_price_b=?,last_price_at=?,next_refresh_at=? WHERE id=? AND status='pending'`).bind(String(uid),t,t+DAY,p[0],p[1],p[0],p[1],t,t+REFRESH_INTERVAL,id)
     ]);
-    if(!changed(batch[2]))return say(env,chat,'Diese Challenge already processed.');
+    if(!changed(batch[2]))return say(env,chat,'This challenge has already been processed.');
   }catch(e){return say(env,chat,'One of these tokens is already in another active fight. Try accepting the challenge later.');}
   await say(env,chat,'✅ Challenge accepted! The 24-hour fight is now live in both groups.');
-  await say(env,f.creator_id,`🥊 ${html(f.sym_b)} accepted! Fight ${f.id} is LIVE.`).catch(()=>{});
+  await say(env,f.creator_id,`🥊 ${html(tokenLabel(f.sym_b))} accepted! Fight ${f.id} is LIVE.`).catch(()=>{});
   await postFight(env,id);
 }
 async function vote(env,q,id,side){
@@ -252,7 +252,7 @@ async function fightList(env,chat,history=false,mint=null){
   if(!list.results.length)return say(env,chat,history?'No completed fights yet.':'No active fights right now.');
   const lines=[history?'🏆 <b>ASTY Token Fight – Hall of Fame</b>':'🥊 <b>Active fights</b>'];
   for(const row of list.results){const f=await detail(env,row.id);if(!f)continue;
-    lines.push(`${html(f.sym_a)} VS ${html(f.sym_b)} · <code>${html(f.id)}</code>${history?(f.status==='ended'?` · Winner: ${f.winner==='draw'?'Draw':html(f.winner==='a'?f.sym_a:f.sym_b)}`:' · No result'):' · LIVE'}`);
+    lines.push(`${html(tokenLabel(f.sym_a))} VS ${html(tokenLabel(f.sym_b))} · <code>${html(f.id)}</code>${history?(f.status==='ended'?` · Winner: ${f.winner==='draw'?'Draw':html(tokenLabel(f.winner==='a'?f.sym_a:f.sym_b))}`:' · No result'):' · LIVE'}`);
   }
   lines.push('\n/status FIGHT_ID for details · 🟣 Powered by ASTY - ArbStrategy.net');
   return say(env,chat,lines.join('\n'));
