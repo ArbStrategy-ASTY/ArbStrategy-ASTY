@@ -242,8 +242,7 @@ function menuButtons(){
   return keyboard([
     [{text:'🥊 New Fight',callback_data:'menu:new'},{text:'🪙 My Projects',callback_data:'menu:projects'}],
     [{text:'⚡ Active Fights',callback_data:'menu:active'},{text:'🏆 Hall of Fame',callback_data:'menu:history'}],
-    [{text:'🌐 Project Websites',callback_data:'menu:sites'},{text:'❓ Help',callback_data:'menu:help'}],
-    [{text:'🎬 Fight Video',callback_data:'menu:video'}]
+    [{text:'🌐 Project Websites',callback_data:'menu:sites'},{text:'❓ Help',callback_data:'menu:help'}]
   ]);
 }
 
@@ -251,6 +250,7 @@ function groupButtons(env){
   return keyboard([
     [{text:'🔗 Link Project Token',callback_data:'group:link'}],
     [{text:'🔓 Unlink Project Token',callback_data:'group:unlink'}],
+    [{text:'🌐 Manage Project Website',callback_data:'group:sites'}],
     [{text:'❓ Help',callback_data:'menu:help'}],
     [{text:'🥊 Open Fight Bot',url:`https://t.me/${env.BOT_USERNAME.replace('@','')}`}]
   ]);
@@ -442,14 +442,30 @@ async function adminProjects(env,user) {
 
 async function projectsScreen(env,chat,user,q=null,forSite=false){
   const items=await adminProjects(env,user);
-  if(!items.length)return screen(env,chat,'🪙 <b>MY PROJECTS</b>\n\nNo linked project groups found where you are an administrator.\n\nAdd this bot to a Telegram group and use the group’s /start menu to link its Solana token.',keyboard([[{text:'➕ Add Bot to Group',url:`https://t.me/${env.BOT_USERNAME.replace('@','')}?startgroup=true`}],[{text:'🏠 Main Menu',callback_data:'menu:home'}]]),q);
+  if(!items.length&&!forSite)return screen(env,chat,'🪙 <b>MY PROJECTS</b>\n\nNo linked project groups found where you are an administrator.\n\nAdd this bot to a Telegram group and use the group’s /start menu to link its Solana token.',keyboard([[{text:'➕ Add Bot to Group',url:`https://t.me/${env.BOT_USERNAME.replace('@','')}?startgroup=true`}],[{text:'🏠 Main Menu',callback_data:'menu:home'}]]),q);
   const rows=[];
+  const seen=new Set();
   for(const p of items){
+    seen.add(p.mint);
     rows.push([{text:`${forSite?'🌐':'🪙'} ${tokenLabel(p.symbol)}`,callback_data:`${forSite?'site:open:':'project:view:'}${p.mint}`}]);
+  }
+  if(forSite){
+    // Make opponents from the user's fights visible, but do NOT grant edit permissions.
+    // A non-admin sees a read-only explanation rather than a missing ARBX project.
+    const other=await env.DB.prepare(`SELECT DISTINCT p.mint,p.symbol FROM projects p
+      WHERE p.mint IN (
+        SELECT mint_a FROM fights WHERE creator_id=? OR accepted_by=?
+        UNION SELECT mint_b FROM fights WHERE creator_id=? OR accepted_by=?
+      ) LIMIT 30`).bind(String(user),String(user),String(user),String(user)).all();
+    for(const p of other.results||[]){
+      if(seen.has(p.mint))continue;
+      seen.add(p.mint);
+      rows.push([{text:`🔒 ${tokenLabel(p.symbol)} (admin required)`,callback_data:`site:open:${p.mint}`}]);
+    }
   }
   rows.push([{text:forSite?'🥊 New Fight':'🌐 Manage Websites',callback_data:forSite?'menu:new':'menu:sites'}]);
   rows.push([{text:'🏠 Main Menu',callback_data:'menu:home'}]);
-  return screen(env,chat,forSite?'🌐 <b>PROJECT WEBSITES</b>\n\nSelect a linked project to add or update its website.':'🪙 <b>MY PROJECTS</b>\n\nSelect a project to view its website or start a challenge.',keyboard(rows),q);
+  return screen(env,chat,forSite?'🌐 <b>PROJECT WEBSITES</b>\n\nChoose a project. Only the administrator of its first linked Telegram group may change its website.':'🪙 <b>MY PROJECTS</b>\n\nSelect a project to view its website or start a challenge.',keyboard(rows),q);
 }
 
 async function projectScreen(env,chat,user,mint,q=null){
@@ -461,7 +477,7 @@ async function projectScreen(env,chat,user,mint,q=null){
     [{text:`🥊 Challenge as ${tokenLabel(p.symbol)}`,callback_data:`new:own:${mint}`}],
   ];
   const websiteAdmin=await canManageWebsite(env,mint,user);
-  if(websiteAdmin)rows.push([{text:'🌐 Set / Edit Website',callback_data:`site:set:${mint}`}]);
+  rows.push([{text:websiteAdmin?'🌐 Set / Edit Website':'🔒 Website Permissions',callback_data:`site:info:${mint}`}]);
   if(p.website_url&&websiteAdmin)rows.push([{text:'🗑 Remove Website',callback_data:`site:remove:${mint}`}]);
   if(p.website_url)rows.push([{text:`🌐 Visit ${tokenLabel(p.symbol)}`,url:p.website_url}]);
   rows.push([{text:'🪙 My Projects',callback_data:'menu:projects'},{text:'🏠 Menu',callback_data:'menu:home'}]);
@@ -493,6 +509,29 @@ async function canManageWebsite(env,mint,user){
   // may advertise or change this token's project website.
   const earliest=await env.DB.prepare('SELECT chat_id FROM project_groups WHERE mint=? ORDER BY registered_at ASC, chat_id ASC LIMIT 1').bind(mint).first();
   return !!earliest&&await tgAdmin(env,earliest.chat_id,user);
+}
+
+async function websiteInfo(env,chat,user,mint,q=null){
+  if(!mintOk(mint))return say(env,chat,'Invalid project mint.');
+  const p=await env.DB.prepare(`SELECT p.mint,p.symbol,p.name,w.website_url FROM projects p
+    LEFT JOIN project_websites w ON w.mint=p.mint WHERE p.mint=?`).bind(mint).first();
+  if(!p)return say(env,chat,'Project not found.');
+  const primary=await env.DB.prepare('SELECT chat_id,chat_title FROM project_groups WHERE mint=? ORDER BY registered_at ASC,chat_id ASC LIMIT 1').bind(mint).first();
+  const allowed=!!primary&&await tgAdmin(env,primary.chat_id,user);
+  const rows=[];
+  if(allowed){
+    rows.push([{text:p.website_url?'✏️ Change Website':'🌐 Add Website',callback_data:`site:set:${mint}`}]);
+    if(p.website_url)rows.push([{text:'🗑 Remove Website',callback_data:`site:remove:${mint}`}]);
+  }
+  if(p.website_url)rows.push([{text:'🌐 Open Website',url:p.website_url}]);
+  rows.push([{text:'↩️ Project Websites',callback_data:'menu:sites'},{text:'🏠 Menu',callback_data:'menu:home'}]);
+  const site=p.website_url?`🌐 Website: <a href="${html(p.website_url)}">${html(projectWebsiteDisplay(p.website_url))}</a>`:'🌐 Website: Not set';
+  const auth=allowed
+    ?'✅ You can edit this project website. The update also works during active fights.'
+    :primary
+      ?`🔒 Website changes require administrator rights in the first linked project group: <b>${html(primary.chat_title||'the original project group')}</b>.\n\nIf you are its admin, make sure the bot is also a group administrator, then open the group's /start → Manage Project Website menu. Other project groups cannot override the original project's link.`
+      :'⚠️ No linked project group found. Link the token from a project Telegram group first.';
+  return screen(env,chat,`🌐 <b>${html(tokenLabel(p.symbol))} WEBSITE</b>\n\n${site}\n\n${auth}`,keyboard(rows),q);
 }
 
 async function websiteStart(env,chat,user,mint,q=null){
@@ -619,6 +658,17 @@ async function groupCallback(env,q){
   }
   if(cmd==='menu:help')return helpScreen(env,chat,q,true);
   if(cmd.startsWith('help:'))return helpSection(env,chat,cmd.slice(5),q,true);
+  if(cmd==='group:sites'){
+    if(!await tgAdmin(env,chat,user))return say(env,chat,'Only group administrators can manage project websites. The bot should also be an administrator.');
+    const linked=await env.DB.prepare(`SELECT pg.mint,p.symbol FROM project_groups pg
+      JOIN projects p ON p.mint=pg.mint WHERE pg.chat_id=? ORDER BY pg.registered_at DESC LIMIT 20`).bind(String(chat)).all();
+    const rows=(linked.results||[]).map(p=>[{text:`🌐 Manage ${tokenLabel(p.symbol)} Website`,
+      url:`https://t.me/${env.BOT_USERNAME.replace('@','')}?start=website_${p.mint}`}]);
+    rows.push([{text:'↩️ Group Menu',callback_data:'menu:group'}]);
+    return screen(env,chat,linked.results?.length?
+      '🌐 <b>PROJECT WEBSITES</b>\n\nSelect a project to manage its website privately. Only admins of the first linked group can edit it.':
+      'No project tokens linked to this group.',keyboard(rows),q);
+  }
   if(cmd==='group:unlink'){
     if(!await tgAdmin(env,chat,user))return say(env,chat,'Only group administrators can unlink tokens.');
     const linked=await env.DB.prepare('SELECT pg.mint,p.symbol FROM project_groups pg JOIN projects p ON p.mint=pg.mint WHERE pg.chat_id=? ORDER BY pg.registered_at DESC LIMIT 20').bind(String(chat)).all();
@@ -708,7 +758,8 @@ async function menuCallback(env,q){
   if(cmd==='menu:active')return fightScreen(env,chat,user,false,q);
   if(cmd==='menu:history')return fightScreen(env,chat,user,true,q);
   if(cmd.startsWith('project:view:'))return projectScreen(env,chat,user,cmd.slice(13),q);
-  if(cmd.startsWith('site:open:'))return projectScreen(env,chat,user,cmd.slice(10),q);
+  if(cmd.startsWith('site:open:'))return websiteInfo(env,chat,user,cmd.slice(10),q);
+  if(cmd.startsWith('site:info:'))return websiteInfo(env,chat,user,cmd.slice(10),q);
   if(cmd.startsWith('site:set:'))return websiteStart(env,chat,user,cmd.slice(9),q);
   if(cmd.startsWith('logo:set:'))return beginLogoUpload(env,chat,user,cmd.slice(9),q);
   if(cmd.startsWith('logo:auto:'))return findLogoAutomatically(env,chat,user,cmd.slice(10),q);
@@ -995,7 +1046,7 @@ async function onUpdate(env,u){
   }
   if(cmd==='/start'){
     if(args[0]?.startsWith('challenge_'))return challengeView(env,chat,args[0].slice(10));
-    if(args[0]?.startsWith('website_'))return projectScreen(env,chat,msg.from.id,args[0].slice(8));
+    if(args[0]?.startsWith('website_'))return websiteInfo(env,chat,msg.from.id,args[0].slice(8));
     if(args[0]?.startsWith('logo_'))return beginLogoUpload(env,chat,msg.from.id,args[0].slice(5));
     return menuHome(env,chat);
   }
