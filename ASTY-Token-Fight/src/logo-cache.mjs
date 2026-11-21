@@ -50,21 +50,38 @@ async function fetchImage(uri){
   return null;
 }
 async function externalCandidates(mint){
-  const urls=[];
-  try{
-    const r=await fetch('https://tokens.jup.ag/token/'+encodeURIComponent(mint),{signal:AbortSignal.timeout(4800)});
-    if(r.ok){const json=await r.json();if(json?.address===mint&&typeof json.logoURI==='string')urls.push(json.logoURI);}
-  }catch{}
-  try{
-    const r=await fetch('https://api.dexscreener.com/token-pairs/v1/solana/'+encodeURIComponent(mint),{signal:AbortSignal.timeout(4800)});
-    if(r.ok){
+  // Query three token-specific providers concurrently to reduce first-time wait.
+  // Sources are tied to the full mint, not just a potentially duplicate ticker.
+  const [jupiter,gecko,dex]=await Promise.all([
+    (async()=>{try{
+      const r=await fetch('https://tokens.jup.ag/token/'+encodeURIComponent(mint),{signal:AbortSignal.timeout(4200)});
+      if(!r.ok)return [];
+      const token=await r.json();
+      return token?.address===mint&&typeof token.logoURI==='string'?[token.logoURI]:[];
+    }catch{return [];}})(),
+    (async()=>{try{
+      const r=await fetch('https://api.geckoterminal.com/api/v2/networks/solana/tokens/'+encodeURIComponent(mint)+'/info',
+        {signal:AbortSignal.timeout(4200),headers:{accept:'application/json'}});
+      if(!r.ok)return [];
+      const payload=await r.json();
+      const data=payload?.data;
+      // GeckoTerminal's data.id contains the requested chain and exact mint.
+      return data?.id==='solana_'+mint&&typeof data?.attributes?.image_url==='string'
+        ?[data.attributes.image_url]:[];
+    }catch{return [];}})(),
+    (async()=>{try{
+      const r=await fetch('https://api.dexscreener.com/token-pairs/v1/solana/'+encodeURIComponent(mint),{signal:AbortSignal.timeout(4200)});
+      if(!r.ok)return [];
       const pairs=await r.json();
-      if(Array.isArray(pairs))pairs.filter(p=>p?.chainId==='solana'&&p?.baseToken?.address===mint&&p?.info?.imageUrl)
+      if(!Array.isArray(pairs))return [];
+      // DEX Screener pairs may feature the requested token as the QUOTE;
+      // never use the BASE token's logo in that situation.
+      return pairs.filter(p=>p?.chainId==='solana'&&p?.baseToken?.address===mint&&p?.info?.imageUrl)
         .sort((a,b)=>Number(b?.liquidity?.usd||0)-Number(a?.liquidity?.usd||0))
-        .slice(0,5).forEach(p=>urls.push(p.info.imageUrl));
-    }
-  }catch{}
-  return [...new Set(urls)];
+        .slice(0,5).map(p=>p.info.imageUrl);
+    }catch{return [];}})()
+  ]);
+  return [...new Set([...jupiter,...gecko,...dex])];
 }
 let logoTableReady=false;
 export async function ensureLogoTable(env){
