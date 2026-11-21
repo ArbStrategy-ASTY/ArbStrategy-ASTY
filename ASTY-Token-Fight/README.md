@@ -1,4 +1,4 @@
-# 🥊 ASTY Token Fight – Telegram Bot v0.8.1 (Birdeye)
+# 🥊 ASTY Token Fight – Telegram Bot v0.8.2 (Birdeye)
 
 **Status: private Beta / laufende Tests.** Der Bot wurde in früheren Versionen auf Cloudflare deployed und mit ASTY-vs.-ARBX-Gruppen getestet. Die neuen Menüs, Website-Buttons, Vote-Benachrichtigungen und das Grafikdesign von v0.4.2 sind im GitHub-Code implementiert, aber müssen nach Cloudflare-Deployment noch in Telegram geprüft werden. Alle Änderungen bleiben auf den Ordner `ASTY-Token-Fight/` beschränkt.
 
@@ -313,3 +313,20 @@ Verification: `/health` should report `0.8.0` after Cloudflare deployment. Test 
 - If an ASTY-only admin sees **$ARBX (admin required)**, they cannot change ARBX's promoted website themselves. A real admin of ARBX's original group must do it from that group's bot menu. If the user actually is that admin but the bot does not recognize them, check that the bot is itself a group admin and Telegram's getChatMember permissions.
 
 Deployment version shown in `/health`: `0.8.1`.
+
+## Group-specific websites – v0.8.2
+
+**Fix for ARBX Token Fight TEST group:** The old website editor authenticated the current user against the earliest-linked group for the ARBX mint. Linking ARBX to a second (test) group therefore did not allow its administrator to set the **official, globally promoted** ARBX website. This was intended to prevent impersonation but provided no way to add a URL to the test group's own battle messages.
+
+v0.8.2 separates group-level and official websites:
+- `project_websites` continues to hold only the canonical project-wide link. Only a current admin of the mint's original group may modify it.
+- The new `group_websites` D1 table is keyed by `(mint,chat_id)`. Current admins of **that exact linked Telegram group** can create, change or delete its local URL. Being able to link ARBX to a second group does not grant any permissions over ARBX's canonical URL or any other group's URL.
+- `/start` in a project group → **Manage Project Website** → choose the linked token → open the bot's private website management → select **Website for [group name]** → **Set Group Website** → send a public HTTPS URL. The same selection is available in the private bot under **Project Websites**.
+- The website selection uses a compact base36 representation of Telegram's chat ID to keep the callback within Telegram's 64-byte limit. Every operation rechecks live Telegram `getChatMember` admin status and database group-token linkage.
+- For live video posts, 30-minute reposts, 15/10/5-minute countdown reminders, milestone notifications and final announcements, the bot loads website links specifically for the destination Telegram chat. A local override is shown **only in that chat**; all other groups continue to use the canonical official link (if any).
+- After adding or deleting a local website during an active fight, the bot updates the latest battle message keyboard **only in that group**, without reposting the fixed video. The existing ASTY/ARBX fight, votes, canonical links and video stay unchanged.
+- Existing databases automatically create `group_websites` through `ensureWebsiteTable()` on the next cron or webhook invocation, with no manual database reset or migration.
+
+IMPORTANT: A local URL in the ARBX test group is not automatically an official project endorsement and will not appear in the real ARBX or ASTY groups. The original ARBX group's admin must set the canonical ARBX website if the URL should be shown project-wide.
+
+Version check: `/health` must show `0.8.2` after deployment. When testing, use a fresh `/start` in the own test group and the new private Telegram buttons.
