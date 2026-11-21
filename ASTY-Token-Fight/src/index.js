@@ -243,7 +243,7 @@ async function groupHome(env,chat,q=null){
 async function helpScreen(env,chat,q=null,isGroup=false) {
   const text=isGroup
     ? '❓ <b>GROUP HELP</b>\n\n<code>/link MINT</code> — Link this group to a Solana token (admins only).\n<code>/unlink MINT</code> — Remove a group-token link (admins only).\n<code>/help</code> — Show this help.\n\nUse the button to link a token without writing a command. Reply to the bot with its mint address.\n\n🟣 Powered by ASTY - ArbStrategy.net'
-    : '❓ <b>ASTY TOKEN FIGHT — HELP</b>\n\n<b>Use the buttons</b> to create challenges, select existing projects, manage websites and browse fights.\n\n<b>Commands</b>\n<code>/start</code> / <code>/menu</code> — Main menu\n<code>/new</code> — Create a challenge\n<code>/projects</code> — My linked projects\n<code>/website</code> — Add or change a project website\n<code>/video</code> — Manage the fixed fight video\n<code>/fights</code> — Active battles\n<code>/history</code> — Finished battles\n<code>/status ID</code> — Detailed fight stats\n<code>/withdraw ID</code> — Withdraw a pending challenge\n<code>/stop ID</code> — Stop your active test fight\n<code>/cancel</code> — Cancel current setup\n<code>/help</code> — This help\n\n<b>In Telegram groups</b>\n<code>/link MINT</code> — Link project\n<code>/unlink MINT</code> — Unlink project\n\n<b>How it works</b>\n1. Add the bot to your group and link your project token.\n2. Optionally add your website once (paste the URL).\n3. Choose New Fight, select your project and opponent.\n4. Opponent accepts the challenge; voting and price tracking begin.\n\nEach Telegram account gets one vote per fight. Website links are supplied by project admins, not verified by ASTY.';
+    : '❓ <b>ASTY TOKEN FIGHT — HELP</b>\n\n<b>Use the buttons</b> to create challenges, select existing projects, manage websites and browse fights.\n\n<b>Commands</b>\n<code>/start</code> / <code>/menu</code> — Main menu\n<code>/new</code> — Create a challenge\n<code>/projects</code> — My linked projects\n<code>/website</code> — Add or change a project website\n<code>/video</code> — Manage the fixed fight video\n<code>/fights</code> — Active battles\n<code>/history</code> — Finished battles\n<code>/status ID</code> — Detailed fight stats\n<code>/withdraw ID</code> — Withdraw a pending challenge\n<code>/stop ID</code> — Stop your active test fight\n<code>/refresh ID</code> — Repost fight stats now\n<code>/cancel</code> — Cancel current setup\n<code>/help</code> — This help\n\n<b>In Telegram groups</b>\n<code>/link MINT</code> — Link project\n<code>/unlink MINT</code> — Unlink project\n\n<b>How it works</b>\n1. Add the bot to your group and link your project token.\n2. Optionally add your website once (paste the URL).\n3. Choose New Fight, select your project and opponent.\n4. Opponent accepts the challenge; voting and price tracking begin.\n\nEach Telegram account gets one vote per fight. Website links are supplied by project admins, not verified by ASTY.';
   return screen(env,chat,text,isGroup?groupButtons(env):keyboard([[{text:'🏠 Main Menu',callback_data:'menu:home'}],[{text:'🥊 New Fight',callback_data:'menu:new'}]]),q);
 }
 
@@ -344,6 +344,7 @@ async function fightScreen(env,chat,user,history=false,q=null){
     lines.push(`• ${html(tokenLabel(f.sym_a))} VS ${html(tokenLabel(f.sym_b))} — ${f.status==='ended' ? `🏆 ${html(f.winner==='a'?tokenLabel(f.sym_a):f.winner==='b'?tokenLabel(f.sym_b):'DRAW')}`:f.status==='active'?'LIVE':f.status.toUpperCase()}`);
     buttons.push([{text:`📊 ${tokenLabel(f.sym_a)} VS ${tokenLabel(f.sym_b)}`,callback_data:`fight:view:${f.id}`}]);
     if(!history&&String(f.creator_id)===String(user))buttons.push([{text:`🛑 Stop ${tokenLabel(f.sym_a)} VS ${tokenLabel(f.sym_b)}`,callback_data:`stop:confirm:${f.id}`}]);
+    if(!history&&String(f.creator_id)===String(user))buttons.push([{text:`🔄 Refresh ${tokenLabel(f.sym_a)} VS ${tokenLabel(f.sym_b)}`,callback_data:`fight:refresh:${f.id}`}]);
   }
   if(lines.length===1)lines.push(history?'No completed fights yet.':'No active fights right now.');
   buttons.push([{text:'🏠 Main Menu',callback_data:'menu:home'}]);
@@ -358,8 +359,28 @@ async function fightView(env,chat,user,id,q=null){
   if(f.website_a)rows.push([{text:`🌐 ${tokenLabel(f.sym_a)} Website`,url:f.website_a}]);
   if(f.website_b)rows.push([{text:`🌐 ${tokenLabel(f.sym_b)} Website`,url:f.website_b}]);
   if(f.status==='active'&&String(f.creator_id)===String(user))rows.push([{text:'🛑 Stop This Fight',callback_data:`stop:confirm:${f.id}`}]);
+  if(f.status==='active'&&String(f.creator_id)===String(user))rows.push([{text:'🔄 Refresh Now',callback_data:`fight:refresh:${f.id}`}]);
   rows.push([{text:'↩️ Back',callback_data:f.status==='active'?'menu:active':'menu:history'}],[{text:'🏠 Menu',callback_data:'menu:home'}]);
   return screen(env,chat,caption(f,a,b),keyboard(rows),q);
+}
+
+async function refreshFightNow(env,chat,user,id){
+  const fight=id?await detail(env,id):null;
+  if(!fight||fight.status!=='active')return say(env,chat,'This fight is not currently active.');
+  if(String(fight.creator_id)!==String(user))return say(env,chat,'Only the challenge creator may refresh this fight manually.');
+  const key='manual_refresh_'+fight.id,t=now();
+  await env.DB.prepare('INSERT OR IGNORE INTO worker_settings(key,value,updated_at) VALUES(?,?,0)').bind(key,'manual').run();
+  const lock=await env.DB.prepare('UPDATE worker_settings SET updated_at=? WHERE key=? AND updated_at<=?').bind(t,key,t-60).run();
+  if(!changed(lock))return say(env,chat,'⏳ Please wait one minute before another manual update.');
+  let newGroups=new Set(),result={targets:0,sent:0,failed:0};
+  try{newGroups=await postFight(env,id);}catch(e){console.error('manual first post',id,errString(e));}
+  try{result=await refreshMessages(env,id,false,true,newGroups);}catch(e){console.error('manual refresh',id,errString(e));result.failed++;}
+  const success=result.failed===0&&(result.sent>0||newGroups.size>0);
+  await env.DB.prepare("UPDATE fights SET next_refresh_at=? WHERE id=? AND status='active'")
+    .bind(t+(success?REFRESH_INTERVAL:90),id).run();
+  return say(env,chat,`${success?'✅':'⚠️'} Fight refresh completed. New posts: ${result.sent+newGroups.size}. Failed groups: ${result.failed}.\n\nAutomatic updates are scheduled every 10 minutes.`,{
+    reply_markup:keyboard([[{text:'📊 Fight Status',callback_data:`fight:view:${id}`}],[{text:'🏠 Menu',callback_data:'menu:home'}]])
+  });
 }
 
 async function stopFight(env,chat,user,id){
@@ -495,6 +516,7 @@ async function menuCallback(env,q){
     return createFight(env,user,draft.own_mint,mint,chat);
   }
   if(cmd.startsWith('fight:view:'))return fightView(env,chat,user,cmd.slice(11),q);
+  if(cmd.startsWith('fight:refresh:'))return refreshFightNow(env,chat,user,cmd.slice(14));
   if(cmd.startsWith('stop:confirm:')){
     const id=cmd.slice(13),f=await detail(env,id);
     if(!f||String(f.creator_id)!==String(user)||f.status!=='active')return say(env,chat,'Only the creator can stop an active fight.');
@@ -514,7 +536,7 @@ async function ensureWebsiteTable(env){
 
 async function ensureBotCommands(env){
   // Persist a version marker so Telegram's command menu isn't rewritten each minute.
-  const key='bot_commands_v5_video_clean';
+  const key='bot_commands_v6_manual_refresh';
   const current=await env.DB.prepare('SELECT value FROM worker_settings WHERE key=?').bind(key).first();
   if(current)return;
   const commands=[
@@ -532,6 +554,7 @@ async function ensureBotCommands(env){
     {command:'status',description:'Detailed fight statistics'},
     {command:'withdraw',description:'Withdraw a pending challenge'},
     {command:'stop',description:'Stop your active fight'},
+    {command:'refresh',description:'Repost current fight stats'},
     {command:'cancel',description:'Cancel an input wizard'}
   ];
   await telegram(env,'setMyCommands',{commands});
@@ -755,6 +778,7 @@ async function onUpdate(env,u){
     return say(env,chat,changed(r)?'✅ Challenge withdrawn. You can create a new fight.':'This challenge has already been processed.');
   }
   if(cmd==='/stop')return stopFight(env,chat,msg.from.id,args[0]);
+  if(cmd==='/refresh')return refreshFightNow(env,chat,msg.from.id,args[0]);
   if(cmd==='/cancel'){await env.DB.prepare('DELETE FROM draft_state WHERE user_id=?').bind(String(msg.from.id)).run();return say(env,chat,'Challenge setup cancelled.');}
   if(cmd==='/new'){
     if(args.length>=2)return createFight(env,msg.from.id,args[0],args[1],chat);
