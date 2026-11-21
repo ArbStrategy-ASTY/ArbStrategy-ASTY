@@ -529,7 +529,7 @@ async function websiteInfo(env,chat,user,mint,q=null){
   const auth=allowed
     ?'✅ You can edit this project website. The update also works during active fights.'
     :primary
-      ?`🔒 Website changes require administrator rights in the first linked project group: <b>${html(primary.chat_title||'the original project group')}</b>.\n\nIf you are its admin, make sure the bot is also a group administrator, then open the group's /start → Manage Project Website menu. Other project groups cannot override the original project's link.`
+      ?'🔒 Website changes require administrator rights in the original linked project group.\\n\\nIf you are an admin of that group, make sure the bot is also a group administrator, then open the group’s /start → Manage Project Website menu. Other project groups cannot override the original project website.'
       :'⚠️ No linked project group found. Link the token from a project Telegram group first.';
   return screen(env,chat,`🌐 <b>${html(tokenLabel(p.symbol))} WEBSITE</b>\n\n${site}\n\n${auth}`,keyboard(rows),q);
 }
@@ -931,7 +931,7 @@ async function linkGroup(env,msg,arg){
   if(!mintOk(arg))return say(env,msg.chat.id,'Please provide a valid Solana token mint address.');
   try{await tokenInfo(env,arg);}catch(e){return say(env,msg.chat.id,'Token not found: '+html(errString(e)));}
   await env.DB.prepare(`INSERT INTO project_groups(mint,chat_id,chat_title,registered_by,registered_at) VALUES(?,?,?,?,?) ON CONFLICT(mint,chat_id) DO UPDATE SET chat_title=excluded.chat_title`).bind(arg,String(msg.chat.id),msg.chat.title||'',String(msg.from.id),now()).run();
-  return say(env,msg.chat.id,`✅ Group linked to <code>${html(arg)}</code>. Ready for future battles.`,{reply_markup:keyboard([[{text:'🖼️ Upload Project Logo',url:`https://t.me/${env.BOT_USERNAME.replace('@','')}?start=logo_${arg}`}],[{text:'🌐 Set Project Website',url:`https://t.me/${env.BOT_USERNAME.replace('@','')}?start=website_${arg}`}],[{text:'🥊 Bot Menu',url:`https://t.me/${env.BOT_USERNAME.replace('@','')}`}]] )});
+  return say(env,msg.chat.id,`✅ Group linked to <code>${html(arg)}</code>. Ready for future battles.`,{reply_markup:keyboard([[{text:'🌐 Set Project Website',url:`https://t.me/${env.BOT_USERNAME.replace('@','')}?start=website_${arg}`}],[{text:'🥊 Bot Menu',url:`https://t.me/${env.BOT_USERNAME.replace('@','')}`}]] )});
 }
 async function unlinkGroup(env,msg,arg){
   if(!['group','supergroup'].includes(msg.chat.type)||!await tgAdmin(env,msg.chat.id,msg.from.id))return say(env,msg.chat.id,'Only a group administrator can unlink a token.');
@@ -1229,7 +1229,7 @@ export default {
           if(row.key==='fight_video_file_id')videoConfigured=!!row.value;
         }
       }catch(e){console.error('health database query',errString(e));}
-      return Response.json({status:'ok',app:'ASTY Token Fight',version:'0.8.0',
+      return Response.json({status:'ok',app:'ASTY Token Fight',version:'0.8.1',
         cron_last_started:started,cron_last_completed:completed,video_configured:videoConfigured});
     }
     if(url.pathname!=='/telegram'||request.method!=='POST')return new Response('Not Found',{status:404});
