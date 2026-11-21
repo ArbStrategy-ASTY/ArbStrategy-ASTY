@@ -530,7 +530,17 @@ async function vote(env,q,id,side){
   if(!f||f.status!=='active'||now()>=f.ends_at)return telegram(env,'answerCallbackQuery',{callback_query_id:q.id,text:'This fight is no longer active.',show_alert:true});
   const r=await env.DB.prepare(`INSERT OR IGNORE INTO votes(fight_id,voter_id,side,voted_at) SELECT ?,?,?,? WHERE EXISTS(SELECT 1 FROM fights WHERE id=? AND status='active' AND ends_at>?)`).bind(id,String(q.from.id),side,now(),id,now()).run();
   const selected=tokenLabel(side==='a'?f.sym_a:f.sym_b);
-  return telegram(env,'answerCallbackQuery',{callback_query_id:q.id,text:changed(r)?`🔥 New vote for ${selected} 🔥`:'You have already voted or this fight has ended.',show_alert:false});
+  const newVote=changed(r), message=`🔥 New vote for ${selected} 🔥`;
+  // Acknowledge Telegram's tap promptly; the public post is a separate group message.
+  await telegram(env,'answerCallbackQuery',{callback_query_id:q.id,text:newVote?message:'You have already voted or this fight has ended.',show_alert:false});
+  if(newVote&&q.message?.chat?.id!=null){
+    try{
+      await say(env,q.message.chat.id,message);
+    }catch(e){
+      // Never undo a valid vote when the group has disabled new bot messages.
+      console.error('vote announcement',id,q.message.chat.id,errString(e));
+    }
+  }
 }
 async function statusText(env,id){
   const f=await detail(env,id);if(!f)return null;
@@ -720,7 +730,7 @@ async function ensureTelegramWebhook(env){
 export default {
   async fetch(request,env,ctx){
     const url=new URL(request.url);
-    if(url.pathname==='/health'&&request.method==='GET')return Response.json({status:'ok',app:'ASTY Token Fight',version:'0.4.0'});
+    if(url.pathname==='/health'&&request.method==='GET')return Response.json({status:'ok',app:'ASTY Token Fight',version:'0.4.1'});
     if(url.pathname!=='/telegram'||request.method!=='POST')return new Response('Not Found',{status:404});
     if(!env.TELEGRAM_WEBHOOK_SECRET||request.headers.get('X-Telegram-Bot-Api-Secret-Token')!==env.TELEGRAM_WEBHOOK_SECRET)return new Response('Unauthorized',{status:401});
     let update;try{update=await request.json();}catch{return new Response('Bad JSON',{status:400});}
