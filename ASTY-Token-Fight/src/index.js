@@ -492,7 +492,6 @@ async function menuCallback(env,q){
   if(cmd==='menu:video')return videoScreen(env,chat,user,q);
   if(cmd==='video:upload')return startVideoUpload(env,chat,user,q);
   if(cmd==='video:preview'){
-    if(!(await isVideoManager(env,user)))return say(env,chat,'You are not authorized to manage the global video.');
     const fileId=await getFightVideo(env);
     if(!fileId)return videoScreen(env,chat,user,q);
     return telegram(env,'sendVideo',{chat_id:chat,video:fileId,caption:'🎬 Fixed ASTY Token Fight video',supports_streaming:true});
@@ -586,25 +585,28 @@ async function isVideoManager(env,user){
 }
 
 async function videoScreen(env,chat,user,q=null){
-  if(!(await isVideoManager(env,user)))return screen(env,chat,'🎬 <b>FIGHT VIDEO</b>\n\nOnly the original video owner can replace the global battle video.',keyboard([[{text:'🏠 Main Menu',callback_data:'menu:home'}]]),q);
   const fileId=await getFightVideo(env);
-  const lines=[
-    '🎬 <b>FIGHT VIDEO</b>','',
-    fileId?'✅ Permanent fight video configured.':'⚠️ No fight video has been configured yet.','',
-    'This same video will appear for all fights. Live statistics and voting buttons are added below it.','',
-    'Select Upload Video to send an MP4 video once in this private chat.'
-  ];
-  const rows=[[{text:fileId?'🎬 Replace Video':'🎬 Upload Video',callback_data:'video:upload'}]];
-  if(fileId)rows.push([{text:'▶️ Preview Video',callback_data:'video:preview'}]);
-  rows.push([{text:'🏠 Main Menu',callback_data:'menu:home'}]);
-  return screen(env,chat,lines.join('\n'),keyboard(rows),q);
+  if(fileId){
+    return screen(env,chat,
+      '🎬 <b>OFFICIAL FIGHT VIDEO</b>\n\n✅ Video configured and permanently locked.\n\nEvery fight and every scheduled update uses this exact video. No project or group administrator can upload or replace it.',
+      keyboard([[{text:'▶️ Preview Video',callback_data:'video:preview'}],[{text:'🏠 Main Menu',callback_data:'menu:home'}]]),q);
+  }
+  if(!(await isVideoManager(env,user)))return screen(env,chat,
+    '🎬 <b>OFFICIAL FIGHT VIDEO</b>\n\nThe official video has not been configured yet. Only the authorized ASTY operator can upload it once.',
+    keyboard([[{text:'🏠 Main Menu',callback_data:'menu:home'}]]),q);
+  return screen(env,chat,
+    '🎬 <b>OFFICIAL FIGHT VIDEO</b>\n\nNo video configured yet. Upload an MP4 once; after a successful upload the video is permanently locked.',
+    keyboard([[{text:'🎬 Upload Official Video',callback_data:'video:upload'}],[{text:'🏠 Main Menu',callback_data:'menu:home'}]]),q);
 }
 
 async function startVideoUpload(env,chat,user,q=null){
-  if(!(await isVideoManager(env,user)))return say(env,chat,'Only the original video owner, or the designated initial uploader, may upload the battle video.');
+  if(await getFightVideo(env))return videoScreen(env,chat,user,q);
+  if(!(await isVideoManager(env,user)))return say(env,chat,'Only the authorized ASTY operator can upload the initial official video.');
   await env.DB.prepare("INSERT INTO draft_state(user_id,step,own_mint,updated_at) VALUES(?,'video',NULL,?) ON CONFLICT(user_id) DO UPDATE SET step='video',own_mint=NULL,updated_at=excluded.updated_at")
     .bind(String(user),now()).run();
-  return screen(env,chat,'🎬 <b>UPLOAD FIGHT VIDEO</b>\n\nSend the MP4 video as a Telegram video in this private chat (not a link).\n\nThe bot will verify that Telegram can resend it, then save its reusable file ID for all fights. Send /cancel to abort.',keyboard([[{text:'↩️ Fight Video',callback_data:'menu:video'}],[{text:'🏠 Menu',callback_data:'menu:home'}]]),q);
+  return screen(env,chat,
+    '🎬 <b>UPLOAD OFFICIAL FIGHT VIDEO</b>\n\nSend your MP4 as a Telegram video (not a link).\n\nOnce saved, this exact video is permanently locked and cannot be replaced through the bot.',
+    keyboard([[{text:'↩️ Fight Video',callback_data:'menu:video'}],[{text:'🏠 Menu',callback_data:'menu:home'}]]),q);
 }
 
 async function receiveFightVideo(env,msg){
@@ -616,7 +618,8 @@ async function receiveFightVideo(env,msg){
     await env.DB.prepare('DELETE FROM draft_state WHERE user_id=?').bind(String(user)).run();
     return say(env,chat,'Video upload session expired. Open Fight Video and try again.');
   }
-  if(!(await isVideoManager(env,user)))return say(env,chat,'Only the original video owner may replace this video.');
+  if(await getFightVideo(env))return say(env,chat,'🔒 The official fight video is already saved and permanently locked.');
+  if(!(await isVideoManager(env,user)))return say(env,chat,'Only the authorized ASTY operator may upload the initial video.');
   const video=msg.video;
   if(Number(video.file_size||0)>50*1024*1024)return say(env,chat,'Please send a video under 50 MB.');
   if(video.mime_type&&video.mime_type!=='video/mp4')return say(env,chat,'Please send an MP4 video.');
@@ -631,16 +634,14 @@ async function receiveFightVideo(env,msg){
     const committed=await env.DB.batch([
       env.DB.prepare("INSERT OR IGNORE INTO worker_settings(key,value,updated_at) VALUES('fight_video_owner_id',?,?)")
         .bind(String(user),now()),
-      env.DB.prepare(`INSERT INTO worker_settings(key,value,updated_at)
+      env.DB.prepare(`INSERT OR IGNORE INTO worker_settings(key,value,updated_at)
         SELECT 'fight_video_file_id',?,?
-        WHERE EXISTS (SELECT 1 FROM worker_settings WHERE key='fight_video_owner_id' AND value=?)
-        ON CONFLICT(key) DO UPDATE SET value=excluded.value,updated_at=excluded.updated_at
         WHERE EXISTS (SELECT 1 FROM worker_settings WHERE key='fight_video_owner_id' AND value=?)`)
-        .bind(saved,now(),String(user),String(user))
+        .bind(saved,now(),String(user))
     ]);
-    if(!changed(committed[1]))return say(env,chat,'⛔ Video locked. Only the original video owner can replace it.');
+    if(!changed(committed[1]))return say(env,chat,'🔒 The official video is already locked and cannot be replaced.');
     await env.DB.prepare('DELETE FROM draft_state WHERE user_id=?').bind(String(user)).run();
-    return say(env,chat,'✅ Your fixed video has been saved and tested. New fights and future 10-minute posts will use it.',{
+    return say(env,chat,'✅ Official video saved and permanently locked! All future fights and 10-minute updates will reuse this video.',{
       reply_markup:keyboard([[{text:'🥊 New Fight',callback_data:'menu:new'}],[{text:'🎬 Fight Video',callback_data:'menu:video'}]])
     });
   }catch(error){
@@ -957,7 +958,7 @@ export default {
           if(row.key==='fight_video_file_id')videoConfigured=!!row.value;
         }
       }catch(e){console.error('health database query',errString(e));}
-      return Response.json({status:'ok',app:'ASTY Token Fight',version:'0.6.1',
+      return Response.json({status:'ok',app:'ASTY Token Fight',version:'0.7.0',
         cron_last_started:started,cron_last_completed:completed,video_configured:videoConfigured});
     }
     if(url.pathname!=='/telegram'||request.method!=='POST')return new Response('Not Found',{status:404});
