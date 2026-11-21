@@ -1,32 +1,129 @@
-# ASTY Token Fight 🥊
+# 🥊 ASTY Token Fight – MVP v0.2
 
-Eigenständiger Telegram-Bot für Solana-Projektduelle.
+**Status: technische Testversion – noch nicht live.**
 
-## Sicherheit der Repository-Struktur
+Der Code baut auf der bereitgestellten v0.1 auf. Er ist **nicht** bei Cloudflare deployt, hat **keinen echten Telegram-/Jupiter-End-to-End-Test** durchlaufen und hat euer bestehendes GitHub-Repository nicht verändert. Die bestehende ASTY-Website bleibt unverändert.
 
-Dieser Bot wird **ausschließlich** im Unterordner `ASTY-Token-Fight/` verwaltet. Bestehende ASTY-Dateien, die Website und der gemeinsame Ordner `assets/` bleiben unverändert.
+## Was neu ist in 0.2?
 
-- Telegram: [@ASTY_TokenFightBot](https://t.me/ASTY_TokenFightBot)
-- Cloudflare Worker (vorgesehener Name): `asty-token-fight`
-- Cloudflare D1-Datenbank: `asty-token-fight`
-- Gemeinsames ASTY-Logo: [../assets/logo.png](../assets/logo.png)
+- **Mehrere unabhängige Fights gleichzeitig:** Jeder Fight hat eigene ID, Stimmen, Preise, Telegram-Nachrichten und Cron-Zeitpunkte.
+- **Ein Token maximal in einem aktiven Fight:** Zwei SQL-Locks pro Fight werden beim Annehmen **atomar** in Cloudflare D1 reserviert. Andere Fights mit demselben Token können erst nach dem Abschluss starten.
+- **Keine doppelte offene Paarung:** A gegen B und B gegen A können nicht gleichzeitig als offene Challenges existieren. Ein späteres Rematch ist erlaubt.
+- **Erneute Battles ohne erneute Gruppenverknüpfung:** Verknüpfte Gruppen bleiben verknüpft. Freigabe der Token-Locks beim Abschluss oder bei `unresolved`.
+- **Hall of Fame:** `/history` sowie `/history TOKENADRESSE` zeigen abgeschlossene Fights. `/fights` listet aktive Kämpfe.
+- **Archivierung statt vollständigem Löschen:** Endergebnisse und aggregierte Stimmen werden gespeichert. Die einzelnen Telegram-Voter-IDs abgeschlossener Fights werden nach 30 Tagen entfernt (durch Cron).
+- **Offene Einladungen laufen nach sieben Tagen ab.** Ersteller können eigene offene Challenges per `/withdraw FIGHT_ID` zurückziehen.
+- **Admin kann Verknüpfung entfernen:** `/unlink TOKENADRESSE` in der Gruppe. Laufende Battle-Messages bleiben bis zum Ende bestehen.
+- **Robustere Aktualisierung:** 10-Minuten-Takt pro Fight mit Reservierung des nächsten Update-Zeitpunkts. Ein fehlgeschlagener initialer Gruppenpost wird bei einem späteren Update erneut versucht.
+- **Gruppenposts:** Start, Zwischenstände als Bearbeitung der bestehenden Nachricht, gesonderte Hinweise bei ~6h, ~12h und ~1h verbleibend sowie Ergebnis. Keine Nachricht pro Stimme; kein automatisches Anpinnen.
+- **Zuverlässigere Abschlussnachrichten:** Einfache persistente Retry-Logik. Bei Netz- oder Datenbankfehlern sind in seltenen Fällen doppelte Hinweise möglich.
 
-## Technischer Stand
+## Weiterhin enthalten
 
-Der Bot-Code befindet sich derzeit noch im separaten v0.2-Projektarchiv. **Dieser Repository-Ordner ist zunächst nur der sichere Ablageort; er stellt noch keine laufende Bot-Installation dar.** Als nächstes kommen die Dateien `src/`, `schema.sql`, `wrangler.jsonc`, `package.json` und die Tests in genau diesen Ordner.
+- 24-Stunden-Fight: **50 % Community-Voting + 50 % Token-Kursentwicklung (Jupiter USD-Preis)**.
+- Ein Vote je Telegram-ID und Fight. Keine Wallet, kein Tokenkauf notwendig.
+- **Keine Mindestliquidität.** Token muss aber in Jupiter einen gültigen Preis liefern, sonst startet er nicht. Fehlt ein zeitnaher Endpreis, wird das Ergebnis `unresolved`, **ohne erfundenen Sieger**.
+- Automatisch generiertes PNG mit beiden Tokenlogos und ASTY-Branding für den Fightstart (SVG → PNG über `@cf-wasm/resvg`). Für fehlende Logos gibt es Ersatzsymbole. Scheitert das Rendering, geht eine Text-Battle-Anzeige raus.
+- Live-Battle-Text wird etwa alle zehn Minuten aktualisiert, das ursprüngliche Bild nicht jedes Mal neu generiert.
 
-Cloudflare muss für den Bot **dieses Unterverzeichnis als Root Directory** verwenden (nicht das Stammverzeichnis der bestehenden Website).
+## Ablage im bestehenden ASTY-Repository
 
-Alle Bot-Zugangsdaten ausschließlich als Cloudflare-Worker-Secrets hinterlegen, niemals im GitHub-Code.
+Dieses Projekt ist für den Unterordner `ASTY-Token-Fight/` in `ArbStrategy-ASTY/ArbStrategy-ASTY` vorbereitet. Andere Dateien bleiben unverändert. Das gemeinsame ASTY-Logo wird unter `../assets/logo.png` wiederverwendet und nicht kopiert; der Worker ruft die Bilddatei beim Erstellen des Startbilds über die unveränderte Raw-GitHub-URL ab. Cloudflare muss das **Root Directory `ASTY-Token-Fight`** verwenden, nicht das Repository-Stammverzeichnis. Bei lokaler Nutzung oder über Wrangler müssen die Befehle **in diesem Unterordner** ausgeführt werden.
 
-## Geplante Funktionen
+## 1. Voraussetzungen
 
-- 24-Stunden-Battle mit 50 % Community-Votes und 50 % Kursentwicklung
-- Token-Preise aus einer gemeinsamen Preisquelle, ohne Mindestliquidität
-- Eigenständige, parallele Battles mit erneuter Teilnahme nach Abschluss
-- Telegram-Challenges über Einladungslinks und einmaliges Voting pro Nutzer/Fight
-- Getrennte Live-Nachrichten pro Gruppe, Aktualisierung ca. alle 10 Minuten
-- Einmalig generierte Battle-Bilder; vorhandenes ASTY-Branding aus `assets/` wiederverwenden
-- Battle-Archiv und Hall of Fame
+1. Telegram-Bot über [@BotFather](https://t.me/BotFather) erstellen, Bot-Username und Bot-Token bereithalten.
+2. Cloudflare-Account mit Workers und D1 nutzen.
+3. Jupiter-API-Key besorgen (aktuellen Tarif und Kontingente prüfen; **kostenloser Betrieb ist nicht garantiert**).
+4. Node.js 20+ installieren.
 
-Status: **Vorbereitung; noch nicht live geschaltet.**
+**Zugangsdaten niemals hier im Chat oder in einem öffentlichen GitHub-Repository veröffentlichen.**
+
+## 2. Cloudflare-Datenbank und Worker erstellen
+
+Im Projektverzeichnis:
+
+```bash
+npm install
+npx wrangler login
+```
+
+Die Cloudflare-D1-Datenbank `asty-token-fight` ist bereits erstellt. **Nicht erneut `wrangler d1 create` ausführen.** Die `database_id` und der Bot-Benutzername `ASTY_TokenFightBot` (ohne `@`) sind in `wrangler.jsonc` bereits eingetragen.
+
+**Bestehende D1:** `48d62dc0-a03f-4f2e-aa7a-82fb401fb300`
+
+Die Befehle unten führen das SQL-Schema in dieser vorhandenen Datenbank aus. `schema.sql` ist für die erste Initialisierung einer **leeren** Datenbank gedacht. Falls bereits Tabellen existieren, vorher prüfen, ob die passende Version vorliegt.
+
+Danach die vorhandene Datenbank initialisieren und die Secrets setzen:
+
+```bash
+npm run db:remote
+npx wrangler secret put TELEGRAM_BOT_TOKEN
+npx wrangler secret put JUPITER_API_KEY
+npx wrangler secret put TELEGRAM_WEBHOOK_SECRET
+npm run deploy
+```
+
+Für `TELEGRAM_WEBHOOK_SECRET` einen zufälligen Wert mit erlaubten Telegram-Zeichen (`A-Za-z0-9_-`) generieren.
+
+**Hinweis für v0.1-Nutzer:** `schema.sql` ist das Schema für eine **neue, leere v0.2-Datenbank**. Es ist **kein** Upgrade-Skript für eine bereits gefüllte v0.1-Datenbank. Falls v0.1 schon deployed wurde, bitte vor einer Migration ein Backup machen und eine gesonderte D1-Migration durchführen. Die v0.1 war laut Vorgängerversion noch nicht live.
+
+## 3. Telegram-Webhook aktivieren
+
+Nach dem Deployment die echte `workers.dev`-URL kopieren und vom eigenen Rechner den Telegram-Webhook setzen:
+
+```bash
+curl -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/setWebhook" \
+  --data-urlencode "url=https://DEINE-WORKER-URL.workers.dev/telegram" \
+  --data-urlencode "secret_token=${TELEGRAM_WEBHOOK_SECRET}"
+```
+
+Über `GET /health` liefert der Worker einen Status mit `version: 0.2`.
+
+## 4. Erste Kämpfe und Rematches testen
+
+1. Bot als Admin mit Schreib-/Fotorechten in **zwei Testgruppen** hinzufügen.
+2. Admin A verknüpft in Gruppe A `/link <TOKEN_A_MINT>`.
+3. Admin B verknüpft in Gruppe B `/link <TOKEN_B_MINT>`.
+4. Admin A startet den Bot privat und sendet `/new <TOKEN_A_MINT> <TOKEN_B_MINT>`.
+5. Admin A sendet den Challenge-Link an Admin B. Dieser öffnet ihn **privat im Bot** und akzeptiert.
+6. Der Fight beginnt nur, wenn für beide Tokens gültige Jupiter-Preise vorhanden sind. Beide Gruppen bekommen einen Battle-Post.
+7. Über denselben Telegram-Account darf pro Fight nur einmal abgestimmt werden. Nach 24 Stunden wird der Fight abgerechnet oder bei fehlenden Daten auf `unresolved` gesetzt.
+8. Nach Beendigung per `/new <TOKEN_A_MINT> <TOKEN_B_MINT>` einen **neuen Fight** starten. Die alte Gruppenverknüpfung muss nicht wiederholt werden.
+9. Ein zweites, **unabhängiges** Tokenpaar darf bereits während des ersten Fights antreten. Ein Überschneidungs-Token dagegen nicht.
+
+### Bot-Befehle
+
+**Privat:** `/start`, `/help`, `/new`, `/new EIGENER_MINT GEGNER_MINT`, `/status FIGHT_ID`, `/fights`, `/history`, `/history MINT`, `/withdraw FIGHT_ID`, `/cancel`.
+
+**In der Gruppe (nur Admin):** `/link MINT` und `/unlink MINT`.
+
+## 5. Wertungsregel (noch abstimmbarer Parameter)
+
+- Votes: `votesA / (votesA + votesB)`, bei null Votes je 50 %.
+- Preisrendite: `(Endpreis / Startpreis - 1) × 100` für jeden Token.
+- Kursanteil A: `clamp(50 + 2,5 × (RenditeA − RenditeB), 0, 100)`.
+- Endscore A: `(VotinganteilA + KursanteilA) / 2`, B = 100 − A.
+
+Die **2,5 Punkte je Prozentpunkt Renditeunterschied** sind eine **vorläufige Annahme**, keine abschließend freigegebene Regel. Keine Mindestliquidität. Bei stark illiquiden Token kann der Preis manipuliert werden; das Battle ist ein Community-Spiel, kein Qualitätsurteil oder Investitionssignal.
+
+**Zeitfenster:** Startpreis wird beim Annehmen gespeichert, Endpreis bei einer Cron-Abfrage nach etwa 24 Stunden (nicht exakt auf die Sekunde). Ist die Abschlussabfrage über 180 Sekunden verspätet oder scheitert bis dahin, erfolgt `unresolved`.
+
+## 6. Was noch vor dem öffentlichen Start fehlt
+
+- **Live-Integrationstests** mit Telegram, Jupiter und Cloudflare D1 einschließlich Foto-Upload und `@cf-wasm/resvg`.
+- **Projekt-Verifizierung/Moderation:** Adminrechte an einer Telegram-Gruppe **beweisen keine offizielle Zugehörigkeit zum Token**. Öffentliche Battles müssen gegen Fake-Registrierungen abgesichert werden.
+- **Anti-Manipulation:** Mehrere Telegram-Accounts, gekaufte Stimmen oder gezielte Kursbewegungen sind nicht sicher auszuschließen.
+- **Daten-/Datenschutzhinweise**, Löschkonzept sowie dokumentierte Nutzerrechte für einen öffentlichen Betrieb.
+- **Siegerehrungsbild:** Aktuell gibt es beim Abschluss einen Textpost und eine aktualisierte Live-Karte; die automatische Champion-Grafik ist noch nicht implementiert.
+- **Skalierung/Monitoring:** Cron bearbeitet begrenzte Batches, damit Free-Tarif und externe API-Limits nicht unkontrolliert belastet werden. Bei sehr vielen parallelen Fights müssen wir das Scheduling und Kapazitäten messen.
+- **Preisquellen-Limits:** Verfügbarkeit, historische Genauigkeit und Jupiter-Gebühren vor Live-Start verifizieren.
+
+## 7. Tests (offline)
+
+```bash
+npm test
+python3 -m unittest discover -s tests -p 'sqlite_*.py' -v
+```
+
+Die Node-Tests prüfen die Wertung; die Python-SQLite-Tests prüfen die Datenbankinvarianten: parallele Fights, Token-Sperren, atomare Konkurrenzvermeidung, Rematch, Archiv-Snapshot, Freigabe abgelaufener Challenges. Python-Tests benötigen keine Zusatzpakete.

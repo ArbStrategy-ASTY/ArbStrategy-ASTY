@@ -1,0 +1,20 @@
+{
+  "name": "asty-token-fight",
+  "main": "src/index.js",
+  "compatibility_date": "2026-11-01",
+  "triggers": {
+    "crons": [
+      "* * * * *"
+    ]
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "asty-token-fight",
+      "database_id": "48d62dc0-a03f-4f2e-aa7a-82fb401fb300"
+    }
+  ],
+  "vars": {
+    "BOT_USERNAME": "ASTY_TokenFightBot"
+  }
+}
