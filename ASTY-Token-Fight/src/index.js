@@ -315,15 +315,50 @@ async function tick(env){
   // After 30 days the votes are deleted. The archived aggregate remains correct.
   await env.DB.prepare(`DELETE FROM votes WHERE fight_id IN (SELECT id FROM fights WHERE status IN ('ended','unresolved') AND archived_at<?)`).bind(now()-VOTE_RETENTION).run();
 }
+// Register the Telegram webhook from inside Cloudflare. Secrets never pass through a browser URL.
+// The fingerprint makes registration idempotent and reconfigures Telegram if secrets change.
+async function ensureTelegramWebhook(env){
+  if(!env.TELEGRAM_BOT_TOKEN||!env.TELEGRAM_WEBHOOK_SECRET||!env.WEBHOOK_URL){
+    throw new Error('Telegram setup: Cloudflare secrets or WEBHOOK_URL missing');
+  }
+  const target=new URL(env.WEBHOOK_URL);
+  if(target.protocol!=='https:'||target.pathname!=='/telegram')throw new Error('Telegram setup: invalid webhook URL');
+  const input=new TextEncoder().encode([target.toString(),env.TELEGRAM_BOT_TOKEN,env.TELEGRAM_WEBHOOK_SECRET].join('|'));
+  const hash=await crypto.subtle.digest('SHA-256',input);
+  const fingerprint=Array.from(new Uint8Array(hash),b=>b.toString(16).padStart(2,'0')).join('');
+  let existing=null;
+  try{
+    existing=await env.DB.prepare("SELECT value FROM worker_settings WHERE key='telegram_webhook'").first();
+  }catch{
+    // Existing v0.2 databases don't yet have the settings table.
+    await env.DB.prepare("CREATE TABLE IF NOT EXISTS worker_settings (key TEXT PRIMARY KEY, value TEXT NOT NULL, updated_at INTEGER NOT NULL)").run();
+  }
+  if(existing?.value===fingerprint)return;
+  const successful=await telegram(env,'setWebhook',{
+    url:target.toString(),
+    secret_token:env.TELEGRAM_WEBHOOK_SECRET,
+    allowed_updates:['message','callback_query'],
+    drop_pending_updates:false
+  });
+  if(!successful)throw new Error('Telegram did not confirm webhook registration');
+  await env.DB.prepare("INSERT INTO worker_settings(key,value,updated_at) VALUES('telegram_webhook',?,?) ON CONFLICT(key) DO UPDATE SET value=excluded.value,updated_at=excluded.updated_at").bind(fingerprint,now()).run();
+  console.log('ASTY Token Fight: Telegram webhook registered');
+}
+
 export default {
   async fetch(request,env,ctx){
     const url=new URL(request.url);
-    if(url.pathname==='/health'&&request.method==='GET')return Response.json({status:'ok',app:'ASTY Token Fight',version:'0.2.1'});
+    if(url.pathname==='/health'&&request.method==='GET')return Response.json({status:'ok',app:'ASTY Token Fight',version:'0.2.2'});
     if(url.pathname!=='/telegram'||request.method!=='POST')return new Response('Not Found',{status:404});
     if(!env.TELEGRAM_WEBHOOK_SECRET||request.headers.get('X-Telegram-Bot-Api-Secret-Token')!==env.TELEGRAM_WEBHOOK_SECRET)return new Response('Unauthorized',{status:401});
     let update;try{update=await request.json();}catch{return new Response('Bad JSON',{status:400});}
     ctx.waitUntil(onUpdate(env,update).catch(e=>console.error('webhook',errString(e))));
     return new Response('OK');
   },
-  async scheduled(_event,env,ctx){ctx.waitUntil(tick(env).catch(e=>console.error('cron',errString(e))));}
+  async scheduled(_event,env,ctx){
+    ctx.waitUntil((async()=>{
+      await ensureTelegramWebhook(env).catch(e=>console.error('telegram webhook setup',errString(e)));
+      await tick(env);
+    })().catch(e=>console.error('cron',errString(e))));
+  }
 };
