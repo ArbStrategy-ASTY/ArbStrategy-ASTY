@@ -250,16 +250,22 @@ async function groupAdminForWebsite(env,mint,groupId,user){
 }
 
 async function websiteViewForChat(env,f,chatId){
+  // Identical website choices in both communities.
+  // A canonical project-wide website is authoritative; otherwise use a link
+  // submitted by the earliest still-linked Telegram group.
+  const resolved={...f};
+  if(resolved.website_a&&resolved.website_b)return resolved;
   const rows=await env.DB.prepare(`SELECT gw.mint,gw.website_url FROM group_websites gw
     JOIN project_groups pg ON pg.chat_id=gw.chat_id AND pg.mint=gw.mint
-    WHERE gw.chat_id=? AND gw.mint IN (?,?)`)
-    .bind(String(chatId),f.mint_a,f.mint_b).all();
-  const override={...f};
-  for(const r of rows.results||[]){
-    if(r.mint===f.mint_a)override.website_a=r.website_url;
-    if(r.mint===f.mint_b)override.website_b=r.website_url;
+    WHERE gw.mint IN (?,?)
+    ORDER BY pg.registered_at ASC,pg.chat_id ASC`)
+    .bind(f.mint_a,f.mint_b).all();
+  for(const row of rows.results||[]){
+    if(row.mint===f.mint_a&&!resolved.website_a)resolved.website_a=row.website_url;
+    if(row.mint===f.mint_b&&!resolved.website_b)resolved.website_b=row.website_url;
+    if(resolved.website_a&&resolved.website_b)break;
   }
-  return override;
+  return resolved;
 }
 
 function siteButtons(f){
@@ -372,7 +378,7 @@ async function helpSection(env,chat,section,q=null,isGroup=false){
         '🥊 <b>HOW ASTY TOKEN FIGHT WORKS</b>',
         '',
         '1. Add the bot to both project groups. For reliable admin checks, promote it to administrator and allow text/video posts. A group admin then links its token once.',
-        '2. Group admins may add a website for their own Telegram group. Admins of the original project group can also manage the official project-wide website.',
+        '2. Group admins can submit a website. If no official link exists, the submitted URL appears in both fight communities. Admins of the original project group may set an official project-wide URL that takes priority.',
         '3. In the private bot chat, select New Fight → your registered project → an opponent.',
         '4. The opposing project admin accepts the challenge.',
         '5. A 24-hour fight starts in both groups.',
@@ -562,8 +568,8 @@ async function websiteInfo(env,chat,user,mint,q=null){
   rows.push([{text:'↩️ Project Websites',callback_data:'menu:sites'},{text:'🏠 Menu',callback_data:'menu:home'}]);
   const site=p.website_url?`<a href="${html(p.website_url)}">${html(projectWebsiteDisplay(p.website_url))}</a>`:'Not set';
   const explain=!mine.length?'🔒 Only admins of linked Telegram groups may manage their group websites. Make sure the bot is also a group admin.'
-    :original?'✅ You can manage the official project website or a separate link for your group.'
-    :'✅ You can add a website for your own Telegram group. The official website for this token is managed by its original group and is not changed by your group link.';
+    :original?'✅ You can manage the official project website and links submitted by your groups.'
+    :'✅ You can submit a website for this token through your linked Telegram group. When no official URL exists, it is shown in BOTH fight communities. You cannot change the official project website.';
   return screen(env,chat,`🌐 <b>${html(tokenLabel(p.symbol))} WEBSITES</b>\n\nOfficial website: ${site}\n\n${explain}\n\nSelect a website to manage:`,keyboard(rows),q);
 }
 
@@ -579,7 +585,7 @@ async function websiteGroupInfo(env,chat,user,mint,groupId,q=null){
     rows.push([{text:'🌐 Visit Website',url}]);
   }
   rows.push([{text:'↩️ Websites',callback_data:`site:open:${mint}`}],[{text:'🏠 Menu',callback_data:'menu:home'}]);
-  return screen(env,chat,`🌐 <b>${html(tokenLabel(p?.symbol||'TOKEN'))} — GROUP WEBSITE</b>\n\nGroup: ${html(g.chat_title||'Telegram Group')}\nWebsite: ${url?`<a href="${html(url)}">${html(projectWebsiteDisplay(url))}</a>`:'Not set'}\n\nThis link appears only in battle posts in this Telegram group. The official project website remains unchanged.\n\nYou may change this during an active fight.`,keyboard(rows),q);
+  return screen(env,chat,`🌐 <b>${html(tokenLabel(p?.symbol||'TOKEN'))} — GROUP WEBSITE</b>\n\nGroup: ${html(g.chat_title||'Telegram Group')}\nWebsite: ${url?`<a href="${html(url)}">${html(projectWebsiteDisplay(url))}</a>`:'Not set'}\n\nWhen no official project-wide website exists, a submitted website is displayed in BOTH fight communities. Official project websites always take priority.\n\nYou can change this during an active fight.`,keyboard(rows),q);
 }
 
 async function websiteGroupStart(env,chat,user,mint,groupId,q=null){
@@ -587,7 +593,7 @@ async function websiteGroupStart(env,chat,user,mint,groupId,q=null){
   if(!g)return say(env,chat,'Only an admin of this linked Telegram group may set its website.');
   await env.DB.prepare("INSERT INTO draft_state(user_id,step,own_mint,updated_at) VALUES(?,'website_group',?,?) ON CONFLICT(user_id) DO UPDATE SET step='website_group',own_mint=excluded.own_mint,updated_at=excluded.updated_at").bind(String(user),`${mint}|${groupId}`,now()).run();
   const p=await env.DB.prepare('SELECT symbol FROM projects WHERE mint=?').bind(mint).first();
-  return screen(env,chat,`🌐 <b>SET WEBSITE FOR ${html(tokenLabel(p?.symbol||'TOKEN'))}</b>\n\nGroup: ${html(g.chat_title||'Telegram Group')}\n\nSend the HTTPS website URL as your next message in this private chat.\n\nThis link affects only your Telegram group, not other groups.`,keyboard([[{text:'↩️ Back',callback_data:`sg:${mint}:${compactGroupChat(groupId)}`}],[{text:'🏠 Menu',callback_data:'menu:home'}]]),q);
+  return screen(env,chat,`🌐 <b>SET WEBSITE FOR ${html(tokenLabel(p?.symbol||'TOKEN'))}</b>\n\nGroup: ${html(g.chat_title||'Telegram Group')}\n\nSend the HTTPS website URL as your next message in this private chat.\n\nWhen no official project-wide website exists, this link can appear in both fight groups.`,keyboard([[{text:'↩️ Back',callback_data:`sg:${mint}:${compactGroupChat(groupId)}`}],[{text:'🏠 Menu',callback_data:'menu:home'}]]),q);
 }
 
 async function websiteGroupSave(env,chat,user,mint,groupId,raw){
@@ -597,8 +603,12 @@ async function websiteGroupSave(env,chat,user,mint,groupId,raw){
   if(!url)return say(env,chat,'⚠️ Send a valid public HTTPS website URL (for example https://arbstrategy.net).');
   await env.DB.prepare(`INSERT INTO group_websites(mint,chat_id,website_url,updated_by,updated_at) VALUES(?,?,?,?,?) ON CONFLICT(mint,chat_id) DO UPDATE SET website_url=excluded.website_url,updated_by=excluded.updated_by,updated_at=excluded.updated_at`).bind(mint,String(groupId),url,String(user),now()).run();
   await env.DB.prepare('DELETE FROM draft_state WHERE user_id=?').bind(String(user)).run();
-  await refreshActiveWebsiteButtons(env,mint,String(groupId));
-  await say(env,chat,`✅ Group website saved: ${html(projectWebsiteDisplay(url))}\n\nThe link now appears in battle posts in ${html(g.chat_title||'your group')} only.`);
+  await refreshActiveWebsiteButtons(env,mint);
+  const official=await env.DB.prepare('SELECT website_url FROM project_websites WHERE mint=?').bind(mint).first();
+  const notice=official?.website_url
+    ?'The official website takes priority in both fight communities.'
+    :'The website can now appear as a project button in BOTH fight communities. Existing battle buttons have been updated.';
+  await say(env,chat,`✅ Website saved: ${html(projectWebsiteDisplay(url))}\n\n${notice}`);
   return websiteGroupInfo(env,chat,user,mint,groupId);
 }
 
@@ -607,7 +617,7 @@ async function websiteGroupRemove(env,chat,user,mint,groupId,confirmed=false,q=n
   if(!g)return say(env,chat,'Only an admin of this linked Telegram group may remove its website.');
   if(!confirmed)return screen(env,chat,`🗑 <b>REMOVE GROUP WEBSITE?</b>\n\nRemove the local website for ${html(g.chat_title||'this group')}? The official link will not change.`,keyboard([[{text:'✅ Remove',callback_data:`sdel:${mint}:${compactGroupChat(groupId)}`}],[{text:'↩️ Keep',callback_data:`sg:${mint}:${compactGroupChat(groupId)}`}]]),q);
   await env.DB.prepare('DELETE FROM group_websites WHERE mint=? AND chat_id=?').bind(mint,String(groupId)).run();
-  await refreshActiveWebsiteButtons(env,mint,String(groupId));
+  await refreshActiveWebsiteButtons(env,mint);
   return websiteGroupInfo(env,chat,user,mint,groupId,q);
 }
 
@@ -619,8 +629,8 @@ async function websiteStart(env,chat,user,mint,q=null){
 }
 
 async function refreshActiveWebsiteButtons(env,mint,onlyChatId=null){
-  // A website may be created or changed while a fight is LIVE.
-  // Update the latest post in both groups without sending an unnecessary new video.
+  // Sync both project website buttons across all participating fight groups
+  // without reposting the permanent video.
   try{
     const ongoing=await env.DB.prepare("SELECT id FROM fights WHERE status='active' AND (mint_a=? OR mint_b=?) LIMIT 10").bind(mint,mint).all();
     for(const fight of ongoing.results||[]){
@@ -744,7 +754,7 @@ async function groupCallback(env,q){
       url:`https://t.me/${env.BOT_USERNAME.replace('@','')}?start=website_${p.mint}`}]);
     rows.push([{text:'↩️ Group Menu',callback_data:'menu:group'}]);
     return screen(env,chat,linked.results?.length?
-      '🌐 <b>PROJECT WEBSITES</b>\n\nSelect your project to set a website for your own Telegram group. The official project website stays protected.':
+      '🌐 <b>PROJECT WEBSITES</b>\n\nSelect a project to submit a website. When no official project URL exists, the submitted link appears in both fight communities.':
       'No project tokens linked to this group.',keyboard(rows),q);
   }
   if(cmd==='group:unlink'){
@@ -1324,7 +1334,7 @@ export default {
           if(row.key==='fight_video_file_id')videoConfigured=!!row.value;
         }
       }catch(e){console.error('health database query',errString(e));}
-      return Response.json({status:'ok',app:'ASTY Token Fight',version:'0.8.2',
+      return Response.json({status:'ok',app:'ASTY Token Fight',version:'0.8.3',
         cron_last_started:started,cron_last_completed:completed,video_configured:videoConfigured});
     }
     if(url.pathname!=='/telegram'||request.method!=='POST')return new Response('Not Found',{status:404});
