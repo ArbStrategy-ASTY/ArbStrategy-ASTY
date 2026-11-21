@@ -2,6 +2,7 @@ import { calculateScore } from './scoring.mjs';
 import { fightImage } from './card.js';
 import { birdeyeTokenInfo, birdeyePairPrices, pause } from './birdeye.mjs';
 import { normalizeProjectWebsite, projectWebsiteDisplay } from './website.mjs';
+import { ensureLogoTable, cachedLogo, ensureTokenLogo, saveUploadedLogo, telegramUploadedBytes } from './logo-cache.mjs';
 
 const DAY=86400;
 const PENDING_TTL=7*DAY;
@@ -83,8 +84,12 @@ async function postFight(env,id){
   // Only groups whose live post is missing need an image. Normal 10-minute refreshes never re-render.
   const groups=await env.DB.prepare(`SELECT DISTINCT pg.chat_id FROM project_groups pg WHERE pg.mint IN (?,?) AND NOT EXISTS (SELECT 1 FROM group_messages gm WHERE gm.fight_id=? AND gm.chat_id=pg.chat_id)`).bind(f.mint_a,f.mint_b,id).all();
   if(!groups.results.length)return;
+  const [logoA,logoB]=await Promise.all([cachedLogo(env,f.mint_a),cachedLogo(env,f.mint_b)]);
+  if(!logoA||!logoB){console.error('postFight postponed: missing persisted token logo',id);return;}
   let img=null;
-  try{img=await fightImage({mint:f.mint_a,symbol:f.sym_a,logo_url:f.logo_a},{mint:f.mint_b,symbol:f.sym_b,logo_url:f.logo_b});}catch(e){console.error('Battle graphic unavailable, using text fallback',errString(e));}
+  try{img=await fightImage(
+      {mint:f.mint_a,symbol:f.sym_a,logo_data_uri:logoA},
+      {mint:f.mint_b,symbol:f.sym_b,logo_data_uri:logoB});}catch(e){console.error('Battle graphic unavailable; retry later',errString(e));return;}
   for(const group of groups.results){
     const existing=await env.DB.prepare('SELECT live_message_id FROM group_messages WHERE fight_id=? AND chat_id=?').bind(id,group.chat_id).first();
     if(existing?.live_message_id)continue;
@@ -94,7 +99,7 @@ async function postFight(env,id){
         const form=new FormData();form.append('chat_id',group.chat_id);form.append('photo',new Blob([img],{type:'image/png'}),'ASTY-Fight.png');form.append('caption',caption(f,0,0));form.append('parse_mode','HTML');form.append('reply_markup',JSON.stringify(votingButtons(f)));
         try{r=await telegram(env,'sendPhoto',form);}catch(e){console.error('Photo upload failed; falling back to text',errString(e));}
       }
-      if(!r){kind='text';r=await say(env,group.chat_id,caption(f,0,0),{reply_markup:votingButtons(f)});}
+      if(!r)throw new Error('Battle image upload failed; will retry instead of posting a logo-less fight.');
       await env.DB.prepare('INSERT OR IGNORE INTO group_messages(fight_id,chat_id,live_message_id,message_type) VALUES(?,?,?,?)').bind(id,group.chat_id,r.message_id,kind).run();
     }catch(e){console.error('postFight group',group.chat_id,errString(e));}
   }
@@ -508,6 +513,22 @@ async function accept(env,query,id,decline=false){
   let p;
   try{p=await prices(env,f.mint_a,f.mint_b);}catch(e){return say(env,chat,'Cannot start this fight because the price source is unavailable: '+html(errString(e)));}
   if(!p[0]||!p[1])return say(env,chat,'Birdeye has no price for at least one token. Fight not started.');
+  // Require 2 permanently cached, usable logos BEFORE reserving either token.
+  const [logoA,logoB]=await Promise.all([
+    ensureTokenLogo(env,{mint:f.mint_a,symbol:f.sym_a,logo_url:f.logo_a}),
+    ensureTokenLogo(env,{mint:f.mint_b,symbol:f.sym_b,logo_url:f.logo_b})
+  ]);
+  if(!logoA||!logoB){
+    const missing=[!logoA?tokenLabel(f.sym_a):null,!logoB?tokenLabel(f.sym_b):null].filter(Boolean).join(' and ');
+    return say(env,chat,`🖼️ Official logo needed for ${html(missing)} before this fight can start.\n\nThe project admin can upload a PNG/JPEG through My Projects → Upload Logo.\n\nThe challenge remains pending.`,{reply_markup:keyboard([[{text:'🪙 My Projects',callback_data:'menu:projects'}]])});
+  }
+  try{
+    const image=await fightImage({symbol:f.sym_a,logo_data_uri:logoA},{symbol:f.sym_b,logo_data_uri:logoB});
+    if(!image?.length)throw new Error('Empty graphic');
+  }catch(e){
+    console.error('fight start image preflight',f.id,errString(e));
+    return say(env,chat,'⚠️ The token logos could not be rendered yet. Please re-upload them as Telegram photos before retrying.');
+  }
   const t=now();
   try{
     // D1 batch is transactional: either BOTH token locks + status change succeed or none.
@@ -680,6 +701,7 @@ async function tick(env){
 async function handleUpdateWithFeedback(env,update){
   try{
     await ensureWebsiteTable(env);
+    await ensureLogoTable(env);
     await onUpdate(env,update);
   }catch(error){
     const errorId=crypto.randomUUID().slice(0,8);
@@ -726,7 +748,7 @@ async function ensureTelegramWebhook(env){
 export default {
   async fetch(request,env,ctx){
     const url=new URL(request.url);
-    if(url.pathname==='/health'&&request.method==='GET')return Response.json({status:'ok',app:'ASTY Token Fight',version:'0.4.2'});
+    if(url.pathname==='/health'&&request.method==='GET')return Response.json({status:'ok',app:'ASTY Token Fight',version:'0.5.0'});
     if(url.pathname!=='/telegram'||request.method!=='POST')return new Response('Not Found',{status:404});
     if(!env.TELEGRAM_WEBHOOK_SECRET||request.headers.get('X-Telegram-Bot-Api-Secret-Token')!==env.TELEGRAM_WEBHOOK_SECRET)return new Response('Unauthorized',{status:401});
     let update;try{update=await request.json();}catch{return new Response('Bad JSON',{status:400});}
@@ -736,6 +758,7 @@ export default {
   async scheduled(_event,env,ctx){
     ctx.waitUntil((async()=>{
       await ensureWebsiteTable(env);
+      await ensureLogoTable(env);
       await ensureTelegramWebhook(env).catch(e=>console.error('telegram webhook setup',errString(e)));
       await ensureBotCommands(env).catch(e=>console.error('Telegram commands setup',errString(e)));
       await tick(env);
