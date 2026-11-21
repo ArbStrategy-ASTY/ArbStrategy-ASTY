@@ -84,7 +84,7 @@ async function postFight(env,id){
   const groups=await env.DB.prepare(`SELECT DISTINCT pg.chat_id FROM project_groups pg WHERE pg.mint IN (?,?) AND NOT EXISTS (SELECT 1 FROM group_messages gm WHERE gm.fight_id=? AND gm.chat_id=pg.chat_id)`).bind(f.mint_a,f.mint_b,id).all();
   if(!groups.results.length)return;
   let img=null;
-  try{img=await fightImage({symbol:f.sym_a,logo_url:f.logo_a},{symbol:f.sym_b,logo_url:f.logo_b});}catch(e){console.error('Battle graphic unavailable, using text fallback',errString(e));}
+  try{img=await fightImage({mint:f.mint_a,symbol:f.sym_a,logo_url:f.logo_a},{mint:f.mint_b,symbol:f.sym_b,logo_url:f.logo_b});}catch(e){console.error('Battle graphic unavailable, using text fallback',errString(e));}
   for(const group of groups.results){
     const existing=await env.DB.prepare('SELECT live_message_id FROM group_messages WHERE fight_id=? AND chat_id=?').bind(id,group.chat_id).first();
     if(existing?.live_message_id)continue;
@@ -182,6 +182,9 @@ function siteButtons(f){
   if(f?.website_b)rows.push([{text:`🌐 ${tokenLabel(f.sym_b)} Website`,url:f.website_b}]);
   return keyboard(rows);
 }
+
+function websiteOptions(f){const links=siteButtons(f);return links.inline_keyboard.length?{reply_markup:links}:{};}
+
 
 function menuButtons(){
   return keyboard([
@@ -471,7 +474,7 @@ async function createFight(env,user,a,b,chat){
   catch(e){return say(env,chat,'This token pair already has an open or active challenge. Wait for it to finish.');}
   await say(env,chat,`🥊 <b>Challenge created!</b>\nShare this link with your opponent:\n${botLink(env,id)}\n\nThe opponent must link their Telegram group and accept the challenge.`,{reply_markup:keyboard([[{text:'🔗 Share challenge',url:botLink(env,id)}],...siteButtons(await detail(env,id)).inline_keyboard])});
   const opponents=await env.DB.prepare('SELECT DISTINCT registered_by FROM project_groups WHERE mint=?').bind(b).all();
-  for(const x of opponents.results){try{await say(env,x.registered_by,`🥊 New challenge for your project!\n${botLink(env,id)}`,{reply_markup:siteButtons(await detail(env,id))});}catch{}}
+  for(const x of opponents.results){try{await say(env,x.registered_by,`🥊 New challenge for your project!\n${botLink(env,id)}`,websiteOptions(await detail(env,id)));}catch{}}
 }
 async function linkGroup(env,msg,arg){
   if(!['group','supergroup'].includes(msg.chat.type))return say(env,msg.chat.id,'Use <code>/link TOKEN_MINT</code> in your Telegram group.');
@@ -515,8 +518,8 @@ async function accept(env,query,id,decline=false){
     ]);
     if(!changed(batch[2]))return say(env,chat,'This challenge has already been processed.');
   }catch(e){return say(env,chat,'One of these tokens is already in another active fight. Try accepting the challenge later.');}
-  await say(env,chat,`✅ Challenge accepted! The 24-hour fight is now live in both groups.`,{reply_markup:siteButtons(f)});
-  await say(env,f.creator_id,`🥊 ${html(tokenLabel(f.sym_b))} accepted! Fight ${f.id} is LIVE.`,{reply_markup:siteButtons(f)}).catch(()=>{});
+  await say(env,chat,`✅ Challenge accepted! The 24-hour fight is now live in both groups.`,websiteOptions(f));
+  await say(env,f.creator_id,`🥊 ${html(tokenLabel(f.sym_b))} accepted! Fight ${f.id} is LIVE.`,websiteOptions(f)).catch(()=>{});
   await postFight(env,id);
 }
 async function vote(env,q,id,side){
@@ -723,7 +726,7 @@ async function ensureTelegramWebhook(env){
 export default {
   async fetch(request,env,ctx){
     const url=new URL(request.url);
-    if(url.pathname==='/health'&&request.method==='GET')return Response.json({status:'ok',app:'ASTY Token Fight',version:'0.4.1'});
+    if(url.pathname==='/health'&&request.method==='GET')return Response.json({status:'ok',app:'ASTY Token Fight',version:'0.4.2'});
     if(url.pathname!=='/telegram'||request.method!=='POST')return new Response('Not Found',{status:404});
     if(!env.TELEGRAM_WEBHOOK_SECRET||request.headers.get('X-Telegram-Bot-Api-Secret-Token')!==env.TELEGRAM_WEBHOOK_SECRET)return new Response('Unauthorized',{status:401});
     let update;try{update=await request.json();}catch{return new Response('Bad JSON',{status:400});}
