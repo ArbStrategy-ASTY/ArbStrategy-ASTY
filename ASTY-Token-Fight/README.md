@@ -1,4 +1,4 @@
-# 🥊 ASTY Token Fight – Telegram Bot v0.7.3 (Birdeye)
+# 🥊 ASTY Token Fight – Telegram Bot v0.8.0 (Birdeye)
 
 **Status: private Beta / laufende Tests.** Der Bot wurde in früheren Versionen auf Cloudflare deployed und mit ASTY-vs.-ARBX-Gruppen getestet. Die neuen Menüs, Website-Buttons, Vote-Benachrichtigungen und das Grafikdesign von v0.4.2 sind im GitHub-Code implementiert, aber müssen nach Cloudflare-Deployment noch in Telegram geprüft werden. Alle Änderungen bleiben auf den Ordner `ASTY-Token-Fight/` beschränkt.
 
@@ -286,3 +286,19 @@ For each successfully counted vote the bot now sends `🔥 New vote for $TOKEN �
 Im englischen `/help` gibt es jetzt **🔐 Bot Permissions** (im privaten Chat und in den Gruppen). Für die zuverlässige Verifizierung der Projektadmins mittels Telegram `getChatMember` **sollte der Bot in beiden Fight-Gruppen Administrator sein**. Telegram garantiert dieses Lookup für andere Nutzer nur dann. Für normalen Versand wären grundsätzlich schon gewöhnliche Gruppenrechte ausreichend, sofern der Bot Text und Videos posten darf.
 
 Der Bot braucht die Möglichkeit, Textmeldungen für Votes, 10-Minuten-Updates und Ergebnisse sowie Videos für Battle-Posts zu senden und eigene Nachrichten zu bearbeiten. Er benötigt **keine** Berechtigungen zum Löschen, Anpinnen, Sperren anderer Mitglieder, Ernennen von Admins oder Ändern der Gruppeninformationen. Nur ein echter Gruppenadmin darf Token verknüpfen und Challenges für ein Projekt annehmen. Die Information steht in der Übersicht, im How-It-Works-Bereich, unter Bot Permissions und bei Commands. Keine erzwingende Rechteänderung im Code, nur zutreffende und transparente Anleitung.
+
+## Latest live-fight notifications, ARBX website fixes (v0.8.0)
+
+**This section supersedes older references to 10-minute reposts and earlier captions.**
+
+- Fight heading is now `🥊 LIVE TOKEN FIGHT`, followed on its own next line by `ID: FIGHT_ID`. No hyphen after FIGHT. Token pair remains `⚡ $ASTY VS $ARBX ⚡`.
+- The bottom line is `Powered by ASTY ArbStrategy.net` (no hyphen), using a clickable HTML link for `ArbStrategy.net` to `https://arbstrategy.net/`. The same style is used on milestone notifications and the main bot menu.
+- Every active fight now sends a fresh status/video message approximately every **30 minutes** (`REFRESH_INTERVAL=1800`). The original video remains unchanged. All user-facing cadence text in fight posts, refresh confirmation and `/help` is updated to 30 minutes. Already-active fights may have one previously scheduled update under their old timer; subsequently the new 30-minute interval is used.
+- **15, 10 and 5 minutes before the end**, the one-minute Cloudflare cron independently sends an urgent text reminder to BOTH project groups, with vote buttons, the current score and any project website buttons. Each threshold is its own window and is delivered only once per group through the D1 `sent_events` idempotency ledger. Missed windows are not duplicated or flooded later. This does not interfere with 30-minute posts, single-vote enforcement or settlement.
+- `/help` overview, How It Works, Fight Results and Bot Permissions now explain the 30-minute updates and the additional 15/10/5-minute alerts.
+- **Website editing is allowed during an active fight.** The Project Websites / My Projects list now checks actual group-admin membership rather than filtering solely by the account that originally linked the group. A project website can still be changed only by a current admin of the **first linked group** for that mint; the bot should also be a group admin for reliable Telegram verification.
+- When a website is saved or removed during an ongoing fight, `editMessageReplyMarkup` immediately updates the latest battle post in all participating groups without reposting the video. Subsequent posts inherit the link. If a Telegram edit fails, the bot logs the error and later posts still use the saved URL.
+- Re-running `/link` for an already linked group no longer alters its original `registered_by` or `registered_at` fields; this prevents later relinks from silently changing the earliest-group website authorization order.
+- Automated countdown boundary tests cover 15m/10m/5m windows, zero/negative remainder and invalid values. Mocked reminder and ARBX-live-website flows were checked during development.
+
+Verification: `/health` should report `0.8.0` after Cloudflare deployment. Test ARBX via `/start` → Project Websites → ARBX → Set / Edit Website. If Telegram still denies the change, verify admin membership in the earliest linked ARBX group and make the bot admin; Cloudflare logs can pinpoint any remaining API permission error.
