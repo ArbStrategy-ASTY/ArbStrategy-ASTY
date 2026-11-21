@@ -1,4 +1,4 @@
-# 🥊 ASTY Token Fight – Telegram Bot v0.6.1 (Birdeye)
+# 🥊 ASTY Token Fight – Telegram Bot v0.7.0 (Birdeye)
 
 **Status: private Beta / laufende Tests.** Der Bot wurde in früheren Versionen auf Cloudflare deployed und mit ASTY-vs.-ARBX-Gruppen getestet. Die neuen Menüs, Website-Buttons, Vote-Benachrichtigungen und das Grafikdesign von v0.4.2 sind im GitHub-Code implementiert, aber müssen nach Cloudflare-Deployment noch in Telegram geprüft werden. Alle Änderungen bleiben auf den Ordner `ASTY-Token-Fight/` beschränkt.
 
@@ -251,3 +251,18 @@ Security: uploading/replacing the global video is restricted to the ASTY project
 - Für jeden weiteren Zugriff auf **Upload Video**, **Replace Video** und die Vorschau wird der gespeicherte Besitzer geprüft. Eine später geänderte Umgebungsvariable oder andere Gruppenadministratoren übernehmen die Berechtigung nicht.
 - Das Video selbst darf ausschließlich der ursprüngliche, einmal festgelegte Eigentümer ersetzen. Andere Token-/Gruppenadmins können es ansehen, aber nicht ersetzen. Eine Rücksetzung des Eigentümers ist nur durch eine ausdrücklich autorisierte Betreiberaktion außerhalb des Bots möglich.
 - Diese Sicherung gilt im Bot ab `0.6.1`; GitHub-Commit allein bedeutet noch nicht, dass Cloudflare bereits auf dieser Version läuft.
+
+
+## Current rules and fixed official video (v0.7.0)
+
+**This section supersedes earlier scoring and video-management notes elsewhere in this README.**
+
+- The global MP4 video was already uploaded and saved in D1 under `worker_settings.fight_video_file_id`. This version keeps that existing value unchanged. Once set, it is permanently locked for all Telegram users, including the original uploader and other admins. The menu shows only video status and a preview; no Replace or Upload button is available. Server-side upload handlers and the database INSERT OR IGNORE prevent replacement via old/stale Telegram buttons. Only an explicit infrastructure-level operator action outside the bot could alter the D1 record.
+- A 24-hour battle uses the same fixed video in both groups, with new posts roughly every 10 minutes and a short group announcement for each successfully counted vote.
+- Community vote share contributes 50% of final score; 24-hour relative percentage-point price performance contributes the other 50%.
+- **New rule:** each 0.1 percentage point of price-change advantage earns 1 price-category point. For side A: `priceShareA = clamp(50 + 10 * (returnA - returnB), 0, 100)`. Side B receives `100 - priceShareA`. Final A: `(voteShareA + priceShareA) / 2`. No votes yields 50:50 in the vote category. The price category cap is reached at a 5-percentage-point lead.
+- Example: ASTY 30 votes / +5.00%, ARBX 20 votes / +3.00%. Vote category: 60:40; price category: 70:30; **final score: ASTY 65.0% vs ARBX 35.0%**.
+- At the end of 24h, the bot tries to retrieve valid final prices, updates the latest group posts, sends a **new text result notification** to both groups declaring winner or draw, and saves the result in the Hall of Fame. If prices remain unavailable after a short retry, it closes as unresolved without a fabricated winner. Early stopped fights have no winner.
+- In English under `/help` (in a group or private bot chat), users get an overview and interactive sections: How It Works, Scoring Rules, Fight Results and Commands. The full price formula, example, winner announcement, website buttons, one-vote rule, fixed video and ten-minute posts are explained.
+
+Deployment check: after Cloudflare Builds publishes the changes, `/health` must show version `0.7.0`. Do not clear or reupload the stored D1 video.
