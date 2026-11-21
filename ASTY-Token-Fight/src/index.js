@@ -529,7 +529,7 @@ async function websiteInfo(env,chat,user,mint,q=null){
   const auth=allowed
     ?'✅ You can edit this project website. The update also works during active fights.'
     :primary
-      ?'🔒 Website changes require administrator rights in the original linked project group.\\n\\nIf you are an admin of that group, make sure the bot is also a group administrator, then open the group’s /start → Manage Project Website menu. Other project groups cannot override the original project website.'
+      ?'🔒 Website changes require administrator rights in the original linked project group.\n\nIf you are an admin of that group, make sure the bot is also a group administrator, then open the group’s /start → Manage Project Website menu. Other project groups cannot override the original project website.'
       :'⚠️ No linked project group found. Link the token from a project Telegram group first.';
   return screen(env,chat,`🌐 <b>${html(tokenLabel(p.symbol))} WEBSITE</b>\n\n${site}\n\n${auth}`,keyboard(rows),q);
 }
