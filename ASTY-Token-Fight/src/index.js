@@ -228,7 +228,7 @@ async function helpScreen(env,chat,q=null,isGroup=false) {
 }
 
 async function adminProjects(env,user) {
-  const groups=await env.DB.prepare(`SELECT pg.chat_id,pg.mint,pg.chat_title,p.symbol FROM project_groups pg JOIN projects p ON p.mint=pg.mint ORDER BY pg.registered_at DESC LIMIT 60`).all();
+  const groups=await env.DB.prepare(`SELECT pg.chat_id,pg.mint,pg.chat_title,p.symbol FROM project_groups pg JOIN projects p ON p.mint=pg.mint WHERE pg.registered_by=? ORDER BY pg.registered_at DESC LIMIT 60`).bind(String(user)).all();
   const candidates=groups.results||[];
   // Access is based on LIVE Telegram group admin status, not the original registrar ID.
   const matches=await Promise.all(candidates.map(async g=>await tgAdmin(env,g.chat_id,user)?g:null));
@@ -359,6 +359,7 @@ async function menuCallback(env,q){
     if(cmd==='menu:help')return helpScreen(env,chat,null,true);
     return groupHome(env,chat,q);
   }
+  if(['menu:home','menu:new','menu:projects','menu:sites'].includes(cmd))await env.DB.prepare('DELETE FROM draft_state WHERE user_id=?').bind(String(user)).run();
   if(cmd==='menu:home')return menuHome(env,chat,q);
   if(cmd==='menu:help')return helpScreen(env,chat,q);
   if(cmd==='menu:projects')return projectsScreen(env,chat,user,q);
@@ -388,9 +389,12 @@ async function menuCallback(env,q){
   return menuHome(env,chat,q);
 }
 
+let websiteTableReady=false;
 async function ensureWebsiteTable(env){
-  // D1 migration also supports already deployed databases without manual SQL commands.
+  // Creates this table in an existing D1 database without touching group or fight records.
+  if(websiteTableReady)return;
   await env.DB.prepare(`CREATE TABLE IF NOT EXISTS project_websites(mint TEXT PRIMARY KEY,website_url TEXT NOT NULL,updated_by TEXT NOT NULL,updated_at INTEGER NOT NULL,FOREIGN KEY(mint) REFERENCES projects(mint))`).run();
+  websiteTableReady=true;
 }
 
 async function ensureBotCommands(env){
@@ -472,8 +476,8 @@ async function accept(env,query,id,decline=false){
     ]);
     if(!changed(batch[2]))return say(env,chat,'This challenge has already been processed.');
   }catch(e){return say(env,chat,'One of these tokens is already in another active fight. Try accepting the challenge later.');}
-  await say(env,chat,'✅ Challenge accepted! The 24-hour fight is now live in both groups.');
-  await say(env,f.creator_id,`🥊 ${html(tokenLabel(f.sym_b))} accepted! Fight ${f.id} is LIVE.`).catch(()=>{});
+  await say(env,chat,`✅ Challenge accepted! The 24-hour fight is now live in both groups.\n${siteLines(f).join('\n')}`);
+  await say(env,f.creator_id,`🥊 ${html(tokenLabel(f.sym_b))} accepted! Fight ${f.id} is LIVE.\n${siteLines(f).join('\n')}`).catch(()=>{});
   await postFight(env,id);
 }
 async function vote(env,q,id,side){
@@ -497,6 +501,7 @@ async function fightList(env,chat,history=false,mint=null){
   const lines=[history?'🏆 <b>ASTY Token Fight – Hall of Fame</b>':'🥊 <b>Active fights</b>'];
   for(const row of list.results){const f=await detail(env,row.id);if(!f)continue;
     lines.push(`${html(tokenLabel(f.sym_a))} VS ${html(tokenLabel(f.sym_b))} · <code>${html(f.id)}</code>${history?(f.status==='ended'?` · Winner: ${f.winner==='draw'?'Draw':html(tokenLabel(f.winner==='a'?f.sym_a:f.sym_b))}`:' · No result'):' · LIVE'}`);
+    lines.push(...siteLines(f));
   }
   lines.push('\n/status FIGHT_ID for details · 🟣 Powered by ASTY - ArbStrategy.net');
   return say(env,chat,lines.join('\n'));
@@ -532,8 +537,8 @@ async function onUpdate(env,u){
   if(cmd==='/projects')return projectsScreen(env,chat,msg.from.id);
   if(cmd==='/website')return projectsScreen(env,chat,msg.from.id,null,true);
   if(cmd==='/help')return helpScreen(env,chat);
-  if(cmd==='/fights')return fightList(env,chat,false);
-  if(cmd==='/history')return fightList(env,chat,true,mintOk(args[0])?args[0]:null);
+  if(cmd==='/fights')return fightScreen(env,chat,msg.from.id,false);
+  if(cmd==='/history')return args[0]&&mintOk(args[0])?fightList(env,chat,true,args[0]):fightScreen(env,chat,msg.from.id,true);
   if(cmd==='/status'){
     if(!args[0])return say(env,chat,'Usage: <code>/status FIGHT_ID</code>');
     const text=await statusText(env,args[0]);return say(env,chat,text||'Fight not found.');
@@ -548,9 +553,8 @@ async function onUpdate(env,u){
   if(cmd==='/cancel'){await env.DB.prepare('DELETE FROM draft_state WHERE user_id=?').bind(String(msg.from.id)).run();return say(env,chat,'Challenge setup cancelled.');}
   if(cmd==='/new'){
     if(args.length>=2)return createFight(env,msg.from.id,args[0],args[1],chat);
+    await env.DB.prepare('DELETE FROM draft_state WHERE user_id=?').bind(String(msg.from.id)).run();
     return newFightScreen(env,chat,msg.from.id);
-    await env.DB.prepare(`INSERT INTO draft_state(user_id,step,own_mint,updated_at) VALUES(?,'own',NULL,?) ON CONFLICT(user_id) DO UPDATE SET step='own',own_mint=NULL,updated_at=excluded.updated_at`).bind(String(msg.from.id),now()).run();
-    return say(env,chat,'Send your <b>project token mint address</b>. Use /cancel to stop.');
   }
   if(!raw.startsWith('/')){
     const draft=await env.DB.prepare('SELECT * FROM draft_state WHERE user_id=?').bind(String(msg.from.id)).first();
