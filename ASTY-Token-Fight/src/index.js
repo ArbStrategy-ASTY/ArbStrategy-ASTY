@@ -80,13 +80,13 @@ function caption(f,votesA,votesB){
 }
 function votingButtons(f){const rows=[[{text:`🗳️ ${tokenLabel(f.sym_a)}`,callback_data:`vote:${f.id}:a`},{text:`🗳️ ${tokenLabel(f.sym_b)}`,callback_data:`vote:${f.id}:b`}]]; return keyboard([...rows,...siteButtons(f).inline_keyboard]);}
 async function postFight(env,id){
-  const f=await detail(env,id);if(!f||f.status!=='active')return 0;
+  const f=await detail(env,id);if(!f||f.status!=='active')return new Set();
   const groups=await env.DB.prepare(`SELECT DISTINCT pg.chat_id FROM project_groups pg WHERE pg.mint IN (?,?) AND NOT EXISTS (SELECT 1 FROM group_messages gm WHERE gm.fight_id=? AND gm.chat_id=pg.chat_id)`).bind(f.mint_a,f.mint_b,id).all();
-  if(!groups.results?.length)return 0;
+  if(!groups.results?.length)return new Set();
   const videoId=await getFightVideo(env);
-  if(!videoId){console.error('postFight: no reusable video configured',id);return 0;}
+  if(!videoId){console.error('postFight: no reusable video configured',id);return new Set();}
   const [a,b]=await stats(env,id);
-  let posted=0;
+  const posted=new Set();
   for(const group of groups.results){
     try{
       const sent=await telegram(env,'sendVideo',{
@@ -96,7 +96,7 @@ async function postFight(env,id){
       if(!Number.isInteger(sent?.message_id))throw new Error('Telegram sendVideo returned no message ID');
       const record=await env.DB.prepare(`INSERT OR IGNORE INTO group_messages(fight_id,chat_id,live_message_id,message_type) VALUES(?,?,?,'video')`)
         .bind(id,group.chat_id,sent.message_id).run();
-      if(changed(record))posted++;
+      if(changed(record))posted.add(String(group.chat_id));
     }catch(e){console.error('postFight video',id,group.chat_id,errString(e));}
   }
   return posted;
@@ -818,18 +818,38 @@ async function tick(env){
       await closeFight(env,f.id,'ended',[a,b]);
     }catch(e){console.error('settlement',f.id,errString(e));}
   }
-  // Rotate through all eligible active fights in subsequent runs: no permanent LIMIT starvation.
-  const active=await env.DB.prepare(`SELECT id,mint_a,mint_b FROM fights WHERE status='active' AND ends_at>? AND (next_refresh_at IS NULL OR next_refresh_at<=?) ORDER BY next_refresh_at LIMIT 40`).bind(now(),now()).all();
-  for(const f of active.results){
+  // Rotate through all eligible active fights. A price API failure must NEVER stop
+  // voting/countdown updates or block a new Telegram post.
+  const active=await env.DB.prepare(`SELECT id,mint_a,mint_b FROM fights WHERE status='active' AND ends_at>? AND (next_refresh_at IS NULL OR next_refresh_at<=?) ORDER BY next_refresh_at LIMIT 40`)
+    .bind(now(),now()).all();
+  for(const f of active.results||[]){
+    const claim=await env.DB.prepare(`UPDATE fights SET next_refresh_at=? WHERE id=? AND status='active' AND ends_at>? AND (next_refresh_at IS NULL OR next_refresh_at<=?)`)
+      .bind(now()+120,f.id,now(),now()).run();
+    if(!changed(claim))continue;
+    let justPosted=new Set(),result={targets:0,sent:0,failed:0};
+    let priceError=null;
     try{
-      const claim=await env.DB.prepare(`UPDATE fights SET next_refresh_at=? WHERE id=? AND status='active' AND ends_at>? AND (next_refresh_at IS NULL OR next_refresh_at<=?)`).bind(now()+REFRESH_INTERVAL,f.id,now(),now()).run();
-      if(!changed(claim))continue;
       const [a,b]=await prices(env,f.mint_a,f.mint_b);
-      if(a&&b)await env.DB.prepare(`UPDATE fights SET latest_price_a=?,latest_price_b=?,last_price_at=? WHERE id=? AND status='active'`).bind(a,b,now(),f.id).run();
-      await postFight(env,f.id); // Retry only groups that never received an initial post.
-      await refreshMessages(env,f.id,false,true); // New post every 10 minutes (not only an edit).
-      await sendMilestones(env,f.id);
-    }catch(e){console.error('refresh',f.id,errString(e));}
+      if(a&&b){
+        await env.DB.prepare(`UPDATE fights SET latest_price_a=?,latest_price_b=?,last_price_at=? WHERE id=? AND status='active'`)
+          .bind(a,b,now(),f.id).run();
+      }else priceError='Price API returned incomplete data';
+    }catch(e){
+      priceError=errString(e);
+      console.error('price refresh failed but Telegram posting continues',f.id,priceError);
+    }
+    try{justPosted=await postFight(env,f.id);}
+    catch(e){console.error('initial video retry',f.id,errString(e));}
+    try{result=await refreshMessages(env,f.id,false,true,justPosted);}
+    catch(e){result.failed++;console.error('repost',f.id,errString(e));}
+    try{await sendMilestones(env,f.id);}
+    catch(e){console.error('milestone',f.id,errString(e));}
+    const success=result.failed===0&&(result.sent>0||justPosted.size>0);
+    const delay=success?REFRESH_INTERVAL:90;
+    await env.DB.prepare("UPDATE fights SET next_refresh_at=? WHERE id=? AND status='active'")
+      .bind(now()+delay,f.id).run();
+    console.log('fight refresh',f.id,'new_posts',result.sent,'new_groups',justPosted.size,
+      'failed_groups',result.failed,'next_seconds',delay,'price',priceError||'ok');
   }
   // Retry unfinished final notifications if Telegram was temporarily unavailable.
   const pendingNotifications=await env.DB.prepare(`SELECT DISTINCT gm.fight_id FROM group_messages gm JOIN fights f ON f.id=gm.fight_id LEFT JOIN sent_events e ON e.fight_id=f.id AND e.chat_id=gm.chat_id AND e.event_type='end_'||f.status WHERE f.status IN ('ended','unresolved','cancelled') AND (e.sent_at IS NULL OR e.sent_at<=0) ORDER BY f.archived_at DESC LIMIT 15`).all();
@@ -889,7 +909,19 @@ async function ensureTelegramWebhook(env){
 export default {
   async fetch(request,env,ctx){
     const url=new URL(request.url);
-    if(url.pathname==='/health'&&request.method==='GET')return Response.json({status:'ok',app:'ASTY Token Fight',version:'0.6.0'});
+    if(url.pathname==='/health'&&request.method==='GET'){
+      let started=null,completed=null,videoConfigured=false;
+      try{
+        const rows=await env.DB.prepare("SELECT key,value FROM worker_settings WHERE key IN ('cron_last_started','cron_last_completed','fight_video_file_id')").all();
+        for(const row of rows.results||[]){
+          if(row.key==='cron_last_started')started=row.value;
+          if(row.key==='cron_last_completed')completed=row.value;
+          if(row.key==='fight_video_file_id')videoConfigured=!!row.value;
+        }
+      }catch(e){console.error('health database query',errString(e));}
+      return Response.json({status:'ok',app:'ASTY Token Fight',version:'0.6.0',
+        cron_last_started:started,cron_last_completed:completed,video_configured:videoConfigured});
+    }
     if(url.pathname!=='/telegram'||request.method!=='POST')return new Response('Not Found',{status:404});
     if(!env.TELEGRAM_WEBHOOK_SECRET||request.headers.get('X-Telegram-Bot-Api-Secret-Token')!==env.TELEGRAM_WEBHOOK_SECRET)return new Response('Unauthorized',{status:401});
     let update;try{update=await request.json();}catch{return new Response('Bad JSON',{status:400});}
@@ -900,9 +932,14 @@ export default {
     ctx.waitUntil((async()=>{
       await ensureWebsiteTable(env);
       await ensureLogoTable(env);
+      // A persisted heartbeat tells us if Cloudflare actually executes the cron.
+      await env.DB.prepare("INSERT INTO worker_settings(key,value,updated_at) VALUES('cron_last_started',?,?) ON CONFLICT(key) DO UPDATE SET value=excluded.value,updated_at=excluded.updated_at")
+        .bind(new Date().toISOString(),now()).run().catch(e=>console.error('cron heartbeat',errString(e)));
       await ensureTelegramWebhook(env).catch(e=>console.error('telegram webhook setup',errString(e)));
       await ensureBotCommands(env).catch(e=>console.error('Telegram commands setup',errString(e)));
       await tick(env);
+      await env.DB.prepare("INSERT INTO worker_settings(key,value,updated_at) VALUES('cron_last_completed',?,?) ON CONFLICT(key) DO UPDATE SET value=excluded.value,updated_at=excluded.updated_at")
+        .bind(new Date().toISOString(),now()).run().catch(e=>console.error('cron completion heartbeat',errString(e)));
     })().catch(e=>console.error('cron',errString(e))));
   }
 };
