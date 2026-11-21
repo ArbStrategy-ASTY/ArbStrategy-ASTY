@@ -563,14 +563,19 @@ async function websiteInfo(env,chat,user,mint,q=null){
     rows.push([{text:p.website_url?'✏️ Edit Official Website':'🌐 Add Official Website',callback_data:`site:set:${mint}`}]);
     if(p.website_url)rows.push([{text:'🗑 Remove Official Website',callback_data:`site:remove:${mint}`}]);
   }
-  for(const g of mine.slice(0,12))rows.push([{text:`🌐 Website for ${String(g.chat_title||'My Group').slice(0,28)}`,callback_data:`sg:${mint}:${compactGroupChat(g.chat_id)}`}]);
+  for(const g of mine.slice(0,12))rows.push([{text:`🌐 Manage link via ${String(g.chat_title||'My Group').slice(0,26)}`,callback_data:`sg:${mint}:${compactGroupChat(g.chat_id)}`}]);
   if(p.website_url)rows.push([{text:'🌐 Open Official Website',url:p.website_url}]);
   rows.push([{text:'↩️ Project Websites',callback_data:'menu:sites'},{text:'🏠 Menu',callback_data:'menu:home'}]);
-  const site=p.website_url?`<a href="${html(p.website_url)}">${html(projectWebsiteDisplay(p.website_url))}</a>`:'Not set';
+  const resolved=await websiteViewForChat(env,{
+    mint_a:mint,mint_b:mint,website_a:p.website_url||null,website_b:p.website_url||null
+  },null);
+  const activeUrl=resolved.website_a;
+  const site=activeUrl?`<a href="${html(activeUrl)}">${html(projectWebsiteDisplay(activeUrl))}</a>`:'Not set';
+  const origin=p.website_url?'Official project link':activeUrl?'Submitted by a linked group':'No website submitted';
   const explain=!mine.length?'🔒 Only admins of linked Telegram groups may manage their group websites. Make sure the bot is also a group admin.'
     :original?'✅ You can manage the official project website and links submitted by your groups.'
     :'✅ You can submit a website for this token through your linked Telegram group. When no official URL exists, it is shown in BOTH fight communities. You cannot change the official project website.';
-  return screen(env,chat,`🌐 <b>${html(tokenLabel(p.symbol))} WEBSITES</b>\n\nOfficial website: ${site}\n\n${explain}\n\nSelect a website to manage:`,keyboard(rows),q);
+  return screen(env,chat,`🌐 <b>${html(tokenLabel(p.symbol))} WEBSITE</b>\n\n🔗 Website in both fights: ${site}\nSource: ${origin}\n\n${explain}\n\nSelect a website to manage:`,keyboard(rows),q);
 }
 
 async function websiteGroupInfo(env,chat,user,mint,groupId,q=null){
@@ -605,9 +610,14 @@ async function websiteGroupSave(env,chat,user,mint,groupId,raw){
   await env.DB.prepare('DELETE FROM draft_state WHERE user_id=?').bind(String(user)).run();
   await refreshActiveWebsiteButtons(env,mint);
   const official=await env.DB.prepare('SELECT website_url FROM project_websites WHERE mint=?').bind(mint).first();
+  const selected=await websiteViewForChat(env,{
+    mint_a:mint,mint_b:mint,website_a:official?.website_url||null,website_b:official?.website_url||null
+  },groupId);
   const notice=official?.website_url
-    ?'The official website takes priority in both fight communities.'
-    :'The website can now appear as a project button in BOTH fight communities. Existing battle buttons have been updated.';
+    ?'An official link is set, so it takes priority in both fight groups.'
+    :selected.website_a===url
+      ?'This website is now available under the project website button in BOTH fight groups.'
+      :'Website saved. Another linked group provided an earlier link, which remains the current fallback in both fight groups.';
   await say(env,chat,`✅ Website saved: ${html(projectWebsiteDisplay(url))}\n\n${notice}`);
   return websiteGroupInfo(env,chat,user,mint,groupId);
 }
@@ -1020,9 +1030,9 @@ async function createFight(env,user,a,b,chat){
   const id=eid();
   try{await env.DB.prepare(`INSERT INTO fights(id,mint_a,mint_b,creator_id,status,created_at) VALUES(?,?,?,?,'pending',?)`).bind(id,a,b,String(user),now()).run();}
   catch(e){return say(env,chat,'This token pair already has an open or active challenge. Wait for it to finish.');}
-  await say(env,chat,`🥊 <b>Challenge created!</b>\nShare this link with your opponent:\n${botLink(env,id)}\n\nThe opponent must link their Telegram group and accept the challenge.`,{reply_markup:keyboard([[{text:'🔗 Share challenge',url:botLink(env,id)}],...siteButtons(await detail(env,id)).inline_keyboard])});
+  await say(env,chat,`🥊 <b>Challenge created!</b>\nShare this link with your opponent:\n${botLink(env,id)}\n\nThe opponent must link their Telegram group and accept the challenge.`,{reply_markup:keyboard([[{text:'🔗 Share challenge',url:botLink(env,id)}],...siteButtons(await websiteViewForChat(env,await detail(env,id),null)).inline_keyboard])});
   const opponents=await env.DB.prepare('SELECT DISTINCT registered_by FROM project_groups WHERE mint=?').bind(b).all();
-  for(const x of opponents.results){try{await say(env,x.registered_by,`🥊 New challenge for your project!\n${botLink(env,id)}`,websiteOptions(await detail(env,id)));}catch{}}
+  for(const x of opponents.results){try{await say(env,x.registered_by,`🥊 New challenge for your project!\n${botLink(env,id)}`,websiteOptions(await websiteViewForChat(env,await detail(env,id),null)));}catch{}}
 }
 async function linkGroup(env,msg,arg){
   if(!['group','supergroup'].includes(msg.chat.type))return say(env,msg.chat.id,'Use <code>/link TOKEN_MINT</code> in your Telegram group.');
@@ -1042,7 +1052,7 @@ async function unlinkGroup(env,msg,arg){
 async function challengeView(env,chat,id){
   const f=await detail(env,id);if(!f)return say(env,chat,'Challenge not found.');
   if(f.status!=='pending')return say(env,chat,`This fight has the status ${html(f.status)}.`);
-  return say(env,chat,`🥊 <b>NEW ASTY TOKEN FIGHT CHALLENGE</b>\n${html(tokenLabel(f.sym_a))} challenges ${html(tokenLabel(f.sym_b))}!\n⏳ 24 hours · 50% votes · 50% price change\n\nYou must be an admin of a group linked to ${html(tokenLabel(f.sym_b))}.`,{reply_markup:keyboard([[{text:'✅ Accept challenge',callback_data:`accept:${f.id}`}],[{text:'❌ Decline',callback_data:`decline:${f.id}`} ],...siteButtons(f).inline_keyboard])});
+  return say(env,chat,`🥊 <b>NEW ASTY TOKEN FIGHT CHALLENGE</b>\n${html(tokenLabel(f.sym_a))} challenges ${html(tokenLabel(f.sym_b))}!\n⏳ 24 hours · 50% votes · 50% price change\n\nYou must be an admin of a group linked to ${html(tokenLabel(f.sym_b))}.`,{reply_markup:keyboard([[{text:'✅ Accept challenge',callback_data:`accept:${f.id}`}],[{text:'❌ Decline',callback_data:`decline:${f.id}`} ],...siteButtons(await websiteViewForChat(env,f,null)).inline_keyboard])});
 }
 async function accept(env,query,id,decline=false){
   const uid=query.from.id,chat=query.message.chat.id;
@@ -1070,8 +1080,8 @@ async function accept(env,query,id,decline=false){
     ]);
     if(!changed(batch[2]))return say(env,chat,'This challenge has already been processed.');
   }catch(e){return say(env,chat,'One of these tokens is already in another active fight. Try accepting the challenge later.');}
-  await say(env,chat,`✅ Challenge accepted! The 24-hour fight is now live in both groups.`,websiteOptions(f));
-  await say(env,f.creator_id,`🥊 ${html(tokenLabel(f.sym_b))} accepted! Fight ${f.id} is LIVE.`,websiteOptions(f)).catch(()=>{});
+  await say(env,chat,`✅ Challenge accepted! The 24-hour fight is now live in both groups.`,websiteOptions(await websiteViewForChat(env,f,null)));
+  await say(env,f.creator_id,`🥊 ${html(tokenLabel(f.sym_b))} accepted! Fight ${f.id} is LIVE.`,websiteOptions(await websiteViewForChat(env,f,null))).catch(()=>{});
   await postFight(env,id);
 }
 async function vote(env,q,id,side){
