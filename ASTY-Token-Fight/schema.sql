@@ -15,6 +15,16 @@ CREATE TABLE IF NOT EXISTS project_websites (
   updated_at INTEGER NOT NULL,
   FOREIGN KEY(mint) REFERENCES projects(mint)
 );
+-- Persisted JPEG/PNG logos, independent of Birdeye/CDN availability during fights.
+-- Uploaded logo data is capped below D1's 2 MB row limit.
+CREATE TABLE IF NOT EXISTS project_logos (
+  mint TEXT PRIMARY KEY,
+  data_uri TEXT NOT NULL,
+  source TEXT NOT NULL,
+  updated_by TEXT,
+  updated_at INTEGER NOT NULL,
+  FOREIGN KEY(mint) REFERENCES projects(mint)
+);
 CREATE TABLE IF NOT EXISTS project_groups (
  mint TEXT NOT NULL,
  chat_id TEXT NOT NULL,
