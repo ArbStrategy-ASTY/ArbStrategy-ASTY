@@ -394,7 +394,6 @@ async function helpSection(env,chat,section,q=null,isGroup=false){
         '<code>/new</code> — New challenge',
         '<code>/projects</code> — Manage registered projects',
         '<code>/website</code> — Add/change project website',
-        '<code>/video</code> — View the fixed official video',
         '<code>/fights</code> — Active fights',
         '<code>/history</code> — Hall of Fame',
         '<code>/status ID</code> — Fight details',
@@ -794,7 +793,7 @@ async function ensureWebsiteTable(env){
 
 async function ensureBotCommands(env){
   // Persist a version marker so Telegram's command menu isn't rewritten each minute.
-  const key='bot_commands_v6_manual_refresh';
+  const key='bot_commands_v7_no_video_button';;
   const current=await env.DB.prepare('SELECT value FROM worker_settings WHERE key=?').bind(key).first();
   if(current)return;
   const commands=[
@@ -803,7 +802,6 @@ async function ensureBotCommands(env){
     {command:'new',description:'Create a new token fight'},
     {command:'projects',description:'Manage linked projects'},
     {command:'website',description:'Set project websites'},
-    {command:'video',description:'Manage the fixed battle video'},
     {command:'fights',description:'Active token fights'},
     {command:'history',description:'Hall of Fame'},
     {command:'help',description:'Commands and how to play'},
