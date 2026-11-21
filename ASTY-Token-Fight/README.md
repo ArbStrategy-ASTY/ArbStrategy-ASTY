@@ -1,4 +1,4 @@
-# 🥊 ASTY Token Fight – Telegram Bot v0.8.3 (Birdeye)
+# 🥊 ASTY Token Fight – Telegram Bot v0.8.4 (Birdeye)
 
 **Status: private Beta / laufende Tests.** Der Bot wurde in früheren Versionen auf Cloudflare deployed und mit ASTY-vs.-ARBX-Gruppen getestet. Die neuen Menüs, Website-Buttons, Vote-Benachrichtigungen und das Grafikdesign von v0.4.2 sind im GitHub-Code implementiert, aber müssen nach Cloudflare-Deployment noch in Telegram geprüft werden. Alle Änderungen bleiben auf den Ordner `ASTY-Token-Fight/` beschränkt.
 
@@ -347,3 +347,11 @@ These are buttons below the battle videos, not URLs repeated inside the battle c
 Website UI is shorter: the private **Project Websites** view now shows `Website in both fights: <domain>` and `Source: Official project link` or `Source: Submitted by a linked group`, rather than confusing `Official website: Not set` when a usable community website exists. A submitted link is confirmed as shared to both fight groups only if it is selected by the priority rules.
 
 No additional Cloudflare service, manual D1 reset, token mint change or new video upload is required. The existing `group_websites` data is retained and reused. After automatic deployment check `/health` for version `0.8.3`.
+
+## Loser's X-post challenge (v0.8.4)
+
+- During active 24-hour fights, the caption now shows `📣 The losing project must post about the winner on X!` on its own line, with a blank line above and below it.
+- The following separate italic line remains `...Stats update every 30 minutes...`, also separated with a blank line above and below.
+- After the fight ends with a declared winner, the final result names both losing and winning tokens in the X-post instruction. Draws and unresolved results do not impose the challenge; early-stopped fights do not have a winner either.
+- `/help` overview, How It Works and Fight Results document this community rule, including that the bot cannot itself publish or verify X posts.
+- Existing permanent fight video, live website buttons, scoring, votes, 30-minute updates and 15/10/5-minute alerts remain unchanged.
