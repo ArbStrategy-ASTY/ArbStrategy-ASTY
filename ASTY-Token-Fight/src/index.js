@@ -572,9 +572,9 @@ async function websiteInfo(env,chat,user,mint,q=null){
   const activeUrl=resolved.website_a;
   const site=activeUrl?`<a href="${html(activeUrl)}">${html(projectWebsiteDisplay(activeUrl))}</a>`:'Not set';
   const origin=p.website_url?'Official project link':activeUrl?'Submitted by a linked group':'No website submitted';
-  const explain=!mine.length?'🔒 Only admins of linked Telegram groups may manage their group websites. Make sure the bot is also a group admin.'
-    :original?'✅ You can manage the official project website and links submitted by your groups.'
-    :'✅ You can submit a website for this token through your linked Telegram group. When no official URL exists, it is shown in BOTH fight communities. You cannot change the official project website.';
+  const explain=!mine.length?'🔒 Only linked-group administrators can manage website submissions. The bot should also be a group admin.'
+    :original?'✅ You can manage both official and community-submitted project links.'
+    :'✅ A submitted website is shown in both fight communities when no official project link exists.';
   return screen(env,chat,`🌐 <b>${html(tokenLabel(p.symbol))} WEBSITE</b>\n\n🔗 Website in both fights: ${site}\nSource: ${origin}\n\n${explain}\n\nSelect a website to manage:`,keyboard(rows),q);
 }
 
@@ -590,7 +590,7 @@ async function websiteGroupInfo(env,chat,user,mint,groupId,q=null){
     rows.push([{text:'🌐 Visit Website',url}]);
   }
   rows.push([{text:'↩️ Websites',callback_data:`site:open:${mint}`}],[{text:'🏠 Menu',callback_data:'menu:home'}]);
-  return screen(env,chat,`🌐 <b>${html(tokenLabel(p?.symbol||'TOKEN'))} — GROUP WEBSITE</b>\n\nGroup: ${html(g.chat_title||'Telegram Group')}\nWebsite: ${url?`<a href="${html(url)}">${html(projectWebsiteDisplay(url))}</a>`:'Not set'}\n\nWhen no official project-wide website exists, a submitted website is displayed in BOTH fight communities. Official project websites always take priority.\n\nYou can change this during an active fight.`,keyboard(rows),q);
+  return screen(env,chat,`🌐 <b>${html(tokenLabel(p?.symbol||'TOKEN'))} WEBSITE</b>\n\nSubmitted via: ${html(g.chat_title||'Telegram Group')}\nWebsite: ${url?`<a href="${html(url)}">${html(projectWebsiteDisplay(url))}</a>`:'Not set'}\n\nThe link can appear in both fight groups. An official project website, if available, takes priority. You can edit it during a live fight.`,keyboard(rows),q);
 }
 
 async function websiteGroupStart(env,chat,user,mint,groupId,q=null){
