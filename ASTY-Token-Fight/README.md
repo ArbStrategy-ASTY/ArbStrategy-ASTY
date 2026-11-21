@@ -1,4 +1,4 @@
-# 🥊 ASTY Token Fight – Telegram Bot v0.8.2 (Birdeye)
+# 🥊 ASTY Token Fight – Telegram Bot v0.8.3 (Birdeye)
 
 **Status: private Beta / laufende Tests.** Der Bot wurde in früheren Versionen auf Cloudflare deployed und mit ASTY-vs.-ARBX-Gruppen getestet. Die neuen Menüs, Website-Buttons, Vote-Benachrichtigungen und das Grafikdesign von v0.4.2 sind im GitHub-Code implementiert, aber müssen nach Cloudflare-Deployment noch in Telegram geprüft werden. Alle Änderungen bleiben auf den Ordner `ASTY-Token-Fight/` beschränkt.
 
@@ -330,3 +330,20 @@ v0.8.2 separates group-level and official websites:
 IMPORTANT: A local URL in the ARBX test group is not automatically an official project endorsement and will not appear in the real ARBX or ASTY groups. The original ARBX group's admin must set the canonical ARBX website if the URL should be shown project-wide.
 
 Version check: `/health` must show `0.8.2` after deployment. When testing, use a fresh `/start` in the own test group and the new private Telegram buttons.
+
+## Website buttons shown in BOTH communities (v0.8.3 – latest)
+
+**This section replaces the previous v0.8.2 instruction that a submitted group website is displayed only within its own Telegram group.**
+
+During each fight **both participating Telegram communities** now see two website buttons wherever those links have been supplied:
+
+- `🌐 $ASTY Website` → canonical ASTY website (`arbstrategy.net`), if set.
+- `🌐 $ARBX Website` → canonical ARBX website, if set, otherwise the oldest available ARBX website submitted by an actively linked ARBX group (such as `arbitragesyndicate.xyz`).
+
+These are buttons below the battle videos, not URLs repeated inside the battle caption. The same deterministic resolution is used in initial posts, 30-minute video reposts, end-of-fight announcements, milestone updates, 15/10/5-minute countdown reminders and challenge invitations. Website changes update the latest live fight post in **all** participating chats immediately when Telegram permits message editing.
+
+**Website priority:** The original linked project's administrators retain exclusive control over its canonical `project_websites` record. The global URL always overrides any group-submitted link. If no canonical URL exists, the first currently linked group with a saved `group_websites` URL (ordered by original group registration time and Telegram chat ID) supplies the fallback. A website from a group that was unlinked is not considered. A group administrator can only change their own group's submission, never another group's record or the canonical link. Community-submitted links are not independently verified as official.
+
+Website UI is shorter: the private **Project Websites** view now shows `Website in both fights: <domain>` and `Source: Official project link` or `Source: Submitted by a linked group`, rather than confusing `Official website: Not set` when a usable community website exists. A submitted link is confirmed as shared to both fight groups only if it is selected by the priority rules.
+
+No additional Cloudflare service, manual D1 reset, token mint change or new video upload is required. The existing `group_websites` data is retained and reused. After automatic deployment check `/health` for version `0.8.3`.
