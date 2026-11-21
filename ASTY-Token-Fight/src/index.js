@@ -496,7 +496,7 @@ async function projectsScreen(env,chat,user,q=null,forSite=false){
   }
   rows.push([{text:forSite?'🥊 New Fight':'🌐 Manage Websites',callback_data:forSite?'menu:new':'menu:sites'}]);
   rows.push([{text:'🏠 Main Menu',callback_data:'menu:home'}]);
-  return screen(env,chat,forSite?'🌐 <b>PROJECT WEBSITES</b>\n\nChoose a project. Only the administrator of its first linked Telegram group may change its website.':'🪙 <b>MY PROJECTS</b>\n\nSelect a project to view its website or start a challenge.',keyboard(rows),q);
+  return screen(env,chat,forSite?'🌐 <b>PROJECT WEBSITES</b>\n\nChoose a project. Group admins can manage their own websites; only original-group admins can change the official link.':'🪙 <b>MY PROJECTS</b>\n\nSelect a project to view its website or start a challenge.',keyboard(rows),q);
 }
 
 async function projectScreen(env,chat,user,mint,q=null){
@@ -508,7 +508,7 @@ async function projectScreen(env,chat,user,mint,q=null){
     [{text:`🥊 Challenge as ${tokenLabel(p.symbol)}`,callback_data:`new:own:${mint}`}],
   ];
   const websiteAdmin=await canManageWebsite(env,mint,user);
-  rows.push([{text:websiteAdmin?'🌐 Set / Edit Website':'🔒 Website Permissions',callback_data:`site:info:${mint}`}]);
+  rows.push([{text:'🌐 Manage Websites',callback_data:`site:info:${mint}`}]);
   if(p.website_url&&websiteAdmin)rows.push([{text:'🗑 Remove Website',callback_data:`site:remove:${mint}`}]);
   if(p.website_url)rows.push([{text:`🌐 Visit ${tokenLabel(p.symbol)}`,url:p.website_url}]);
   rows.push([{text:'🪙 My Projects',callback_data:'menu:projects'},{text:'🏠 Menu',callback_data:'menu:home'}]);
@@ -741,7 +741,7 @@ async function groupCallback(env,q){
       url:`https://t.me/${env.BOT_USERNAME.replace('@','')}?start=website_${p.mint}`}]);
     rows.push([{text:'↩️ Group Menu',callback_data:'menu:group'}]);
     return screen(env,chat,linked.results?.length?
-      '🌐 <b>PROJECT WEBSITES</b>\n\nSelect a project to manage its website privately. Only admins of the first linked group can edit it.':
+      '🌐 <b>PROJECT WEBSITES</b>\n\nSelect your project to set a website for your own Telegram group. The official project website stays protected.':
       'No project tokens linked to this group.',keyboard(rows),q);
   }
   if(cmd==='group:unlink'){
@@ -834,6 +834,18 @@ async function menuCallback(env,q){
   if(cmd==='menu:history')return fightScreen(env,chat,user,true,q);
   if(cmd.startsWith('project:view:'))return projectScreen(env,chat,user,cmd.slice(13),q);
   if(cmd.startsWith('site:open:'))return websiteInfo(env,chat,user,cmd.slice(10),q);
+  for(const prefix of ['sg:','swg:','srm:','sdel:']){
+    if(cmd.startsWith(prefix)){
+      const segments=cmd.slice(prefix.length).split(':');
+      const mint=segments[0],groupId=segments.length===2?restoreGroupChat(segments[1]):null;
+      if(!mintOk(mint)||!groupId)return say(env,chat,'Invalid group website selection. Please reopen Project Websites.');
+      if(prefix==='sg:')return websiteGroupInfo(env,chat,user,mint,groupId,q);
+      if(prefix==='swg:')return websiteGroupStart(env,chat,user,mint,groupId,q);
+      if(prefix==='srm:')return websiteGroupRemove(env,chat,user,mint,groupId,false,q);
+      return websiteGroupRemove(env,chat,user,mint,groupId,true,q);
+    }
+  }
+
   if(cmd.startsWith('site:info:'))return websiteInfo(env,chat,user,cmd.slice(10),q);
   if(cmd.startsWith('site:set:'))return websiteStart(env,chat,user,cmd.slice(9),q);
   if(cmd.startsWith('logo:set:'))return beginLogoUpload(env,chat,user,cmd.slice(9),q);
@@ -1153,6 +1165,11 @@ async function onUpdate(env,u){
   if(!raw.startsWith('/')){
     const draft=await env.DB.prepare('SELECT * FROM draft_state WHERE user_id=?').bind(String(msg.from.id)).first();
     if(draft?.step==='website'&&now()-draft.updated_at<=1800)return websiteSave(env,chat,msg.from.id,draft.own_mint,raw);
+    if(draft?.step==='website_group'&&now()-draft.updated_at<=1800){
+      const [mint,groupId,...extra]=String(draft.own_mint||'').split('|');
+      if(extra.length||!mintOk(mint)||!groupId)return say(env,chat,'Invalid group website session. Please reopen Project Websites.');
+      return websiteGroupSave(env,chat,msg.from.id,mint,groupId,raw);
+    }
     if(draft?.step==='logo'&&now()-draft.updated_at<=1800)return say(env,chat,'📷 Please send an image as a Telegram photo, not a text message.');
     if(draft?.step==='video'&&now()-draft.updated_at<=1800)return say(env,chat,'🎬 Please send the MP4 as a Telegram video attachment, not a text message.');
     if(!draft||now()-draft.updated_at>1800){
