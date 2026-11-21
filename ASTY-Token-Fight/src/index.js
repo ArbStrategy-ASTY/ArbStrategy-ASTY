@@ -67,15 +67,16 @@ function caption(f,votesA,votesB){
   const bScore=f.status==='ended'&&f.final_score_b!==null?f.final_score_b:computed?.scoreB;
   const left=Math.max(0,(f.ends_at||now())-now()),time=`${Math.floor(left/3600)}h ${Math.floor((left%3600)/60)}m`;
   const statuses={pending:'CHALLENGE PENDING',active:'LIVE TOKEN FIGHT',ended:'FINISHED TOKEN FIGHT',unresolved:'PRICE UNAVAILABLE',declined:'CHALLENGE DECLINED',cancelled:'FIGHT STOPPED',expired:'CHALLENGE EXPIRED'};
-  const header=`<b>🥊 ${statuses[f.status]||'TOKEN FIGHT'} ${html(f.id)}</b>`;
-  const lines=[header,'',`⚡ ${html(tokenLabel(f.sym_a))} VS ${html(tokenLabel(f.sym_b))}`,'',
+  const header=`<b>🥊 ${statuses[f.status]||'TOKEN FIGHT'} - ID: ${html(f.id)}</b>`;
+  const lines=[header,'',`⚡ ${html(tokenLabel(f.sym_a))} VS ${html(tokenLabel(f.sym_b))} ⚡`,'',
     `🗳️ Votes: <b>${va}</b> · <b>${vb}</b>`,
     `📈 Price change: ${ra===null?'n/a':pct(ra)} · ${rb===null?'n/a':pct(rb)}`];
   if(aScore!==undefined&&['active','ended'].includes(f.status))lines.push(`🏆 Score: <b>${aScore.toFixed(1)}%</b> · <b>${bScore.toFixed(1)}%</b>`);
   if(f.status==='active')lines.push(`⏳ Remaining: ${time}`);
   if(f.status==='ended')lines.push(`🥇 ${f.winner==='draw'?'DRAW':html(tokenLabel(f.winner==='a'?f.sym_a:f.sym_b))+' WINS!'}`);
   if(f.status==='unresolved')lines.push('No winner declared. Manual price review required.');
-  lines.push('','🟣 <b>Powered by ASTY - ArbStrategy.net</b>');
+  if(f.status==='active')lines.push('','<i>...Stats update every 10 minutes...</i>');
+  lines.push('','<b>Powered by ASTY - <a href="https://arbstrategy.net/">ArbStrategy.net</a></b>');
   return lines.join('\n');
 }
 function votingButtons(f){const rows=[[{text:`🗳️ ${tokenLabel(f.sym_a)}`,callback_data:`vote:${f.id}:a`},{text:`🗳️ ${tokenLabel(f.sym_b)}`,callback_data:`vote:${f.id}:b`}]]; return keyboard([...rows,...siteButtons(f).inline_keyboard]);}
@@ -261,7 +262,7 @@ async function helpScreen(env,chat,q=null,isGroup=false){
     '',
     '🏆 At the end, both groups receive a winner announcement, and the result appears in the Hall of Fame.',
     '',
-    '🎬 All fights use the same permanently locked official video. Project websites appear as optional buttons below battle posts.',
+    'Project websites appear as optional buttons below battle posts.',
     '',
     'Select a topic below to see the details.'
   ];
@@ -275,15 +276,13 @@ async function helpSection(env,chat,section,q=null,isGroup=false){
         '🥊 <b>HOW ASTY TOKEN FIGHT WORKS</b>',
         '',
         '1. Add the bot to your Telegram project group. A group admin links its Solana token once.',
-        '2. A project admin may add the official website. Websites are shown as buttons, never repeated in the battle text.',
+        '2. A project admin may add the official website. Websites are shown as buttons.',
         '3. In the private bot chat, select New Fight → your registered project → an opponent.',
         '4. The opposing project admin accepts the challenge.',
-        '5. A 24-hour fight starts in both groups using the same fixed ASTY video.',
+        '5. A 24-hour fight starts in both groups.',
         '6. Vote using the buttons. Each Telegram account has one vote per fight, no matter which group.',
         '7. A new message with the current votes, price change, scores and countdown is posted approximately every 10 minutes. Every successful new vote also triggers a short group message.',
-        '8. When 24 hours end, both groups get a result notification.',
-        '',
-        'The original video is permanently locked. Project admins cannot replace it.'
+        '8. When 24 hours end, both groups get a result notification.'
       ];break;
     case 'rules':
       lines=[
@@ -1067,7 +1066,7 @@ export default {
           if(row.key==='fight_video_file_id')videoConfigured=!!row.value;
         }
       }catch(e){console.error('health database query',errString(e));}
-      return Response.json({status:'ok',app:'ASTY Token Fight',version:'0.7.0',
+      return Response.json({status:'ok',app:'ASTY Token Fight',version:'0.7.1',
         cron_last_started:started,cron_last_completed:completed,video_configured:videoConfigured});
     }
     if(url.pathname!=='/telegram'||request.method!=='POST')return new Response('Not Found',{status:404});
