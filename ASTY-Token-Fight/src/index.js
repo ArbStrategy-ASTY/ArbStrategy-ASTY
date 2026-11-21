@@ -110,12 +110,52 @@ async function deliverEvent(env,id,chat,eventType,text){
     await env.DB.prepare('UPDATE sent_events SET sent_at=0 WHERE fight_id=? AND chat_id=? AND event_type=? AND sent_at=?').bind(id,chat,eventType,lease).run().catch(()=>{});
   }
 }
-async function refreshMessages(env,id,final=false){
+// Every 10 minutes, post a NEW battle message with the current numbers.
+// Telegram copyMessage reuses the already uploaded photo without rendering/reuploading it.
+// Keep only the newest message ID in D1 so the next update copies the newest card.
+async function refreshMessages(env,id,final=false,repost=false){
   const f=await detail(env,id);if(!f)return;
   const [va,vb]=await stats(env,id),msgs=await env.DB.prepare('SELECT * FROM group_messages WHERE fight_id=?').bind(id).all();
+  const currentCaption=caption(f,va,vb);
   for(const m of msgs.results){
-    try{await telegram(env,m.message_type==='text'?'editMessageText':'editMessageCaption',{chat_id:m.chat_id,message_id:m.live_message_id,[m.message_type==='text'?'text':'caption']:caption(f,va,vb),parse_mode:'HTML',reply_markup:f.status==='active'?votingButtons(f):keyboard([])});}catch(e){if(!errString(e).includes('message is not modified'))console.error('edit',id,m.chat_id,errString(e));}
-    if(final)await deliverEvent(env,id,m.chat_id,`end_${f.status}`,caption(f,va,vb)).catch(e=>console.error('final event',id,m.chat_id,errString(e)));
+    if(repost&&f.status==='active'){
+      try{
+        let sent;
+        if(m.message_type==='text'){
+          sent=await say(env,m.chat_id,currentCaption,{reply_markup:votingButtons(f)});
+        }else{
+          sent=await telegram(env,'copyMessage',{
+            chat_id:m.chat_id,from_chat_id:m.chat_id,message_id:m.live_message_id,
+            caption:currentCaption,parse_mode:'HTML',reply_markup:votingButtons(f)
+          });
+        }
+        if(!Number.isInteger(sent?.message_id))throw new Error('Telegram returned no copied message ID');
+        await env.DB.prepare('UPDATE group_messages SET live_message_id=? WHERE fight_id=? AND chat_id=? AND live_message_id=?')
+          .bind(sent.message_id,id,m.chat_id,m.live_message_id).run();
+      }catch(e){
+        console.error('repost',id,m.chat_id,errString(e));
+        // Never lose live stats if Telegram rejects a repost; edit the previous post instead.
+        try{
+          await telegram(env,m.message_type==='text'?'editMessageText':'editMessageCaption',{
+            chat_id:m.chat_id,message_id:m.live_message_id,
+            [m.message_type==='text'?'text':'caption']:currentCaption,
+            parse_mode:'HTML',reply_markup:votingButtons(f)
+          });
+        }catch(fallbackError){
+          if(!errString(fallbackError).includes('message is not modified'))console.error('repost fallback',id,m.chat_id,errString(fallbackError));
+        }
+      }
+      continue;
+    }
+    // The final result updates the latest posted card and adds one final notification.
+    try{
+      await telegram(env,m.message_type==='text'?'editMessageText':'editMessageCaption',{
+        chat_id:m.chat_id,message_id:m.live_message_id,
+        [m.message_type==='text'?'text':'caption']:currentCaption,
+        parse_mode:'HTML',reply_markup:f.status==='active'?votingButtons(f):keyboard([])
+      });
+    }catch(e){if(!errString(e).includes('message is not modified'))console.error('edit',id,m.chat_id,errString(e));}
+    if(final)await deliverEvent(env,id,m.chat_id,`end_${f.status}`,currentCaption).catch(e=>console.error('final event',id,m.chat_id,errString(e)));
   }
 }
 async function sendMilestones(env,id){
@@ -310,7 +350,7 @@ async function tick(env){
       const [a,b]=await prices(env,f.mint_a,f.mint_b);
       if(a&&b)await env.DB.prepare(`UPDATE fights SET latest_price_a=?,latest_price_b=?,last_price_at=? WHERE id=? AND status='active'`).bind(a,b,now(),f.id).run();
       await postFight(env,f.id); // Retry only groups that never received an initial post.
-      await refreshMessages(env,f.id);
+      await refreshMessages(env,f.id,false,true); // New post every 10 minutes (not only an edit).
       await sendMilestones(env,f.id);
     }catch(e){console.error('refresh',f.id,errString(e));}
   }
@@ -370,7 +410,7 @@ async function ensureTelegramWebhook(env){
 export default {
   async fetch(request,env,ctx){
     const url=new URL(request.url);
-    if(url.pathname==='/health'&&request.method==='GET')return Response.json({status:'ok',app:'ASTY Token Fight',version:'0.2.3'});
+    if(url.pathname==='/health'&&request.method==='GET')return Response.json({status:'ok',app:'ASTY Token Fight',version:'0.2.4'});
     if(url.pathname!=='/telegram'||request.method!=='POST')return new Response('Not Found',{status:404});
     if(!env.TELEGRAM_WEBHOOK_SECRET||request.headers.get('X-Telegram-Bot-Api-Secret-Token')!==env.TELEGRAM_WEBHOOK_SECRET)return new Response('Unauthorized',{status:401});
     let update;try{update=await request.json();}catch{return new Response('Bad JSON',{status:400});}
