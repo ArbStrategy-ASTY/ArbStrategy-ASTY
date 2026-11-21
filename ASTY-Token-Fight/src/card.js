@@ -135,6 +135,10 @@ export function fightCardSvg(a,b,logoA=null,logoB=null){
 }
 
 export async function fightImage(a,b){
-  const [logoA,logoB]=await Promise.all([resolveLogo(a),resolveLogo(b)]);
+  // D1-cached logos always win over transient metadata URLs.
+  const cached=a?.logo_data_uri&&b?.logo_data_uri;
+  const [logoA,logoB]=cached?[a.logo_data_uri,b.logo_data_uri]:await Promise.all([resolveLogo(a),resolveLogo(b)]);
+  // Do not publish a logo-less battle. The owner can submit a photo in the bot.
+  if(!logoA||!logoB)throw new Error('Both token logos are required to render a battle.');
   return new Resvg(fightCardSvg(a,b,logoA,logoB)).render().asPng();
 }
