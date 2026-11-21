@@ -234,9 +234,14 @@ async function accept(env,query,id,decline=false){
 }
 async function vote(env,q,id,side){
   const f=await detail(env,id);
-  if(!f||f.status!=='active'||now()>=f.ends_at)return telegram(env,'answerCallbackQuery',{callback_query_id:q.id,text:'Dieser Fight ist nicht mehr aktiv.',show_alert:true});
+  if(!f||f.status!=='active'||now()>=f.ends_at)return telegram(env,'answerCallbackQuery',{callback_query_id:q.id,text:'This fight is no longer active.',show_alert:true});
   const r=await env.DB.prepare(`INSERT OR IGNORE INTO votes(fight_id,voter_id,side,voted_at) SELECT ?,?,?,? WHERE EXISTS(SELECT 1 FROM fights WHERE id=? AND status='active' AND ends_at>?)`).bind(id,String(q.from.id),side,now(),id,now()).run();
-  return telegram(env,'answerCallbackQuery',{callback_query_id:q.id,text:changed(r)?'Deine Stimme wurde gezählt! 🥊':'Du hast bereits abgestimmt oder der Fight ist beendet.',show_alert:false});
+  const symbol=String(side==='a'?f.sym_a:f.sym_b).replace(/^\\$/,'').slice(0,50);
+  return telegram(env,'answerCallbackQuery',{
+    callback_query_id:q.id,
+    text:changed(r)?`New vote for ${symbol}`:'You have already voted or this fight has ended.',
+    show_alert:false
+  });
 }
 async function statusText(env,id){
   const f=await detail(env,id);if(!f)return null;
@@ -410,7 +415,7 @@ async function ensureTelegramWebhook(env){
 export default {
   async fetch(request,env,ctx){
     const url=new URL(request.url);
-    if(url.pathname==='/health'&&request.method==='GET')return Response.json({status:'ok',app:'ASTY Token Fight',version:'0.2.4'});
+    if(url.pathname==='/health'&&request.method==='GET')return Response.json({status:'ok',app:'ASTY Token Fight',version:'0.2.5'});
     if(url.pathname!=='/telegram'||request.method!=='POST')return new Response('Not Found',{status:404});
     if(!env.TELEGRAM_WEBHOOK_SECRET||request.headers.get('X-Telegram-Bot-Api-Secret-Token')!==env.TELEGRAM_WEBHOOK_SECRET)return new Response('Unauthorized',{status:401});
     let update;try{update=await request.json();}catch{return new Response('Bad JSON',{status:400});}
