@@ -59,6 +59,28 @@ function publicStats(f,votesA,votesB){
   const closed=['ended','unresolved'].includes(f.status);
   return closed&&f.final_votes_a!==null&&f.final_votes_b!==null?[f.final_votes_a,f.final_votes_b]:[votesA,votesB];
 }
+const ASTY_FIGHT_BOT_LINK='https://t.me/ASTY_TokenFightBot';
+
+function loserXPostText(f){
+  if(f?.status!=='ended'||!['a','b'].includes(f.winner))return null;
+  const winner=tokenLabel(f.winner==='a'?f.sym_a:f.sym_b);
+  const loser=tokenLabel(f.winner==='a'?f.sym_b:f.sym_a);
+  const winningWebsite=f.winner==='a'?f.website_a:f.website_b;
+  const lines=[
+    `🏆 Congratulations to ${winner} for winning our 24h ASTY Token Fight against ${loser}!`,
+    '',
+    winningWebsite?`Discover the winner: ${winningWebsite}`: `Discover the winning project: ${winner}`,
+    `Join the next fight: ${ASTY_FIGHT_BOT_LINK}`
+  ];
+  return lines.join('\n');
+}
+
+function finishedFightButtons(f){
+  const links=siteButtons(f).inline_keyboard;
+  const text=loserXPostText(f);
+  if(text)links.push([{text:'✍️ Create Loser’s X Post',url:'https://x.com/intent/tweet?text='+encodeURIComponent(text)}]);
+  return keyboard(links);
+}
 function caption(f,votesA,votesB){
   const [va,vb]=publicStats(f,votesA,votesB);
   const ra=f.start_price_a&&f.latest_price_a?100*(f.latest_price_a/f.start_price_a-1):null;
@@ -83,7 +105,8 @@ function caption(f,votesA,votesB){
   if(f.status==='ended'&&f.winner!=='draw'){
     const loser=html(tokenLabel(f.winner==='a'?f.sym_b:f.sym_a));
     const winner=html(tokenLabel(f.winner==='a'?f.sym_a:f.sym_b));
-    lines.push('','📣 <b>'+loser+' must post about '+winner+' on X!</b>');
+    lines.push('','📣 <b>'+loser+' must post about '+winner+' on X!</b>',
+      '🔗 Include our Telegram bot in the X post: <a href="'+ASTY_FIGHT_BOT_LINK+'">t.me/ASTY_TokenFightBot</a>');
   }
   lines.push('','<b>Powered by ASTY <a href="https://arbstrategy.net/">ArbStrategy.net</a></b>');
   return lines.join('\n');
@@ -184,10 +207,10 @@ async function refreshMessages(env,id,final=false,repost=false,skipChats=null){
       await telegram(env,m.message_type==='text'?'editMessageText':'editMessageCaption',{
         chat_id:m.chat_id,message_id:m.live_message_id,
         [m.message_type==='text'?'text':'caption']:currentCaption,parse_mode:'HTML',
-        reply_markup:f.status==='active'?votingButtons(chatView):siteButtons(chatView)
+        reply_markup:f.status==='active'?votingButtons(chatView):finishedFightButtons(chatView)
       });
     }catch(e){if(!errString(e).includes('message is not modified'))console.error('edit',id,m.chat_id,errString(e));}
-    if(final)await deliverEvent(env,id,m.chat_id,`end_${f.status}`,currentCaption,siteButtons(chatView))
+    if(final)await deliverEvent(env,id,m.chat_id,`end_${f.status}`,currentCaption,finishedFightButtons(chatView))
       .catch(e=>console.error('final event',id,m.chat_id,errString(e)));
   }
   return summary;
@@ -344,7 +367,7 @@ async function helpScreen(env,chat,q=null,isGroup=false){
     '⏱️ Live stats are posted every 30 minutes. Both groups get extra reminders 15, 10 and 5 minutes before the fight ends.',
     '',
     '🏆 At the end, both groups receive a winner announcement, and the result appears in the Hall of Fame.',
-    '📣 The losing project must post about the winning project on X. No post is required for a draw or an unresolved fight.',
+    '📣 The losing project must post about the winning project on X and include the Telegram bot link: https://t.me/ASTY_TokenFightBot. No post is required for a draw or unresolved result.',
     '',
     'Project websites appear as optional buttons below battle posts.',
     '',
@@ -395,7 +418,7 @@ async function helpSection(env,chat,section,q=null,isGroup=false){
         '7. A new message with the current votes, price change, scores and countdown is posted approximately every 30 minutes. Every successful new vote also triggers a short group message.',
         '8. Both groups receive extra reminders with voting buttons at 15, 10 and 5 minutes remaining.',
         '9. When 24 hours end, both groups get a winner or draw notification.',
-        '10. The losing project must publish an X post about the winning project. Draws and unresolved fights have no posting obligation.'
+        '10. The losing project must publish an X post about the winning project, including https://t.me/ASTY_TokenFightBot. The results contain an X-post draft button. Draws and unresolved fights have no posting obligation.'
       ];break;
     case 'rules':
       lines=[
@@ -431,7 +454,8 @@ async function helpSection(env,chat,section,q=null,isGroup=false){
         '📣 Both groups receive a <b>new text result announcement</b> showing the votes, price change, final score and winning token.',
         'The latest battle message is updated and voting closes. The result is saved in the Hall of Fame. Both tokens are released for rematches.',
         '',
-        '📣 <b>Loser’s X-post challenge:</b> The losing project must publish an X post about the winning project.',
+        '📣 <b>Loser’s X-post challenge:</b> The losing project must publish an X post about the winning project and include https://t.me/ASTY_TokenFightBot.',
+        'The final result explicitly names the loser and winner. A Create Loser’s X Post button opens an editable X draft with the winner, optional winner website and our Telegram bot link.',
         'No X post is required after a draw, an unresolved outcome or a fight stopped early. The bot announces the rule but cannot automatically publish or verify X posts.',
         '',
         'If valid final prices cannot be retrieved, the bot retries briefly (up to about 3 minutes). If the data is still missing, the fight closes without a declared winner rather than inventing a result.',
@@ -716,6 +740,7 @@ async function fightView(env,chat,user,id,q=null){
   if(f.website_b)rows.push([{text:`🌐 ${tokenLabel(f.sym_b)} Website`,url:f.website_b}]);
   if(f.status==='active'&&String(f.creator_id)===String(user))rows.push([{text:'🛑 Stop This Fight',callback_data:`stop:confirm:${f.id}`}]);
   if(f.status==='active'&&String(f.creator_id)===String(user))rows.push([{text:'🔄 Refresh Now',callback_data:`fight:refresh:${f.id}`}]);
+  if(loserXPostText(f))rows.push(finishedFightButtons(f).inline_keyboard.at(-1));
   rows.push([{text:'↩️ Back',callback_data:f.status==='active'?'menu:active':'menu:history'}],[{text:'🏠 Menu',callback_data:'menu:home'}]);
   return screen(env,chat,caption(f,a,b),keyboard(rows),q);
 }
@@ -1357,7 +1382,7 @@ export default {
           if(row.key==='fight_video_file_id')videoConfigured=!!row.value;
         }
       }catch(e){console.error('health database query',errString(e));}
-      return Response.json({status:'ok',app:'ASTY Token Fight',version:'0.8.4',
+      return Response.json({status:'ok',app:'ASTY Token Fight',version:'0.8.5',
         cron_last_started:started,cron_last_completed:completed,video_configured:videoConfigured});
     }
     if(url.pathname!=='/telegram'||request.method!=='POST')return new Response('Not Found',{status:404});
