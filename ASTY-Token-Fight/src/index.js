@@ -7,7 +7,7 @@ import { ensureLogoTable, cachedLogo, ensureTokenLogo, saveUploadedLogo, telegra
 const DAY=86400;
 const PENDING_TTL=7*DAY;
 const VOTE_RETENTION=30*DAY;
-const REFRESH_INTERVAL=600;
+const REFRESH_INTERVAL=1800;
 const now=()=>Math.floor(Date.now()/1000);
 const mintOk=s=>typeof s==='string' && /^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(s);
 const eid=()=>crypto.randomUUID().replaceAll('-','').slice(0,14);
@@ -67,7 +67,7 @@ function caption(f,votesA,votesB){
   const bScore=f.status==='ended'&&f.final_score_b!==null?f.final_score_b:computed?.scoreB;
   const left=Math.max(0,(f.ends_at||now())-now()),time=`${Math.floor(left/3600)}h ${Math.floor((left%3600)/60)}m`;
   const statuses={pending:'CHALLENGE PENDING',active:'LIVE TOKEN FIGHT',ended:'FINISHED TOKEN FIGHT',unresolved:'PRICE UNAVAILABLE',declined:'CHALLENGE DECLINED',cancelled:'FIGHT STOPPED',expired:'CHALLENGE EXPIRED'};
-  const header=`<b>🥊 ${statuses[f.status]||'TOKEN FIGHT'} - ID: ${html(f.id)}</b>`;
+  const header=`<b>🥊 ${statuses[f.status]||'TOKEN FIGHT'}</b>\nID: ${html(f.id)}`;
   const lines=[header,'',`⚡ ${html(tokenLabel(f.sym_a))} VS ${html(tokenLabel(f.sym_b))} ⚡`,'',
     `🗳️ Votes: <b>${va}</b> · <b>${vb}</b>`,
     `📈 Price change: ${ra===null?'n/a':pct(ra)} · ${rb===null?'n/a':pct(rb)}`];
@@ -75,8 +75,8 @@ function caption(f,votesA,votesB){
   if(f.status==='active')lines.push(`⏳ Remaining: ${time}`);
   if(f.status==='ended')lines.push(`🥇 ${f.winner==='draw'?'DRAW':html(tokenLabel(f.winner==='a'?f.sym_a:f.sym_b))+' WINS!'}`);
   if(f.status==='unresolved')lines.push('No winner declared. Manual price review required.');
-  if(f.status==='active')lines.push('','<i>...Stats update every 10 minutes...</i>');
-  lines.push('','<b>Powered by ASTY - <a href="https://arbstrategy.net/">ArbStrategy.net</a></b>');
+  if(f.status==='active')lines.push('','<i>...Stats update every 30 minutes...</i>');
+  lines.push('','<b>Powered by ASTY <a href="https://arbstrategy.net/">ArbStrategy.net</a></b>');
   return lines.join('\n');
 }
 function votingButtons(f){const rows=[[{text:`🗳️ ${tokenLabel(f.sym_a)}`,callback_data:`vote:${f.id}:a`},{text:`🗳️ ${tokenLabel(f.sym_b)}`,callback_data:`vote:${f.id}:b`}]]; return keyboard([...rows,...siteButtons(f).inline_keyboard]);}
@@ -117,7 +117,7 @@ async function deliverEvent(env,id,chat,eventType,text,reply_markup=null){
     await env.DB.prepare('UPDATE sent_events SET sent_at=0 WHERE fight_id=? AND chat_id=? AND event_type=? AND sent_at=?').bind(id,chat,eventType,lease).run().catch(()=>{});
   }
 }
-// Every 10 minutes, post a NEW battle message with the current numbers.
+// Every 30 minutes, post a NEW battle message with the current numbers.
 // Telegram copyMessage reuses the already uploaded photo without rendering/reuploading it.
 // Keep only the newest message ID in D1 so the next update copies the newest card.
 async function refreshMessages(env,id,final=false,repost=false,skipChats=null){
@@ -193,6 +193,36 @@ async function sendMilestones(env,id){
   const msgs=await env.DB.prepare('SELECT * FROM group_messages WHERE fight_id=?').bind(id).all();
   for(const m of msgs.results){
     await deliverEvent(env,id,m.chat_id,`milestone_${milestone}`,`🥊 <b>ASTY TOKEN FIGHT</b> – ${html(tokenLabel(f.sym_a))} VS ${html(tokenLabel(f.sym_b))}\n${milestone==='23h'?'⏰ Only 1 hour left!':'⚡ Battle update'}\n\n🟣 Powered by ASTY - ArbStrategy.net`,siteButtons(f)).catch(e=>console.error('milestone',id,errString(e)));
+  }
+}
+
+async function sendFinalCountdownReminders(env){
+  // Run on EVERY one-minute cron tick, independent of the normal 30-minute posts
+  // and independent of price APIs. Only one reminder for each countdown threshold.
+  const t=now();
+  const soon=await env.DB.prepare("SELECT id FROM fights WHERE status='active' AND ends_at>? AND ends_at<=? ORDER BY ends_at LIMIT 60")
+    .bind(t,t+15*60).all();
+  for(const item of soon.results||[]){
+    try{
+      const f=await detail(env,item.id);
+      if(!f||f.status!=='active')continue;
+      const left=f.ends_at-now();
+      if(left<=0||left>15*60)continue;
+      const minutes=left>10*60?15:left>5*60?10:5;
+      const [va,vb]=await stats(env,f.id);
+      const result=calculateScore(va,vb,f.start_price_a,f.latest_price_a,f.start_price_b,f.latest_price_b);
+      const line=result?`🏆 Score: <b>${result.scoreA.toFixed(1)}%</b> · <b>${result.scoreB.toFixed(1)}%</b>`:'🏆 Score: n/a';
+      const text=[
+        `⏰ <b>${minutes} MINUTES LEFT!</b>`,'',
+        `⚡ ${html(tokenLabel(f.sym_a))} VS ${html(tokenLabel(f.sym_b))} ⚡`,'',
+        `🗳️ Votes: <b>${va}</b> · <b>${vb}</b>`,
+        line,'','🔥 Vote before the fight ends!','',
+        '<b>Powered by ASTY <a href="https://arbstrategy.net/">ArbStrategy.net</a></b>'
+      ].join('\n');
+      const posts=await env.DB.prepare('SELECT chat_id FROM group_messages WHERE fight_id=?').bind(f.id).all();
+      await Promise.all((posts.results||[]).map(post=>deliverEvent(env,f.id,post.chat_id,
+        `countdown_${minutes}m`,text,votingButtons(f)).catch(e=>console.error('countdown reminder',f.id,minutes,post.chat_id,errString(e)))));
+    }catch(e){console.error('countdown scan',item.id,errString(e));}
   }
 }
 
@@ -286,7 +316,7 @@ async function helpSection(env,chat,section,q=null,isGroup=false){
         '',
         '<b>What it must be allowed to do</b>',
         '• Send text messages (votes, updates and winner announcements).',
-        '• Send videos (new battle posts every 10 minutes).',
+        '• Send videos (new battle posts every 30 minutes).',
         '• Edit its own battle messages to show the final result.',
         '',
         '<b>Not needed</b>',
@@ -309,7 +339,7 @@ async function helpSection(env,chat,section,q=null,isGroup=false){
         '4. The opposing project admin accepts the challenge.',
         '5. A 24-hour fight starts in both groups.',
         '6. Vote using the buttons. Each Telegram account has one vote per fight, no matter which group.',
-        '7. A new message with the current votes, price change, scores and countdown is posted approximately every 10 minutes. Every successful new vote also triggers a short group message.',
+        '7. A new message with the current votes, price change, scores and countdown is posted approximately every 30 minutes. Every successful new vote also triggers a short group message.',
         '8. When 24 hours end, both groups get a result notification.'
       ];break;
     case 'rules':
@@ -384,12 +414,23 @@ async function helpSection(env,chat,section,q=null,isGroup=false){
 }
 
 async function adminProjects(env,user) {
-  const groups=await env.DB.prepare(`SELECT pg.chat_id,pg.mint,pg.chat_title,p.symbol FROM project_groups pg JOIN projects p ON p.mint=pg.mint WHERE pg.registered_by=? ORDER BY pg.registered_at DESC LIMIT 60`).bind(String(user)).all();
-  const candidates=groups.results||[];
-  // Access is based on LIVE Telegram group admin status, not the original registrar ID.
-  const matches=await Promise.all(candidates.map(async g=>await tgAdmin(env,g.chat_id,user)?g:null));
-  const seen=new Set();
-  return matches.filter(g=>g&&!seen.has(g.mint)&&seen.add(g.mint)).slice(0,18);
+  // Do not restrict the project list to the account which originally linked a group.
+  // Other current admins of that group are also entitled to manage its project.
+  const groups=await env.DB.prepare(`SELECT pg.chat_id,pg.mint,pg.chat_title,p.symbol
+    FROM project_groups pg JOIN projects p ON p.mint=pg.mint
+    ORDER BY CASE WHEN pg.registered_by=? THEN 0 ELSE 1 END,pg.registered_at DESC LIMIT 100`)
+    .bind(String(user)).all();
+  const found=[],seen=new Set(),candidates=groups.results||[];
+  // Limit simultaneous Telegram calls and stop once enough visible projects are found.
+  for(let i=0;i<candidates.length&&found.length<18;i+=8){
+    const batch=candidates.slice(i,i+8);
+    const checks=await Promise.all(batch.map(async g=>await tgAdmin(env,g.chat_id,user)));
+    for(let j=0;j<batch.length;j++){
+      const group=batch[j];
+      if(checks[j]&&!seen.has(group.mint)){seen.add(group.mint);found.push(group);}
+    }
+  }
+  return found.slice(0,18);
 }
 
 async function projectsScreen(env,chat,user,q=null,forSite=false){
@@ -448,25 +489,47 @@ async function canManageWebsite(env,mint,user){
 }
 
 async function websiteStart(env,chat,user,mint,q=null){
-  if(!mintOk(mint)||!(await canManageWebsite(env,mint,user)))return screen(env,chat,'Only admins of the first linked project group may edit this website.',keyboard([[{text:'🪙 My Projects',callback_data:'menu:projects'}]]),q);
+  if(!mintOk(mint)||!(await canManageWebsite(env,mint,user)))return screen(env,chat,'Only a current admin of the first group linked to this token may edit its website. The bot should also be a group admin for reliable verification. Active fights do not block website changes.',keyboard([[{text:'🪙 My Projects',callback_data:'menu:projects'}]]),q);
   await env.DB.prepare(`INSERT INTO draft_state(user_id,step,own_mint,updated_at) VALUES(?,'website',?,?) ON CONFLICT(user_id) DO UPDATE SET step='website',own_mint=excluded.own_mint,updated_at=excluded.updated_at`).bind(String(user),mint,now()).run();
   const p=await env.DB.prepare('SELECT symbol FROM projects WHERE mint=?').bind(mint).first();
   return screen(env,chat,`🌐 <b>SET WEBSITE FOR ${html(tokenLabel(p?.symbol||'TOKEN'))}</b>\n\nPaste your project's HTTPS website address (for example: https://arbstrategy.net).\n\nThis is the only information you need to enter manually. You can change it later.`,keyboard([[{text:'↩️ My Projects',callback_data:'menu:sites'}],[{text:'🏠 Main Menu',callback_data:'menu:home'}]]),q);
 }
 
+async function refreshActiveWebsiteButtons(env,mint){
+  // A website may be created or changed while a fight is LIVE.
+  // Update the latest post in both groups without sending an unnecessary new video.
+  try{
+    const ongoing=await env.DB.prepare("SELECT id FROM fights WHERE status='active' AND (mint_a=? OR mint_b=?) LIMIT 10").bind(mint,mint).all();
+    for(const fight of ongoing.results||[]){
+      const f=await detail(env,fight.id);if(!f)continue;
+      const posts=await env.DB.prepare('SELECT chat_id,live_message_id FROM group_messages WHERE fight_id=?').bind(f.id).all();
+      const current=votingButtons(f);
+      await Promise.all((posts.results||[]).filter(p=>p.live_message_id).map(async p=>{
+        try{
+          await telegram(env,'editMessageReplyMarkup',{chat_id:p.chat_id,message_id:p.live_message_id,reply_markup:current});
+        }catch(e){
+          if(!errString(e).includes('message is not modified'))console.error('website buttons refresh',f.id,p.chat_id,errString(e));
+        }
+      }));
+    }
+  }catch(e){console.error('website live updates',mint,errString(e));}
+}
+
 async function websiteSave(env,chat,user,mint,raw){
-  if(!mintOk(mint)||!(await canManageWebsite(env,mint,user)))return say(env,chat,'Only admins of the first linked project group can save this website.');
+  if(!mintOk(mint)||!(await canManageWebsite(env,mint,user)))return say(env,chat,'Only a current admin of the first group linked to this token can save its website. Check your group admin rights and whether the bot is also a group admin.');
   const website_url=normalizeProjectWebsite(raw);
   if(!website_url)return say(env,chat,'⚠️ Please paste a valid HTTPS website URL, such as https://arbstrategy.net. Public domain names only, maximum 160 characters.');
   await env.DB.prepare(`INSERT INTO project_websites(mint,website_url,updated_by,updated_at) VALUES(?,?,?,?) ON CONFLICT(mint) DO UPDATE SET website_url=excluded.website_url,updated_by=excluded.updated_by,updated_at=excluded.updated_at`).bind(mint,website_url,String(user),now()).run();
   await env.DB.prepare('DELETE FROM draft_state WHERE user_id=?').bind(String(user)).run();
-  await say(env,chat,'✅ Website saved! Your link will be shown in battle posts and notifications.');
+  await refreshActiveWebsiteButtons(env,mint);
+  await say(env,chat,'✅ Website saved! The website buttons in the current active fight have been updated.');
   return projectScreen(env,chat,user,mint);
 }
 
 async function websiteRemove(env,chat,user,mint,q=null){
   if(!mintOk(mint)||!(await canManageWebsite(env,mint,user)))return say(env,chat,'Only admins of the first linked project group can remove the website.');
   await env.DB.prepare('DELETE FROM project_websites WHERE mint=?').bind(mint).run();
+  await refreshActiveWebsiteButtons(env,mint);
   return projectScreen(env,chat,user,mint,q);
 }
 
@@ -514,7 +577,7 @@ async function refreshFightNow(env,chat,user,id){
   const success=result.failed===0&&(result.sent>0||newGroups.size>0);
   await env.DB.prepare("UPDATE fights SET next_refresh_at=? WHERE id=? AND status='active'")
     .bind(t+(success?REFRESH_INTERVAL:90),id).run();
-  return say(env,chat,`${success?'✅':'⚠️'} Fight refresh completed. New posts: ${result.sent+newGroups.size}. Failed groups: ${result.failed}.\n\nAutomatic updates are scheduled every 10 minutes.`,{
+  return say(env,chat,`${success?'✅':'⚠️'} Fight refresh completed. New posts: ${result.sent+newGroups.size}. Failed groups: ${result.failed}.\n\nAutomatic updates are scheduled every 30 minutes.`,{
     reply_markup:keyboard([[{text:'📊 Fight Status',callback_data:`fight:view:${id}`}],[{text:'🏠 Menu',callback_data:'menu:home'}]])
   });
 }
@@ -779,7 +842,7 @@ async function receiveFightVideo(env,msg){
     ]);
     if(!changed(committed[1]))return say(env,chat,'🔒 The official video is already locked and cannot be replaced.');
     await env.DB.prepare('DELETE FROM draft_state WHERE user_id=?').bind(String(user)).run();
-    return say(env,chat,'✅ Official video saved and permanently locked! All future fights and 10-minute updates will reuse this video.',{
+    return say(env,chat,'✅ Official video saved and permanently locked! All future fights and 30-minute updates will reuse this video.',{
       reply_markup:keyboard([[{text:'🥊 New Fight',callback_data:'menu:new'}],[{text:'🎬 Fight Video',callback_data:'menu:video'}]])
     });
   }catch(error){
@@ -809,7 +872,7 @@ async function linkGroup(env,msg,arg){
   if(!arg)return say(env,msg.chat.id,'🔗 Reply with the Solana token mint address for this Telegram group:',{reply_markup:{force_reply:true,input_field_placeholder:'Paste token mint address'}});
   if(!mintOk(arg))return say(env,msg.chat.id,'Please provide a valid Solana token mint address.');
   try{await tokenInfo(env,arg);}catch(e){return say(env,msg.chat.id,'Token not found: '+html(errString(e)));}
-  await env.DB.prepare(`INSERT INTO project_groups(mint,chat_id,chat_title,registered_by,registered_at) VALUES(?,?,?,?,?) ON CONFLICT(mint,chat_id) DO UPDATE SET chat_title=excluded.chat_title,registered_by=excluded.registered_by,registered_at=excluded.registered_at`).bind(arg,String(msg.chat.id),msg.chat.title||'',String(msg.from.id),now()).run();
+  await env.DB.prepare(`INSERT INTO project_groups(mint,chat_id,chat_title,registered_by,registered_at) VALUES(?,?,?,?,?) ON CONFLICT(mint,chat_id) DO UPDATE SET chat_title=excluded.chat_title`).bind(arg,String(msg.chat.id),msg.chat.title||'',String(msg.from.id),now()).run();
   return say(env,msg.chat.id,`✅ Group linked to <code>${html(arg)}</code>. Ready for future battles.`,{reply_markup:keyboard([[{text:'🖼️ Upload Project Logo',url:`https://t.me/${env.BOT_USERNAME.replace('@','')}?start=logo_${arg}`}],[{text:'🌐 Set Project Website',url:`https://t.me/${env.BOT_USERNAME.replace('@','')}?start=website_${arg}`}],[{text:'🥊 Bot Menu',url:`https://t.me/${env.BOT_USERNAME.replace('@','')}`}]] )});
 }
 async function unlinkGroup(env,msg,arg){
@@ -1005,6 +1068,8 @@ async function tick(env){
       await closeFight(env,f.id,'ended',[a,b]);
     }catch(e){console.error('settlement',f.id,errString(e));}
   }
+  // Countdown reminders must run every minute, not only when 30-minute posts are due.
+  await sendFinalCountdownReminders(env).catch(e=>console.error('countdown scheduler',errString(e)));
   // Rotate through all eligible active fights. A price API failure must NEVER stop
   // voting/countdown updates or block a new Telegram post.
   const active=await env.DB.prepare(`SELECT id,mint_a,mint_b FROM fights WHERE status='active' AND ends_at>? AND (next_refresh_at IS NULL OR next_refresh_at<=?) ORDER BY next_refresh_at LIMIT 40`)
@@ -1106,7 +1171,7 @@ export default {
           if(row.key==='fight_video_file_id')videoConfigured=!!row.value;
         }
       }catch(e){console.error('health database query',errString(e));}
-      return Response.json({status:'ok',app:'ASTY Token Fight',version:'0.7.3',
+      return Response.json({status:'ok',app:'ASTY Token Fight',version:'0.8.0',
         cron_last_started:started,cron_last_completed:completed,video_configured:videoConfigured});
     }
     if(url.pathname!=='/telegram'||request.method!=='POST')return new Response('Not Found',{status:404});
