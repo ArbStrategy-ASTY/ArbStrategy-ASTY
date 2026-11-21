@@ -15,6 +15,7 @@
     }
   ],
   "vars": {
-    "BOT_USERNAME": "ASTY_TokenFightBot"
+    "BOT_USERNAME": "ASTY_TokenFightBot",
+    "WEBHOOK_URL": "https://asty-token-fight.mail-timothy.workers.dev/telegram"
   }
 }
