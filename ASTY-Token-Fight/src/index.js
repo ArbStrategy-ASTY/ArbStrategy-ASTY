@@ -168,7 +168,7 @@ async function sendMilestones(env,id){
   if(elapsed>minTime+2*REFRESH_INTERVAL)return;
   const msgs=await env.DB.prepare('SELECT * FROM group_messages WHERE fight_id=?').bind(id).all();
   for(const m of msgs.results){
-    await deliverEvent(env,id,m.chat_id,`milestone_${milestone}`,`🥊 <b>ASTY TOKEN FIGHT</b> – ${html(f.sym_a)} VS ${html(f.sym_b)}\n${milestone==='23h'?'⏰ Only 1 hour left!':'⚡ Battle update'}\n\n🟣 Powered by ASTY`).catch(e=>console.error('milestone',id,errString(e)));
+    await deliverEvent(env,id,m.chat_id,`milestone_${milestone}`,`🥊 <b>ASTY TOKEN FIGHT</b> – ${html(tokenLabel(f.sym_a))} VS ${html(tokenLabel(f.sym_b))}\n${milestone==='23h'?'⏰ Only 1 hour left!':'⚡ Battle update'}\n\n🟣 Powered by ASTY - ArbStrategy.net`).catch(e=>console.error('milestone',id,errString(e)));
   }
 }
 
@@ -176,48 +176,48 @@ async function createFight(env,user,a,b,chat){
   if(!mintOk(a)||!mintOk(b)||a===b)return say(env,chat,'Please provide two different valid Solana token mint addresses.');
   if(!(await groupForAdmin(env,a,user)))return say(env,chat,`First link your project group as an admin: <code>/link ${html(a)}</code>.`);
   const pending=await env.DB.prepare(`SELECT COUNT(*) n FROM fights WHERE creator_id=? AND status='pending'`).bind(String(user)).first();
-  if(Number(pending?.n||0)>=3)return say(env,chat,'Maximal drei offene Herausforderungen gleichzeitig.');
+  if(Number(pending?.n||0)>=3)return say(env,chat,'You can have a maximum of three pending challenges.');
   const busy=await env.DB.prepare(`SELECT COUNT(*) n FROM active_token_locks WHERE mint IN (?,?)`).bind(a,b).first();
-  if(Number(busy?.n||0)>0)return say(env,chat,'Mindestens einer der Tokens kämpft bereits in einem aktiven Fight. Nach dessen Ende kannst du erneut herausfordern.');
+  if(Number(busy?.n||0)>0)return say(env,chat,'At least one token is already in an active fight. Try again after it ends.');
   try{await tokenInfo(env,a);await pause(1200);await tokenInfo(env,b);}catch(e){return say(env,chat,`Token lookup failed: ${html(errString(e))}`);}
   const id=eid();
   try{await env.DB.prepare(`INSERT INTO fights(id,mint_a,mint_b,creator_id,status,created_at) VALUES(?,?,?,?,'pending',?)`).bind(id,a,b,String(user),now()).run();}
-  catch(e){return say(env,chat,'Für dieses Token-Paar existiert bereits eine offene oder aktive Herausforderung. Wiederholung erst nach deren Abschluss möglich.');}
+  catch(e){return say(env,chat,'This token pair already has an open or active challenge. Wait for it to finish.');}
   await say(env,chat,`🥊 <b>Challenge created!</b>\nShare this link with your opponent:\n${botLink(env,id)}\n\nThe opponent must link their Telegram group and accept the challenge.`,{reply_markup:keyboard([[{text:'🔗 Share challenge',url:botLink(env,id)}]])});
   const opponents=await env.DB.prepare('SELECT DISTINCT registered_by FROM project_groups WHERE mint=?').bind(b).all();
-  for(const x of opponents.results){try{await say(env,x.registered_by,`🥊 Neue Herausforderung für dein Projekt!\n${botLink(env,id)}`);}catch{}}
+  for(const x of opponents.results){try{await say(env,x.registered_by,`🥊 New challenge for your project!\n${botLink(env,id)}`);}catch{}}
 }
 async function linkGroup(env,msg,arg){
-  if(!['group','supergroup'].includes(msg.chat.type))return say(env,msg.chat.id,'Bitte direkt in deiner Telegram-Gruppe <code>/link TOKENADRESSE</code> verwenden.');
-  if(!await tgAdmin(env,msg.chat.id,msg.from.id))return say(env,msg.chat.id,'Nur ein Gruppenadmin kann einen Token verknüpfen.');
-  if(!mintOk(arg))return say(env,msg.chat.id,'Syntax: <code>/link SOLANA_TOKENADRESSE</code>');
-  try{await tokenInfo(env,arg);}catch(e){return say(env,msg.chat.id,'Token nicht gefunden: '+html(errString(e)));}
+  if(!['group','supergroup'].includes(msg.chat.type))return say(env,msg.chat.id,'Use <code>/link TOKEN_MINT</code> in your Telegram group.');
+  if(!await tgAdmin(env,msg.chat.id,msg.from.id))return say(env,msg.chat.id,'Only a group administrator can link a token.');
+  if(!mintOk(arg))return say(env,msg.chat.id,'Usage: <code>/link SOLANA_TOKEN_MINT</code>');
+  try{await tokenInfo(env,arg);}catch(e){return say(env,msg.chat.id,'Token not found: '+html(errString(e)));}
   await env.DB.prepare(`INSERT INTO project_groups(mint,chat_id,chat_title,registered_by,registered_at) VALUES(?,?,?,?,?) ON CONFLICT(mint,chat_id) DO UPDATE SET chat_title=excluded.chat_title,registered_by=excluded.registered_by,registered_at=excluded.registered_at`).bind(arg,String(msg.chat.id),msg.chat.title||'',String(msg.from.id),now()).run();
   return say(env,msg.chat.id,`✅ Group linked to <code>${html(arg)}</code>. Ready for future battles.`);
 }
 async function unlinkGroup(env,msg,arg){
-  if(!['group','supergroup'].includes(msg.chat.type)||!await tgAdmin(env,msg.chat.id,msg.from.id))return say(env,msg.chat.id,'Nur ein Gruppenadmin kann hier eine Gruppe trennen.');
-  if(!mintOk(arg))return say(env,msg.chat.id,'Syntax: <code>/unlink TOKENADRESSE</code>');
+  if(!['group','supergroup'].includes(msg.chat.type)||!await tgAdmin(env,msg.chat.id,msg.from.id))return say(env,msg.chat.id,'Only a group administrator can unlink a token.');
+  if(!mintOk(arg))return say(env,msg.chat.id,'Usage: <code>/unlink SOLANA_TOKEN_MINT</code>');
   const r=await env.DB.prepare('DELETE FROM project_groups WHERE mint=? AND chat_id=?').bind(arg,String(msg.chat.id)).run();
-  return say(env,msg.chat.id,changed(r)?'✅ Gruppenverknüpfung entfernt. Laufende Battle-Nachrichten bleiben bis zum Ende bestehen.':'Für diesen Token besteht hier keine Verknüpfung.');
+  return say(env,msg.chat.id,changed(r)?'✅ Group unlinked. Active battle posts will remain until the fight ends.':'This token is not linked to this group.');
 }
 async function challengeView(env,chat,id){
-  const f=await detail(env,id);if(!f)return say(env,chat,'Herausforderung nicht gefunden.');
-  if(f.status!=='pending')return say(env,chat,`Dieser Fight hat den Status ${html(f.status)}.`);
-  return say(env,chat,`🥊 <b>NEW ASTY TOKEN FIGHT CHALLENGE</b>\n${html(f.sym_a)} fordert ${html(f.sym_b)} heraus!\n⏳ 24 Stunden · 50 % Voting · 50 % Preisentwicklung\n\nDu musst Admin einer mit ${html(f.sym_b)} verknüpften Gruppe sein.`,{reply_markup:keyboard([[{text:'✅ Herausforderung annehmen',callback_data:`accept:${f.id}`}],[{text:'❌ Ablehnen',callback_data:`decline:${f.id}`} ]])});
+  const f=await detail(env,id);if(!f)return say(env,chat,'Challenge not found.');
+  if(f.status!=='pending')return say(env,chat,`This fight has the status ${html(f.status)}.`);
+  return say(env,chat,`🥊 <b>NEW ASTY TOKEN FIGHT CHALLENGE</b>\n${html(f.sym_a)} challenges ${html(f.sym_b)}!\n⏳ 24 hours · 50% votes · 50% price change\n\nYou must be an admin of a group linked to ${html(f.sym_b)}.`,{reply_markup:keyboard([[{text:'✅ Accept challenge',callback_data:`accept:${f.id}`}],[{text:'❌ Decline',callback_data:`decline:${f.id}`} ]])});
 }
 async function accept(env,query,id,decline=false){
   const uid=query.from.id,chat=query.message.chat.id;
-  if(query.message.chat.type!=='private')return say(env,chat,'Bitte diese Anfrage im privaten Bot-Chat öffnen.');
-  const f=await detail(env,id);if(!f||f.status!=='pending')return say(env,chat,'Diese Herausforderung ist nicht mehr offen.');
-  if(!(await groupForAdmin(env,f.mint_b,uid)))return say(env,chat,`Du musst Admin einer verknüpften Gruppe für ${html(f.sym_b)} sein. Dort zuerst <code>/link ${html(f.mint_b)}</code> eingeben.`);
+  if(query.message.chat.type!=='private')return say(env,chat,'Open this challenge in the private bot chat.');
+  const f=await detail(env,id);if(!f||f.status!=='pending')return say(env,chat,'This challenge is no longer pending.');
+  if(!(await groupForAdmin(env,f.mint_b,uid)))return say(env,chat,`You must be an admin of a group linked to ${html(f.sym_b)}. Link the group first using <code>/link ${html(f.mint_b)}</code>.`);
   if(decline){
     const r=await env.DB.prepare(`UPDATE fights SET status='declined' WHERE id=? AND status='pending'`).bind(id).run();
-    return say(env,chat,changed(r)?'Herausforderung abgelehnt.':'Herausforderung wurde bereits bearbeitet.');
+    return say(env,chat,changed(r)?'Challenge declined.':'Challenge already processed.');
   }
   let p;
-  try{p=await prices(env,f.mint_a,f.mint_b);}catch(e){return say(env,chat,'Der Start ist derzeit wegen der Preisquelle nicht möglich: '+html(errString(e)));}
-  if(!p[0]||!p[1])return say(env,chat,'Für mindestens einen Token fehlt gerade ein Birdeye-Preis. Kein Fight gestartet.');
+  try{p=await prices(env,f.mint_a,f.mint_b);}catch(e){return say(env,chat,'Cannot start this fight because the price source is unavailable: '+html(errString(e)));}
+  if(!p[0]||!p[1])return say(env,chat,'Birdeye has no price for at least one token. Fight not started.');
   const t=now();
   try{
     // D1 batch is transactional: either BOTH token locks + status change succeed or none.
@@ -226,10 +226,10 @@ async function accept(env,query,id,decline=false){
       env.DB.prepare(`INSERT INTO active_token_locks(mint,fight_id) SELECT mint_b,id FROM fights WHERE id=? AND status='pending'`).bind(id),
       env.DB.prepare(`UPDATE fights SET status='active',accepted_by=?,started_at=?,ends_at=?,start_price_a=?,start_price_b=?,latest_price_a=?,latest_price_b=?,last_price_at=?,next_refresh_at=? WHERE id=? AND status='pending'`).bind(String(uid),t,t+DAY,p[0],p[1],p[0],p[1],t,t+REFRESH_INTERVAL,id)
     ]);
-    if(!changed(batch[2]))return say(env,chat,'Diese Herausforderung wurde bereits bearbeitet.');
-  }catch(e){return say(env,chat,'Einer der beiden Tokens kämpft bereits in einem anderen aktiven Fight. Die Herausforderung bleibt offen und kann später erneut angenommen werden.');}
-  await say(env,chat,'✅ Fight angenommen! 24-Stunden-Uhr läuft. Die Battle-Anzeige wird in beide Gruppen geschickt.');
-  await say(env,f.creator_id,`🥊 ${html(f.sym_b)} hat angenommen! Fight #${f.id} ist LIVE.`).catch(()=>{});
+    if(!changed(batch[2]))return say(env,chat,'Diese Challenge already processed.');
+  }catch(e){return say(env,chat,'One of these tokens is already in another active fight. Try accepting the challenge later.');}
+  await say(env,chat,'✅ Challenge accepted! The 24-hour fight is now live in both groups.');
+  await say(env,f.creator_id,`🥊 ${html(f.sym_b)} accepted! Fight ${f.id} is LIVE.`).catch(()=>{});
   await postFight(env,id);
 }
 async function vote(env,q,id,side){
@@ -249,12 +249,12 @@ async function fightList(env,chat,history=false,mint=null){
   if(mint){sql+=' AND (mint_a=? OR mint_b=?)';binds.push(mint,mint);}
   sql+=history?' ORDER BY archived_at DESC LIMIT 10':' ORDER BY ends_at ASC LIMIT 10';
   const list=await env.DB.prepare(sql).bind(...binds).all();
-  if(!list.results.length)return say(env,chat,history?'Noch keine abgeschlossenen Fights gefunden.':'Derzeit keine aktiven Fights.');
-  const lines=[history?'🏆 <b>ASTY Token Fight – Hall of Fame</b>':'🥊 <b>Aktive Fights</b>'];
+  if(!list.results.length)return say(env,chat,history?'No completed fights yet.':'No active fights right now.');
+  const lines=[history?'🏆 <b>ASTY Token Fight – Hall of Fame</b>':'🥊 <b>Active fights</b>'];
   for(const row of list.results){const f=await detail(env,row.id);if(!f)continue;
-    lines.push(`${html(f.sym_a)} VS ${html(f.sym_b)} · <code>${html(f.id)}</code>${history?(f.status==='ended'?` · Sieger: ${f.winner==='draw'?'Unentschieden':html(f.winner==='a'?f.sym_a:f.sym_b)}`:' · Ohne Wertung'):' · LIVE'}`);
+    lines.push(`${html(f.sym_a)} VS ${html(f.sym_b)} · <code>${html(f.id)}</code>${history?(f.status==='ended'?` · Winner: ${f.winner==='draw'?'Draw':html(f.winner==='a'?f.sym_a:f.sym_b)}`:' · No result'):' · LIVE'}`);
   }
-  lines.push('\n/status FIGHT_ID für Details · 🟣 Powered by ASTY');
+  lines.push('\n/status FIGHT_ID for details · 🟣 Powered by ASTY - ArbStrategy.net');
   return say(env,chat,lines.join('\n'));
 }
 async function onUpdate(env,u){
@@ -273,20 +273,20 @@ async function onUpdate(env,u){
   if(!privateChat)return;
   if(cmd==='/start'){
     if(args[0]?.startsWith('challenge_'))return challengeView(env,chat,args[0].slice(10));
-    return say(env,chat,'🥊 <b>ASTY TOKEN FIGHT</b>\n\nZwei Projekte. 24 Stunden. 50 % Stimmen + 50 % Kursentwicklung.\n\n1. In der Projektgruppe als Admin <code>/link TOKENADRESSE</code> senden.\n2. Hier <code>/new</code> starten.\n3. Challenge-Link an den Gegner schicken.\n\n/fights zeigt laufende Duelle, /history die Hall of Fame.\n\n🟣 Powered by ASTY');
+    return say(env,chat,'🥊 <b>ASTY TOKEN FIGHT</b>\n\nTwo projects. 24 hours. 50% community votes + 50% price change.\n\n1. As a group admin, send <code>/link TOKEN_MINT</code> in your group.\n2. Send <code>/new</code> here to create a challenge.\n3. Share the challenge link with your opponent.\n\n/fights lists active battles, /history shows the Hall of Fame.\n\n🟣 Powered by ASTY - ArbStrategy.net');
   }
-  if(cmd==='/help')return say(env,chat,'Privat: <code>/new</code>, <code>/new EIGENER_MINT GEGNER_MINT</code>, <code>/fights</code>, <code>/history [MINT]</code>, <code>/status FIGHT_ID</code>, <code>/withdraw FIGHT_ID</code>, <code>/cancel</code>. Gruppe: <code>/link MINT</code>, <code>/unlink MINT</code>.');
+  if(cmd==='/help')return say(env,chat,'Private: <code>/new</code>, <code>/new YOUR_MINT OPPONENT_MINT</code>, <code>/fights</code>, <code>/history [MINT]</code>, <code>/status FIGHT_ID</code>, <code>/withdraw FIGHT_ID</code>, <code>/stop FIGHT_ID</code>, <code>/cancel</code>. Groups: <code>/link MINT</code>, <code>/unlink MINT</code>.');
   if(cmd==='/fights')return fightList(env,chat,false);
   if(cmd==='/history')return fightList(env,chat,true,mintOk(args[0])?args[0]:null);
   if(cmd==='/status'){
-    if(!args[0])return say(env,chat,'Syntax: <code>/status FIGHT_ID</code>');
-    const text=await statusText(env,args[0]);return say(env,chat,text||'Fight nicht gefunden.');
+    if(!args[0])return say(env,chat,'Usage: <code>/status FIGHT_ID</code>');
+    const text=await statusText(env,args[0]);return say(env,chat,text||'Fight not found.');
   }
   if(cmd==='/withdraw'){
     const f=args[0]?await detail(env,args[0]):null;
-    if(!f||f.creator_id!==String(msg.from.id)||f.status!=='pending')return say(env,chat,'Nur der Ersteller kann seine noch offene Herausforderung zurückziehen.');
+    if(!f||f.creator_id!==String(msg.from.id)||f.status!=='pending')return say(env,chat,'Only the creator can withdraw a pending challenge.');
     const r=await env.DB.prepare(`UPDATE fights SET status='cancelled' WHERE id=? AND status='pending'`).bind(f.id).run();
-    return say(env,chat,changed(r)?'✅ Herausforderung zurückgezogen. Ein neuer Fight ist jetzt möglich.':'Die Herausforderung wurde inzwischen bearbeitet.');
+    return say(env,chat,changed(r)?'✅ Challenge withdrawn. You can create a new fight.':'This challenge has already been processed.');
   }
   if(cmd==='/stop'){
     const f=args[0]?await detail(env,args[0]):null;
