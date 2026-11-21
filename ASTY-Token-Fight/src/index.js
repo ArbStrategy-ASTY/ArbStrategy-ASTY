@@ -535,7 +535,7 @@ async function linkGroup(env,msg,arg){
   if(!mintOk(arg))return say(env,msg.chat.id,'Please provide a valid Solana token mint address.');
   try{await tokenInfo(env,arg);}catch(e){return say(env,msg.chat.id,'Token not found: '+html(errString(e)));}
   await env.DB.prepare(`INSERT INTO project_groups(mint,chat_id,chat_title,registered_by,registered_at) VALUES(?,?,?,?,?) ON CONFLICT(mint,chat_id) DO UPDATE SET chat_title=excluded.chat_title,registered_by=excluded.registered_by,registered_at=excluded.registered_at`).bind(arg,String(msg.chat.id),msg.chat.title||'',String(msg.from.id),now()).run();
-  return say(env,msg.chat.id,`✅ Group linked to <code>${html(arg)}</code>. Ready for future battles.`,{reply_markup:keyboard([[{text:'🌐 Set Project Website',url:`https://t.me/${env.BOT_USERNAME.replace('@','')}?start=website_${arg}`}],[{text:'🥊 Bot Menu',url:`https://t.me/${env.BOT_USERNAME.replace('@','')}`}]] )});
+  return say(env,msg.chat.id,`✅ Group linked to <code>${html(arg)}</code>. Ready for future battles.`,{reply_markup:keyboard([[{text:'🖼️ Upload Project Logo',url:`https://t.me/${env.BOT_USERNAME.replace('@','')}?start=logo_${arg}`}],[{text:'🌐 Set Project Website',url:`https://t.me/${env.BOT_USERNAME.replace('@','')}?start=website_${arg}`}],[{text:'🥊 Bot Menu',url:`https://t.me/${env.BOT_USERNAME.replace('@','')}`}]] )});
 }
 async function unlinkGroup(env,msg,arg){
   if(!['group','supergroup'].includes(msg.chat.type)||!await tgAdmin(env,msg.chat.id,msg.from.id))return say(env,msg.chat.id,'Only a group administrator can unlink a token.');
@@ -652,6 +652,7 @@ async function onUpdate(env,u){
   if(cmd==='/start'){
     if(args[0]?.startsWith('challenge_'))return challengeView(env,chat,args[0].slice(10));
     if(args[0]?.startsWith('website_'))return projectScreen(env,chat,msg.from.id,args[0].slice(8));
+    if(args[0]?.startsWith('logo_'))return beginLogoUpload(env,chat,msg.from.id,args[0].slice(5));
     return menuHome(env,chat);
   }
   if(cmd==='/menu')return menuHome(env,chat);
