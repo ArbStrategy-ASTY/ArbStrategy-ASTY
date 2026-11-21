@@ -257,9 +257,11 @@ async function projectScreen(env,chat,user,mint,q=null){
   const web=p.website_url ? `🌐 Website: <a href="${html(p.website_url)}">${html(projectWebsiteDisplay(p.website_url))}</a>`:'🌐 Website: Not set';
   const rows=[
     [{text:`🥊 Challenge as ${tokenLabel(p.symbol)}`,callback_data:`new:own:${mint}`}],
-    [{text:'🌐 Set / Edit Website',callback_data:`site:set:${mint}`}]
   ];
-  if(p.website_url)rows.push([{text:'🗑 Remove Website',callback_data:`site:remove:${mint}`}],[{text:`🌐 Visit ${tokenLabel(p.symbol)}`,url:p.website_url}]);
+  const websiteAdmin=await canManageWebsite(env,mint,user);
+  if(websiteAdmin)rows.push([{text:'🌐 Set / Edit Website',callback_data:`site:set:${mint}`}]);
+  if(p.website_url&&websiteAdmin)rows.push([{text:'🗑 Remove Website',callback_data:`site:remove:${mint}`}]);
+  if(p.website_url)rows.push([{text:`🌐 Visit ${tokenLabel(p.symbol)}`,url:p.website_url}]);
   rows.push([{text:'🪙 My Projects',callback_data:'menu:projects'},{text:'🏠 Menu',callback_data:'menu:home'}]);
   return screen(env,chat,`🪙 <b>${html(tokenLabel(p.symbol))}</b>\n${html(p.name)}\n${web}\n\nYour website will appear in battle posts and fight notifications.`,keyboard(rows),q);
 }
@@ -283,15 +285,23 @@ async function chooseOwn(env,chat,user,mint,q=null){
   return screen(env,chat,`🥊 <b>${html(tokenLabel(p?.symbol||'TOKEN'))} VS ?</b>\n\nChoose a registered opponent or paste a Solana token mint address.`,keyboard(rows),q);
 }
 
+async function canManageWebsite(env,mint,user){
+  if(!mintOk(mint))return false;
+  // Minimize link impersonation: only administrators of the earliest linked group
+  // may advertise or change this token's project website.
+  const earliest=await env.DB.prepare('SELECT chat_id FROM project_groups WHERE mint=? ORDER BY registered_at ASC, chat_id ASC LIMIT 1').bind(mint).first();
+  return !!earliest&&await tgAdmin(env,earliest.chat_id,user);
+}
+
 async function websiteStart(env,chat,user,mint,q=null){
-  if(!mintOk(mint)||!(await groupForAdmin(env,mint,user)))return screen(env,chat,'Only an admin of a linked project group may edit its website.',keyboard([[{text:'🪙 My Projects',callback_data:'menu:projects'}]]),q);
+  if(!mintOk(mint)||!(await canManageWebsite(env,mint,user)))return screen(env,chat,'Only admins of the first linked project group may edit this website.',keyboard([[{text:'🪙 My Projects',callback_data:'menu:projects'}]]),q);
   await env.DB.prepare(`INSERT INTO draft_state(user_id,step,own_mint,updated_at) VALUES(?,'website',?,?) ON CONFLICT(user_id) DO UPDATE SET step='website',own_mint=excluded.own_mint,updated_at=excluded.updated_at`).bind(String(user),mint,now()).run();
   const p=await env.DB.prepare('SELECT symbol FROM projects WHERE mint=?').bind(mint).first();
   return screen(env,chat,`🌐 <b>SET WEBSITE FOR ${html(tokenLabel(p?.symbol||'TOKEN'))}</b>\n\nPaste your project's HTTPS website address (for example: https://arbstrategy.net).\n\nThis is the only information you need to enter manually. You can change it later.`,keyboard([[{text:'↩️ My Projects',callback_data:'menu:sites'}],[{text:'🏠 Main Menu',callback_data:'menu:home'}]]),q);
 }
 
 async function websiteSave(env,chat,user,mint,raw){
-  if(!mintOk(mint)||!(await groupForAdmin(env,mint,user)))return say(env,chat,'Only a current project group admin can save its website.');
+  if(!mintOk(mint)||!(await canManageWebsite(env,mint,user)))return say(env,chat,'Only admins of the first linked project group can save this website.');
   const website_url=normalizeProjectWebsite(raw);
   if(!website_url)return say(env,chat,'⚠️ Please paste a valid HTTPS website URL, such as https://arbstrategy.net. Public domain names only, maximum 160 characters.');
   await env.DB.prepare(`INSERT INTO project_websites(mint,website_url,updated_by,updated_at) VALUES(?,?,?,?) ON CONFLICT(mint) DO UPDATE SET website_url=excluded.website_url,updated_by=excluded.updated_by,updated_at=excluded.updated_at`).bind(mint,website_url,String(user),now()).run();
@@ -301,7 +311,7 @@ async function websiteSave(env,chat,user,mint,raw){
 }
 
 async function websiteRemove(env,chat,user,mint,q=null){
-  if(!mintOk(mint)||!(await groupForAdmin(env,mint,user)))return say(env,chat,'Only a project group admin can remove the website.');
+  if(!mintOk(mint)||!(await canManageWebsite(env,mint,user)))return say(env,chat,'Only admins of the first linked project group can remove the website.');
   await env.DB.prepare('DELETE FROM project_websites WHERE mint=?').bind(mint).run();
   return projectScreen(env,chat,user,mint,q);
 }
@@ -380,7 +390,7 @@ async function groupCallback(env,q){
 }
 
 async function confirmWebsiteRemove(env,chat,user,mint,q){
-  if(!mintOk(mint)||!(await groupForAdmin(env,mint,user)))return say(env,chat,'Only a project group admin can change its website.');
+  if(!mintOk(mint)||!(await canManageWebsite(env,mint,user)))return say(env,chat,'Only admins of the first linked project group can change the website.');
   return screen(env,chat,'🗑 <b>REMOVE PROJECT WEBSITE?</b>\n\nThis removes the website from upcoming battle posts. You can add a new URL any time.',keyboard([[{text:'✅ Remove Website',callback_data:`site:delete:${mint}`}],[{text:'↩️ Keep Website',callback_data:`site:open:${mint}`}]]),q);
 }
 
