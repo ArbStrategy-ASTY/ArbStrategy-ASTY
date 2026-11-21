@@ -196,7 +196,7 @@ function menuButtons(){
     [{text:'🥊 New Fight',callback_data:'menu:new'},{text:'🪙 My Projects',callback_data:'menu:projects'}],
     [{text:'⚡ Active Fights',callback_data:'menu:active'},{text:'🏆 Hall of Fame',callback_data:'menu:history'}],
     [{text:'🌐 Project Websites',callback_data:'menu:sites'},{text:'❓ Help',callback_data:'menu:help'}],
-    [{text:'🖼️ Token Logos',callback_data:'menu:logos'}]
+    [{text:'🎬 Fight Video',callback_data:'menu:video'}]
   ]);
 }
 
@@ -230,7 +230,7 @@ async function groupHome(env,chat,q=null){
 async function helpScreen(env,chat,q=null,isGroup=false) {
   const text=isGroup
     ? '❓ <b>GROUP HELP</b>\n\n<code>/link MINT</code> — Link this group to a Solana token (admins only).\n<code>/unlink MINT</code> — Remove a group-token link (admins only).\n<code>/help</code> — Show this help.\n\nUse the button to link a token without writing a command. Reply to the bot with its mint address.\n\n🟣 Powered by ASTY - ArbStrategy.net'
-    : '❓ <b>ASTY TOKEN FIGHT — HELP</b>\n\n<b>Use the buttons</b> to create challenges, select existing projects, manage websites and browse fights.\n\n<b>Commands</b>\n<code>/start</code> / <code>/menu</code> — Main menu\n<code>/new</code> — Create a challenge\n<code>/projects</code> — My linked projects\n<code>/website</code> — Add or change a project website\n<code>/logo</code> — Upload and manage project logos\n<code>/fights</code> — Active battles\n<code>/history</code> — Finished battles\n<code>/status ID</code> — Detailed fight stats\n<code>/withdraw ID</code> — Withdraw a pending challenge\n<code>/stop ID</code> — Stop your active test fight\n<code>/cancel</code> — Cancel current setup\n<code>/help</code> — This help\n\n<b>In Telegram groups</b>\n<code>/link MINT</code> — Link project\n<code>/unlink MINT</code> — Unlink project\n\n<b>How it works</b>\n1. Add the bot to your group and link your project token.\n2. Optionally add your website once (paste the URL).\n3. Choose New Fight, select your project and opponent.\n4. Opponent accepts the challenge; voting and price tracking begin.\n\nEach Telegram account gets one vote per fight. Website links are supplied by project admins, not verified by ASTY.';
+    : '❓ <b>ASTY TOKEN FIGHT — HELP</b>\n\n<b>Use the buttons</b> to create challenges, select existing projects, manage websites and browse fights.\n\n<b>Commands</b>\n<code>/start</code> / <code>/menu</code> — Main menu\n<code>/new</code> — Create a challenge\n<code>/projects</code> — My linked projects\n<code>/website</code> — Add or change a project website\n<code>/logo</code> — Upload and manage project logos\n<code>/video</code> — Manage the fixed fight video\n<code>/fights</code> — Active battles\n<code>/history</code> — Finished battles\n<code>/status ID</code> — Detailed fight stats\n<code>/withdraw ID</code> — Withdraw a pending challenge\n<code>/stop ID</code> — Stop your active test fight\n<code>/cancel</code> — Cancel current setup\n<code>/help</code> — This help\n\n<b>In Telegram groups</b>\n<code>/link MINT</code> — Link project\n<code>/unlink MINT</code> — Unlink project\n\n<b>How it works</b>\n1. Add the bot to your group and link your project token.\n2. Optionally add your website once (paste the URL).\n3. Choose New Fight, select your project and opponent.\n4. Opponent accepts the challenge; voting and price tracking begin.\n\nEach Telegram account gets one vote per fight. Website links are supplied by project admins, not verified by ASTY.';
   return screen(env,chat,text,isGroup?groupButtons(env):keyboard([[{text:'🏠 Main Menu',callback_data:'menu:home'}],[{text:'🥊 New Fight',callback_data:'menu:new'}]]),q);
 }
 
@@ -458,7 +458,14 @@ async function menuCallback(env,q){
   if(cmd==='menu:help')return helpScreen(env,chat,q);
   if(cmd==='menu:projects')return projectsScreen(env,chat,user,q);
   if(cmd==='menu:sites')return projectsScreen(env,chat,user,q,true);
-  if(cmd==='menu:logos')return projectsScreen(env,chat,user,q);
+  if(cmd==='menu:video')return videoScreen(env,chat,user,q);
+  if(cmd==='video:upload')return startVideoUpload(env,chat,user,q);
+  if(cmd==='video:preview'){
+    if(!(await isVideoManager(env,user)))return say(env,chat,'You are not authorized to manage the global video.');
+    const fileId=await getFightVideo(env);
+    if(!fileId)return videoScreen(env,chat,user,q);
+    return telegram(env,'sendVideo',{chat_id:chat,video:fileId,caption:'🎬 Fixed ASTY Token Fight video',supports_streaming:true});
+  }
   if(cmd==='menu:new')return newFightScreen(env,chat,user,q);
   if(cmd==='menu:active')return fightScreen(env,chat,user,false,q);
   if(cmd==='menu:history')return fightScreen(env,chat,user,true,q);
@@ -497,7 +504,7 @@ async function ensureWebsiteTable(env){
 
 async function ensureBotCommands(env){
   // Persist a version marker so Telegram's command menu isn't rewritten each minute.
-  const key='bot_commands_v3_logo_upload';
+  const key='bot_commands_v4_video';
   const current=await env.DB.prepare('SELECT value FROM worker_settings WHERE key=?').bind(key).first();
   if(current)return;
   const commands=[
@@ -507,6 +514,7 @@ async function ensureBotCommands(env){
     {command:'projects',description:'Manage linked projects'},
     {command:'website',description:'Set project websites'},
     {command:'logo',description:'Upload an official project logo'},
+    {command:'video',description:'Manage the fixed battle video'},
     {command:'fights',description:'Active token fights'},
     {command:'history',description:'Hall of Fame'},
     {command:'help',description:'Commands and how to play'},
@@ -519,6 +527,74 @@ async function ensureBotCommands(env){
   ];
   await telegram(env,'setMyCommands',{commands});
   await env.DB.prepare(`INSERT OR IGNORE INTO worker_settings(key,value,updated_at) VALUES(?,?,?)`).bind(key,'ok',now()).run();
+}
+
+function fixedVideoKey(){return 'fight_video_file_id';}
+
+async function getFightVideo(env){
+  const r=await env.DB.prepare('SELECT value FROM worker_settings WHERE key=?').bind(fixedVideoKey()).first();
+  return r?.value||null;
+}
+
+async function isVideoManager(env,user){
+  if(env.FIGHT_VIDEO_ADMIN_ID)return String(user)===String(env.FIGHT_VIDEO_ADMIN_ID);
+  // Fallback only to the original ASTY group registrar (not arbitrary linked token holders).
+  const mint='ASTYqeaoK83Zs1pTFEXZUB6BM8cG8YLTsN852NUkt7ZR';
+  const origin=await env.DB.prepare('SELECT chat_id,registered_by FROM project_groups WHERE mint=? ORDER BY registered_at ASC,chat_id ASC LIMIT 1').bind(mint).first();
+  return !!origin&&String(origin.registered_by)===String(user)&&await tgAdmin(env,origin.chat_id,user);
+}
+
+async function videoScreen(env,chat,user,q=null){
+  if(!(await isVideoManager(env,user)))return screen(env,chat,'🎬 <b>FIGHT VIDEO</b>\n\nOnly the original ASTY group registrant may replace the global battle video.',keyboard([[{text:'🏠 Main Menu',callback_data:'menu:home'}]]),q);
+  const fileId=await getFightVideo(env);
+  const lines=[
+    '🎬 <b>FIGHT VIDEO</b>','',
+    fileId?'✅ Permanent fight video configured.':'⚠️ No fight video has been configured yet.','',
+    'This same video will appear for all fights. Live statistics and voting buttons are added below it.','',
+    'Select Upload Video to send an MP4 video once in this private chat.'
+  ];
+  const rows=[[{text:fileId?'🎬 Replace Video':'🎬 Upload Video',callback_data:'video:upload'}]];
+  if(fileId)rows.push([{text:'▶️ Preview Video',callback_data:'video:preview'}]);
+  rows.push([{text:'🏠 Main Menu',callback_data:'menu:home'}]);
+  return screen(env,chat,lines.join('\n'),keyboard(rows),q);
+}
+
+async function startVideoUpload(env,chat,user,q=null){
+  if(!(await isVideoManager(env,user)))return say(env,chat,'Only the designated ASTY video manager can upload the global battle video.');
+  await env.DB.prepare("INSERT INTO draft_state(user_id,step,own_mint,updated_at) VALUES(?,'video',NULL,?) ON CONFLICT(user_id) DO UPDATE SET step='video',own_mint=NULL,updated_at=excluded.updated_at")
+    .bind(String(user),now()).run();
+  return screen(env,chat,'🎬 <b>UPLOAD FIGHT VIDEO</b>\n\nSend the MP4 video as a Telegram video in this private chat (not a link).\n\nThe bot will verify that Telegram can resend it, then save its reusable file ID for all fights. Send /cancel to abort.',keyboard([[{text:'↩️ Fight Video',callback_data:'menu:video'}],[{text:'🏠 Menu',callback_data:'menu:home'}]]),q);
+}
+
+async function receiveFightVideo(env,msg){
+  if(msg?.chat?.type!=='private'||!msg?.video?.file_id||!msg?.from?.id)return;
+  const chat=msg.chat.id,user=msg.from.id;
+  const draft=await env.DB.prepare('SELECT * FROM draft_state WHERE user_id=?').bind(String(user)).first();
+  if(!draft||draft.step!=='video')return;
+  if(now()-draft.updated_at>1800){
+    await env.DB.prepare('DELETE FROM draft_state WHERE user_id=?').bind(String(user)).run();
+    return say(env,chat,'Video upload session expired. Open Fight Video and try again.');
+  }
+  if(!(await isVideoManager(env,user)))return say(env,chat,'You are not allowed to replace the global battle video.');
+  const video=msg.video;
+  if(Number(video.file_size||0)>50*1024*1024)return say(env,chat,'Please send a video under 50 MB.');
+  if(video.mime_type&&video.mime_type!=='video/mp4')return say(env,chat,'Please send an MP4 video.');
+  try{
+    // Prove that Telegram accepts the same file_id in sendVideo before saving it.
+    const preview=await telegram(env,'sendVideo',{chat_id:chat,video:video.file_id,
+      caption:'🎬 ASTY Token Fight — fixed video preview',supports_streaming:true});
+    const saved=preview?.video?.file_id||video.file_id;
+    if(typeof saved!=='string'||!saved||saved.length>300)throw new Error('Telegram returned no usable video file ID');
+    await env.DB.prepare("INSERT INTO worker_settings(key,value,updated_at) VALUES(?,?,?) ON CONFLICT(key) DO UPDATE SET value=excluded.value,updated_at=excluded.updated_at")
+      .bind(fixedVideoKey(),saved,now()).run();
+    await env.DB.prepare('DELETE FROM draft_state WHERE user_id=?').bind(String(user)).run();
+    return say(env,chat,'✅ Your fixed video has been saved and tested. New fights and future 10-minute posts will use it.',{
+      reply_markup:keyboard([[{text:'🥊 New Fight',callback_data:'menu:new'}],[{text:'🎬 Fight Video',callback_data:'menu:video'}]])
+    });
+  }catch(error){
+    console.error('video upload',errString(error));
+    return say(env,chat,'⚠️ Telegram could not reuse this video: '+html(errString(error))+'\n\nPlease send a shorter MP4 video.');
+  }
 }
 
 async function createFight(env,user,a,b,chat){
@@ -642,6 +718,7 @@ async function onUpdate(env,u){
     return menuCallback(env,q);
   }
   const msg=u.message;
+  if(msg?.video?.file_id)return receiveFightVideo(env,msg);
   if(msg?.photo?.length)return receiveLogoPhoto(env,msg);
   if(!msg?.text||!msg.from)return;
   const chat=msg.chat.id,privateChat=msg.chat.type==='private';
@@ -667,6 +744,7 @@ async function onUpdate(env,u){
   if(cmd==='/projects')return projectsScreen(env,chat,msg.from.id);
   if(cmd==='/website')return projectsScreen(env,chat,msg.from.id,null,true);
   if(cmd==='/logo')return projectsScreen(env,chat,msg.from.id);
+  if(cmd==='/video')return videoScreen(env,chat,msg.from.id);
   if(cmd==='/help')return helpScreen(env,chat);
   if(cmd==='/fights')return fightScreen(env,chat,msg.from.id,false);
   if(cmd==='/history')return args[0]&&mintOk(args[0])?fightList(env,chat,true,args[0]):fightScreen(env,chat,msg.from.id,true);
@@ -691,6 +769,7 @@ async function onUpdate(env,u){
     const draft=await env.DB.prepare('SELECT * FROM draft_state WHERE user_id=?').bind(String(msg.from.id)).first();
     if(draft?.step==='website'&&now()-draft.updated_at<=1800)return websiteSave(env,chat,msg.from.id,draft.own_mint,raw);
     if(draft?.step==='logo'&&now()-draft.updated_at<=1800)return say(env,chat,'📷 Please send an image as a Telegram photo, not a text message.');
+    if(draft?.step==='video'&&now()-draft.updated_at<=1800)return say(env,chat,'🎬 Please send the MP4 as a Telegram video attachment, not a text message.');
     if(!draft||now()-draft.updated_at>1800){
       if(draft)await env.DB.prepare('DELETE FROM draft_state WHERE user_id=?').bind(String(msg.from.id)).run();
       // Never silently ignore a submitted mint when a challenge draft has expired.
@@ -808,7 +887,7 @@ async function ensureTelegramWebhook(env){
 export default {
   async fetch(request,env,ctx){
     const url=new URL(request.url);
-    if(url.pathname==='/health'&&request.method==='GET')return Response.json({status:'ok',app:'ASTY Token Fight',version:'0.5.0'});
+    if(url.pathname==='/health'&&request.method==='GET')return Response.json({status:'ok',app:'ASTY Token Fight',version:'0.6.0'});
     if(url.pathname!=='/telegram'||request.method!=='POST')return new Response('Not Found',{status:404});
     if(!env.TELEGRAM_WEBHOOK_SECRET||request.headers.get('X-Telegram-Bot-Api-Secret-Token')!==env.TELEGRAM_WEBHOOK_SECRET)return new Response('Unauthorized',{status:401});
     let update;try{update=await request.json();}catch{return new Response('Bad JSON',{status:400});}
