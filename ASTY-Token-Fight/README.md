@@ -1,4 +1,4 @@
-# 🥊 ASTY Token Fight – Telegram Bot v0.7.2 (Birdeye)
+# 🥊 ASTY Token Fight – Telegram Bot v0.7.3 (Birdeye)
 
 **Status: private Beta / laufende Tests.** Der Bot wurde in früheren Versionen auf Cloudflare deployed und mit ASTY-vs.-ARBX-Gruppen getestet. Die neuen Menüs, Website-Buttons, Vote-Benachrichtigungen und das Grafikdesign von v0.4.2 sind im GitHub-Code implementiert, aber müssen nach Cloudflare-Deployment noch in Telegram geprüft werden. Alle Änderungen bleiben auf den Ordner `ASTY-Token-Fight/` beschränkt.
 
@@ -279,3 +279,10 @@ Deployment check: after Cloudflare Builds publishes the changes, `/health` must 
 ## Vote notifications in both fight communities (v0.7.2)
 
 For each successfully counted vote the bot now sends `🔥 New vote for $TOKEN 🔥` **concurrently** to both project groups via `Promise.allSettled`. Group IDs are drawn from currently linked project groups plus the group's recorded fight posts, deduplicated using SQL `UNION`. A second vote by the same Telegram user still produces no notification. The vote acknowledgement in Telegram remains immediate, and failure to post to one group does not prevent delivery to the other group or undo the valid vote. The automatic 10-minute status/video posts remain unchanged.
+
+
+## Telegram-Bot Gruppenberechtigungen und Hilfe (v0.7.3)
+
+Im englischen `/help` gibt es jetzt **🔐 Bot Permissions** (im privaten Chat und in den Gruppen). Für die zuverlässige Verifizierung der Projektadmins mittels Telegram `getChatMember` **sollte der Bot in beiden Fight-Gruppen Administrator sein**. Telegram garantiert dieses Lookup für andere Nutzer nur dann. Für normalen Versand wären grundsätzlich schon gewöhnliche Gruppenrechte ausreichend, sofern der Bot Text und Videos posten darf.
+
+Der Bot braucht die Möglichkeit, Textmeldungen für Votes, 10-Minuten-Updates und Ergebnisse sowie Videos für Battle-Posts zu senden und eigene Nachrichten zu bearbeiten. Er benötigt **keine** Berechtigungen zum Löschen, Anpinnen, Sperren anderer Mitglieder, Ernennen von Admins oder Ändern der Gruppeninformationen. Nur ein echter Gruppenadmin darf Token verknüpfen und Challenges für ein Projekt annehmen. Die Information steht in der Übersicht, im How-It-Works-Bereich, unter Bot Permissions und bei Commands. Keine erzwingende Rechteänderung im Code, nur zutreffende und transparente Anleitung.
