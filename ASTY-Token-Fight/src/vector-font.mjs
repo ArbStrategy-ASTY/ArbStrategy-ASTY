@@ -67,7 +67,7 @@ export function vectorWidth(value, pixel=7, tracking=2){
   return n>0 ? n*5*pixel+(n-1)*tracking : 0;
 }
 export function vectorText(value,x,y,{pixel=7,color='#ffffff',tracking=2,align='start',maxWidth=Infinity,opacity=1}={}){
-  const string=String(value??'').toUpperCase().replace(/[^A-Z0-9 $.\-:/+%?!&]/g,'?');
+  const string=String(value??'').toUpperCase().replace(/[^A-Z0-9 $.\-:\/+%?!&]/g,'?');
   let width=vectorWidth(string,pixel,tracking);
   const fit=width>maxWidth?maxWidth/width:1;
   let origin=align==='middle'?x-width*fit/2:align==='end'?x-width*fit:x;
