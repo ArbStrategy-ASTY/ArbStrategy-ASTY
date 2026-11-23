@@ -968,6 +968,74 @@ async function ensureBotCommands(env){
 }
 
 function fixedVideoKey(){return 'fight_video_file_id';}
+function winnerVideoKey(){return 'winner_video_file_id';}
+
+async function getWinnerVideo(env){
+  const result=await env.DB.prepare('SELECT value FROM worker_settings WHERE key=?')
+    .bind(winnerVideoKey()).first();
+  return result?.value||null;
+}
+
+async function winnerVideoScreen(env,chat,user,q=null){
+  const video=await getWinnerVideo(env);
+  if(video)return screen(env,chat,
+    '🏆 <b>WINNER VIDEO</b>\n\n✅ The separate winner video is saved permanently.\n\nIt will be sent with the final results to BOTH communities when a fight has a winner.\n\n🔒 The video cannot be replaced.',
+    keyboard([[{text:'▶️ Preview Winner Video',callback_data:'winner-video:preview'}],[{text:'🏠 Main Menu',callback_data:'menu:home'}]]),q);
+  if(!(await isVideoManager(env,user)))return screen(env,chat,
+    '🏆 <b>WINNER VIDEO</b>\n\nThe one-time winner-video upload is reserved for the original ASTY fight-video owner.',
+    keyboard([[{text:'🏠 Main Menu',callback_data:'menu:home'}]]),q);
+  return screen(env,chat,
+    '🏆 <b>UPLOAD WINNER VIDEO</b>\n\nUpload a separate MP4 video once. After each 24-hour fight with a winner, the bot will post it in both groups with the final score and X-post challenge.\n\nThe existing live-fight video will not change.',
+    keyboard([[{text:'🎬 Upload Winner Video',callback_data:'winner-video:upload'}],[{text:'🏠 Main Menu',callback_data:'menu:home'}]]),q);
+}
+
+async function startWinnerVideoUpload(env,chat,user,q=null){
+  if(await getWinnerVideo(env))return winnerVideoScreen(env,chat,user,q);
+  if(!(await isVideoManager(env,user)))return say(env,chat,'Only the original fight-video owner can upload the winner video.');
+  await env.DB.prepare("INSERT INTO draft_state(user_id,step,own_mint,updated_at) VALUES(?,'winner_video',NULL,?) ON CONFLICT(user_id) DO UPDATE SET step='winner_video',own_mint=NULL,updated_at=excluded.updated_at")
+    .bind(String(user),now()).run();
+  return screen(env,chat,
+    '🏆 <b>SEND THE WINNER VIDEO</b>\n\nSend your finished MP4 as a Telegram video attachment in this private chat.\n\nThe bot will preview and save it once. Only the winner announcement uses this video.\n\nThe original 30-minute battle video stays unchanged.',
+    keyboard([[{text:'↩️ Back',callback_data:'winner-video:menu'}],[{text:'🏠 Menu',callback_data:'menu:home'}]]),q);
+}
+
+async function receiveWinnerVideo(env,msg,draft=null){
+  if(msg?.chat?.type!=='private'||!msg?.video?.file_id||!msg.from?.id)return;
+  const chat=msg.chat.id,user=msg.from.id;
+  if(!draft)draft=await env.DB.prepare('SELECT * FROM draft_state WHERE user_id=?').bind(String(user)).first();
+  if(!draft||draft.step!=='winner_video')return;
+  if(now()-Number(draft.updated_at)>1800){
+    await env.DB.prepare('DELETE FROM draft_state WHERE user_id=?').bind(String(user)).run();
+    return say(env,chat,'Winner-video upload expired. Send /winner_video and try again.');
+  }
+  if(await getWinnerVideo(env))return say(env,chat,'🔒 The winner video is already locked. No replacement is allowed.');
+  if(!(await isVideoManager(env,user)))return say(env,chat,'Only the original fight-video owner can upload the winner video.');
+  const video=msg.video;
+  if(Number(video.file_size||0)>50*1024*1024)return say(env,chat,'Please send an MP4 video under 50 MB.');
+  if(video.mime_type&&video.mime_type!=='video/mp4')return say(env,chat,'Please send an MP4 video.');
+  try{
+    // Telegram accepts its own file_id; save only the reusable file ID in D1.
+    const preview=await telegram(env,'sendVideo',{
+      chat_id:chat,video:video.file_id,caption:'🏆 Winner video — preview',
+      supports_streaming:true
+    });
+    const reusable=preview?.video?.file_id||video.file_id;
+    if(typeof reusable!=='string'||!reusable||reusable.length>300)throw new Error('Telegram returned no usable video file ID.');
+    // Immutable, one-time insert, authorized by the already locked fight-video owner.
+    const stored=await env.DB.prepare(`INSERT OR IGNORE INTO worker_settings(key,value,updated_at)
+      SELECT 'winner_video_file_id',?,?
+      WHERE EXISTS (SELECT 1 FROM worker_settings WHERE key='fight_video_owner_id' AND value=?)`)
+      .bind(reusable,now(),String(user)).run();
+    if(!changed(stored))return say(env,chat,'🔒 Winner video could not be saved: only the original fight-video owner may set it, once.');
+    await env.DB.prepare('DELETE FROM draft_state WHERE user_id=?').bind(String(user)).run();
+    return say(env,chat,'✅ Winner video saved and permanently locked!\n\nNew winning results will include this video in both Telegram groups. The original fight video has not changed.',
+      {reply_markup:keyboard([[{text:'🥊 Main Menu',callback_data:'menu:home'}]])});
+  }catch(e){
+    console.error('winner video upload',errString(e));
+    return say(env,chat,'⚠️ Winner-video upload failed: '+html(errString(e))+'\n\nPlease retry the video attachment.');
+  }
+}
+
 
 async function getFightVideo(env){
   const r=await env.DB.prepare('SELECT value FROM worker_settings WHERE key=?').bind(fixedVideoKey()).first();
