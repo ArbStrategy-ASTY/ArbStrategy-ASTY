@@ -1475,17 +1475,19 @@ export default {
   async fetch(request,env,ctx){
     const url=new URL(request.url);
     if(url.pathname==='/health'&&request.method==='GET'){
-      let started=null,completed=null,videoConfigured=false;
+      let started=null,completed=null,videoConfigured=false,winnerVideoConfigured=false;
       try{
-        const rows=await env.DB.prepare("SELECT key,value FROM worker_settings WHERE key IN ('cron_last_started','cron_last_completed','fight_video_file_id')").all();
+        const rows=await env.DB.prepare("SELECT key,value FROM worker_settings WHERE key IN ('cron_last_started','cron_last_completed','fight_video_file_id','winner_video_file_id')").all();
         for(const row of rows.results||[]){
           if(row.key==='cron_last_started')started=row.value;
           if(row.key==='cron_last_completed')completed=row.value;
           if(row.key==='fight_video_file_id')videoConfigured=!!row.value;
+          if(row.key==='winner_video_file_id')winnerVideoConfigured=!!row.value;
         }
       }catch(e){console.error('health database query',errString(e));}
       return Response.json({status:'ok',app:'ASTY Token Fight',version:'0.8.6',
-        cron_last_started:started,cron_last_completed:completed,video_configured:videoConfigured});
+        cron_last_started:started,cron_last_completed:completed,video_configured:videoConfigured,
+        winner_video_configured:winnerVideoConfigured});
     }
     if(url.pathname!=='/telegram'||request.method!=='POST')return new Response('Not Found',{status:404});
     if(!env.TELEGRAM_WEBHOOK_SECRET||request.headers.get('X-Telegram-Bot-Api-Secret-Token')!==env.TELEGRAM_WEBHOOK_SECRET)return new Response('Unauthorized',{status:401});
