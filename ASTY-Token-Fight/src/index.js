@@ -1047,12 +1047,28 @@ async function receiveWinnerVideo(env,msg,draft=null){
     });
     const reusable=preview?.video?.file_id||video.file_id;
     if(typeof reusable!=='string'||!reusable||reusable.length>300)throw new Error('Telegram returned no usable video file ID.');
-    // Immutable, one-time insert, authorized by the already locked fight-video owner.
-    const stored=await env.DB.prepare(`INSERT OR IGNORE INTO worker_settings(key,value,updated_at)
-      SELECT 'winner_video_file_id',?,?
-      WHERE EXISTS (SELECT 1 FROM worker_settings WHERE key='fight_video_owner_id' AND value=?)`)
-      .bind(reusable,now(),String(user)).run();
-    if(!changed(stored))return say(env,chat,'🔒 Winner video could not be saved: only the original fight-video owner may set it, once.');
+    // Backwards-compatible owner registration for fight videos uploaded before
+    // v0.6.1: the initial fight video may exist without an owner row.
+    // isVideoManager() was checked above, so only an already-authorized ASTY
+    // operator may claim that missing record. An existing owner is NEVER replaced.
+    // D1 batch is transactional: claiming the missing owner and saving the
+    // one-time winner video either both succeed or neither becomes visible.
+    const committed=await env.DB.batch([
+      env.DB.prepare(`INSERT OR IGNORE INTO worker_settings(key,value,updated_at)
+        SELECT 'fight_video_owner_id',?,?
+        WHERE EXISTS (SELECT 1 FROM worker_settings
+          WHERE key='fight_video_file_id' AND length(value)>0)`)
+        .bind(String(user),now()),
+      env.DB.prepare(`INSERT OR IGNORE INTO worker_settings(key,value,updated_at)
+        SELECT 'winner_video_file_id',?,?
+        WHERE EXISTS (SELECT 1 FROM worker_settings
+          WHERE key='fight_video_owner_id' AND value=?)`)
+        .bind(reusable,now(),String(user))
+    ]);
+    if(!changed(committed[1])){
+      console.error('winner video not stored: owner missing, mismatch or video already set');
+      return say(env,chat,'⚠️ Winner video could not be saved. The bot could not confirm the original video owner. Please contact the ASTY operator; the existing fight video was not changed.');
+    }
     await env.DB.prepare('DELETE FROM draft_state WHERE user_id=?').bind(String(user)).run();
     return say(env,chat,'✅ Winner video saved and permanently locked!\n\nNew winning results will include this video in both Telegram groups. The original fight video has not changed.',
       {reply_markup:keyboard([[{text:'🥊 Main Menu',callback_data:'menu:home'}]])});
@@ -1485,7 +1501,7 @@ export default {
           if(row.key==='winner_video_file_id')winnerVideoConfigured=!!row.value;
         }
       }catch(e){console.error('health database query',errString(e));}
-      return Response.json({status:'ok',app:'ASTY Token Fight',version:'0.8.6',
+      return Response.json({status:'ok',app:'ASTY Token Fight',version:'0.8.7',
         cron_last_started:started,cron_last_completed:completed,video_configured:videoConfigured,
         winner_video_configured:winnerVideoConfigured});
     }
