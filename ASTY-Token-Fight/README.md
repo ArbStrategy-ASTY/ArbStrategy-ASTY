@@ -1,4 +1,4 @@
-# 🥊 ASTY Token Fight – Telegram Bot v0.8.5 (Birdeye)
+# 🥊 ASTY Token Fight – Telegram Bot v0.8.6 (Birdeye)
 
 **Status: private Beta / laufende Tests.** Der Bot wurde in früheren Versionen auf Cloudflare deployed und mit ASTY-vs.-ARBX-Gruppen getestet. Die neuen Menüs, Website-Buttons, Vote-Benachrichtigungen und das Grafikdesign von v0.4.2 sind im GitHub-Code implementiert, aber müssen nach Cloudflare-Deployment noch in Telegram geprüft werden. Alle Änderungen bleiben auf den Ordner `ASTY-Token-Fight/` beschränkt.
 
@@ -366,3 +366,16 @@ No additional Cloudflare service, manual D1 reset, token mint change or new vide
 - `/help` overview, How It Works and Fight Results explicitly explain the mandatory bot link and the one-click X compose button.
 
 Deployment check: `/health` should report version `0.8.5` once Cloudflare publishes these GitHub changes.
+
+## Separate winner-video upload and automatic winner announcement (v0.8.6)
+
+- **Two distinct immutable MP4 videos:** The existing `worker_settings.fight_video_file_id` remains the live battle video (unchanged). A separate `worker_settings.winner_video_file_id` stores Telegram's reusable `file_id` for the winner announcement. No separate Cloudflare product or new secret is required.
+- The original **fixed-video owner** (stored in `worker_settings.fight_video_owner_id`) sees a **🏆 Upload Winner Video** button in the private main menu while no winner video exists. Alternatively, they can send `/winner_video` to the bot and select Upload Winner Video. No other group/project admin can upload it. The owner sends the MP4 as a Telegram video (not a file link) in the private bot chat; Telegram sends a preview, and an `INSERT OR IGNORE ... SELECT ... WHERE fight_video_owner_id = uploader` operation saves it once. The button disappears after the first successful upload, and the file ID is permanently locked from subsequent uploads.
+- Telegram MP4 upload is limited to 50 MB through the bot. The video is not copied into GitHub or D1 as binary media; only its persistent Telegram file ID is stored. The stored video can be previewed using `/winner_video`, but not replaced.
+- **After a real winner is determined**, the latest live battle post is first updated with the full final result. **Additionally, both participating Telegram groups receive a new video result announcement** using this separate winner video. The video caption shows final votes, both price changes, score, winner, explicit loser X-post requirement and a clickable link to `https://t.me/ASTY_TokenFightBot`; beneath it are both project website buttons and `✍️ Create Loser’s X Post`. The draft opens X's compose intent with the winner's information and our bot link.
+- The same existing D1 `sent_events` at-least-once ledger ensures each group receives at most one successful winner-video result message per fight; transient Telegram errors are eligible for scheduled retry. The already-uploaded live fight video is never used as the separate winner video.
+- **Draws, unresolved and early cancelled fights** do not play the winner video and remain text notifications. If the winner video has not yet been configured at settlement time, the existing text result announcement is retained instead of suppressing important results.
+- The English `/help` Fight Results and Bot Permissions sections now explain the distinct winner-video announcement.
+- Local mocked tests validated first-owner-only upload, immutable storage, preservation of the live battle video, conditional main-menu upload button, duplicate prevention, simultaneous result-video delivery to both groups, website/X buttons, and text-only draw behavior. Real Telegram/Cloudflare delivery needs verification after deployment.
+
+Deployment check: `/health` should return version `0.8.6`. The user should open `https://t.me/ASTY_TokenFightBot`, send `/winner_video` or tap **🏆 Upload Winner Video** in `/start`, then send the prepared MP4. After confirmation, future winning fights use it automatically.
