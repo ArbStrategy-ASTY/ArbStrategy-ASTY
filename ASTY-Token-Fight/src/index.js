@@ -337,7 +337,14 @@ async function screen(env,chat,text,reply_markup,q=null) {
 }
 
 async function menuHome(env,chat,q=null){
-  return screen(env,chat,'🥊 <b>ASTY TOKEN FIGHT</b>\n\nTwo Solana projects. One 24-hour battle.\n50% community votes + 50% price change.\n\nSelect an option to get started.\n\n<b>Powered by ASTY <a href="https://arbstrategy.net/">ArbStrategy.net</a></b>',menuButtons(),q);
+  const buttons=menuButtons();
+  // Setup button exists only until the first winner video is saved, and only
+  // for the Telegram account already authorized to control the fixed video.
+  if(!(await getWinnerVideo(env))&&await isVideoManager(env,q?.from?.id??chat)){
+    buttons.inline_keyboard.splice(buttons.inline_keyboard.length-1,0,
+      [{text:'🏆 Upload Winner Video',callback_data:'winner-video:menu'}]);
+  }
+  return screen(env,chat,'🥊 <b>ASTY TOKEN FIGHT</b>\n\nTwo Solana projects. One 24-hour battle.\n50% community votes + 50% price change.\n\nSelect an option to get started.\n\n<b>Powered by ASTY <a href="https://arbstrategy.net/">ArbStrategy.net</a></b>',buttons,q);
 }
 
 async function groupHome(env,chat,q=null){
@@ -392,7 +399,7 @@ async function helpSection(env,chat,section,q=null,isGroup=false){
         '',
         '<b>What it must be allowed to do</b>',
         '• Send text messages (votes, updates and winner announcements).',
-        '• Send videos (new battle posts every 30 minutes).',
+        '• Send videos (new battle posts every 30 minutes, plus a separate winner video when a project wins).',
         '• Edit its own battle messages to show the final result.',
         '',
         '<b>Not needed</b>',
@@ -451,7 +458,7 @@ async function helpSection(env,chat,section,q=null,isGroup=false){
         'After 24 hours, the bot checks the final votes and both token prices.',
         'The final 50:50 score determines the winner. Exactly equal final scores result in a draw.',
         '',
-        '📣 Both groups receive a <b>new text result announcement</b> showing the votes, price change, final score and winning token.',
+        '📣 Both groups receive a <b>new winner-video announcement</b> (after the separate winner video is configured) showing the votes, price change, final score and winning token. Draws and unresolved fights receive a text result.',
         'The latest battle message is updated and voting closes. The result is saved in the Hall of Fame. Both tokens are released for rematches.',
         '',
         '📣 <b>Loser’s X-post challenge:</b> The losing project must publish an X post about the winning project and include https://t.me/ASTY_TokenFightBot.',
@@ -883,6 +890,13 @@ async function menuCallback(env,q){
   if(cmd.startsWith('help:'))return helpSection(env,chat,cmd.slice(5),q);
   if(cmd==='menu:projects')return projectsScreen(env,chat,user,q);
   if(cmd==='menu:sites')return projectsScreen(env,chat,user,q,true);
+  if(cmd==='winner-video:menu')return winnerVideoScreen(env,chat,user,q);
+  if(cmd==='winner-video:upload')return startWinnerVideoUpload(env,chat,user,q);
+  if(cmd==='winner-video:preview'){
+    const fileId=await getWinnerVideo(env);
+    if(!fileId)return winnerVideoScreen(env,chat,user,q);
+    return telegram(env,'sendVideo',{chat_id:chat,video:fileId,caption:'🏆 Fixed ASTY Token Fight winner video',supports_streaming:true});
+  }
   if(cmd==='menu:video')return videoScreen(env,chat,user,q);
   if(cmd==='video:upload')return startVideoUpload(env,chat,user,q);
   if(cmd==='video:preview'){
@@ -1244,7 +1258,12 @@ async function onUpdate(env,u){
     return menuCallback(env,q);
   }
   const msg=u.message;
-  if(msg?.video?.file_id)return receiveFightVideo(env,msg);
+  if(msg?.video?.file_id){
+    if(msg?.chat?.type!=='private'||!msg?.from?.id)return;
+    const draft=await env.DB.prepare('SELECT * FROM draft_state WHERE user_id=?').bind(String(msg.from.id)).first();
+    if(draft?.step==='winner_video')return receiveWinnerVideo(env,msg,draft);
+    return receiveFightVideo(env,msg);
+  }
   if(msg?.photo?.length)return receiveLogoPhoto(env,msg);
   if(!msg?.text||!msg.from)return;
   const chat=msg.chat.id,privateChat=msg.chat.type==='private';
@@ -1264,12 +1283,14 @@ async function onUpdate(env,u){
     if(args[0]?.startsWith('challenge_'))return challengeView(env,chat,args[0].slice(10));
     if(args[0]?.startsWith('website_'))return websiteInfo(env,chat,msg.from.id,args[0].slice(8));
     if(args[0]?.startsWith('logo_'))return beginLogoUpload(env,chat,msg.from.id,args[0].slice(5));
+    if(args[0]==='winner_video')return winnerVideoScreen(env,chat,msg.from.id);
     return menuHome(env,chat);
   }
   if(cmd==='/menu')return menuHome(env,chat);
   if(cmd==='/projects')return projectsScreen(env,chat,msg.from.id);
   if(cmd==='/website')return projectsScreen(env,chat,msg.from.id,null,true);
   if(cmd==='/video')return videoScreen(env,chat,msg.from.id);
+  if(cmd==='/winner_video')return winnerVideoScreen(env,chat,msg.from.id);
   if(cmd==='/help')return helpScreen(env,chat);
   if(cmd==='/fights')return fightScreen(env,chat,msg.from.id,false);
   if(cmd==='/history')return args[0]&&mintOk(args[0])?fightList(env,chat,true,args[0]):fightScreen(env,chat,msg.from.id,true);
@@ -1301,6 +1322,7 @@ async function onUpdate(env,u){
     }
     if(draft?.step==='logo'&&now()-draft.updated_at<=1800)return say(env,chat,'📷 Please send an image as a Telegram photo, not a text message.');
     if(draft?.step==='video'&&now()-draft.updated_at<=1800)return say(env,chat,'🎬 Please send the MP4 as a Telegram video attachment, not a text message.');
+    if(draft?.step==='winner_video'&&now()-draft.updated_at<=1800)return say(env,chat,'🏆 Please send your winner MP4 as a Telegram video attachment, not text.');
     if(!draft||now()-draft.updated_at>1800){
       if(draft)await env.DB.prepare('DELETE FROM draft_state WHERE user_id=?').bind(String(msg.from.id)).run();
       // Never silently ignore a submitted mint when a challenge draft has expired.
@@ -1450,7 +1472,7 @@ export default {
           if(row.key==='fight_video_file_id')videoConfigured=!!row.value;
         }
       }catch(e){console.error('health database query',errString(e));}
-      return Response.json({status:'ok',app:'ASTY Token Fight',version:'0.8.5',
+      return Response.json({status:'ok',app:'ASTY Token Fight',version:'0.8.6',
         cron_last_started:started,cron_last_completed:completed,video_configured:videoConfigured});
     }
     if(url.pathname!=='/telegram'||request.method!=='POST')return new Response('Not Found',{status:404});
