@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#08080d">
-<title>ASTY Unlockr · V19</title>
+<title>ASTY Unlockr</title>
 <style>
 :root{
   --bg:#07070b;--panel:#0e0e16;--panel2:#12121d;--line:rgba(255,255,255,.085);
@@ -72,7 +72,13 @@ select,input[type=url]{width:100%;background:#09090f;color:var(--text);border:1p
 .value .dust-amount{color:#d7c3ff}
 .dust-warning-modal{display:none;margin:12px 0;padding:12px;border:1px solid rgba(255,201,107,.24);border-radius:13px;background:rgba(255,201,107,.045);font-size:9px;line-height:1.6;color:#cfc7d6}
 .dust-warning-modal strong{color:var(--amber)}
-.dust-warning-list{margin-top:8px;padding:8px;border-radius:10px;background:#08080d;border:1px solid var(--line);font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;font-size:8px;line-height:1.6;overflow-wrap:anywhere}
+.dust-warning-list{
+  margin-top:8px;padding:8px;border-radius:10px;background:#08080d;border:1px solid var(--line);
+  font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;
+  font-size:8px;line-height:1.6;overflow-wrap:anywhere;
+  max-height:min(34dvh,260px);overflow-y:auto;overscroll-behavior:contain;
+  -webkit-overflow-scrolling:touch;touch-action:pan-y
+}
 .dust-confirm-row{display:none;align-items:flex-start;gap:9px;margin-top:10px;padding:10px;border-radius:10px;border:1px solid rgba(189,140,255,.18);background:rgba(189,140,255,.035);cursor:pointer}
 .dust-confirm-row input{width:17px;height:17px;flex:0 0 auto;margin-top:1px;accent-color:#9f72ff}
 .dust-confirm-row span{font-size:9px;line-height:1.5;color:#d3cddd}
@@ -191,13 +197,37 @@ select,input[type=url]{width:100%;background:#09090f;color:var(--text);border:1p
 .delegate{padding:12px 15px;border-bottom:1px solid var(--line);display:grid;grid-template-columns:1fr auto;gap:10px}.delegate b{font-size:10px}.delegate span{font-size:8px;color:var(--muted);display:block;margin-top:3px}
 .badge{display:inline-flex;border-radius:999px;padding:4px 7px;font-size:8px;font-weight:1000;border:1px solid rgba(255,201,107,.25);color:var(--amber);height:max-content}
 .notice{margin-top:13px;padding:14px;border-radius:17px;border:1px solid rgba(255,201,107,.2);background:rgba(255,201,107,.035);font-size:10px;line-height:1.68;color:#c8c1cf}.notice strong{color:var(--amber)}
-.modalback{position:fixed;inset:0;background:rgba(0,0,0,.72);display:none;align-items:center;justify-content:center;padding:16px;z-index:50}
-.modal{width:min(520px,100%);border:1px solid var(--line);border-radius:20px;background:#0d0d15;padding:18px}.modal h3{margin:0 0 8px;font-size:16px}.modal p{font-size:10px;line-height:1.65;color:var(--muted)}
+.modalback{
+  position:fixed;inset:0;background:rgba(0,0,0,.72);display:none;
+  align-items:flex-start;justify-content:center;padding:12px 16px;
+  z-index:50;overflow-y:auto;overscroll-behavior:contain;
+  -webkit-overflow-scrolling:touch;touch-action:pan-y
+}
+.modal{
+  width:min(520px,100%);max-height:calc(100dvh - 24px);
+  margin:auto 0;border:1px solid var(--line);border-radius:20px;
+  background:#0d0d15;padding:18px;overflow-y:auto;overscroll-behavior:contain;
+  -webkit-overflow-scrolling:touch;touch-action:pan-y
+}
+.modal h3{margin:0 0 8px;font-size:16px}.modal p{font-size:10px;line-height:1.65;color:var(--muted)}
 .modalstats{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:13px 0}.modalstat{border:1px solid var(--line);border-radius:13px;padding:11px}.modalstat small{display:block;color:var(--muted);font-size:8px;text-transform:uppercase;font-weight:900;margin-bottom:5px}.modalstat b{font-size:13px}
-.modalactions{display:flex;justify-content:flex-end;gap:8px;margin-top:14px}.txlog{max-height:180px;overflow:auto;font-size:9px;line-height:1.55;color:#a9a3b4;background:#08080d;border:1px solid var(--line);border-radius:12px;padding:9px;margin-top:10px;display:none}
+.modalactions{
+  display:flex;justify-content:flex-end;gap:8px;margin-top:14px;
+  position:sticky;bottom:-18px;z-index:8;padding:12px 0 3px;
+  background:linear-gradient(180deg,rgba(13,13,21,0),#0d0d15 28%)
+}
+.txlog{max-height:180px;overflow:auto;font-size:9px;line-height:1.55;color:#a9a3b4;background:#08080d;border:1px solid var(--line);border-radius:12px;padding:9px;margin-top:10px;display:none}
 footer{text-align:center;font-size:8px;color:#5f5a67;margin-top:20px;line-height:1.7}
 @media(max-width:820px){.grid{grid-template-columns:1fr}.statusgrid{grid-template-columns:1fr 1fr}}
-@media(max-width:560px){.wrap{width:calc(100% - 18px);padding-top:10px}.hero{padding:18px}.statusgrid{grid-template-columns:1fr 1fr}.account{grid-template-columns:26px 1fr}.value{grid-column:2;text-align:left}.actionbar{align-items:flex-start;flex-direction:column}.actionbar .btn{width:100%}.modalstats{grid-template-columns:1fr}}
+@media(max-width:560px){
+  .wrap{width:calc(100% - 18px);padding-top:10px}.hero{padding:18px}.statusgrid{grid-template-columns:1fr 1fr}
+  .account{grid-template-columns:26px 1fr}.value{grid-column:2;text-align:left}
+  .actionbar{align-items:flex-start;flex-direction:column}.actionbar .btn{width:100%}
+  .modalback{padding:8px}
+  .modal{max-height:calc(100vh - 16px);max-height:calc(100dvh - 16px);padding:15px}
+  .modalstats{grid-template-columns:1fr}
+  .dust-warning-list{max-height:30vh;max-height:30dvh}
+}
 
 /* ===== ASTY Unlockr V21 branding / UX layer ===== */
 body{overflow-x:hidden}
@@ -850,9 +880,9 @@ footer{padding-bottom:10px}
           <div class="dust-count" id="dustCount">—</div>
         </div>
         <div class="dust-copy"
-             data-en="Tiny token remainders or token balances with an estimated value of $0.01 or less can appear here. Never selected automatically. Burning is permanent."
-             data-de="Sehr kleine Token-Restbestände oder Tokenbestände mit einem geschätzten Wert von höchstens 0,01 $ können hier erscheinen. Nie automatisch ausgewählt. Das Verbrennen ist endgültig.">
-          Tiny token remainders or token balances with an estimated value of $0.01 or less can appear here. Never selected automatically. Burning is permanent.
+             data-en="Tiny token remainders can appear here. Larger balances are shown only when a real positive price is available and their estimated total value is $0.01 or less. Never selected automatically. Burning is permanent."
+             data-de="Sehr kleine Token-Restbestände können hier erscheinen. Größere Bestände werden nur angezeigt, wenn ein echter positiver Preis verfügbar ist und ihr geschätzter Gesamtwert höchstens 0,01 $ beträgt. Nie automatisch ausgewählt. Das Verbrennen ist endgültig.">
+          Tiny token remainders can appear here. Larger balances are shown only when a real positive price is available and their estimated total value is $0.01 or less. Never selected automatically. Burning is permanent.
         </div>
       </div>
       <div id="dustList"><div class="empty"><b data-en="No scan yet." data-de="Noch kein Scan.">No scan yet.</b><span data-en="Dust accounts are checked during the wallet scan." data-de="Dust-Konten werden beim Wallet-Scan geprüft.">Dust accounts are checked during the wallet scan.</span></div></div>
@@ -1362,15 +1392,15 @@ function isDustCandidate(a){
 
   if(isLegacyMicroDust(a))return true;
 
-  const usd=Number(a.estimatedUsdValue);
-  return Number.isFinite(usd)&&usd>=0&&usd<=DUST_MAX_USD;
+  const usd=a.estimatedUsdValue;
+  return typeof usd==="number"&&Number.isFinite(usd)&&usd>0&&usd<=DUST_MAX_USD;
 }
 
 function formatDustUsd(a){
-  const usd=Number(a?.estimatedUsdValue);
-  if(!Number.isFinite(usd)||usd<0)return "";
+  const usd=a?.estimatedUsdValue;
+  if(typeof usd!=="number"||!Number.isFinite(usd)||usd<=0)return "";
   if(usd<0.0001)return "< $0.0001";
-  if(usd<0.01)return `< $0.01`;
+  if(usd<0.01)return "< $0.01";
   return `$${usd.toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:4})}`;
 }
 
@@ -1573,11 +1603,20 @@ async function enrichTokenMetadata(accounts){
           asset?.token_info?.symbol||
           ""
         ).trim();
-        const price=Number(asset?.token_info?.price_info?.price_per_token);
+        const rawPrice=asset?.token_info?.price_info?.price_per_token;
+        const parsedPrice=
+          rawPrice===null||rawPrice===undefined||rawPrice===""
+            ?null
+            :Number(rawPrice);
+        const tokenPriceUsd=
+          typeof parsedPrice==="number"&&Number.isFinite(parsedPrice)&&parsedPrice>0
+            ?parsedPrice
+            :null;
+
         if(id)byMint.set(id,{
           tokenName:name,
           tokenSymbol:symbol,
-          tokenPriceUsd:Number.isFinite(price)&&price>=0?price:null
+          tokenPriceUsd
         });
       });
 
@@ -1590,9 +1629,11 @@ async function enrichTokenMetadata(accounts){
   return accounts.map(a=>{
     const meta=byMint.get(a.mint)||{};
     const uiAmount=Number(formatRawTokenAmount(a.rawAmount,a.decimals));
-    const price=Number(meta.tokenPriceUsd);
+    const price=meta.tokenPriceUsd;
+    const hasReliablePrice=
+      typeof price==="number"&&Number.isFinite(price)&&price>0;
     const estimatedUsdValue=
-      Number.isFinite(uiAmount)&&uiAmount>=0&&Number.isFinite(price)&&price>=0
+      Number.isFinite(uiAmount)&&uiAmount>0&&hasReliablePrice
         ?uiAmount*price
         :null;
 
