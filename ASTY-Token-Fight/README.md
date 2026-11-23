@@ -1,4 +1,4 @@
-# 🥊 ASTY Token Fight – Telegram Bot v0.8.6 (Birdeye)
+# 🥊 ASTY Token Fight – Telegram Bot v0.8.7 (Birdeye)
 
 **Status: private Beta / laufende Tests.** Der Bot wurde in früheren Versionen auf Cloudflare deployed und mit ASTY-vs.-ARBX-Gruppen getestet. Die neuen Menüs, Website-Buttons, Vote-Benachrichtigungen und das Grafikdesign von v0.4.2 sind im GitHub-Code implementiert, aber müssen nach Cloudflare-Deployment noch in Telegram geprüft werden. Alle Änderungen bleiben auf den Ordner `ASTY-Token-Fight/` beschränkt.
 
@@ -379,3 +379,16 @@ Deployment check: `/health` should report version `0.8.5` once Cloudflare publis
 - Local mocked tests validated first-owner-only upload, immutable storage, preservation of the live battle video, conditional main-menu upload button, duplicate prevention, simultaneous result-video delivery to both groups, website/X buttons, and text-only draw behavior. Real Telegram/Cloudflare delivery needs verification after deployment.
 
 Deployment check: `/health` should return version `0.8.6`. The user should open `https://t.me/ASTY_TokenFightBot`, send `/winner_video` or tap **🏆 Upload Winner Video** in `/start`, then send the prepared MP4. After confirmation, future winning fights use it automatically.
+
+## Legacy winner-video permission fix (v0.8.7)
+
+Some users uploaded the original fixed battle video in v0.6.0, before the `fight_video_owner_id` setting was implemented in v0.6.1. Those users could be recognized by `isVideoManager()` through the original ASTY group registration or configured `FIGHT_VIDEO_ADMIN_ID`, and even preview a winner video. Yet the v0.8.6 SQL required `fight_video_owner_id` to exist already and returned a false permissions error on the final insert.
+
+v0.8.7 fixes that discrepancy without changing the existing battle video or weakening the one-time video lock:
+- The bot first verifies the uploader using its existing `isVideoManager()` authorization check.
+- A single D1 transaction (`env.DB.batch`) inserts a **missing** `fight_video_owner_id` with `INSERT OR IGNORE`, but only if the original `fight_video_file_id` exists and is nonempty. An existing owner record is not modified.
+- The same transaction saves the `winner_video_file_id` only if the now-established owner ID matches the uploader. The winner-video insert is also `INSERT OR IGNORE`, so it is never overwritten.
+- Users who are not the authorized operator and users whose account differs from the already recorded owner remain blocked. A Telegram group admin cannot claim owner rights merely by linking the same mint in a new group.
+- Six mocked scenarios were tested: legacy owner missing, existing correct owner, mismatched owner, non-original group admin, missing original live video, and already-saved winner file. The original MP4's file ID is never updated.
+
+After Cloudflare builds the commit, `/health` should show `0.8.7`. The user should reopen the bot, send `/winner_video`, select Upload Winner Video and submit the same MP4 again. If the owner backfill still cannot be authorized, inspect the original linked ASTY group administrator identity and bot membership/permissions; do not overwrite an existing owner's ID.
