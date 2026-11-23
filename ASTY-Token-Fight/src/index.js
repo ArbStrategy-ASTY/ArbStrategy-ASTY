@@ -136,13 +136,23 @@ async function postFight(env,id){
 }
 // Durable at-least-once group message delivery. Negative sent_at is a 90-second lease.
 // In the rare case Telegram accepts a message but the database write fails, it may retry once.
-async function deliverEvent(env,id,chat,eventType,text,reply_markup=null){
+async function deliverEvent(env,id,chat,eventType,text,reply_markup=null,videoFileId=null){
   await env.DB.prepare('INSERT OR IGNORE INTO sent_events(fight_id,chat_id,event_type,sent_at) VALUES(?,?,?,0)').bind(id,chat,eventType).run();
   const lease=-now()-90;
   const r=await env.DB.prepare('UPDATE sent_events SET sent_at=? WHERE fight_id=? AND chat_id=? AND event_type=? AND (sent_at=0 OR (sent_at<0 AND sent_at>=?))').bind(lease,id,chat,eventType,-now()).run();
   if(!changed(r))return;
   try{
-    await say(env,chat,text,reply_markup?.inline_keyboard?.length?{reply_markup}:{});
+    if(videoFileId){
+      // The extra pre-uploaded winner MP4 is used only for a real winner.
+      // The caption includes the final score, winner, X-post obligation and bot link.
+      if(text.length>1024)throw new Error('Final winner video caption exceeds Telegram 1024-character limit');
+      await telegram(env,'sendVideo',{
+        chat_id:chat,video:videoFileId,caption:text,parse_mode:'HTML',
+        supports_streaming:true,...(reply_markup?.inline_keyboard?.length?{reply_markup}:{})
+      });
+    }else{
+      await say(env,chat,text,reply_markup?.inline_keyboard?.length?{reply_markup}:{});
+    }
     await env.DB.prepare('UPDATE sent_events SET sent_at=? WHERE fight_id=? AND chat_id=? AND event_type=? AND sent_at=?').bind(now(),id,chat,eventType,lease).run();
   }catch(e){
     console.error('event delivery',id,eventType,errString(e));
@@ -159,6 +169,8 @@ async function refreshMessages(env,id,final=false,repost=false,skipChats=null){
   const msgs=await env.DB.prepare('SELECT * FROM group_messages WHERE fight_id=?').bind(id).all();
   const currentCaption=caption(f,va,vb),summary={targets:0,sent:0,failed:0};
   const videoId=repost&&f.status==='active'?await getFightVideo(env):null;
+  const winnerVideo=final&&f.status==='ended'&&['a','b'].includes(f.winner)
+    ?await getWinnerVideo(env):null;
   for(const m of msgs.results||[]){
     if(skipChats?.has(String(m.chat_id)))continue;
     const chatView=await websiteViewForChat(env,f,m.chat_id);
@@ -210,7 +222,7 @@ async function refreshMessages(env,id,final=false,repost=false,skipChats=null){
         reply_markup:f.status==='active'?votingButtons(chatView):finishedFightButtons(chatView)
       });
     }catch(e){if(!errString(e).includes('message is not modified'))console.error('edit',id,m.chat_id,errString(e));}
-    if(final)await deliverEvent(env,id,m.chat_id,`end_${f.status}`,currentCaption,finishedFightButtons(chatView))
+    if(final)await deliverEvent(env,id,m.chat_id,`end_${f.status}`,currentCaption,finishedFightButtons(chatView),winnerVideo)
       .catch(e=>console.error('final event',id,m.chat_id,errString(e)));
   }
   return summary;
