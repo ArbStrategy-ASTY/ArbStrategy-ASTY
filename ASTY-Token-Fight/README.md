@@ -1,4 +1,4 @@
-# 🥊 ASTY Token Fight – Telegram Bot v0.8.7 (Birdeye)
+# 🥊 ASTY Token Fight – Telegram Bot v0.8.8 (Birdeye)
 
 **Status: private Beta / laufende Tests.** Der Bot wurde in früheren Versionen auf Cloudflare deployed und mit ASTY-vs.-ARBX-Gruppen getestet. Die neuen Menüs, Website-Buttons, Vote-Benachrichtigungen und das Grafikdesign von v0.4.2 sind im GitHub-Code implementiert, aber müssen nach Cloudflare-Deployment noch in Telegram geprüft werden. Alle Änderungen bleiben auf den Ordner `ASTY-Token-Fight/` beschränkt.
 
@@ -392,3 +392,32 @@ v0.8.7 fixes that discrepancy without changing the existing battle video or weak
 - Six mocked scenarios were tested: legacy owner missing, existing correct owner, mismatched owner, non-original group admin, missing original live video, and already-saved winner file. The original MP4's file ID is never updated.
 
 After Cloudflare builds the commit, `/health` should show `0.8.7`. The user should reopen the bot, send `/winner_video`, select Upload Winner Video and submit the same MP4 again. If the owner backfill still cannot be authorized, inspect the original linked ASTY group administrator identity and bot membership/permissions; do not overwrite an existing owner's ID.
+
+## v0.8.8 – Challenge DMs, clear website setup and readable Help
+
+**This section supersedes older user-interface explanations referring to 'official', 'canonical', 'group-specific', 'first-linked' or 'secondary' website configuration. Those terms must no longer be shown in normal website setup. Existing stored URLs and internal anti-hijacking priority remain unchanged.**
+
+### Private challenge invitations
+
+- Challenge creation now queries the **oldest currently linked opponent Telegram group** by `project_groups.registered_at` and calls Telegram `getChatAdministrators` to obtain **current human group admins** only. Challenge DMs are sent only to this group's current admins, not to `registered_by` values from every group linked to a token. Additional test-group registrants will not receive project-owner notifications merely because they linked someone else's mint.
+- The private invitation shows `🥊 NEW TOKEN FIGHT CHALLENGE!`, `⚡ $BRL challenges $ARBX!` or the actual token symbols, `⏳ 24 hours · 50% Votes · 50% Price`, and direct **✅ Accept Challenge / ❌ Decline Challenge** callback buttons. Website buttons for both projects appear if links are available. Existing accepting/declining authorization checks remain unchanged.
+- Bot DMs depend on a current Telegram API admin listing and Telegram private-chat permissions. If getChatAdministrators fails, the bot checks the original registrant's CURRENT Telegram admin status before using them as fallback. If an administrator has not started a private chat with the bot, Telegram may disallow DM delivery. Such failures are logged without cancelling the challenge.
+- There is **no cryptographic verification that a Telegram group belongs to a Solana token project**. Group admin checks are Telegram-level only; linking an arbitrary token for testing does not establish legitimate ownership. After testing, run `/unlink MINT` from the test group to stop that group being associated with the token and receiving its group fight posts.
+
+### Website setup (one simple URL workflow)
+
+- After linking the token via `/link MINT` or the group menu, the confirmation offers `🌐 Set Project Website`. This deep link carries the mint and compact group id (`web_MINT_BASE36CHAT`) and checks that the person clicking is **still an admin of the exact group**, then takes them directly to the website input on first setup; if a website exists it shows the simple project website view.
+- The private Website screen shows `Website: domain` (or Not set) with just `🌐 Set Website` / `✏️ Edit Website`, a website-opening button when available, and normal menu/back controls. No official-vs-secondary distinction, extra admin level explanation or double website selector appears.
+- The same URL from the project's resolved internal website settings is displayed under that project's button in BOTH communities during fights. Existing `project_websites`/`group_websites` data, earliest-linked group priority and authorization restrictions are preserved internally to prevent an unrelated tester from overwriting a project's established URL.
+- Admins can edit later via `Project Websites` privately or the same group menu, including during active fights. If a different URL is already selected, the bot tells the user their submitted link did not replace that existing fight button; it does not misleadingly claim a successful global change.
+
+### Help and formatting
+
+- `/help` overview is split into clearly spaced sections: Getting Started, How to Win, Live Updates, After 24 Hours and Bot Permissions.
+- `How It Works` now has **six numbered, separated sections** with a blank line between each: 1. Connect Your Project; 2. Add Your Website; 3. Start a Challenge; 4. Fight & Vote; 5. Follow the Fight; 6. Winner & X Challenge.
+- `When the Fight Ends` has separate short sections for Final Countdown, Final Score, Winner Announcement and Loser's X Post. The instructions omit the website-database priority model.
+- Previous 30-minute video status updates, 15/10/5-minute reminders, fixed battle/winner videos, cross-community website buttons, scoring and X-post loser challenge are unaffected.
+
+Mocked verification performed: group-admin-only invitation to an opponent's earliest-linked community; test group registrant excluded; direct Accept/Decline buttons; simple ASTY and ARBX website screens; group deep-link within Telegram's size limit; private setup wizard; all Help sections under Telegram's message limit.
+
+Check `/health` for `0.8.8` after deployment.
