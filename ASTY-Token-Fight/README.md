@@ -1,4 +1,4 @@
-# 🥊 ASTY Token Fight – Telegram Bot v0.8.8 (Birdeye)
+# 🥊 ASTY Token Fight – Telegram Bot v0.8.9 (Birdeye)
 
 **Status: private Beta / laufende Tests.** Der Bot wurde in früheren Versionen auf Cloudflare deployed und mit ASTY-vs.-ARBX-Gruppen getestet. Die neuen Menüs, Website-Buttons, Vote-Benachrichtigungen und das Grafikdesign von v0.4.2 sind im GitHub-Code implementiert, aber müssen nach Cloudflare-Deployment noch in Telegram geprüft werden. Alle Änderungen bleiben auf den Ordner `ASTY-Token-Fight/` beschränkt.
 
@@ -421,3 +421,15 @@ After Cloudflare builds the commit, `/health` should show `0.8.7`. The user shou
 Mocked verification performed: group-admin-only invitation to an opponent's earliest-linked community; test group registrant excluded; direct Accept/Decline buttons; simple ASTY and ARBX website screens; group deep-link within Telegram's size limit; private setup wizard; all Help sections under Telegram's message limit.
 
 Check `/health` for `0.8.8` after deployment.
+
+## v0.8.9 – Native Telegram sharing for inviting new project communities
+
+- The creator receives a `📤 Share Challenge` button directly beneath each newly created fight invitation. Unlike the old button that opened only the bot, this uses the native Telegram share endpoint `https://t.me/share/url` with `url` set to the unique `https://t.me/ASTY_TokenFightBot?start=challenge_FIGHT_ID` deep link and `text` set to the prewritten invitation.
+- The share message names the initiating and opposing token symbols dynamically, explains 24-hour duration, 50% votes / 50% price scoring, the loser's X-post challenge, and that a newcomer must add the bot to their project Telegram group and link the token before accepting.
+- Telegram's built-in sharing interface allows the creator to select a recipient or Telegram group and send the message. The link is public to anyone with the invitation but **acceptance is still restricted** in the bot to a verified current administrator of a Telegram group linked to the challenged token.
+- A separate `🔗 Open Challenge` button retains direct opening of the deep link, alongside website buttons for the participating tokens when available. The creator's confirmation message also shows the raw deep link as a manual fallback.
+- Automated invitation DMs to admins of already-registered opponents continue unchanged. Projects not yet using the bot can join using the new share link; no user is contacted by the bot if Telegram has not authorized direct messages.
+- English `/help` How It Works describes sharing a ready-made invitation with projects that have not used the bot before.
+- Tested the generated share URL, unique challenge link across two fights, both token symbols, game rules, X wager, readable line breaks, and new-user onboarding instructions.
+
+After the Cloudflare deployment, `/health` should report `0.8.9`. The tester can create a fight, tap `📤 Share Challenge`, select a Telegram chat and verify the recipient sees the formatted invitation with the working personal fight link.
