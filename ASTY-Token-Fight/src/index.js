@@ -555,12 +555,12 @@ async function projectsScreen(env,chat,user,q=null,forSite=false){
     for(const p of other.results||[]){
       if(seen.has(p.mint))continue;
       seen.add(p.mint);
-      rows.push([{text:`🔒 ${tokenLabel(p.symbol)} (admin required)`,callback_data:`site:open:${p.mint}`}]);
+      rows.push([{text:`👁️ ${tokenLabel(p.symbol)} (view only)`,callback_data:`site:open:${p.mint}`}]);
     }
   }
   rows.push([{text:forSite?'🥊 New Fight':'🌐 Manage Websites',callback_data:forSite?'menu:new':'menu:sites'}]);
   rows.push([{text:'🏠 Main Menu',callback_data:'menu:home'}]);
-  return screen(env,chat,forSite?'🌐 <b>PROJECT WEBSITES</b>\n\nChoose a project. Group admins may edit their own group website; only original-group admins may change the official link.':'🪙 <b>MY PROJECTS</b>\n\nSelect a project to view its website or start a challenge.',keyboard(rows),q);
+  return screen(env,chat,forSite?'🌐 <b>PROJECT WEBSITES</b>\n\nSelect a token to set or update its website. The same project website button is shown in both fight groups.':'🪙 <b>MY PROJECTS</b>\n\nSelect a project to view its website or start a challenge.',keyboard(rows),q);
 }
 
 async function projectScreen(env,chat,user,mint,q=null){
@@ -606,32 +606,45 @@ async function canManageWebsite(env,mint,user){
   return !!earliest&&await tgAdmin(env,earliest.chat_id,user);
 }
 
+async function websiteEdit(env,chat,user,mint,q=null){
+  if(!mintOk(mint))return say(env,chat,'Invalid token address.');
+  const group=await groupForAdmin(env,mint,user);
+  if(!group)return say(env,chat,'Only an administrator of a linked Telegram group can change this project website.');
+  // Keep internal project ownership protections while presenting ONE website editor.
+  if(await canManageWebsite(env,mint,user))return websiteStart(env,chat,user,mint,q);
+  return websiteGroupStart(env,chat,user,mint,group.chat_id,q);
+}
+
+async function websiteSetupFromGroup(env,chat,user,mint,groupId){
+  const g=await groupAdminForWebsite(env,mint,groupId,user);
+  if(!g)return say(env,chat,'Only an administrator of this linked group can set its token website.');
+  const p=await env.DB.prepare('SELECT website_url FROM project_websites WHERE mint=?').bind(mint).first();
+  const current=await websiteViewForChat(env,{
+    mint_a:mint,mint_b:mint,website_a:p?.website_url||null,website_b:p?.website_url||null
+  },groupId);
+  if(current.website_a)return websiteInfo(env,chat,user,mint);
+  if(await canManageWebsite(env,mint,user))return websiteStart(env,chat,user,mint);
+  return websiteGroupStart(env,chat,user,mint,groupId);
+}
+
 async function websiteInfo(env,chat,user,mint,q=null){
-  if(!mintOk(mint))return say(env,chat,'Invalid project mint.');
-  const p=await env.DB.prepare(`SELECT p.mint,p.symbol,p.name,w.website_url FROM projects p LEFT JOIN project_websites w ON w.mint=p.mint WHERE p.mint=?`).bind(mint).first();
+  if(!mintOk(mint))return say(env,chat,'Invalid token address.');
+  const p=await env.DB.prepare(`SELECT p.mint,p.symbol,p.name,w.website_url FROM projects p
+    LEFT JOIN project_websites w ON w.mint=p.mint WHERE p.mint=?`).bind(mint).first();
   if(!p)return say(env,chat,'Project not found.');
-  const groups=(await env.DB.prepare('SELECT chat_id,chat_title FROM project_groups WHERE mint=? ORDER BY registered_at ASC,chat_id ASC LIMIT 30').bind(mint).all()).results||[];
-  const checks=await Promise.all(groups.map(g=>tgAdmin(env,g.chat_id,user)));
-  const mine=groups.filter((_,i)=>checks[i]);
-  const original=groups.length>0&&checks[0];
-  const rows=[];
-  if(original){
-    rows.push([{text:p.website_url?'✏️ Edit Official Website':'🌐 Add Official Website',callback_data:`site:set:${mint}`}]);
-    if(p.website_url)rows.push([{text:'🗑 Remove Official Website',callback_data:`site:remove:${mint}`}]);
-  }
-  for(const g of mine.slice(0,12))rows.push([{text:`🌐 Manage link via ${String(g.chat_title||'My Group').slice(0,26)}`,callback_data:`sg:${mint}:${compactGroupChat(g.chat_id)}`}]);
-  if(p.website_url)rows.push([{text:'🌐 Open Official Website',url:p.website_url}]);
-  rows.push([{text:'↩️ Project Websites',callback_data:'menu:sites'},{text:'🏠 Menu',callback_data:'menu:home'}]);
-  const resolved=await websiteViewForChat(env,{
+  const f=await websiteViewForChat(env,{
     mint_a:mint,mint_b:mint,website_a:p.website_url||null,website_b:p.website_url||null
   },null);
-  const activeUrl=resolved.website_a;
-  const site=activeUrl?`<a href="${html(activeUrl)}">${html(projectWebsiteDisplay(activeUrl))}</a>`:'Not set';
-  const origin=p.website_url?'Official project link':activeUrl?'Submitted by a linked group':'No website submitted';
-  const explain=!mine.length?'🔒 Only linked-group administrators can manage website submissions. The bot should also be a group admin.'
-    :original?'✅ You can manage both official and community-submitted project links.'
-    :'✅ A submitted website is shown in both fight communities when no official project link exists.';
-  return screen(env,chat,`🌐 <b>${html(tokenLabel(p.symbol))} WEBSITE</b>\n\n🔗 Website in both fights: ${site}\nSource: ${origin}\n\n${explain}\n\nSelect a website to manage:`,keyboard(rows),q);
+  const url=f.website_a;
+  const canEdit=!!(await groupForAdmin(env,mint,user));
+  const buttons=[];
+  if(canEdit)buttons.push([{text:url?'✏️ Edit Website':'🌐 Set Website',callback_data:`site:edit:${mint}`}]);
+  if(url)buttons.push([{text:'🌐 Open Website',url}]);
+  buttons.push([{text:'↩️ Project Websites',callback_data:'menu:sites'},{text:'🏠 Menu',callback_data:'menu:home'}]);
+  const site=url?`<a href="${html(url)}">${html(projectWebsiteDisplay(url))}</a>`:'Not set';
+  const note=canEdit?'Set your website once. You can change it later at any time. The same project website button appears in both fight groups.':
+    'Only an administrator of a group linked to this token can edit the website.';
+  return screen(env,chat,`🌐 <b>${html(tokenLabel(p.symbol))} WEBSITE</b>\n\nWebsite: ${site}\n\n${note}`,keyboard(buttons),q);
 }
 
 async function websiteGroupInfo(env,chat,user,mint,groupId,q=null){
@@ -817,11 +830,11 @@ async function groupCallback(env,q){
     if(!await tgAdmin(env,chat,user))return say(env,chat,'Only group administrators can manage project websites. The bot should also be an administrator.');
     const linked=await env.DB.prepare(`SELECT pg.mint,p.symbol FROM project_groups pg
       JOIN projects p ON p.mint=pg.mint WHERE pg.chat_id=? ORDER BY pg.registered_at DESC LIMIT 20`).bind(String(chat)).all();
-    const rows=(linked.results||[]).map(p=>[{text:`🌐 Manage ${tokenLabel(p.symbol)} Website`,
-      url:`https://t.me/${env.BOT_USERNAME.replace('@','')}?start=website_${p.mint}`}]);
+    const rows=(linked.results||[]).map(p=>[{text:`🌐 Set / Edit ${tokenLabel(p.symbol)} Website`,
+      url:`https://t.me/${env.BOT_USERNAME.replace('@','')}?start=web_${p.mint}_${compactGroupChat(chat)}`}]);
     rows.push([{text:'↩️ Group Menu',callback_data:'menu:group'}]);
     return screen(env,chat,linked.results?.length?
-      '🌐 <b>PROJECT WEBSITES</b>\n\nSelect a project to submit a website. When no official project URL exists, the submitted link appears in both fight communities.':
+      '🌐 <b>PROJECT WEBSITES</b>\n\nSelect your token to set or update its website. Both fight groups will see the project website button.':
       'No project tokens linked to this group.',keyboard(rows),q);
   }
   if(cmd==='group:unlink'){
@@ -921,6 +934,7 @@ async function menuCallback(env,q){
   if(cmd==='menu:history')return fightScreen(env,chat,user,true,q);
   if(cmd.startsWith('project:view:'))return projectScreen(env,chat,user,cmd.slice(13),q);
   if(cmd.startsWith('site:open:'))return websiteInfo(env,chat,user,cmd.slice(10),q);
+  if(cmd.startsWith('site:edit:'))return websiteEdit(env,chat,user,cmd.slice(10),q);
   for(const prefix of ['sg:','swg:','srm:','sdel:']){
     if(cmd.startsWith(prefix)){
       const segments=cmd.slice(prefix.length).split(':');
@@ -934,7 +948,7 @@ async function menuCallback(env,q){
   }
 
   if(cmd.startsWith('site:info:'))return websiteInfo(env,chat,user,cmd.slice(10),q);
-  if(cmd.startsWith('site:set:'))return websiteStart(env,chat,user,cmd.slice(9),q);
+  if(cmd.startsWith('site:set:'))return websiteEdit(env,chat,user,cmd.slice(9),q);
   if(cmd.startsWith('logo:set:'))return beginLogoUpload(env,chat,user,cmd.slice(9),q);
   if(cmd.startsWith('logo:auto:'))return findLogoAutomatically(env,chat,user,cmd.slice(10),q);
   if(cmd.startsWith('site:remove:'))return confirmWebsiteRemove(env,chat,user,cmd.slice(12),q);
@@ -1355,6 +1369,13 @@ async function onUpdate(env,u){
   if(cmd==='/start'){
     if(args[0]?.startsWith('challenge_'))return challengeView(env,chat,args[0].slice(10));
     if(args[0]?.startsWith('website_'))return websiteInfo(env,chat,msg.from.id,args[0].slice(8));
+    if(args[0]?.startsWith('web_')){
+      const params=args[0].slice(4).split('_');
+      const groupId=params.length===2?restoreGroupChat(params[1]):null;
+      return groupId&&mintOk(params[0])
+        ?websiteSetupFromGroup(env,chat,msg.from.id,params[0],groupId)
+        :say(env,chat,'Invalid website setup link. Please reopen the project group menu.');
+    }
     if(args[0]?.startsWith('logo_'))return beginLogoUpload(env,chat,msg.from.id,args[0].slice(5));
     if(args[0]==='winner_video')return winnerVideoScreen(env,chat,msg.from.id);
     return menuHome(env,chat);
