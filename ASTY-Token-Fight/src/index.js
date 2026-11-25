@@ -720,7 +720,7 @@ async function websiteGroupSave(env,chat,user,mint,groupId,raw){
 async function websiteGroupRemove(env,chat,user,mint,groupId,confirmed=false,q=null){
   const g=await groupAdminForWebsite(env,mint,groupId,user);
   if(!g)return say(env,chat,'Only an admin of this linked Telegram group may remove its website.');
-  if(!confirmed)return screen(env,chat,`🗑 <b>REMOVE GROUP WEBSITE?</b>\n\nRemove the website you saved for this token? If another link is available, the fight button will use that link.`,keyboard([[{text:'✅ Remove',callback_data:`sdel:${mint}:${compactGroupChat(groupId)}`}],[{text:'↩️ Keep',callback_data:`sg:${mint}:${compactGroupChat(groupId)}`}]]),q);
+  if(!confirmed)return screen(env,chat,`🗑 <b>REMOVE WEBSITE?</b>\n\nRemove the website you saved for this token? If another link is available, the fight button will use that link.`,keyboard([[{text:'✅ Remove',callback_data:`sdel:${mint}:${compactGroupChat(groupId)}`}],[{text:'↩️ Keep',callback_data:`sg:${mint}:${compactGroupChat(groupId)}`}]]),q);
   await env.DB.prepare('DELETE FROM group_websites WHERE mint=? AND chat_id=?').bind(mint,String(groupId)).run();
   await refreshActiveWebsiteButtons(env,mint);
   return websiteInfo(env,chat,user,mint,q);
@@ -892,7 +892,7 @@ async function confirmWebsiteRemove(env,chat,user,mint,q){
 }
 
 async function beginLogoUpload(env,chat,user,mint,q=null){
-  if(!mintOk(mint)||!(await canManageWebsite(env,mint,user)))return say(env,chat,'Only admins of the first linked project group can manage this logo.');
+  if(!mintOk(mint)||!(await canManageWebsite(env,mint,user)))return say(env,chat,'Only an authorized project admin can manage this logo.');
   await env.DB.prepare("INSERT INTO draft_state(user_id,step,own_mint,updated_at) VALUES(?,'logo',?,?) ON CONFLICT(user_id) DO UPDATE SET step='logo',own_mint=excluded.own_mint,updated_at=excluded.updated_at").bind(String(user),mint,now()).run();
   const p=await env.DB.prepare('SELECT symbol FROM projects WHERE mint=?').bind(mint).first();
   return screen(env,chat,`🖼️ <b>UPLOAD LOGO FOR ${html(tokenLabel(p?.symbol||'TOKEN'))}</b>\n\nSend your official logo as a Telegram photo in this private chat.\n\nPNG/JPEG, under 440 KB. Telegram compresses photo uploads automatically.\n\nOnce saved, the logo is reused in every future fight.`,keyboard([[{text:'↩️ My Projects',callback_data:'menu:projects'}],[{text:'🏠 Main Menu',callback_data:'menu:home'}]]),q);
@@ -915,7 +915,7 @@ async function receiveLogoPhoto(env,msg){
     await env.DB.prepare('DELETE FROM draft_state WHERE user_id=?').bind(String(user)).run();
     return say(env,chat,'Logo upload expired. Please choose Upload Logo again.');
   }
-  if(!(await canManageWebsite(env,draft.own_mint,user)))return say(env,chat,'Only admins of the first linked group can upload this logo.');
+  if(!(await canManageWebsite(env,draft.own_mint,user)))return say(env,chat,'Only an authorized project admin can upload this logo.');
   const sizes=[...msg.photo].filter(p=>p?.file_id&&Number(p.file_size||0)<=440000).sort((a,b)=>Number(b.width||0)*Number(b.height||0)-Number(a.width||0)*Number(a.height||0));
   if(!sizes.length)return say(env,chat,'Please send a smaller logo photo (under 440 KB).');
   try{
