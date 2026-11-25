@@ -445,7 +445,7 @@ async function helpSection(env,chat,section,q=null,isGroup=false){
         '⚔️ <b>3. START A CHALLENGE</b>',
         'Open the private bot chat and tap New Fight.',
         'Choose your token and the project you want to challenge.',
-        'Current admins of the opponent’s original linked Telegram group receive a private challenge with Accept and Decline buttons.',
+        'The opposing project’s registered group administrators receive a private challenge with Accept and Decline buttons.',
         '',
         '🗳️ <b>4. FIGHT & VOTE</b>',
         'The accepted fight lasts 24 hours.',
@@ -670,7 +670,7 @@ async function websiteInfo(env,chat,user,mint,q=null){
   if(url)buttons.push([{text:'🌐 Open Website',url}]);
   buttons.push([{text:'↩️ Project Websites',callback_data:'menu:sites'},{text:'🏠 Menu',callback_data:'menu:home'}]);
   const site=url?`<a href="${html(url)}">${html(projectWebsiteDisplay(url))}</a>`:'Not set';
-  const note=canEdit?'Set your website once. You can change it later at any time. The same project website button appears in both fight groups.':
+  const note=canEdit?'Add your project website once. You can update it whenever needed. The website button is shown in both fight groups.':
     'Only an administrator of a group linked to this token can edit the website.';
   return screen(env,chat,`🌐 <b>${html(tokenLabel(p.symbol))} WEBSITE</b>\n\nWebsite: ${site}\n\n${note}`,keyboard(buttons),q);
 }
@@ -712,7 +712,7 @@ async function websiteGroupSave(env,chat,user,mint,groupId,raw){
   },groupId);
   const notice=selected.website_a===url
     ?'The website button is now available in both fight groups.'
-    :'This token already uses another website link. Your saved URL has not replaced the existing fight button.';
+    :'This token already has a website. Your submitted address was saved, but the existing fight button remains unchanged.';
   await say(env,chat,`✅ Website saved: ${html(projectWebsiteDisplay(url))}\n\n${notice}`);
   return websiteInfo(env,chat,user,mint);
 }
