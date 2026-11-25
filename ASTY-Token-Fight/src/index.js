@@ -376,27 +376,32 @@ async function helpScreen(env,chat,q=null,isGroup=false){
   const help=[
     '❓ <b>ASTY TOKEN FIGHT — HELP</b>',
     '',
-    '🥊 <b>24-hour Solana token battles</b>',
-    'One Telegram account = one vote per fight, even across both groups.',
+    '🥊 <b>TWO PROJECTS. ONE 24-HOUR FIGHT.</b>',
+    'Each community votes for its token while both token prices are tracked.',
     '',
-    '⚖️ <b>FINAL SCORE</b>',
-    '50% community votes + 50% price performance.',
-    'In the price category, every 0.1 percentage-point lead in 24h token return earns 1 point (maximum 100).',
+    '🔗 <b>GETTING STARTED</b>',
+    'Add the bot to your Telegram project group, link the Solana token and set its website once.',
+    'The website can be changed later and is shown to both communities.',
     '',
-    '⏱️ Live stats are posted every 30 minutes. Both groups get extra reminders 15, 10 and 5 minutes before the fight ends.',
+    '⚖️ <b>HOW TO WIN</b>',
+    '50% community votes + 50% token price performance.',
+    'Each Telegram user gets one vote per fight.',
     '',
-    '🏆 At the end, both groups receive a winner announcement, and the result appears in the Hall of Fame.',
-    '📣 The losing project must post about the winning project on X and include the Telegram bot link: https://t.me/ASTY_TokenFightBot. No post is required for a draw or unresolved result.',
+    '⏱️ <b>LIVE UPDATES</b>',
+    'New battle posts every 30 minutes, plus reminders 15, 10 and 5 minutes before the finish.',
     '',
-    'Project websites appear as optional buttons below battle posts.',
+    '🏆 <b>AFTER 24 HOURS</b>',
+    'Both communities receive the result and winner video when a winner is declared.',
+    'The losing project creates an X post about the winner and includes https://t.me/ASTY_TokenFightBot.',
     '',
-    '🔐 <b>GROUP PERMISSIONS</b>',
-    'For reliable group-admin verification, make the bot an administrator in both project groups and allow it to post text messages and videos.',
+    '🔐 <b>BOT PERMISSIONS</b>',
+    'Make the bot an administrator in both groups for reliable admin verification and allow it to send messages and videos.',
     '',
-    'Select a topic below to see the details.'
+    'Choose a topic below for more details.'
   ];
   return screen(env,chat,help.join('\n'),helpKeyboard(isGroup),q);
 }
+
 async function helpSection(env,chat,section,q=null,isGroup=false){
   let lines;
   switch(section){
@@ -428,16 +433,34 @@ async function helpSection(env,chat,section,q=null,isGroup=false){
       lines=[
         '🥊 <b>HOW ASTY TOKEN FIGHT WORKS</b>',
         '',
-        '1. Add the bot to both project groups. For reliable admin checks, promote it to administrator and allow text/video posts. A group admin then links its token once.',
-        '2. Group admins can submit a website. If no official link exists, the submitted URL appears in both fight communities. Admins of the original project group may set an official project-wide URL that takes priority.',
-        '3. In the private bot chat, select New Fight → your registered project → an opponent.',
-        '4. The opposing project admin accepts the challenge.',
-        '5. A 24-hour fight starts in both groups.',
-        '6. Vote using the buttons. Each Telegram account has one vote per fight, no matter which group.',
-        '7. A new message with the current votes, price change, scores and countdown is posted approximately every 30 minutes. Every successful new vote also triggers a short group message.',
-        '8. Both groups receive extra reminders with voting buttons at 15, 10 and 5 minutes remaining.',
-        '9. When 24 hours end, both groups get a winner or draw notification.',
-        '10. The losing project must publish an X post about the winning project, including https://t.me/ASTY_TokenFightBot. The results contain an X-post draft button. Draws and unresolved fights have no posting obligation.'
+        '🔗 <b>1. CONNECT YOUR PROJECT</b>',
+        'Add @ASTY_TokenFightBot to your Telegram group and make it a group administrator.',
+        'A group admin uses /start → Link Project Token and enters the Solana mint address.',
+        '',
+        '🌐 <b>2. ADD YOUR WEBSITE</b>',
+        'Tap Set Project Website after linking the token.',
+        'Enter your HTTPS website once. You can change it later using Project Websites in the bot.',
+        'Both fighting communities get a website button for each participating project.',
+        '',
+        '⚔️ <b>3. START A CHALLENGE</b>',
+        'Open the private bot chat and tap New Fight.',
+        'Choose your token and the project you want to challenge.',
+        'Current admins of the opponent’s original linked Telegram group receive a private challenge with Accept and Decline buttons.',
+        '',
+        '🗳️ <b>4. FIGHT & VOTE</b>',
+        'The accepted fight lasts 24 hours.',
+        'Both communities can vote, but each Telegram account has only ONE vote per fight.',
+        'The final score consists of 50% community votes and 50% token price performance.',
+        '',
+        '⏱️ <b>5. FOLLOW THE FIGHT</b>',
+        'New battle video updates arrive every 30 minutes in both groups.',
+        'Each valid new vote triggers a short alert in both groups.',
+        'Extra reminders with voting buttons appear 15, 10 and 5 minutes before the end.',
+        '',
+        '🏆 <b>6. WINNER & X CHALLENGE</b>',
+        'After 24 hours, both groups receive the final result, including the separate winner video if configured.',
+        'The losing project must publish an X post about the winner and include https://t.me/ASTY_TokenFightBot.',
+        'A button opens a ready-to-edit X post. No post is required for a draw or an unresolved fight.'
       ];break;
     case 'rules':
       lines=[
@@ -465,21 +488,26 @@ async function helpSection(env,chat,section,q=null,isGroup=false){
       lines=[
         '🏆 <b>WHEN THE FIGHT ENDS</b>',
         '',
-        'Before the end, both groups receive separate reminders at 15, 10 and 5 minutes remaining, each with voting buttons.',
+        '⏰ <b>FINAL COUNTDOWN</b>',
+        'Both groups receive voting reminders with 15, 10 and 5 minutes remaining.',
         '',
-        'After 24 hours, the bot checks the final votes and both token prices.',
-        'The final 50:50 score determines the winner. Exactly equal final scores result in a draw.',
+        '⚖️ <b>FINAL SCORE</b>',
+        'At the 24-hour mark, the bot reads the final votes and token prices.',
+        '50% community votes + 50% price performance determine the result. An exactly equal score is a draw.',
         '',
-        '📣 Both groups receive a <b>new winner-video announcement</b> (after the separate winner video is configured) showing the votes, price change, final score and winning token. Draws and unresolved fights receive a text result.',
-        'The latest battle message is updated and voting closes. The result is saved in the Hall of Fame. Both tokens are released for rematches.',
+        '🎬 <b>WINNER ANNOUNCEMENT</b>',
+        'Both groups receive the final score and winning project.',
+        'If the separate winner video is configured, it appears with the winner announcement.',
+        'The Hall of Fame stores the result, and both tokens become available for a rematch.',
         '',
-        '📣 <b>Loser’s X-post challenge:</b> The losing project must publish an X post about the winning project and include https://t.me/ASTY_TokenFightBot.',
-        'The final result explicitly names the loser and winner. A Create Loser’s X Post button opens an editable X draft with the winner, optional winner website and our Telegram bot link.',
-        'No X post is required after a draw, an unresolved outcome or a fight stopped early. The bot announces the rule but cannot automatically publish or verify X posts.',
+        '📣 <b>LOSER’S X POST</b>',
+        'The losing project must publish an X post about the winner and include https://t.me/ASTY_TokenFightBot.',
+        'The Create Loser’s X Post button opens an editable draft with the winning project and bot link.',
         '',
-        'If valid final prices cannot be retrieved, the bot retries briefly (up to about 3 minutes). If the data is still missing, the fight closes without a declared winner rather than inventing a result.',
+        'A draw, cancelled fight or unresolved result has no X-post obligation.',
+        'The bot cannot publish or verify X posts automatically.',
         '',
-        'A fight stopped early by its creator does not receive a winner.'
+        'If final price data is missing, the bot retries briefly. If still unavailable, it closes the fight without inventing a winner.'
       ];break;
     case 'commands':
       lines=[
@@ -1565,7 +1593,7 @@ export default {
           if(row.key==='winner_video_file_id')winnerVideoConfigured=!!row.value;
         }
       }catch(e){console.error('health database query',errString(e));}
-      return Response.json({status:'ok',app:'ASTY Token Fight',version:'0.8.7',
+      return Response.json({status:'ok',app:'ASTY Token Fight',version:'0.8.8',
         cron_last_started:started,cron_last_completed:completed,video_configured:videoConfigured,
         winner_video_configured:winnerVideoConfigured});
     }
