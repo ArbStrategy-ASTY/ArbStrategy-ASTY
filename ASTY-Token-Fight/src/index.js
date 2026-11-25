@@ -567,14 +567,14 @@ async function projectScreen(env,chat,user,mint,q=null){
   if(!mintOk(mint)||!(await groupForAdmin(env,mint,user)))return screen(env,chat,'This project is not linked to a group you currently administer.',keyboard([[{text:'🪙 My Projects',callback_data:'menu:projects'}]]),q);
   const p=await env.DB.prepare(`SELECT p.*,w.website_url FROM projects p LEFT JOIN project_websites w ON w.mint=p.mint WHERE p.mint=?`).bind(mint).first();
   if(!p)return say(env,chat,'Project not found.');
-  const web=p.website_url ? `🌐 Official website: <a href="${html(p.website_url)}">${html(projectWebsiteDisplay(p.website_url))}</a>`:'🌐 Official website: Not set';
+  const shared=await websiteViewForChat(env,{mint_a:mint,mint_b:mint,website_a:p.website_url||null,website_b:p.website_url||null},null);
+  const url=shared.website_a;
+  const web=url ? `🌐 Website: <a href="${html(url)}">${html(projectWebsiteDisplay(url))}</a>`:'🌐 Website: Not set';
   const rows=[
     [{text:`🥊 Challenge as ${tokenLabel(p.symbol)}`,callback_data:`new:own:${mint}`}],
   ];
-  const websiteAdmin=await canManageWebsite(env,mint,user);
-  rows.push([{text:'🌐 Manage Websites',callback_data:`site:info:${mint}`}]);
-  if(p.website_url&&websiteAdmin)rows.push([{text:'🗑 Remove Website',callback_data:`site:remove:${mint}`}]);
-  if(p.website_url)rows.push([{text:`🌐 Visit ${tokenLabel(p.symbol)}`,url:p.website_url}]);
+  rows.push([{text:url?'✏️ Edit Website':'🌐 Set Website',callback_data:`site:info:${mint}`}]);
+  if(url)rows.push([{text:`🌐 Visit ${tokenLabel(p.symbol)}`,url}]);
   rows.push([{text:'🪙 My Projects',callback_data:'menu:projects'},{text:'🏠 Menu',callback_data:'menu:home'}]);
   return screen(env,chat,`🪙 <b>${html(tokenLabel(p.symbol))}</b>\n${html(p.name)}\n\n${web}`,keyboard(rows),q);
 }
@@ -653,13 +653,13 @@ async function websiteGroupInfo(env,chat,user,mint,groupId,q=null){
   const p=await env.DB.prepare('SELECT symbol FROM projects WHERE mint=?').bind(mint).first();
   const record=await env.DB.prepare('SELECT website_url FROM group_websites WHERE mint=? AND chat_id=?').bind(mint,String(groupId)).first();
   const url=record?.website_url,scope=compactGroupChat(groupId);
-  const rows=[[{text:url?'✏️ Edit Group Website':'🌐 Set Group Website',callback_data:`swg:${mint}:${scope}`}]];
+  const rows=[[{text:url?'✏️ Edit Website':'🌐 Set Website',callback_data:`swg:${mint}:${scope}`}]];
   if(url){
-    rows.push([{text:'🗑 Remove Group Website',callback_data:`srm:${mint}:${scope}`}]);
+    rows.push([{text:'🗑 Remove Website',callback_data:`srm:${mint}:${scope}`}]);
     rows.push([{text:'🌐 Visit Website',url}]);
   }
   rows.push([{text:'↩️ Websites',callback_data:`site:open:${mint}`}],[{text:'🏠 Menu',callback_data:'menu:home'}]);
-  return screen(env,chat,`🌐 <b>${html(tokenLabel(p?.symbol||'TOKEN'))} WEBSITE</b>\n\nSubmitted via: ${html(g.chat_title||'Telegram Group')}\nWebsite: ${url?`<a href="${html(url)}">${html(projectWebsiteDisplay(url))}</a>`:'Not set'}\n\nThe link can appear in both fight groups. An official project website, if available, takes priority. You can edit it during a live fight.`,keyboard(rows),q);
+  return screen(env,chat,`🌐 <b>${html(tokenLabel(p?.symbol||'TOKEN'))} WEBSITE</b>\n\nGroup: ${html(g.chat_title||'Telegram Group')}\nWebsite: ${url?`<a href="${html(url)}">${html(projectWebsiteDisplay(url))}</a>`:'Not set'}\n\nYou can change this website whenever needed. It is used for the project button in fights, unless a different link has already been selected for this token.`,keyboard(rows),q);
 }
 
 async function websiteGroupStart(env,chat,user,mint,groupId,q=null){
@@ -667,7 +667,7 @@ async function websiteGroupStart(env,chat,user,mint,groupId,q=null){
   if(!g)return say(env,chat,'Only an admin of this linked Telegram group may set its website.');
   await env.DB.prepare("INSERT INTO draft_state(user_id,step,own_mint,updated_at) VALUES(?,'website_group',?,?) ON CONFLICT(user_id) DO UPDATE SET step='website_group',own_mint=excluded.own_mint,updated_at=excluded.updated_at").bind(String(user),`${mint}|${groupId}`,now()).run();
   const p=await env.DB.prepare('SELECT symbol FROM projects WHERE mint=?').bind(mint).first();
-  return screen(env,chat,`🌐 <b>SET WEBSITE FOR ${html(tokenLabel(p?.symbol||'TOKEN'))}</b>\n\nGroup: ${html(g.chat_title||'Telegram Group')}\n\nSend the HTTPS website URL as your next message in this private chat.\n\nWhen no official project-wide website exists, this link can appear in both fight groups.`,keyboard([[{text:'↩️ Back',callback_data:`sg:${mint}:${compactGroupChat(groupId)}`}],[{text:'🏠 Menu',callback_data:'menu:home'}]]),q);
+  return screen(env,chat,`🌐 <b>SET WEBSITE FOR ${html(tokenLabel(p?.symbol||'TOKEN'))}</b>\n\nSend the HTTPS website URL as your next message in this private chat.\n\nYou can change it later. The project website button will appear in both fight groups.`,keyboard([[{text:'↩️ Back',callback_data:`sg:${mint}:${compactGroupChat(groupId)}`}],[{text:'🏠 Menu',callback_data:'menu:home'}]]),q);
 }
 
 async function websiteGroupSave(env,chat,user,mint,groupId,raw){
@@ -682,29 +682,27 @@ async function websiteGroupSave(env,chat,user,mint,groupId,raw){
   const selected=await websiteViewForChat(env,{
     mint_a:mint,mint_b:mint,website_a:official?.website_url||null,website_b:official?.website_url||null
   },groupId);
-  const notice=official?.website_url
-    ?'An official link is set, so it takes priority in both fight groups.'
-    :selected.website_a===url
-      ?'This website is now available under the project website button in BOTH fight groups.'
-      :'Website saved. Another linked group provided an earlier link, which remains the current fallback in both fight groups.';
+  const notice=selected.website_a===url
+    ?'The website button is now available in both fight groups.'
+    :'This token already uses another website link. Your saved URL has not replaced the existing fight button.';
   await say(env,chat,`✅ Website saved: ${html(projectWebsiteDisplay(url))}\n\n${notice}`);
-  return websiteGroupInfo(env,chat,user,mint,groupId);
+  return websiteInfo(env,chat,user,mint);
 }
 
 async function websiteGroupRemove(env,chat,user,mint,groupId,confirmed=false,q=null){
   const g=await groupAdminForWebsite(env,mint,groupId,user);
   if(!g)return say(env,chat,'Only an admin of this linked Telegram group may remove its website.');
-  if(!confirmed)return screen(env,chat,`🗑 <b>REMOVE GROUP WEBSITE?</b>\n\nRemove the local website for ${html(g.chat_title||'this group')}? The official link will not change.`,keyboard([[{text:'✅ Remove',callback_data:`sdel:${mint}:${compactGroupChat(groupId)}`}],[{text:'↩️ Keep',callback_data:`sg:${mint}:${compactGroupChat(groupId)}`}]]),q);
+  if(!confirmed)return screen(env,chat,`🗑 <b>REMOVE GROUP WEBSITE?</b>\n\nRemove the website you saved for this token? If another link is available, the fight button will use that link.`,keyboard([[{text:'✅ Remove',callback_data:`sdel:${mint}:${compactGroupChat(groupId)}`}],[{text:'↩️ Keep',callback_data:`sg:${mint}:${compactGroupChat(groupId)}`}]]),q);
   await env.DB.prepare('DELETE FROM group_websites WHERE mint=? AND chat_id=?').bind(mint,String(groupId)).run();
   await refreshActiveWebsiteButtons(env,mint);
-  return websiteGroupInfo(env,chat,user,mint,groupId,q);
+  return websiteInfo(env,chat,user,mint,q);
 }
 
 async function websiteStart(env,chat,user,mint,q=null){
-  if(!mintOk(mint)||!(await canManageWebsite(env,mint,user)))return screen(env,chat,'Only a current admin of the first group linked to this token may edit its website. The bot should also be a group admin for reliable verification. Active fights do not block website changes.',keyboard([[{text:'🪙 My Projects',callback_data:'menu:projects'}]]),q);
+  if(!mintOk(mint)||!(await canManageWebsite(env,mint,user)))return screen(env,chat,'Only an authorized project-group administrator may edit this website. Make sure the bot is also a group administrator.',keyboard([[{text:'🪙 My Projects',callback_data:'menu:projects'}]]),q);
   await env.DB.prepare(`INSERT INTO draft_state(user_id,step,own_mint,updated_at) VALUES(?,'website',?,?) ON CONFLICT(user_id) DO UPDATE SET step='website',own_mint=excluded.own_mint,updated_at=excluded.updated_at`).bind(String(user),mint,now()).run();
   const p=await env.DB.prepare('SELECT symbol FROM projects WHERE mint=?').bind(mint).first();
-  return screen(env,chat,`🌐 <b>SET WEBSITE FOR ${html(tokenLabel(p?.symbol||'TOKEN'))}</b>\n\nPaste your project's HTTPS website address (for example: https://arbstrategy.net).\n\nThis is the only information you need to enter manually. You can change it later.`,keyboard([[{text:'↩️ My Projects',callback_data:'menu:sites'}],[{text:'🏠 Main Menu',callback_data:'menu:home'}]]),q);
+  return screen(env,chat,`🌐 <b>SET WEBSITE FOR ${html(tokenLabel(p?.symbol||'TOKEN'))}</b>\n\nSend your project's HTTPS website URL (for example https://arbstrategy.net) as your next message.\n\nYou only need to do this once and can update it whenever needed.`,keyboard([[{text:'↩️ My Projects',callback_data:'menu:sites'}],[{text:'🏠 Main Menu',callback_data:'menu:home'}]]),q);
 }
 
 async function refreshActiveWebsiteButtons(env,mint,onlyChatId=null){
@@ -729,21 +727,21 @@ async function refreshActiveWebsiteButtons(env,mint,onlyChatId=null){
 }
 
 async function websiteSave(env,chat,user,mint,raw){
-  if(!mintOk(mint)||!(await canManageWebsite(env,mint,user)))return say(env,chat,'Only a current admin of the first group linked to this token can save its website. Check your group admin rights and whether the bot is also a group admin.');
+  if(!mintOk(mint)||!(await canManageWebsite(env,mint,user)))return say(env,chat,'Only an authorized project-group administrator may change this website.');
   const website_url=normalizeProjectWebsite(raw);
   if(!website_url)return say(env,chat,'⚠️ Please paste a valid HTTPS website URL, such as https://arbstrategy.net. Public domain names only, maximum 160 characters.');
   await env.DB.prepare(`INSERT INTO project_websites(mint,website_url,updated_by,updated_at) VALUES(?,?,?,?) ON CONFLICT(mint) DO UPDATE SET website_url=excluded.website_url,updated_by=excluded.updated_by,updated_at=excluded.updated_at`).bind(mint,website_url,String(user),now()).run();
   await env.DB.prepare('DELETE FROM draft_state WHERE user_id=?').bind(String(user)).run();
   await refreshActiveWebsiteButtons(env,mint);
-  await say(env,chat,'✅ Website saved! The latest fight posts have been updated where possible; future battle posts will automatically include the link.');
-  return projectScreen(env,chat,user,mint);
+  await say(env,chat,'✅ Website saved!\n\nThe website button is available in both fight groups. You can update it later.');
+  return websiteInfo(env,chat,user,mint);
 }
 
 async function websiteRemove(env,chat,user,mint,q=null){
-  if(!mintOk(mint)||!(await canManageWebsite(env,mint,user)))return say(env,chat,'Only a current admin of the first linked project group may remove its website. Active fights do not restrict this.');
+  if(!mintOk(mint)||!(await canManageWebsite(env,mint,user)))return say(env,chat,'Only an authorized project-group administrator may remove this website.');
   await env.DB.prepare('DELETE FROM project_websites WHERE mint=?').bind(mint).run();
   await refreshActiveWebsiteButtons(env,mint);
-  return projectScreen(env,chat,user,mint,q);
+  return websiteInfo(env,chat,user,mint,q);
 }
 
 async function fightScreen(env,chat,user,history=false,q=null){
@@ -861,7 +859,7 @@ async function groupCallback(env,q){
 }
 
 async function confirmWebsiteRemove(env,chat,user,mint,q){
-  if(!mintOk(mint)||!(await canManageWebsite(env,mint,user)))return say(env,chat,'Only admins of the first linked project group can change the website.');
+  if(!mintOk(mint)||!(await canManageWebsite(env,mint,user)))return say(env,chat,'Only an authorized project administrator may change this website.');
   return screen(env,chat,'🗑 <b>REMOVE PROJECT WEBSITE?</b>\n\nThis removes the website from the latest active fight post and upcoming updates. You can add a new URL any time.',keyboard([[{text:'✅ Remove Website',callback_data:`site:delete:${mint}`}],[{text:'↩️ Keep Website',callback_data:`site:open:${mint}`}]]),q);
 }
 
@@ -1248,7 +1246,7 @@ async function linkGroup(env,msg,arg){
   if(!mintOk(arg))return say(env,msg.chat.id,'Please provide a valid Solana token mint address.');
   try{await tokenInfo(env,arg);}catch(e){return say(env,msg.chat.id,'Token not found: '+html(errString(e)));}
   await env.DB.prepare(`INSERT INTO project_groups(mint,chat_id,chat_title,registered_by,registered_at) VALUES(?,?,?,?,?) ON CONFLICT(mint,chat_id) DO UPDATE SET chat_title=excluded.chat_title`).bind(arg,String(msg.chat.id),msg.chat.title||'',String(msg.from.id),now()).run();
-  return say(env,msg.chat.id,`✅ Group linked to <code>${html(arg)}</code>. Ready for future battles.`,{reply_markup:keyboard([[{text:'🌐 Set Project Website',url:`https://t.me/${env.BOT_USERNAME.replace('@','')}?start=website_${arg}`}],[{text:'🥊 Bot Menu',url:`https://t.me/${env.BOT_USERNAME.replace('@','')}`}]] )});
+  return say(env,msg.chat.id,`✅ Group linked to <code>${html(arg)}</code>.\n\nNext step: Add your project website once. You can edit it later whenever needed.`,{reply_markup:keyboard([[{text:'🌐 Set Project Website',url:`https://t.me/${env.BOT_USERNAME.replace('@','')}?start=web_${arg}_${compactGroupChat(msg.chat.id)}`}],[{text:'🥊 Bot Menu',url:`https://t.me/${env.BOT_USERNAME.replace('@','')}`}]] )});
 }
 async function unlinkGroup(env,msg,arg){
   if(!['group','supergroup'].includes(msg.chat.type)||!await tgAdmin(env,msg.chat.id,msg.from.id))return say(env,msg.chat.id,'Only a group administrator can unlink a token.');
