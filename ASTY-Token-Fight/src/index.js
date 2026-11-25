@@ -1167,6 +1167,49 @@ async function receiveFightVideo(env,msg){
   }
 }
 
+async function notifyProjectAdmins(env,mint,creatorId,fight){
+  // Only the FIRST still-linked community is contacted as this project's
+  // notification contact. Linking a token in a TEST group must not subscribe
+  // that group's registrant to another project's challenge notifications.
+  const original=await env.DB.prepare(`SELECT chat_id,registered_by
+    FROM project_groups WHERE mint=? ORDER BY registered_at ASC,chat_id ASC LIMIT 1`)
+    .bind(mint).first();
+  if(!original)return;
+  let recipients=[];
+  try{
+    const admins=await telegram(env,'getChatAdministrators',{chat_id:original.chat_id});
+    recipients=(Array.isArray(admins)?admins:[])
+      .filter(m=>['creator','administrator'].includes(m.status)&&m.user&&!m.user.is_bot)
+      .map(m=>String(m.user.id));
+  }catch(e){
+    console.error('challenge admin lookup',mint,errString(e));
+    // Current-admin check prevents a stale registrar receiving notifications.
+    if(original.registered_by&&await tgAdmin(env,original.chat_id,original.registered_by))
+      recipients=[String(original.registered_by)];
+  }
+  const users=[...new Set(recipients)].filter(id=>id!==String(creatorId));
+  if(!users.length)return;
+  const web=await websiteViewForChat(env,fight,null);
+  const msg=[
+    '🥊 <b>NEW TOKEN FIGHT CHALLENGE!</b>',
+    '',
+    `⚡ ${html(tokenLabel(fight.sym_a))} challenges ${html(tokenLabel(fight.sym_b))}!`,
+    '',
+    '⏳ 24 hours · 50% Votes · 50% Price',
+    '',
+    'Accept or decline this challenge.'
+  ].join('\n');
+  const buttons=keyboard([
+    [{text:'✅ Accept Challenge',callback_data:`accept:${fight.id}`},
+     {text:'❌ Decline Challenge',callback_data:`decline:${fight.id}`}],
+    ...siteButtons(web).inline_keyboard
+  ]);
+  const results=await Promise.allSettled(users.map(id=>say(env,id,msg,{reply_markup:buttons})));
+  results.forEach((result,i)=>{
+    if(result.status==='rejected')console.error('challenge DM failed',fight.id,users[i],errString(result.reason));
+  });
+}
+
 async function createFight(env,user,a,b,chat){
   if(!mintOk(a)||!mintOk(b)||a===b)return say(env,chat,'Please provide two different valid Solana token mint addresses.');
   if(!(await groupForAdmin(env,a,user)))return say(env,chat,`First link your project group as an admin: <code>/link ${html(a)}</code>.`);
@@ -1179,8 +1222,10 @@ async function createFight(env,user,a,b,chat){
   try{await env.DB.prepare(`INSERT INTO fights(id,mint_a,mint_b,creator_id,status,created_at) VALUES(?,?,?,?,'pending',?)`).bind(id,a,b,String(user),now()).run();}
   catch(e){return say(env,chat,'This token pair already has an open or active challenge. Wait for it to finish.');}
   await say(env,chat,`🥊 <b>Challenge created!</b>\nShare this link with your opponent:\n${botLink(env,id)}\n\nThe opponent must link their Telegram group and accept the challenge.`,{reply_markup:keyboard([[{text:'🔗 Share challenge',url:botLink(env,id)}],...siteButtons(await websiteViewForChat(env,await detail(env,id),null)).inline_keyboard])});
-  const opponents=await env.DB.prepare('SELECT DISTINCT registered_by FROM project_groups WHERE mint=?').bind(b).all();
-  for(const x of opponents.results){try{await say(env,x.registered_by,`🥊 New challenge for your project!\n${botLink(env,id)}`,websiteOptions(await websiteViewForChat(env,await detail(env,id),null)));}catch{}}
+  // Notify only live administrators of the original linked opponent group.
+  // A user who connected someone else's token for testing receives nothing.
+  await notifyProjectAdmins(env,b,user,await detail(env,id)).catch(e=>
+    console.error('challenge notifications',id,errString(e)));
 }
 async function linkGroup(env,msg,arg){
   if(!['group','supergroup'].includes(msg.chat.type))return say(env,msg.chat.id,'Use <code>/link TOKEN_MINT</code> in your Telegram group.');
