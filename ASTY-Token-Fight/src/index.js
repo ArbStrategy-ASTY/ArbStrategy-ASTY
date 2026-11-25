@@ -36,6 +36,29 @@ async function groupForAdmin(env,mint,user){
   return null;
 }
 function botLink(env,fightId){return `https://t.me/${env.BOT_USERNAME.replace('@','')}?start=challenge_${fightId}`;}
+function challengeShareText(f){
+  // Telegram attaches the challenge link from the separate 'url' query parameter.
+  return [
+    "🥊 YOU\'VE BEEN CHALLENGED!",
+    '',
+    `⚡ ${tokenLabel(f.sym_a)} challenges ${tokenLabel(f.sym_b)}!`,
+    '',
+    'Are you ready to fight?',
+    '',
+    '🗳️ 50% Community Votes',
+    '📈 50% Price Performance',
+    '⏳ 24 Hours',
+    '',
+    '🏆 The losing project posts about the winner on X and links our Telegram bot!',
+    '',
+    '🔗 Open the challenge below to accept. New projects should add the bot to their group and link their token first.'
+  ].join('\n');
+}
+function challengeShareUrl(env,f){
+  return 'https://t.me/share/url?url='+encodeURIComponent(botLink(env,f.id))
+    +'&text='+encodeURIComponent(challengeShareText(f));
+}
+
 
 async function tokenInfo(env,mint){
   const prev=await env.DB.prepare('SELECT * FROM projects WHERE mint=?').bind(mint).first();
@@ -445,6 +468,7 @@ async function helpSection(env,chat,section,q=null,isGroup=false){
         '⚔️ <b>3. START A CHALLENGE</b>',
         'Open the private bot chat and tap New Fight.',
         'Choose your token and the project you want to challenge.',
+        'Tap Share Challenge to send a ready-made Telegram invitation, even if the opponent has not installed the bot yet.',
         'The opposing project’s registered group administrators receive a private challenge with Accept and Decline buttons.',
         '',
         '🗳️ <b>4. FIGHT & VOTE</b>',
@@ -1261,10 +1285,17 @@ async function createFight(env,user,a,b,chat){
   const id=eid();
   try{await env.DB.prepare(`INSERT INTO fights(id,mint_a,mint_b,creator_id,status,created_at) VALUES(?,?,?,?,'pending',?)`).bind(id,a,b,String(user),now()).run();}
   catch(e){return say(env,chat,'This token pair already has an open or active challenge. Wait for it to finish.');}
-  await say(env,chat,`🥊 <b>Challenge created!</b>\nShare this link with your opponent:\n${botLink(env,id)}\n\nThe opponent must link their Telegram group and accept the challenge.`,{reply_markup:keyboard([[{text:'🔗 Share challenge',url:botLink(env,id)}],...siteButtons(await websiteViewForChat(env,await detail(env,id),null)).inline_keyboard])});
-  // Notify only live administrators of the original linked opponent group.
-  // A user who connected someone else's token for testing receives nothing.
-  await notifyProjectAdmins(env,b,user,await detail(env,id)).catch(e=>
+  const createdFight=await detail(env,id);
+  await say(env,chat,`🥊 <b>CHALLENGE CREATED!</b>\n\n⚡ ${html(tokenLabel(createdFight.sym_a))} challenges ${html(tokenLabel(createdFight.sym_b))}!\n\n📤 Tap <b>Share Challenge</b> to send a ready-made invitation to another Telegram group or person. They can join even if they have never used our bot.\n\n🔗 Your challenge link:\n${botLink(env,id)}\n\nThe opponent must add the bot to their group, link their token and accept.`,{
+    reply_markup:keyboard([
+      [{text:'📤 Share Challenge',url:challengeShareUrl(env,createdFight)}],
+      [{text:'🔗 Open Challenge',url:botLink(env,id)}],
+      ...siteButtons(await websiteViewForChat(env,createdFight,null)).inline_keyboard
+    ])
+  });
+  // Only current administrators of the original opposing project group receive automated DMs.
+  // All other opponents can join by opening the manually shared challenge link.
+  await notifyProjectAdmins(env,b,user,createdFight).catch(e=>
     console.error('challenge notifications',id,errString(e)));
 }
 async function linkGroup(env,msg,arg){
@@ -1593,7 +1624,7 @@ export default {
           if(row.key==='winner_video_file_id')winnerVideoConfigured=!!row.value;
         }
       }catch(e){console.error('health database query',errString(e));}
-      return Response.json({status:'ok',app:'ASTY Token Fight',version:'0.8.8',
+      return Response.json({status:'ok',app:'ASTY Token Fight',version:'0.8.9',
         cron_last_started:started,cron_last_completed:completed,video_configured:videoConfigured,
         winner_video_configured:winnerVideoConfigured});
     }
