@@ -79,11 +79,13 @@ th{position:sticky;top:0;background:#0d1123;color:var(--muted);font-size:10.5px;
 th:first-child,th:nth-child(2){text-align:left}
 td{padding:11px 10px;border-top:1px solid rgba(255,255,255,.045);text-align:right;font-size:12.5px;font-variant-numeric:tabular-nums;white-space:nowrap}
 td:first-child,td:nth-child(2){text-align:left}
-th:first-child{left:0;position:sticky;z-index:4;background:#0d1123;width:154px;min-width:154px;max-width:154px}
-td:first-child{left:0;position:sticky;z-index:1;background:#0a0f24;width:154px;min-width:154px;max-width:154px;overflow:hidden}
+th:first-child{left:0;position:sticky;z-index:4;background:#0d1123;width:186px;min-width:186px;max-width:186px}
+td:first-child{left:0;position:sticky;z-index:1;background:#0a0f24;width:186px;min-width:186px;max-width:186px;overflow:hidden}
 tbody tr{transition:background .15s ease}
 tbody tr:hover{background:rgba(169,138,255,.045)}
-.pair{font-weight:780;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pair{display:flex;align-items:baseline;gap:6px;font-weight:780;font-size:13px;overflow:hidden;white-space:nowrap}
+.pair-name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+.pair-fee{flex-shrink:0;font-weight:550;font-size:10px;color:var(--muted2);white-space:nowrap}
 .addr{font-size:10px;color:var(--muted2);font-family:ui-monospace,SFMono-Regular,Menlo,monospace;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .dex{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line2);border-radius:999px;padding:4px 7px;color:var(--muted);font-size:10.5px}
 .dex:before{content:"";width:6px;height:6px;border-radius:50%;background:var(--purple)}
@@ -1674,12 +1676,12 @@ function renderTable(){
   const arr=filteredRows(), tb=$("#poolBody"); tb.innerHTML="";
   $("#emptyState").style.display=arr.length?"none":"block";
   tb.innerHTML=arr.map(r=>{
-    if(!r.loaded) return `<tr onclick="openDetail('${r.address}')"><td><div class="pair">${r.name}</div><div class="addr">${shortAddr(r.address)}</div></td><td><span class="dex ${r.dex==="Raydium"?"ray":""}">${r.dex}</span></td><td>${sourceBubble(r)}</td><td>${fmtPct(r.configuredFee)}</td><td colspan="16" class="na" style="text-align:center">Daten nicht geladen</td><td><span class="badge b-low">FEHLER</span></td></tr>`;
+    if(!r.loaded) return `<tr onclick="openDetail('${r.address}')"><td><div class="pair"><span class="pair-name">${r.name}</span><span class="pair-fee">${fmtPct(r.configuredFee,2)}</span></div><div class="addr">${shortAddr(r.address)}</div></td><td><span class="dex ${r.dex==="Raydium"?"ray":""}">${r.dex}</span></td><td>${sourceBubble(r)}</td><td>${fmtPct(r.configuredFee)}</td><td colspan="16" class="na" style="text-align:center">Daten nicht geladen</td><td><span class="badge b-low">FEHLER</span></td></tr>`;
     const effBadge = r.excluded
       ? `<span class="badge b-excluded">AUSGEKLAMMERT</span>`
       : `<span class="badge ${Number.isFinite(r.performanceScore)?levelClass(r.level):"b-excluded"}">${r.level}</span>`;
     return `<tr onclick="openDetail('${r.address}')">
-      <td><div class="pair">${r.name}</div><div class="addr">${shortAddr(r.address)}${r.excluded ? " · aus Berechnung" : ""}</div></td>
+      <td><div class="pair"><span class="pair-name">${r.name}</span><span class="pair-fee">${fmtPct(r.configuredFee,2)}</span></div><div class="addr">${shortAddr(r.address)}${r.excluded ? " · aus Berechnung" : ""}</div></td>
       <td><span class="dex ${r.dex==="Raydium"?"ray":""}">${r.dex}</span></td>
       <td>${sourceBubble(r)}</td>
       <td>${feeDisplay(r)}</td>
