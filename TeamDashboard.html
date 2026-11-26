@@ -173,6 +173,27 @@ tbody tr:hover{background:rgba(169,138,255,.045)}
 .claim-origin-note b{color:var(--text)}
 
 
+
+/* ASTY Effekt Faktor (AEF) */
+.aef-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:11px;padding:0 16px 14px}
+.aef-stat{padding:14px;border:1px solid var(--line2);background:rgba(169,138,255,.025);border-radius:14px;min-width:0}
+.aef-stat-label{font-size:10px;text-transform:uppercase;letter-spacing:.075em;color:var(--muted)}
+.aef-stat-value{font-weight:850;font-size:23px;letter-spacing:-.03em;margin-top:8px;overflow-wrap:anywhere}
+.aef-stat-note{font-size:10px;color:var(--muted2);margin-top:4px;line-height:1.5}
+.aef-ranking{padding:0 16px 16px}
+.aef-ranking-title{padding:12px 0 9px;color:var(--muted);font-size:11px;letter-spacing:.075em;text-transform:uppercase}
+.aef-rankrow{display:grid;grid-template-columns:28px minmax(0,1fr) auto;align-items:center;gap:10px;border-top:1px solid var(--line2);padding:10px 2px;cursor:pointer}
+.aef-rankrow:hover{background:rgba(169,138,255,.04)}
+.aef-ranknum{color:var(--purple);font-weight:850}
+.aef-rankname{font-size:12px;font-weight:750;overflow:hidden;text-overflow:ellipsis}
+.aef-rankmeta{font-size:10px;color:var(--muted);margin-top:3px}
+.aef-rankvalue{font-size:15px;font-weight:850;text-align:right;font-variant-numeric:tabular-nums}
+.aef-rankscore{font-size:10px;color:var(--muted);margin-top:2px;text-align:right}
+.aef-description{line-height:1.65}
+.aef-description p{margin:0 0 8px}.aef-description p:last-child{margin-bottom:0}
+.tablewrap table{min-width:2070px}
+@media(max-width:760px){.aef-stats{grid-template-columns:1fr 1fr}.aef-stats .aef-stat:last-child{grid-column:1/-1}.aef-stat-value{font-size:20px}}
+@media(max-width:440px){.aef-stat{padding:11px}.aef-stat-value{font-size:18px}.aef-rankrow{grid-template-columns:24px minmax(0,1fr) auto;gap:7px}}
 </style>
 </head>
 <body>
@@ -205,6 +226,12 @@ tbody tr:hover{background:rgba(169,138,255,.045)}
   Aktive <b>SOL-, ETH-, WBTC-, USDC- und ARBX-Pools</b> erhalten unabhängig von der Performance fest <b>70 %</b>.
   <b>5 strategisch ausgeklammerte Pools</b> bleiben sichtbar, werden aber nicht bewertet und bekommen keine Reinvest-Vorgabe.
   Die konkrete Reinvest-Stufe je Pool steht im <b>CSV-Export</b>.
+</div>
+<div class="info-note aef-description">
+  <p><b>ASTY Effekt Faktor (AEF):</b> Der ASTY Effekt Faktor bewertet den gesamten gebührenbezogenen Beitrag eines Liquidity Pools zum ASTY-Ökosystem innerhalb der letzten 30 Tage. Grundlage sind die Pool-Einnahmen sowie die aus dem Handelsvolumen rechnerisch abgeleiteten 1 % ASTY Transfer Fees, jeweils im Verhältnis zur aktuellen Liquidität (TVL).</p>
+  <p>Dadurch berücksichtigt der AEF neben den klassischen Pool-Einnahmen auch den rechnerischen Beitrag zu Burn, Growth Wallet und Treasury.</p>
+  <p>Während die bisherige Performance-Bewertung die Kapital-Effizienz und Stabilität der Pool-Einnahmen betrachtet, bewertet der AEF den umfassenderen Beitrag eines Pools zum ASTY Effekt.</p>
+  <p>Der AEF dient der strategischen Vergleichbarkeit unserer Liquidity Pools und stellt keine tatsächliche Gewinnabrechnung dar. Die bestehenden Reinvest-Stufen bleiben davon unberührt.</p>
 </div>
 
 <section class="kpis">
@@ -258,6 +285,24 @@ tbody tr:hover{background:rgba(169,138,255,.045)}
 
 <section class="section">
   <div class="section-head">
+    <div>
+      <div class="section-title">ASTY Effekt Faktor (AEF)</div>
+      <div class="section-note">Eigenständiger Vergleich aus 30d Pool-Einnahmen + 1 % des 30d-Handelsvolumens, bezogen auf das aktuelle TVL.</div>
+    </div>
+  </div>
+  <div class="aef-stats">
+    <div class="aef-stat"><div class="aef-stat-label">AEF 30d · Gesamteffizienz</div><div class="aef-stat-value" id="aefNetwork">–</div><div class="aef-stat-note">TVL-gewichteter Wert der gültigen, aktiven Pools</div></div>
+    <div class="aef-stat"><div class="aef-stat-label">Höchster AEF</div><div class="aef-stat-value" id="aefBest">–</div><div class="aef-stat-note" id="aefBestPool">Noch keine AEF-Daten</div></div>
+    <div class="aef-stat"><div class="aef-stat-label">Pools mit gültigem AEF</div><div class="aef-stat-value" id="aefCount">–</div><div class="aef-stat-note" id="aefCountNote">Fünf ausgeklammerte Pools zählen nicht mit</div></div>
+  </div>
+  <div class="aef-ranking">
+    <div class="aef-ranking-title">Top 5 nach AEF 30d</div>
+    <div id="aefTopRank"><div class="empty">Noch keine 30-Tage-Daten</div></div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="section-head">
     <div><div class="section-title">Alle ASTY-Pools</div><div class="section-note">Zeile anklicken für Details. Reinvest-Prozente stehen im CSV-Export.</div></div>
   </div>
   <div class="tools">
@@ -266,6 +311,9 @@ tbody tr:hover{background:rgba(169,138,255,.045)}
     <select class="control" id="effFilter"><option value="all">Alle Performance-Stufen</option><option value="high">Sehr stark / Stark</option><option value="mid">Mittel</option><option value="low">Gering</option></select>
     <select class="control" id="sortSelect">
       <option value="score">30d Performance</option>
+      <option value="aef30">AEF 30d (%)</option>
+      <option value="aefScore">AEF Score</option>
+      <option value="aefRank">AEF Rang</option>
       <option value="fees24">Einnahmen 24h</option>
       <option value="fees7">Einnahmen 7d</option>
       <option value="fees30">Einnahmen 30d</option>
@@ -287,7 +335,7 @@ tbody tr:hover{background:rgba(169,138,255,.045)}
           <th>Volumen 1h</th><th>Volumen 24h</th><th>Volumen 7d</th><th>Volumen 30d</th>
           <th>Einnahmen 1h</th><th>Einnahmen 24h</th><th>Einnahmen 7d</th><th>Einnahmen 30d</th>
           <th>Einn./TVL 24h</th><th>Einn./TVL 7d</th><th>Einn./TVL 30d</th>
-          <th>Trend</th><th>30d Performance</th>
+          <th>Trend</th><th>30d Performance</th><th>AEF 30d</th><th>AEF Score</th><th>AEF Rang</th>
         </tr>
       </thead>
       <tbody id="poolBody"></tbody>
@@ -463,6 +511,29 @@ function calcStability30(r){
   const cv=std/mean;
   return 1/(1+cv);
 }
+
+function deriveAefMetrics(){
+  // Die 1 % ASTY Transfer Fee wird aus dem 30d-Handelsvolumen abgeleitet.
+  // Bei fehlenden Eingangswerten oder TVL <= 0 wird kein AEF ermittelt.
+  for(const r of rows){
+    r.aef30=null; r.aefScore=null; r.aefRank=null;
+    if(r.excluded||!r.loaded||!Number.isFinite(r.tvl)||r.tvl<=0||
+       !Number.isFinite(r.fees30)||r.fees30<0||
+       !Number.isFinite(r.volume30)||r.volume30<0||
+       (r.dex==="Meteora"&&!r.historyLoaded)) continue;
+    const factor=((r.fees30+r.volume30*0.01)/r.tvl)*100;
+    if(Number.isFinite(factor)&&factor>=0) r.aef30=factor;
+  }
+  const valid=rows.filter(r=>!r.excluded&&Number.isFinite(r.aef30));
+  const allFactors=valid.map(r=>r.aef30);
+  for(const r of valid) r.aefScore=Math.round(percentile(allFactors,r.aef30));
+  const sorted=[...valid].sort((a,b)=>b.aef30-a.aef30||a.address.localeCompare(b.address));
+  let last=null,rank=0;
+  sorted.forEach((r,i)=>{
+    if(last===null||Math.abs(r.aef30-last)>1e-10) rank=i+1;
+    r.aefRank=rank; last=r.aef30;
+  });
+}
 function deriveMetrics(){
   const nowSec=Date.now()/1000;
   rows.forEach(r=>{
@@ -533,6 +604,7 @@ function deriveMetrics(){
     // Ausgeklammerte Pools kommen nicht bis hierher und bleiben daher weiterhin ohne Reinvest-Empfehlung.
     if(STRATEGIC_REINVEST_70.has(r.name)) r.reinvestPct=70;
   });
+  deriveAefMetrics();
 }
 
 function adaptMeteora(base, d){
@@ -1520,9 +1592,10 @@ function filteredRows(){
     if(ef!=="all" && (!r.loaded || effGroup(r.level)!==ef))return false;
     return true;
   });
-  const key={score:"score",fees24:"fees24",fees7:"fees7",fees30:"fees30",feeTvl24:"feeTvl24",feeTvl7:"feeTvl7",feeTvl30:"feeTvl30",volume24:"volume24",volume7:"volume7",volume30:"volume30",tvl:"tvl"}[sort];
+  const key={aef30:"aef30",aefScore:"aefScore",aefRank:"aefRank",score:"score",fees24:"fees24",fees7:"fees7",fees30:"fees30",feeTvl24:"feeTvl24",feeTvl7:"feeTvl7",feeTvl30:"feeTvl30",volume24:"volume24",volume7:"volume7",volume30:"volume30",tvl:"tvl"}[sort];
   if(sort==="name") arr.sort((a,b)=>a.name.localeCompare(b.name,"de"));
   else if(sort==="score") arr.sort((a,b)=>((b.excluded ? -1 : (Number.isFinite(b[key])?b[key]:-Infinity)))-((a.excluded ? -1 : (Number.isFinite(a[key])?a[key]:-Infinity))));
+  else if(sort==="aefRank") arr.sort((a,b)=>(Number.isFinite(a.aefRank)?a.aefRank:Infinity)-(Number.isFinite(b.aefRank)?b.aefRank:Infinity));
   else arr.sort((a,b)=>(Number.isFinite(b[key])?b[key]:-Infinity)-(Number.isFinite(a[key])?a[key]:-Infinity));
   return arr;
 }
@@ -1578,11 +1651,29 @@ function renderRank(){
   $("#lowRank").innerHTML=block([...a].sort((x,y)=>x.performanceScore-y.performanceScore).slice(0,5));
 }
 
+
+function renderAef(){
+  const valid=rows.filter(r=>r.loaded&&!r.excluded&&Number.isFinite(r.aef30))
+    .sort((a,b)=>b.aef30-a.aef30||a.address.localeCompare(b.address));
+  const totalTvl=valid.reduce((sum,r)=>sum+r.tvl,0);
+  const totalEffect=valid.reduce((sum,r)=>sum+r.fees30+r.volume30*0.01,0);
+  $("#aefNetwork").textContent=totalTvl>0?fmtPct(totalEffect/totalTvl*100,2):"–";
+  $("#aefBest").textContent=valid.length?fmtPct(valid[0].aef30,2):"–";
+  $("#aefBestPool").textContent=valid.length?`${valid[0].name} · ${valid[0].dex} · Fee ${fmtPct(poolFeeValue(valid[0]))}`:"Noch keine AEF-Daten";
+  $("#aefCount").textContent=`${valid.length} / ${ACTIVE_POOL_COUNT}`;
+  $("#aefCountNote").textContent=`${EXCLUDED_POOL_IDS.size} strategisch ausgeklammerte Pools ohne AEF-Bewertung`;
+  $("#aefTopRank").innerHTML=valid.length?valid.slice(0,5).map(r=>`
+    <div class="aef-rankrow" onclick="openDetail('${r.address}')">
+      <div class="aef-ranknum">#${r.aefRank}</div>
+      <div><div class="aef-rankname">${r.name}</div><div class="aef-rankmeta">${r.dex} · Fee ${fmtPct(poolFeeValue(r))}</div></div>
+      <div><div class="aef-rankvalue">${fmtPct(r.aef30,2)}</div><div class="aef-rankscore">AEF Score ${r.aefScore} / 100</div></div>
+    </div>`).join(""):`<div class="empty">Keine gültigen AEF-Daten vorhanden.</div>`;
+}
 function renderTable(){
   const arr=filteredRows(), tb=$("#poolBody"); tb.innerHTML="";
   $("#emptyState").style.display=arr.length?"none":"block";
   tb.innerHTML=arr.map(r=>{
-    if(!r.loaded) return `<tr onclick="openDetail('${r.address}')"><td><div class="pair">${r.name}</div><div class="addr">${shortAddr(r.address)}</div></td><td><span class="dex ${r.dex==="Raydium"?"ray":""}">${r.dex}</span></td><td>${sourceBubble(r)}</td><td>${fmtPct(r.configuredFee)}</td><td colspan="13" class="na" style="text-align:center">Daten nicht geladen</td><td><span class="badge b-low">FEHLER</span></td></tr>`;
+    if(!r.loaded) return `<tr onclick="openDetail('${r.address}')"><td><div class="pair">${r.name}</div><div class="addr">${shortAddr(r.address)}</div></td><td><span class="dex ${r.dex==="Raydium"?"ray":""}">${r.dex}</span></td><td>${sourceBubble(r)}</td><td>${fmtPct(r.configuredFee)}</td><td colspan="16" class="na" style="text-align:center">Daten nicht geladen</td><td><span class="badge b-low">FEHLER</span></td></tr>`;
     const effBadge = r.excluded
       ? `<span class="badge b-excluded">AUSGEKLAMMERT</span>`
       : `<span class="badge ${Number.isFinite(r.performanceScore)?levelClass(r.level):"b-excluded"}">${r.level}</span>`;
@@ -1599,10 +1690,13 @@ function renderTable(){
       <td>${fmtPct(r.feeTvl24)}</td><td>${fmtPct(r.feeTvl7)}</td><td>${fmtPct(r.feeTvl30)}</td>
       <td class="${trendClass(r.trend)}">${r.trend}</td>
       <td>${effBadge}</td>
+      <td>${r.excluded?'<span class="badge b-excluded">AUSGEKLAMMERT</span>':fmtPct(r.aef30,2)}</td>
+      <td>${Number.isFinite(r.aefScore)?r.aefScore:"–"}</td>
+      <td>${Number.isFinite(r.aefRank)?r.aefRank:"–"}</td>
     </tr>`;
   }).join("");
 }
-function render(){ renderKPIs(); renderRank(); renderTable(); }
+function render(){ renderKPIs(); renderRank(); renderAef(); renderTable(); }
 
 function detailCard(l,v){ return `<div class="detail"><div class="l">${l}</div><div class="v">${v}</div></div>`; }
 window.openDetail=function(address){
@@ -1614,6 +1708,9 @@ window.openDetail=function(address){
       +detailCard("Quelle",sourceBubble(r))
       +detailCard("Liquidität",fmtUSD(r.tvl))
       +detailCard("30d Performance",r.excluded?"AUSGEKLAMMERT":(r.level||"–"))+detailCard("Reinvest-Vorgabe",r.excluded?"–":(Number.isFinite(r.reinvestPct)?`${r.reinvestPct} %`:"Nicht bewertet"));
+    html+=detailCard("AEF 30d",r.excluded?"AUSGEKLAMMERT":fmtPct(r.aef30,2))
+      +detailCard("AEF Score",Number.isFinite(r.aefScore)?`${r.aefScore} / 100`:"–")
+      +detailCard("AEF Rang",Number.isFinite(r.aefRank)?`#${r.aefRank}`:"–");
     html+=detailCard("Trend",r.trend||"–")
       +detailCard("Volumen 1h",fmtUSD(r.volume1))
       +detailCard("Volumen 24h",fmtUSD(r.volume24))
@@ -1645,7 +1742,7 @@ function exportCSV(){
     "Einnahmen 1h USD","Einnahmen 24h USD","Einnahmen 7d USD","Einnahmen 30d USD",
     "Einnahmen/TVL 24h %","Einnahmen/TVL 7d %","Einnahmen/TVL 30d %",
     "APR 24h %","APR 7d %","APR 30d %","Trend",
-    "30d Performance Score","Stabilität 30d","History Tage","Datenquelle"
+    "30d Performance Score","Stabilität 30d","History Tage","Datenquelle","AEF 30d %","AEF Score","AEF Rang"
   ];
   const data=rows.map(r=>{
     const rule=r.excluded?"Ausgeklammert":
@@ -1658,7 +1755,7 @@ function exportCSV(){
       r.fees1??"",r.fees24??"",r.fees7??"",r.fees30??"",
       r.feeTvl24??"",r.feeTvl7??"",r.feeTvl30??"",
       r.apr24??"",r.apr7??"",r.apr30??"",r.trend??"",
-      r.performanceScore??"",r.stability30??"",r.coverage30??"",rowSource(r)
+      r.performanceScore??"",r.stability30??"",r.coverage30??"",rowSource(r),r.aef30??"",r.aefScore??"",r.aefRank??""
     ];
   });
   const esc=v=>`"${String(v).replaceAll('"','""')}"`;
